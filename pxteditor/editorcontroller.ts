@@ -47,6 +47,7 @@ namespace pxt.editor {
         | "undo"
         | "redo"
         | "renderblocks"
+        | "renderpython"
         | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
@@ -171,8 +172,18 @@ namespace pxt.editor {
     }
 
     export interface EditorMessageRenderBlocksResponse {
-        mime: "application/svg+xml";
-        data: string;
+        svg: SVGSVGElement;
+        xml: Promise<any>;
+    }
+
+    export interface EditorMessageRenderPythonRequest extends EditorMessageRequest {
+        action: "renderpython";
+        // typescript code to render
+        ts: string;
+    }
+
+    export interface EditorMessageRenderPythonResponse {
+        python: string;
     }
 
     export interface EditorSimulatorEvent extends EditorMessageRequest {
@@ -328,10 +339,18 @@ namespace pxt.editor {
                                     const rendermsg = data as EditorMessageRenderBlocksRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.renderBlocksAsync(rendermsg))
-                                        .then((r: any) => {
+                                        .then(r => {
                                             return r.xml.then((svg: any) => {
                                                 resp = svg.xml;
                                             })
+                                        });
+                                }
+                                case "renderpython": {
+                                    const rendermsg = data as EditorMessageRenderPythonRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.renderPythonAsync(rendermsg))
+                                        .then(r => {
+                                            resp = r.python;
                                         });
                                 }
                                 case "toggletrace": {

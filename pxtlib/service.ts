@@ -68,6 +68,7 @@ namespace ts.pxtc {
 
     export interface FunctionLocationInfo extends LocationInfo {
         functionName: string;
+        argumentNames?: string[];
     }
 
     export interface KsDiagnostic extends LocationInfo {
@@ -275,6 +276,7 @@ namespace ts.pxtc {
                     },
                     name: tp,
                     namespace: s.namespace,
+                    fileName: s.fileName,
                     qName: `${mkey}.${tp}`,
                     pkg: s.pkg,
                     kind: SymbolKind.Property,
@@ -539,6 +541,8 @@ namespace ts.pxtc {
                         } else {
                             res.paramDefl[n.slice(0, n.length - 5)] = v
                         }
+                        if (!res.explicitDefaults) res.explicitDefaults = []
+                        res.explicitDefaults.push(n.slice(0, n.length - 5))
                     } else if (U.endsWith(n, ".shadow")) {
                         if (!res._shadowOverrides) res._shadowOverrides = {};
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
@@ -600,6 +604,7 @@ namespace ts.pxtc {
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
                 if (!res.paramDefl[name]) {
+                    // these don't add to res.explicitDefaults
                     let m = /\beg\.?:\s*(.+)/.exec(desc);
                     if (m && m[1]) {
                         let defaultValue = /(?:"([^"]*)")|(?:'([^']*)')|(?:([^\s,]+))/g.exec(m[1]);

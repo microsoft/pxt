@@ -6,22 +6,29 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
+@highlightLineColor: #fcfc90;
+@tutorialCardHeight: 9rem;
+@tutorialCardExpandedHeight: 22rem;
 
 /*******************************
       Tutorial mode
 *******************************/
-
 .tutorial #maineditor .full-abs {
-    top: 5.5rem;
+    top: calc(@tutorialCardHeight - 0.5rem);
 }
+
+.tutorial.tutorialExpanded #maineditor .full-abs {
+    top: calc(@tutorialCardExpandedHeight - 0.5rem);
+}
+
 .tutorial #maineditor #monacoEditor {
     top: 0rem;
 }
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
     background: rgba(27, 28, 29, 0.3) !important;
-    margin: calc(0.45rem);
-    padding: calc(0.45rem);
+    margin: 0.45rem;
+    padding: 0.45rem;
     border-radius: 0.5rem !important;
 }
 .menubar .ui.menu .item.tutorial-menuitem > .step-label {
@@ -39,13 +46,23 @@
     padding-right: 1.3rem !important;
 }
 
-#tutorialcard {
+.tutorial #tutorialcard {
     position: relative;
-    z-index: 1;
-    height: 6rem;
+    z-index: @tutorialCardZIndex;
+    height: @tutorialCardHeight;
     width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
+    font-family: @docsPageFont;
+}
+
+.tutorial #tutotialcard > code,
+.tutorial #tutotialcard > pre {
+    font-family: @pageFont;
+}
+
+.tutorial.tutorialExpanded #tutorialcard {
+    height: @tutorialCardExpandedHeight;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -88,49 +105,57 @@ body#docs.tutorial {
     background: @tutorialSegmentBackground;
 }
 
-#tutorialcard .ui.tutorialsegment .avatar-image {
-    position: absolute;
-    top: 0.7rem;
-    left: 0.7rem;
-    width: 3rem;
-    height: 3rem;
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-image: @avatarImage;
-    cursor:pointer;
+#tutorialcard .ui.tutorialsegment svg {
+    -webkit-transform: translate3d(0, 0, 0);
 }
 
 #tutorialcard {
     padding: 0.5rem;
 }
 
-#tutorialcard .ui.buttons {
+.tutorial #tutorialcard .ui.buttons {
     width: 100%;
-    height: 4.5rem;
+    height: calc(@tutorialCardHeight - 1.5rem);
+}
+
+.tutorial.tutorialExpanded #tutorialcard .ui.buttons {
+    height: calc(@tutorialCardExpandedHeight - 1.5rem);
 }
 
 #tutorialcard .ui.tutorialsegment {
     width: 100%;
 }
 
-#tutorialcard .tutorialmessage .content {
+.tutorial #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 12pt;
-    height: 4rem;
-    overflow: auto;
+    height: calc(@tutorialCardHeight - 5rem);
+    margin-bottom: 0.5rem;
+    overflow-y: hidden;
+    overflow-x: auto;
     cursor:pointer;
 }
+
+.tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
+    height: calc(@tutorialCardExpandedHeight - 5rem);
+    overflow-y: auto;
+}
+
 #tutorialcard .tutorialmessage .content p {
     line-height: 30px !important;
     color: @tutorialSegmentColor;
 }
 
-#tutorialcard .tutorialmessage {
+.tutorial #tutorialcard .tutorialmessage {
     width: 100%;
     padding: 0.5rem;
-    padding-left: 7rem;
-    height: 4.5rem;
+    padding-left: 0.5rem;
+    height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
+}
+
+.tutorial.tutorialExpanded #tutorialcard .tutorialmessage {
+    height: calc(@tutorialCardExpandedHeight - 1.5rem);
 }
 
 #root.dimmable.dimmed .ui.segment.message {
@@ -159,12 +184,6 @@ body#docs.tutorial {
     border-radius: 0.28571429rem;
 }
 
-i.icon.avatar-image {
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-image: @avatarImage;
-}
-
 /* Tutorial blocks */
 
 .hintdialog .ui.segment .blocklyPreview {
@@ -173,36 +192,6 @@ i.icon.avatar-image {
         max-height: 50vh;
     }
 }
-
-
-/******************************
-    Hint button
-******************************/
-
-#tutorialcard .ui.button.hintbutton {
-    position: absolute;
-    bottom: 2rem;
-    left: 4rem;
-    font-size: 0.8rem;
-    border-radius: 0.28571429rem;
-    padding: 0.4rem;
-	background-color: @primaryColor;
-    color: white;
-}
-
-#tutorialcard .ui.button.hintbutton:after{
-	content: ' ';
-	position: absolute;
-	width: 0;
-	height: 0;
-    left: -10px;
-	right: auto;
-    top: 0px;
-	bottom: auto;
-	border: 10px solid;
-	border-color: @primaryColor transparent transparent transparent;
-}
-
 
 /******************************
     Inline Blocks and Buttons
@@ -228,6 +217,33 @@ span.docs.inlineblock {
 
 code.lang-filterblocks {
     display: none;
+}
+
+span.highlight-line {
+    font-weight: bold;
+    white-space: pre-wrap;
+    background: @highlightLineColor;
+    display: block;
+    padding: 0.5rem;
+}
+
+#tutorialcard .prevbutton, #tutorialcard .nextbutton {
+    background: @tutorialSegmentBackground;
+    z-index: 2;
+
+    > i, > span {
+        display: block;
+        margin: 0 auto 0.5em !important;
+        color: @mainMenuTutorialBackground;
+    }
+}
+
+#tutorialcard .prevbutton:hover, #tutorialcard .nextbutton:hover {
+    background-color: #cacbcd;
+
+    > i, > span, > i.orange {
+        color: @black!important;
+    }
 }
 
 /*******************************
@@ -273,17 +289,8 @@ code.lang-filterblocks {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #tutorialcard .ui.tutorialsegment .avatar-image {
-        display: none;
-    }
-    #tutorialcard .ui.button.hintbutton {
-        display: none;
-    }
     #tutorialcard .ui.button.prevbutton {
         display: none;
-    }
-    #tutorialcard .tutorialmessage {
-        padding-left: 0.5rem;
     }
 }
 
@@ -304,4 +311,19 @@ code.lang-filterblocks {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
 
+}
+
+/* thin screen */
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .tutorial #tutorialcard {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;        
+    }
+    .tutorial #tutorialcard .content {
+        font-size: 10pt;
+    }
+    
+    .modal.hintdialog img.ui.centered.image {
+        max-height:12rem;
+    }
 }

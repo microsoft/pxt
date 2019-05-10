@@ -32,7 +32,25 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
-    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
+    const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+    f.numDiagnosticsOverride = errors.length
+    reportDiagnosticErrors(errors);
+}
+
+let lastErrorCounts: string = "";
+function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
+    // report to analytics;
+    if (errors && errors.length) {
+        const counts: pxt.Map<number> = {};
+        errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
+        const errorCounts = JSON.stringify(errors);
+        if (errorCounts !== lastErrorCounts) {
+            pxt.tickEvent("dianostics", counts);
+            lastErrorCounts = errorCounts;
+        }
+    } else {
+        lastErrorCounts = "";
+    }
 }
 
 let noOpAsync = new Promise<any>(() => { })
@@ -53,6 +71,7 @@ export interface CompileOptions {
     trace?: boolean;
     native?: boolean;
     debug?: boolean;
+    debugExtensionCode?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
@@ -89,7 +108,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
-                opts.justMyCode = true;
+                opts.justMyCode = !options.debugExtensionCode;
                 opts.testMode = true;
             }
             if (options.trace) {
@@ -198,7 +217,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
@@ -213,7 +232,6 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
             if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
                 opts.sourceFiles.push(snippetBlocks);
             }
-
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
         }).then(resp => {
@@ -238,6 +256,28 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> 
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp
+        })
+}
+
+export function decompilePythonSnippetAsync(code: string): Promise<string> {
+    const snippetTs = "main.ts";
+    const snippetPy = "main.py";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.fileSystem[snippetTs] = code;
+            opts.fileSystem[snippetPy] = "";
+
+            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
+                opts.sourceFiles.push(snippetTs);
+            }
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            opts.ast = true;
+            return pyDecompileCoreAsync(opts, snippetTs)
+        }).then(resp => {
+            return resp.outfiles[snippetPy]
         })
 }
 

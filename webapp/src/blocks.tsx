@@ -6,7 +6,6 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
-import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
@@ -14,6 +13,7 @@ import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 
 import Util = pxt.Util;
+import { DebuggerToolbox } from "./debuggerToolbox";
 
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
@@ -27,15 +27,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
-    filters: pxt.editor.ProjectFilters;
-    showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
-    debuggerToolboxDiv: JSX.Element;
+
+    protected debuggerToolbox: DebuggerToolbox;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-
-    private debugVariables: debug.DebuggerVariables;
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
         let map: pxt.Map<number> = {};
@@ -45,6 +42,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (blockId) map[blockId] = breakpoint.id;
         });
         this.breakpointsByBlock = map;
+        this.setBreakpointsFromBlocks();
     }
 
     setBreakpointsFromBlocks(): void {
@@ -564,15 +562,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.toolbox = c;
     }
 
+    handleDebuggerToolboxRef = (c: DebuggerToolbox) => {
+        this.debuggerToolbox = c;
+    }
+
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        const debuggerToolboxDiv = <div id="debuggerToolbox"></div>;
         const blocklyToolbox = <div className="blocklyToolbox">
             <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />
-            {debuggerToolboxDiv}
+            {<div id="debuggerToolbox"></div>}
         </div>;
-        this.debuggerToolboxDiv = debuggerToolboxDiv;
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
 
@@ -580,20 +580,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     updateToolbox() {
-        if (!this.debuggerToolboxDiv) return; // nothing to do here
+        const container = document.getElementById('debuggerToolbox');
+        if (!container) return;
 
         const debugging = !!this.parent.state.debugging;
-        let debuggerToolbox = debugging ? <div>
-            <debug.DebuggerToolbar parent={this.parent} />
-            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
-        </div> : <div />;
-        Util.assert(!!this.debuggerToolboxDiv)
+        let debuggerToolbox = debugging ? <DebuggerToolbox ref={this.handleDebuggerToolboxRef} parent={this.parent} apis={this.blockInfo.apis.byQName} /> : <div />;
+
         if (debugging) {
             this.toolbox.hide();
         } else {
+            this.debuggerToolbox = null;
             this.toolbox.show();
         }
-        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
+        ReactDOM.render(debuggerToolbox, container);
     }
 
     showPackageDialog() {
@@ -689,19 +688,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
-                if (this.currFile && this.currFile != file) {
-                    this.filterToolbox(null);
-                }
-                if (this.parent.state.editorState && this.parent.state.editorState.filters) {
-                    this.filterToolbox(this.parent.state.editorState.filters);
-                } else {
-                    this.filters = null;
-                }
-                if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
-                    this.showSearch = this.parent.state.editorState.searchBar;
-                } else {
-                    this.showSearch = true;
-                }
+                this.filterToolbox();
                 if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
                     this.showCategories = this.parent.state.editorState.hasCategories;
                 } else {
@@ -781,7 +768,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
-        this.updateDebuggerVariables(brk ? brk.globals : undefined);
+        this.updateDebuggerVariables(brk);
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
@@ -816,51 +803,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return false;
     }
 
-    handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {
-        this.debugVariables = c;
-    }
-
-    clearDebuggerVariables() {
-        if (this.debugVariables) this.debugVariables.clear();
-    }
-
-    updateDebuggerVariables(globals: pxsim.Variables) {
+    updateDebuggerVariables(brk: pxsim.DebuggerBreakpointMessage) {
         if (!this.parent.state.debugging) return;
-        if (!globals) {
-            // freeze the ui
-            if (this.debugVariables) this.debugVariables.update(true);
-            return;
-        }
-        const vars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
-        if (!vars.length) {
-            if (this.debugVariables) this.debugVariables.clear();
-            return;
-        }
 
-        for (const variable of vars) {
-            const value = getValueOfVariable(variable);
-            if (this.debugVariables) this.debugVariables.set(variable, value);
-        }
+        if (this.debuggerToolbox) {
+            const visibleVars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
 
-        if (this.debugVariables) this.debugVariables.update();
-
-        function getValueOfVariable(name: string): pxsim.Variables {
-            // Variable names could have spaces.
-            let correctedName = name.replace(/\s/g, '_');
-            for (let k of Object.keys(globals)) {
-                let n = k.replace(/___\d+$/, "");
-                if (correctedName === n) {
-                    let v = globals[k]
-                    return v;
-                }
-            }
-            return undefined;
+            this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }
     }
 
     clearHighlightedStatements() {
         this.editor.highlightBlock(null);
-        this.clearDebuggerVariables();
+        if (this.debuggerToolbox) this.debuggerToolbox.setBreakpoint(null);
     }
 
     openTypeScript() {
@@ -976,8 +931,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
-        this.filters = filters;
+    filterToolbox(showCategories?: boolean) {
         this.showCategories = showCategories;
         this.refreshToolbox();
     }
@@ -1050,7 +1004,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super.clearCaches();
         this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();
-        // note that we don't need to clear the flyout SVG cache since those 
+        // note that we don't need to clear the flyout SVG cache since those
         // will regenerate themselves more precisely based on the hash of the
         // input blocks xml.
     }
@@ -1196,6 +1150,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private flyoutXmlList: Element[] = [];
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         const { nameid: ns, subns } = treeRow;
+        const inTutorial = this.parent.state.tutorialOptions
+            && !!this.parent.state.tutorialOptions.tutorial;
 
         if (ns == 'search') {
             this.showSearchFlyout();
@@ -1208,7 +1164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.flyoutXmlList = [];
-        let cacheKey = ns + subns;
+        let cacheKey = ns + subns + (inTutorial ? "tutorialexpanded" : "");
         if (this.flyoutBlockXmlCache[cacheKey]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];

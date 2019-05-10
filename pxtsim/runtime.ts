@@ -185,8 +185,15 @@ namespace pxsim {
 
     const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
-        public runOptions: SimulatorRunMessage;
-        public messageListeners: MessageListener[] = [];
+        id: string;
+        bus: pxsim.EventBus;
+        runOptions: SimulatorRunMessage;
+        messageListeners: MessageListener[] = [];
+
+        constructor() {
+            this.id = "b" + Math.round(Math.random() * 2147483647);
+            this.bus = new pxsim.EventBus(runtime);
+        }
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
@@ -249,11 +256,6 @@ namespace pxsim {
     }
 
     export class CoreBoard extends BaseBoard {
-        id: string;
-
-        // the bus
-        bus: pxsim.EventBus;
-
         // updates
         updateSubscribers: (() => void)[];
 
@@ -264,8 +266,6 @@ namespace pxsim {
 
         constructor() {
             super()
-            this.id = "b" + Math.round(Math.random() * 2147483647);
-            this.bus = new pxsim.EventBus(runtime);
 
             // updates
             this.updateSubscribers = []
@@ -309,23 +309,25 @@ namespace pxsim {
         }
     }
 
-    export type EventValueToActionArgs<T> = (value: T) => any[];
+    export type EventValueToActionArgs = (value: EventIDType) => any[];
 
     enum LogType {
         UserSet, BackAdd, BackRemove
     }
 
-    export class EventQueue<T> {
+    export type EventIDType = number | string;
+
+    export class EventQueue {
         max: number = 5;
-        events: T[] = [];
+        events: EventIDType[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
         private _handlers: RefAction[] = [];
         private _addRemoveLog: { act: RefAction, log: LogType }[] = [];
 
-        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
+        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs) { }
 
-        public push(e: T, notifyOne: boolean): Promise<void> {
+        public push(e: EventIDType, notifyOne: boolean): Promise<void> {
             if (this.awaiters.length > 0) {
                 if (notifyOne) {
                     const aw = this.awaiters.shift();
@@ -455,6 +457,7 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        idleTimer: number = undefined;
         recording = false;
         recordingTimer = 0;
         recordingLastImageData: ImageData = undefined;
@@ -572,6 +575,7 @@ namespace pxsim {
             this.dead = true
             // TODO fix this
             this.stopRecording();
+            this.stopIdle();
             this.setRunning(false);
         }
 
@@ -651,6 +655,7 @@ namespace pxsim {
                     });
                 } else {
                     this.stopRecording();
+                    this.stopIdle();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
                         frameid: Embed.frameid,
@@ -698,6 +703,7 @@ namespace pxsim {
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
+            let userGlobals: string[];
             let __this = this
 
             function oops(msg: string) {
@@ -718,6 +724,10 @@ namespace pxsim {
             }
 
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
+                // If code is running on a breakpoint, it's because we are evaluating getters;
+                // no need to yield in that case.
+                if (__this.pausedOnBreakpoint) return false;
+
                 __this.cleanScheduledExpired()
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()
@@ -742,10 +752,11 @@ namespace pxsim {
                 return false
             }
 
-            function setupDebugger(numBreakpoints: number) {
+            function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
                 breakpoints = new Uint8Array(numBreakpoints)
                 // start running and let user put a breakpoint on start
                 // breakAlways = true
+                userGlobals = userCodeGlobals;
             }
 
             function isBreakFrame(s: StackFrame) {
@@ -765,7 +776,7 @@ namespace pxsim {
                 s.pc = retPC;
                 s.r0 = r0;
 
-                const { msg, heap } = getBreakpointMsg(s, brkId);
+                const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
                 Runtime.postMessage(msg)
                 breakAlways = false;
@@ -891,7 +902,7 @@ namespace pxsim {
                         __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
-                        const { msg } = getBreakpointMsg(p, p.lastBrkId)
+                        const { msg } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
@@ -1090,6 +1101,26 @@ namespace pxsim {
             c.start = 0;
             c.numstops++;
         }
+
+        startIdle() {
+            // schedules handlers to run every 20ms
+            if (this.idleTimer === undefined) {
+                this.idleTimer = setInterval(() => {
+                    if (!this.running || this.pausedOnBreakpoint) return;
+                    const bus = this.board.bus;
+                    if (bus)
+                        bus.queueIdle();
+                }, 20);
+            }
+        }
+
+        stopIdle() {
+            if (this.idleTimer !== undefined) {
+                clearInterval(this.idleTimer);
+                this.idleTimer = undefined;
+            }
+        }
+
 
         // Wrapper for the setTimeout
         schedule(fn: Function, timeout: number): number {

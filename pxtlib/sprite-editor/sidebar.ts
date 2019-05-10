@@ -7,6 +7,7 @@ namespace pxtsprite {
         setActiveTool(tool: PaintTool): void;
         setActiveColor(color: number): void;
         setToolWidth(width: number): void;
+        setIconsToDefault(): void;
     }
 
     const TOOLBAR_WIDTH = 65;
@@ -177,8 +178,14 @@ namespace pxtsprite {
 
         protected initButton(title: string, icon: string, tool: PaintTool, xicon = false) {
             const btn = xicon ? mkXIconButton(icon, TOOL_BUTTON_WIDTH) : mkIconButton(icon, TOOL_BUTTON_WIDTH);
+            const shortcut = getPaintToolShortcut(tool);
+            if (shortcut) btn.shortcut(shortcut);
             btn.title(title);
-            btn.onClick(() => this.setTool(tool));
+
+            btn.onClick(() => {
+                this.host.setIconsToDefault();
+                this.setTool(tool);
+            });
             this.buttonGroup.appendChild(btn.getElement());
             return btn;
         }

@@ -40,18 +40,20 @@
 /* Monaco */
 @monacoFlyoutZIndex: @blocklyFlyoutZIndex; /* Same as blockly Flyout */
 @monacoInnerZIndex: @menuBarZIndex+1; /* Above menu bar */
+@monacoHintsZIndex: @monacoInnerZIndex; /* parameter hints */
 
 /* Editor toolbar */
 @editorToolsZIndex: @blocklyToolboxZIndex+1; /* Above the blockly toolbox but under the drag surface */
 @simulatorZIndex: @editorToolsZIndex+1; /* Needs to be on top of @editorToolsZIndex for mobile/tablet view */
 @editorLogoZIndex: ((@blocklyFlyoutZIndex)-1); /* Should be below the flyouts blocklyFlyout and @monacoFlyoutZIndex */
 
+/* Tutorial */
+@tutorialCardZIndex: @simulatorZIndex+1;
+@tutorialLightboxCardZIndex: @tutorialCardZIndex+1;
+
 /* Extension frames */
 @extensionFrameZIndex: @dimmerZIndex+1;
 @extensionPermissionZIndex: @extensionFrameZIndex+1;
-
-/* Tutorial */
-@tutorialLightboxCardZIndex: @dimmerZIndex+1;
 
 /* Home screen */
 @homeScreenZIndex: (@dimmerZIndex)-1; /* Just below the dimmer */

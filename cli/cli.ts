@@ -22,7 +22,6 @@ import * as server from './server';
 import * as build from './buildengine';
 import * as commandParser from './commandparser';
 import * as hid from './hid';
-import * as serial from './serial';
 import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
@@ -92,14 +91,7 @@ function reportDiagnostics(diagnostics: pxtc.KsDiagnostic[]): void {
 }
 
 function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
-    let output = "";
-
-    if (diagnostic.fileName) {
-        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-    }
-
-    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-    output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`;
+    let output = pxtc.getDiagnosticString(diagnostic)
     pxt.log(output);
 }
 
@@ -790,7 +782,8 @@ function uploadTargetAsync(label: string) {
 export function uploadTargetReleaseAsync(parsed?: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     const label = parsed.args[0];
-    return internalBuildTargetAsync()
+    const rebundle = !!parsed.flags["rebundle"];
+    return (rebundle ? rebundleAsync() : internalBuildTargetAsync())
         .then(() => {
             return uploadTargetAsync(label);
         });
@@ -2109,10 +2102,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.log(`native image already in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                         } else {
                             nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })
@@ -2387,7 +2380,7 @@ class SnippetHost implements pxt.Host {
     files: Map<Map<string>> = {}
     cache: pxt.Map<string> = {};
 
-    constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
+    constructor(public name: string, public packageFiles: Map<string>, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
         pxt.log(`resolve ${module.id}. ${filename}`)
@@ -2403,6 +2396,11 @@ class SnippetHost implements pxt.Host {
         }
         if (module.id == "this") {
             if (filename == "pxt.json") {
+                let commonFiles = this.includeCommon ? [
+                    "pxt-core.d.ts",
+                    "pxt-helpers.ts",
+                ] : []
+                let packageFileNames = Object.keys(this.packageFiles)
                 return JSON.stringify(<pxt.PackageConfig>{
                     "name": this.name.replace(/[^a-zA-z0-9]/g, ''),
                     "dependencies": this.dependencies(),
@@ -2411,17 +2409,11 @@ class SnippetHost implements pxt.Host {
                     "yotta": {
                         "ignoreConflicts": true
                     },
-                    "files": this.includeCommon ? [
-                        "main.ts",
-                        "pxt-core.d.ts",
-                        "pxt-helpers.ts"
-                    ] : [
-                            "main.ts",
-                        ]
+                    "files": packageFileNames.concat(commonFiles)
                 })
             }
-            else if (filename == "main.ts") {
-                return this.main
+            else if (filename in this.packageFiles) {
+                return this.packageFiles[filename]
             }
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
@@ -3175,7 +3167,7 @@ function simshimAsync() {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc(path.resolve(simDir()))
+    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()))
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -3245,7 +3237,7 @@ function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(opts => {
             let res = pxtc.compile(opts);
-            return pxtc.getApiInfo(opts, res.ast, true)
+            return pxtc.getApiInfo(res.ast, opts.jres, true)
         })
 }
 
@@ -3438,7 +3430,7 @@ function testPkgConflictsAsync() {
 
         const dep: pxt.Map<string> = {};
         tc.dependencies.forEach(d => dep[d] = "*");
-        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, dep));
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { "main.ts": tc.main }, dep));
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -3497,7 +3489,8 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         const dep: pxt.Map<string> = {};
         if (dependency)
             dep[dependency] = "*";
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dep, true));
+        let inPackages = { "main.ts": input, "main.py": "" }
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", inPackages, dep, true));
 
         pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync())
@@ -3514,7 +3507,8 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boolean): Promise<void> {
+    console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -3570,7 +3564,8 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             return Promise.resolve();
         }
 
-        const host = new SnippetHost("snippet" + name, snippet.code, snippet.packages);
+        let inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "" }
+        const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
         host.cache = cache;
         const pkg = new pxt.MainPackage(host);
         return pkg.installAllAsync()
@@ -3600,15 +3595,107 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         const file = resp.ast.getSourceFile('main.ts');
-                        const apis = pxtc.getApiInfo(opts, resp.ast);
+                        const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+                        opts.apisInfo = apis
+
+                        // ensure decompile to blocks works
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
                             errorOnGreyBlocks: true
                         });
-                        const success = !!bresp.outfiles['main.blocks']
-                        if (success) return addSuccess(name)
-                        else return addFailure(fn, bresp.diagnostics)
+                        let blockSucces = !!bresp.outfiles['main.blocks']
+                        if (!blockSucces) {
+                            return addFailure(fn, bresp.diagnostics)
+                        }
+
+                        // decompile to python
+                        let ts1 = opts.fileSystem["main.ts"]
+                        let program = pxtc.getTSProgram(opts);
+                        const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
+                        let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
+                        if (!pySuccess) {
+                            console.log("ts2py error")
+                            return addFailure(fn, decompiled.diagnostics)
+                        }
+                        opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
+                        let py = decompiled.outfiles['main.py']
+
+                        // py to ts
+                        opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                        let ts2Res = pxt.py.py2ts(opts)
+
+                        let ts2 = ts2Res.generated["main.ts"];
+
+                        if (!ts2) {
+                            console.log("py2ts error!")
+                            console.dir(ts2Res)
+                            let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+                            if (errs)
+                                console.log(errs)
+                            return addFailure(fn, ts2Res.diagnostics)
+                        }
+
+                        let getComparisonString = (s: string): string =>
+                            s.split("\n")
+                                // ignore function names
+                                // e.g. function foobar() {}
+                                //   => function () {}
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /function(.+)\(/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`function${m[1]}`, "function")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore type annotations on assignment statements (these tend to get erased)
+                                // e.g. let foo: number = 7
+                                //   => let foo = 7
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /.+:(.+)[=,)]/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`:${m[1]}`, "")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore whitespace
+                                .map(l => l.replace(/\s/g, ""))
+                                // ignore linebreak differences
+                                .map(l => l.replace(/\n/g, ""))
+                                // ignore semi-colons
+                                .map(l => l.replace(/\;/g, ""))
+                                // ignore blank lines
+                                .filter(l => l)
+                                .join("")
+
+                        if (pycheck) {
+                            let cmp1 = getComparisonString(ts1)
+                            let cmp2 = getComparisonString(ts2)
+                            let mismatch = cmp1 != cmp2
+                            if (mismatch) {
+                                console.log(`Mismatch. Original:`)
+                                console.log(cmp1)
+                                console.log("decompiled->compiled:")
+                                console.log(cmp2)
+                                console.log("TS mismatch :/")
+                                // TODO: generate more helpful diags
+                                return addFailure(fn, [])
+                            } else {
+                                console.log("TS same :)")
+                            }
+                        }
+
+                        // NOTE: neither of these decompile steps checks that the resulting code is correct or that
+                        // when the code is compiled back to ts it'll behave the same. This could be validated in
+                        // the future.
+
+                        return addSuccess(name)
                     }
                     else {
                         return addSuccess(fn)
@@ -3632,7 +3719,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 ])
             }))
     }, { concurrency: 1 }).then((a: any) => {
-        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
+        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
@@ -3703,7 +3790,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                         opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
                 }
                 const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
+                opts.apisInfo = pxtc.getApiInfo(res.ast, opts2.jres)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
@@ -3844,7 +3931,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             pxt.log(`package built; written to ${pxt.outputName()}`);
 
             if (res.usedSymbols && compileOptions.computeUsedSymbols) {
-                const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                 for (let k of Object.keys(res.usedSymbols)) {
                     res.usedSymbols[k] = apiInfo.byQName[k] || null
                 }
@@ -3855,7 +3942,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
-                    const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                    const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
                         const info = apiInfo.byQName[infok];
@@ -4514,11 +4601,11 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
 
 export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`monitoring console.log`)
-    if (!serial.isInstalled() && !hid.isInstalled()) {
+    if (!hid.isInstalled()) {
         pxt.log(`console support not installed, did you run "pxt npminstallnative"?`)
         return Promise.resolve();
     }
-    return serialAsync().then(() => hid.serialAsync());
+    return hid.serialAsync();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -4537,16 +4624,6 @@ export function runAsync(parsed?: commandParser.ParsedCommand) {
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
         .then((compileOpts) => { });
-}
-
-export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (!serial.isInstalled())
-        return Promise.resolve();
-    pxt.log(`start serial monitor`);
-    serial.monitorSerial((info, buffer) => {
-        process.stdout.write(buffer);
-    })
-    return Promise.resolve();
 }
 
 export interface SavedProject {
@@ -4812,11 +4889,12 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         true,
         parsed.flags["re"] as string,
-        !!parsed.flags["fix"]
+        !!parsed.flags["fix"],
+        !!parsed.flags["pycheck"]
     )
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -4901,6 +4979,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             entry.subitems.forEach(checkTOCEntry);
     }
 
+    // check over TOCs
     nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
         .forEach(summaryFile => {
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
@@ -4973,7 +5052,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     nodeutil.mkdirP("temp");
     nodeutil.writeFileSync("temp/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
-    let p = Promise.resolve();
     // test targetconfig
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
@@ -4986,35 +5064,34 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
                     pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
-                        case "tutorial":
-                            {
-                                const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: pxt.tutorial.bundleTutorialCode(tutorialMd),
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "tutorial" + gal.name, cardIndex);
-                                break;
-                            }
-                        case "example":
-                            {
-                                const exMd = nodeutil.resolveMd(docsRoot, card.url);
-                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: prj.filesOverride["main.ts"],
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "example" + gal.name, cardIndex);
-                                break;
-                            }
+                        case "tutorial": {
+                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
+                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                            pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                            addSnippet(<CodeSnippet>{
+                                name: card.name,
+                                code: tutorial.code,
+                                type: "blocks",
+                                ext: "ts",
+                                packages: pkgs
+                            }, "tutorial" + gal.name, cardIndex);
+                            break;
+                        }
+                        case "example": {
+                            const exMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                            pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                            addSnippet(<CodeSnippet>{
+                                name: card.name,
+                                code: prj.filesOverride["main.ts"],
+                                type: "blocks",
+                                ext: "ts",
+                                packages: pkgs
+                            }, "example" + gal.name, cardIndex);
+                            break;
+                        }
                     }
                 }));
             })
@@ -5022,8 +5099,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
+    let p = Promise.resolve();
     if (compileSnippets)
-        p = p.then(() => testSnippetsAsync(snippets, re));
+        p = p.then(() => testSnippetsAsync(snippets, re, pycheck));
     return p.then(() => {
         if (broken > 0) {
             const msg = `${broken} broken links found in the docs`;
@@ -5444,7 +5522,6 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    advancedCommand("serial", "listen and print serial commands to console", serialAsync, undefined, true);
 
     p.defineCommand({
         name: "login",
@@ -5682,6 +5759,9 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
+            },
+            rebundle: {
+                description: "skip build and just rebundle",
             }
         }
     }, uploadTargetReleaseAsync);
@@ -5707,6 +5787,11 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             },
             fix: {
                 description: "Fix links if possible"
+            },
+            pycheck: {
+                description: "Check code snippets by round-tripping to .py and comparing the "
+                    + "original and result .ts. This will generate lots of false positives but can "
+                    + "still be useful for searching for semantic issues."
             }
         }
     }, checkDocsAsync);
@@ -5737,7 +5822,6 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync, undefined, true);
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
-    advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
     p.defineCommand({
         name: "pyconv",
         help: "convert from python",

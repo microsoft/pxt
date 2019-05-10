@@ -14,7 +14,8 @@
 /* Top bar menu */
 .menubar .debugger-menu-item.centered {
     position: fixed;
-    place-content: center;
+    align-content: center;
+    justify-content: center;
     right: 0;
     left: 0;
     margin-right: auto;
@@ -100,14 +101,35 @@
 }
 
 /* Debugger variables view */
+.ui.varExplorer {
+    width: 100%;
+    .ui.variableTableHeader {
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
+        padding-left: 1rem;
+        border: none;
+        font-family: @pageFont;
+        font-size: larger;
+        color: black;
+    }
+}
 .ui.segment.debugvariables {
-    table-layout: auto;
     width: 100%;
     display: none;
+    max-width: 100%;
+    font-family: "Helvetica Neue", "Segoe UI", Helvetica, sans-serif;
 
     .ui.middle.aligned.list {
         overflow-y: auto;
         max-height: 25rem;
+    }
+    .item {
+        max-width: 100%;
+    }
+    .variableAndValue {
+        display: flex;
+        padding-right: 0.4rem;
+        padding-left: 0.4rem;
     }
 
     .transparent{
@@ -118,12 +140,16 @@
     }
     .variable.varname {
         text-overflow: ellipsis;
-        max-width: 1rem;
         overflow: hidden;
         white-space: nowrap;
+        flex-grow: 2;
     }
     .variable.detail {
+        overflow: hidden;
         text-align: right;
+        max-width: 50%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .varval.number {
         color: @debugNumberVariable;
@@ -148,13 +174,20 @@
 }
 
 .debugging .ui.segment.debugvariables {
-    display: table;
+    display: block;
     margin: 0;
     border: none;
 }
 
+.ui.segment.debugvariables:not(.frozen) .item:nth-child(even) {
+    background-color: @debugVariableEven;
+}
+.ui.segment.debugvariables:not(.frozen) .item:nth-child(odd) {
+    background-color: @debugVariableOdd;
+}
+
 .ui.segment.debugvariables.frozen {
-    background: #eee;
+    background: @debugVariableFrozen;
 }
 /* sim overlay */
 div.simframe div.pause-overlay {
@@ -165,10 +198,43 @@ div.simframe div.pause-overlay {
     width: 100%;
     height: 100%;
     position: absolute;
-    z-index: 100;    
+    z-index: 100;
 }
 
 /* Old debugger view */
 #root .debuggerview h4 {
     margin: 0.9em 0 0 0;
+}
+
+.monaco-breakpoint {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml, %3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle fill='red' cx='50%25' cy='50%25' r='30%25' /%3E%3C/svg%3E");
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.monaco-breakpoint:hover {
+    opacity: 0.7;
+}
+
+.monaco-breakpoint.active {
+    opacity: 1;
+}
+
+.callstack-row {
+    cursor: pointer;
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    .debugger div.monacoToolboxDiv {
+        min-width: calc(@blocklyRowWidthWide + 100px);
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    .debugger div.monacoToolboxDiv {
+        min-width: calc(@blocklyRowWidthTablet + 100px);
+    }
 }

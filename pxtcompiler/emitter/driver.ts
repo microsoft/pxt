@@ -229,7 +229,7 @@ namespace ts.pxtc {
 
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
-        const apis = getApiInfo(opts, program);
+        const apis = getApiInfo(program, opts.jres);
         const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
         const decompileOpts: decompiler.DecompileBlocksOptions = {
             snippetMode: false,
@@ -237,7 +237,8 @@ namespace ts.pxtc {
             includeGreyBlockMessages,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, pxtc.decompiler.buildRenameMap(program, file));
+        let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
     }
 

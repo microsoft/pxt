@@ -97,6 +97,7 @@ namespace pxt.editor {
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
+        preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
     }
 
     export interface ExampleImportOptions {
@@ -138,6 +139,11 @@ namespace pxt.editor {
 
     export interface SimulatorStartOptions {
         clickTrigger?: boolean;
+    }
+
+    export interface ImportFileOptions {
+        extension?: boolean;
+        openHomeIfFailed?: boolean;
     }
 
     export interface IProjectView {
@@ -193,6 +199,7 @@ namespace pxt.editor {
 
         openHome(): void;
         setTutorialStep(step: number): void;
+        setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
@@ -213,6 +220,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
+        setMute(on: boolean): void;
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
@@ -237,7 +245,8 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
-        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<any>;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
+        renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
@@ -263,7 +272,7 @@ namespace pxt.editor {
         showAboutDialog(): void;
 
         showImportUrlDialog(): void;
-        showImportFileDialog(): void;
+        showImportFileDialog(options?: ImportFileOptions): void;
         showImportGithubDialog(): void;
 
         showResetDialog(): void;

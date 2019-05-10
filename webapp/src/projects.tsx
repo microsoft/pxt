@@ -568,6 +568,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             clickLabel = lf("Start Tutorial");
         }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
+        else if (cardType == "forumUrl") clickLabel = lf("Open in Forum");
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
 
@@ -578,7 +579,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
-        const isLink = !cardType && (youTubeId || url);
+        const isLink = (!isCodeCardType(cardType) || cardType === "forumUrl") && (youTubeId || url);
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
@@ -617,6 +618,23 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 </div>
             </div>
         </div>;
+
+        function isCodeCardType(value: string): value is pxt.CodeCardType {
+            switch (value) {
+                case "file":
+                case "example":
+                case "codeExample":
+                case "tutorial":
+                case "side":
+                case "template":
+                case "package":
+                case "hw":
+                case "forumUrl":
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }
 
@@ -944,17 +962,6 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             >
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
-                        {variants.map(cfg =>
-                            <codecard.CodeCardView
-                                key={'variant' + cfg.name}
-                                name={cfg.card.name}
-                                ariaLabel={cfg.card.name}
-                                description={cfg.card.description}
-                                imageUrl={cfg.card.imageUrl}
-                                learnMoreUrl={cfg.card.learnMoreUrl}
-                                onClick={cfg.card.onClick}
-                            />
-                        )}
                         {cards.map(card =>
                             <codecard.CodeCardView
                                 key={'card' + card.name}
@@ -964,6 +971,17 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 imageUrl={card.imageUrl}
                                 learnMoreUrl={card.url}
                                 onClick={card.onClick}
+                            />
+                        )}
+                        {variants.map(cfg =>
+                            <codecard.CodeCardView
+                                key={'variant' + cfg.name}
+                                name={cfg.card.name}
+                                ariaLabel={cfg.card.name}
+                                description={cfg.card.description}
+                                imageUrl={cfg.card.imageUrl}
+                                learnMoreUrl={cfg.card.learnMoreUrl}
+                                onClick={cfg.card.onClick}
                             />
                         )}
                     </div>

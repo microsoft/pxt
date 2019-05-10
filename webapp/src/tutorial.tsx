@@ -15,31 +15,32 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox. 
  */
-export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<pxt.Map<number>> {
-    const code = pxt.tutorial.bundleTutorialCode(tutorialmd);
-    return Promise.resolve()
-        .then(() => {
-            if (code == '') return Promise.resolve({});
-
-            const usedBlocks: pxt.Map<number> = {};
-            return compiler.getBlocksAsync()
-                .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
-                .then(blocksXml => {
-                    if (blocksXml) {
-                        const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
-                        const allblocks = headless.getAllBlocks();
-                        for (let bi = 0; bi < allblocks.length; ++bi) {
-                            const blk = allblocks[bi];
-                            usedBlocks[blk.type] = 1;
-                        }
-                        return usedBlocks;
-                    } else {
-                        throw new Error("Empty blocksXml, failed to decompile");
-                    }
-                }).catch(() => {
-                    pxt.log(`Failed to decompile tutorial: ${tutorialId}`);
-                    throw new Error(`Failed to decompile tutorial: ${tutorialId}`);
-                })
+export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
+    if (!code) return Promise.resolve({});
+    const usedBlocks: pxt.Map<number> = {};
+    return compiler.getBlocksAsync()
+        .then(blocksInfo => {
+            pxt.blocks.initializeAndInject(blocksInfo);
+            return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
+        }).then(blocksXml => {
+            if (blocksXml) {
+                const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                if (!headless) {
+                    pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
+                    throw new Error("blocksXml failed to load");
+                }
+                const allblocks = headless.getAllBlocks();
+                for (let bi = 0; bi < allblocks.length; ++bi) {
+                    const blk = allblocks[bi];
+                    usedBlocks[blk.type] = 1;
+                }
+                return usedBlocks;
+            } else {
+                throw new Error("Empty blocksXml, failed to decompile");
+            }
+        }).catch((e) => {
+            pxt.reportException(e);
+            throw new Error(`Failed to decompile tutorial`);
         });
 }
 
@@ -142,16 +143,17 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
-        const hide = () => this.setState({ visible: false });
+        const hide = () => {
+            this.setState({ visible: false });
+        }
         const next = () => {
-            hide();
+            this.setState({ visible: false });
             const nextStep = tutorialStep + 1;
             options.tutorialStep = nextStep;
             pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
             this.props.parent.setTutorialStep(nextStep);
         }
 
-        const isRtl = pxt.Util.isUserLanguageRtl();
         const actions: sui.ModalButton[] = [{
             label: lf("Ok"),
             onclick: tutorialUnplugged ? next : hide,
@@ -187,6 +189,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.previousTutorialStep = this.previousTutorialStep.bind(this);
         this.nextTutorialStep = this.nextTutorialStep.bind(this);
         this.finishTutorial = this.finishTutorial.bind(this);
+        this.toggleExpanded = this.toggleExpanded.bind(this);
     }
 
     previousTutorialStep() {
@@ -259,6 +262,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         }
     }
 
+    private lastStep = -1;
     componentDidUpdate(prevProps: ISettingsProps, prevState: TutorialCardState) {
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         const tutorialOkRef = this.refs["tutorialok"] as sui.Button;
@@ -274,11 +278,30 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
             okButton.removeEventListener('keydown', this.okButtonKeyDown);
             tutorialCard.focus();
         }
+        const step = this.props.parent.state.tutorialOptions.tutorialStep;
+        if (step != this.lastStep) {
+            const animationClasses = `fade ${step < this.lastStep ? "right" : "left"} in visible transition animating`;
+            tutorialCard.style.animationDuration = '500ms';
+            this.lastStep = step;
+            pxsim.U.addClass(tutorialCard, animationClasses);
+            Promise.resolve().delay(500)
+                .then(() => pxsim.U.removeClass(tutorialCard, animationClasses));
+        }
     }
 
     componentWillUnmount() {
         // Clear the markdown cache when we unmount
         md.MarkedContent.clearBlockSnippetCache();
+        this.lastStep = -1;
+    }
+
+    toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const options = this.props.parent.state.tutorialOptions;
+        const { tutorialStepExpanded } = options;
+        this.props.parent.setTutorialInstructionsExpanded(!tutorialStepExpanded);
+        return false;
     }
 
     private hasHint() {
@@ -296,9 +319,11 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded } = options;
         if (!tutorialReady) return <div />
-        const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
+        const tutorialCardContent = tutorialStepExpanded
+            ? tutorialStepInfo[tutorialStep].contentMd
+            : tutorialStepInfo[tutorialStep].headerContentMd;
         let tutorialAriaLabel = '';
 
         const currentStep = tutorialStep;
@@ -313,21 +338,21 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
+        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
-                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron`} className={`prevbutton left attached green ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="landscape only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div role="button" className='avatar-image' onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}></div>
-                    {hasHint ? <sui.Button className="mini blue hintbutton hidelightbox" text={lf("Hint")} tabIndex={-1} onClick={this.showHint} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}>
+                        onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
-                            <md.MarkedContent markdown={tutorialCardContent} parent={this.props.parent} />
+                            <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
+                        {hasHint && !tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        {tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
-                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron`} rightIcon className={`nextbutton right attached green ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="landscape only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron orange large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;

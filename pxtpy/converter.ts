@@ -29,10 +29,12 @@ namespace pxt.py {
     let infoScope: ScopeDef
 
     function stmtTODO(v: py.Stmt) {
+        pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkStmt(B.mkText("TODO: " + v.kind))
     }
 
     function exprTODO(v: py.Expr) {
+        pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkText(" {TODO: " + v.kind + "} ")
     }
 
@@ -204,21 +206,24 @@ namespace pxt.py {
         return fillTypes(lookupApi(name))
     }
 
-    function initApis(apisInfo: pxtc.ApisInfo) {
+    function initApis(apisInfo: pxtc.ApisInfo, tsShadowFiles: string[]) {
         internalApis = {}
         externalApis = {}
 
+        let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
-            // sym.pkg == null - from main package - skip these
-            if (sym.pkg != null) {
-                let sym2 = sym as SymbolInfo
-
-                if (sym2.extendsTypes)
-                    sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
-
-                externalApis[sym2.pyQName] = sym2
-                externalApis[sym2.qName] = sym2
+            // if the symbol comes from a .ts file that matches one of the .py files we're compiling - skip these
+            if (tsShadowFilesSet.hasOwnProperty(sym.fileName)) {
+                continue
             }
+
+            let sym2 = sym as SymbolInfo
+
+            if (sym2.extendsTypes)
+                sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
+
+            externalApis[sym2.pyQName] = sym2
+            externalApis[sym2.qName] = sym2
         }
 
         // TODO this is for testing mostly; we can do this lazily
@@ -443,6 +448,11 @@ namespace pxt.py {
 
         if (t0 === t1)
             return
+
+        if (t0.primType === "any") {
+            t0.union = t1
+            return
+        }
 
         const c0 = typeCtor(t0)
         const c1 = typeCtor(t1)
@@ -853,8 +863,17 @@ namespace pxt.py {
 
     function typeAnnot(t: Type) {
         let s = t2s(t)
-        if (s[0] == "?")
-            return B.mkText(": any; /** TODO: type **/")
+        if (s[0] == "?") {
+            // TODO:
+            // example from minecraft doc snippet:
+            // player.onChat("while",function(num1){while(num1<10){}})
+            // -> py -> ts ->
+            // player.onChat("while",function(num1:any;/**TODO:type**/){while(num1<10){;}})
+            // work around using any:
+            // return B.mkText(": any /** TODO: type **/")
+            // but for now we can just omit the type and most of the type it'll be inferable
+            return B.mkText("")
+        }
         return B.mkText(": " + t2s(t))
     }
 
@@ -868,14 +887,30 @@ namespace pxt.py {
         }
     }
 
-    const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
-        FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
+    function shouldInlineFunction(si: SymbolInfo) {
+        if (!si || !si.pyAST)
+            return false
+        if (si.pyAST.kind != "FunctionDef")
+            return false
+        const fn = si.pyAST as FunctionDef
+        if (!fn.callers || fn.callers.length != 1)
+            return false
+        if (fn.callers[0].inCalledPosition)
+            return false
+        return true
+    }
+
+    function emitFunctionDef(n: FunctionDef, inline = false) {
+        return guardedScope(n, () => {
             const isMethod = !!ctx.currClass && !ctx.currFun
 
             const topLev = isTopLevel()
 
             setupScope(n)
             const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
+
+            if (shouldInlineFunction(sym) && !inline)
+                return B.mkText("")
 
             if (isMethod) sym.isInstance = true
             ctx.currFun = n
@@ -920,7 +955,7 @@ namespace pxt.py {
                 }
             } else {
                 U.assert(!prefix)
-                if (n.name[0] == "_" || topLev)
+                if (n.name[0] == "_" || topLev || inline)
                     nodes.push(B.mkText("function "), quote(funname))
                 else
                     nodes.push(B.mkText("export function "), quote(funname))
@@ -936,7 +971,7 @@ namespace pxt.py {
             if (n.name == "__init__") {
                 for (let f of listClassFields(ctx.currClass)) {
                     let p = f.pyAST as Assign
-                    if (p.value) {
+                    if (p && p.value) {
                         body.push(
                             B.mkStmt(B.mkText(`this.${quoteStr(f.pyName)} = `), expr(p.value))
                         )
@@ -946,8 +981,19 @@ namespace pxt.py {
 
             nodes.push(B.mkBlock(body))
 
-            return B.mkStmt(B.mkGroup(nodes))
-        }),
+            let ret = B.mkGroup(nodes)
+
+            if (inline)
+                nodes[nodes.length - 1].noFinalNewline = true
+            else
+                ret = B.mkStmt(ret)
+
+            return ret
+        })
+    }
+
+    const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
+        FunctionDef: (n: py.FunctionDef) => emitFunctionDef(n),
 
         ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
             setupScope(n)
@@ -1013,78 +1059,10 @@ namespace pxt.py {
                 )
         },
         Assign: (n: py.Assign) => {
-            if (n.targets.length != 1)
-                return stmtTODO(n)
-            let pref = ""
-            let isConstCall = isCallTo(n.value, "const")
-            let nm = getName(n.targets[0]) || ""
-            let isUpperCase = nm && !/[a-z]/.test(nm)
-            if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
-                pref = "export "
-            if (nm && ctx.currClass && !ctx.currFun) {
-                // class fields can't be const
-                isConstCall = false;
-                let fd = getClassField(ctx.currClass.symInfo, nm)
-                /*
-                let src = expr(n.value)
-                let attrTp = typeOf(n.value)
-                let getter = getTypeField(n.value, "__get__", true)
-                if (getter) {
-                    unify(n, fd.pyRetType, getter.pyRetType)
-                    let implNm = "_" + nm
-                    let fdBack = getClassField(ctx.currClass.symInfo, implNm)
-                    unify(n, fdBack.pyRetType, attrTp)
-                    let setter = getTypeField(attrTp, "__set__", true)
-                    let res = [
-                        B.mkNewLine(),
-                        B.mkStmt(B.mkText("private "), quote(implNm), typeAnnot(attrTp))
-                    ]
-                    if (!getter.fundef.alwaysThrows)
-                        res.push(B.mkStmt(B.mkText(`get ${quoteStr(nm)}()`), typeAnnot(fd.type), B.mkBlock([
-                            B.mkText(`return this.${quoteStr(implNm)}.get(this.i2c_device)`),
-                            B.mkNewLine()
-                        ])))
-                    if (!setter.fundef.alwaysThrows)
-                        res.push(B.mkStmt(B.mkText(`set ${quoteStr(nm)}(value`), typeAnnot(fd.type),
-                            B.mkText(`) `), B.mkBlock([
-                                B.mkText(`this.${quoteStr(implNm)}.set(this.i2c_device, value)`),
-                                B.mkNewLine()
-                            ])))
-                    fdBack.initializer = n.value
-                    fd.isGetSet = true
-                    fdBack.isGetSet = true
-                    return B.mkGroup(res)
-                } else 
-                */
-                if (currIteration < 2) {
-                    return B.mkText("/* skip for now */")
-                }
-                unifyTypeOf(n.targets[0], fd.pyRetType)
-                fd.isInstance = false
-                pref = "static "
-            }
-            unifyTypeOf(n.targets[0], typeOf(n.value))
-            if (isConstCall || isUpperCase) {
-                // first run would have "let" in it
-                defvar(getName(n.targets[0]), {})
-                let s = pref;
-                if (!/^static /.test(pref))
-                    s += "const ";
-                return B.mkStmt(B.mkText(s), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
-            }
-            if (!pref && n.targets[0].kind == "Tuple") {
-                let res = [
-                    B.mkStmt(B.mkText("const tmp = "), expr(n.value))
-                ]
-                let tup = n.targets[0] as py.Tuple
-                tup.elts.forEach((e, i) => {
-                    res.push(
-                        B.mkStmt(B.mkInfix(expr(e), "=", B.mkText("tmp[" + i + "]")))
-                    )
-                })
-                return B.mkGroup(res)
-            }
-            return B.mkStmt(B.mkText(pref), B.mkInfix(expr(n.targets[0]), "=", expr(n.value)))
+            return convertAssign(n)
+        },
+        AnnAssign: (n: py.AnnAssign) => {
+            return convertAssign(n)
         },
         For: (n: py.For) => {
             U.assert(n.orelse.length == 0)
@@ -1103,7 +1081,7 @@ namespace pxt.py {
                     B.mkText("; "),
                     r.args.length >= 3 ?
                         B.mkInfix(ref, "+=", expr(r.args[2])) :
-                        B.mkInfix(null, "++", ref),
+                        B.mkPostfix([ref], "++"),
                     B.mkText(")"),
                     stmts(n.body))
             }
@@ -1260,7 +1238,6 @@ namespace pxt.py {
                 r.push(B.mkText("finally"), stmts(n.finalbody))
             return B.mkStmt(B.mkGroup(r))
         },
-        AnnAssign: (n: py.AnnAssign) => stmtTODO(n),
         AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
         AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
         AsyncWith: (n: py.AsyncWith) => stmtTODO(n),
@@ -1270,7 +1247,108 @@ namespace pxt.py {
             B.mkStmt(B.mkText("TODO: nonlocal: "), B.mkGroup(n.names.map(B.mkText))),
     }
 
-    function possibleDef(n: py.Name) {
+    function convertAssign(n: py.AnnAssign | py.Assign): B.JsNode {
+        let annotation: Expr;
+        let value: Expr;
+        let target: Expr;
+        // TODO handle more than 1 target
+        if (n.kind === "Assign") {
+            if (n.targets.length != 1)
+                return stmtTODO(n)
+            target = n.targets[0]
+            value = n.value
+            annotation = null
+        } else if (n.kind === "AnnAssign") {
+            target = n.target
+            value = n.value || null
+            annotation = n.annotation
+        } else {
+            return n;
+        }
+
+        let pref = ""
+        let isConstCall = value ? isCallTo(value, "const") : false
+        let nm = getName(target) || ""
+        let isUpperCase = nm && !/[a-z]/.test(nm)
+        if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
+            pref = "export "
+        if (nm && ctx.currClass && !ctx.currFun) {
+            // class fields can't be const
+            isConstCall = false;
+            let fd = getClassField(ctx.currClass.symInfo, nm)
+            // TODO: use or remove this code
+            /*
+            let src = expr(value)
+            let attrTp = typeOf(value)
+            let getter = getTypeField(value, "__get__", true)
+            if (getter) {
+                unify(n, fd.pyRetType, getter.pyRetType)
+                let implNm = "_" + nm
+                let fdBack = getClassField(ctx.currClass.symInfo, implNm)
+                unify(n, fdBack.pyRetType, attrTp)
+                let setter = getTypeField(attrTp, "__set__", true)
+                let res = [
+                    B.mkNewLine(),
+                    B.mkStmt(B.mkText("private "), quote(implNm), typeAnnot(attrTp))
+                ]
+                if (!getter.fundef.alwaysThrows)
+                    res.push(B.mkStmt(B.mkText(`get ${quoteStr(nm)}()`), typeAnnot(fd.type), B.mkBlock([
+                        B.mkText(`return this.${quoteStr(implNm)}.get(this.i2c_device)`),
+                        B.mkNewLine()
+                    ])))
+                if (!setter.fundef.alwaysThrows)
+                    res.push(B.mkStmt(B.mkText(`set ${quoteStr(nm)}(value`), typeAnnot(fd.type),
+                        B.mkText(`) `), B.mkBlock([
+                            B.mkText(`this.${quoteStr(implNm)}.set(this.i2c_device, value)`),
+                            B.mkNewLine()
+                        ])))
+                fdBack.initializer = value
+                fd.isGetSet = true
+                fdBack.isGetSet = true
+                return B.mkGroup(res)
+            } else 
+            */
+            if (currIteration == 0) {
+                return B.mkText("/* skip for now */")
+            }
+            unifyTypeOf(target, fd.pyRetType)
+            fd.isInstance = false
+            pref = "static "
+        }
+        if (value)
+            unifyTypeOf(target, typeOf(value))
+        if (isConstCall || isUpperCase) {
+            // first run would have "let" in it
+            defvar(getName(target), {})
+            if (!/^static /.test(pref))
+                pref += "const ";
+            return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+        }
+        if (!pref && target.kind == "Tuple") {
+            let tup = target as py.Tuple
+            let targs = [B.mkText("let "), B.mkText("[")]
+            let nonNames = tup.elts.filter(e => e.kind !== "Name")
+            if (nonNames.length)
+                return stmtTODO(n)
+            let tupNames = tup.elts
+                .map(e => e as py.Name)
+                .map(convertName)
+            function convertName(n: py.Name) {
+                // TODO resuse with Name expr
+                markInfoNode(n, "identifierCompletion")
+                typeOf(n)
+                let v = lookupName(n)
+                return possibleDef(n, /*excludeLet*/true)
+            }
+            targs.push(B.mkCommaSep(tupNames))
+            targs.push(B.mkText("]"))
+            let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
+            return res
+        }
+        return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+    }
+
+    function possibleDef(n: py.Name, excludeLet: boolean = false) {
         let id = n.id
         if (n.isdef === undefined) {
             let curr = lookupSymbol(id)
@@ -1289,8 +1367,9 @@ namespace pxt.py {
             unify(n, n.tsType, curr.pyRetType)
         }
 
-        if (n.isdef)
+        if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
+        }
         else
             return quote(id)
     }
@@ -1350,6 +1429,7 @@ namespace pxt.py {
         scale?: number;
     }
 
+    // TODO: handle built-in mapping in a bi-directional way
     const funMap: Map<FunOverride> = {
         "memoryview": { n: "", t: tpBuffer },
         "const": { n: "", t: tpNumber },
@@ -1365,6 +1445,7 @@ namespace pxt.py {
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
         "bool": { n: "!!", t: tpBoolean },
         "Array.index": { n: ".indexOf", t: tpNumber },
+        "print": { n: "console.log", t: tpVoid },
     }
 
     function isSuper(v: py.Expr) {
@@ -1418,6 +1499,15 @@ namespace pxt.py {
             nodeInInfoRange(n)) {
             infoNode = n
             infoScope = currentScope()
+        }
+    }
+
+    function addCaller(e: Expr, v: SymbolInfo) {
+        if (v && v.pyAST && v.pyAST.kind == "FunctionDef") {
+            let fn = v.pyAST as FunctionDef
+            if (!fn.callers) fn.callers = []
+            if (fn.callers.indexOf(e) < 0)
+                fn.callers.push(e)
         }
     }
 
@@ -1485,7 +1575,10 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
-            let namedSymbol = lookupSymbol(getName(n.func))
+            n.func.inCalledPosition = true
+
+            let nm = getName(n.func)
+            let namedSymbol = lookupSymbol(nm)
             let isClass = namedSymbol && namedSymbol.kind == SK.Class
 
             let fun = namedSymbol
@@ -1510,8 +1603,6 @@ namespace pxt.py {
             }
 
             let orderedArgs = n.args.slice()
-
-            let nm = getName(n.func)
 
             if (nm == "super" && orderedArgs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass)
@@ -1592,7 +1683,11 @@ namespace pxt.py {
                         allargs.push(B.mkText("null"))
                     } else if (arg) {
                         unifyTypeOf(arg, formals[i].pyType)
-                        allargs.push(expr(arg))
+                        if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
+                            allargs.push(emitFunctionDef(arg.symbolInfo.pyAST as FunctionDef, true))
+                        } else {
+                            allargs.push(expr(arg))
+                        }
                     } else {
                         allargs.push(B.mkText(formals[i].initializer))
                     }
@@ -1605,8 +1700,15 @@ namespace pxt.py {
                 syntaxInfo.auxResult = 0
                 // foo, bar
                 for (let i = 0; i < orderedArgs.length; ++i) {
-                    if (orderedArgs[i] && syntaxInfo.position <= orderedArgs[i].endPos) {
-                        syntaxInfo.auxResult = i
+                    syntaxInfo.auxResult = i
+                    let arg = orderedArgs[i]
+                    if (!arg) {
+                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // previous arguments, assume it's here
+                        break
+                    }
+                    if (arg.startPos <= syntaxInfo.position && syntaxInfo.position <= arg.endPos) {
+                        break
                     }
                 }
             }
@@ -1663,12 +1765,14 @@ namespace pxt.py {
             markInfoNode(n, "memberCompletion")
             if (fd) {
                 n.symbolInfo = fd
+                addCaller(n, fd)
                 unify(n, n.tsType, fd.pyRetType)
                 nm = fd.name
             } else if (part.moduleType) {
                 let sym = lookupGlobalSymbol(part.moduleType.pyQName + "." + n.attr)
                 if (sym) {
                     n.symbolInfo = sym
+                    addCaller(n, sym)
                     unifyTypeOf(n, symbolType(sym))
                     nm = sym.name
                 } else
@@ -1711,14 +1815,9 @@ namespace pxt.py {
                 return B.mkText("this")
             }
 
-            let v = lookupSymbol(n.id)
-            if (v) {
-                n.symbolInfo = v
-                unify(n, n.tsType, symbolType(v))
-                if (v.isImport)
-                    return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
-            } else if (currIteration > 0) {
-                error(n, 9516, U.lf("name '{0}' is not defined", n.id))
+            let v = lookupName(n)
+            if (v && v.isImport) {
+                return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
 
             if (n.ctx.indexOf("Load") >= 0) {
@@ -1728,6 +1827,27 @@ namespace pxt.py {
         },
         List: mkArrayExpr,
         Tuple: mkArrayExpr,
+    }
+
+    function lookupName(n: py.Name): SymbolInfo {
+        let v = lookupSymbol(n.id)
+        if (!v) {
+            // check if the symbol has an override py<->ts mapping
+            let over = U.lookup(funMap, n.id)
+            if (over) {
+                v = lookupSymbol(over.n)
+            }
+        }
+        if (v) {
+            n.symbolInfo = v
+            unify(n, n.tsType, symbolType(v))
+            if (v.isImport)
+                return v
+            addCaller(n, v)
+        } else if (currIteration > 0) {
+            error(n, 9516, U.lf("name '{0}' is not defined", n.id))
+        }
+        return v
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
@@ -1810,17 +1930,28 @@ namespace pxt.py {
         lastAST = null
     }
 
-    export function py2ts(opts: pxtc.CompileOptions) {
+    export interface Py2TsRes {
+        generated: Map<string>,
+        diagnostics: pxtc.KsDiagnostic[]
+    }
+    export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
         const generated: Map<string> = {}
         diagnostics = []
 
+        // find .ts files that are copies of / shadowed by the .py files
         let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
             return { generated, diagnostics }
+        let removeEnd = (file: string, ext: string) => file.substr(0, file.length - ext.length)
+        let pyFilesSet = U.toDictionary(pyFiles, p => removeEnd(p, ".py"))
+        let tsFiles = opts.sourceFiles
+            .filter(fn => U.endsWith(fn, ".ts"))
+        let tsShadowFiles = tsFiles
+            .filter(fn => removeEnd(fn, ".ts") in pyFilesSet)
 
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
-        initApis(opts.apisInfo)
+        initApis(opts.apisInfo, tsShadowFiles)
 
         compileOptions = opts
         syntaxInfo = null

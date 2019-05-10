@@ -274,6 +274,14 @@ namespace ts.pxtc {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
+    export function getExplicitDefault(attrs: CommentAttrs, name: string) {
+        if (!attrs.explicitDefaults)
+            return null
+        if (attrs.explicitDefaults.indexOf(name) < 0)
+            return null
+        return attrs.paramDefl[name]
+    }
+
     function classFunctionPref(node: Node) {
         if (!node) return null;
         switch (node.kind) {
@@ -357,7 +365,7 @@ namespace ts.pxtc {
     }
 
     export interface CallInfo {
-        decl: Declaration;
+        decl: TypedDecl;
         qName: string;
         args: Expression[];
         isExpression: boolean;
@@ -1971,7 +1979,7 @@ ${lbl}: .short 0xffff
                         p.valueDeclaration.kind == SK.Parameter) {
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
-                            let defl = attrs.paramDefl[getName(prm)]
+                            let defl = getExplicitDefault(attrs, getName(prm))
                             let expr = defl ? emitLit(parseInt(defl)) : null
                             if (expr == null) {
                                 expr = emitLit(undefined)
@@ -2009,8 +2017,8 @@ ${lbl}: .short 0xffff
         }
 
         function emitCallExpression(node: CallExpression): ir.Expr {
-            let sig = checker.getResolvedSignature(node)
-            return emitCallCore(node, node.expression, node.arguments, sig)
+            const sig = checker.getResolvedSignature(node);
+            return emitCallCore(node, node.expression, node.arguments, sig);
         }
 
         function emitCallCore(
@@ -2025,6 +2033,7 @@ ${lbl}: .short 0xffff
                 decl = getDecl(funcExpr) as EmittableAsCall;
             let isMethod = false
             let isProperty = false
+
             if (decl) {
                 switch (decl.kind) {
                     // we treat properties via calls
@@ -2376,10 +2385,12 @@ ${lbl}: .short 0xffff
                 if (ctor) {
                     obj = sharedDef(obj)
                     markUsed(ctor)
-                    let args = node.arguments.slice(0)
+                    // arguments undefined on .ctor with optional args
+                    let args = (node.arguments || []).slice(0)
                     let ctorAttrs = parseComments(ctor)
 
-                    let sig = checker.getResolvedSignature(node)
+                    // unused?
+                    // let sig = checker.getResolvedSignature(node)
                     // TODO: can we have overloeads?
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map((x) => emitExpr(x))
@@ -3059,6 +3070,20 @@ ${lbl}: .short 0xffff
                 } else {
                     if (typeof v == "number")
                         return v
+                }
+            } else if (e.exprKind == ir.EK.RuntimeCall && e.args.length == 2) {
+                let v0 = valueToInt(e.args[0])
+                let v1 = valueToInt(e.args[1])
+                if (v0 === undefined || v1 === undefined)
+                    return undefined
+                switch (e.data) {
+                    case "numops::orrs":
+                        return v0 | v1;
+                    case "numops::adds":
+                        return v0 + v1;
+                    default:
+                        console.log(e)
+                        return undefined;
                 }
             }
             return undefined

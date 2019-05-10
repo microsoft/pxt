@@ -6,6 +6,8 @@ import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
 import Cloud = pxt.Cloud;
 
+let tryPairedDevice = false;
+
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
         text,
@@ -82,7 +84,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         hideCancel: true,
         hideAgree: true,
         buttons: [downloadAgain ? {
-            label: userDownload ? lf("Download") : fn,
+            label: userDownload ? lf("Download") : lf("Click to download again"),
             icon: "download",
             class: `${userDownload ? "primary" : "lightgrey"}`,
             url,
@@ -196,7 +198,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
-    core.infoNotification(lf("Uploading .hex file..."));
+    core.infoNotification(lf("Uploading..."));
     let deploy = () => pxt.Util.requestAsync({
         url: "/api/deploy",
         headers: { "Authorization": Cloud.localToken },
@@ -269,7 +271,7 @@ export function init(): void {
         pxt.debug(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (!shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
+    } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.debug(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
@@ -277,6 +279,22 @@ export function init(): void {
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.debug(`deploy: browser`);
-        pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
+        pxt.commands.deployCoreAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
     }
+}
+
+export function setWebUSBPaired(enabled: boolean) {
+    if (tryPairedDevice === enabled) return;
+    tryPairedDevice = enabled;
+    init();
+}
+
+function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
+    return pxt.usb.isPairedAsync().then(paired => {
+        if (paired) {
+            setWebUSBPaired(true);
+            return hidDeployCoreAsync(resp);
+        }
+        return browserDownloadDeployCoreAsync(resp);
+    });
 }

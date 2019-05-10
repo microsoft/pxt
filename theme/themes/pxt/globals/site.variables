@@ -52,7 +52,16 @@
    Breakpoints
 --------------------*/
 
+@tabletBreakpoint: 814px; // iPhone X landscape is 812px;
 /*
+default semantic
+@mobileBreakpoint            : 320px;
+@tabletBreakpoint            : 768px;
+@computerBreakpoint          : 992px;
+@largeMonitorBreakpoint      : 1200px;
+@widescreenMonitorBreakpoint : 1920px;
+
+// experiment
 @mobileBreakpoint            : unit( (63 * @emSize), px);
 @tabletBreakpoint            : unit( (79 * @emSize), px);
 @computerBreakpoint          : unit( (91 * @emSize), px);
@@ -140,6 +149,7 @@
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
+@thinMenuHeight: 3rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;
@@ -300,7 +310,9 @@
 @debugArrayVariable: #663905;
 @debugSpriteVariable: blue;
 
+@debugVariableOdd: #fafafa;
+@debugVariableEven: #f0f0f0;
+@debugVariableFrozen: #eee;
+
 @DebuggerBackgroundPrimaryColor: #e67e22;
 @DebuggerBackgroundSecondaryColor: lightgreen;
-
-@debuggerVariableExplorerBackground: white;
