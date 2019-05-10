@@ -691,12 +691,12 @@ namespace pxt.svgUtil {
         }
     }
 
-    function addClass(el: SVGElement, cls: string) {
+    export function addClass(el: SVGElement | HTMLElement, cls: string) {
         if (el.classList) el.classList.add(cls);
         else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
     }
 
-    function removeClass(el: SVGElement, cls: string) {
+    export function removeClass(el: SVGElement | HTMLElement, cls: string) {
         if (el.classList) el.classList.remove(cls);
         else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
     }

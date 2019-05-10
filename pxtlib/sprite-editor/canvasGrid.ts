@@ -15,6 +15,9 @@ namespace pxtsprite {
         protected paintLayer: HTMLCanvasElement;
         protected overlayLayer: HTMLCanvasElement;
 
+        mouseCol: number;
+        mouseRow: number;
+
         constructor(protected palette: string[], public image: Bitmap, protected lightMode = false) {
             this.paintLayer = document.createElement("canvas");
             this.paintLayer.setAttribute("class", "sprite-editor-canvas");
@@ -33,6 +36,16 @@ namespace pxtsprite {
             }
 
             this.hideOverlay();
+        }
+
+        setEyedropperMouse(on: boolean) {
+            const eyedropperClass = "sprite-editor-eyedropper";
+            const toApply = on ? pxt.svgUtil.addClass : pxt.svgUtil.removeClass;
+            toApply(this.paintLayer, eyedropperClass);
+            if (!this.lightMode) {
+                toApply(this.backgroundLayer, eyedropperClass);
+                toApply(this.overlayLayer, eyedropperClass);
+            }
         }
 
         repaint(): void {
@@ -286,10 +299,11 @@ namespace pxtsprite {
          */
         protected clientToCell(coord: ClientCoordinates) {
             const bounds = this.paintLayer.getBoundingClientRect();
-
+            this.mouseCol = Math.floor((coord.clientX - bounds.left) / this.cellWidth);
+            this.mouseRow = Math.floor((coord.clientY - bounds.top) / this.cellHeight);
             return [
-                Math.floor((coord.clientX - bounds.left) / this.cellWidth),
-                Math.floor((coord.clientY - bounds.top) / this.cellHeight)
+                this.mouseCol,
+                this.mouseRow
             ];
         }
 
