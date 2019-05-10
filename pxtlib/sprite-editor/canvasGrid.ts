@@ -40,7 +40,8 @@ namespace pxtsprite {
 
         setEyedropperMouse(on: boolean) {
             const eyedropperClass = "sprite-editor-eyedropper";
-            const toApply = on ? pxt.svgUtil.addClass : pxt.svgUtil.removeClass;
+
+            const toApply = on ? pxt.BrowserUtils.addClass : pxt.BrowserUtils.removeClass;
             toApply(this.paintLayer, eyedropperClass);
             if (!this.lightMode) {
                 toApply(this.backgroundLayer, eyedropperClass);

@@ -352,8 +352,8 @@ namespace pxtblockly {
                     let rowLength = menuItemsDom[row].childNodes.length
                     for (let col = 0; col < rowLength; ++col) {
                         const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
-                        menuItem.classList.remove("goog-menuitem-highlight")
-                        menuItem.classList.remove("goog-option-selected")
+                        pxt.BrowserUtils.removeClass(menuItem, "goog-menuitem-highlight");
+                        pxt.BrowserUtils.removeClass(menuItem, "goog-option-selected");
                     }
                 }
                 let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;

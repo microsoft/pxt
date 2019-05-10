@@ -9,9 +9,9 @@ namespace pxtblockly {
         private params: any;
 
         private state_: boolean;
-        private checkElement_: any;
+        private checkElement_: SVGElement;
 
-        private toggleThumb_: any;
+        private toggleThumb_: SVGElement;
 
         public CURSOR = 'pointer';
 
@@ -119,11 +119,11 @@ namespace pxtblockly {
             if (this.checkElement_) {
                 this.updateWidth();
                 if (newState) {
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
                 } else {
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
                 }
                 this.checkElement_.setAttribute('transform', `translate(-7, -1) scale(0.3)`);
             }
@@ -132,7 +132,7 @@ namespace pxtblockly {
         updateTextNode_() {
             super.updateTextNode_();
             if (this.textElement_)
-                pxtblockly.svg.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
+                pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
         }
 
         render_() {

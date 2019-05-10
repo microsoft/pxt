@@ -1255,12 +1255,12 @@ namespace pxt.blocks {
                     trashIcon.style.display = 'block';
                     blocklyTreeRoot.style.opacity = `${opacity}`;
                     if (distance < 50) {
-                        blocklyToolboxDiv.classList.add('blocklyToolboxDeleting');
+                        pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                     }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
-                    blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                    pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                 }
             }
             return blockDrag.call(this, e, currentDragDeltaXY);
@@ -1281,7 +1281,7 @@ namespace pxt.blocks {
             if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
-                blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
             }
         }
     }
