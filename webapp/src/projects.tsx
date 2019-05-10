@@ -619,7 +619,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                                     href={linkHref} target={'_blank'}
                                     icon={action.icon}
                                     text={action.label}
-                                    className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                    className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
                                     onClick={action.onClick}
                                     onKeyDown={sui.fireClickOnEnter}
                                 />
@@ -634,7 +634,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         {isForum && <sui.Button
                             key="action_open"
                             text={lf("Open in Editor")}
-                            className={`ui button approve`}
+                            className={`approve huge`}
                             onClick={this.handleOpenForumUrlInEditor}
                             onKeyDown={sui.fireClickOnEnter}
                         />}
