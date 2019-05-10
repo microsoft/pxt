@@ -596,7 +596,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         // featured link: featured_link
         const isForum = cardType == "forumUrl" && url;
-        const isLink = (!isCodeCardType(cardType) || cardType === "forumUrl") && (youTubeId || url);
+         const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
