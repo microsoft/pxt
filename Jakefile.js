@@ -153,6 +153,12 @@ compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js",
 compileDir("backendutils", ['pxtlib/commonutil.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
 
+jake.cpR('node_modules/pxt-blockly/blocks_compressed.js', 'webapp/public/blockly/');
+jake.cpR('node_modules/pxt-blockly/blockly_compressed.js', 'webapp/public/blockly/');
+jake.cpR('node_modules/pxt-blockly/msg/js/en.js', 'webapp/public/blockly/msg/js/');
+jake.cpR('node_modules/pxt-blockly/msg/json/en.json', 'webapp/public/blockly/msg/json/');
+jake.cpR('node_modules/pxt-blockly/media', 'webapp/public/blockly/');
+
 task("karma", ["blocklycompilertest"], function () {
     runKarma(this, "");
 });
