@@ -93,7 +93,7 @@ class SerialIO implements pxt.TCPIO {
                             this.onData(bb)
                         loop()
                     } else {
-                        let msg = "GDB read error, nb=" + nb + err.message
+                        let msg = "GDB read error, nb=" + nb + (err ? err.message : "no err")
                         if (this.trace) pxt.log(msg)
                         else pxt.debug(msg)
                         setTimeout(loop, 500)
