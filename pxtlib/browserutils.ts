@@ -980,7 +980,7 @@ namespace pxt.BrowserUtils {
             } else {
                 const classes = el.className.split(" ") as string[];
                 if (classes.indexOf(cls) < 0) {
-                    el.className.baseVal += ' ' + cls;
+                    el.className.baseVal += " " + cls;
                 }
             }
         }
