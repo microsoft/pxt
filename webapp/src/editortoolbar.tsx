@@ -26,7 +26,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
-        this.toggleCollapse = this.toggleCollapse.bind(this);
     }
 
     saveProjectName(name: string, view?: string) {
@@ -79,11 +78,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.props.parent.toggleDebugging();
     }
 
-    toggleCollapse(view?: string) {
-        pxt.tickEvent("editortools.toggleCollapse", { view: view, collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        this.props.parent.toggleSimulatorCollapse();
-    }
-
     private getViewString(view: View): string {
         return view.toString().toLowerCase();
     }
@@ -94,18 +88,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     private getHeadlessState(): string {
         return pxt.appTarget.simulator.headless ? "true" : "false";
-    }
-
-    private getCollapseButton(view: View, collapsed: boolean, hideEditorFloats: boolean): JSX.Element {
-        const isRtl = pxt.Util.isUserLanguageRtl();
-        const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
-        switch (view) {
-            case View.Computer:
-                return ( <EditorToolbarButton icon={`${this.props.parent.state.collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' />)
-            default:
-                return (<EditorToolbarButton icon={`${collapsed ? 'toggle up' : 'toggle down'}`} className={`collapse-button ${collapsed ? 'collapsed' : ''} ${hideEditorFloats ? 'disabled' : ''}`} title={collapseTooltip} ariaLabel={lf("{0}, {1}", collapseTooltip, hideEditorFloats ? lf("Disabled") : "")} onButtonClick={this.toggleCollapse} view={this.getViewString(view)}  />);
-
-        }
     }
 
     private getUndoRedo(view: View): JSX.Element[] {
@@ -170,11 +152,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const compileLoading = !!compiling;
         const running = simState == pxt.editor.SimState.Running;
         const starting = simState == pxt.editor.SimState.Starting;
-        const pairingButton = !!targetTheme.pairingButton;
 
         const hasUndo = this.props.parent.editor.hasUndo();
 
-        const showCollapsed = !tutorial && !sandbox && !targetTheme.simCollapseInMenu;
         const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename && !debugging;
         const showUndoRedo = !tutorial && !readOnly && !debugging;
         const showZoomControls = true;
@@ -209,7 +189,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className="ui grid">
                         {!targetTheme.bigRunButton && <div className="left aligned column six wide">
                             <div className="ui icon small buttons">
-                                {showCollapsed && this.getCollapseButton(View.Mobile, collapsed, hideEditorFloats)}
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
                             </div>
                         </div>}
@@ -227,15 +206,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                     </div> :
                     <div className="ui equal width grid">
-                        <div className="left aligned two wide column">
-                            {showCollapsed &&
-                                <div className="row" style={{ paddingTop: "1rem" }}>
-                                    <div className="ui vertical icon small buttons">
-                                        {this.getCollapseButton(View.Mobile, collapsed, hideEditorFloats)}
-                                    </div>
-                                </div>}
-                        </div>
-                        <div className="three wide column">
+                        <div className="left aligned five wide column">
                         </div>
                         <div className="column">
                             <div className="ui grid">
@@ -265,7 +236,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className="ui grid seven column">
                         <div className="left aligned six wide column">
                             <div className="ui icon buttons">
-                                {showCollapsed && this.getCollapseButton(View.Tablet, collapsed, hideEditorFloats)}
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='tablet' />}
                             </div>
                         </div>
@@ -282,15 +252,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                     </div>
                     : <div className="ui grid">
-                        <div className="left aligned two wide column">
-                            {showCollapsed &&
-                                <div className="row" style={{ paddingTop: "1rem" }}>
-                                    <div className="ui vertical icon small buttons">
-                                        {this.getCollapseButton(View.Tablet, collapsed, hideEditorFloats)}
-                                    </div>
-                                </div>}
-                        </div>
-                        <div className="three wide column">
+                        <div className="left aligned five wide column">
                         </div>
                         <div className="five wide column">
                             <div className="ui grid right aligned">
@@ -333,12 +295,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div id="downloadArea" className="ui column items">{headless ?
                         <div className="ui item">
                             <div className="ui icon large buttons">
-                                {showCollapsed && this.getCollapseButton(View.Computer, collapsed, hideEditorFloats)}
                                 {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary large download-button ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
                             </div>
                         </div> :
                         <div className="ui item">
-                            {showCollapsed && !pairingButton && this.getCollapseButton(View.Computer, collapsed, hideEditorFloats)}
                             {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
                         </div>
                     }

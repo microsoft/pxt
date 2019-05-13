@@ -38,6 +38,8 @@ namespace pxtblockly {
         private editor: pxtsprite.SpriteEditor;
         private state: pxtsprite.Bitmap;
         private lightMode: boolean;
+        private undoStack: pxtsprite.Bitmap[];
+        private redoStack: pxtsprite.Bitmap[];
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -91,10 +93,14 @@ namespace pxtblockly {
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
             this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
+            this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
+
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
             this.editor.onClose(() => {
+                this.undoStack = this.editor.getUndoStack();
+                this.redoStack = this.editor.getRedoStack();
                 Blockly.DropDownDiv.hideIfOwner(this);
             });
 

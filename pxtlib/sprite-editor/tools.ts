@@ -11,6 +11,25 @@ namespace pxtsprite {
         Erase = 6,
     }
 
+    export function getPaintToolShortcut(tool: PaintTool) {
+        switch (tool) {
+            case PaintTool.Normal:
+                return "p";
+            case PaintTool.Rectangle:
+                return "r";
+            case PaintTool.Circle:
+                return "c";
+            case PaintTool.Fill:
+                return "b";
+            case PaintTool.Line:
+                return "l";
+            case PaintTool.Erase:
+                return "e";
+            default:
+                return undefined;
+        }
+    }
+
     export class Cursor {
         color: number;
         width: number;

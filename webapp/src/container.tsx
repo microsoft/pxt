@@ -567,10 +567,9 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
-            <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button" onClick={this.toggleVisibility}>
-                <sui.Icon icon={`icon large inverted ${sideDocsCollapsed ? 'book' : 'chevron right'}`} />
-                {sideDocsCollapsed ? <sui.Icon icon={`large inverted chevron left hover`} /> : undefined}
-            </button>
+            <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
+                <sui.Icon icon={`icon inverted chevron ${sideDocsCollapsed ? 'left' : 'right'}`} />
+             </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
                     <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
