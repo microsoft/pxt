@@ -195,13 +195,13 @@ _start_${name}:
             `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
             + "\n    .word 0, 0")
 
-        let s = ctx.opcodes.map(s => s == null ? "" : s).join("\0") + "\0"
+        let s = ctx.opcodes.map(s => s == null ? "" : s).join("\x00") + "\x00"
         let opcm = ""
         while (s) {
             let pref = s.slice(0, 64)
             s = s.slice(64)
             if (pref.length & 1)
-                pref += "\0"
+                pref += "\x00"
             opcm += ".hex " + U.toHex(U.stringToUint8Array(pref)) + "\n"
         }
         section("opcodeMap", SectionType.OpCodeMap, () => opcm)
