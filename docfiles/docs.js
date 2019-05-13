@@ -75,7 +75,8 @@ function setupSidebar() {
             },
             onHidden: function () {
                 togglesidebar.setAttribute("aria-expanded", "false");
-            }
+            },
+            context: $('#docs')
         })
         .sidebar('setting', 'transition', 'overlay')
         .sidebar(

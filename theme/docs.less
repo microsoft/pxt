@@ -40,6 +40,7 @@
     background-color: @primaryColor;
     margin-top: 0;
     margin-bottom: 0;
+    &.ui.menu {border-radius: 0px; }
     .left.floated {
         display: flex;
         align-items: center;
@@ -52,8 +53,8 @@
     } 
 }
 
-#docsMobile + div {
-    background-color: @primaryColor; 
+#docs-header + div {
+   background-color: @primaryColor; 
 }
 
 #togglesidebar + div.menu > a { 
@@ -450,6 +451,14 @@
     .ui.accordion .accordion .title .dropdown.icon:before, .ui.accordion .title .dropdown.icon:before {
         content: "\f054";
     } 
+
+    .ui.container.mainbody {
+        margin-top: 1rem;
+    }
+
+    .ui.breadcrumb:first-child {
+        margin-top: 20px;
+    }
 }
 
 #docsMobile {
@@ -538,6 +547,14 @@
 
         .ui.accordion .accordion .title .dropdown.icon:before, .ui.accordion .title .dropdown.icon:before {
             content: "\f054";
+        }
+
+        .ui.container.mainbody {
+            margin-top: 1rem;
+        }
+
+        .ui.breadcrumb:first-child {
+            margin-top: 20px;
         }
     } 
 }
