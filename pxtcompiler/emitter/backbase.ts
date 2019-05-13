@@ -1309,13 +1309,13 @@ ${baseLabel}_nochk:
             this.write(`
             .notint:
                 lsls r1, r1, #1
+                ${this.t.pushLR()}
                 push {r0, r2}
                 mov r0, r1
                 ${this.t.callCPP("pxt::toInt")}
                 mov r1, r0
                 pop {r0, r2}
-            ${op == "set" ? ".oob:" : ""}
-                ${this.t.pushLR()}
+            .doop:
                 ${this.t.callCPP(`Array_::${op}At`)}
                 ${conv}
                 ${this.t.popPC()}
@@ -1329,6 +1329,12 @@ ${baseLabel}_nochk:
                     .oob:
                         movs r0, #${isBuffer ? 1 : 0} ; 0 or undefined
                         bx lr
+                `)
+            } else {
+                this.write(`
+                    .oob:
+                        ${this.t.pushLR()}
+                        b .doop
                 `)
             }
 
