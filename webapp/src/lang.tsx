@@ -117,7 +117,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 {targetTheme.crowdinProject ?
                     <p>
                         <br /><br />
-                        <a href={`https://crowdin.com/project/${targetTheme.crowdinProject}`} target="_blank" rel="noopener noreferrer"
+                        <a href="/translate" target="_blank" rel="noopener noreferrer"
                             aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
                     </p> : undefined}
             </sui.Modal>
