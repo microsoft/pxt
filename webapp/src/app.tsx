@@ -3573,10 +3573,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""));
 
                     // Download sim translations and save them in the sim
-                    return ts.pxtc.Util.downloadTranslationsAsync(
+                    // don't wait!
+                    ts.pxtc.Util.downloadTranslationsAsync(
                         targetId, baseUrl, useLang,
                         pxtBranch, targetBranch, live, ts.pxtc.Util.TranslationsKind.Sim)
-                        .then(simStrings => simStrings && simulator.setTranslations(simStrings));
+                        .done(simStrings => simStrings && simulator.setTranslations(simStrings))
                 });
         })
         .then(() => {
