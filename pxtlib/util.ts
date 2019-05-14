@@ -980,21 +980,22 @@ namespace ts.pxtc.Util {
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live, true)
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, sim?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code)[0];
         let translationsCacheId = `${code}/${live}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = [
-            { branch: pxtBranch, path: "strings.json" },
-            { branch: targetBranch, path: targetId + "/target-strings.json" },
-            { branch: targetBranch, path: targetId + "/sim-strings.json" }
-        ];
+        const stringFiles: { branch: string, path: string }[] = sim
+            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
+            : [
+                { branch: pxtBranch, path: "strings.json" },
+                { branch: targetBranch, path: targetId + "/target-strings.json" },
+            ];
         let translations: pxt.Map<string>;
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
@@ -1025,7 +1026,7 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, sim);
                 }
 
                 return Promise.resolve(translations);
@@ -1033,7 +1034,7 @@ namespace ts.pxtc.Util {
         } else {
             return Promise.all(stringFiles.map(p =>
                 Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.path}`)
-                .catch(e => undefined))
+                    .catch(e => undefined))
             ).then(resps => {
                 let tr: pxt.Map<string> = {};
                 resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));
