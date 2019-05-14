@@ -231,6 +231,21 @@ namespace pxt.py {
             fillTypes(sym)
         }
 
+        // create symbols for builtIn types
+        // TODO(dz)
+        for (let typName of Object.keys(builtInTypes)) {
+            let typ = builtInTypes[typName]
+            let sym: SymbolInfo = {
+                pyRetType: typ,
+                pySymbolType: typ,
+                pyInstanceType: typ,
+                parameters: [],
+                pyAST: null,
+                isProtected: false,
+                moduleTypeMarker: null,
+            }
+        }
+
         tpBuffer = mapTsType("Buffer")
     }
 
@@ -1337,6 +1352,7 @@ namespace pxt.py {
                 // TODO resuse with Name expr
                 markInfoNode(n, "identifierCompletion")
                 typeOf(n)
+                console.log("1340")
                 let v = lookupName(n)
                 return possibleDef(n, /*excludeLet*/true)
             }
@@ -1830,13 +1846,18 @@ namespace pxt.py {
     }
 
     function lookupName(n: py.Name): SymbolInfo {
-        let v = lookupSymbol(n.id)
+        let v: SymbolInfo = lookupSymbol(n.id)
         if (!v) {
             // check if the symbol has an override py<->ts mapping
             let over = U.lookup(funMap, n.id)
             if (over) {
                 v = lookupSymbol(over.n)
             }
+            // TODO(dz)
+            // // check if the name refers to a type
+            // let typ = builtInTypes[n.id]
+            // if (typ)
+            // v = typ
         }
         if (v) {
             n.symbolInfo = v
