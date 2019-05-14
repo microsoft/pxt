@@ -975,6 +975,8 @@ namespace ts.pxtc.Util {
 
     export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code)[0];
+        if (code === "en-US")
+            code = "en"; // special case for built-in language
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
