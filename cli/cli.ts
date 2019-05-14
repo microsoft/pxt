@@ -4125,7 +4125,13 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
 
             const crowdinDir = pxt.appTarget.id;
             const name = parsed.args[0] || "";
-            const todo: string[] = [];
+            let todo: string[] = [];
+            const locs: pxt.Map<pxt.Map<string>> = {};
+
+            // adding target files
+            todo.push("target-strings.json");
+            todo.push("sim-strings.json");
+            // bundle project strings
             pxt.appTarget.bundleddirs
                 .filter(dir => !name || dir == "libs/" + name)
                 .forEach(dir => {
@@ -4135,6 +4141,8 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             .filter(f => /\.json$/i.test(f))
                             .forEach(f => todo.push(path.join(locdir, f)))
                 });
+
+            todo = todo.slice(0,3);
 
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
@@ -4148,8 +4156,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                 const locdir = path.dirname(f);
                 const projectdir = path.dirname(locdir);
                 pxt.log(`downloading ${crowdf}`);
-                pxt.log(`projectdir: ${projectdir}`)
-                const locFiles: Map<string> = {};
+                pxt.debug(`projectdir: ${projectdir}`)
                 return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
                     .then(data => {
                         Object.keys(data)
@@ -4172,30 +4179,17 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     });
                                 }
 
-                                const tfdir = path.join(locdir, lang);
-                                const tf = path.join(tfdir, fn);
-                                nodeutil.mkdirP(tfdir)
-                                pxt.log(`writing ${tf}`);
-                                nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
-
-                                locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
+                                // merge translations
+                                let strings = locs[lang];
+                                if (!strings) strings = locs[lang] = {};
+                                Object.keys(dataLang)
+                                    .filter(k => !!dataLang[k] && !strings[k])
+                                    .forEach(k => strings[k] = dataLang[k]);
                             })
-                        // update pxt.json
-                        const pxtJson = nodeutil.readPkgConfig(projectdir)
-                        const missingFiles = Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0)
-                        if (missingFiles.length) {
-                            U.pushRange(pxtJson.files, missingFiles)
-                            // note that pxtJson might result from additionalFilePath, so we read the local file again
-                            const pxtJsonf = path.join(projectdir, "pxt.json");
-                            let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
-                            local.files = pxtJson.files
-                            pxt.log(`writing ${pxtJsonf}`);
-                            nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
-                        }
 
                         const errorIds = Object.keys(errors);
-                        pxt.log(`${errorIds.length} errors`);
                         if (errorIds.length) {
+                            pxt.log(`${errorIds.length} errors`);
                             errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
                             pxt.reportError("loc.errors", "invalid translation", errors);
                         }
@@ -4203,7 +4197,16 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         return nextFileAsync()
                     });
             }
-            return nextFileAsync();
+            return nextFileAsync()
+                .then(() => {
+                    Object.keys(locs).forEach(lang => {
+                        const tf = path.join(`built/locales/${lang}/packaged.json`);
+                        pxt.log(`writing ${tf}`);
+                        const dataLang = locs[lang];
+                        const langTranslations = stringifyTranslations(dataLang);
+                        nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
+                    })
+                })
         });
 }
 
@@ -4224,6 +4227,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
     const disableAppCache = !!parsed.flags["no-appcache"];
+    const locs = !!parsed.flags["crowdin"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
 
     pxt.log(`packaging editor to ${builtPackaged}`)
@@ -5614,6 +5618,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            locs: {
+                description: "Download localization files and bundle them",
+                aliases: ["locales", "crowdin"]
             },
             "no-appcache": {
                 description: "Disables application cache"

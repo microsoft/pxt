@@ -45,7 +45,9 @@ namespace pxt.crowdin {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            const todo = info.languages;
+            let todo = info.languages.filter(l => l.code != "en");
+            if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales)
+                todo = todo.filter(l => pxt.appTarget.appTheme.availableLocales.indexOf(l.code) > -1);
             pxt.log('languages: ' + todo.map(l => l.code).join(', '));
             const nextFile = (): Promise<void> => {
                 const item = todo.pop();
