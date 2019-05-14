@@ -3986,8 +3986,9 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
         });
 }
 
+interface CrowdinCredentials { prj: string; key: string; branch: string; }
 
-function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: string; }> {
+function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
@@ -4120,93 +4121,97 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 
 export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const name = (parsed && parsed.args[0]) || "";
+    const crowdinDir = pxt.appTarget.id;
 
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
 
-            const crowdinDir = pxt.appTarget.id;
-            const todo: string[] = [];
-            const locs: pxt.Map<pxt.Map<string>> = {};
-
-            // adding target files
-            todo.push("target-strings.json");
-            todo.push("sim-strings.json");
-            // bundle project strings
-            pxt.appTarget.bundleddirs
-                .filter(dir => !name || dir == "libs/" + name)
-                .forEach(dir => {
-                    const locdir = path.join(dir, "_locales");
-                    if (fs.existsSync(locdir))
-                        fs.readdirSync(locdir)
-                            .filter(f => /\.json$/i.test(f))
-                            .forEach(f => todo.push(path.join(locdir, f)))
-                });
-
-            const nextFileAsync = (): Promise<void> => {
-                const f = todo.pop();
-                if (!f) {
-                    return Promise.resolve();
-                }
-
-                const errors: pxt.Map<number> = {};
-                const fn = path.basename(f);
-                const crowdf = path.join(crowdinDir, fn);
-                const locdir = path.dirname(f);
-                const projectdir = path.dirname(locdir);
-                pxt.log(`downloading ${crowdf}`);
-                pxt.debug(`projectdir: ${projectdir}`)
-                return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
-                    .then(data => {
-                        Object.keys(data)
-                            .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
-                            .forEach(lang => {
-                                const dataLang = data[lang];
-                                const langTranslations = stringifyTranslations(dataLang);
-                                if (!langTranslations) return;
-
-                                // validate translations
-                                if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
-                                    // block definitions
-                                    Object.keys(dataLang).forEach(id => {
-                                        const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => {
-                                            const errid = `${fn}.${lang}`;
-                                            errors[`${fn}.${lang}`] = 1
-                                            pxt.log(`error ${errid}: ${err}`)
-                                        });
-                                    });
-                                }
-
-                                // merge translations
-                                let strings = locs[lang];
-                                if (!strings) strings = locs[lang] = {};
-                                Object.keys(dataLang)
-                                    .filter(k => !!dataLang[k] && !strings[k])
-                                    .forEach(k => strings[k] = dataLang[k]);
-                            })
-
-                        const errorIds = Object.keys(errors);
-                        if (errorIds.length) {
-                            pxt.log(`${errorIds.length} errors`);
-                            errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
-                            pxt.reportError("loc.errors", "invalid translation", errors);
-                        }
-
-                        return nextFileAsync()
-                    });
-            }
-            return nextFileAsync()
+            return downloadFilesAsync(cred, ["sim-strings.json"], "sim")
                 .then(() => {
-                    Object.keys(locs).forEach(lang => {
-                        const tf = path.join(`sim/public/locales/${lang}/packaged.json`);
-                        pxt.log(`writing ${tf}`);
-                        const dataLang = locs[lang];
-                        const langTranslations = stringifyTranslations(dataLang);
-                        nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
-                    })
-                })
+                    const files: string[] = [];
+                    // adding target files
+                    files.push("target-strings.json");
+                    // bundle project strings
+                    pxt.appTarget.bundleddirs
+                        .filter(dir => !name || dir == "libs/" + name)
+                        .forEach(dir => {
+                            const locdir = path.join(dir, "_locales");
+                            if (fs.existsSync(locdir))
+                                fs.readdirSync(locdir)
+                                    .filter(f => /\.json$/i.test(f))
+                                    .forEach(f => files.push(path.join(locdir, f)))
+                        });
+                    return downloadFilesAsync(cred, files, "editor");
+                });
         });
+
+    function downloadFilesAsync(cred: CrowdinCredentials, todo: string[], outputName: string) {
+        const locs: pxt.Map<pxt.Map<string>> = {};
+        const nextFileAsync = (): Promise<void> => {
+            const f = todo.pop();
+            if (!f) {
+                return Promise.resolve();
+            }
+
+            const errors: pxt.Map<number> = {};
+            const fn = path.basename(f);
+            const crowdf = path.join(crowdinDir, fn);
+            const locdir = path.dirname(f);
+            const projectdir = path.dirname(locdir);
+            pxt.log(`downloading ${crowdf}`);
+            pxt.debug(`projectdir: ${projectdir}`)
+            return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
+                .then(data => {
+                    Object.keys(data)
+                        .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
+                        .forEach(lang => {
+                            const dataLang = data[lang];
+                            const langTranslations = stringifyTranslations(dataLang);
+                            if (!langTranslations) return;
+
+                            // validate translations
+                            if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
+                                // block definitions
+                                Object.keys(dataLang).forEach(id => {
+                                    const tr = dataLang[id];
+                                    pxt.blocks.normalizeBlock(tr, err => {
+                                        const errid = `${fn}.${lang}`;
+                                        errors[`${fn}.${lang}`] = 1
+                                        pxt.log(`error ${errid}: ${err}`)
+                                    });
+                                });
+                            }
+
+                            // merge translations
+                            let strings = locs[lang];
+                            if (!strings) strings = locs[lang] = {};
+                            Object.keys(dataLang)
+                                .filter(k => !!dataLang[k] && !strings[k])
+                                .forEach(k => strings[k] = dataLang[k]);
+                        })
+
+                    const errorIds = Object.keys(errors);
+                    if (errorIds.length) {
+                        pxt.log(`${errorIds.length} errors`);
+                        errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
+                        pxt.reportError("loc.errors", "invalid translation", errors);
+                    }
+
+                    return nextFileAsync()
+                });
+        }
+        return nextFileAsync()
+            .then(() => {
+                Object.keys(locs).forEach(lang => {
+                    const tf = path.join(`sim/public/locales/${lang}/${outputName}-strings.json`);
+                    pxt.log(`writing ${tf}`);
+                    const dataLang = locs[lang];
+                    const langTranslations = stringifyTranslations(dataLang);
+                    nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
+                })
+            })
+    }
 }
 
 function stringifyTranslations(strings: pxt.Map<string>): string {
