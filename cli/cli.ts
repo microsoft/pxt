@@ -4118,13 +4118,14 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
     return nextFileAsync();
 }
 
-export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
+export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
+    const name = (parsed && parsed.args[0]) || "";
+
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
 
             const crowdinDir = pxt.appTarget.id;
-            const name = parsed.args[0] || "";
             let todo: string[] = [];
             const locs: pxt.Map<pxt.Map<string>> = {};
 
@@ -4227,13 +4228,14 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
     const disableAppCache = !!parsed.flags["no-appcache"];
-    const locs = !!parsed.flags["crowdin"];
+    const locs = !!parsed.flags["locs"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
+        .then(() => locs && downloadTargetTranslationsAsync())
         .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
