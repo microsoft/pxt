@@ -301,6 +301,27 @@
         content: "" !important;
     }
 
+    #printbtn.circular.ui.icon.right.floated.button {
+        border: none;
+        border-radius: 0px;
+        background: none;
+        box-shadow: none;
+        padding: .5em;
+    }
+
+    /* Print Icon */
+    #printbtn i.icon.print {
+        background: no-repeat center;
+        background-size: contain;
+        .icon-add-fill('../docs/static/logo/icons/print.svg', @primaryColor);
+        height: 1.3em;
+        width: 1.3em;
+    }
+
+    #printbtn i.icon.print:before {
+        content: "" !important;
+    }
+
     /* Python Icon */
     div.menu > a.item > i.icon.xicon.python {
         background: no-repeat center;
@@ -393,6 +414,16 @@
     .menuContainer .dropdown.icon.chevron.down{
         float: left;
         color: @primaryColor;
+    }
+
+    /* Message Boxes */
+    .ui.content.js > .right {
+        text-align: right;
+        margin-right: 1em;
+        font-size: 0.7em;
+        border-top: 1px solid #cecece;
+        margin-top: 2.5em;
+        color: #807e7e;
     }
 
     /* Buttons */

@@ -41,7 +41,7 @@ namespace pxt.runner {
     }
 
     function appendBlocks($parent: JQuery, $svg: JQuery) {
-        $parent.append($('<div class="ui content blocks"/>').append($svg));
+        $parent.append($('<div class="ui content blocks"><div class="right">BLOCKS</div></div>').append($svg));
     }
 
     function highlight($js: JQuery) {
@@ -55,12 +55,12 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
+        $parent.append($('<div class="ui content js"><div class="right">JAVASCRIPT</div></div>').append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/>Python</div></div>').append($py));
+        $parent.append($('<div class="ui content py"><div class="right">PYTHON</div></div>').append($py));
         highlight($py);
     }
 
