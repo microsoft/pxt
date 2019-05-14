@@ -1296,7 +1296,7 @@ ${output}</xml>`;
                         return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right);
                     }
                     else if (n.left.kind == SK.PropertyAccessExpression) {
-                        return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@set@");
+                        return getPropertySetBlock(n, "@set@");
                     }
                     else {
                         return getArraySetBlock(n.left as ts.ElementAccessExpression, n.right);
@@ -1312,7 +1312,7 @@ ${output}</xml>`;
                     }
 
                     if (n.left.kind == SK.PropertyAccessExpression)
-                        return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@change@");
+                        return getPropertySetBlock(n, "@change@");
                     else
                         return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
@@ -1497,9 +1497,14 @@ ${output}</xml>`;
             return r;
         }
 
-
-        function getPropertySetBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
-            return getPropertyBlock(left, right, tp) as StatementNode
+        function getPropertySetBlock(n: ts.BinaryExpression, tp: string) {
+            const info: pxtc.CallInfo = (n.left as any).callInfo;
+            const sym = env.blocks.apis.byQName[info ? info.qName : ""];
+            if (!sym || !sym.attributes.blockCombine) {
+                return getTypeScriptStatementBlock(n);
+            } else {
+                return getPropertyBlock(n.left as ts.PropertyAccessExpression, n.right, tp) as StatementNode;
+            }
         }
 
         function getPropertyGetBlock(left: ts.PropertyAccessExpression) {
@@ -1509,10 +1514,11 @@ ${output}</xml>`;
         function getPropertyBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = (left as any).callInfo
             const sym = env.blocks.apis.byQName[info ? info.qName : ""]
-            if (!sym || !sym.attributes.blockCombine) {
+            if (!sym) {
                 error(left);
                 return undefined;
             }
+
             const qName = `${sym.namespace}.${sym.retType}.${tp}`;
             const setter = env.blocks.blocks.find(b => b.qName == qName)
             const r = right ? mkStmt(setter.attributes.blockId) : mkExpr(setter.attributes.blockId)
