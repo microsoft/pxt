@@ -1606,6 +1606,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
+        monacoFlyout.addEventListener("wheel", e => {
+            e.stopPropagation();
+        }, true)
         pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;
