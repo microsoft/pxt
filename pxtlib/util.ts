@@ -1030,15 +1030,18 @@ namespace ts.pxtc.Util {
                 return Promise.resolve(translations);
             });
         } else {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    if (tr) {
-                        translations = tr;
-                        translationsCache()[translationsCacheId] = translations;
-                    }
-                }, e => {
-                    console.error('failed to load localizations')
-                })
+            return Promise.all(["strings.json", "packaged.json"].map(p =>
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p}`))
+            ).then(resps => {
+                let tr: pxt.Map<string> = {};
+                resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));
+                if (Object.keys(tr).length) {
+                    translations = tr;
+                    translationsCache()[translationsCacheId] = translations;
+                }
+            }, e => {
+                console.error('failed to load localizations')
+            })
                 .then(() => translations);
         }
     }
