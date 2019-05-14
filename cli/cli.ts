@@ -4128,11 +4128,9 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
             if (!cred) return Promise.resolve();
 
             return downloadFilesAsync(cred, ["sim-strings.json"], "sim")
+                .then(() => downloadFilesAsync(cred, ["target-strings.json"], "target"))
                 .then(() => {
                     const files: string[] = [];
-                    // adding target files
-                    files.push("target-strings.json");
-                    // bundle project strings
                     pxt.appTarget.bundleddirs
                         .filter(dir => !name || dir == "libs/" + name)
                         .forEach(dir => {
@@ -4142,7 +4140,7 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                                     .filter(f => /\.json$/i.test(f))
                                     .forEach(f => files.push(path.join(locdir, f)))
                         });
-                    return downloadFilesAsync(cred, files, "target");
+                    return downloadFilesAsync(cred, files, "bundled");
                 });
         });
 
