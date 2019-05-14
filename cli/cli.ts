@@ -4126,7 +4126,7 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
             if (!cred) return Promise.resolve();
 
             const crowdinDir = pxt.appTarget.id;
-            let todo: string[] = [];
+            const todo: string[] = [];
             const locs: pxt.Map<pxt.Map<string>> = {};
 
             // adding target files
@@ -4142,8 +4142,6 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                             .filter(f => /\.json$/i.test(f))
                             .forEach(f => todo.push(path.join(locdir, f)))
                 });
-
-            todo = todo.slice(0,3);
 
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
