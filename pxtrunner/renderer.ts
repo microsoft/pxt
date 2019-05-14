@@ -125,8 +125,8 @@ namespace pxt.runner {
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
                     const url = getRunUrl(options) + "#nofooter=1" + deps;
-                    const name = "&code=" + encodeURIComponent($js.text());
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" name="${name}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    const data = encodeURIComponent($js.text());
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -797,9 +797,9 @@ namespace pxt.runner {
                     </div></div>`)
                 const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
                 const url = getRunUrl(options) + "#nofooter=1" + deps;
-                const name = "&code=" + encodeURIComponent($c.text().trim());
+                const data = encodeURIComponent($c.text().trim());
                 $sim.find("iframe").attr("src", url);
-                $sim.find("iframe").attr("name", name);
+                $sim.find("iframe").attr("data-code", data);
                 if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });
