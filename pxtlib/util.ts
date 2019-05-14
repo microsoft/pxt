@@ -990,11 +990,11 @@ namespace ts.pxtc.Util {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = sim
-            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
+        const stringFiles: { branch: string, staticName: string, path: string }[] = sim
+            ? [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }]
             : [
-                { branch: pxtBranch, path: "strings.json" },
-                { branch: targetBranch, path: targetId + "/target-strings.json" },
+                { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
+                { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
             ];
         let translations: pxt.Map<string>;
         function mergeTranslations(tr: pxt.Map<string>) {
@@ -1033,7 +1033,7 @@ namespace ts.pxtc.Util {
             });
         } else {
             return Promise.all(stringFiles.map(p =>
-                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.path}`)
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.staticName}`)
                     .catch(e => undefined))
             ).then(resps => {
                 let tr: pxt.Map<string> = {};
