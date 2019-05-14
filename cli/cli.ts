@@ -4142,7 +4142,7 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                                     .filter(f => /\.json$/i.test(f))
                                     .forEach(f => files.push(path.join(locdir, f)))
                         });
-                    return downloadFilesAsync(cred, files, "editor");
+                    return downloadFilesAsync(cred, files, "target");
                 });
         });
 

@@ -996,7 +996,6 @@ namespace ts.pxtc.Util {
             { branch: targetBranch, path: targetId + "/sim-strings.json" }
         ];
         let translations: pxt.Map<string>;
-
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             if (!translations) {
@@ -1032,8 +1031,8 @@ namespace ts.pxtc.Util {
                 return Promise.resolve(translations);
             });
         } else {
-            return Promise.all(["strings.json", "packaged.json"].map(p =>
-                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p}`)
+            return Promise.all(stringFiles.map(p =>
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.path}`)
                 .catch(e => undefined))
             ).then(resps => {
                 let tr: pxt.Map<string> = {};
