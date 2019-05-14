@@ -4200,7 +4200,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
             return nextFileAsync()
                 .then(() => {
                     Object.keys(locs).forEach(lang => {
-                        const tf = path.join(`built/locales/${lang}/packaged.json`);
+                        const tf = path.join(`built/web/locales/${lang}/packaged.json`);
                         pxt.log(`writing ${tf}`);
                         const dataLang = locs[lang];
                         const langTranslations = stringifyTranslations(dataLang);
