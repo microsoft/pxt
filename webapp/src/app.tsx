@@ -3548,14 +3548,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
             const useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            const live = !theme.disableLiveTranslations || (mlang && !!mlang[1]);
+            const locstatic = /staticlang=1/i.test(window.location.href);
+            const live = !(locstatic || pxt.BrowserUtils.isElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
             const force = !!mlang && !!mlang[2];
+            const targetId = pxt.appTarget.id;
+            const baseUrl = config.commitCdnUrl;
+            const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
+            const targetBranch = pxt.appTarget.versions.targetCrowdinBranch;
             return Util.updateLocalizationAsync(
-                pxt.appTarget.id,
-                config.commitCdnUrl,
+                targetId,
+                baseUrl,
                 useLang,
-                pxt.appTarget.versions.pxtCrowdinBranch,
-                pxt.appTarget.versions.targetCrowdinBranch,
+                pxtBranch,
+                targetBranch,
                 live,
                 force)
                 .then(() => {
@@ -3568,18 +3573,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""));
 
                     // Download sim translations and save them in the sim
-                    return Util.downloadSimulatorLocalizationAsync(
-                        pxt.appTarget.id,
-                        config.commitCdnUrl,
-                        useLang,
-                        pxt.appTarget.versions.pxtCrowdinBranch,
-                        pxt.appTarget.versions.targetCrowdinBranch,
-                        live,
-                        force
-                    );
-                }).then((simStrings) => {
-                    if (simStrings)
-                        simulator.setTranslations(simStrings);
+                    // don't wait!
+                    ts.pxtc.Util.downloadTranslationsAsync(
+                        targetId, baseUrl, useLang,
+                        pxtBranch, targetBranch, live, ts.pxtc.Util.TranslationsKind.Sim)
+                        .done(simStrings => simStrings && simulator.setTranslations(simStrings))
                 });
         })
         .then(() => {
