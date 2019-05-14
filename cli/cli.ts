@@ -765,7 +765,9 @@ function pkgVersion() {
 
 function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(nodeutil.allFiles(path.join(simDir(), "public")))
+        .concat(nodeutil.allFiles(path.join(simDir(), "public")));
+    if (simDir() != "sim")
+        lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), 5, true))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
