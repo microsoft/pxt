@@ -1031,7 +1031,8 @@ namespace ts.pxtc.Util {
             });
         } else {
             return Promise.all(["strings.json", "packaged.json"].map(p =>
-                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p}`))
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p}`)
+                .catch(e => undefined))
             ).then(resps => {
                 let tr: pxt.Map<string> = {};
                 resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));

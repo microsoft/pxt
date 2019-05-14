@@ -3548,7 +3548,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
             const useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            const live = !theme.disableLiveTranslations || (mlang && !!mlang[1]);
+            const live = false// !theme.disableLiveTranslations || (mlang && !!mlang[1]);
             const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
