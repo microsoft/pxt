@@ -985,7 +985,7 @@ namespace ts.pxtc.Util {
 
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, sim?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code)[0];
-        let translationsCacheId = `${code}/${live}`;
+        let translationsCacheId = `${code}/${live}/${sim}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
