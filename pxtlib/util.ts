@@ -960,7 +960,9 @@ namespace ts.pxtc.Util {
         }
 
         pxt.debug(`loc: ${code}`);
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code,
+            pxtBranch, targetBranch, live,
+            ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -969,33 +971,48 @@ namespace ts.pxtc.Util {
                         localizeLive = true;
                     }
                 }
-                return Promise.resolve();
+
+                // Download api translations
+                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                    targetId, baseUrl, code,
+                    pxtBranch, targetBranch, live,
+                    ts.pxtc.Util.TranslationsKind.Apis)
+                    .then(trs => {
+                        if (trs)
+                            ts.pxtc.apiLocalizationStrings = trs;
+                    }) : Promise.resolve();
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code)[0];
-        if (code === "en-US")
-            code = "en"; // special case for built-in language
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
-            return Promise.resolve<pxt.Map<string>>(undefined);
-
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live, true)
+    export enum TranslationsKind {
+        Editor,
+        Sim,
+        Apis
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, sim?: boolean): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
+        translationKind = translationKind || TranslationsKind.Editor;
         code = normalizeLanguageCode(code)[0];
-        let translationsCacheId = `${code}/${live}/${sim}`;
+        let translationsCacheId = `${code}/${live}/${translationKind}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, staticName: string, path: string }[] = sim
-            ? [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }]
-            : [
-                { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
-                { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
-            ];
+        let stringFiles: { branch: string, staticName: string, path: string }[];
+        switch (translationKind) {
+            case TranslationsKind.Editor:
+                stringFiles = [
+                    { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
+                    { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                ];
+                break;
+            case TranslationsKind.Sim:
+                stringFiles = [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
+                break;
+            case TranslationsKind.Apis:
+                stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+        }
         let translations: pxt.Map<string>;
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
@@ -1026,7 +1043,7 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, sim);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, translationKind);
                 }
 
                 return Promise.resolve(translations);
