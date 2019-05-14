@@ -993,6 +993,9 @@ namespace ts.pxtc.Util {
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
         translationKind = translationKind || TranslationsKind.Editor;
         code = normalizeLanguageCode(code)[0];
+        if (code === "en-US" || code === "en") // shortcut
+            return Promise.resolve(undefined);
+
         let translationsCacheId = `${code}/${live}/${translationKind}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
