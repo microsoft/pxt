@@ -23,6 +23,8 @@ namespace bc {
         get testgetter(): boolean {
             return false;
         }
+
+        data: any;
     }
 
     //% blockId=bc_create_test block="create test"
