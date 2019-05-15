@@ -583,16 +583,18 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
     }
 
     let p = Promise.resolve();
-    if (pxt.appTarget.compile
+    // TODO renable when HID/webusb fixed deployment
+/*    if (pxt.appTarget.compile
         && pxt.appTarget.compile.useUF2
         && !pxt.appTarget.serial.noDeploy
-        && hid.isInstalled(true)) {
+        && hid.isInstalled(true) {
         // try hid or simply bail out
         p = p.then(() => hidDeployAsync())
             .catch(e => copyDeployAsync());
     } else {
+        */
         p = p.then(() => copyDeployAsync())
-    }
+  //  }
     return p;
 }
 
