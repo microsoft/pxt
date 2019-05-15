@@ -804,6 +804,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (flyout) {
             pxsim.U.clear(flyout);
             flyout.style.display = 'none';
+            flyout.removeEventListener("wheel", this.handleScroll, true);
         }
 
         // Hide the current toolbox category
@@ -1598,6 +1599,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return document.getElementById('monacoFlyoutWidget');
     }
 
+    handleScroll = (e: WheelEvent) => e.stopPropagation();
+
     private createMonacoFlyout() {
         let monacoFlyout = this.getMonacoFlyout();
 
@@ -1606,9 +1609,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
-        monacoFlyout.addEventListener("wheel", e => {
-            e.stopPropagation();
-        }, true)
+        monacoFlyout.addEventListener("wheel", this.handleScroll, true);
         pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;
