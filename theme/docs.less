@@ -51,6 +51,9 @@
     img {
         margin-right:7px
     } 
+    .ui.input input {
+        font-family: @docsPageFont;
+    }
 }
 
 #docs-header + div {
@@ -68,7 +71,7 @@
 
 #docs {
     background-color: @docsBackgroundColor;
-    font-family: @docsPageFont ;
+    font-family: @docsPageFont;
     color: @docsTextColor;
     * {
         -webkit-overflow-scrolling: touch;
@@ -84,6 +87,9 @@
     }
     h1 {
         margin-bottom: .85em;
+    }
+    .ui.menu, .ui.list .list>.item .header, .ui.list>.item .header, .ui.card>.content>.header, .ui.cards>.card>.content>.header {
+       font-family: @docsPageFont;
     }
     /* Text color */
     p, ul li {
