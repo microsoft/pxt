@@ -1,6 +1,6 @@
 # MakeCode Languages: Blocks, Static TypeScript and Static Python
 
-MakeCode programs can be authored in **Blocks**, **Static TypeScript** or **Static Phyton**.
+MakeCode programs can be authored in **Blocks**, **Static TypeScript** or **Static Python**.
 
 Both Blocks and Static Python are converted to Static TypeScript before being compiled to lower-level languages.
 Blocks is implemented using Google Blockly.
