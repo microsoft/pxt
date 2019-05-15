@@ -195,7 +195,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
 
-    private handleScroll = (e: WheelEvent) => e.stopPropagation();
+    private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -806,7 +806,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (flyout) {
             pxsim.U.clear(flyout);
             flyout.style.display = 'none';
-            flyout.removeEventListener("wheel", this.handleScroll, true);
+            flyout.removeEventListener("wheel", this.handleFlyoutScroll, true);
         }
 
         // Hide the current toolbox category
@@ -1609,7 +1609,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
-        monacoFlyout.addEventListener("wheel", this.handleScroll, true);
+        monacoFlyout.addEventListener("wheel", this.handleFlyoutScroll, true);
         pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;
