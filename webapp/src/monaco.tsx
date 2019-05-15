@@ -195,6 +195,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
 
+    private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
+
     hasBlocks() {
         if (!this.currFile) return true
         let blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
@@ -804,6 +806,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (flyout) {
             pxsim.U.clear(flyout);
             flyout.style.display = 'none';
+            flyout.removeEventListener("wheel", this.handleFlyoutScroll, true);
         }
 
         // Hide the current toolbox category
@@ -1606,6 +1609,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
+        monacoFlyout.addEventListener("wheel", this.handleFlyoutScroll, true);
         pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;
