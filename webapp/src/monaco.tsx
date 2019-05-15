@@ -195,6 +195,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
 
+    private handleScroll = (e: WheelEvent) => e.stopPropagation();
+
     hasBlocks() {
         if (!this.currFile) return true
         let blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
@@ -1598,8 +1600,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getMonacoFlyout() {
         return document.getElementById('monacoFlyoutWidget');
     }
-
-    handleScroll = (e: WheelEvent) => e.stopPropagation();
 
     private createMonacoFlyout() {
         let monacoFlyout = this.getMonacoFlyout();
