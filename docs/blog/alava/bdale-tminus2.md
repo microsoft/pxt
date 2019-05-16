@@ -1,6 +1,6 @@
 ![Brooklyn Public Library](/static/blog/alava/bklyn_pub_lib_night.jpg)
 
-# Project Ozette: BKLYN or Bust (T minus 2 days)
+# Project Alava: BKLYN or Bust (T minus 2 days)
 
 Posted on May 1st, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball/)
 
@@ -9,7 +9,7 @@ Back in 2013, I was one of 50 choristers in the Seattle Opera's product of Wagne
 When you go to a concert, movie, or musical, you are treated to a performance that is the
 product of many person-years of effort. In this blog, I want to tell you about
 the technology that is going into the fashion show [On the Runway: Homage to Future Fashion](https://bfahomagetofuturefashion.eventbrite.com/) and the people behind it. For more context, see
-[Project Ozette](/blog/alava/alava). Let's get into the tech going bottom-up, starting
+[Project Alava](/blog/alava/alava). Let's get into the tech going bottom-up, starting
 with the hardware, which is in the Pelican case that Teddy Seyed, James Devine and Peli de Halleux 
 (left to right) are standing with in front of the [Brooklyn Public Library](https://www.bklynlibrary.org/locations/central).
 
