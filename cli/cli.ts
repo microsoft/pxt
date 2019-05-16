@@ -5493,6 +5493,7 @@ The following environment variables modify the behavior of the CLI when set to
 non-empty string:
 
 PXT_DEBUG        - display extensive logging info
+PXT_USE_HID      - use webusb or hid to flash device
 
 These apply to the C++ runtime builds:
 
