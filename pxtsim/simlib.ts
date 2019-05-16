@@ -86,9 +86,9 @@ namespace pxsim {
             let ret = [this.start(0, 0, bg)]
             if (id == 0 && evid == 0)
                 return ret
-            if (id == 0)
+            if (id != 0)
                 ret.push(this.start(0, evid, bg))
-            if (evid == 0)
+            if (evid != 0)
                 ret.push(this.start(id, 0, bg))
             if (id != 0 && evid != 0)
                 ret.push(this.start(id, evid, bg))
