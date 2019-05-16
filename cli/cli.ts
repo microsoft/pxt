@@ -5493,6 +5493,7 @@ The following environment variables modify the behavior of the CLI when set to
 non-empty string:
 
 PXT_DEBUG        - display extensive logging info
+PXT_USE_HID      - use webusb or hid to flash device
 
 These apply to the C++ runtime builds:
 
@@ -5502,7 +5503,6 @@ PXT_NODOCKER     - don't use Docker image, and instead use host's
 PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
                    in the lower level runtime if any
 PXT_ASMDEBUG     - embed additional information in generated binary.asm file
-PXT_USE_HID      - use webusb or hid to flash device
 `)
         return Promise.resolve();
     }, "[all|command]");

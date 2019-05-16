@@ -583,7 +583,6 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
     }
 
     let p = Promise.resolve();
-    // TODO renable when HID/webusb fixed deployment
     if (pxt.appTarget.compile
         && pxt.appTarget.compile.useUF2
         && !pxt.appTarget.serial.noDeploy
