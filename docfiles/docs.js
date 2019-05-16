@@ -253,7 +253,9 @@ function renderSnippets() {
                     simulator: true,
                     showEdit: true,
                     hex: true,
-                    hexName: path
+                    hexName: path,
+                    showToggleCode: true,
+                    showBlocks: true
                 });
             }).done();
     });

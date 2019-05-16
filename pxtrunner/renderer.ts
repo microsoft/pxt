@@ -26,8 +26,11 @@ namespace pxt.runner {
         packageClass?: string;
         package?: string;
         showEdit?: boolean;
+        showBlocks?: boolean;
+        showPython?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         split?: boolean; // split in multiple divs if too big
+        showToggleCode?: boolean;
     }
 
     export interface WidgetOptions {
@@ -88,7 +91,52 @@ namespace pxt.runner {
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
-        if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
+
+        // Show code in switch mode
+        if (options.showToggleCode && woptions.hexname) {
+            let buttonGroup = $('<div class="ui small basic icon buttons" style="border: none;">');
+            if ($svg) {
+                buttonGroup.append(appendSwitchButton("Blocks", $svg, BLOCKS_ICON));
+            }
+            if ($js) {
+                buttonGroup.append(appendSwitchButton("JavaScript", $js, JS_ICON));
+            }
+            if ($py) {
+                buttonGroup.append(appendSwitchButton("Python", $py, PY_ICON));
+            }
+            $menu.append(buttonGroup);
+
+            if (options.showJavaScript) {
+                $c.append($js);
+            };
+            if (options.showBlocks) {
+                $c.append($svg);
+            };
+            if (options.showPython) {
+                $c.append($py);
+            };
+
+        } else {
+            // Show code separate in widget
+            if (options.showJavaScript || (!$svg && !$py)) {
+                // js
+                $c.append($js);
+                appendBlocksButton();
+                appendPyButton();
+            } else if ($svg) {
+                // blocks
+                $c.append($svg);
+                appendJsButton();
+                appendPyButton();
+            } else if ($py) {
+                $c.append($py);
+                appendBlocksButton();
+                appendJsButton();
+            }
+        }
+
+        // edit button
+        if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { 
             const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
                 decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
@@ -96,22 +144,6 @@ namespace pxt.runner {
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
             })
             $menu.append($editBtn);
-        }
-
-        if (options.showJavaScript || (!$svg && !$py)) {
-            // js
-            $c.append($js);
-            appendBlocksButton();
-            appendPyButton();
-        } else if ($svg) {
-            // blocks
-            $c.append($svg);
-            appendJsButton();
-            appendPyButton();
-        } else if ($py) {
-            $c.append($py);
-            appendBlocksButton();
-            appendJsButton();
         }
 
         // runner menu
@@ -147,6 +179,20 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r as any);
+
+        function appendSwitchButton(type: string, content: JQuery<HTMLElement>, icon: string) {
+            let active = !options.showJavaScript && type === 'Blocks' ? 'active' : '';
+            let button = $(`<button class="ui button ${active} btn-${type}" title="${lf(type)}"><i class="ui ${icon}" style="pointer-events: none;"/></button>`);
+            type = type.toLowerCase();
+            button.click((e) => {
+                pxt.tickEvent("docs.btn", { button: type });
+                $c.empty()
+                $c.append(content);
+                $(e.target).parent().children(".ui.button").removeClass('active');
+                $(e.target).addClass('active');
+            });
+           return button;
+        }
 
         function appendBlocksButton() {
             if (!$svg) return;
