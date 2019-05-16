@@ -547,14 +547,16 @@ function getCSharpCommand() {
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
-    const firmwareName = pxt.outputName()
-    const encoding = pxt.isOutputText() ? "utf8" : "base64";
-    const firmware = res.outfiles[firmwareName];
-
-    if (!firmware) { // something went wrong heres
-        pxt.reportError("compile", `${firmwareName} missing from built files (${Object.keys(res.outfiles).join(', ')})`)
+    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_HEX].filter(f => !!res.outfiles[f])[0];
+    if (!firmwareName) { // something went wrong heres
+        pxt.reportError("compile", `firmware missing from built files (${Object.keys(res.outfiles).join(', ')})`)
         return Promise.resolve();
     }
+
+    const firmware = res.outfiles[firmwareName];
+    const encoding = firmwareName == pxtc.BINARY_HEX
+        ? "utf8" : "base64";
+
 
     function copyDeployAsync() {
         return getBoardDrivesAsync()
