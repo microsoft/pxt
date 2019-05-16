@@ -299,9 +299,9 @@ namespace pxtsprite {
          */
         protected clientToCell(coord: ClientCoordinates) {
             const bounds = this.paintLayer.getBoundingClientRect();
-
             const left = bounds.left + (window.scrollX !== null ? window.scrollX : window.pageXOffset);
             const top = bounds.top + (window.scrollY !== null ? window.scrollY : window.pageYOffset);
+
             this.mouseCol = Math.floor((coord.clientX - left) / this.cellWidth);
             this.mouseRow = Math.floor((coord.clientY - top) / this.cellHeight);
 
