@@ -554,7 +554,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
     }
 
     const firmware = res.outfiles[firmwareName];
-    const encoding = firmwareName == pxtc.BINARY_HEX 
+    const encoding = firmwareName == pxtc.BINARY_HEX
         ? "utf8" : "base64";
 
 
