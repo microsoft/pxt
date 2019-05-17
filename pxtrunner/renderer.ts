@@ -94,7 +94,7 @@ namespace pxt.runner {
 
         // Show code in switch mode
         if (options.showToggleCode && woptions.hexname) {
-            let buttonGroup = $('<div class="ui small basic icon buttons" style="border: none;">');
+            let buttonGroup = $('<div class="ui menu">');
             if ($svg) {
                 buttonGroup.append(appendSwitchButton("Blocks", $svg, BLOCKS_ICON));
             }
@@ -136,7 +136,7 @@ namespace pxt.runner {
         }
 
         // edit button
-        if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { 
+        if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) {
             const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
                 decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
@@ -182,14 +182,15 @@ namespace pxt.runner {
 
         function appendSwitchButton(type: string, content: JQuery<HTMLElement>, icon: string) {
             let active = !options.showJavaScript && type === 'Blocks' ? 'active' : '';
-            let button = $(`<button class="ui button ${active} btn-${type}" title="${lf(type)}"><i class="ui ${icon}" style="pointer-events: none;"/></button>`);
+            let button = snippetBtn(lf(type), icon);
+            button.addClass(active);
             type = type.toLowerCase();
             button.click((e) => {
                 pxt.tickEvent("docs.btn", { button: type });
                 $c.empty()
                 $c.append(content);
-                $(e.target).parent().children(".ui.button").removeClass('active');
-                $(e.target).addClass('active');
+                $(e.currentTarget).parent().children(".item").removeClass('active');
+                $(e.currentTarget).addClass('active');
             });
            return button;
         }
