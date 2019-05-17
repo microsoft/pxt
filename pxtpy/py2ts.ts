@@ -243,7 +243,20 @@ namespace pxt.py {
                 pyAST: null,
                 isProtected: false,
                 moduleTypeMarker: null,
+                //
+                qName: typName,
+                pyName: typName,
+                pyQName: typName,
+                retType: typName,
+                //
+                attributes: null,
+                name: typName,
+                namespace: null,
+                fileName: "global.ts", // TODO(dz)
+                kind: ts.pxtc.SymbolKind.BuiltinType, // TODO(dz)
             }
+            // TODO(dz): external or internal?
+            externalApis[typName] = sym
         }
 
         tpBuffer = mapTsType("Buffer")
@@ -1384,7 +1397,10 @@ namespace pxt.py {
         }
 
         if (n.isdef && !excludeLet) {
-            return B.mkGroup([B.mkText("let "), quote(id)])
+            // TODO(dz): how to handle type alias
+            console.dir(n)
+            let prefix = n.symbolInfo.kind == pxtc.SymbolKind.BuiltinType ? "type " : "let "
+            return B.mkGroup([B.mkText(prefix), quote(id)])
         }
         else
             return quote(id)

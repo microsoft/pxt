@@ -629,6 +629,7 @@ declare namespace ts.pxtc {
         EnumMember,
         Class,
         Interface,
+        BuiltinType,
     }
 
     interface SymbolInfo {
