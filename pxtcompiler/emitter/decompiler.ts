@@ -367,17 +367,16 @@ namespace ts.pxtc.decompiler {
                 if (env.declaredKinds[kindName]) {
                     env.declaredKinds[kindName].declaredNames.push(...exported);
                 }
-                else {
-                    env.declaredKinds[kindName] = {
-                        kindInfo: blocksInfo.kindsByName[kindName],
-                        declaredNames: exported
-                    };
-                }
             }
             else if (topLevelNode.kind === SK.Block) {
                 ts.forEachChild(topLevelNode, checkTopNode);
             }
         };
+
+        Object.keys(blocksInfo.kindsByName).forEach(k => {
+            const kindInfo = blocksInfo.kindsByName[k];
+            env.declaredKinds[k] = { kindInfo, declaredNames: [] };
+        });
 
         ts.forEachChild(file, checkTopNode);
 
@@ -2786,24 +2785,33 @@ ${output}</xml>`;
                 // There isn't really a way to persist comments, so to be safe just bail out
                 if (isCommented(statement)) return fail;
 
-                if (isVariableStatement(statement) && statement.declarationList.declarations.length === 1 && statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword) {
-                    const declaration = statement.declarationList.declarations[0];
-                    if (!declaration.initializer || !isCallExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
-                        return fail;
-                    }
+                if (isVariableStatement(statement) && statement.declarationList.declarations) {
+                    const isSingleDeclaration = statement.declarationList.declarations.length === 1;
+                    const isExport = statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword;
+                    const isConst = statement.declarationList.flags & NodeFlags.Const
 
-                    const call = declaration.initializer;
+                    if (isSingleDeclaration && isExport && isConst) {
+                        const declaration = statement.declarationList.declarations[0];
+                        if (!declaration.initializer || !isCallExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
+                            return fail;
+                        }
 
-                    if (call.arguments.length) {
-                        return fail;
-                    }
+                        const call = declaration.initializer;
 
-                    // The namespace is emitted from the blocks, but it's optional when decompiling
-                    if (isPropertyAccessExpression(call.expression) && isIdentifier(call.expression.expression)) {
-                        if (call.expression.expression.text !== kindInfo.name || call.expression.name.text !== kindInfo.createFunctionName) return fail;
-                    }
-                    else if (isIdentifier(call.expression)) {
-                        if (call.expression.text !== kindInfo.createFunctionName) return fail;
+                        if (call.arguments.length) {
+                            return fail;
+                        }
+
+                        // The namespace is emitted from the blocks, but it's optional when decompiling
+                        if (isPropertyAccessExpression(call.expression) && isIdentifier(call.expression.expression)) {
+                            if (call.expression.expression.text !== kindInfo.name || call.expression.name.text !== kindInfo.createFunctionName) return fail;
+                        }
+                        else if (isIdentifier(call.expression)) {
+                            if (call.expression.text !== kindInfo.createFunctionName) return fail;
+                        }
+                        else {
+                            return fail;
+                        }
                     }
                     else {
                         return fail;
@@ -3006,7 +3014,7 @@ ${output}</xml>`;
                     const propName = n.name.text;
                     const kind = env.declaredKinds[n.expression.text];
 
-                    if (kind && kind.kindInfo.initialMembers.indexOf(propName) !== -1 || kind.declaredNames.indexOf(propName) !== -1) {
+                    if (kind && (kind.kindInfo.initialMembers.indexOf(propName) !== -1 || kind.declaredNames.indexOf(propName) !== -1)) {
                         return undefined;
                     }
                 }

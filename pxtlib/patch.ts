@@ -43,8 +43,8 @@ namespace pxt.patching {
                     const declRegex = new RegExp("enum\\s+" + enumName + "\\s*{", 'gm');
                     updatedContents = updatedContents.replace(declRegex, `enum ${rule.map[enumName]} {`);
 
-                    const usageRegex = new RegExp(`(^|[^_a-zA-Z0-9])${enumName}\\s*\\.`, 'g');
-                    updatedContents.replace(usageRegex, `$1${rule.map[enumName]}`);
+                    const usageRegex = new RegExp(`(^|[^_a-zA-Z0-9])${enumName}(\\s*\\.)`, 'g');
+                    updatedContents = updatedContents.replace(usageRegex, `$1${rule.map[enumName]}$2`);
                 });
             });
         }
