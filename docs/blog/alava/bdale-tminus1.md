@@ -1,6 +1,6 @@
-![Working in the basement of the Holiday Inn](/static/blog/ozette/thebasement.jpg)
+![Working in the basement of the Holiday Inn](/static/blog/alava/thebasement.jpg)
 
-# Project Ozette: BKLYN or Bust (T minus 1 day)
+# Project Alava: BKLYN or Bust (T minus 1 day)
 
 Posted on May 2nd, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball/)
 
@@ -40,7 +40,7 @@ So it goes...
 
 ### From the Holiday Inn to the Library
 
-![Montage: from Holiday Inn to Library](/static/blog/ozette/montage.jpg)
+![Montage: from Holiday Inn to Library](/static/blog/alava/montage.jpg)
 
 Despite the race conditions, a gaggle of teenagers from a local school coming for the 
 afternoon to learn about fashion, party and eat pizza, we managed to make a lot of 
@@ -54,4 +54,4 @@ back here in the basement (dare I say "all nighter") and will be back at the lib
 at 7am with the hardware and software ready for incorporation into the garments (most
 of which were still being worked on late today). No pain, no gain! 
 
-![Still working in the basement of the Holiday Inn](/static/blog/ozette/backInTheDungeon.jpg)
+![Still working in the basement of the Holiday Inn](/static/blog/alava/backInTheDungeon.jpg)

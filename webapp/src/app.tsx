@@ -2742,7 +2742,7 @@ export class ProjectView
         let p: Promise<string>;
         if (/^\//.test(tutorialId)) {
             title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId)
+            p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
                 .then(md => {
                     if (md) {
                         dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
