@@ -916,27 +916,34 @@ namespace pxt.BrowserUtils {
         leave: string
     }
 
-    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
-        up: "pointerup",
-        down: ["pointerdown"],
-        move: "pointermove",
-        enter: "pointerenter",
-        leave: "pointerleave"
-    } : isTouchEnabled() ?
-            {
+    export const pointerEvents: IPointerEvents = (() => {
+        if (isTouchEnabled()) {
+            return {
                 up: "mouseup",
                 down: ["mousedown", "touchstart"],
                 move: "touchmove",
                 enter: "touchenter",
                 leave: "touchend"
-            } :
-            {
+            }
+        } else if (hasPointerEvents()) {
+            return {
+                up: "pointerup",
+                down: ["pointerdown"],
+                move: "pointermove",
+                enter: "pointerenter",
+                leave: "pointerleave"
+            }
+        } else {
+            return {
                 up: "mouseup",
                 down: ["mousedown"],
                 move: "mousemove",
                 enter: "mouseenter",
                 leave: "mouseleave"
-            };
+            }
+        }
+    })();
+
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {
             const winLeft = window.screenLeft ? window.screenLeft : window.screenX;
