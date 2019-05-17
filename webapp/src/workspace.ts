@@ -661,8 +661,14 @@ export async function importGithubAsync(id: string) {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     } catch (e) {
         if (e.statusCode == 409) {
-            // this means repo is completely empty; put something in there
-            await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n")
+            // this means repo is completely empty; 
+            // put all default files in there
+            const files = pxt.packageFiles(parsed.fullName.replace('/', '-'));
+            pxt.packageFilesFixup(files)
+            for (const f in files) {
+                const c = files[f];
+                await pxt.github.putFileAsync(parsed.fullName, f, c)
+            };
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
