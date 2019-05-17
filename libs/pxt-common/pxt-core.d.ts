@@ -257,12 +257,10 @@ declare interface String {
     //% helper=stringSlice
     slice(start: number, end?: number): string;
 
-    // This block is currently disabled, as it does not compile in some targets
-    // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
-    //% shim=String_::isEmpty
+    //% helper=stringEmpty
     //% blockId="string_isempty" blockNamespace="text"
-    // block="%this=text| is empty"
+    //% block="%this=text| is empty"
     isEmpty(): boolean;
 
     /**

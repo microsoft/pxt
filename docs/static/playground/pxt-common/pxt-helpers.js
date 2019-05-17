@@ -296,6 +296,10 @@ namespace helpers {
         }
         return q + r;
     }
+
+    export function stringEmpty(S: string): boolean {
+        return !S || S.length == 0;
+    }
 }
 
 namespace Math {
