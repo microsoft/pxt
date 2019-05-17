@@ -2448,7 +2448,27 @@ ${lbl}: .short 0xffff
                     s = ""
                 }
                 if (s == "" && thisJres) {
-                    if (!thisJres.dataEncoding || thisJres.dataEncoding == "base64") {
+                    let fontMatch = /font\/x-mkcd-b(\d+)/.exec(thisJres.mimeType)
+                    if (fontMatch) {
+                        if (!bin.finalPass) {
+                            s = "aabbccdd"
+                        } else {
+                            let chsz = parseInt(fontMatch[1])
+                            let data = atob(thisJres.data)
+                            let mask = bin.usedChars
+                            let buf = ""
+                            let incl = ""
+                            for (let pos = 0; pos < data.length; pos += chsz) {
+                                let charcode = data.charCodeAt(pos) + (data.charCodeAt(pos + 1) << 8)
+                                if (charcode < 128 || (mask[charcode >> 5] & (1 << (charcode & 31)))) {
+                                    buf += data.slice(pos, pos + chsz)
+                                    incl += charcode + ", "
+                                }
+                            }
+                            console.log("embed font: " + incl)
+                            s = U.toHex(U.stringToUint8Array(buf))
+                        }
+                    } else if (!thisJres.dataEncoding || thisJres.dataEncoding == "base64") {
                         s = U.toHex(U.stringToUint8Array(ts.pxtc.decodeBase64(thisJres.data)))
                     } else if (thisJres.dataEncoding == "hex") {
                         s = thisJres.data
@@ -4200,6 +4220,7 @@ ${lbl}: .short 0xffff
         itFullEntries = 0;
         numMethods = 0;
         numVirtMethods = 0;
+        usedChars = new Uint32Array(0x10000 / 32);
 
         ifaceMembers: string[];
         strings: pxt.Map<string> = {};
@@ -4239,6 +4260,12 @@ ${lbl}: .short 0xffff
         }
 
         emitString(s: string): string {
+            if (!this.finalPass)
+                for (let i = 0; i < s.length; ++i) {
+                    const ch = s.charCodeAt(i)
+                    if (ch >= 128)
+                        this.usedChars[ch >> 5] |= 1 << (ch & 31)
+                }
             return this.emitLabelled(s, this.strings, "_str")
         }
 
