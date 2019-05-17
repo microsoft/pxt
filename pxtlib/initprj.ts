@@ -1,16 +1,16 @@
 namespace pxt {
-    export const defaultFiles: Map<string> = {
-        "tsconfig.json":
-            `{
-    "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "outDir": "built",
-        "rootDir": "."
-    },
-    "exclude": ["pxt_modules/**/*test.ts"]
-}
-`,
+    export const TS_CONFIG =             `{
+        "compilerOptions": {
+            "target": "es5",
+            "noImplicitAny": true,
+            "outDir": "built",
+            "rootDir": "."
+        },
+        "exclude": ["pxt_modules/**/*test.ts"]
+    }
+    `;
+    const _defaultFiles: Map<string> = {
+        "tsconfig.json": TS_CONFIG,
 
         "test.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
@@ -140,8 +140,7 @@ cache:
 `
     }
 
-
-    export function packageFiles(name: string) {
+    export function packageFiles(name: string): pxt.Map<string> {
         let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
         let config = U.clone(prj.config);
         // remove blocks file
@@ -159,8 +158,8 @@ cache:
         }
 
         const files: Map<string> = {};
-        for (const f in defaultFiles)
-            files[f] = defaultFiles[f];
+        for (const f in _defaultFiles)
+            files[f] = _defaultFiles[f];
         for (const f in prj.files)
             if (f != "README.md") // this one we need to keep
                 files[f] = prj.files[f];

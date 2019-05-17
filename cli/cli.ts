@@ -2730,7 +2730,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
             .then(() => {
                 let tscfg = "tsconfig.json"
                 if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                    nodeutil.writeFileSync(tscfg, pxt.defaultFiles[tscfg])
+                    nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
                 }
             })
     }
@@ -4842,21 +4842,13 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             nodeutil.writeFileSync(fullname, prj.files[fn])
         }
         // add default files if not present
-        const configMap: pxt.Map<string> = {
-            "version": "0.0.0",
-            "description": "",
-            "license": "MIT",
-            "name": prj.name,
-            "target": pxt.appTarget.platformid || pxt.appTarget.id,
-            "docs": pxt.appTarget.appTheme.homeUrl || "./"
-        }
-        for (let fn in pxt.defaultFiles) {
+        const files = pxt.packageFiles(prj.name);
+        pxt.packageFilesFixup(files);
+        for (let fn in files) {
             if (prj.files[fn]) continue;
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
-
-            const src = pxt.defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
-
+            const src = files[fn];
             nodeutil.writeFileSync(fullname, src)
         }
 
