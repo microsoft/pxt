@@ -2465,7 +2465,6 @@ ${lbl}: .short 0xffff
                                     incl += charcode + ", "
                                 }
                             }
-                            console.log("embed font: " + incl)
                             s = U.toHex(U.stringToUint8Array(buf))
                         }
                     } else if (!thisJres.dataEncoding || thisJres.dataEncoding == "base64") {
