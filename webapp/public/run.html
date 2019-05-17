@@ -103,7 +103,7 @@
         (function () {
         var loading = document.getElementById('loading');
         var id = /id(?:[:=])([^&?]+)/i.exec(window.location.href);
-        var code = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var code = window.frameElement.getAttribute('data-code')
         var localToken = /local_token(?:[:=])([^&?]+)/i.exec(window.location.href);
         var hex = !!/hex(?:[:=])1/i.exec(window.location.href);
         var footer = !/nofooter(?:[:=])1/i.exec(window.location.href);
@@ -163,7 +163,7 @@
             else if (!debugSim) {
                 var options = {
                     id: id ? id[1] : undefined,
-                    code: code ? decodeURIComponent(code[1]) : undefined,
+                    code: code ? decodeURIComponent(code) : undefined,
                     highContrast: highContrast,
                     light: light,
                     fullScreen: fullScreen,

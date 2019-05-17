@@ -462,6 +462,8 @@ namespace ts.pxtc {
         }
     }
 
+    export let apiLocalizationStrings: pxt.Map<string> = {};
+
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
@@ -469,6 +471,8 @@ namespace ts.pxtc {
         const errors: pxt.Map<number> = {};
         return mainPkg.localizationStringsAsync(lang)
             .then(loc => Util.values(apis.byQName).forEach(fn => {
+                if (apiLocalizationStrings)
+                    Util.jsonMergeFrom(loc, apiLocalizationStrings);
                 const jsDoc = loc[fn.qName]
                 if (jsDoc) {
                     fn.attributes.jsDoc = jsDoc;

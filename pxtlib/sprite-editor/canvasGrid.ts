@@ -297,10 +297,15 @@ namespace pxtsprite {
         /**
          * This calls getBoundingClientRect() so don't call it in a loop!
          */
-        protected clientToCell(coord: ClientCoordinates) {
+        protected clientEventToCell(ev: MouseEvent) {
+            const coord = clientCoord(ev);
             const bounds = this.paintLayer.getBoundingClientRect();
-            this.mouseCol = Math.floor((coord.clientX - bounds.left) / this.cellWidth);
-            this.mouseRow = Math.floor((coord.clientY - bounds.top) / this.cellHeight);
+            const left = bounds.left + (window.scrollX !== null ? window.scrollX : window.pageXOffset);
+            const top = bounds.top + (window.scrollY !== null ? window.scrollY : window.pageYOffset);
+
+            this.mouseCol = Math.floor((coord.clientX - left) / this.cellWidth);
+            this.mouseRow = Math.floor((coord.clientY - top) / this.cellHeight);
+
             return [
                 this.mouseCol,
                 this.mouseRow
@@ -314,13 +319,13 @@ namespace pxtsprite {
                 pxt.BrowserUtils.pointerEvents.down.forEach(evId => {
                     this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
                         this.startDrag();
-                        const [col, row] = this.clientToCell(clientCoord(ev));
+                        const [col, row] = this.clientEventToCell(ev);
                         this.gesture.handle(InputEvent.Down, col, row);
                     });
                 })
 
                 this.paintLayer.addEventListener("click", (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(clientCoord(ev));
+                    const [col, row] = this.clientEventToCell(ev);
                     this.gesture.handle(InputEvent.Down, col, row);
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
@@ -331,7 +336,7 @@ namespace pxtsprite {
 
         private upHandler = (ev: MouseEvent) => {
             this.endDrag();
-            const [col, row] = this.clientToCell(clientCoord(ev));
+            const [col, row] = this.clientEventToCell(ev);
             this.gesture.handle(InputEvent.Up, col, row);
 
             ev.stopPropagation();
@@ -340,7 +345,7 @@ namespace pxtsprite {
 
         private leaveHandler = (ev: MouseEvent) => {
             this.endDrag();
-            const [col, row] = this.clientToCell(clientCoord(ev));
+            const [col, row] = this.clientEventToCell(ev);
             this.gesture.handle(InputEvent.Leave, col, row);
 
             ev.stopPropagation();
@@ -348,7 +353,7 @@ namespace pxtsprite {
         };
 
         private moveHandler = (ev: MouseEvent) => {
-            const [col, row] = this.clientToCell(clientCoord(ev));
+            const [col, row] = this.clientEventToCell(ev);
             if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
                 if (ev.buttons & 1) {
                     this.gesture.handle(InputEvent.Down, col, row);
@@ -361,7 +366,7 @@ namespace pxtsprite {
         }
 
         private hoverHandler = (ev: MouseEvent) => {
-            const [col, row] = this.clientToCell(clientCoord(ev));
+            const [col, row] = this.clientEventToCell(ev);
             if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
                 this.gesture.handle(InputEvent.Move, col, row);
                 this.gesture.isHover = true;

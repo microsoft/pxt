@@ -860,6 +860,8 @@ namespace pxt.py {
                     return ">>"
                 case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
                     throw Error("Unsupported operator: >>>")
+                case ts.SyntaxKind.AsteriskAsteriskToken:
+                    return "**"
                 default:
                     pxt.tickEvent("depython.todo", { op: s })
                     return "# TODO unknown op: " + s

@@ -1530,7 +1530,6 @@ ${output}</xml>`;
             return r;
         }
 
-
         function getPropertySetBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
             return getPropertyBlock(left, right, tp) as StatementNode
         }
@@ -2316,6 +2315,8 @@ ${output}</xml>`;
                 if (n.operatorToken.kind !== SK.EqualsToken &&
                     n.operatorToken.kind !== SK.PlusEqualsToken) {
                     return Util.lf("Property access expressions may only be assigned to using the = and += operators");
+                } else {
+                    return checkExpression(n.left, env);
                 }
             }
             else if (n.left.kind === SK.Identifier) {

@@ -765,7 +765,9 @@ function pkgVersion() {
 
 function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(nodeutil.allFiles(path.join(simDir(), "public")))
+        .concat(nodeutil.allFiles(path.join(simDir(), "public")));
+    if (simDir() != "sim")
+        lst = lst.concat(nodeutil.allFiles(path.join("sim", "public"), 5, true))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -2728,7 +2730,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
             .then(() => {
                 let tscfg = "tsconfig.json"
                 if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                    nodeutil.writeFileSync(tscfg, pxt.defaultFiles[tscfg])
+                    nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
                 }
             })
     }
@@ -3986,8 +3988,9 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
         });
 }
 
+interface CrowdinCredentials { prj: string; key: string; branch: string; }
 
-function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: string; }> {
+function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
@@ -4118,93 +4121,97 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
     return nextFileAsync();
 }
 
-export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
+export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
+    const name = (parsed && parsed.args[0]) || "";
+    const crowdinDir = pxt.appTarget.id;
+
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
 
-            const crowdinDir = pxt.appTarget.id;
-            const name = parsed.args[0] || "";
-            const todo: string[] = [];
-            pxt.appTarget.bundleddirs
-                .filter(dir => !name || dir == "libs/" + name)
-                .forEach(dir => {
-                    const locdir = path.join(dir, "_locales");
-                    if (fs.existsSync(locdir))
-                        fs.readdirSync(locdir)
-                            .filter(f => /\.json$/i.test(f))
-                            .forEach(f => todo.push(path.join(locdir, f)))
+            return downloadFilesAsync(cred, ["sim-strings.json"], "sim")
+                .then(() => downloadFilesAsync(cred, ["target-strings.json"], "target"))
+                .then(() => {
+                    const files: string[] = [];
+                    pxt.appTarget.bundleddirs
+                        .filter(dir => !name || dir == "libs/" + name)
+                        .forEach(dir => {
+                            const locdir = path.join(dir, "_locales");
+                            if (fs.existsSync(locdir))
+                                fs.readdirSync(locdir)
+                                    .filter(f => /\.json$/i.test(f))
+                                    .forEach(f => files.push(path.join(locdir, f)))
+                        });
+                    return downloadFilesAsync(cred, files, "bundled");
                 });
-
-            const nextFileAsync = (): Promise<void> => {
-                const f = todo.pop();
-                if (!f) {
-                    return Promise.resolve();
-                }
-
-                const errors: pxt.Map<number> = {};
-                const fn = path.basename(f);
-                const crowdf = path.join(crowdinDir, fn);
-                const locdir = path.dirname(f);
-                const projectdir = path.dirname(locdir);
-                pxt.log(`downloading ${crowdf}`);
-                pxt.log(`projectdir: ${projectdir}`)
-                const locFiles: Map<string> = {};
-                return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
-                    .then(data => {
-                        Object.keys(data)
-                            .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
-                            .forEach(lang => {
-                                const dataLang = data[lang];
-                                const langTranslations = stringifyTranslations(dataLang);
-                                if (!langTranslations) return;
-
-                                // validate translations
-                                if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
-                                    // block definitions
-                                    Object.keys(dataLang).forEach(id => {
-                                        const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => {
-                                            const errid = `${fn}.${lang}`;
-                                            errors[`${fn}.${lang}`] = 1
-                                            pxt.log(`error ${errid}: ${err}`)
-                                        });
-                                    });
-                                }
-
-                                const tfdir = path.join(locdir, lang);
-                                const tf = path.join(tfdir, fn);
-                                nodeutil.mkdirP(tfdir)
-                                pxt.log(`writing ${tf}`);
-                                nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
-
-                                locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
-                            })
-                        // update pxt.json
-                        const pxtJson = nodeutil.readPkgConfig(projectdir)
-                        const missingFiles = Object.keys(locFiles).filter(f => pxtJson.files.indexOf(f) < 0)
-                        if (missingFiles.length) {
-                            U.pushRange(pxtJson.files, missingFiles)
-                            // note that pxtJson might result from additionalFilePath, so we read the local file again
-                            const pxtJsonf = path.join(projectdir, "pxt.json");
-                            let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
-                            local.files = pxtJson.files
-                            pxt.log(`writing ${pxtJsonf}`);
-                            nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
-                        }
-
-                        const errorIds = Object.keys(errors);
-                        pxt.log(`${errorIds.length} errors`);
-                        if (errorIds.length) {
-                            errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
-                            pxt.reportError("loc.errors", "invalid translation", errors);
-                        }
-
-                        return nextFileAsync()
-                    });
-            }
-            return nextFileAsync();
         });
+
+    function downloadFilesAsync(cred: CrowdinCredentials, todo: string[], outputName: string) {
+        const locs: pxt.Map<pxt.Map<string>> = {};
+        const nextFileAsync = (): Promise<void> => {
+            const f = todo.pop();
+            if (!f) {
+                return Promise.resolve();
+            }
+
+            const errors: pxt.Map<number> = {};
+            const fn = path.basename(f);
+            const crowdf = path.join(crowdinDir, fn);
+            const locdir = path.dirname(f);
+            const projectdir = path.dirname(locdir);
+            pxt.log(`downloading ${crowdf}`);
+            pxt.debug(`projectdir: ${projectdir}`)
+            return pxt.crowdin.downloadTranslationsAsync(cred.branch, cred.prj, cred.key, crowdf, { translatedOnly: true, validatedOnly: true })
+                .then(data => {
+                    Object.keys(data)
+                        .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
+                        .forEach(lang => {
+                            const dataLang = data[lang];
+                            const langTranslations = stringifyTranslations(dataLang);
+                            if (!langTranslations) return;
+
+                            // validate translations
+                            if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
+                                // block definitions
+                                Object.keys(dataLang).forEach(id => {
+                                    const tr = dataLang[id];
+                                    pxt.blocks.normalizeBlock(tr, err => {
+                                        const errid = `${fn}.${lang}`;
+                                        errors[`${fn}.${lang}`] = 1
+                                        pxt.log(`error ${errid}: ${err}`)
+                                    });
+                                });
+                            }
+
+                            // merge translations
+                            let strings = locs[lang];
+                            if (!strings) strings = locs[lang] = {};
+                            Object.keys(dataLang)
+                                .filter(k => !!dataLang[k] && !strings[k])
+                                .forEach(k => strings[k] = dataLang[k]);
+                        })
+
+                    const errorIds = Object.keys(errors);
+                    if (errorIds.length) {
+                        pxt.log(`${errorIds.length} errors`);
+                        errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
+                        pxt.reportError("loc.errors", "invalid translation", errors);
+                    }
+
+                    return nextFileAsync()
+                });
+        }
+        return nextFileAsync()
+            .then(() => {
+                Object.keys(locs).forEach(lang => {
+                    const tf = path.join(`sim/public/locales/${lang}/${outputName}-strings.json`);
+                    pxt.log(`writing ${tf}`);
+                    const dataLang = locs[lang];
+                    const langTranslations = stringifyTranslations(dataLang);
+                    nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
+                })
+            })
+    }
 }
 
 function stringifyTranslations(strings: pxt.Map<string>): string {
@@ -4224,12 +4231,14 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const minify = !!parsed.flags["minify"];
     const bump = !!parsed.flags["bump"];
     const disableAppCache = !!parsed.flags["no-appcache"];
+    const locs = !!parsed.flags["locs"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
     let p = rimrafAsync(builtPackaged, {})
         .then(() => bump ? bumpAsync() : Promise.resolve())
+        .then(() => locs && downloadTargetTranslationsAsync())
         .then(() => internalBuildTargetAsync({ packaged: true }));
     if (ghpages) return p.then(() => ghpPushAsync(builtPackaged, minify));
     else return p.then(() => internalStaticPkgAsync(builtPackaged, route, minify, disableAppCache));
@@ -4833,21 +4842,13 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             nodeutil.writeFileSync(fullname, prj.files[fn])
         }
         // add default files if not present
-        const configMap: pxt.Map<string> = {
-            "version": "0.0.0",
-            "description": "",
-            "license": "MIT",
-            "name": prj.name,
-            "target": pxt.appTarget.platformid || pxt.appTarget.id,
-            "docs": pxt.appTarget.appTheme.homeUrl || "./"
-        }
-        for (let fn in pxt.defaultFiles) {
+        const files = pxt.packageFiles(prj.name);
+        pxt.packageFilesFixup(files);
+        for (let fn in files) {
             if (prj.files[fn]) continue;
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
-
-            const src = pxt.defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
-
+            const src = files[fn];
             nodeutil.writeFileSync(fullname, src)
         }
 
@@ -5484,6 +5485,7 @@ The following environment variables modify the behavior of the CLI when set to
 non-empty string:
 
 PXT_DEBUG        - display extensive logging info
+PXT_USE_HID      - use webusb or hid to flash device
 
 These apply to the C++ runtime builds:
 
@@ -5614,6 +5616,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            locs: {
+                description: "Download localization files and bundle them",
+                aliases: ["locales", "crowdin"]
             },
             "no-appcache": {
                 description: "Disables application cache"
