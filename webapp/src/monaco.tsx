@@ -156,6 +156,7 @@ class HoverProvider implements monaco.languages.HoverProvider {
      * to the word range at the position when omitted.
      */
     provideHover(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.Hover | monaco.Thenable<monaco.languages.Hover> {
+        console.log("monaco 159")
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
@@ -206,6 +207,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public openBlocks() {
+        console.log("monaco 209")
+        console.debug("monaco 209")
+        console.dir("monaco 209")
         pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
@@ -639,6 +643,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ev.preventDefault();
                 ev.stopPropagation();
                 console.log("monaco 641")
+                console.dir(insertText)
 
                 let p = insertText.startsWith("qName:")
                     ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
@@ -647,6 +652,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
                     let position = mouseTarget.position;
                     console.log("monaco 647")
+                    console.dir(snippet)
                     this.insertSnippet(position, snippet);
                 });
             });
@@ -1760,10 +1766,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.getMonacoFlyout();
 
         const isPython = this.fileType == pxt.editor.FileType.Python;
-        console.log("monaco 1761")
         if (fn.snippet === undefined)
             return undefined;
-        console.log("monaco 1763")
         const qName = fn.qName;
         const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
 

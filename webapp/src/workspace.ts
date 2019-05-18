@@ -54,6 +54,8 @@ export function copyProjectToLegacyEditor(header: Header, majorVersion: number):
 }
 
 export function setupWorkspace(id: string) {
+    console.log("workspace.ts 57")
+    pxt.log("workspace.ts 57")
     U.assert(!impl, "workspace set twice");
     pxt.log(`workspace: ${id}`);
     implType = id;
