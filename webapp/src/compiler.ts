@@ -352,7 +352,6 @@ export function formatAsync(input: string, pos: number) {
 }
 
 export function snippetAsync(qName: string, python?: boolean) {
-    // TODO(dz): generate py snippet
     return workerOpAsync("snippet", { snippet: { qName, python } });
 }
 

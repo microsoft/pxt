@@ -71,8 +71,6 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
-                    console.log("monaco 74")
-                    // TODO(dz)
                     const snippet = this.python ? si.pySnippet : si.snippet;
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
@@ -156,7 +154,6 @@ class HoverProvider implements monaco.languages.HoverProvider {
      * to the word range at the position when omitted.
      */
     provideHover(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.Hover | monaco.Thenable<monaco.languages.Hover> {
-        console.log("monaco 159")
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
@@ -207,9 +204,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public openBlocks() {
-        console.log("monaco 209")
-        console.debug("monaco 209")
-        console.dir("monaco 209")
         pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
@@ -642,8 +636,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return;
                 ev.preventDefault();
                 ev.stopPropagation();
-                console.log("monaco 641")
-                console.dir(insertText)
 
                 let p = insertText.startsWith("qName:")
                     ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
@@ -651,8 +643,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 p.done(snippet => {
                     let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
                     let position = mouseTarget.position;
-                    console.log("monaco 647")
-                    console.dir(snippet)
                     this.insertSnippet(position, snippet);
                 });
             });
@@ -674,7 +664,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private insertSnippet(position: monaco.Position, insertText: string) {
-        console.log("monaco 671")
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
         if (!position) // IE11 fails to locate the mouse
