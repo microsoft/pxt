@@ -914,6 +914,7 @@ namespace ts.pxtc.service {
             return lastApiInfo.apis;
         },
         snippet: v => {
+            // TODO(dz): snippets generated here
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];
