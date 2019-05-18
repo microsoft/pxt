@@ -71,6 +71,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
+                    console.log("monaco 74")
+                    // TODO(dz)
                     const snippet = this.python ? si.pySnippet : si.snippet;
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
@@ -636,6 +638,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return;
                 ev.preventDefault();
                 ev.stopPropagation();
+                console.log("monaco 641")
 
                 let p = insertText.startsWith("qName:")
                     ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
@@ -643,6 +646,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 p.done(snippet => {
                     let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
                     let position = mouseTarget.position;
+                    console.log("monaco 647")
                     this.insertSnippet(position, snippet);
                 });
             });
@@ -664,6 +668,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private insertSnippet(position: monaco.Position, insertText: string) {
+        console.log("monaco 671")
         let currPos = this.editor.getPosition();
         let model = this.editor.getModel();
         if (!position) // IE11 fails to locate the mouse
@@ -1755,8 +1760,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.getMonacoFlyout();
 
         const isPython = this.fileType == pxt.editor.FileType.Python;
+        console.log("monaco 1761")
         if (fn.snippet === undefined)
             return undefined;
+        console.log("monaco 1763")
         const qName = fn.qName;
         const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
 
