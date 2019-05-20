@@ -298,7 +298,7 @@ namespace helpers {
     }
 
     export function stringEmpty(S: string): boolean {
-        return !S || S.length == 0;
+        return !S;
     }
 }
 
