@@ -31,8 +31,7 @@ namespace pxt.tutorial {
                             return undefined;
                         break;
                 }
-                // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-                code += "\n { \n " + patchArcadeSnippets(m2) + "\n } \n";
+                code += "\n { \n " + m2 + "\n } \n";
                 return "";
             });
 
@@ -127,6 +126,8 @@ namespace pxt.tutorial {
      * @param inputJS The snippet of js (or markdown with js snippets) to upgrade
      */
     export function patchArcadeSnippets(inputJS: string): string {
+        if (pxt.appTarget.id !== "arcade" && pxt.appTarget.id !== "pxt-32") return inputJS;
+
         const declRegex = /enum\s+SpriteKind\s*{((?:[^}]|\s)+)}/gm;
         const builtin = ["Player", "Projectile", "Enemy", "Food"]
         const match = declRegex.exec(inputJS);
