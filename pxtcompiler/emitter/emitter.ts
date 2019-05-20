@@ -2646,7 +2646,7 @@ ${lbl}: .short 0xffff
                     else
                         classInfo.ctor = proc
                     for (let f of classInfo.allfields) {
-                        if (f.kind == SK.PropertyDeclaration) {
+                        if (f.kind == SK.PropertyDeclaration && !isStatic(f)) {
                             let fi = f as PropertyDeclaration
                             if (fi.initializer) initalizedFields.push(fi)
                         }
