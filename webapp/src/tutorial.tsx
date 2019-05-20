@@ -347,8 +347,8 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                         <div className="content">
                             <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
-                        {hasHint && !tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                        {tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        {hasHint && !tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom grey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        {tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom grey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
