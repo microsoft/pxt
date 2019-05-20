@@ -917,21 +917,21 @@ namespace pxt.BrowserUtils {
     }
 
     export const pointerEvents: IPointerEvents = (() => {
-        if (isTouchEnabled()) {
-            return {
-                up: "mouseup",
-                down: ["mousedown", "touchstart"],
-                move: "touchmove",
-                enter: "touchenter",
-                leave: "touchend"
-            }
-        } else if (hasPointerEvents()) {
+        if (hasPointerEvents()) {
             return {
                 up: "pointerup",
                 down: ["pointerdown"],
                 move: "pointermove",
                 enter: "pointerenter",
                 leave: "pointerleave"
+            }
+        } else if (isTouchEnabled()) {
+            return {
+                up: "mouseup",
+                down: ["mousedown", "touchstart"],
+                move: "touchmove",
+                enter: "touchenter",
+                leave: "touchend"
             }
         } else {
             return {
