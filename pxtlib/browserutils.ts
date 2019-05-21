@@ -964,21 +964,21 @@ namespace pxt.BrowserUtils {
         if (el.classList) {
             return el.classList.contains(cls);
         } else {
-            const classes = el.className.split(" ") as string[];
+            const classes = el.className.split("\s+") as string[];
             return !(classes.indexOf(cls) < 0)
         }
     }
 
     export function addClass(el: SVGElement | HTMLElement, classes: string) {
         classes
-            .split(" ")
+            .split("\s+")
             .forEach(cls => addSingleClass(el, cls));
 
         function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
                 el.classList.add(cls);
             } else {
-                const classes = el.className.split(" ") as string[];
+                const classes = el.className.split("\s+") as string[];
                 if (classes.indexOf(cls) < 0) {
                     el.className.baseVal += " " + cls;
                 }
@@ -988,7 +988,7 @@ namespace pxt.BrowserUtils {
 
     export function removeClass(el: SVGElement | HTMLElement, classes: string) {
         classes
-            .split(" ")
+            .split("\s+")
             .forEach(cls => removeSingleClass(el, cls));
 
         function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
@@ -996,7 +996,7 @@ namespace pxt.BrowserUtils {
                 el.classList.remove(cls);
             } else {
                 el.className.baseVal = (el.className as string)
-                                    .split(" ")
+                                    .split("\s+")
                                     .filter(c => c != cls)
                                     .join(" ");
             }
