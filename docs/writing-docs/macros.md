@@ -23,6 +23,72 @@ Use ``* [ ]`` to create a bullet point with a square and ``* [x]`` for a checked
 **Example:** the [blink lesson](https://makecode.microbit.org/lessons/blink/activity)
 and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/lessons/blink/activity.md) source.
 
+## Message Boxes
+
+Use the following styles for the message box you need
+
+### ~hint
+
+#### Hint Title
+[content]
+
+### ~
+
+```
+### ~hint
+
+#### Hint Title
+[content]
+
+### ~
+```
+
+### ~reminder
+
+#### Reminder Title
+[content]
+
+### ~
+
+```
+### ~reminder
+
+#### Reminder Title
+[content]
+
+### ~
+```
+
+### ~alert
+
+#### Alert Title
+[content]
+
+### ~
+```
+### ~alert
+
+#### Alert Title
+[content]
+
+### ~
+```
+
+### ~tip
+
+#### Tip Title 
+[content]
+
+### ~
+```
+### ~tip
+
+#### Tip Title 
+[content]
+
+### ~
+```
+
 ## Inline button rendering
 
 Use ``` ``|primary button|`` ``` or ``` ``||secondary button||`` ``` to render a button like element.
