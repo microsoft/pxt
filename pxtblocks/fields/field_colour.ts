@@ -67,7 +67,7 @@ namespace pxtblockly {
          * @param {string} colour The new colour in '#rrggbb' format.
          */
         setValue(colour: string) {
-            colour = fixEnumColor(colour);
+            colour = parseColour(colour);
             if (colour.indexOf('0x') > -1) {
                 colour = `#${colour.substr(2)}`;
             }
@@ -107,7 +107,7 @@ namespace pxtblockly {
         }
     }
 
-    function fixEnumColor(colour: string) {
+    function parseColour(colour: string) {
         if (colour) {
             const match = /Colors\.([a-zA-Z]+)/.exec(colour);
             if (match) {
@@ -127,6 +127,6 @@ namespace pxtblockly {
                 }
             }
         }
-        return colour;
+        return parseInt(colour) + "";
     }
 }
