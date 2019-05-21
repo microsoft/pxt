@@ -109,9 +109,11 @@ namespace pxtblockly {
 
     function parseColour(colour: string) {
         if (colour) {
-            const match = /Colors\.([a-zA-Z]+)/.exec(colour);
-            if (match) {
-                switch (match[1].toLocaleLowerCase()) {
+            const enumSplit = /Colors\.([a-zA-Z]+)/.exec(colour);
+            const hexSplit = /0x([0-9a-fA-F]+)/.exec(colour);
+
+            if (enumSplit) {
+                switch (enumSplit[1].toLocaleLowerCase()) {
                     case "red": return "#FF0000";
                     case "orange": return "#FF7F00";
                     case "yellow": return "#FFFF00";
@@ -125,8 +127,25 @@ namespace pxtblockly {
                     case "black": return "#000000";
                     default: return colour;
                 }
+            } else if (hexSplit) {
+                const hexLiteralNumber = hexSplit[1];
+
+                if (hexLiteralNumber.length === 3) {
+                    // if shorthand color, return standard hex triple
+                    let output = "0x";
+                    for (let i = 0; i < hexLiteralNumber.length; i++) {
+                        const digit = hexLiteralNumber.charAt(i);
+                        output += digit + digit;
+                    }
+                    return output;
+                } else if (hexLiteralNumber.length === 6) {
+                    return colour;
+                } else {
+                    // else return parsed as index
+                    return "" + parseInt(colour);
+                }
             }
         }
-        return parseInt(colour) + "";
+        return colour;
     }
 }
