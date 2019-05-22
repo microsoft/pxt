@@ -74,14 +74,13 @@ namespace pxtblockly {
         setValue(colour: string) {
             colour = parseColour(colour, this.getColours_());
 
+            if (!colour) return;
+
             if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
                 this.colour_ != colour) {
                 Blockly.Events.fire(new (Blockly as any).Events.BlockChange(
                     this.sourceBlock_, 'field', this.name, this.colour_, colour));
             }
-
-            // if color is not valid, do not apply color
-            if (!/#[0-9a-fA-F]{6}/.test(colour)) return;
 
             this.colour_ = colour;
             if (this.sourceBlock_) {
