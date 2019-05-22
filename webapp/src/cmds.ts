@@ -4,6 +4,7 @@ import * as electron from "./electron";
 import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
+import * as compiler from "./compiler";
 import Cloud = pxt.Cloud;
 
 let tryPairedDevice = false;
@@ -222,6 +223,8 @@ export function init(): void {
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
+
+    compiler.initAppTarget(pxt.appTarget);
 
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
         pxt.debug(`enabled webusb`);
