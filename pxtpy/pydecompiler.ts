@@ -902,25 +902,6 @@ namespace pxt.py {
                 // TODO confirm the type is correct!
                 return [`len(${left})`, leftSup]
             }
-            // special casing
-            // TODO make this safer. This is syntactic matching, but we really need semantics
-            if (left === "Math") {
-                let mathFn = ""
-                if (right === "max") {
-                    mathFn = "max"
-                } else if (right === "min") {
-                    mathFn = "min"
-                } else if (right === "randomRange") {
-                    mathFn = "random.randint"
-                } else {
-                    throw Error(`Unsupported math fn: ${left}.${right}`);
-                }
-                return [mathFn, leftSup]
-            } else if (left === "console") {
-                if (right === "log") {
-                    return ["print", leftSup]
-                }
-            }
 
             return [`${left}.${right}`, leftSup];
         }
