@@ -4,6 +4,10 @@ import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
+export function initAppTarget(appTarget: pxt.TargetBundle) {
+    return workerOpAsync("initTarget", { target: appTarget })
+}
+
 function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     let mainPkg = pkg.mainEditorPkg();
 

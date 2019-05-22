@@ -164,7 +164,6 @@ namespace ts.pxtc {
     }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
-        // TODO(dz): symbols are created here
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
@@ -721,7 +720,8 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo, bannedCategories?: string[]) => {
+    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo) => {
+        let bannedCategories = pxt.appTarget.runtime.bannedCategories
         if (apisInfoLocOverride) {
             if (!lastLocBlocksInfo) {
                 lastLocBlocksInfo = getBlocksInfo(apisInfoLocOverride, bannedCategories);
@@ -744,6 +744,10 @@ namespace ts.pxtc.service {
     }
 
     const operations: pxt.Map<(v: OpArg) => any> = {
+        initTarget: v => {
+            pxt.appTarget = v.target
+        },
+
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = null
@@ -915,7 +919,6 @@ namespace ts.pxtc.service {
             return lastApiInfo.apis;
         },
         snippet: v => {
-            // TODO(dz): snippets generated here
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];
@@ -928,8 +931,7 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
-            const blockInfo = blocksInfoOp(search.localizedApis, bannedCategories); // cache
+            const blockInfo = blocksInfoOp(search.localizedApis); // caches
 
             if (search.localizedStrings) {
                 pxt.Util.setLocalizedStrings(search.localizedStrings);
@@ -1130,31 +1132,7 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-
-
     export function getSnippet(apis: ApisInfo, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
-        // TODO(dz): snippet generation
-        // typescript, then decompile
-        //      we need Program and symbols ?
-        //      we need py names
-        // parts
-        //      function name
-        //      parameter types, parameter defaults
-        // scenarios
-        //      snippet dragging
-        //      typing suggestions
-        //      tab completion
-        //      signature help
-        //      parameter help
-        // APIS:
-        //      get list of in-scope symbols, filtered by type, filtered by prefix
-        //      get type and default of parameter
-        //      get snippet (apis, fn, n, py?)
-        //          
-        // other things:
-        //      add field editors e.g. item picker
-        //      TODO: talk to Richard
-
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let findex = 0;
@@ -1173,19 +1151,7 @@ namespace ts.pxtc.service {
         const attrs = fn.attributes;
 
         // TODO(dz)
-        console.log("attrs")
-        console.dir(attrs)
-        console.log("apis")
-        console.dir(apis)
-        // let blocks = pxt.blocks.blockDefinitions()
-        console.log("lastBlocksInfo")
-        console.dir(lastBlocksInfo)
-        // e.g. 
-        // attributes:
-        // block: "%block"
-        // blockHidden: true
-        // blockId: "minecraftBlockField"
-        let blocks = blocksInfoOp(apis).blocks; // cache
+        let blocks = blocksInfoOp(apis).blocks;
         let byShadowBlock = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
         console.log("byShadowBlock")
         console.dir(byShadowBlock)
@@ -1196,29 +1162,12 @@ namespace ts.pxtc.service {
             let sym = byShadowBlock[shadowBlock]
             if (!sym)
                 return null
-            console.log("sym")
-            console.dir(sym)
             if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
                 let realName = sym.parameters[0].type
                 let realSym = apis.byQName[realName]
                 sym = realSym || sym
-                console.log("sym")
-                console.dir(sym)
             }
             return sym
-            // const shadowBlockMap: pxt.Map<string> = {
-            //     // shadow override -> qname
-            //     // TODO: determine this programatically somehow
-            //     "minecraftBlockField": "Block",
-            //     "minecraftItemField": "Item",
-            // }
-            // let shadowSymStr = shadowBlockMap[shadowBlock]
-            // if (!shadowSymStr)
-            //     return null
-            // let shadowSym = apis.byQName[shadowSymStr]
-            // if (!shadowSym)
-            //     return null
-            // return shadowSym
         }
 
         const checker = service && service.getProgram().getTypeChecker();
