@@ -424,13 +424,14 @@ div.simframe > iframe {
     z-index: @sidedocZIndex;
     padding: 0;
     margin: 0;
-    background: grey;
+    background: @grey;
     box-shadow: none!important;
     transition: none;
+    opacity: 0.8;
 
     &:hover,
     &:focus {
-      background: #5A5A5A;
+      opacity: 1;
     }
 }
 

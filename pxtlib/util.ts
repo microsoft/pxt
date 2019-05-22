@@ -960,7 +960,9 @@ namespace ts.pxtc.Util {
         }
 
         pxt.debug(`loc: ${code}`);
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code,
+            pxtBranch, targetBranch, live,
+            ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -969,32 +971,52 @@ namespace ts.pxtc.Util {
                         localizeLive = true;
                     }
                 }
-                return Promise.resolve();
+
+                // Download api translations
+                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                    targetId, baseUrl, code,
+                    pxtBranch, targetBranch, live,
+                    ts.pxtc.Util.TranslationsKind.Apis)
+                    .then(trs => {
+                        if (trs)
+                            ts.pxtc.apiLocalizationStrings = trs;
+                    }) : Promise.resolve();
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code)[0];
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
-            return Promise.resolve<pxt.Map<string>>(undefined);
-
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+    export enum TranslationsKind {
+        Editor,
+        Sim,
+        Apis
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
+        translationKind = translationKind || TranslationsKind.Editor;
         code = normalizeLanguageCode(code)[0];
-        let translationsCacheId = `${code}/${live}`;
+        if (code === "en-US" || code === "en") // shortcut
+            return Promise.resolve(undefined);
+
+        let translationsCacheId = `${code}/${live}/${translationKind}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = [
-            { branch: pxtBranch, path: "strings.json" },
-            { branch: targetBranch, path: targetId + "/target-strings.json" },
-            { branch: targetBranch, path: targetId + "/sim-strings.json" }
-        ];
+        let stringFiles: { branch: string, staticName: string, path: string }[];
+        switch (translationKind) {
+            case TranslationsKind.Editor:
+                stringFiles = [
+                    { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
+                    { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                ];
+                break;
+            case TranslationsKind.Sim:
+                stringFiles = [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
+                break;
+            case TranslationsKind.Apis:
+                stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+        }
         let translations: pxt.Map<string>;
-
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             if (!translations) {
@@ -1024,21 +1046,25 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, translationKind);
                 }
 
                 return Promise.resolve(translations);
             });
         } else {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    if (tr) {
-                        translations = tr;
-                        translationsCache()[translationsCacheId] = translations;
-                    }
-                }, e => {
-                    console.error('failed to load localizations')
-                })
+            return Promise.all(stringFiles.map(p =>
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.staticName}`)
+                    .catch(e => undefined))
+            ).then(resps => {
+                let tr: pxt.Map<string> = {};
+                resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));
+                if (Object.keys(tr).length) {
+                    translations = tr;
+                    translationsCache()[translationsCacheId] = translations;
+                }
+            }, e => {
+                console.error('failed to load localizations')
+            })
                 .then(() => translations);
         }
     }
