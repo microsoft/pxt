@@ -67,21 +67,7 @@ namespace pxtblockly {
          * @param {string} colour The new colour in '#rrggbb' format.
          */
         setValue(colour: string) {
-            colour = parseColour(colour);
-
-            if (!/^#/.test(colour) && this.valueMode_ === "index") {
-                const allColors = this.getColours_();
-                if (allColors.indexOf(colour) === -1) {
-                    // Might be the index and not the color
-                    const i = parseInt(colour);
-                    if (!isNaN(i) && i >= 0 && i < allColors.length) {
-                        colour = allColors[i];
-                    }
-                    else {
-                        colour = allColors[0];
-                    }
-                }
-            }
+            colour = parseColour(colour, this.getColours_());
 
             if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
                 this.colour_ != colour) {
@@ -109,10 +95,10 @@ namespace pxtblockly {
         }
     }
 
-    function parseColour(colour: string) {
+    function parseColour(colour: string, allColours: string[]) {
         if (colour) {
             const enumSplit = /Colors\.([a-zA-Z]+)/.exec(colour);
-            const hexSplit = /[0x|#]([0-9a-fA-F]+)/.exec(colour);
+            const hexSplit = /(0x|#)([0-9a-fA-F]+)/.exec(colour);
 
             if (enumSplit) {
                 switch (enumSplit[1].toLocaleLowerCase()) {
@@ -130,7 +116,7 @@ namespace pxtblockly {
                     default: return colour;
                 }
             } else if (hexSplit) {
-                const hexLiteralNumber = hexSplit[1];
+                const hexLiteralNumber = hexSplit[2];
 
                 if (hexLiteralNumber.length === 3) {
                     // if shorthand color, return standard hex triple
@@ -145,14 +131,15 @@ namespace pxtblockly {
                 }
             }
 
-            const parsedAsInt = parseInt(colour);
-            const allColors = this.getColours_();
+            if (allColours) {
+                const parsedAsInt = parseInt(colour);
 
-            // Might be the index and not the color
-            if (!isNaN(parsedAsInt) && allColors[parsedAsInt] != undefined) {
-                return allColors[parsedAsInt];
-            } else {
-                return allColors[0];
+                // Might be the index and not the color
+                if (!isNaN(parsedAsInt) && allColours[parsedAsInt] != undefined) {
+                    return allColours[parsedAsInt];
+                } else {
+                    return allColours[0];
+                }
             }
         }
         return colour;
