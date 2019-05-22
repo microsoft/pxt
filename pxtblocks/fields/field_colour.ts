@@ -57,6 +57,7 @@ namespace pxtblockly {
                         return this.colour_;
                     }
                 case "index":
+                    if (!this.colour_) return "-1";
                     const allColours = this.getColours_();
                     for (let i = 0; i < allColours.length; i++) {
                         if (this.colour_.toUpperCase() === allColours[i].toUpperCase()) {
