@@ -69,10 +69,7 @@ namespace pxtblockly {
         setValue(colour: string) {
             colour = parseColour(colour);
 
-            if (/^0x/.test(colour)) {
-                colour = `#${colour.substr(2)}`;
-            }
-            else if (this.valueMode_ === "index") {
+            if (this.valueMode_ === "index") {
                 const allColors = this.getColours_();
                 if (allColors.indexOf(colour) === -1) {
                     // Might be the index and not the color
@@ -137,14 +134,14 @@ namespace pxtblockly {
 
                 if (hexLiteralNumber.length === 3) {
                     // if shorthand color, return standard hex triple
-                    let output = "0x";
+                    let output = "#";
                     for (let i = 0; i < hexLiteralNumber.length; i++) {
                         const digit = hexLiteralNumber.charAt(i);
                         output += digit + digit;
                     }
                     return output;
                 } else if (hexLiteralNumber.length === 6) {
-                    return colour;
+                    return "#" + hexLiteralNumber;
                 } else {
                     // else return parsed as index
                     return "" + parseInt(colour);
