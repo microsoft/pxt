@@ -69,7 +69,7 @@ namespace pxtblockly {
         setValue(colour: string) {
             colour = parseColour(colour);
 
-            if (colour.indexOf('0x') > -1) {
+            if (/^0x/.test(colour)) {
                 colour = `#${colour.substr(2)}`;
             }
             else if (this.valueMode_ === "index") {
@@ -93,7 +93,7 @@ namespace pxtblockly {
             }
 
             // if color is not valid, do not apply color
-            if (!/#[0-9a-fA-F]{6}/.exec(colour)) return;
+            if (!/#[0-9a-fA-F]{6}/.test(colour)) return;
 
             this.colour_ = colour;
             if (this.sourceBlock_) {
