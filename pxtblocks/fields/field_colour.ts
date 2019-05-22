@@ -69,7 +69,7 @@ namespace pxtblockly {
         setValue(colour: string) {
             colour = parseColour(colour);
 
-            if (this.valueMode_ === "index") {
+            if (!/^#/.test(colour) && this.valueMode_ === "index") {
                 const allColors = this.getColours_();
                 if (allColors.indexOf(colour) === -1) {
                     // Might be the index and not the color
@@ -112,7 +112,7 @@ namespace pxtblockly {
     function parseColour(colour: string) {
         if (colour) {
             const enumSplit = /Colors\.([a-zA-Z]+)/.exec(colour);
-            const hexSplit = /0x([0-9a-fA-F]+)/.exec(colour);
+            const hexSplit = /[0x|#]([0-9a-fA-F]+)/.exec(colour);
 
             if (enumSplit) {
                 switch (enumSplit[1].toLocaleLowerCase()) {
@@ -142,10 +142,17 @@ namespace pxtblockly {
                     return output;
                 } else if (hexLiteralNumber.length === 6) {
                     return "#" + hexLiteralNumber;
-                } else {
-                    // else return parsed as index
-                    return "" + parseInt(colour);
                 }
+            }
+
+            const parsedAsInt = parseInt(colour);
+            const allColors = this.getColours_();
+
+            // Might be the index and not the color
+            if (!isNaN(parsedAsInt) && allColors[parsedAsInt] != undefined) {
+                return allColors[parsedAsInt];
+            } else {
+                return allColors[0];
             }
         }
         return colour;
