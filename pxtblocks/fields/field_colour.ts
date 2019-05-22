@@ -57,7 +57,12 @@ namespace pxtblockly {
                         return this.colour_;
                     }
                 case "index":
-                    return this.getColours_().indexOf(this.colour_).toString();
+                    const allColours = this.getColours_();
+                    for (let i = 0; i < allColours.length; i++) {
+                        if (this.colour_.toUpperCase() === allColours[i].toUpperCase()) {
+                            return i + "";
+                        }
+                    }
             }
             return this.colour_;
         }
@@ -91,7 +96,7 @@ namespace pxtblockly {
         }
 
         getColours_(): string[] {
-            return (this as any).colours_;
+            return this.colours_;
         }
     }
 
