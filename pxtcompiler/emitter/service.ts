@@ -1409,8 +1409,6 @@ namespace ts.pxtc.service {
                             if (member.name.kind === SK.Identifier) {
                                 let fullName = checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
                                 let pxtSym = apis.byQName[fullName]
-                                console.log(pxtSym)
-                                console.dir(pxtSym)
                                 if (pxtSym) {
                                     return python ? pxtSym.pyQName : pxtSym.qName
                                 }
