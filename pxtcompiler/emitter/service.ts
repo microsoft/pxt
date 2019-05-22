@@ -1150,16 +1150,13 @@ namespace ts.pxtc.service {
 
         const attrs = fn.attributes;
 
-        // TODO(dz)
         let blocks = blocksInfoOp(apis).blocks;
-        let byShadowBlock = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
-        console.log("byShadowBlock")
-        console.dir(byShadowBlock)
+        let blocksById = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
         function getShadowSymbol(paramName: string): SymbolInfo | null {
             let shadowBlock = (attrs._shadowOverrides || {})[paramName]
             if (!shadowBlock)
                 return null
-            let sym = byShadowBlock[shadowBlock]
+            let sym = blocksById[shadowBlock]
             if (!sym)
                 return null
             if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
@@ -1173,11 +1170,9 @@ namespace ts.pxtc.service {
         const checker = service && service.getProgram().getTypeChecker();
 
         function getTsSymbolFromPxtSymbol(inSym: SymbolInfo, anchor: ts.Node): ts.Symbol | null {
-            // TODO(dz): handle non-enums
+            // TODO: handle non-enum types
             const tsSymbols = checker.getSymbolsInScope(anchor, SymbolFlags.Enum)
             const tsSymbolMap = pxt.Util.toDictionary(tsSymbols, s => s.escapedName.toString())
-            console.log("tsSymbolMap")
-            console.dir(tsSymbolMap)
             return tsSymbolMap[inSym.qName] || null
         }
 
@@ -1197,11 +1192,8 @@ namespace ts.pxtc.service {
             }
 
             function getDefaultValueOfType(type: ts.Type): string | null {
-                // TODO(dz): there's a wierd confusion around Type and the symbol for a Type
-                // e.g. the enum "Block" has symbol kind of "enum" but if you get the type of that symbol
-                // it'll tell you it's an object
-                let sym = type.symbol
-                if (sym && sym.flags & SymbolFlags.Enum) {
+                // TODO: generalize this to handle more types
+                if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
                     return getDefaultEnumValue(type);
                 }
                 if (isObjectType(type)) {
@@ -1225,8 +1217,6 @@ namespace ts.pxtc.service {
             // check if there's a shadow override defined
             let shadowSymbol = getShadowSymbol(name)
             if (shadowSymbol) {
-                console.log("shadowSymbol")
-                console.dir(shadowSymbol)
                 let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param)
                 let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
                 if (shadowType) {
@@ -1238,7 +1228,7 @@ namespace ts.pxtc.service {
             }
 
             // simple types we can determine defaults for
-            // TODO(dz): move into getDefaultValueOfType
+            // TODO: move into getDefaultValueOfType
             switch (typeNode.kind) {
                 case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
                 case SK.NumberKeyword: return "0";
