@@ -149,7 +149,7 @@ namespace pxt {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
                     let js: Map<JRes> = JSON.parse(this.readFile(f))
-                    let base = js["*"]
+                    let base: JRes = js["*"] || {} as any
                     for (let k of Object.keys(js)) {
                         if (k == "*") continue
                         let v = js[k]

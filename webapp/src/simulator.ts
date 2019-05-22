@@ -24,7 +24,10 @@ let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
-    simTranslations = translations;
+    if (simTranslations !== translations) {
+        simTranslations = translations;
+        setDirty();
+    }
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
@@ -233,11 +236,11 @@ export function setState(editor: string, tutMode?: boolean) {
 }
 
 export function setDirty() { // running outdated code
-    driver.setDirty();
+    if (driver) driver.setDirty();
 }
 
 export function setPending() {
-    driver.setPending();
+    if (driver) driver.setPending();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,

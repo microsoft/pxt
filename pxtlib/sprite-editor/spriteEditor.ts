@@ -126,7 +126,7 @@ namespace pxtsprite {
             this.paintSurface.leave(() => {
                 if (this.edit) {
                     this.rePaint();
-                    if (this.edit.isStarted && this.activeTool === PaintTool.Normal) {
+                    if (this.edit.isStarted && !this.shiftDown) {
                         this.commit();
                     }
                 }
@@ -558,15 +558,26 @@ namespace pxtsprite {
             if (!this.shiftDown || this.altDown)
                 return;
 
-            if (this.activeTool === PaintTool.Line) {
-                this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
+            switch (this.activeTool) {
+                case PaintTool.Line:
+                case PaintTool.Rectangle:
+                case PaintTool.Circle:
+                    this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
+                    break;
             }
         }
 
         private clearShiftAction() {
-            if (this.activeTool === PaintTool.Line && !this.mouseDown) {
-                this.updateEdit();
-                this.paintSurface.restore(this.state, true);
+            if (this.mouseDown)
+                return;
+
+            switch (this.activeTool) {
+                case PaintTool.Line:
+                case PaintTool.Rectangle:
+                case PaintTool.Circle:
+                    this.updateEdit();
+                    this.paintSurface.restore(this.state, true);
+                    break;
             }
         }
 
