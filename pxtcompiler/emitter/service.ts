@@ -164,6 +164,7 @@ namespace ts.pxtc {
     }
 
     function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
+        // TODO(dz): symbols are created here
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
@@ -830,9 +831,9 @@ namespace ts.pxtc.service {
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
                     if (python)
-                        si.pySnippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
+                        si.pySnippet = getSnippet(lastApiInfo.apis, si, n, python);
                     else
-                        si.snippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
+                        si.snippet = getSnippet(lastApiInfo.apis, si, n, python);
                 }
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
@@ -921,7 +922,7 @@ namespace ts.pxtc.service {
             const n = lastApiInfo.decls[o.qName];
             if (!fn || !n || !ts.isFunctionLike(n))
                 return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis.byQName, fn, n as FunctionLikeDeclaration, !!o.python)
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis, fn, n as FunctionLikeDeclaration, !!o.python)
         },
         blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
@@ -1131,7 +1132,7 @@ namespace ts.pxtc.service {
 
 
 
-    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+    export function getSnippet(apis: ApisInfo, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
         // TODO(dz): snippet generation
         // typescript, then decompile
         //      we need Program and symbols ?
@@ -1174,23 +1175,50 @@ namespace ts.pxtc.service {
         // TODO(dz)
         console.log("attrs")
         console.dir(attrs)
+        console.log("apis")
+        console.dir(apis)
+        // let blocks = pxt.blocks.blockDefinitions()
+        console.log("lastBlocksInfo")
+        console.dir(lastBlocksInfo)
+        // e.g. 
+        // attributes:
+        // block: "%block"
+        // blockHidden: true
+        // blockId: "minecraftBlockField"
+        let blocks = blocksInfoOp(apis).blocks; // cache
+        let byShadowBlock = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
+        console.log("byShadowBlock")
+        console.dir(byShadowBlock)
         function getShadowSymbol(paramName: string): SymbolInfo | null {
             let shadowBlock = (attrs._shadowOverrides || {})[paramName]
             if (!shadowBlock)
                 return null
-            const shadowBlockMap: pxt.Map<string> = {
-                // shadow override -> qname
-                // TODO: determine this programatically somehow
-                "minecraftBlockField": "Block",
-                "minecraftItemField": "Item",
+            let sym = byShadowBlock[shadowBlock]
+            if (!sym)
+                return null
+            console.log("sym")
+            console.dir(sym)
+            if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
+                let realName = sym.parameters[0].type
+                let realSym = apis.byQName[realName]
+                sym = realSym || sym
+                console.log("sym")
+                console.dir(sym)
             }
-            let shadowSymStr = shadowBlockMap[shadowBlock]
-            if (!shadowSymStr)
-                return null
-            let shadowSym = apis[shadowSymStr]
-            if (!shadowSym)
-                return null
-            return shadowSym
+            return sym
+            // const shadowBlockMap: pxt.Map<string> = {
+            //     // shadow override -> qname
+            //     // TODO: determine this programatically somehow
+            //     "minecraftBlockField": "Block",
+            //     "minecraftItemField": "Item",
+            // }
+            // let shadowSymStr = shadowBlockMap[shadowBlock]
+            // if (!shadowSymStr)
+            //     return null
+            // let shadowSym = apis.byQName[shadowSymStr]
+            // if (!shadowSym)
+            //     return null
+            // return shadowSym
         }
 
         const checker = service && service.getProgram().getTypeChecker();
@@ -1228,7 +1256,7 @@ namespace ts.pxtc.service {
                     return getDefaultEnumValue(type);
                 }
                 if (isObjectType(type)) {
-                    const typeSymbol = apis[checker.getFullyQualifiedName(type.symbol)];
+                    const typeSymbol = apis.byQName[checker.getFullyQualifiedName(type.symbol)];
                     const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
                     if (snip) return snip;
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
@@ -1309,9 +1337,9 @@ namespace ts.pxtc.service {
                     snippetPrefix = snakify(snippetPrefix).toLowerCase();
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
-                const nsInfo = apis[element.namespace];
+                const nsInfo = apis.byQName[element.namespace];
                 if (nsInfo.attributes.fixedInstances) {
-                    let instances = Util.values(apis)
+                    let instances = Util.values(apis.byQName)
                     let getExtendsTypesFor = function (name: string) {
                         return instances
                             .filter(v => v.extendsTypes)
@@ -1373,7 +1401,7 @@ namespace ts.pxtc.service {
         function getSymbolName(symbol: Symbol) {
             if (checker) {
                 const qName = getFullName(checker, symbol);
-                const si = apis[qName];
+                const si = apis.byQName[qName];
                 if (si)
                     return getName(si);
             }
@@ -1441,7 +1469,7 @@ namespace ts.pxtc.service {
                             const member = enumDeclaration.members[i];
                             if (member.name.kind === SK.Identifier) {
                                 let fullName = checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
-                                let pxtSym = apis[fullName]
+                                let pxtSym = apis.byQName[fullName]
                                 console.log(pxtSym)
                                 console.dir(pxtSym)
                                 if (pxtSym) {
