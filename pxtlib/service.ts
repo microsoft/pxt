@@ -1320,6 +1320,7 @@ namespace ts.pxtc.service {
         blocks?: BlocksOptions;
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
+        target?: pxt.TargetBundle;
     }
 
     export interface SnippetOptions {
