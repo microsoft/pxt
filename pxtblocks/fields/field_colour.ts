@@ -68,6 +68,7 @@ namespace pxtblockly {
          */
         setValue(colour: string) {
             colour = parseColour(colour);
+
             if (colour.indexOf('0x') > -1) {
                 colour = `#${colour.substr(2)}`;
             }
@@ -90,6 +91,10 @@ namespace pxtblockly {
                 Blockly.Events.fire(new (Blockly as any).Events.BlockChange(
                     this.sourceBlock_, 'field', this.name, this.colour_, colour));
             }
+
+            // if color is not valid, do not apply color
+            if (!/#[0-9a-fA-F]{6}/.exec(colour)) return;
+
             this.colour_ = colour;
             if (this.sourceBlock_) {
                 this.sourceBlock_.setColour(colour, colour, colour);
