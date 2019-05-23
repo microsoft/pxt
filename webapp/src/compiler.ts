@@ -183,7 +183,8 @@ export function completionsAsync(fileName: string, position: number, fileContent
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
-        position
+        position,
+        runtime: pxt.appTarget.runtime
     });
 }
 
@@ -329,7 +330,11 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
         .then(() => {
             searchFor.localizedApis = cachedApis;
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
-            return workerOpAsync("apiSearch", { search: searchFor, blocks: blocksOptions() });
+            return workerOpAsync("apiSearch", {
+                search: searchFor,
+                blocks: blocksOptions(),
+                runtime: pxt.appTarget.runtime
+            });
         });
 }
 
@@ -352,7 +357,10 @@ export function formatAsync(input: string, pos: number) {
 }
 
 export function snippetAsync(qName: string, python?: boolean) {
-    return workerOpAsync("snippet", { snippet: { qName, python } });
+    return workerOpAsync("snippet", {
+        snippet: { qName, python },
+        runtime: pxt.appTarget.runtime
+    });
 }
 
 export function typecheckAsync() {

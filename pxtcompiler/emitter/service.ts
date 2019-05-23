@@ -9,6 +9,28 @@ namespace ts.pxtc {
 . . . . .
 `
 
+    export interface FunOverride {
+        n: string;
+        t: any;
+        scale?: number;
+    }
+
+    export const ts2PyFunNameMap: pxt.Map<FunOverride> = {
+            "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
+            "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
+            "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
+            "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
+            "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
+            ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
+            ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
+            ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
+            ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
+            "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+            "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+            "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
+            ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
+        }
+
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
         if (p.default) return p.default
@@ -533,7 +555,10 @@ namespace ts.pxtc {
             }
 
             if (si.pyName) {
-                if (si.namespace) {
+                let override = U.lookup(ts2PyFunNameMap, si.qName);
+                if (override && override.n) {
+                    si.pyQName = override.n;
+                } else if (si.namespace) {
                     let par = res.byQName[si.namespace]
                     if (par) {
                         si.pyQName = par.pyQName + "." + si.pyName
@@ -720,7 +745,7 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo, bannedCategories?: string[]) => {
+    const blocksInfoOp = (apisInfoLocOverride: pxtc.ApisInfo, bannedCategories: string[]) => {
         if (apisInfoLocOverride) {
             if (!lastLocBlocksInfo) {
                 lastLocBlocksInfo = getBlocksInfo(apisInfoLocOverride, bannedCategories);
@@ -830,9 +855,9 @@ namespace ts.pxtc.service {
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
                     if (python)
-                        si.pySnippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
+                        si.pySnippet = getSnippet(lastApiInfo.apis, v.runtime, si, n, python);
                     else
-                        si.snippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
+                        si.snippet = getSnippet(lastApiInfo.apis, v.runtime, si, n, python);
                 }
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
@@ -920,14 +945,13 @@ namespace ts.pxtc.service {
             const n = lastApiInfo.decls[o.qName];
             if (!fn || !n || !ts.isFunctionLike(n))
                 return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis.byQName, fn, n as FunctionLikeDeclaration, !!o.python)
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis, v.runtime, fn, n as FunctionLikeDeclaration, !!o.python)
         },
-        blocksInfo: v => blocksInfoOp(v as any),
+        blocksInfo: v => blocksInfoOp(v as any, v.runtime.bannedCategories),
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
-            const blockInfo = blocksInfoOp(search.localizedApis, bannedCategories); // cache
+            const blockInfo = blocksInfoOp(search.localizedApis, v.runtime.bannedCategories); // caches
 
             if (search.localizedStrings) {
                 pxt.Util.setLocalizedStrings(search.localizedStrings);
@@ -1128,7 +1152,7 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+    export function getSnippet(apis: ApisInfo, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let findex = 0;
@@ -1145,13 +1169,40 @@ namespace ts.pxtc.service {
             fnName = snakify(fnName).toLowerCase();
 
         const attrs = fn.attributes;
+
+        let blocks = blocksInfoOp(apis, runtimeOps.bannedCategories).blocks;
+        let blocksById = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
+        function getShadowSymbol(paramName: string): SymbolInfo | null {
+            let shadowBlock = (attrs._shadowOverrides || {})[paramName]
+            if (!shadowBlock)
+                return null
+            let sym = blocksById[shadowBlock]
+            if (!sym)
+                return null
+            if (sym.attributes.shim === "TD_ID" && sym.parameters.length) {
+                let realName = sym.parameters[0].type
+                let realSym = apis.byQName[realName]
+                sym = realSym || sym
+            }
+            return sym
+        }
+
         const checker = service && service.getProgram().getTypeChecker();
-        const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
+
+        function getTsSymbolFromPxtSymbol(inSym: SymbolInfo, anchor: ts.Node): ts.Symbol | null {
+            // TODO: handle non-enum types
+            const tsSymbols = checker.getSymbolsInScope(anchor, SymbolFlags.Enum)
+            const tsSymbolMap = pxt.Util.toDictionary(tsSymbols, s => s.escapedName.toString())
+            return tsSymbolMap[inSym.qName] || null
+        }
+
+        function getParameterDefault(param: ParameterDeclaration) {
             const typeNode = param.type;
             if (!typeNode) return python ? "None" : "null";
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
+            // check for explicit default in the attributes
             if (attrs && attrs.paramDefl && attrs.paramDefl[name]) {
                 if (typeNode.kind == SK.StringKeyword) {
                     const defaultName = attrs.paramDefl[name];
@@ -1159,6 +1210,45 @@ namespace ts.pxtc.service {
                 }
                 return attrs.paramDefl[name];
             }
+
+            function getDefaultValueOfType(type: ts.Type): string | null {
+                // TODO: generalize this to handle more types
+                if (type.symbol && type.symbol.flags & SymbolFlags.Enum) {
+                    return getDefaultEnumValue(type);
+                }
+                if (isObjectType(type)) {
+                    const typeSymbol = apis.byQName[checker.getFullyQualifiedName(type.symbol)];
+                    const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
+                    if (snip) return snip;
+                    if (type.objectFlags & ts.ObjectFlags.Anonymous) {
+                        const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
+                        if (sigs && sigs.length) {
+                            return getFunctionString(sigs[0]);
+                        }
+                        return emitFn(name);
+                    }
+                }
+                if (type.flags & ts.TypeFlags.NumberLike) {
+                    return "0";
+                }
+                return null
+            }
+
+            // check if there's a shadow override defined
+            let shadowSymbol = getShadowSymbol(name)
+            if (shadowSymbol) {
+                let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param)
+                let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
+                if (shadowType) {
+                    let shadowDef = getDefaultValueOfType(shadowType)
+                    if (shadowDef) {
+                        return shadowDef
+                    }
+                }
+            }
+
+            // simple types we can determine defaults for
+            // TODO: move into getDefaultValueOfType
             switch (typeNode.kind) {
                 case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
                 case SK.NumberKeyword: return "0";
@@ -1176,29 +1266,21 @@ namespace ts.pxtc.service {
                     return emitFn(name);
             }
 
-            const type = checker && checker.getTypeAtLocation(param);
+            // get default of type
+            let type = checker && checker.getTypeAtLocation(param);
             if (type) {
-                if (isObjectType(type)) {
-                    const typeSymbol = apis[checker.getFullyQualifiedName(type.symbol)];
-                    const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
-                    if (snip) return snip;
-                    if (type.objectFlags & ts.ObjectFlags.Anonymous) {
-                        const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
-                        if (sigs && sigs.length) {
-                            return getFunctionString(sigs[0]);
-                        }
-                        return emitFn(name);
-                    }
-                }
-                if (type.flags & ts.TypeFlags.EnumLike) {
-                    return getDefaultEnumValue(type);
-                }
-                if (type.flags & ts.TypeFlags.NumberLike) {
-                    return "0";
-                }
+                let typeDef = getDefaultValueOfType(type)
+                if (typeDef)
+                    return typeDef
             }
+
+            // lastly, null or none
             return python ? "None" : "null";
-        }) : [];
+        }
+
+        const args = n.parameters ? n.parameters
+            .filter(param => !param.initializer && !param.questionToken)
+            .map(getParameterDefault) : [];
 
         let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
         let isInstance = false;
@@ -1214,9 +1296,9 @@ namespace ts.pxtc.service {
                     snippetPrefix = snakify(snippetPrefix).toLowerCase();
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
-                const nsInfo = apis[element.namespace];
+                const nsInfo = apis.byQName[element.namespace];
                 if (nsInfo.attributes.fixedInstances) {
-                    let instances = Util.values(apis)
+                    let instances = Util.values(apis.byQName)
                     let getExtendsTypesFor = function (name: string) {
                         return instances
                             .filter(v => v.extendsTypes)
@@ -1278,7 +1360,7 @@ namespace ts.pxtc.service {
         function getSymbolName(symbol: Symbol) {
             if (checker) {
                 const qName = getFullName(checker, symbol);
-                const si = apis[qName];
+                const si = apis.byQName[qName];
                 if (si)
                     return getName(si);
             }
@@ -1345,7 +1427,13 @@ namespace ts.pxtc.service {
                         for (let j = 0; j < enumDeclaration.members.length; j++) {
                             const member = enumDeclaration.members[i];
                             if (member.name.kind === SK.Identifier) {
-                                return checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
+                                let fullName = checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
+                                let pxtSym = apis.byQName[fullName]
+                                if (pxtSym) {
+                                    return python ? pxtSym.pyQName : pxtSym.qName
+                                }
+                                else
+                                    return fullName
                             }
                         }
                     }
