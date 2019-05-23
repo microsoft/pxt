@@ -216,6 +216,14 @@ using the ``spy`` macro.
     let x = 0;
     ```
 
+### ghost
+
+A typescript snippet that should not be displayed but can be used to force
+the appearance of various blocs in a tutorial.
+
+    ```ghost
+    let x = 0;
+    ```
 
 ### codecard
 

@@ -777,6 +777,12 @@ namespace pxt.runner {
         });
     }
 
+    function renderGhost(options: ClientRenderOptions) {
+        let c = $('.lang-ghost');
+        c = c.parent();
+        c.remove();
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable();
         if (!options) options = {}
@@ -806,6 +812,7 @@ namespace pxt.runner {
         }
 
         renderQueue = [];
+        renderGhost(options);
         renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
