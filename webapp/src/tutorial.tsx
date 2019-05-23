@@ -123,6 +123,7 @@ export interface TutorialHintState {
 
 export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
     public elementRef: HTMLDivElement;
+    protected setRef: (el: HTMLDivElement) => void = (el) => {this.elementRef = el};
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -142,7 +143,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const tutorialHint = step.blockSolution;
         const fullText = step.contentMd;
 
-        return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={(el) => {this.elementRef = el}}>
+        return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
             <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
         </div>
     }
