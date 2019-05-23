@@ -778,7 +778,7 @@ namespace pxt.runner {
     }
 
     function renderGhost(options: ClientRenderOptions) {
-        let c = $('.lang-ghost');
+        let c = $('code.lang-ghost');
         c = c.parent();
         c.remove();
     }
