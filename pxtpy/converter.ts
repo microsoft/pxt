@@ -72,6 +72,23 @@ namespace pxt.py {
         "any": tpAny,
     }
 
+    function ts2PyType(syntaxKind: ts.SyntaxKind): Type {
+        switch (syntaxKind) {
+            case ts.SyntaxKind.StringKeyword:
+                return tpString
+            case ts.SyntaxKind.NumberKeyword:
+                return tpNumber
+            case ts.SyntaxKind.BooleanKeyword:
+                return tpBoolean
+            case ts.SyntaxKind.VoidKeyword:
+                return tpVoid
+            case ts.SyntaxKind.AnyKeyword:
+                return tpAny
+            default:
+                return tpBuffer
+        }
+    }
+
     function cleanSymbol(s: SymbolInfo): pxtc.SymbolInfo {
         let r = U.flatClone(s)
         delete r.pyAST
@@ -1423,30 +1440,35 @@ namespace pxt.py {
             return B.mkInfix(left, op, right)
     }
 
-    interface FunOverride {
-        n: string;
+    interface FunOverride extends pxtc.FunOverride {
         t: Type;
-        scale?: number;
     }
 
-    // TODO: handle built-in mapping in a bi-directional way
-    const funMap: Map<FunOverride> = {
+    const funMapExtension: Map<FunOverride> = {
         "memoryview": { n: "", t: tpBuffer },
         "const": { n: "", t: tpNumber },
-        "micropython.const": { n: "", t: tpNumber },
-        "int": { n: "Math.trunc", t: tpNumber },
-        "len": { n: ".length", t: tpNumber },
-        "min": { n: "Math.min", t: tpNumber },
-        "max": { n: "Math.max", t: tpNumber },
-        "string.lower": { n: ".toLowerCase()", t: tpString },
-        "string.upper": { n: ".toUpperCase()", t: tpString },
-        "ord": { n: ".charCodeAt(0)", t: tpNumber },
-        "bytearray": { n: "pins.createBuffer", t: tpBuffer },
-        "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
-        "bool": { n: "!!", t: tpBoolean },
-        "Array.index": { n: ".indexOf", t: tpNumber },
-        "print": { n: "console.log", t: tpVoid },
+        "micropython.const": { n: "", t: tpNumber }
     }
+
+    function getFunMap(): Map<FunOverride> {
+        let funMap: Map<FunOverride> = {};
+        Object.keys(pxtc.ts2PyFunNameMap).forEach(k => {
+            let tsOverride = pxtc.ts2PyFunNameMap[k];
+            if (tsOverride && tsOverride.n) {
+                let py2TsOverride: FunOverride = {
+                    n: k,
+                    t: ts2PyType(tsOverride.t),
+                    scale: tsOverride.scale
+                }
+
+                funMap[tsOverride.n] = py2TsOverride;
+            }
+        })
+
+        return Object.assign({}, funMap, funMapExtension);
+    }
+
+    const funMap: Map<FunOverride> = getFunMap();
 
     function isSuper(v: py.Expr) {
         return isCallTo(v, "super") && (v as py.Call).args.length == 0

@@ -909,8 +909,7 @@ export class ProjectView
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
-            if (fullscreen) this.showTutorialHint();
-            //else this.showLightbox();
+            if (fullscreen) this.showTutorialHint(true);
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -943,7 +942,7 @@ export class ProjectView
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
                         this.setState({ tutorialOptions: tutorialOptions });
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
-                        if (fullscreen) this.showTutorialHint();
+                        if (fullscreen) this.showTutorialHint(true);
                         //else {
                         //    this.showLightbox();
                         //}
@@ -1148,7 +1147,7 @@ export class ProjectView
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
-                if (fullscreen) this.showTutorialHint();
+                if (fullscreen) this.showTutorialHint(true);
                 //else this.showLightbox();
             })
             .catch(e => {
@@ -2742,7 +2741,7 @@ export class ProjectView
         let p: Promise<string>;
         if (/^\//.test(tutorialId)) {
             title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId)
+            p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
                 .then(md => {
                     if (md) {
                         dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
@@ -2870,11 +2869,9 @@ export class ProjectView
             });
     }
 
-    showTutorialHint() {
-        let th = this.refs["tutorialhint"] as tutorial.TutorialHint;
-        th.showHint();
-        const options = this.state.tutorialOptions;
-        pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+    showTutorialHint(showFullText?: boolean) {
+        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+        tc.toggleHint(showFullText);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3086,7 +3083,6 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {inTutorial ? <tutorial.TutorialHint ref="tutorialhint" parent={this} /> : undefined}
                 {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}

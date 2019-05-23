@@ -2,6 +2,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
+import * as compiler from "./compiler";
 
 import Util = pxt.Util;
 
@@ -15,7 +16,6 @@ let extWeight: pxt.Map<number> = {
 }
 
 export function setupAppTarget(trgbundle: pxt.TargetBundle) {
-    //if (!trgbundle.appTheme) trgbundle.appTheme = {};
     pxt.setAppTarget(trgbundle)
 }
 
