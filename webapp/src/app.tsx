@@ -909,7 +909,7 @@ export class ProjectView
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
-            if (fullscreen) this.showTutorialHint();
+            if (fullscreen) this.showTutorialHint(true);
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }

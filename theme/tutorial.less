@@ -145,7 +145,6 @@ body#docs.tutorial {
     width: 100%;
     font-size: 12pt;
     height: calc(@tutorialCardHeight - 1rem);
-    padding-left: @avatarMargin + 0.5rem;
     margin-bottom: 0.4rem;
     overflow-y: hidden;
     overflow-x: auto;
@@ -164,10 +163,11 @@ body#docs.tutorial {
 }
 
 .tutorial #tutorialcard .tutorialmessage {
-    width: 100%;
+    width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
+    margin-left: @avatarMargin + 0.5rem;
     overflow: hidden;
 }
 
@@ -318,6 +318,7 @@ span.highlight-line {
     z-index: @tutorialLightboxCardZIndex;
     border: 8px solid @primaryColor;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
+    max-height: 70vh;
 }
 
 .tutorialhint:before {
@@ -332,7 +333,6 @@ span.highlight-line {
     border: 16px solid;
     border-color: transparent @primaryColor transparent transparent;
     transform: rotateZ(-45deg);
-
 }
 
 .tutorialhint.hidden {
@@ -369,11 +369,6 @@ span.highlight-line {
 #tutorialcard.seemore {
     .tutorialmessage .content {
         height: calc(@tutorialCardHeight - 1rem - @seeMoreButtonHeight);
-    }
-
-    .tutorialmessage > button {
-        margin-left: @avatarMargin;
-        width: ~'calc(100% - @{avatarMargin})';
     }
 }
 

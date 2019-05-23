@@ -250,6 +250,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     private lastStep = -1;
     componentDidUpdate(prevProps: ISettingsProps, prevState: TutorialCardState) {
+        const options = this.props.parent.state.tutorialOptions;
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         const tutorialOkRef = this.refs["tutorialok"] as sui.Button;
         const okButton = ReactDOM.findDOMNode(tutorialOkRef) as HTMLElement;
@@ -276,6 +277,10 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         if (this.prevStep != step) {
             this.setShowSeeMore();
             this.prevStep = step;
+
+            if (!!options.tutorialStepInfo[step].fullscreen && !prevState.showHintTooltip) {
+                this.toggleHint(true);
+            }
         }
     }
 
@@ -311,10 +316,10 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
-        const tutorialUnplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
+        const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
 
         this.toggleHint(showFullText);
-        if (tutorialUnplugged) {
+        if (unplugged) {
             this.nextTutorialStep();
         }
     }
