@@ -202,6 +202,8 @@ namespace pxsim.util {
         }
 
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+        console.log("Polyfill 1");
+        (window as any).foo = "poly1";
         if (typeof Object.assign != 'function') {
             // Must be writable: true, enumerable: false, configurable: true
             Object.defineProperty(Object, "assign", {

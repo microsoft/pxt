@@ -1465,6 +1465,9 @@ namespace pxt.py {
             }
         })
 
+        console.log("getFunMap")
+        console.log((window as any).foo)
+
         return Object.assign({}, funMap, funMapExtension);
     }
 
