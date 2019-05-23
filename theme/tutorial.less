@@ -7,8 +7,11 @@
 
 @inlineBlockColor: #D83B01;
 @highlightLineColor: #fcfc90;
-@tutorialCardHeight: 9rem;
+@tutorialCardHeight: 8rem;
 @tutorialCardExpandedHeight: 22rem;
+@seeMoreButtonHeight: 3.5rem;
+@avatarSize: 4.5rem;
+@avatarMargin: @avatarSize + 0.5rem;
 
 /*******************************
       Tutorial mode
@@ -113,9 +116,21 @@ body#docs.tutorial {
     padding: 0.5rem;
 }
 
+#tutorialcard .ui.tutorialsegment .avatar-image {
+    position: absolute;
+    top: .9rem;
+    left: 0.7rem;
+    width: @avatarSize;
+    height: @avatarSize;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-image: @avatarImage;
+    cursor: pointer;
+}
+
 .tutorial #tutorialcard .ui.buttons {
     width: 100%;
-    height: calc(@tutorialCardHeight - 1.5rem);
+    height: calc(@tutorialCardHeight - 1rem);
 }
 
 .tutorial.tutorialExpanded #tutorialcard .ui.buttons {
@@ -129,8 +144,8 @@ body#docs.tutorial {
 .tutorial #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 12pt;
-    height: calc(@tutorialCardHeight - 5rem);
-    margin-bottom: 0.5rem;
+    height: calc(@tutorialCardHeight - 1rem);
+    margin-bottom: 0.4rem;
     overflow-y: hidden;
     overflow-x: auto;
     cursor:pointer;
@@ -141,17 +156,19 @@ body#docs.tutorial {
     overflow-y: auto;
 }
 
-#tutorialcard .tutorialmessage .content p {
+#tutorialcard .tutorialmessage .content p,
+.tutorialhint p {
     line-height: 30px !important;
     color: @tutorialSegmentColor;
 }
 
 .tutorial #tutorialcard .tutorialmessage {
-    width: 100%;
+    width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
     padding: 0.5rem;
-    padding-left: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
+    margin-left: @avatarMargin + 0.5rem;
+    overflow: hidden;
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage {
@@ -184,12 +201,25 @@ body#docs.tutorial {
     border-radius: 0.28571429rem;
 }
 
+i.icon.avatar-image {
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-image: @avatarImage;
+}
+
 /* Tutorial blocks */
 
 .hintdialog .ui.segment .blocklyPreview {
     width: 100%;
     @media only screen and (min-height: 400px) {
         max-height: 50vh;
+    }
+}
+
+.tutorialhint .ui.segment .blocklyPreview {
+    width: 100%;
+    @media only screen and (min-height: 400px) {
+        max-height: 40vh;
     }
 }
 
@@ -246,9 +276,30 @@ span.highlight-line {
     }
 }
 
+/******************************
+    Hint button
+******************************/
+
+#tutorialcard .ui.button.hintbutton {
+    position: absolute;
+    top: .5rem;
+    left: .5rem;
+    color: white; // match menubutton color
+}
+
 /*******************************
         Tutorial Hint
 *******************************/
+
+.tutorialsegment > div:first-child[data-tooltip]:after,
+.tutorialsegment > div:first-child[data-tooltip]:before {
+    top: 6rem;
+    left: 1.9rem;
+    transition: none;
+    background: @primaryColor;
+    border-color: @primaryColor;
+    z-index: @tutorialLightboxCardZIndex;
+}
 
 .ui.modal.hintdialog .content p {
     font-size: 16px;
@@ -259,6 +310,72 @@ span.highlight-line {
     .ui.segment {
         display: flex;
         min-height: 100px;
+    }
+}
+
+.tutorialhint {
+    position: absolute;
+    max-width: 60%;
+    min-width: 300px;
+    top: 7rem;
+    left: .7rem;
+    padding: 10px 26px;
+    border-radius: 1.2rem;
+    background: @white;
+    z-index: @tutorialLightboxCardZIndex;
+    border: 8px solid @primaryColor;
+    box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
+    max-height: 70vh;
+}
+
+.tutorialhint:before {
+    content: ' ';
+    position: absolute;
+    width: 0;
+    height: 0;
+    left: 5px;
+    right: auto;
+    top: -24px;
+    bottom: auto;
+    border: 16px solid;
+    border-color: transparent @primaryColor transparent transparent;
+    transform: rotateZ(-45deg);
+}
+
+.tutorialhint.hidden {
+    display: none;
+    visibility: hidden;
+    animation: fade 1s;
+}
+
+.tutorialhint .lang-blocks .segment.raised {
+    border: none;
+    background: none;
+    box-shadow: none;
+    text-align: center;
+}
+
+@keyframes fade {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+        width: auto;
+        height: auto;
+    }
+}
+
+
+/*******************************
+        See More Button
+*******************************/
+#tutorialcard.seemore {
+    .tutorialmessage .content {
+        height: calc(@tutorialCardHeight - 1rem - @seeMoreButtonHeight);
     }
 }
 
@@ -310,7 +427,9 @@ span.highlight-line {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-
+    .tutorialsegment>div:first-child[data-tooltip]:after {
+        left: 6rem;
+    }
 }
 
 /* thin screen */
