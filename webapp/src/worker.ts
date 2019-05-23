@@ -335,19 +335,6 @@ if (!Math.imul) {
     }
 }
 
-onmessage = ev => {
-    let res = pxtc.service.performOperation(ev.data.op, ev.data.arg)
-    pm({
-        op: ev.data.op,
-        id: ev.data.id,
-        result: JSON.parse(JSON.stringify(res))
-    })
-}
-
-pm({
-    id: "ready"
-})
-
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
 if (typeof Object.assign != 'function') {
     // Must be writable: true, enumerable: false, configurable: true
@@ -378,3 +365,16 @@ if (typeof Object.assign != 'function') {
         configurable: true
     });
 }
+
+onmessage = ev => {
+    let res = pxtc.service.performOperation(ev.data.op, ev.data.arg)
+    pm({
+        op: ev.data.op,
+        id: ev.data.id,
+        result: JSON.parse(JSON.stringify(res))
+    })
+}
+
+pm({
+    id: "ready"
+})
