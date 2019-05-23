@@ -4,6 +4,7 @@ import * as electron from "./electron";
 import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
+import * as compiler from "./compiler";
 import Cloud = pxt.Cloud;
 
 let tryPairedDevice = false;
