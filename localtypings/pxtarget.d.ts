@@ -759,6 +759,7 @@ declare namespace pxt.tutorial {
         hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
+        blockSolution?: string;
     }
 
     interface TutorialOptions {
