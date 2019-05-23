@@ -17,7 +17,6 @@ let extWeight: pxt.Map<number> = {
 
 export function setupAppTarget(trgbundle: pxt.TargetBundle) {
     pxt.setAppTarget(trgbundle)
-    compiler.initAppTarget(trgbundle)
 }
 
 export class File implements pxt.editor.IFile {

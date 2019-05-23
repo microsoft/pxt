@@ -720,8 +720,7 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo) => {
-        let bannedCategories = pxt.appTarget.runtime.bannedCategories
+    const blocksInfoOp = (apisInfoLocOverride: pxtc.ApisInfo, bannedCategories: string[]) => {
         if (apisInfoLocOverride) {
             if (!lastLocBlocksInfo) {
                 lastLocBlocksInfo = getBlocksInfo(apisInfoLocOverride, bannedCategories);
@@ -744,10 +743,6 @@ namespace ts.pxtc.service {
     }
 
     const operations: pxt.Map<(v: OpArg) => any> = {
-        initTarget: v => {
-            pxt.appTarget = v.target
-        },
-
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = null
@@ -835,9 +830,9 @@ namespace ts.pxtc.service {
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
                     if (python)
-                        si.pySnippet = getSnippet(lastApiInfo.apis, si, n, python);
+                        si.pySnippet = getSnippet(lastApiInfo.apis, v.runtime, si, n, python);
                     else
-                        si.snippet = getSnippet(lastApiInfo.apis, si, n, python);
+                        si.snippet = getSnippet(lastApiInfo.apis, v.runtime, si, n, python);
                 }
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
@@ -925,13 +920,13 @@ namespace ts.pxtc.service {
             const n = lastApiInfo.decls[o.qName];
             if (!fn || !n || !ts.isFunctionLike(n))
                 return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis, fn, n as FunctionLikeDeclaration, !!o.python)
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis, v.runtime, fn, n as FunctionLikeDeclaration, !!o.python)
         },
-        blocksInfo: v => blocksInfoOp(v as any),
+        blocksInfo: v => blocksInfoOp(v as any, v.runtime.bannedCategories),
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            const blockInfo = blocksInfoOp(search.localizedApis); // caches
+            const blockInfo = blocksInfoOp(search.localizedApis, v.runtime.bannedCategories); // caches
 
             if (search.localizedStrings) {
                 pxt.Util.setLocalizedStrings(search.localizedStrings);
@@ -1132,7 +1127,7 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(apis: ApisInfo, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+    export function getSnippet(apis: ApisInfo, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let findex = 0;
@@ -1150,7 +1145,7 @@ namespace ts.pxtc.service {
 
         const attrs = fn.attributes;
 
-        let blocks = blocksInfoOp(apis).blocks;
+        let blocks = blocksInfoOp(apis, runtimeOps.bannedCategories).blocks;
         let blocksById = pxt.Util.toDictionary(blocks, t => t.attributes.blockId)
         function getShadowSymbol(paramName: string): SymbolInfo | null {
             let shadowBlock = (attrs._shadowOverrides || {})[paramName]

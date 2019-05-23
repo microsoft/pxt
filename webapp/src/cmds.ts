@@ -224,8 +224,6 @@ export function init(): void {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    compiler.initAppTarget(pxt.appTarget);
-
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
         pxt.debug(`enabled webusb`);
         pxt.usb.setEnabled(true);
