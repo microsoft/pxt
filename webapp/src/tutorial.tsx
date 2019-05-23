@@ -312,20 +312,20 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         return tutorialStepInfo[tutorialStep].hasHint;
     }
 
-    private hintOnClickDocument(evt?: any, showFullText?: boolean) {
+    private hintOnClickDocument(evt?: any) {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
 
-        this.toggleHint(showFullText);
+        this.toggleHint(true);
         if (unplugged) {
             this.nextTutorialStep();
         }
     }
 
-    private hintOnClick(evt?: any, showFullText?: boolean) {
-        this.toggleHint(showFullText);
+    private hintOnClick(evt?: any) {
+        this.toggleHint(true);
     }
 
     private expandedHintOnClick(evt?: any) {
@@ -392,7 +392,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={this.state.showSeeMore ? this.toggleExpanded : null} onKeyDown={sui.fireClickOnEnter}>
+                        onClick={hasHint ? this.hintOnClick : null} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
