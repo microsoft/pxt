@@ -180,6 +180,7 @@ export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics:
 }
 
 export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+    console.log("compiler 183")
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
@@ -356,11 +357,11 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
-export function snippetAsync(qName: string, python?: boolean) {
+export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     return workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    });
+    }).then(res => res as string)
 }
 
 export function typecheckAsync() {

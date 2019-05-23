@@ -65,11 +65,13 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      */
     provideCompletionItems(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken):
         monaco.languages.CompletionItem[] | monaco.Thenable<monaco.languages.CompletionItem[]> | monaco.languages.CompletionList | monaco.Thenable<monaco.languages.CompletionList> {
+        console.log("monaco 68")
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
+                console.log("monaco 74")
                 const items = (completions.entries || []).map((si, i) => {
                     const snippet = this.python ? si.pySnippet : si.snippet;
                     const label = this.python
@@ -77,6 +79,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         : (completions.isMemberCompletion ? si.name : si.qName);
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
+                    console.log("snippet")
+                    console.log(snippet)
                     return {
                         label,
                         kind: this.tsKindToMonacoKind(si.kind),
@@ -84,7 +88,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         detail: this.python ? si.pySnippet : si.snippet,
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${snippet}`,
-                        filterText: `${label} ${documentation} ${block}`
+                        filterText: `${label} ${documentation} ${block}`,
+                        insertText: snippet
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -101,7 +106,23 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      * The editor will only resolve a completion item once.
      */
     resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        return item;
+        console.log("monaco 104")
+        console.dir(item)
+        return item
+        // TODO(dz)
+        // // item.insertText = "foobaz"
+        // let newItem = Object.assign({}, item)
+        // let qName = newItem.insertText as string
+        // console.log(newItem.insertText)
+        // console.log(qName)
+        // return compiler.snippetAsync(qName, this.python)
+        //     .then(snippet => {
+        //         // newItem.insertText = snippet
+        //         // console.log("snippet")
+        //         // console.log(newItem.insertText)
+        //         newItem.insertText = "foobarbaz"
+        //         return newItem
+        //     })
     }
 }
 
