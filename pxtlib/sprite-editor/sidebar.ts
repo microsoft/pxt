@@ -124,7 +124,7 @@ namespace pxtsprite {
             this.rectangleTool = this.initButton(lf("Rectangle"), "\uf096", PaintTool.Rectangle);
             this.rectangleTool.translate(1 + TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN, TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN);
 
-            this.marqueeTool = this.initButton(lf("Marquee"), "\uf00a", PaintTool.Marquee);
+            this.marqueeTool = this.initButton(lf("Marquee"), "\uf113", PaintTool.Marquee, true);
             this.marqueeTool.translate(0, (TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN) << 1);
 
             this.setTool(PaintTool.Normal);
