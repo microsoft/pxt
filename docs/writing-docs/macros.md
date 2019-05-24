@@ -291,8 +291,7 @@ using the ``spy`` macro.
 
 ### ghost
 
-A typescript snippet that should not be displayed but can be used to force
-the appearance of various blocks in a tutorial.
+The **ghost** "language" causes addtional blocks to appear in the Toolbox during a tutorial step. This is used to provide additional block choices other than those matching the code snippet in a **blocks** section. The **ghost** blocks don't render but serve to identify other blocks to add to the Toolbox choices.
 
     ```ghost
     let x = 0;
