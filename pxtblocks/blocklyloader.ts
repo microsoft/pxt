@@ -601,7 +601,7 @@ namespace pxt.blocks {
             const inputs = splitInputs(def);
             const imgConv = new ImageConverter()
 
-            if (fn.attributes.shim === "ENUM_GET") {
+            if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
                 if (comp.parameters.length > 1 || comp.thisParameter) {
                     console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
                     return;
@@ -626,6 +626,13 @@ namespace pxt.blocks {
                         fields.push({
                             name: "MEMBER",
                             field: new pxtblockly.FieldUserEnum(info.enumsByName[fn.attributes.enumName])
+                        });
+                        return;
+                    }
+                    else if (fn.attributes.shim === "KIND_GET") {
+                        fields.push({
+                            name: "MEMBER",
+                            field: new pxtblockly.FieldKind(info.kindsByName[fn.attributes.kindNamespace || fn.attributes.blockNamespace || fn.namespace])
                         });
                         return;
                     }

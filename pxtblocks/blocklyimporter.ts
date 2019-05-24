@@ -204,6 +204,15 @@ namespace pxt.blocks {
                                 pxt.debug(`patched block value ${k} -> ${up.map[k]}`);
                             });
                     }))
+
+                // patch enum variables
+                upgrades.filter(up => up.type == "userenum")
+                    .forEach(up => Object.keys(up.map).forEach(k => {
+                        getChildrenWithAttr(doc, "variable", "type", k).forEach(el => {
+                            el.setAttribute("type", up.map[k]);
+                            pxt.debug(`patched enum variable type ${k} -> ${up.map[k]}`);
+                        })
+                    }));
             }
 
             // build upgrade map

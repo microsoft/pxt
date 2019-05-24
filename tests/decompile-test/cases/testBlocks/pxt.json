@@ -13,7 +13,8 @@
         "cp.ts",
         "templateStrings.ts",
         "classHandlerParameter.ts",
-        "globals.ts"
+        "globals.ts",
+        "spritekind.ts"
     ],
     "public": true,
     "dependencies": {},
