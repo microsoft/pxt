@@ -103,15 +103,43 @@ namespace helpers {
         if (arr.length <= 0 || !callbackfn) {
             return arr;
         }
-        let len = arr.length;
-        // simple selection sort.
-        for (let i = 0; i < len - 1; ++i) {
-            for (let j = i + 1; j < len; ++j) {
-                if (callbackfn(arr[i], arr[j]) > 0) {
-                    swap(arr, i, j);
-                }
+
+        function buildMaxHeap(a: T[]) {
+            let i = Math.floor(a.length / 2 - 1);
+
+            while (i >= 0) {
+                heapify(a, i, a.length);
+                i -= 1;
             }
         }
+
+        function heapify(heap: T[], i: number, max: number) {
+            while (i < max) {
+                const left = 2 * i + 1;
+                const right = left + 1;
+                let curr = i;
+
+                if (left < max && callbackfn(heap[curr], heap[left])) {
+                    curr = left;
+                }
+
+                if (right < max && callbackfn(heap[curr], heap[right])) {
+                    curr = right;
+                }
+
+                if (curr == i) return;
+
+                swap(heap, i, curr);
+                i = curr;
+            }
+        }
+        buildMaxHeap(arr);
+
+        for (let i = arr.length - 1; i > 0; --i) {
+            swap(arr, 0, i);
+            heapify(arr, 0, i);
+        }
+
         return arr;
     }
 
