@@ -153,16 +153,24 @@ interface TutorialCardState {
     popout?: boolean;
     showHintTooltip?: boolean;
     showSeeMore?: boolean;
+    shakeHint?: boolean;
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, TutorialCardState> {
-    public focusInitialized: boolean;
     private prevStep: number;
+    private timer: number;
+    private animationDuration: number = 30000;
+
+    public focusInitialized: boolean;
 
     constructor(props: ISettingsProps) {
         super(props);
+        const options = this.props.parent.state.tutorialOptions;
+        this.prevStep = options.tutorialStep;
+
         this.state = {
-            showSeeMore: false
+            showSeeMore: false,
+            showHintTooltip: !options.tutorialStepInfo[this.prevStep].fullscreen
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -175,7 +183,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
 
-        this.prevStep = this.props.parent.state.tutorialOptions.tutorialStep;
     }
 
     previousTutorialStep() {
@@ -223,6 +230,13 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         // Hide lightbox
         this.props.parent.hideLightbox();
         this.setState({ popout: false });
+    }
+
+    shakeHint(duration: number) {
+        if (this.hasHint()) {
+            this.setState({shakeHint: true})
+            setTimeout(() => { this.setState({shakeHint: false}) }, duration)
+        }
     }
 
     componentWillUpdate() {
@@ -286,6 +300,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     componentDidMount() {
         this.setShowSeeMore();
+        this.setHintAnimation();
     }
 
     componentWillUnmount() {
@@ -336,6 +351,21 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.setState({showSeeMore: show});
     }
 
+    clearHintAnimation() {
+        this.setState({shakeHint: false});
+        clearTimeout(this.timer);
+    }
+
+    setHintAnimation() {
+        if (this.hasHint()) {
+            this.clearHintAnimation();
+            this.timer = setTimeout(() => {
+                this.setState({shakeHint: true});
+                setTimeout(() => { this.setState({shakeHint: false}) }, 2000);
+            }, this.animationDuration);
+        }
+    }
+
     toggleHint(showFullText?: boolean) {
         if (!this.hasHint()) return;
         this.closeLightbox();
@@ -343,13 +373,19 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         if (th && th.state && th.state.visible) {
             this.setState({showHintTooltip : true});
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+<<<<<<< HEAD
             document.removeEventListener('click', this.hintOnClick);
+=======
+            document.removeEventListener('click', this.hintOnClickDocument);
+            this.setHintAnimation();
+>>>>>>> Tutorial tooltip appears & animates after 30 seconds of inactivity
         } else {
             this.setState({showHintTooltip : false});
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClick);
             const options = this.props.parent.state.tutorialOptions;
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+            this.clearHintAnimation();
         }
 
         th.toggleHint(showFullText);
@@ -376,13 +412,14 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}`} >
+        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${this.state.showHintTooltip ? 'showTooltip' : ''}`} >
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div {... (this.state.showHintTooltip && hasHint && {'data-tooltip': tutorialHintTooltip})} data-position="bottom center" data-inverted>
-                        <div role="button" className='avatar-image' onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
+                    <div className="avatar-container">
+                        <div role="button" className={`avatar-image ${this.state.shakeHint ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {hasHint && <div className={`tooltip ${this.state.shakeHint ? 'show' : ''}`} onClick={this.hintOnClick}>{tutorialHintTooltip}</div>}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}

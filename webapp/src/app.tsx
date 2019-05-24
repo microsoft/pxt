@@ -2874,6 +2874,11 @@ export class ProjectView
         tc.toggleHint(showFullText);
     }
 
+    setTutorialHintAnimation() {
+        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+        tc.setHintAnimation();
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////         High contrast            /////////////
     ///////////////////////////////////////////////////////////

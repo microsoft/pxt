@@ -203,6 +203,7 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
+        setTutorialHintAnimation(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
