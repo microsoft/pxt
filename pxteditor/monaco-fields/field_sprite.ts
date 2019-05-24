@@ -52,8 +52,8 @@ namespace pxt.editor {
             contentDiv.style.height = (this.editor.outerHeight() + 3) + "px";
             contentDiv.style.width = (this.editor.outerWidth() + 3) + "px";
             contentDiv.style.overflow = "hidden";
-            addClass(contentDiv, "sprite-editor-dropdown-bg");
-            addClass(contentDiv.parentElement, "sprite-editor-dropdown");
+            pxt.BrowserUtils.addClass(contentDiv, "sprite-editor-dropdown-bg");
+            pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown");
 
             this.editor.addKeyListeners();
             this.editor.onClose(() => this.onClosed());
@@ -99,11 +99,6 @@ namespace pxt.editor {
         },
         proto: MonacoSpriteEditor
     };
-
-    function addClass(el: Element, className: string) {
-        if (el.hasAttribute("class")) el.setAttribute("class", el.getAttribute("class") + " " + className);
-        else el.setAttribute("class", className);
-    }
 
     registerMonacoFieldEditor(fieldEditorId, spriteEditorDefinition);
 }

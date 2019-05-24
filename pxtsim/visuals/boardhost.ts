@@ -140,12 +140,12 @@ namespace pxsim.visuals {
             //TODO: move to wiring.ts
             //underboard wires
             wire.wires.forEach(e => {
-                svg.addClass(e, "highlight");
+                pxsim.U.addClass(e, "highlight");
                 (<any>e).style["visibility"] = "visible";
             });
 
             //un greyed out
-            svg.addClass(wire.endG, "highlight");
+            pxsim.U.addClass(wire.endG, "highlight");
         }
 
         public getView(): SVGElement {
@@ -262,8 +262,8 @@ namespace pxsim.visuals {
             part.moveToCoord(coord);
             let getCmpClass = (type: string) => `sim-${type}-cmp`;
             let cls = getCmpClass(partInst.name);
-            svg.addClass(part.element, cls);
-            svg.addClass(part.element, "sim-cmp");
+            pxsim.U.addClass(part.element, cls);
+            pxsim.U.addClass(part.element, "sim-cmp");
             part.updateTheme();
             part.updateState();
             return part;

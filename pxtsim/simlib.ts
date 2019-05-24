@@ -762,7 +762,7 @@ namespace pxsim.visuals {
             style: `font-size:${size}px;`,
             transform: `translate(${cx} ${cy}) rotate(${rot}) translate(${xOff} ${yOff})`
         });
-        svg.addClass(el, "noselect");
+        pxsim.U.addClass(el, "noselect");
         el.textContent = txt;
         return el;
     }

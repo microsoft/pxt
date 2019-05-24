@@ -13,12 +13,12 @@ namespace pxtblockly {
               return;
             }
             if (this.sourceBlock_.isEditable()) {
-              Blockly.utils.addClass(group, 'blocklyEditableText');
-              Blockly.utils.removeClass(group, 'blocklyGreyExpressionBlockText');
+              pxt.BrowserUtils.addClass(group, 'blocklyEditableText');
+              pxt.BrowserUtils.removeClass(group, 'blocklyGreyExpressionBlockText');
               (this.fieldGroup_ as any).style.cursor = this.CURSOR;
             } else {
-              Blockly.utils.addClass(group, 'blocklyGreyExpressionBlockText');
-              Blockly.utils.removeClass(group, 'blocklyEditableText');
+              pxt.BrowserUtils.addClass(group, 'blocklyGreyExpressionBlockText');
+              pxt.BrowserUtils.removeClass(group, 'blocklyEditableText');
               (this.fieldGroup_ as any).style.cursor = '';
             }
         }

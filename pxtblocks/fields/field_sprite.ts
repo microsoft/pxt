@@ -114,7 +114,7 @@ namespace pxtblockly {
             goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
             goog.style.setStyle(contentDiv, "overflow", "hidden");
             goog.style.setStyle(contentDiv, "max-height", "500px");
-            goog.dom.classlist.add(contentDiv.parentElement, "sprite-editor-dropdown")
+            pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown")
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
@@ -129,7 +129,7 @@ namespace pxtblockly {
                 goog.style.setWidth(contentDiv, null);
                 goog.style.setStyle(contentDiv, "overflow", null);
                 goog.style.setStyle(contentDiv, "max-height", null);
-                (goog.dom.classlist as any).remove(contentDiv.parentElement, "sprite-editor-dropdown");
+                pxt.BrowserUtils.removeClass(contentDiv.parentElement, "sprite-editor-dropdown");
                 this.editor.removeKeyListeners();
             });
 
