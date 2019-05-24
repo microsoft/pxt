@@ -116,11 +116,17 @@ namespace helpers {
     }
 
     export function arraySort<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
-        if (!callbackfn) {
-            //TODO: support native strings and number sorting
-            /* callbackfn = function (value1: string, value2: string) : number {
-                return value1.compare(value2);
-                }*/
+        if (!callbackfn && arr.length > 1) {
+            const firstElement = arr[0];
+            if (typeof(firstElement) == "string") {
+                callbackfn = (a, b) => {
+                    return (a as any as string).compare(b as any as string);
+                }
+            } else if (typeof(firstElement) == "number") {
+                callbackfn = (a, b) => {
+                    return (a as any as number) - (b as any as number);
+                }
+            }
         }
         return sortHelper(arr, callbackfn);
     }
