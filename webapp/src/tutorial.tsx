@@ -307,6 +307,9 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         // Clear the markdown cache when we unmount
         md.MarkedContent.clearBlockSnippetCache();
         this.lastStep = -1;
+
+        // Dismiss any existing timer
+        this.clearHintAnimation();
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {

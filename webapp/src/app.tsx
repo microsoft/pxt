@@ -2874,9 +2874,14 @@ export class ProjectView
         tc.toggleHint(showFullText);
     }
 
-    setTutorialHintAnimation() {
+    ///////////////////////////////////////////////////////////
+    ////////////     User alert/notifications     /////////////
+    ///////////////////////////////////////////////////////////
+
+    pokeUserActivity() {
+        // animate tutorial hint after some time of user inactivity
         let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
-        tc.setHintAnimation();
+        if (tc) tc.setHintAnimation();
     }
 
     ///////////////////////////////////////////////////////////
