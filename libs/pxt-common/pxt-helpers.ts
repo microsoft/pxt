@@ -117,14 +117,21 @@ namespace helpers {
 
     export function arraySort<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
         if (!callbackfn && arr.length > 1) {
-            if (arr.every(v => typeof(v) == "string")) {
-                callbackfn = (a, b) => {
-                    return (a as any as string).compare(b as any as string);
-                }
-            } else if (arr.every(v => typeof(v) == "number")) {
-                callbackfn = (a, b) => {
-                    return (a as any as number) - (b as any as number);
-                }
+            callbackfn = (a, b) => {
+                // default is sort as if the element were a string, with null < undefined
+                const aIsUndef = a === undefined;
+                const bIsUndef = b === undefined;
+                if (aIsUndef && bIsUndef) return 0;
+                else if (aIsUndef) return 1;
+                else if (bIsUndef) return -1;
+
+                const aIsNull = a === null;
+                const bIsNull = b === null;
+                if (aIsNull && bIsNull) return 0;
+                else if (aIsNull) return 1;
+                else if (bIsNull) return -1;
+
+                return (a + "").compare(b + "");
             }
         }
         return sortHelper(arr, callbackfn);
