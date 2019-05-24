@@ -209,7 +209,13 @@ namespace pxt {
         if (!pxt.appTarget.variants)
             return []
         let hws = Object.keys(pxt.appTarget.bundledpkgs).filter(pkg => /^hw---/.test(pkg))
-        return hws.map(pkg => JSON.parse(pxt.appTarget.bundledpkgs[pkg][CONFIG_NAME]))
+        return hws
+            .map(pkg => JSON.parse(pxt.appTarget.bundledpkgs[pkg][CONFIG_NAME]))
+            .filter((cfg: PackageConfig) => {
+                if (pxt.appTarget.appTheme.experimentalHw)
+                    return true
+                return !cfg.experimentalHw
+            })
     }
 
     export interface PxtOptions {
