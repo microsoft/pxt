@@ -18,8 +18,10 @@ namespace ts.pxtc {
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
+    export const BINARY_PXT64 = "binary.pxt64";
 
     export const NATIVE_TYPE_THUMB = "thumb";
+    export const NATIVE_TYPE_VM = "vm";
 
     export interface BlocksInfo {
         apis: ApisInfo;
@@ -489,7 +491,7 @@ namespace ts.pxtc {
         let cs = pxt.appTarget.compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
-        const docker = cs.buildEngine == "dockermake";
+        const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},

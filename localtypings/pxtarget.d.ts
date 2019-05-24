@@ -180,11 +180,13 @@ declare namespace pxt {
         codalDefinitions?: any;
 
         dockerImage?: string;
+        dockerArgs?: string[];
 
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
+        skipCloudBuild?: boolean;
     }
 
     interface AppTheme {
@@ -501,6 +503,7 @@ declare namespace ts.pxtc {
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
+        expose?: boolean; // expose to VM despite being in pxt:: namespace
         decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
         constantShim?: boolean;
         indexedInstanceNS?: string;
@@ -729,6 +732,7 @@ declare namespace ts.pxtc {
         enumsDTS: string;
         onlyPublic: boolean;
         commBase?: number;
+        skipCloudBuild?: boolean;
     }
 
     interface HexInfo {
