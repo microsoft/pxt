@@ -117,12 +117,11 @@ namespace helpers {
 
     export function arraySort<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
         if (!callbackfn && arr.length > 1) {
-            const firstElement = arr[0];
-            if (typeof(firstElement) == "string") {
+            if (!arr.some(v => typeof(v) != "string")) {
                 callbackfn = (a, b) => {
                     return (a as any as string).compare(b as any as string);
                 }
-            } else if (typeof(firstElement) == "number") {
+            } else if (!arr.some(v => typeof(v) != "number")) {
                 callbackfn = (a, b) => {
                     return (a as any as number) - (b as any as number);
                 }
