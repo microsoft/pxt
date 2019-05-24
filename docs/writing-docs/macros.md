@@ -1,16 +1,40 @@
 # Macros
 
-The following macros are custom extensions to markdown.
+MakeCode has several custom macros that extend regular markdown. These provide extra style features and code / blocks rendering in the document pages.
+
+The following macros are the MakeCode custom extensions to markdown.
 
 ## Checkboxes in bullet points
 
 Use ``* [ ]`` to create a bullet point with a square and ``* [x]`` for a checked bullet point
 
+### Checked bullets
+
 * [ ] unchecked bullet point
 * [x] checked bullet point
+
+```
+* [ ] unchecked bullet point
+* [x] checked bullet point
+```
+
+### Regular bullets
+
 * a regular bullet point
 
+```
+* a regular bullet point
+```
+
 ## avatar
+
+MakeCode targets have avatar icons that help express a more personalized message to a user. The avatar icon is specified by its ``class`` name.
+
+### ~avatar avatar
+
+Hi! Writing docs for MakeCode is great!
+
+### ~
 
 ```
 ### ~avatar [class]
@@ -25,7 +49,9 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/l
 
 ## Message Boxes
 
-Use the following styles for the message box you need
+Message boxes bring special attention to an idea or to something that the user must take note of. There are several types of message boxes.
+
+### hint
 
 ### ~hint
 
@@ -43,6 +69,8 @@ Use the following styles for the message box you need
 ### ~
 ```
 
+### reminder
+
 ### ~reminder
 
 #### Reminder Title
@@ -58,6 +86,7 @@ Use the following styles for the message box you need
 
 ### ~
 ```
+### alert
 
 ### ~alert
 
@@ -74,6 +103,8 @@ Use the following styles for the message box you need
 ### ~
 ```
 
+### tip
+
 ### ~tip
 
 #### Tip Title 
@@ -87,27 +118,69 @@ Use the following styles for the message box you need
 [content]
 
 ### ~
+```
+
+## Buttons
+
+As a navigation aid, the button macro is used to move to another page within the target's document tree.
+
+### ~button /writing-docs/tutorials
+
+NEXT: Tutorials
+
+### ~
+
+```
+## ~button /writing-docs/tutorials
+
+NEXT: Tutorials
+
+## ~
 ```
 
 ## Inline button rendering
 
-Use ``` ``|primary button|`` ``` or ``` ``||secondary button||`` ``` to render a button like element.
+Use inline buttons to render a button like element. These aren't linked to any action, they just display like buttons.
 
+``|primary button|``
+
+``||secondary button||``
+
+```
+``|primary button|``
+
+``||secondary button||``
+```
+
+### Namespace coloring
+
+When a namespace specifier is included in the button text, the button will have the same color that is defined for showing blocks from that namespace. Use the namespace name separated with a ``:``.
+
+```
+``||loops:forever||``
+```
 
 ## Inline code snippets
 
 If an inline code snippet start with `[` and ends with `]`, the doc engine will try to render it as a block. It must contain a valid API call
 to the desired block.
 
-To change the inline code snippet color to reflect the namespace color, use this format:
+Set your text variable like this: ``[let txt = "text"]``
 
 ```
-``|namespace.block name|``
+Set your text variable like this: ``[let txt = "text"]``
+```
+
+To change the inline code snippet color to reflect the namespace color, use this format:
+
+
+```
+``[namespace.blockname]``
 ```
 
 ## Code snippets
 
-To avoid changing screenshots, PXT automatically renders code snippets to blocks or javascript. This is done by specifying a language on code blocks.
+To avoid changing screenshots, PXT automatically renders code snippets to blocks or javascript. This is done by specifying a pseudo-language on a code section.
 
 ### dependencies
 
@@ -131,7 +204,7 @@ MakeCode will match the feature set with existing boards.
 
 ### blocks
 
-The **blocks** language renders a JavaScript snippet into blocks and provide a simulator if needed.
+The **blocks** "language" renders a JavaScript snippet into blocks and provides a simulator if needed.
 
     ```blocks
     basic.showNumber(5)
@@ -142,7 +215,7 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### project
 
-The **project** language is similar to blocks but renders a published project.
+The **project** "language" is similar to blocks but renders a published project.
 
     ```project
     twejlyucio
@@ -150,7 +223,7 @@ The **project** language is similar to blocks but renders a published project.
 
 ### sig
 
-The **sig** displays a signature of the first function call in the snippet.
+The **sig** "language" displays a signature of the first function call in the snippet.
 
     ```sig
     basic.showNumber(5)
@@ -161,7 +234,7 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### cards
 
-The **cards** language displays a code card for each function call.
+The **cards** "language" displays a code card for each function call.
 
     ```cards
     basic.showNumber(0);
@@ -181,7 +254,7 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### namespaces
 
-The **namespaces** language display a code card for the first symbol of each namespace.
+The **namespaces** "language" displays a code card for the first symbol of each namespace.
 
     ```namespaces
     basic.showNumber(0);
@@ -193,7 +266,7 @@ and it's [markdown](https://github.com/Microsoft/pxt-microbit/blob/master/docs/r
 
 ### block
 
-The **block** language renders a JavaScript snippet into blocks without any simulator.
+The **block** "language" renders a JavaScript snippet into blocks without any simulator.
 
     ```block
     basic.showNumber(5)
@@ -201,7 +274,7 @@ The **block** language renders a JavaScript snippet into blocks without any simu
 
 ### javascript
 
-If you need a rendering of typescript, javascript code, specify the language as typescript
+If you need a rendering of typescript, javascript code, specify the language as ``typescript``.
 
     ```typescript
     let x = 0;
@@ -209,7 +282,7 @@ If you need a rendering of typescript, javascript code, specify the language as 
 
 ### spy
 
-If your editor support Static Python, you can specify a TypeScript snippet to be rendered as Static Python
+If your editor supports [Static Python](/js/python), you can specify a TypeScript snippet to be rendered as Static Python
 using the ``spy`` macro.
 
     ```spy
@@ -219,7 +292,7 @@ using the ``spy`` macro.
 ### ghost
 
 A typescript snippet that should not be displayed but can be used to force
-the appearance of various blocs in a tutorial.
+the appearance of various blocks in a tutorial.
 
     ```ghost
     let x = 0;
@@ -227,7 +300,7 @@ the appearance of various blocs in a tutorial.
 
 ### codecard
 
-Renders one or more codecards as JSON into cards
+To render one or more code cards as JSON into cards, use **codecard**.
 
     ```codecard
     [{
