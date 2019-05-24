@@ -452,7 +452,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             // reset tutorial hint animation on any blockly event
             if (this.parent.state.tutorialOptions != undefined) {
-                this.parent.setTutorialHintAnimation();
+                this.parent.pokeUserActivity();
             }
         })
         if (this.shouldShowCategories()) {
