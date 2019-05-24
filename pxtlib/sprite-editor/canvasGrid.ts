@@ -59,6 +59,7 @@ namespace pxtsprite {
         repaint(): void {
             this.drawImage();
             if (this.state.floatingLayer) this.drawFloatingLayer();
+            else this.hideOverlay();
         }
 
         applyEdit(edit: Edit, cursorCol: number, cursorRow: number, gestureEnd = false) {
@@ -67,9 +68,16 @@ namespace pxtsprite {
         }
 
         drawCursor(edit: Edit, col: number, row: number) {
-            this.context.strokeStyle = "#898989";
-            this.repaint();
-            edit.drawCursor(col, row, this.state);
+            const cursor = edit.getCursor();
+
+            if (cursor) {
+                this.repaint();
+                this.context.strokeStyle = "#898989";
+                this.context.strokeRect((col + cursor.offsetX) * this.cellWidth, (row + cursor.offsetY) * this.cellHeight, cursor.width * this.cellWidth, cursor.height * this.cellHeight);
+            }
+            else if (edit.isStarted) {
+                this.repaint();
+            }
         }
 
         bitmap() {
@@ -99,7 +107,7 @@ namespace pxtsprite {
                 this.resizeGrid(state.width, state.width * state.height);
             }
             else {
-                this.image.apply(state.image);
+                this.state = state.copy();
             }
 
             if (repaint) {
@@ -412,11 +420,11 @@ namespace pxtsprite {
                 });
             })
 
-            surface.addEventListener("click", (ev: MouseEvent) => {
-                const [col, row] = this.clientEventToCell(ev);
-                this.gesture.handle(InputEvent.Down, col, row);
-                this.gesture.handle(InputEvent.Up, col, row);
-            });
+            // surface.addEventListener("click", (ev: MouseEvent) => {
+            //     const [col, row] = this.clientEventToCell(ev);
+            //     this.gesture.handle(InputEvent.Down, col, row);
+            //     this.gesture.handle(InputEvent.Up, col, row);
+            // });
         }
 
         private upHandler = (ev: MouseEvent) => {

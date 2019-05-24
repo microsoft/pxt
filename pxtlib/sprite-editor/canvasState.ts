@@ -22,26 +22,49 @@ namespace pxtsprite {
         copy() {
             const res = new CanvasState();
             res.image = this.image.copy();
-            res.floatingLayer = this.floatingLayer && this.floatingLayer.copy();
+
+            if (this.floatingLayer) {
+                res.floatingLayer = this.floatingLayer.copy();
+                res.floatingLayer.x0 = this.layerOffsetX;
+                res.floatingLayer.y0 = this.layerOffsetY;
+            }
             res.layerOffsetX = this.layerOffsetX;
             res.layerOffsetY = this.layerOffsetY;
+
             return res;
         }
 
         equals(other: CanvasState) {
             if (!this.image.equals(other.image) || (this.floatingLayer && !other.floatingLayer) || (!this.floatingLayer && other.floatingLayer)) return false;
 
-            if (this.floatingLayer) return this.floatingLayer.equals(other.floatingLayer);
+            if (this.floatingLayer) return this.floatingLayer.equals(other.floatingLayer) && this.layerOffsetX === other.layerOffsetX && this.layerOffsetY === other.layerOffsetY;
 
             return true;
         }
 
         mergeFloatingLayer() {
-            this.image.apply(this.floatingLayer);
+            if (!this.floatingLayer) return;
+
+            this.floatingLayer.x0 = this.layerOffsetX;
+            this.floatingLayer.y0 = this.layerOffsetY;
+
+            this.image.apply(this.floatingLayer, true);
             this.floatingLayer = undefined;
         }
 
         copyToLayer(left: number, top: number, width: number, height: number, cut = false) {
+            if (width === 0 || height === 0) return;
+
+            if (width < 0) {
+                left += width;
+                width = -width;
+            }
+
+            if (height < 0) {
+                top += height;
+                height = -height;
+            }
+
             this.floatingLayer = this.image.copy(left, top, width, height);
             this.layerOffsetX = this.floatingLayer.x0;
             this.layerOffsetY = this.floatingLayer.y0;

@@ -41,10 +41,14 @@ namespace pxtsprite {
             return sub;
         }
 
-        apply(change: Bitmap) {
+        apply(change: Bitmap, transparent = false) {
+            let current: number;
             for (let c = 0; c < change.width; c++) {
                 for (let r = 0; r < change.height; r++) {
-                    this.set(change.x0 + c, change.y0 + r, change.get(c, r));
+                    current = change.get(c, r);
+
+                    if (!current && transparent) continue;
+                    this.set(change.x0 + c, change.y0 + r, current);
                 }
             }
         }

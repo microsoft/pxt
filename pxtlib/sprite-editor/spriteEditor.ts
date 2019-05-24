@@ -151,6 +151,11 @@ namespace pxtsprite {
             else if (this.edit) {
                 if (!this.edit.isStarted) {
                     this.paintSurface.onEditStart(col, row, this.edit);
+
+                    if (this.state.floatingLayer && !this.paintSurface.state.floatingLayer) {
+                        this.pushState(true);
+                        this.state = this.paintSurface.state.copy();
+                    }
                 }
                 this.edit.update(col, row);
                 this.cursorCol = col;
@@ -486,7 +491,7 @@ namespace pxtsprite {
                 }
                 this.pushState(true);
                 this.paintEdit(this.edit, this.cursorCol, this.cursorRow, true);
-                this.state.image.apply(this.paintSurface.image);
+                this.state = this.paintSurface.state.copy();
                 this.updateEdit();
                 this.redoStack = [];
             }
@@ -522,7 +527,7 @@ namespace pxtsprite {
                 this.afterResize(false);
             }
             else {
-                this.state.image.apply(state.image);
+                this.state = state.copy();
                 this.paintSurface.restore(state, true);
             }
         }

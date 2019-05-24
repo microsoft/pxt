@@ -32,9 +32,12 @@ namespace pxtsprite {
     }
 
     export class Cursor {
-        color: number;
-        width: number;
-        height: number;
+        offsetX: number;
+        offsetY: number;
+        constructor(public readonly width: number, public readonly height: number) {
+            this.offsetX = -(width >> 1);
+            this.offsetY = -(height >> 1);
+        }
     }
 
     export abstract class Edit {
@@ -63,8 +66,8 @@ namespace pxtsprite {
             state.mergeFloatingLayer();
         }
 
-        drawCursor(col: number, row: number, state: CanvasState) {
-            state.image.set(col, row, this.color);
+        getCursor(): Cursor {
+            return new Cursor(this.toolWidth, this.toolWidth);
         }
     }
 
@@ -136,10 +139,6 @@ namespace pxtsprite {
                     err -= 1;
                 }
             }
-        }
-
-        drawCursor(col: number, row: number, state: CanvasState) {
-            this.drawCore(col, row, (c, r) => state.image.set(c, r, this.color));
         }
 
         protected doEditCore(state: CanvasState) {
@@ -218,10 +217,6 @@ namespace pxtsprite {
     export class LineEdit extends SelectionEdit {
         protected doEditCore(state: CanvasState) {
             this.bresenham(this.startCol, this.startRow, this.endCol, this.endRow, state);
-        }
-
-        drawCursor(col: number, row: number, state: CanvasState) {
-            this.drawCore(col, row, (c, r) => state.image.set(c, r, this.color));
         }
 
         // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
@@ -393,7 +388,8 @@ namespace pxtsprite {
             }
         }
 
-        drawCursor(col: number, row: number, state: CanvasState) {
+        getCursor(): Cursor {
+            return undefined;
         }
     }
 }
