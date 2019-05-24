@@ -294,10 +294,10 @@ export function readPkgConfig(dir: string) {
     if (ap) {
         let adddir = path.join(dir, ap);
         // try to spot include directory
-        if (!existsDirSync(adddir) && adddir.indexOf("../../node_modules/")) {
+        if (!existsDirSync(adddir) && adddir.indexOf("../../node_modules/") == 0) {
             // we are trying to get sources from another node package
             // but we are not nested anymore
-            adddir = path.join(dir.replace("../../node_modules/", "../../../"), ap);
+            adddir = path.join("..", adddir);
         }
         if (!existsDirSync(adddir))
             pxt.U.userError(`additional pxt.json not found: ${adddir} in ${dir} + ${ap}`)
