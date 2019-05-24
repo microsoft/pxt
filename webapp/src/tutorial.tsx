@@ -153,7 +153,7 @@ interface TutorialCardState {
     popout?: boolean;
     showHintTooltip?: boolean;
     showSeeMore?: boolean;
-    shakeHint?: boolean;
+    pokeUser?: boolean;
 }
 
 export class TutorialCard extends data.Component<ISettingsProps, TutorialCardState> {
@@ -232,13 +232,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.setState({ popout: false });
     }
 
-    shakeHint(duration: number) {
-        if (this.hasHint()) {
-            this.setState({shakeHint: true})
-            setTimeout(() => { this.setState({shakeHint: false}) }, duration)
-        }
-    }
-
     componentWillUpdate() {
         document.documentElement.addEventListener("keydown", this.closeLightboxOnEscape);
     }
@@ -300,7 +293,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     componentDidMount() {
         this.setShowSeeMore();
-        this.setHintAnimation();
+        this.startPokeUserActivity();
     }
 
     componentWillUnmount() {
@@ -308,8 +301,8 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         md.MarkedContent.clearBlockSnippetCache();
         this.lastStep = -1;
 
-        // Dismiss any existing timer
-        this.clearHintAnimation();
+        // Clear any existing timer
+        clearTimeout(this.timer);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -354,18 +347,18 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.setState({showSeeMore: show});
     }
 
-    clearHintAnimation() {
-        this.setState({shakeHint: false});
-        clearTimeout(this.timer);
+    private debouncedPokeUserActivity = pxt.Util.debounce(() => {
+        this.setState({pokeUser: true});
+        setTimeout(() => { this.stopPokeUserActivity() }, 3000);
+    }, this.animationDuration);
+
+    stopPokeUserActivity() {
+        this.setState({pokeUser: false});
     }
 
-    setHintAnimation() {
+    startPokeUserActivity() {
         if (this.hasHint()) {
-            this.clearHintAnimation();
-            this.timer = setTimeout(() => {
-                this.setState({shakeHint: true});
-                setTimeout(() => { this.setState({shakeHint: false}) }, 2000);
-            }, this.animationDuration);
+            this.timer = this.debouncedPokeUserActivity();
         }
     }
 
@@ -376,19 +369,15 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         if (th && th.state && th.state.visible) {
             this.setState({showHintTooltip : true});
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
-<<<<<<< HEAD
             document.removeEventListener('click', this.hintOnClick);
-=======
-            document.removeEventListener('click', this.hintOnClickDocument);
-            this.setHintAnimation();
->>>>>>> Tutorial tooltip appears & animates after 30 seconds of inactivity
+            this.startPokeUserActivity();
         } else {
             this.setState({showHintTooltip : false});
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClick);
             const options = this.props.parent.state.tutorialOptions;
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
-            this.clearHintAnimation();
+            this.startPokeUserActivity();
         }
 
         th.toggleHint(showFullText);
@@ -420,9 +409,9 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div className="avatar-container">
-                        <div role="button" className={`avatar-image ${this.state.shakeHint ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
+                        <div role="button" className={`avatar-image ${this.state.pokeUser ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
-                        {hasHint && <div className={`tooltip ${this.state.shakeHint ? 'show' : ''}`} onClick={this.hintOnClick}>{tutorialHintTooltip}</div>}
+                        {hasHint && <div className={`tooltip ${this.state.pokeUser ? 'show' : ''}`} role="tooltip" onClick={this.hintOnClick}>{tutorialHintTooltip}</div>}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}

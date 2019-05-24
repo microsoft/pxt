@@ -2879,9 +2879,11 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     pokeUserActivity() {
-        // animate tutorial hint after some time of user inactivity
-        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
-        if (tc) tc.setHintAnimation();
+        if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
+            // animate tutorial hint after some time of user inactivity
+            let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+            if (tc) tc.startPokeUserActivity();
+        }
     }
 
     ///////////////////////////////////////////////////////////
