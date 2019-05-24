@@ -781,6 +781,35 @@ namespace pxt.runner {
         });
     }
 
+    function renderGhost(options: ClientRenderOptions) {
+        let c = $('code.lang-ghost');
+        if (options.snippetReplaceParent)
+            c = c.parent();
+        c.remove();
+    }
+
+    function renderSims(options: ClientRenderOptions) {
+        if (!options.simulatorClass) return;
+        // simulators
+        $('.' + options.simulatorClass).each((i, c) => {
+            let $c = $(c);
+            let padding = '81.97%';
+            if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
+            let $sim = $(`<div class="ui centered card"><div class="ui content">
+                    <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
+                    </div>
+                    </div></div>`)
+            const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
+            const url = getRunUrl(options) + "#nofooter=1" + deps;
+            const data = encodeURIComponent($c.text().trim());
+            $sim.find("iframe").attr("src", url);
+            $sim.find("iframe").attr("data-code", data);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.replaceWith($sim);
+        });
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable();
         if (!options) options = {}
@@ -788,28 +817,10 @@ namespace pxt.runner {
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
-        if (options.simulatorClass) {
-            // simulators
-            $('.' + options.simulatorClass).each((i, c) => {
-                let $c = $(c);
-                let padding = '81.97%';
-                if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                let $sim = $(`<div class="ui centered card"><div class="ui content">
-                    <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
-                    </div>
-                    </div></div>`)
-                const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
-                const url = getRunUrl(options) + "#nofooter=1" + deps;
-                const data = encodeURIComponent($c.text().trim());
-                $sim.find("iframe").attr("src", url);
-                $sim.find("iframe").attr("data-code", data);
-                if (options.snippetReplaceParent) $c = $c.parent();
-                $c.replaceWith($sim);
-            });
-        }
 
         renderQueue = [];
+        renderGhost(options);
+        renderSims(options);
         renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
