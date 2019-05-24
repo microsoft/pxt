@@ -5154,6 +5154,7 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "namespaces": "ts",
         "cards": "ts",
         "sim": "ts",
+        "ghost": "ts",
         "codecard": "json"
     }
     const snippets = getSnippets(md);
