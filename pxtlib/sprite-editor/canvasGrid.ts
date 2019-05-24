@@ -18,7 +18,7 @@ namespace pxtsprite {
         mouseCol: number;
         mouseRow: number;
 
-        constructor(protected palette: string[], public image: Bitmap, protected lightMode = false) {
+        constructor(protected palette: string[], public state: CanvasState, protected lightMode = false) {
             this.paintLayer = document.createElement("canvas");
             this.paintLayer.setAttribute("class", "sprite-editor-canvas");
 
@@ -36,6 +36,14 @@ namespace pxtsprite {
             }
 
             this.hideOverlay();
+
+            this.selectPixels = this.selectPixels.bind(this);
+            this.createFloatingLayer = this.createFloatingLayer.bind(this);
+        }
+
+
+        get image() {
+            return this.state.image;
         }
 
         setEyedropperMouse(on: boolean) {
@@ -49,23 +57,19 @@ namespace pxtsprite {
         }
 
         repaint(): void {
-            this.redraw();
+            this.drawImage();
+            if (this.state.floatingLayer) this.drawFloatingLayer();
         }
 
-        applyEdit(edit: Edit, cursorCol: number, cursorRow: number) {
-            edit.doEdit(this.image);
+        applyEdit(edit: Edit, cursorCol: number, cursorRow: number, gestureEnd = false) {
+            edit.doEdit(this.state);
             this.drawCursor(edit, cursorCol, cursorRow);
         }
 
         drawCursor(edit: Edit, col: number, row: number) {
             this.context.strokeStyle = "#898989";
             this.repaint();
-            edit.drawCursor(col, row, (c, r) => {
-                this.drawColor(c, r, edit.color);
-                const x = c * this.cellWidth;
-                const y = r * this.cellHeight;
-                this.context.strokeRect(x, y, this.cellWidth, this.cellHeight);
-            });
+            edit.drawCursor(col, row, this.state);
         }
 
         bitmap() {
@@ -85,17 +89,17 @@ namespace pxtsprite {
             this.drawColor(col, row, color);
         }
 
-        drawColor(col: number, row: number, color: number) {
-            this.setCellColor(col, row, color === 0 ? undefined : this.palette[color - 1]);
+        drawColor(col: number, row: number, color: number, context = this.context) {
+            this.drawPixelCore(col, row, color === 0 ? undefined : this.palette[color - 1], context);
         }
 
-        restore(bitmap: Bitmap, repaint = false) {
-            if (bitmap.height != this.image.height || bitmap.width != this.image.width) {
-                this.image = bitmap.copy();
-                this.resizeGrid(bitmap.width, bitmap.width * bitmap.height);
+        restore(state: CanvasState, repaint = false) {
+            if (state.height != this.image.height || state.width != this.image.width) {
+                this.state = state.copy();
+                this.resizeGrid(state.width, state.width * state.height);
             }
             else {
-                this.image.apply(bitmap);
+                this.image.apply(state.image);
             }
 
             if (repaint) {
@@ -103,13 +107,60 @@ namespace pxtsprite {
             }
         }
 
-        showOverlay(): void {
+        selectPixels(left: number, top: number, width: number, height: number): void {
+            if (this.lightMode || !width || !height || this.state.floatingLayer) return;
+
+            if (width < 0) {
+                left += width;
+                width = -width;
+            }
+
+            if (height < 0) {
+                top += height;
+                height = -height;
+            }
+
+            this.showOverlay();
+
+            const context = this.overlayLayer.getContext("2d");
+            context.clearRect(0, 0, this.overlayLayer.width, this.overlayLayer.height);
+            context.strokeStyle = "#898989";
+            context.strokeRect(left * this.cellWidth, top * this.cellHeight, width * this.cellWidth, height * this.cellHeight);
+        }
+
+        createFloatingLayer(left: number, top: number, width: number, height: number): void {
+            if (this.lightMode || !width || !height) return;
+
+            if (width < 0) {
+                left += width;
+                width = -width;
+            }
+
+            if (height < 0) {
+                top += height;
+                height = -height;
+            }
+
+            this.state.floatingLayer = this.image.copy(left, top, width, height)
+
+            // Clear out the area
+            for (let c = 0; c < width; c++) {
+                for (let r = 0; r < height; r++) {
+                    this.image.set(left + c, top + r, 0);
+                }
+            }
+            this.drawImage();
+            this.drawFloatingLayer();
+        }
+
+        showResizeOverlay(): void {
             if (this.lightMode) return;
 
             if (this.fadeAnimation) {
                 this.fadeAnimation.kill();
             }
-            this.overlayLayer.style.visibility = "visible";
+            this.showOverlay();
+
             const w = this.overlayLayer.width;
             const h = this.overlayLayer.height;
             const context = this.overlayLayer.getContext("2d");
@@ -150,9 +201,19 @@ namespace pxtsprite {
             }, 750, 500);
         }
 
+        showOverlay() {
+            if (!this.lightMode) {
+                this.overlayLayer.style.visibility = "visible";
+            }
+        }
+
         hideOverlay() {
             if (!this.lightMode) {
                 this.overlayLayer.style.visibility = "hidden";
+            }
+
+            if (this.fadeAnimation) {
+                this.fadeAnimation.kill();
             }
         }
 
@@ -199,22 +260,6 @@ namespace pxtsprite {
             }
         }
 
-        setCellColor(column: number, row: number, color: string, opacity?: number): void {
-            const x = column * this.cellWidth;
-            const y = row * this.cellHeight;
-            if (color) {
-                this.context.fillStyle = color;
-                this.context.fillRect(x, y, this.cellWidth, this.cellHeight);
-            }
-            else if (!this.lightMode) {
-                this.context.clearRect(x, y, this.cellWidth, this.cellHeight);
-            }
-            else {
-                this.context.fillStyle = lightModeBackground;
-                this.context.fillRect(x, y, this.cellWidth, this.cellHeight);
-            }
-        }
-
         down(handler: (col: number, row: number) => void): void {
             this.initDragSurface();
             this.gesture.subscribe(GestureType.Down, handler);
@@ -248,7 +293,7 @@ namespace pxtsprite {
                 this.layoutCanvas(this.backgroundLayer, top, left, width, height);
             }
 
-            this.redraw();
+            this.drawImage();
             this.drawBackground();
         }
 
@@ -268,10 +313,14 @@ namespace pxtsprite {
             this.endDrag();
         }
 
-        protected redraw() {
-            for (let c = 0; c < this.image.width; c++) {
-                for (let r = 0; r < this.image.height; r++) {
-                    this.drawColor(c, r, this.image.get(c, r));
+        onEditStart(col: number, row: number, edit: Edit) {
+            edit.start(col, row, this.state);
+        }
+
+        protected drawImage(image = this.image, context = this.context, left = 0, top = 0) {
+            for (let c = 0; c < image.width; c++) {
+                for (let r = 0; r < image.height; r++) {
+                    this.drawColor(left + c, top + r, image.get(c, r), context);
                 }
             }
         }
@@ -312,26 +361,62 @@ namespace pxtsprite {
             ];
         }
 
+        protected drawPixelCore(column: number, row: number, color: string, context: CanvasRenderingContext2D) {
+            const x = column * this.cellWidth;
+            const y = row * this.cellHeight;
+            if (color) {
+                context.fillStyle = color;
+                context.fillRect(x, y, this.cellWidth, this.cellHeight);
+            }
+            else if (!this.lightMode) {
+                context.clearRect(x, y, this.cellWidth, this.cellHeight);
+            }
+            else {
+                context.fillStyle = lightModeBackground;
+                context.fillRect(x, y, this.cellWidth, this.cellHeight);
+            }
+        }
+
+        protected drawFloatingLayer() {
+            if (!this.state.floatingLayer) {
+                this.hideOverlay();
+                return;
+            }
+
+            this.showOverlay();
+            const context = this.overlayLayer.getContext("2d");
+            context.clearRect(0, 0, this.overlayLayer.width, this.overlayLayer.height);
+            context.strokeStyle = "#898989";
+            context.strokeRect(this.state.layerOffsetX * this.cellWidth, this.state.layerOffsetY * this.cellHeight, this.state.floatingLayer.width * this.cellWidth, this.state.floatingLayer.height * this.cellHeight);
+
+            this.drawImage(this.state.floatingLayer, context, this.state.layerOffsetX, this.state.layerOffsetY);
+        }
+
         private initDragSurface() {
             if (!this.gesture) {
                 this.gesture = new GestureState();
 
-                pxt.BrowserUtils.pointerEvents.down.forEach(evId => {
-                    this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
-                        this.startDrag();
-                        const [col, row] = this.clientEventToCell(ev);
-                        this.gesture.handle(InputEvent.Down, col, row);
-                    });
-                })
-
-                this.paintLayer.addEventListener("click", (ev: MouseEvent) => {
-                    const [col, row] = this.clientEventToCell(ev);
-                    this.gesture.handle(InputEvent.Down, col, row);
-                    this.gesture.handle(InputEvent.Up, col, row);
-                });
+                this.bindEvents(this.paintLayer);
+                if (this.overlayLayer) this.bindEvents(this.overlayLayer);
 
                 document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             }
+        }
+
+        private bindEvents(surface: HTMLElement) {
+            pxt.BrowserUtils.pointerEvents.down.forEach(evId => {
+                surface.addEventListener(evId, (ev: MouseEvent) => {
+                    this.startDrag();
+                    const [col, row] = this.clientEventToCell(ev);
+                    this.gesture.handle(InputEvent.Down, col, row);
+                });
+            })
+
+            surface.addEventListener("click", (ev: MouseEvent) => {
+                const [col, row] = this.clientEventToCell(ev);
+                this.gesture.handle(InputEvent.Down, col, row);
+                this.gesture.handle(InputEvent.Up, col, row);
+            });
         }
 
         private upHandler = (ev: MouseEvent) => {

@@ -68,7 +68,7 @@ namespace pxt.editor {
             if (this.resolver) {
                 this.resolver({
                     range: this.editrange,
-                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap(), this.fileType)
+                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap().image, this.fileType)
                 });
 
                 this.editor.removeKeyListeners();
