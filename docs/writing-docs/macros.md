@@ -216,12 +216,12 @@ using the ``spy`` macro.
     let x = 0;
     ```
 
-### ghost
+### filterblocks
 
 A typescript snippet that should not be displayed but can be used to force
 the appearance of various blocs in a tutorial.
 
-    ```ghost
+    ```filterblocks
     let x = 0;
     ```
 

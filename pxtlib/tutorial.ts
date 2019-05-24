@@ -6,7 +6,7 @@ namespace pxt.tutorial {
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|typescript|ts|js|javascript)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd
@@ -15,7 +15,7 @@ namespace pxt.tutorial {
                 switch (m1) {
                     case "block":
                     case "blocks":
-                    case "filterblocks":
+                    // case "filterblocks": don't check filterblocks
                         if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
                             return undefined;
                         break;

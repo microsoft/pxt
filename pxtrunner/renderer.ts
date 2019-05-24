@@ -778,7 +778,7 @@ namespace pxt.runner {
     }
 
     function renderGhost(options: ClientRenderOptions) {
-        let c = $('code.lang-ghost');
+        let c = $('code.lang-filterblocks');
         if (options.snippetReplaceParent)
             c = c.parent();
         c.remove();

@@ -77,7 +77,7 @@ div.blocks-svg-list > svg {
 code {
         white-space: pre-wrap;
 }
-code.lang-ghost, code.lang-config, code.lang-package 
+code.lang-filterblocks, code.lang-config, code.lang-package 
 { display: none;}
 
 code.lang-block::before,
