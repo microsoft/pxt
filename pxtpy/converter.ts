@@ -1465,7 +1465,11 @@ namespace pxt.py {
             }
         })
 
-        return Object.assign({}, funMap, funMapExtension);
+        Object.keys(funMapExtension).forEach(k => {
+            funMap[k] = funMapExtension[k]
+        })
+
+        return funMap
     }
 
     const funMap: Map<FunOverride> = getFunMap();
