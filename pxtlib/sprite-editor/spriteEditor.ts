@@ -467,7 +467,7 @@ namespace pxtsprite {
             this.bottomBar.updateDimensions(this.columns, this.rows);
             this.layout();
 
-            if (showOverlay) this.paintSurface.showOverlay();
+            if (showOverlay) this.paintSurface.showResizeOverlay();
 
             // Canvas size changed and some edits rely on that (like paint)
             this.updateEdit();

@@ -10,6 +10,7 @@ namespace pxtsprite {
         private gesture: GestureState;
         private context: CanvasRenderingContext2D;
         private fadeAnimation: Fade;
+        private selectAnimation: number;
 
         protected backgroundLayer: HTMLCanvasElement;
         protected paintLayer: HTMLCanvasElement;
@@ -168,6 +169,7 @@ namespace pxtsprite {
                 this.fadeAnimation.kill();
             }
             this.showOverlay();
+            this.stopSelectAnimation();
 
             const w = this.overlayLayer.width;
             const h = this.overlayLayer.height;
@@ -179,7 +181,7 @@ namespace pxtsprite {
 
             this.fadeAnimation = new Fade((opacity, dead) => {
                 if (dead) {
-                    this.hideOverlay();
+                    this.drawFloatingLayer();
                     return;
                 }
 
@@ -216,6 +218,8 @@ namespace pxtsprite {
         }
 
         hideOverlay() {
+            this.stopSelectAnimation();
+
             if (!this.lightMode) {
                 this.overlayLayer.style.visibility = "hidden";
             }
@@ -318,6 +322,9 @@ namespace pxtsprite {
         }
 
         removeMouseListeners() {
+            this.stopSelectAnimation();
+            if (this.fadeAnimation) this.fadeAnimation.kill();
+
             this.endDrag();
         }
 
@@ -372,6 +379,7 @@ namespace pxtsprite {
         protected drawPixelCore(column: number, row: number, color: string, context: CanvasRenderingContext2D) {
             const x = column * this.cellWidth;
             const y = row * this.cellHeight;
+
             if (color) {
                 context.fillStyle = color;
                 context.fillRect(x, y, this.cellWidth, this.cellHeight);
@@ -385,7 +393,7 @@ namespace pxtsprite {
             }
         }
 
-        protected drawFloatingLayer() {
+        protected drawFloatingLayer(dashOffset = 0) {
             if (!this.state.floatingLayer) {
                 this.hideOverlay();
                 return;
@@ -394,10 +402,22 @@ namespace pxtsprite {
             this.showOverlay();
             const context = this.overlayLayer.getContext("2d");
             context.clearRect(0, 0, this.overlayLayer.width, this.overlayLayer.height);
-            context.strokeStyle = "#898989";
+            context.globalAlpha = 1;
+            context.strokeStyle = "#303030";
+            context.lineWidth = 5;
+            context.setLineDash([5, 3]);
+            context.lineDashOffset = dashOffset;
             context.strokeRect(this.state.layerOffsetX * this.cellWidth, this.state.layerOffsetY * this.cellHeight, this.state.floatingLayer.width * this.cellWidth, this.state.floatingLayer.height * this.cellHeight);
-
             this.drawImage(this.state.floatingLayer, context, this.state.layerOffsetX, this.state.layerOffsetY);
+
+            if (!this.selectAnimation && (!this.fadeAnimation || this.fadeAnimation.dead)) {
+                let drawLayer = () => {
+                    dashOffset++
+                    requestAnimationFrame(() => this.drawFloatingLayer(dashOffset));
+                };
+
+                this.selectAnimation = setInterval(drawLayer, 40)
+            }
         }
 
         private initDragSurface() {
@@ -515,6 +535,14 @@ namespace pxtsprite {
                 canvas.style.left = (left + dropdownPaddding + (width - canvas.width) / 2) + "px";
             }
         }
+
+        private stopSelectAnimation() {
+            if (this.selectAnimation) {
+                clearInterval(this.selectAnimation);
+                this.selectAnimation = undefined;
+            }
+
+        }
     }
 
     enum InputEvent {
@@ -618,8 +646,8 @@ namespace pxtsprite {
                 requestAnimationFrame(() => this.frame());
             }
             else {
-                this.draw(0, true);
                 this.kill();
+                this.draw(0, true);
             }
         }
 
