@@ -996,6 +996,7 @@ namespace pxt.cpp {
         }
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
+#ifndef PXT_VM
 #ifdef PXT_MAIN
 PXT_MAIN
 #else
@@ -1005,6 +1006,7 @@ int main() {
     release_fiber();
     return 0;   // your program will never reach this line.
 }
+#endif
 #endif
 `
         if (makefile) {
