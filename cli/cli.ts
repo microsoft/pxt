@@ -2923,6 +2923,29 @@ export function timeAsync() {
         .then(() => console.log("MIN", min))
 }
 
+export function exportCppAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir();
+    return mainPkg.loadAsync()
+        .then(() => {
+            setBuildEngine();
+            let target = mainPkg.getTargetOptions()
+            if (target.hasHex)
+                target.isNative = true
+            target.keepCppFiles = true
+            return mainPkg.getCompileOptionsAsync(target)
+        })
+        .then(opts => {
+            for (let s of Object.keys(opts.extinfo.extensionFiles)) {
+                let s2 = s.replace("/pxtapp/", "")
+                if (s2 == s) continue
+                if (s2 == "main.cpp") continue
+                const trg = path.join(parsed.args[0], s2)
+                nodeutil.mkdirP(path.dirname(trg))
+                fs.writeFileSync(trg, opts.extinfo.extensionFiles[s])
+            }
+        })
+}
+
 export function formatAsync(parsed: commandParser.ParsedCommand) {
     let inPlace = !!parsed.flags["i"];
     let testMode = !!parsed.flags["t"];
@@ -5984,6 +6007,13 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             debug: { description: "Keeps the browser open to debug tests" }
         }
     }, blockTestsAsync);
+
+    p.defineCommand({
+        name: "exportcpp",
+        help: "Export all generated C++ files to given directory",
+        advanced: true,
+        argString: "<target-directory>"
+    }, exportCppAsync);
 
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
