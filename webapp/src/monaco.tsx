@@ -38,6 +38,12 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 }
 
 
+// TODO(dz):
+interface EditAmendment {
+    delLeft?: number
+}
+const amendmentMarker = "#AMENDMENT:" // TODO(dz) pivot python vs ts
+
 class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
     }
@@ -73,14 +79,24 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             .then(completions => {
                 console.log("monaco 74")
                 const items = (completions.entries || []).map((si, i) => {
-                    const snippet = this.python ? si.pySnippet : si.snippet;
+                    let snippet = this.python ? si.pySnippet : si.snippet;
+                    let amend: EditAmendment = {
+                        delLeft: position.column - 1
+                    }
+                    let anyAmmend = (a: EditAmendment): boolean => {
+                        return a.delLeft > 0
+                    }
+                    if (anyAmmend(amend))
+                        snippet += `${amendmentMarker}${JSON.stringify(amend)}`
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
                         : (completions.isMemberCompletion ? si.name : si.qName);
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
-                    console.log("snippet")
-                    console.log(snippet)
+                    // let range = monaco.Range.fromPositions(position)
+                    // .setStartPosition(position.lineNumber, 1)
+                    // console.log(range)
+                    // console.dir(range)
                     return {
                         label,
                         kind: this.tsKindToMonacoKind(si.kind),
@@ -89,7 +105,12 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${snippet}`,
                         filterText: `${label} ${documentation} ${block}`,
-                        insertText: snippet
+                        insertText: snippet,
+                        // range: range,
+                        // textEdit: {
+                        //     text: snippet,
+                        //     range: range
+                        // }
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -106,8 +127,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      * The editor will only resolve a completion item once.
      */
     resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        console.log("monaco 104")
-        console.dir(item)
+        // console.log("Resolving! " + item.label)
+        // if (item.kind == monaco.languages.CompletionItemKind.Function) {
+        //     item.range = item.range
+        //         .setStartPosition(item.range.startLineNumber, 1)
+        // }
         return item
         // TODO(dz)
         // // item.insertText = "foobaz"
@@ -681,6 +705,117 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.setupToolbox(editorArea);
             this.setupFieldEditors();
+
+            this.editor.onDidChangeModelContent(e => {
+                // TODO(dz):
+                if (e.changes.length != 1)
+                    return
+                let change = e.changes[0]
+                if (change.text.indexOf(amendmentMarker) >= 0) {
+                    // text ammendment happened
+                    let textAndAmendment = change.text.split(amendmentMarker)
+                    if (textAndAmendment.length != 2) {
+                        // TODO(dz):
+                        console.error("Incorrect text ammendment: ")
+                        console.dir(change)
+                    }
+                    let changeText = textAndAmendment[0]
+                    let amendmentStr = textAndAmendment[1]
+                    let amendment = JSON.parse(amendmentStr) as EditAmendment
+                    console.log("amendment:")
+                    console.dir(amendment)
+
+                    // let model = this.editor.getModel()
+                    // let amendRange = monaco.Range.lift(change.range)
+                    let amendRange = Object.assign({}, change.range)
+                    // let amendRange = model.validateRange(change.range)
+                    // TODO(dz):
+                    // amendRange.endColumn -= amendmentMarker.length + amendmentStr.length
+                    amendRange.endColumn = 9999 // TODO(dz) ?
+                    let changeLines = changeText.split("\n").length - 1
+                    amendRange.endLineNumber += changeLines
+                    if (amendment.delLeft) {
+                        amendRange.startColumn = Math.max(amendRange.startColumn - amendment.delLeft, 1)
+                    }
+
+                    // TODO(dz): hacky? yes. better way? unknown.
+                    setTimeout(() => {
+                        // this.editModelAsync(amendRange, changeText)
+
+                        // TODO(dz): this listens for code editor changes
+                        let newText = changeText
+                        let range = amendRange
+                        return new Promise(resolve => {
+                            const model = this.editor.getModel();
+                            const lines = newText.split("\n");
+                            // const afterRange = new monaco.Range(range.startLineNumber, range.startColumn,
+                            //     range.startLineNumber + lines.length - 1, lines[lines.length - 1].length)
+                            // TODO(dz): finding "pass" in text
+                            let afterRange: monaco.Range = null;
+                            let passSplits = newText.split("pass")
+                            if (passSplits.length >= 2) {
+                                // TODO(dz): generalize
+                                let before = passSplits[0]
+                                let beforeLines = before.split("\n");
+                                let pass = "pass"
+                                let lastBeforeLine = beforeLines[beforeLines.length - 1]
+                                let passLine = range.startLineNumber + beforeLines.length - 1
+                                let startCol = lastBeforeLine.length
+
+                                afterRange = new monaco.Range(passLine, startCol,
+                                    passLine, startCol + pass.length)
+                            }
+
+                            const disposable = this.editor.onDidChangeModelContent(e => {
+                                let changes = e.changes;
+
+                                disposable.dispose();
+                                if (afterRange)
+                                    this.editor.setSelection(afterRange);
+
+                                // TODO(dz):
+                                // - optional select after range
+
+                                // Clear ranges because the model changed
+                                if (this.fieldEditors)
+                                    this.fieldEditors.clearRanges(this.editor);
+                                if (afterRange)
+                                    resolve(afterRange);
+                            });
+
+                            model.pushEditOperations(this.editor.getSelections(), [{
+                                identifier: { major: 0, minor: 0 },
+                                range: model.validateRange(range),
+                                text: newText,
+                                forceMoveMarkers: true,
+                                isAutoWhitespaceEdit: true
+                            }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
+                        });
+                    }, 0)
+
+                    // this.editor.executeEdits("", [
+                    //     {
+                    //         identifier: { major: 0, minor: 0 },
+                    //         range: amendRange,
+                    //         text: changeText,
+                    //         // TODO(dz):
+                    //         forceMoveMarkers: true,
+                    //         // isAutoWhitespaceEdit: true,
+                    //     }
+                    // ]);
+
+                    // model.pushEditOperations(this.editor.getSelections(), [{
+                    //     identifier: { major: 0, minor: 0 },
+                    //     range: amendRange,
+                    //     text: changeText,
+                    //     forceMoveMarkers: true,
+                    //     isAutoWhitespaceEdit: true
+                    // }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
+                }
+                // // TODO(dz):
+                // console.log("editor changed!")
+                // console.dir(e)
+            });
         })
     }
 
@@ -692,6 +827,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // always insert the text on the next lin
         insertText += "\n";
+        // TODO(dz)
+        insertText += "\n#woobloooblobo\n"
         position.lineNumber++;
         position.column = 1;
         // check existing content
@@ -1918,6 +2055,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private editModelAsync(range: monaco.IRange, newText: string): Promise<monaco.IRange> {
+        // TODO(dz): this listens for code editor changes
         return new Promise(resolve => {
             const model = this.editor.getModel();
             const lines = newText.split("\n");
@@ -1925,6 +2063,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 range.startLineNumber + lines.length - 1, lines[lines.length - 1].length)
 
             const disposable = this.editor.onDidChangeModelContent(e => {
+                let changes = e.changes;
+
                 disposable.dispose();
                 this.editor.setSelection(afterRange);
 
