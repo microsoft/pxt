@@ -289,19 +289,15 @@ namespace pxt.cpp {
         let currDocComment = ""
         let currAttrs = ""
         let inDocComment = false
-        let outp = ""
 
         function handleComments(ln: string) {
-            if (inEnum) {
-                outp += ln + "\n"
+            if (inEnum)
                 return true
-            }
 
             if (/^\s*\/\*\*/.test(ln)) {
                 inDocComment = true
                 currDocComment = ln + "\n"
                 if (/\*\//.test(ln)) inDocComment = false
-                outp += "//\n"
                 return true
             }
 
@@ -310,17 +306,14 @@ namespace pxt.cpp {
                 if (/\*\//.test(ln)) {
                     inDocComment = false
                 }
-                outp += "//\n"
                 return true
             }
 
             if (/^\s*\/\/%/.test(ln)) {
                 currAttrs += ln + "\n"
-                outp += "//\n"
                 return true
             }
 
-            outp += ln + "\n"
             return false
         }
 
@@ -629,7 +622,6 @@ namespace pxt.cpp {
                 return wrap
             }
 
-            outp = ""
             inEnum = false
             enumVal = 0
 
@@ -812,8 +804,6 @@ namespace pxt.cpp {
                     return;
                 }
             })
-
-            return outp
         }
 
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
@@ -909,7 +899,7 @@ namespace pxt.cpp {
 
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         pxt.debug("Parse C++: " + fullName)
-                        src = parseCpp(src, isHeader)
+                        parseCpp(src, isHeader)
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)

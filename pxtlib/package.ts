@@ -797,9 +797,11 @@ namespace pxt {
                         : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
                             ext = U.flatClone(ext)
-                            delete ext.compileData;
-                            delete ext.generatedFiles;
-                            delete ext.extensionFiles;
+                            if (!target.keepCppFiles) {
+                                delete ext.compileData;
+                                delete ext.generatedFiles;
+                                delete ext.extensionFiles;
+                            }
                             opts.extinfo = ext
                             opts.hexinfo = inf
                         })
