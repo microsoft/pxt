@@ -208,18 +208,21 @@ i.icon.avatar-image {
 }
 
 /* Tutorial blocks */
-
-.hintdialog .ui.segment .blocklyPreview {
+.hintdialog .ui.segment .blocklyPreview,
+.tutorialhint .ui.segment .blocklyPreview {
     width: 100%;
-    @media only screen and (min-height: 400px) {
-        max-height: 50vh;
+}
+
+@media only screen and (min-height: 400px) {
+    .hintdialog .ui.segment .blocklyPreview,
+    .tutorialhint .ui.segment .blocklyPreview {
+        max-height: 45vh;
     }
 }
 
-.tutorialhint .ui.segment .blocklyPreview {
-    width: 100%;
-    @media only screen and (min-height: 400px) {
-        max-height: 40vh;
+@media only screen and (max-height: 800px) {
+    .tutorialhint img {
+        max-height: 30vh;
     }
 }
 
