@@ -1032,6 +1032,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (fs.existsSync(hexCache)) {
         hexFiles = fs.readdirSync(hexCache)
             .filter(f => /\.hex$/.test(f))
+            .filter(f => fs.readFileSync(f, { encoding: "uf8"}) != "SKIP")
             .map((f) => `@cdnUrl@/compile/${f}`);
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
