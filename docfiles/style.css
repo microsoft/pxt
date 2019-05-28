@@ -118,8 +118,33 @@ code.lang-spy
  
 .ui.text p,
 .ui.text li,
-.ui.container.mainbody {
-    max-width: 1100px !important;
+.ui.grid.mainbody {
+    /*max-width: 1100px !important;*/
+    margin-left: 1rem !important;
+    transition: width .5s;
+    transition-timing-function: ease;
+}
+
+.ui.grid.mainbody.full-width, .ui.vertical.footer.full-width {
+    width: 100vw;
+    padding-right: 3rem;
+}
+
+.ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
+    width: 84vw;
+    margin-left: 1rem;
+}
+
+#togglesidebar > i.icon {
+    transition: transform .2s ease;
+}
+
+#togglesidebar > i.icon.content {
+    transform: rotate(0deg);
+}
+
+#togglesidebar > i.icon.close {
+    transform: rotate(90deg);
 }
 
 /* wrap cards header */
@@ -391,4 +416,7 @@ print only stuff
     body.pushable {
         background: #fff !important;        
     }
+
+   
 }
+ 

@@ -20,26 +20,42 @@
 
 	<!-- @include docsheader.html-->
 
-	<!-- @include tocheader.html -->
+	
 
-	<div id="docs" class="pusher">
+	<div id="docs" class="">
 
-		<!-- @include toc.html -->
+		<!-- @include tocheader.html -->
 
-		<div class="article" id="maincontent">
+		<div class="article pusher" id="maincontent">
 			<div class="article-inner">
 
 				<!-- @include header.html -->
 
-				<div class="main ui container fluid mainbody">
+				<div class="main ui grid fluid mainbody content-width">
+						<div class="one wide computer column zero wide mobile column">
+
+							</div>
+					<div class="ten wide computer column sixteen wide mobile column">
 					@printBtn@ @body@
 					<div class="hideprint">@github@</div>
+					</div>
+					<div class="one wide computer column zero wide mobile column">
+
+					</div>
+					<div class="three wide computer column zero wide mobile column">
+
+						</div>
+						<div class="one wide computer column zero wide mobile column">
+
+							</div>
+					
 				</div>
 
-				<!-- @include footer.html -->
+			
 			</div>
-
+        
 		</div>
+		<!-- @include footer.html -->
 
 	</div>
 

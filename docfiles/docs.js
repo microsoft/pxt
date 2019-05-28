@@ -70,15 +70,23 @@ function setupSidebar() {
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
+                document.querySelector('#togglesidebar > i').classList.remove('content');
+                document.querySelector('#togglesidebar > i').classList.add('close');
+                document.querySelector("#docs .ui.grid.mainbody").classList.remove('full-width');
+                document.querySelector("#docs .ui.grid.mainbody").classList.add('content-width');
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
                 scrollActiveHeaderIntoView();
             },
             onHidden: function () {
+                document.querySelector('#togglesidebar > i').classList.remove('close');
+                document.querySelector('#togglesidebar > i').classList.add('content');
+                document.querySelector("#docs .ui.grid.mainbody").classList.remove('content-width');
+                document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width');
                 togglesidebar.setAttribute("aria-expanded", "false");
             },
-            context: $('#docs')
+            context: $('#maincontent')
         })
-        .sidebar('setting', 'transition', 'overlay')
+        .sidebar('setting', 'transition', 'push')
         .sidebar(
             'attach events', '#togglesidebar'
         );
