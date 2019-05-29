@@ -6,7 +6,7 @@ namespace pxt.tutorial {
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|typescript|ts|js|javascript)\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd
@@ -37,7 +37,7 @@ namespace pxt.tutorial {
 
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
-            steps: parseTutorialSteps(tutorialmd),
+            steps: steps,
             code
         };
 
@@ -53,6 +53,8 @@ namespace pxt.tutorial {
     }
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
+        const filterblocksRegex = /```(filterblocks)\s*\n([\s\S]*?)\n```/gmi;
+
         // Download tutorial markdown
         let steps = tutorialmd.split(/^##[^#].*$/gmi);
         let newAuthoring = true;
@@ -84,7 +86,16 @@ namespace pxt.tutorial {
             const contentLines = stepContent.split('\n');
             stepInfo[i].headerContentMd = contentLines[0];
             stepInfo[i].contentMd = stepContent;
-            stepInfo[i].hasHint = contentLines.length > 1;
+
+            // everything after the first line currently treated as "Hint"
+            let blockSolution = contentLines.slice(1).join('\n');
+            if (blockSolution) {
+                // remove ```filterblocks ``` code, as it isn't displayed in the hint
+                blockSolution = blockSolution.replace(filterblocksRegex, '');
+                stepInfo[i].blockSolution = blockSolution;
+            }
+
+            stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
         }
         return stepInfo;
     }

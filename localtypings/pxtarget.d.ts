@@ -633,6 +633,7 @@ declare namespace ts.pxtc {
 
     interface SymbolInfo {
         attributes: CommentAttrs;
+        // unqualified name (e.g. "Grass" instead of "Blocks.Grass")
         name: string;
         namespace: string;
         fileName: string;
@@ -642,6 +643,7 @@ declare namespace ts.pxtc {
         extendsTypes?: string[]; // for classes and interfaces
         isInstance?: boolean;
         isContextual?: boolean;
+        // qualified name (e.g. "Blocks.Grass")
         qName?: string;
         pkg?: string;
         snippet?: string;
@@ -757,6 +759,7 @@ declare namespace pxt.tutorial {
         hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
+        blockSolution?: string;
     }
 
     interface TutorialOptions {

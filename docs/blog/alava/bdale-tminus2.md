@@ -1,6 +1,6 @@
-![Brooklyn Public Library](/static/blog/ozette/bklyn_pub_lib_night.jpg)
+![Brooklyn Public Library](/static/blog/alava/bklyn_pub_lib_night.jpg)
 
-# Project Ozette: BKLYN or Bust (T minus 2 days)
+# Project Alava: BKLYN or Bust (T minus 2 days)
 
 Posted on May 1st, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball/)
 
@@ -9,17 +9,17 @@ Back in 2013, I was one of 50 choristers in the Seattle Opera's product of Wagne
 When you go to a concert, movie, or musical, you are treated to a performance that is the
 product of many person-years of effort. In this blog, I want to tell you about
 the technology that is going into the fashion show [On the Runway: Homage to Future Fashion](https://bfahomagetofuturefashion.eventbrite.com/) and the people behind it. For more context, see
-[Project Ozette](/blog/ozette/ozette). Let's get into the tech going bottom-up, starting
+[Project Alava](/blog/alava/alava). Let's get into the tech going bottom-up, starting
 with the hardware, which is in the Pelican case that Teddy Seyed, James Devine and Peli de Halleux 
 (left to right) are standing with in front of the [Brooklyn Public Library](https://www.bklynlibrary.org/locations/central).
 
-![Teddy Seyed, James Devine and Peli de Halleux standing in front of the Brooklyn Public Library](/static/blog/ozette/trio.jpg)
+![Teddy Seyed, James Devine and Peli de Halleux standing in front of the Brooklyn Public Library](/static/blog/alava/trio.jpg)
 
 ### Hardware: Fashion Brain and Beads
 
 Teddy Seyed created the hardware designs for the fashion "brain" and six fashion "beads" shown in the box below.  These all use the [SAMD21 microcontroller](https://www.microchip.com/wwwproducts/en/ATSAMD21G18) and can be networked together using stereo audio cables and the JACDAC physical/logical protocol (described below). Each bead has a different set of sensing and actuation capabilities. These beads are prototypes that include USB-C ports for ease of flashing code (future versions will not include the USB port and be much smaller). 
 
-![Fashion brain and beads](/static/blog/ozette/boxBrainBeads.jpg)
+![Fashion brain and beads](/static/blog/alava/boxBrainBeads.jpg)
 
 ### Flashing Code with UF2
 
@@ -46,7 +46,7 @@ can provide power and ground (in addition to data). JACDAC is [open source](http
 Stereo audio cables, Y- and multi- splitters are plentiful, 
 making it easy to create arbitrary single-bus networks, as shown in this picture.
 
-![Fashion brain and bead, connected via stereo audio cable](/static/blog/ozette/jacdac.jpg)
+![Fashion brain and bead, connected via stereo audio cable](/static/blog/alava/jacdac.jpg)
 
 ### Logical Networking with JACDAC
 
@@ -73,7 +73,7 @@ Microsoft Research started this editor as a way to experiment with Arduino-style
 to external sensors and actuators. With the JACDAC device drivers in place, one can now program against
 a set of networked fashion brain and beads.
 
-![Smart Tattoos](/static/blog/ozette/maker_beads.jpg)
+![Smart Tattoos](/static/blog/alava/maker_beads.jpg)
 
 ### Smart Tattoos
 
@@ -81,9 +81,9 @@ We've also worked with [Asta Roseway]() to incorporate [Smart Tattoos](https://w
 into the mix - these interactive tattoos are capacitive and can send signals to any device via touch - the fashion designers
 really love this technology!
 
-![Smart Tattoos](/static/blog/ozette/smart_tattoo.jpg)
+![Smart Tattoos](/static/blog/alava/smart_tattoo.jpg)
 
-[Tomorrow](/blog/ozette/bdale-tminus1) is the last day before the fashion show... off to the races!
+[Tomorrow](/blog/alava/bdale-tminus1) is the last day before the fashion show... off to the races!
 
 
 

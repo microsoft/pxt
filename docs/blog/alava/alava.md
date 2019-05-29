@@ -1,6 +1,6 @@
-![Picture of fashion beads connected together](/static/blog/ozette/networked.jpg)
+![Picture of fashion beads connected together](/static/blog/alava/networked.jpg)
 
-# Project Ozette: Programming Webs of Microcontrollers
+# Project Alava: Programming Webs of Microcontrollers
 
 Posted on April 26th, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball/)
 
@@ -19,7 +19,7 @@ Over the last year, the [Microsoft Research](https://research.microsoft.com) (MS
 along with our superstar interns James Devine and Teddy Seyed, 
 has been working hard to make it **much easier to program, configure and debug a network/web of microcontroller-based devices** than is possible today.
 This work is part of MSR's 
-[Project Ozette](https://www.microsoft.com/en-us/research/project/ozette/),
+[Project Alava](https://www.microsoft.com/en-us/research/project/alava/),
 which introduces three related technologies:
 - [JACDAC](https://jacdac.org), a bus-based plug-and-play protocol for microcontrollers (written in TypeScript, so it works in browsers and on microcontrollers); 
 - **physical transports for JACDAC**, including JACDAC over stereo audio cables and JACDAC over WebUSB;
@@ -33,15 +33,15 @@ on May 3, 2019 at the [Brooklyn Fashion Academy](https://www.bklynlibrary.org/bk
 for their fashion show [On the Runway: Homage to Future Fashion](https://www.eventbrite.com/e/bklyn-fashion-academy-presents-on-the-runway-homage-to-future-fashion-show-tickets-59616896743).
 We are providing wearable technology (fashion beads) for the  designers to incorporate into their creations:
 
-![JACDAC fashion beads](/static/blog/ozette/beads.jpg)
+![JACDAC fashion beads](/static/blog/alava/beads.jpg)
 
-We'll be posting more soon on the technology behind Project Ozette, but offer the following taste for now.
+We'll be posting more soon on the technology behind Project Alava, but offer the following taste for now.
 
 ### Counting Down to the Show
 
-- [BKLYN or Bust (T minus 3 days)](/blog/ozette/bdale-tminus3)
-- [BKLYN or Bust (T minus 2 days)](/blog/ozette/bdale-tminus2)
-- [BKLYN or Bust (T minus 1 day)](/blog/ozette/bdale-tminus1)
+- [BKLYN or Bust (T minus 3 days)](/blog/alava/bdale-tminus3)
+- [BKLYN or Bust (T minus 2 days)](/blog/alava/bdale-tminus2)
+- [BKLYN or Bust (T minus 1 day)](/blog/alava/bdale-tminus1)
 
 ### Debugging with JACDAC over WebUSB
 
