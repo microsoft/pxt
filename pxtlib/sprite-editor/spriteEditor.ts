@@ -329,6 +329,10 @@ namespace pxtsprite {
         closeEditor() {
             if (this.closeHandler) {
                 this.closeHandler();
+                if (this.state.floatingLayer) {
+                    this.state.mergeFloatingLayer();
+                    this.pushState(true);
+                }
             }
         }
 
@@ -389,6 +393,35 @@ namespace pxtsprite {
                 this.discardEdit();
                 this.paintSurface.setEyedropperMouse(true);
                 this.altDown = true;
+            }
+
+            if (this.activeTool === PaintTool.Marquee && this.state.floatingLayer) {
+                let didSomething = true;
+                switch (event.keyCode) {
+                    case 8: // Backspace
+                        this.state.floatingLayer = undefined;
+                        break;
+                    case 37: // Left arrow
+                        this.state.layerOffsetX--;
+                        break;
+                    case 38: // Up arrow
+                        this.state.layerOffsetY--;
+                        break;
+                    case 39: // Right arrow
+                        this.state.layerOffsetX++;
+                        break;
+                    case 40: // Down arrow
+                        this.state.layerOffsetY++;
+                        break;
+                    default:
+                        didSomething = false;
+                }
+
+                if (didSomething) {
+                    this.updateEdit();
+                    this.pushState(true);
+                    this.paintSurface.restore(this.state, true);
+                }
             }
 
             const tools = [

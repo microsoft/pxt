@@ -118,6 +118,7 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
+                this.editor.closeEditor();
                 this.state = this.editor.bitmap().image;
                 this.redrawPreview();
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
