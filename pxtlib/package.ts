@@ -806,7 +806,10 @@ namespace pxt {
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
+                .then(() =>
+                    appTarget.compile.shortPointers || appTarget.compile.nativeType == "vm" ||
+                        this.config.binaryonly || !opts.target.isNative ? null
+                        : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         const headerString = JSON.stringify({
