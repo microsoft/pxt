@@ -1397,8 +1397,6 @@ ${output}</xml>`;
                     case SK.LessThanEqualsToken:
                     case SK.GreaterThanToken:
                     case SK.GreaterThanEqualsToken:
-                    // TODO: &&, ||, ! should check against non boolean l / r (e.g. not `1 || 2`)
-                    // https://github.com/Microsoft/pxt-arcade/issues/946
                     case SK.AmpersandAmpersandToken:
                     case SK.BarBarToken:
                         return undefined;
