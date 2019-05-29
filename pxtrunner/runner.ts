@@ -289,7 +289,7 @@ namespace pxt.runner {
     }
 
     function compileAsync(hex: boolean, updateOptions?: (ops: pxtc.CompileOptions) => void) {
-        return getCompileOptionsAsync()
+        return getCompileOptionsAsync(hex)
             .then(opts => {
                 if (updateOptions) updateOptions(opts);
                 let resp = pxtc.compile(opts)
@@ -313,6 +313,18 @@ namespace pxt.runner {
                 }
                 return resp.outfiles[pxtc.BINARY_HEX];
             });
+    }
+
+    export function generateVMFileAsync(options: SimulateOptions): Promise<any> {
+        pxt.setHwVariant("vm")
+        return loadPackageAsync(options.id)
+            .then(() => compileAsync(true, opts => {
+                if (options.code) opts.fileSystem["main.ts"] = options.code;
+            }))
+            .then(resp => {
+                console.log(resp)
+                return resp
+            })
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
