@@ -1409,10 +1409,12 @@ ${output}</xml>`;
 
             function checkBooleanCallExpression(n: CallExpression) {
                 const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
-                const type = callInfo.decl.type;
+                if (callInfo) {
+                    const type = callInfo.decl.type;
 
-                if (type && type.kind === SK.BooleanKeyword) {
-                    return undefined;
+                    if (type && type.kind === SK.BooleanKeyword) {
+                        return undefined;
+                    }
                 }
                 return Util.lf("Only functions that return booleans are allowed as conditions");
             }
