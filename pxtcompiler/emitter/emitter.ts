@@ -2922,7 +2922,7 @@ ${lbl}: .short 0xffff
             if (isStatic(fld))
                 U.oops("fieldIndex on static field: " + getName(fld))
             let attrs = parseComments(fld)
-            let idx = info.allfields.indexOf(fld) 
+            let idx = info.allfields.indexOf(fld)
             if (idx < 0 && bin.finalPass)
                 U.oops("missing field")
             return {
