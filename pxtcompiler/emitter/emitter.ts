@@ -1431,7 +1431,8 @@ namespace ts.pxtc {
                 for (let mem of decl.members) {
                     if (mem.kind == SK.PropertyDeclaration) {
                         let pdecl = <PropertyDeclaration>mem
-                        info.allfields.push(pdecl)
+                        if (!isStatic(pdecl))
+                            info.allfields.push(pdecl)
                     } else if (mem.kind == SK.Constructor) {
                         for (let p of (mem as FunctionLikeDeclaration).parameters) {
                             if (isCtorField(p))
@@ -2918,9 +2919,14 @@ ${lbl}: .short 0xffff
         }
 
         function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, needsCheck = true): FieldAccessInfo {
+            if (isStatic(fld))
+                U.oops("fieldIndex on static field: " + getName(fld))
             let attrs = parseComments(fld)
+            let idx = info.allfields.indexOf(fld)
+            if (idx < 0 && bin.finalPass)
+                U.oops("missing field")
             return {
-                idx: info.allfields.indexOf(fld),
+                idx,
                 name: getName(fld),
                 isRef: true,
                 shimName: attrs.shim,

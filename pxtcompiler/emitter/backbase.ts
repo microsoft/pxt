@@ -592,7 +592,7 @@ ${baseLabel}_nochk:
                 let off = info.idx * 4 + 4
                 let xoff = "#" + off
                 if (off > 124) {
-                    this.t.emit_int(off, "r3")
+                    this.write(this.t.emit_int(off, "r3"))
                     xoff = "r3"
                 }
                 if (store)
@@ -606,7 +606,7 @@ ${baseLabel}_nochk:
                 let off = info.idx * 4 + 4
                 let xoff = "#" + off
                 if (off > 124) {
-                    this.t.emit_int(off, "r3")
+                    this.write(this.t.emit_int(off, "r3"))
                     xoff = "r3"
                 }
 
@@ -618,7 +618,7 @@ ${baseLabel}_nochk:
                     this.write(`bl _pxt_decr`)
                     this.write(`pop {r0, r1}`)
                     if (off > 124)
-                        this.t.emit_int(off, "r3")
+                        this.write(this.t.emit_int(off, "r3"))
                     this.write(`str r1, [r0, ${xoff}]`)
                     if (info.needsCheck)
                         this.write(`ldrh r2, [r0, #0]`)
