@@ -1,6 +1,7 @@
-
 global.assert = require('assert');
-const { Builder } = require('selenium-webdriver');
+const {
+    Builder
+} = require('selenium-webdriver');
 global.browser = new Builder().forBrowser('chrome').build();
 
 var helpList = require('./HelpList');
@@ -31,4 +32,3 @@ describe('Micro:bit Test', async () => {
     searchBox.search();
 
 })
-
