@@ -2754,6 +2754,11 @@ ${lbl}: .short 0xffff
             return f.body && (f.body.kind != SK.Block || (f.body as Block).statements.length > 0)
         }
 
+        function isInAmbientContext(node: Node) {
+            // Ambient is an internal flag, but we use it
+            return node.flags & (NodeFlags as any).Ambient
+        }
+
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (!isUsed(node))
                 return undefined;
@@ -2773,7 +2778,7 @@ ${lbl}: .short 0xffff
                     return undefined;
             }
 
-            if (ts.isInAmbientContext(node))
+            if (isInAmbientContext(node))
                 return undefined;
 
             if (!node.body)
@@ -3466,7 +3471,7 @@ ${lbl}: .short 0xffff
                         addConfigEntry({ name: nm, key: key, value: val })
                     }
                 }
-            if (ts.isInAmbientContext(node))
+            if (isInAmbientContext(node))
                 return;
             checkForLetOrConst(node.declarationList);
             node.declarationList.declarations.forEach(emit);
