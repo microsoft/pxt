@@ -15,7 +15,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function flatClone<T>(obj: T): T {
+    export function flatClone<T extends Object>(obj: T): T {
         if (obj == null) return null
         let r: any = {}
         Object.keys(obj).forEach((k) => { r[k] = (obj as any)[k] })
