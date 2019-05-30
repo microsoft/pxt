@@ -255,10 +255,13 @@ namespace pxt.BrowserUtils {
     export function devicePixelRatio(): number {
         if (typeof window === "undefined" || !window.screen) return 1;
 
-        if (window.screen.systemXDPI !== undefined
-            && window.screen.logicalXDPI !== undefined
-            && window.screen.systemXDPI > window.screen.logicalXDPI) {
-            return window.screen.systemXDPI / window.screen.logicalXDPI;
+        // these are IE specific
+        let sysXDPI = (window.screen as any).systemXDPI
+        let logicalXDPI = (window.screen as any).logicalXDPI
+        if (sysXDPI !== undefined
+            && logicalXDPI !== undefined
+            && sysXDPI > logicalXDPI) {
+            return sysXDPI / logicalXDPI;
         }
         else if (window && window.devicePixelRatio !== undefined) {
             return window.devicePixelRatio;
