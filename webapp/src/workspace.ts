@@ -625,14 +625,21 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     h.githubCurrent = true
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, addDefaultFiles?: boolean) {
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
-    let files = pxt.packageFiles(name)
+    let files = pxt.packageFiles(name);
     pxt.packageFilesFixup(files, true)
 
-    let currFiles = await getTextAsync(hd.id)
-    U.jsonMergeFrom(currFiles, files)
+    let currFiles = await getTextAsync(hd.id);
+
+    if (addDefaultFiles) {
+        const initFiles = pxt.packageFiles(parsed.fullName.replace('/', '-'));
+        pxt.packageFilesFixup(initFiles);
+        U.jsonMergeFrom(currFiles, initFiles);
+    }
+
+    U.jsonMergeFrom(currFiles, files);
 
     await saveAsync(hd, currFiles)
     await commitAsync(hd, "Auto-initialized.", "", Object.keys(currFiles))
@@ -663,12 +670,7 @@ export async function importGithubAsync(id: string) {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
-            const files = pxt.packageFiles(parsed.fullName.replace('/', '-'));
-            pxt.packageFilesFixup(files)
-            for (const f in files) {
-                const c = files[f];
-                await pxt.github.putFileAsync(parsed.fullName, f, c)
-            };
+            await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
@@ -678,7 +680,7 @@ export async function importGithubAsync(id: string) {
     return await githubUpdateToAsync(null, repoid, sha, {})
         .then(hd => {
             if (isEmpty)
-                return initializeGithubRepoAsync(hd, repoid)
+                return initializeGithubRepoAsync(hd, repoid, true);
             return hd
         })
 }
