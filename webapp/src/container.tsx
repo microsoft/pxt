@@ -563,12 +563,13 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     renderCore() {
         const { sideDocsCollapsed, docsUrl } = this.state;
+        const isRTL = pxt.Util.isUserLanguageRtl();
         if (!docsUrl) return null;
 
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
-                <sui.Icon icon={`icon inverted chevron ${sideDocsCollapsed ? 'left' : 'right'}`} />
+                <sui.Icon icon={`icon inverted chevron ${( sideDocsCollapsed || isRTL ) && !( sideDocsCollapsed && isRTL ) ? 'left' : 'right'}`} />
              </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
