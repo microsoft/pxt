@@ -7,11 +7,19 @@ declare namespace ts {
     }
 
 
-    interface DiagnosticCollection {
+    export interface DiagnosticWithLocation extends Diagnostic {
+        file: SourceFile;
+        start: number;
+        length: number;
+    }
+    export interface DiagnosticCollection {
+        // from TypeScript/src/compiler/types.ts v3.3.4000
         add(diagnostic: Diagnostic): void;
+        lookup(diagnostic: Diagnostic): Diagnostic | undefined;
         getGlobalDiagnostics(): Diagnostic[];
-        getDiagnostics(fileName?: string): Diagnostic[];
-        getModificationCount(): number;
+        getDiagnostics(fileName: string): DiagnosticWithLocation[];
+        getDiagnostics(): Diagnostic[];
+        reattachFileDiagnostics(newFile: SourceFile): void;
     }
 
 

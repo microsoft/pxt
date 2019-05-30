@@ -1,7 +1,7 @@
 namespace ts.pxtc {
     let reportDiagnostic = reportDiagnosticSimply;
 
-    function reportDiagnostics(diagnostics: ReadonlyArray<Diagnostic>): void {
+    function reportDiagnostics(diagnostics: readonly Diagnostic[]): void {
         for (const diagnostic of diagnostics) {
             reportDiagnostic(diagnostic);
         }

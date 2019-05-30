@@ -980,7 +980,7 @@ namespace ts.pxtc {
         pruneMethodsAndRecompute()
         emitVTables()
 
-        if (diagnostics.getModificationCount() == 0) {
+        if (diagnostics.getDiagnostics().length == 0) {
             reset();
             bin.finalPass = true
             emit(rootFunction)
@@ -1169,7 +1169,10 @@ namespace ts.pxtc {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit || !host)
+            // TODO(dz)
+            console.log("diagnostics")
+            console.dir(diagnostics)
+            if (diagnostics.getDiagnostics().length || opts.noEmit || !host)
                 return;
 
             bin.writeFile = (fn: string, data: string) =>
