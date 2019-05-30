@@ -4,8 +4,16 @@ namespace pxtmelody {
         src: string;
         alt: string;
     }
+    
+    export enum items { // these are placeholders for now
+        melody1,
+        melody2,
+        melody3,
+        melody4,
+        melody5
+    }
 
-    const COLUMNS = 4;
+    const COLUMNS = 1;
 
     export class Gallery {
         protected info: pxtc.BlocksInfo;
@@ -27,8 +35,8 @@ namespace pxtmelody {
             this.contentDiv = document.createElement("div");
             this.contentDiv.setAttribute("id", "sprite-editor-gallery");
 
-            this.itemBackgroundColor = "#ffffff";
-            this.itemBorderColor = "#000000";
+            this.itemBackgroundColor = "#ffffff"; // white
+            this.itemBorderColor = "#000000"; // black
 
             this.initStyles();
             this.containerDiv.appendChild(this.contentDiv);
@@ -80,7 +88,12 @@ namespace pxtmelody {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
             const totalWidth = this.containerDiv.clientWidth - 17;
             const buttonWidth = (Math.floor(totalWidth / COLUMNS) - 8) + "px";
-            this.getGalleryItems("Image").forEach((item, i) => this.mkButton(item.src, item.alt, item.qName, i, buttonWidth));
+            // const melodies = Object.keys(items);
+            // for(var i: number; i<melodies.length; i++) {
+            //     this.mkButton(melodies[i], melodies[i], melodies[i], i, buttonWidth);
+            // }
+
+            Object.keys(items).forEach((item, i) => this.mkButton(item, item, item, i, buttonWidth)); // this is making two buttons for each melody
         }
 
         protected initStyles() {
@@ -128,11 +141,12 @@ namespace pxtmelody {
             button.setAttribute('class', 'sprite-gallery-button sprite-editor-card');
             button.title = alt;
             button.style.width = width;
-            button.style.height = width;
+            button.style.height = "25px";
             let backgroundColor = this.itemBackgroundColor;
 
             button.style.backgroundColor = backgroundColor;
             button.style.borderColor = this.itemBorderColor;
+            button.innerText = src;
 
             const parentDiv = this.contentDiv;
 
@@ -146,11 +160,11 @@ namespace pxtmelody {
                 parentDiv.removeAttribute('aria-activedescendant');
             });
 
-            let buttonImg = document.createElement('img');
-            buttonImg.src = src;
+            //let buttonImg = document.createElement('img');
+            //buttonImg.src = src;
             button.setAttribute('data-value', value);
-            buttonImg.setAttribute('data-value', value);
-            button.appendChild(buttonImg);
+            //buttonImg.setAttribute('data-value', value);
+            //button.appendChild(buttonImg);
             this.contentDiv.appendChild(button);
         }
 
@@ -218,40 +232,40 @@ namespace pxtmelody {
         // }
 
 
-        protected getGalleryItems(qName: string): GalleryItem[] {
-            const syms = getFixedInstanceDropdownValues(this.info.apis, qName);
-            generateIcons(syms);
+    //     protected getGalleryItems(qName: string): GalleryItem[] {
+    //         const syms = getFixedInstanceDropdownValues(this.info.apis, qName);
+    //         generateIcons(syms);
 
-            return syms.map(sym => {
-                return {
-                    qName: sym.qName,
-                    src: sym.attributes.iconURL,
-                    alt: sym.qName
-                };
-            });
-        }
-    }
+    //         return syms.map(sym => {
+    //             return {
+    //                 qName: sym.qName,
+    //                 src: sym.attributes.iconURL,
+    //                 alt: sym.qName
+    //             };
+    //         });
+    //     }
+    // }
 
-    function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-            && sym.attributes.fixedInstance
-            && isSubtype(apis, sym.retType, qName));
-    }
+    // function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+    //     return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+    //         && sym.attributes.fixedInstance
+    //         && isSubtype(apis, sym.retType, qName));
+    // }
 
-    function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-        if (specific == general) return true
-        let inf = apis.byQName[specific]
-        if (inf && inf.extendsTypes)
-            return inf.extendsTypes.indexOf(general) >= 0
-        return false
-    }
+    // function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
+    //     if (specific == general) return true
+    //     let inf = apis.byQName[specific]
+    //     if (inf && inf.extendsTypes)
+    //         return inf.extendsTypes.indexOf(general) >= 0
+    //     return false
+    // }
 
-    function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
-        const imgConv = new pxt.ImageConverter();
-        instanceSymbols.forEach(v => {
-            if (v.attributes.jresURL && !v.attributes.iconURL && v.attributes.jresURL.indexOf("data:image/x-mkcd-f") == 0) {
-                v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
-            }
-        });
+    // function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
+    //     const imgConv = new pxt.ImageConverter();
+    //     instanceSymbols.forEach(v => {
+    //         if (v.attributes.jresURL && !v.attributes.iconURL && v.attributes.jresURL.indexOf("data:image/x-mkcd-f") == 0) {
+    //             v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+    //         }
+    //     });
     }
 }

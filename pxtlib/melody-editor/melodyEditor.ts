@@ -75,7 +75,7 @@ namespace pxtmelody {
                 if (!this.altDown) {
                     this.setCell(col, row, 1, false); // third parameter is color
                 }
-                this.bottomBar.updateCursor(col, row);
+                //this.bottomBar.updateCursor(col, row);
             });
 
             this.selectionSurface.up((col, row) => {
@@ -101,7 +101,7 @@ namespace pxtmelody {
             this.selectionSurface.move((col, row) => {
                 //this.drawCursor(col, row);
                 this.shiftAction()
-                this.bottomBar.updateCursor(col, row);
+                //this.bottomBar.updateCursor(col, row);
             });
 
             this.selectionSurface.leave(() => {
@@ -111,7 +111,7 @@ namespace pxtmelody {
                 //         this.commit();
                 //     }
                 // }
-                this.bottomBar.hideCursor();
+                //this.bottomBar.hideCursor();
             });
 
 
@@ -197,9 +197,9 @@ namespace pxtmelody {
             return this.melody;
         }
 
-        setSizePresets(presets: [number, number][]) {
-            this.bottomBar.setSizePresets(presets, this.columns, this.rows);
-        }
+        // setSizePresets(presets: [number, number][]) {
+        //     this.bottomBar.setSizePresets(presets, this.columns, this.rows);
+        // }
 
         canvasWidth() {
             return this.columns;

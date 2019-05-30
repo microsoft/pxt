@@ -128,7 +128,11 @@ namespace pxtblockly {
         //setName(name: string)
 
         /**
+<<<<<<< Updated upstream
          * Show the inline free-text editor on top of the text.
+=======
+         * Create the melody editor under the name field.
+>>>>>>> Stashed changes
          * @private
          */
         showEditor_() {
