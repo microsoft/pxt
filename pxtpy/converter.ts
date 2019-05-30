@@ -1334,6 +1334,8 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
+        if (!value)
+            return stmtTODO(n)
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             defvar(getName(target), {})

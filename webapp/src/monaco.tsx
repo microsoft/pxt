@@ -708,6 +708,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.editor.onDidChangeModelContent(e => {
                 // TODO(dz):
+                // - do one edit to always delete the amendment
+                // - do one edit to delete left
+                // - ensure undo-redo stack works
+                // - ensure indent works
+                // - ensure pasting snippet in the middle of existing function works
+
                 if (e.changes.length != 1)
                     return
                 let change = e.changes[0]
@@ -721,7 +727,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     let changeText = textAndAmendment[0]
                     let amendmentStr = textAndAmendment[1]
-                    let amendment = JSON.parse(amendmentStr) as EditAmendment
+                    let amendment = pxt.U.jsonTryParse(amendmentStr) as EditAmendment
+                    if (!amendment) {
+                        // TODO(dz): Unexpected token , in JSON at position 14
+                        console.error("Incorrect text ammendment str: ")
+                        console.dir(amendmentStr)
+                        // TODO(dz): even if we can't parse the amendment json, still remove it from the editor
+                        return
+                    }
                     console.log("amendment:")
                     console.dir(amendment)
 
@@ -760,7 +773,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                 let pass = "pass"
                                 let lastBeforeLine = beforeLines[beforeLines.length - 1]
                                 let passLine = range.startLineNumber + beforeLines.length - 1
-                                let startCol = lastBeforeLine.length
+                                let startCol = lastBeforeLine.length + 1
 
                                 afterRange = new monaco.Range(passLine, startCol,
                                     passLine, startCol + pass.length)
@@ -783,13 +796,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                     resolve(afterRange);
                             });
 
-                            model.pushEditOperations(this.editor.getSelections(), [{
+                            let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
                                 identifier: { major: 0, minor: 0 },
                                 range: model.validateRange(range),
                                 text: newText,
                                 forceMoveMarkers: true,
                                 isAutoWhitespaceEdit: true
-                            }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
+                            }]
+                            // TODO(dz): add option to skip undo stack
+                            model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)]);
+                            // model.applyEdits(edits)
                         });
                     }, 0)
 
