@@ -1,0 +1,22 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="3" error="Function with return value not supported in blocks" line0="function getBool&#40;&#41; &#123;" line1="    return true&#59;" line2="&#125;" />
+<next>
+<block type="controls_if">
+<mutation elseif="0" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="typescript_expression">
+<field name="EXPRESSION">getBool&#40;&#41;</field>
+</block>
+</value>
+<statement name="DO0">
+</statement>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
