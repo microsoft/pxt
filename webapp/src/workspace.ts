@@ -478,7 +478,6 @@ export async function bumpAsync(hd: Header) {
 }
 
 export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
-    // call this
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
