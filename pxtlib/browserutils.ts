@@ -365,7 +365,7 @@ namespace pxt.BrowserUtils {
     }
 
     export function loadImageAsync(data: string): Promise<HTMLImageElement> {
-        const img = document.createElement("img") as HTMLImageElement;
+        const img = document.createElement("img")
         return new Promise<HTMLImageElement>((resolve, reject) => {
             img.onload = () => resolve(img);
             img.onerror = () => resolve(undefined);
