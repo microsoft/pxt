@@ -2621,17 +2621,15 @@ export class ProjectView
     showImportGithubDialog() {
         dialogs.showImportGithubDialogAsync()
             .then(url => {
-                if (url) {
-                    if (url === "NEW") {
-                        dialogs.showCreateGithubRepoDialogAsync()
-                            .then(url => {
-                                if (url) {
-                                    importGithubProject(url);
-                                }
-                            })
-                    } else {
-                        importGithubProject(url);
-                    }
+                if (url === "NEW") {
+                    dialogs.showCreateGithubRepoDialogAsync()
+                        .then(url => {
+                            if (url) {
+                                importGithubProject(url);
+                            }
+                        })
+                } else if (url) {
+                    importGithubProject(url);
                 }
             }, e => {
                 core.errorNotification(lf("Sorry, that repository looks invalid."));
