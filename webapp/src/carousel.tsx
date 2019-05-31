@@ -83,11 +83,12 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
     public renderCore() {
         const { rightDisabled, leftDisabled } = this.state;
+        const isRTL = pxt.Util.isUserLanguageRtl();
 
         return <div className="ui carouselouter">
             <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} aria-label={lf("See previous")}
                 tabIndex={leftDisabled ? -1 : 0} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
-                <sui.Icon icon={"circle angle " + (!pxt.Util.isUserLanguageRtl() ? "left" : "right")} />
+                <sui.Icon icon={"circle angle " + (!isRTL ? "left" : "right")} />
             </span>
             <div className="carouselcontainer" ref={this.handleContainerRef}>
                 <div className="carouselbody" ref={this.handleDragSurfaceRef}>
