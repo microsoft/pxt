@@ -1020,7 +1020,7 @@ namespace pxt.py {
             U.assert(!ctx.currClass)
             let topLev = isTopLevel()
             ctx.currClass = n
-            n.isNamespace = n.decorator_list.some(d => d.kind == "Name" && (<Name>d).id == "namespace");
+            n.isNamespace = n.decorator_list.some(d => getFullName(d) == "namespace");
             let nodes = n.isNamespace ?
                 [B.mkText("namespace "), quote(n.name)]
                 : [
