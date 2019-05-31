@@ -1294,7 +1294,8 @@ namespace pxt.py {
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
             // class fields can't be const
-            isConstCall = isConstCall && !ctx.currClass.isNamespace;
+            // hack: value in @namespace should always be const
+            isConstCall = value && ctx.currClass.isNamespace;
             let fd = getClassField(ctx.currClass.symInfo, nm)
             // TODO: use or remove this code
             /*
