@@ -280,9 +280,20 @@ namespace pxt.py {
                 return emitTypeAliasDecl(s)
             } else if (ts.isEmptyStatement(s)) {
                 return []
+            } else if (ts.isModuleDeclaration(s)) {
+                return emitModuleDeclaration(s);
             } else {
                 throw Error(`Not implemented: statement kind ${s.kind}`);
             }
+        }
+        function emitModuleDeclaration(s: ts.ModuleDeclaration): string[] {
+            let name = getName(s.name)
+            let stmts = s.body && s.body.getChildren()
+                .map(emitNode)
+                .reduce((p, c) => p.concat(c), [])
+                .map(n => indent1(n));
+
+            return [`class ${name}:`].concat(stmts);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
             let typeStr = emitType(s.type)
