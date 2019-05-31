@@ -328,7 +328,9 @@ namespace pxtsprite {
 
         closeEditor() {
             if (this.closeHandler) {
-                this.closeHandler();
+                const ch = this.closeHandler;
+                this.closeHandler = undefined;
+                ch();
                 if (this.state.floatingLayer) {
                     this.state.mergeFloatingLayer();
                     this.pushState(true);
@@ -430,7 +432,8 @@ namespace pxtsprite {
                 PaintTool.Rectangle,
                 PaintTool.Erase,
                 PaintTool.Circle,
-                PaintTool.Line
+                PaintTool.Line,
+                PaintTool.Marquee
             ]
 
             tools.forEach(tool => {
