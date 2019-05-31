@@ -293,7 +293,7 @@ namespace pxt.py {
                 .reduce((p, c) => p.concat(c), [])
                 .map(n => indent1(n));
 
-            return [`class ${name}:`].concat(stmts);
+            return [`@namespace`, `class ${name}:`].concat(stmts);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
             let typeStr = emitType(s.type)
