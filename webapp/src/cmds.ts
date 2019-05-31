@@ -142,12 +142,15 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
+    console.log("hidDeployCoreAsync")
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
     if (!resp.success)
         return browserDownloadDeployCoreAsync(resp);
     core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
+    if (!f)
+        console.error("No UF2 file!") // TODO(dz)
     let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
         .then(dev => dev.reflashAsync(blocks))
@@ -217,8 +220,13 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return deploy()
 }
 
+// TODO(dz): choose deploy core function
+
 export function init(): void {
-    pxt.onAppTargetChanged = init;
+    pxt.onAppTargetChanged = () => {
+        pxt.debug('app target changed')
+        init()
+    }
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
@@ -234,7 +242,7 @@ export function init(): void {
         pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
 
-    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.webUSB;
+    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
     if (isNativeHost()) {
         pxt.debug(`deploy: webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
@@ -284,6 +292,12 @@ export function init(): void {
     }
 }
 
+// TODO(dz):
+// export function setDeployCoreFn(deployFn: (r: ts.pxtc.CompileResult, d?: pxt.commands.DeployOptions) => Promise<void>) {
+//     pxt.debug(`Setting deployCoreAsync function to: ${deployFn.name}`)
+//     pxt.commands.deployCoreAsync = deployFn
+// }
+
 export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
@@ -291,11 +305,14 @@ export function setWebUSBPaired(enabled: boolean) {
 }
 
 function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
+    console.log("checkWebUSBThenDownloadAsync")
     return pxt.usb.isPairedAsync().then(paired => {
         if (paired) {
             setWebUSBPaired(true);
+            console.log("checkWebUSBThenDownloadAsync hidDeployCoreAsync")
             return hidDeployCoreAsync(resp);
         }
+        console.log("checkWebUSBThenDownloadAsync browserDownloadDeployCoreAsync")
         return browserDownloadDeployCoreAsync(resp);
     });
 }
