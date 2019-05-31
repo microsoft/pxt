@@ -1333,14 +1333,14 @@ namespace pxt.py {
             }
             unifyTypeOf(target, fd.pyRetType)
             fd.isInstance = false
-            pref = ctx.currClass.isNamespace ? "export " : "static "
+            pref = ctx.currClass.isNamespace ? `export ${isConstCall ? "const" : "let"} ` : "static "
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             defvar(getName(target), {})
-            if (!/^(static|export) /.test(pref))
+            if (!/^static /.test(pref) && !/const/.test(pref))
                 pref += "const ";
             return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
         }
