@@ -86,10 +86,10 @@ function setupSidebar() {
             },
             context: $('#maincontent')
         })
-        .sidebar('setting', 'transition', 'push')
         .sidebar(
             'attach events', '#togglesidebar'
-        );
+        )
+        .sidebar('setting', 'transition', 'push')
 
     $('.ui.dropdown')
         .dropdown();
