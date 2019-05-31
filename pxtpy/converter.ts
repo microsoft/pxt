@@ -1020,13 +1020,16 @@ namespace pxt.py {
             U.assert(!ctx.currClass)
             let topLev = isTopLevel()
             ctx.currClass = n
-            let nodes = [
-                todoComment("keywords", n.keywords.map(doKeyword)),
-                todoComment("decorators", n.decorator_list.map(expr)),
-                B.mkText(topLev ? "class " : "export class "),
-                quote(n.name)
-            ]
-            if (n.bases.length > 0) {
+            n.isNamespace = n.decorator_list.some(d => d.kind == "Name" && (<Name>d).id == "namespace");
+            let nodes = n.isNamespace ?
+                [B.mkText("namespace "), quote(n.name)]
+                : [
+                    todoComment("keywords", n.keywords.map(doKeyword)),
+                    todoComment("decorators", n.decorator_list.map(expr)),
+                    B.mkText(topLev ? "class " : "export class "),
+                    quote(n.name)
+                ]
+            if (!n.isNamespace && n.bases.length > 0) {
                 if (getName(n.bases[0]) == "Enum") {
                     n.isEnum = true
                 } else {
@@ -1291,7 +1294,7 @@ namespace pxt.py {
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
             // class fields can't be const
-            isConstCall = false;
+            isConstCall = isConstCall && !ctx.currClass.isNamespace;
             let fd = getClassField(ctx.currClass.symInfo, nm)
             // TODO: use or remove this code
             /*
@@ -1330,14 +1333,14 @@ namespace pxt.py {
             }
             unifyTypeOf(target, fd.pyRetType)
             fd.isInstance = false
-            pref = "static "
+            pref = ctx.currClass.isNamespace ? "export " : "static "
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
         if (isConstCall || isUpperCase) {
             // first run would have "let" in it
             defvar(getName(target), {})
-            if (!/^static /.test(pref))
+            if (!/^(static|export) /.test(pref))
                 pref += "const ";
             return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
         }
