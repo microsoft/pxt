@@ -234,7 +234,7 @@ export function init(): void {
         pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
 
-    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
+    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.webUSB;
     if (isNativeHost()) {
         pxt.debug(`deploy: webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
