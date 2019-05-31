@@ -38,8 +38,8 @@ namespace pxtblockly {
         private editor: pxtsprite.SpriteEditor;
         private state: pxtsprite.Bitmap;
         private lightMode: boolean;
-        private undoStack: pxtsprite.Bitmap[];
-        private redoStack: pxtsprite.Bitmap[];
+        private undoStack: pxtsprite.CanvasState[];
+        private redoStack: pxtsprite.CanvasState[];
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -118,7 +118,8 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.state = this.editor.bitmap();
+                this.editor.closeEditor();
+                this.state = this.editor.bitmap().image;
                 this.redrawPreview();
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                     Blockly.Events.fire(new Blockly.Events.BlockChange(
