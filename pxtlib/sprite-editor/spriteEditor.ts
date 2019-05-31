@@ -432,7 +432,8 @@ namespace pxtsprite {
                 PaintTool.Rectangle,
                 PaintTool.Erase,
                 PaintTool.Circle,
-                PaintTool.Line
+                PaintTool.Line,
+                PaintTool.Marquee
             ]
 
             tools.forEach(tool => {
