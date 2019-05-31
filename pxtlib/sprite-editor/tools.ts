@@ -27,7 +27,7 @@ namespace pxtsprite {
             case PaintTool.Erase:
                 return "e";
             case PaintTool.Marquee:
-                return "m";
+                return "s";
             default:
                 return undefined;
         }
