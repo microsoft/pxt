@@ -99,11 +99,28 @@ namespace helpers {
         arr[j] = temp;
     }
 
-    function sortHelper<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
-        if (arr.length <= 0 || !callbackfn) {
-            return arr;
+    function sortHelper<T>(arr: T[], callbackfn: (value1: T, value2: T) => number): T[] {
+        if (arr.length > 1 && callbackfn) {
+            if (arr.length < 50) {
+                // simple selection sort for small arrays
+                const len = arr.length;
+                for (let i = 0; i < len - 1; ++i) {
+                    for (let j = i + 1; j < len; ++j) {
+                        if (callbackfn(arr[i], arr[j]) > 0) {
+                            swap(arr, i, j);
+                        }
+                    }
+                }
+            } else {
+                // heap sort for larger arrays
+                arr =  heapSort(arr, callbackfn);
+            }
         }
 
+        return arr;
+    }
+
+    function heapSort<T>(arr: T[], callbackfn: (value1: T, value2: T) => number): T[] {
         function buildMaxHeap(a: T[]) {
             let i = Math.floor(a.length / 2 - 1);
 
@@ -119,11 +136,11 @@ namespace helpers {
                 const right = left + 1;
                 let curr = i;
 
-                if (left < max && callbackfn(heap[curr], heap[left])) {
+                if (left < max && callbackfn(heap[curr], heap[left]) < 0) {
                     curr = left;
                 }
 
-                if (right < max && callbackfn(heap[curr], heap[right])) {
+                if (right < max && callbackfn(heap[curr], heap[right]) < 0) {
                     curr = right;
                 }
 
@@ -133,6 +150,7 @@ namespace helpers {
                 i = curr;
             }
         }
+
         buildMaxHeap(arr);
 
         for (let i = arr.length - 1; i > 0; --i) {
