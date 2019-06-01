@@ -2619,19 +2619,22 @@ export class ProjectView
     }
 
     showImportGithubDialog() {
-        dialogs.showImportGithubDialogAsync().done(url => {
-            if (url === "NEW") {
-                dialogs.showCreateGithubRepoDialogAsync()
-                    .then(url => {
-                        if (url)
-                            importGithubProject(url)
-                    })
-            } else if (!pxt.github.isGithubId(url)) {
-                core.errorNotification(lf("Sorry, the project url looks invalid."));
-            } else {
-                importGithubProject(url);
-            }
-        });
+        dialogs.showImportGithubDialogAsync()
+            .then(url => {
+                if (url === "NEW") {
+                    dialogs.showCreateGithubRepoDialogAsync()
+                        .then(url => {
+                            if (url) {
+                                importGithubProject(url);
+                            }
+                        })
+                } else if (url) {
+                    importGithubProject(url);
+                }
+            }, e => {
+                core.errorNotification(lf("Sorry, that repository looks invalid."));
+            })
+            .done();
     }
 
     showImportFileDialog(options?: pxt.editor.ImportFileOptions) {
