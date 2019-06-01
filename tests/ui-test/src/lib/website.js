@@ -8,7 +8,7 @@ class Website {
 
     open(path = "") {
         var fullPath = this.getUrl(path);
-        console.log(`Open url $(fullPath)`);
+        console.log(`Open url ${fullPath}`);
         driver.get(fullPath);
 
         driver.manage().window().maximize();

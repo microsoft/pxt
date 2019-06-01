@@ -1,8 +1,7 @@
-import {
-    website
-} from "./lib/website";
+import {website} from "./lib/website";
 import webdriver from 'selenium-webdriver';
 import newProject from './NewProject'
+
 global.driver = new webdriver.Builder()
     .forBrowser('chrome')
     .build();
