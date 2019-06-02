@@ -174,7 +174,7 @@ _start_${name}:
 
         U.iterMap(bin.hexlits, (k, v) => {
             section(v, SectionType.Literal, () =>
-                hexLiteralAsm(k, ", 0"), [], pxt.BuiltInType.BoxedBuffer)
+                hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
 
         // ifaceMembers are already sorted alphabetically
