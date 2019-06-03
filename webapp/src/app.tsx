@@ -2866,14 +2866,18 @@ export class ProjectView
     exitTutorial(removeProject?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+        const tutorial = this.state.header && this.state.header.tutorial;
+        const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
+
         this.exitTutorialAsync(removeProject)
             .finally(() => {
                 core.hideLoading("leavingtutorial");
-                this.openHome();
+                if (!stayInEditor)
+                    this.openHome();
             })
     }
 
-    exitTutorialAsync(removeProject?: boolean, openHome?: boolean) {
+    exitTutorialAsync(removeProject?: boolean): Promise<void> {
         let curr = pkg.mainEditorPkg().header;
         curr.isDeleted = removeProject;
         let files = pkg.mainEditorPkg().getAllFiles();
