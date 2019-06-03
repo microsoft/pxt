@@ -124,7 +124,7 @@ export interface TutorialHintState {
 
 export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
     public elementRef: HTMLDivElement;
-    protected setRef: (el: HTMLDivElement) => void = (el) => {this.elementRef = el};
+    protected setRef: (el: HTMLDivElement) => void = (el) => { this.elementRef = el };
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -144,7 +144,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const tutorialHint = step.blockSolution;
         const fullText = step.contentMd;
 
-        return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
+        return <div className={`tutorialhint ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
             <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
         </div>
     }
@@ -341,7 +341,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
             show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
         }
-        this.setState({showSeeMore: show});
+        this.setState({ showSeeMore: show });
     }
 
     toggleHint(showFullText?: boolean) {
@@ -349,11 +349,11 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
-            this.setState({showHintTooltip : true});
+            this.setState({ showHintTooltip: true });
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             document.removeEventListener('click', this.hintOnClickDocument);
         } else {
-            this.setState({showHintTooltip : false});
+            this.setState({ showHintTooltip: false });
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClickDocument);
             const options = this.props.parent.state.tutorialOptions;
@@ -388,7 +388,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div {... (this.state.showHintTooltip && hasHint && {'data-tooltip': tutorialHintTooltip})} data-position="bottom center" data-inverted>
+                    <div {... (this.state.showHintTooltip && hasHint && { 'data-tooltip': tutorialHintTooltip })} data-position="bottom center" data-inverted>
                         <div role="button" className='avatar-image' onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
@@ -456,6 +456,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
         return this.prevGalleries || [];
     }
 
+    /* tslint:disable:react-a11y-anchors */
     renderCore() {
         const { visible } = this.state;
         if (!visible) return <div />;
