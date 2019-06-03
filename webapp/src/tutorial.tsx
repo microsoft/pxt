@@ -203,7 +203,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     finishTutorial() {
         this.closeLightbox();
-        this.props.parent.completeTutorial();
+        this.props.parent.completeTutorialAsync().done();
     }
 
     private closeLightboxOnEscape = (e: KeyboardEvent) => {

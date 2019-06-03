@@ -785,7 +785,7 @@ declare namespace pxt.tutorial {
         tutorialStepExpanded?: boolean; // display full step in dialog
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
-        tutorialGlitch?: boolean; // micro tutorial running within the context of a script
+        tutorialRecipe?: boolean; // micro tutorial running within the context of a script
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

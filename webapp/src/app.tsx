@@ -2719,29 +2719,32 @@ export class ProjectView
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////
 
-    startTutorial(tutorialId: string, tutorialTitle?: string) {
+    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
         pxt.tickEvent("tutorial.start");
         // Check for Internet access
         if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
         } else {
-            this.startTutorialAsync(tutorialId, tutorialTitle);
+            this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
         }
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, glitch?: boolean): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
         const scriptId = pxt.Cloud.parseScriptId(tutorialId);
         const ghid = pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;
-        let tutorialmd: string;
         let title: string;
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
         let p: Promise<string>;
+
+        // make sure we are in the editor
+        recipe = recipe && !!this.state.header;
+
         if (/^\//.test(tutorialId)) {
             title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
             p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
@@ -2809,15 +2812,15 @@ export class ProjectView
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code,
-                tutorialGlitch: !!glitch
+                tutorialRecipe: !!recipe
             };
 
             // start a tutorial within the context of an exisintg
-            if (glitch && this.state.header) {
-                this.state.header.tutorial = tutorialOptions;
-                this.state.header.tutorialCompleted = undefined;
-                this.forceUpdate();
-                return Promise.resolve();
+            if (recipe) {
+                const header = pkg.mainEditorPkg().header;
+                header.tutorial = tutorialOptions;
+                header.tutorialCompleted = undefined;
+                return this.loadHeaderAsync(header);
             }
 
             return this.createProjectAsync({
@@ -2849,6 +2852,7 @@ export class ProjectView
             // the issue we go to the homescreen instead of the to the editor. See
             // https://github.com/Microsoft/pxt-microbit/issues/1249 for more info.
             this.exitTutorial();
+            return Promise.resolve(); // TODO cleanup
         }
         else {
             return this.exitTutorialAsync()
@@ -3308,6 +3312,11 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             editor.startTutorial(hash.arg);
             pxt.BrowserUtils.changeHash("");
             return true;
+        case "recipe": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
+            pxt.tickEvent("hash.tutorial")
+            editor.startTutorial(hash.arg, undefined, true);
+            pxt.BrowserUtils.changeHash("");
+            return true;
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
             editor.openHome();
@@ -3348,6 +3357,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "newjavascript":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
+        case "recipe":
         case "projects":
         case "sandbox":
         case "pub":
