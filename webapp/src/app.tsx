@@ -2729,7 +2729,7 @@ export class ProjectView
         }
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, glitch?: boolean): Promise<void> {
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
@@ -2808,21 +2808,30 @@ export class ProjectView
                 tutorialReady: true,
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
-                tutorialCode: tutorialInfo.code
+                tutorialCode: tutorialInfo.code,
+                tutorialGlitch: !!glitch
             };
+
+            // start a tutorial within the context of an exisintg
+            if (glitch && this.state.header) {
+                this.state.header.tutorial = tutorialOptions;
+                this.state.header.tutorialCompleted = undefined;
+                this.forceUpdate();
+                return Promise.resolve();
+            }
+
             return this.createProjectAsync({
                 name: title,
                 tutorial: tutorialOptions,
                 preferredEditor: tutorialInfo.editor,
                 dependencies
-            });
-        }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
-        ).catch((e) => {
+            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
+        }).catch((e) => {
             core.handleNetworkError(e);
         }).finally(() => core.hideLoading("tutorial"));
     }
 
-    completeTutorial() {
+    completeTutorialAsync(): Promise<void> {
         pxt.tickEvent("tutorial.complete");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
@@ -2842,7 +2851,7 @@ export class ProjectView
             this.exitTutorial();
         }
         else {
-            this.exitTutorialAsync()
+            return this.exitTutorialAsync()
                 .then(() => {
                     let curr = pkg.mainEditorPkg().header;
                     return this.loadHeaderAsync(curr);
@@ -2860,7 +2869,7 @@ export class ProjectView
             })
     }
 
-    exitTutorialAsync(removeProject?: boolean) {
+    exitTutorialAsync(removeProject?: boolean, openHome?: boolean) {
         let curr = pkg.mainEditorPkg().header;
         curr.isDeleted = removeProject;
         let files = pkg.mainEditorPkg().getAllFiles();

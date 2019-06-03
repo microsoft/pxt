@@ -201,7 +201,7 @@ namespace pxt.editor {
         setTutorialStep(step: number): void;
         setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
-        completeTutorial(): void;
+        completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
