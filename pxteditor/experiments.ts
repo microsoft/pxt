@@ -116,6 +116,11 @@ namespace pxt.editor.experiments {
                 id: "experimentalHw",
                 name: lf("Experimental Hardware"),
                 description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
+            },
+            {
+                id: "recipes",
+                name: lf("Recipes"),
+                description: lf("Micro-tutorials running within the context of a program.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
