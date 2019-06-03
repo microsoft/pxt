@@ -2004,7 +2004,7 @@ export class ProjectView
                         });
                     }
                 }
-                return pxt.commands.deployCoreAsync(resp, {
+                return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg)
@@ -3422,9 +3422,9 @@ function initExtensionsAsync(): Promise<void> {
                     theEditor.resourceImporters.push(fi);
                 });
             }
-            if (res.deployCoreAsync) {
+            if (res.deployAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
-                pxt.commands.deployCoreAsync = res.deployCoreAsync;
+                pxt.commands.deployCoreAsync = res.deployAsync;
             }
             if (res.saveOnlyAsync) {
                 pxt.debug(`\tadded custom save only async`);
