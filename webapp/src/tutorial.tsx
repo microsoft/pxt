@@ -437,6 +437,12 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
         this.setState({ visible: true });
     }
 
+    start(card: pxt.CodeCard) {
+        pxt.tickEvent("recipe." + card.url);
+        this.hide();
+        this.props.parent.startTutorial(card.url, undefined, true);
+    }
+
     fetchGallery(): pxt.CodeCard[] {
         const path = "/recipes";
         let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
@@ -444,8 +450,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
             if (res instanceof Error) {
                 // ignore
             } else {
-                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
-                    .filter(c => !!c.variant);
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
             }
         }
         return this.prevGalleries || [];
@@ -471,7 +476,8 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
                                 ariaLabel={card.name}
                                 description={card.description}
                                 imageUrl={card.imageUrl}
-                                url={`#recipe:${card.url}`}
+                                largeImageUrl={card.largeImageUrl}
+                                onClick={() => this.start(card)}
                             />
                         )}
                     </div>
