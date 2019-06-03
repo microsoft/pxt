@@ -3040,6 +3040,8 @@ export class ProjectView
                 </div>
             </div>
         }
+        const isRTL = pxt.Util.isUserLanguageRtl();
+        const showRightChevron = (this.state.collapseEditorTools || isRTL ) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3070,7 +3072,7 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
