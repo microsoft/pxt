@@ -277,6 +277,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             && greenscreen.isSupported();
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
 
+        // Electron does not currently support webusb
+        const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
+
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
@@ -294,7 +297,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 // we always need a way to clear local storage, regardless if signed in or not
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
-            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
