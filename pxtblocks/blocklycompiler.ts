@@ -1488,7 +1488,7 @@ namespace pxt.blocks {
                         pxt.reportError("blocks", "function already defined", {
                             "details": fn.attributes.blockId,
                             "qualifiedName": fn.qName,
-                            "sourceFile": fn.fileName,
+                            "packageName": fn.pkg,
                         });
                         return;
                     }
