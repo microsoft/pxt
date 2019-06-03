@@ -1032,7 +1032,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (fs.existsSync(hexCache)) {
         hexFiles = fs.readdirSync(hexCache)
             .filter(f => /\.hex$/.test(f))
-            .filter(f => fs.readFileSync(path.join(hexCache, f), { encoding: "utf8"}) != "SKIP")
+            .filter(f => fs.readFileSync(path.join(hexCache, f), { encoding: "utf8" }) != "SKIP")
             .map((f) => `@cdnUrl@/compile/${f}`);
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
@@ -3803,20 +3803,9 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.ast = true
             }
 
-            // this is suboptimal, but we need apisInfo for the python converter
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 pxt.log("pre-compiling apisInfo for Python")
-                const opts2 = U.clone(opts)
-                opts2.ast = true
-                opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                opts2.noEmit = true
-                // remove previously converted .ts files, so they don't end up in apisinfo
-                for (let f of opts2.sourceFiles) {
-                    if (U.endsWith(f, ".py"))
-                        opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
-                }
-                const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(res.ast, opts2.jres)
+                pxt.prepPythonOptions(opts)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
