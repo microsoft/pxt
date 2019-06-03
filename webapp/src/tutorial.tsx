@@ -463,6 +463,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
         let cards = this.fetchGallery();
         return (
             <sui.Modal isOpen={visible} className="recipedialog"
+                size="large"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Try a Recipe")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
