@@ -11,7 +11,7 @@ namespace pxt {
             if (module.id == "this") {
                 return this.packageFiles[filename]
             } else if (pxt.appTarget.bundledpkgs[module.id]) {
-                return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
+                return pxt.appTarget.bundledpkgs[module.id][filename];
             } else {
                 console.log("file missing: " + module + " / " + filename)
                 return null;
@@ -24,7 +24,7 @@ namespace pxt {
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
             //console.log(`getHexInfoAsync(${extInfo})`);
-            return Promise.resolve<any>(null)
+            return Promise.resolve<any>({ hex: ["SKIP"] })
         }
 
         cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -65,10 +65,9 @@ namespace pxt {
         }
     }
 
-    export function simpleCompile(files: pxt.Map<string>, isNative: boolean) {
+    export function simpleCompileAsync(files: pxt.Map<string>, isNative: boolean) {
         const host = new SimpleHost(files)
         const mainPkg = new MainPackage(host)
-        let r: pxtc.CompileResult
         mainPkg.loadAsync()
             .then(() => {
                 let target = mainPkg.getTargetOptions()
@@ -78,9 +77,7 @@ namespace pxt {
             })
             .then(opts => {
                 prepPythonOptions(opts)
-                r = pxtc.compile(opts)
-                console.log(JSON.stringify(r, null, 1))
+                return pxtc.compile(opts)
             })
-        return r
     }
 }
