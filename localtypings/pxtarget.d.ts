@@ -330,6 +330,7 @@ declare namespace pxt {
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
         experimentalHw?: boolean; // enable experimental hardware
+        recipes?: boolean; // inlined tutorials
     }
 
     interface SocialOptions {

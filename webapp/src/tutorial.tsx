@@ -8,6 +8,7 @@ import * as sounds from "./sounds";
 import * as core from "./core";
 import * as md from "./marked";
 import * as compiler from "./compiler";
+import * as codecard from "./codecard";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -406,5 +407,76 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
+    }
+}
+
+export interface ChooseRecipeDialogState {
+    visible?: boolean;
+}
+
+export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRecipeDialogState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+        this.close = this.close.bind(this);
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    close() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    fetchGallery(): pxt.CodeCard[] {
+        const path = "/recipes";
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(c => !!c.variant);
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+        if (!visible) return <div />;
+
+        let cards = this.fetchGallery();
+        return (
+            <sui.Modal isOpen={visible} className="recipedialog"
+                onClose={this.close} dimmer={true}
+                closeIcon={true} header={lf("Try a Recipe")}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+            >
+                <div className="group">
+                    <div className="ui cards centered" role="listbox">
+                        {cards.map(card =>
+                            <codecard.CodeCardView
+                                key={'card' + card.name}
+                                name={card.name}
+                                ariaLabel={card.name}
+                                description={card.description}
+                                imageUrl={card.imageUrl}
+                                url={`#recipe:${card.url}`}
+                            />
+                        )}
+                    </div>
+                </div>
+            </sui.Modal>
+        )
     }
 }
