@@ -68,7 +68,7 @@ namespace pxt {
     export function simpleCompileAsync(files: pxt.Map<string>, isNative: boolean) {
         const host = new SimpleHost(files)
         const mainPkg = new MainPackage(host)
-        mainPkg.loadAsync()
+        return mainPkg.loadAsync()
             .then(() => {
                 let target = mainPkg.getTargetOptions()
                 if (target.hasHex)
