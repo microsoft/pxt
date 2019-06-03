@@ -240,17 +240,17 @@ export function init(): void {
     const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
     if (isNativeHost()) {
         pxt.debug(`deploy: webkit host`);
-        pxt.commands.deployAsync.core = nativeHostDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
     } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
         pxt.debug(`deploy: webusb`);
-        pxt.commands.deployAsync.core = webusb.webUsbDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = webusb.webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.debug(`deploy: winrt`);
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployAsync.core = winrtDeployCoreAsync;
+            pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
@@ -259,7 +259,7 @@ export function init(): void {
             if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
                 pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             }
-            pxt.commands.deployAsync.core = pxt.winrt.driveDeployCoreAsync;
+            pxt.commands.deployFallbackAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
         pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
@@ -273,17 +273,17 @@ export function init(): void {
         };
     } else if (pxt.BrowserUtils.isPxtElectron()) {
         pxt.debug(`deploy: electron`);
-        pxt.commands.deployAsync.core = electron.driveDeployAsync;
+        pxt.commands.deployFallbackAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.debug(`deploy: hid`);
-        pxt.commands.deployAsync.core = hidDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = hidDeployCoreAsync;
     } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.debug(`deploy: localhost`);
-        pxt.commands.deployAsync.core = localhostDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.debug(`deploy: browser`);
-        pxt.commands.deployAsync.core = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
     }
 }
 

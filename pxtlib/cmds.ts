@@ -7,10 +7,12 @@ namespace pxt.commands {
 
     // overriden by targets
     export type DeployFnAsync = (r: ts.pxtc.CompileResult, d?: DeployOptions) => Promise<void>
-    export let deployAsync: {
-        core: DeployFnAsync,
-        target: DeployFnAsync
-    } = { core: undefined, target: undefined };
+    export let deployCoreAsync: DeployFnAsync = undefined;
+    export let deployFallbackAsync: DeployFnAsync = undefined;
+    export let hasDeployFn = () => deployCoreAsync || deployFallbackAsync
+    export let deployAsync: DeployFnAsync = (r: ts.pxtc.CompileResult, d?: DeployOptions) => {
+        return (deployCoreAsync || deployFallbackAsync)(r, d)
+    }
     export let patchCompileResultAsync: (r: pxtc.CompileResult) => Promise<void> = undefined;
     export let browserDownloadAsync: (text: string, name: string, contentType: string) => Promise<void> = undefined;
     export let saveOnlyAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined;

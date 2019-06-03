@@ -2004,8 +2004,7 @@ export class ProjectView
                         });
                     }
                 }
-                let doDeploy = pxt.commands.deployAsync.target || pxt.commands.deployAsync.core;
-                return doDeploy(resp, {
+                return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg)
@@ -3423,7 +3422,7 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.deployAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
-                pxt.commands.deployAsync.target = res.deployAsync;
+                pxt.commands.deployCoreAsync = res.deployAsync;
             }
             if (res.saveOnlyAsync) {
                 pxt.debug(`\tadded custom save only async`);

@@ -278,7 +278,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
     const cmd = meth + " " + elts[1]
-    const deployFn = pxt.commands.deployAsync.target || pxt.commands.deployAsync.core
     const readJsonAsync = () =>
         nodeutil.readResAsync(req)
             .then(buf => JSON.parse(buf.toString("utf8")))
@@ -308,9 +307,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(d => writePkgAssetAsync(innerPath, d))
     else if (cmd == "GET pkgasset")
         return readAssetsAsync(innerPath)
-    else if (cmd == "POST deploy" && deployFn)
+    else if (cmd == "POST deploy" && pxt.commands.hasDeployFn())
         return readJsonAsync()
-            .then(deployFn)
+            .then(pxt.commands.deployAsync)
             .then((boardCount) => {
                 return {
                     boardCount: boardCount
