@@ -4,15 +4,22 @@
   "description": "fortest",
   "main": "Main.js",
   "scripts": {
-    "test": "node_modules/.bin/mocha ./src/Main.js --timeout 100000"
+    "test": "node_modules/.bin/mocha ./src/index.js --require @babel/register --require @babel/polyfill --timeout 100000"
   },
-  "author": "steven",
+  "type": "module",
+  "author": "Helen Ma",
   "license": "MIT",
   "dependencies": {
     "chromedriver": "^2.46.0",
     "selenium-webdriver": "^4.0.0-alpha.1"
   },
   "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/polyfill": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
+    "@babel/register": "^7.4.4",
     "mocha": "6.0.2"
   }
 }
