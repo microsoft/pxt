@@ -120,6 +120,7 @@ export class TutorialMenuItemLink extends data.Component<TutorialMenuItemLinkPro
 export interface TutorialHintState {
     visible: boolean;
     showFullText: boolean;
+    renderModal?: boolean;
 }
 
 export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
@@ -130,6 +131,17 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         super(props);
     }
 
+    componentWillReceiveProps(nextProps: ISettingsProps) {
+        const options = nextProps.parent.state.tutorialOptions;
+        const { tutorialStepInfo, tutorialStep } = options;
+        const step = tutorialStepInfo[tutorialStep];
+        const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
+
+        if (this.state.renderModal != unplugged) {
+            this.setState({ renderModal: unplugged });
+        }
+    }
+
     toggleHint(showFullText?: boolean) {
         this.setState({ visible: !this.state.visible, showFullText: showFullText })
     }
@@ -137,16 +149,41 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     renderCore() {
         const { visible } = this.state;
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialName } = options;
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
         const tutorialHint = step.blockSolution;
         const fullText = step.contentMd;
 
-        return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
-            <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
-        </div>
+        if (!this.state.renderModal) {
+            return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
+                <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
+            </div>
+        } else {
+            const header = tutorialName;
+            const next = () => {
+                this.setState({ visible: false });
+                const nextStep = tutorialStep + 1;
+                options.tutorialStep = nextStep;
+                pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
+                this.props.parent.setTutorialStep(nextStep);
+            }
+
+            const actions: sui.ModalButton[] = [{
+                label: lf("Ok"),
+                onclick: next,
+                icon: 'check',
+                className: 'green'
+            }]
+
+            return <sui.Modal isOpen={visible} className="hintdialog"
+                closeIcon={true} header={header} buttons={actions}
+                onClose={next} dimmer={true} longer={true}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape>
+                <md.MarkedContent markdown={fullText} parent={this.props.parent} />
+            </sui.Modal>
+        }
     }
 }
 
@@ -355,14 +392,14 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
-            this.setState({ showHintTooltip : true });
-            th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+            this.setState({showHintTooltip : true});
             document.removeEventListener('click', this.hintOnClick);
+            if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             this.props.parent.pokeUserActivity();
         } else {
-            this.setState({ showHintTooltip : false });
-            th.elementRef.addEventListener('click', this.expandedHintOnClick);
+            this.setState({showHintTooltip : false});
             document.addEventListener('click', this.hintOnClick);
+            if (th.elementRef) th.elementRef.addEventListener('click', this.expandedHintOnClick);
             this.props.parent.stopPokeUserActivity();
 
             const options = this.props.parent.state.tutorialOptions;
