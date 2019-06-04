@@ -271,7 +271,7 @@ declare interface String {
     //% shim=String_::indexOf
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
-    //% block="index from %this=text|of %searchValue"
+    //% block="%this=text|find index of %searchValue"
     indexOf(searchValue: string, start?: number): number;
 
     /**
