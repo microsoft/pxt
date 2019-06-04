@@ -59,8 +59,8 @@ function initTargetCommands() {
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
         let cli = require.main.require(cmdsjs)
-        if (cli.deployCoreAsync) {
-            pxt.commands.deployCoreAsync = cli.deployCoreAsync
+        if (cli.deployAsync) {
+            pxt.commands.deployFallbackAsync = cli.deployAsync
         }
         if (cli.addCommands) {
             cli.addCommands(p)
@@ -3985,11 +3985,12 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                     }
                     return null
                 case BuildOption.Deploy:
-                    if (!pxt.commands.deployCoreAsync) {
+                    if (pxt.commands.hasDeployFn())
+                        return pxt.commands.deployAsync(res)
+                    else {
                         pxt.log("no deploy functionality defined by this target")
                         return null;
                     }
-                    return pxt.commands.deployCoreAsync(res);
                 case BuildOption.Run:
                     return runCoreAsync(res);
                 default:
@@ -6139,11 +6140,11 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
                 initTargetCommands();
             }
 
-            if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
-                pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
+            if (!pxt.commands.deployFallbackAsync && build.thisBuild.deployAsync)
+                pxt.commands.deployFallbackAsync = build.thisBuild.deployAsync
 
             if (!args[0]) {
-                if (pxt.commands.deployCoreAsync) {
+                if (pxt.commands.deployFallbackAsync) {
                     pxt.log("running 'pxt deploy' (run 'pxt help' for usage)")
                     args = ["deploy"]
                 } else {
