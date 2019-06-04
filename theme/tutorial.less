@@ -328,7 +328,6 @@ span.highlight-line {
     z-index: @tutorialLightboxCardZIndex;
     border: 8px solid @primaryColor;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
-    max-height: 70vh;
 }
 
 .tutorialhint:before {
@@ -343,6 +342,11 @@ span.highlight-line {
     border: 16px solid;
     border-color: transparent @primaryColor transparent transparent;
     transform: rotateZ(-45deg);
+}
+
+.tutorialhint > div {
+    max-height: 60vh;
+    overflow: auto;
 }
 
 .tutorialhint.hidden {
