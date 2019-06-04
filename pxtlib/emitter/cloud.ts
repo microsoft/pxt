@@ -210,12 +210,6 @@ namespace pxt.Cloud {
         time: number; // time when publication was created
     }
 
-    export interface JsonScriptMeta {
-        blocksWidth?: number;
-        blocksHeight?: number;
-        versions?: TargetVersions
-    }
-
     export interface JsonScript extends JsonPublication {
         shortid?: string;
         name: string;
