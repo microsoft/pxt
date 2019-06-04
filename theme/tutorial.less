@@ -311,7 +311,7 @@ span.highlight-line {
     border-radius: 1.2rem;
     background: @white;
     z-index: @tutorialLightboxCardZIndex;
-    border: 8px solid @primaryColor;
+    border: 8px solid @blue;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
@@ -325,7 +325,7 @@ span.highlight-line {
     top: -24px;
     bottom: auto;
     border: 16px solid;
-    border-color: transparent @primaryColor transparent transparent;
+    border-color: transparent @blue transparent transparent;
     transform: rotateZ(-45deg);
 }
 
@@ -359,43 +359,26 @@ span.highlight-line {
     width: 100%;
 }
 
-.avatar-container .tooltip,
-.avatar-container .tooltip:before {
-    display: none;
-    position: absolute;
-    line-height: 1.4285em;
-    background: @primaryColor;
-    border-color: @primaryColor;
-    text-align: center;
-    z-index: 44;
-    transition: all .1s ease;
-}
-
-
-.showTooltip .avatar-container:hover .tooltip,
-.showTooltip .avatar-container:hover .tooltip:before,
-.avatar-container .tooltip.show,
-.avatar-container .tooltip.show:before {
-    display: block;
-}
-
 .avatar-container .tooltip {
     top: 5rem;
     left: 1.5rem;
-    transform: translateX(-50%);
     max-width: 175px;
-    padding: .833em 1em;
-    margin-top: .5em;
-    border-radius: .28571429rem;
 }
 
+.avatar-container .tooltip ,
 .avatar-container .tooltip:before {
-    content: "";
-    top: -.35rem;
-    left: 50%;
-    width: .71428571em;
-    height: .71428571em;
-    transform: rotate(45deg) scale(1)!important;
+    background-color: @blue;
+    color: @white;
+}
+
+.showTooltip .avatar-container:hover .tooltip,
+.showTooltip .avatar-container:hover .tooltip:before {
+    display: block;
+}
+
+#tutorialcard:not(.showTooltip) .tooltip,
+#tutorialcard:not(.showTooltip) .tooltip:before {
+    display: none;
 }
 
 /*******************************

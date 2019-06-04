@@ -58,6 +58,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { HintManager } from "./hinttooltip";
 
 pxsim.util.injectPolyphils();
 
@@ -113,6 +114,9 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
 
+    // component ID strings
+    private static readonly tutorialCardId = "tutorialcard";
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -146,6 +150,9 @@ export class ProjectView
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.initScreenshots();
+
+        // add user hint IDs and callback to hint manager
+        this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
     }
 
     private autoRunOnStart() {
@@ -900,7 +907,7 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
-        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
             tc.setPopout();
@@ -2720,6 +2727,8 @@ export class ProjectView
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////
 
+    private hintManager: HintManager = new HintManager();
+
     startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
         // Check for Internet access
@@ -2874,7 +2883,7 @@ export class ProjectView
     }
 
     showTutorialHint(showFullText?: boolean) {
-        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         tc.toggleHint(showFullText);
     }
 
@@ -2885,9 +2894,17 @@ export class ProjectView
     pokeUserActivity() {
         if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
             // animate tutorial hint after some time of user inactivity
-            let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
-            if (tc) tc.startPokeUserActivity();
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId);
         }
+    }
+
+    stopPokeUserActivity() {
+        this.hintManager.stopPokeUserActivity();
+    }
+
+    private tutorialCardHintCallback() {
+        this.setState({pokeUserComponent: ProjectView.tutorialCardId});
+        setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3068,7 +3085,7 @@ export class ProjectView
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    <tutorial.TutorialCard ref="tutorialcard" parent={this} />
+                    <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
                 </div> : undefined}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">

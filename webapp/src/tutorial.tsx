@@ -8,6 +8,7 @@ import * as sounds from "./sounds";
 import * as core from "./core";
 import * as md from "./marked";
 import * as compiler from "./compiler";
+import { HintTooltip } from "./hinttooltip";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -153,13 +154,14 @@ interface TutorialCardState {
     popout?: boolean;
     showHintTooltip?: boolean;
     showSeeMore?: boolean;
+}
+
+interface TutorialCardProps extends ISettingsProps {
     pokeUser?: boolean;
 }
 
-export class TutorialCard extends data.Component<ISettingsProps, TutorialCardState> {
+export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
-    private timer: number;
-    private animationDuration: number = 30000;
 
     public focusInitialized: boolean;
 
@@ -293,7 +295,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     componentDidMount() {
         this.setShowSeeMore();
-        this.startPokeUserActivity();
+        this.props.parent.pokeUserActivity();
     }
 
     componentWillUnmount() {
@@ -301,8 +303,8 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         md.MarkedContent.clearBlockSnippetCache();
         this.lastStep = -1;
 
-        // Clear any existing timer
-        clearTimeout(this.timer);
+        // Clear any existing timers
+        this.props.parent.stopPokeUserActivity();
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -348,37 +350,23 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.setState({showSeeMore: show});
     }
 
-    private debouncedPokeUserActivity = pxt.Util.debounce(() => {
-        this.setState({pokeUser: true});
-        setTimeout(() => { this.stopPokeUserActivity() }, 3000);
-    }, this.animationDuration);
-
-    stopPokeUserActivity() {
-        this.setState({pokeUser: false});
-    }
-
-    startPokeUserActivity() {
-        if (this.hasHint()) {
-            this.timer = this.debouncedPokeUserActivity();
-        }
-    }
-
     toggleHint(showFullText?: boolean) {
         if (!this.hasHint()) return;
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
-            this.setState({showHintTooltip : true});
+            this.setState({ showHintTooltip : true });
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             document.removeEventListener('click', this.hintOnClick);
-            this.startPokeUserActivity();
+            this.props.parent.pokeUserActivity();
         } else {
-            this.setState({showHintTooltip : false});
+            this.setState({ showHintTooltip : false });
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClick);
+            this.props.parent.stopPokeUserActivity();
+
             const options = this.props.parent.state.tutorialOptions;
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
-            this.startPokeUserActivity();
         }
 
         th.toggleHint(showFullText);
@@ -410,9 +398,9 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div className="avatar-container">
-                        <div role="button" className={`avatar-image ${this.state.pokeUser ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
+                        <div role="button" className={`avatar-image ${this.props.pokeUser ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
-                        {hasHint && <div className={`tooltip ${this.state.pokeUser ? 'show' : ''}`} role="tooltip" onClick={this.hintOnClick}>{tutorialHintTooltip}</div>}
+                        {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={this.hintOnClick} />}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
