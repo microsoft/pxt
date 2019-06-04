@@ -271,6 +271,7 @@ declare interface String {
     //% shim=String_::indexOf
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
+    //% block="index %this=text|of %searchValue"
     indexOf(searchValue: string, start?: number): number;
 
     /**
@@ -281,6 +282,7 @@ declare interface String {
     //% shim=String_::includes
     //% help=text/includes
     //% blockId="string_includes" blockNamespace="text"
+    //% block="%this=text|includes %searchValue"
     includes(searchValue: string, start?: number): boolean;
 
     /**
@@ -291,6 +293,7 @@ declare interface String {
     //% helper=stringSplit
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
+    //% block="split %this=text|at %separator"
     split(separator?: string, limit?: number): string[];
 
     [index: number]: string;
