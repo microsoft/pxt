@@ -167,7 +167,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
         this.toggleHint = this.toggleHint.bind(this);
         this.hintOnClick = this.hintOnClick.bind(this);
-        this.hintOnClickDocument = this.hintOnClickDocument.bind(this);
         this.closeLightbox = this.closeLightbox.bind(this);
         this.tutorialCardKeyDown = this.tutorialCardKeyDown.bind(this);
         this.okButtonKeyDown = this.okButtonKeyDown.bind(this);
@@ -286,7 +285,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
     }
 
     componentDidMount() {
-        document.addEventListener('click', this.hintOnClickDocument);
         this.setShowSeeMore();
     }
 
@@ -294,7 +292,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         // Clear the markdown cache when we unmount
         md.MarkedContent.clearBlockSnippetCache();
         this.lastStep = -1;
-        document.removeEventListener('click', this.hintOnClickDocument);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -313,7 +310,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         return tutorialStepInfo[tutorialStep].hasHint;
     }
 
-    private hintOnClickDocument(evt?: any) {
+    private hintOnClick(evt?: any) {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
@@ -323,10 +320,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         if (unplugged) {
             this.nextTutorialStep();
         }
-    }
-
-    private hintOnClick(evt?: any) {
-        this.toggleHint(true);
     }
 
     private expandedHintOnClick(evt?: any) {
@@ -350,11 +343,11 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         if (th && th.state && th.state.visible) {
             this.setState({showHintTooltip : true});
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
-            document.removeEventListener('click', this.hintOnClickDocument);
+            document.removeEventListener('click', this.hintOnClick);
         } else {
             this.setState({showHintTooltip : false});
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
-            document.addEventListener('click', this.hintOnClickDocument);
+            document.addEventListener('click', this.hintOnClick);
             const options = this.props.parent.state.tutorialOptions;
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
         }

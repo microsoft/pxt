@@ -2619,19 +2619,22 @@ export class ProjectView
     }
 
     showImportGithubDialog() {
-        dialogs.showImportGithubDialogAsync().done(url => {
-            if (url === "NEW") {
-                dialogs.showCreateGithubRepoDialogAsync()
-                    .then(url => {
-                        if (url)
-                            importGithubProject(url)
-                    })
-            } else if (!pxt.github.isGithubId(url)) {
-                core.errorNotification(lf("Sorry, the project url looks invalid."));
-            } else {
-                importGithubProject(url);
-            }
-        });
+        dialogs.showImportGithubDialogAsync()
+            .then(url => {
+                if (url === "NEW") {
+                    dialogs.showCreateGithubRepoDialogAsync()
+                        .then(url => {
+                            if (url) {
+                                importGithubProject(url);
+                            }
+                        })
+                } else if (url) {
+                    importGithubProject(url);
+                }
+            }, e => {
+                core.errorNotification(lf("Sorry, that repository looks invalid."));
+            })
+            .done();
     }
 
     showImportFileDialog(options?: pxt.editor.ImportFileOptions) {
@@ -2789,6 +2792,10 @@ export class ProjectView
         return p.then(md => {
             if (!md)
                 throw new Error(lf("Tutorial not found"));
+
+            // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
+            md = pxt.tutorial.patchArcadeSnippets(md);
+
             const tutorialInfo = pxt.tutorial.parseTutorial(md);
             if (!tutorialInfo)
                 throw new Error(lf("Invalid tutorial format"));

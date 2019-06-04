@@ -9,6 +9,7 @@ namespace pxtsprite {
         Fill = 4,
         Line = 5,
         Erase = 6,
+        Marquee = 7,
     }
 
     export function getPaintToolShortcut(tool: PaintTool) {
@@ -25,15 +26,20 @@ namespace pxtsprite {
                 return "l";
             case PaintTool.Erase:
                 return "e";
+            case PaintTool.Marquee:
+                return "s";
             default:
                 return undefined;
         }
     }
 
     export class Cursor {
-        color: number;
-        width: number;
-        height: number;
+        offsetX: number;
+        offsetY: number;
+        constructor(public readonly width: number, public readonly height: number) {
+            this.offsetX = -(width >> 1);
+            this.offsetY = -(height >> 1);
+        }
     }
 
     export abstract class Edit {
@@ -45,23 +51,25 @@ namespace pxtsprite {
         }
 
         public abstract update(col: number, row: number): void;
-        protected abstract doEditCore(bitmap: Bitmap): void;
+        protected abstract doEditCore(state: CanvasState): void;
 
-        public doEdit(bitmap: Bitmap): void {
+        public doEdit(state: CanvasState): void {
             if (this.isStarted) {
-                this.doEditCore(bitmap);
+                this.doEditCore(state);
             }
         }
 
 
-        start(cursorCol: number, cursorRow: number) {
+        start(cursorCol: number, cursorRow: number, state: CanvasState) {
             this.isStarted = true;
             this.startCol = cursorCol;
             this.startRow = cursorRow;
+
+            state.mergeFloatingLayer();
         }
 
-        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
-            draw(col, row);
+        getCursor(): Cursor {
+            return new Cursor(this.toolWidth, this.toolWidth);
         }
     }
 
@@ -135,15 +143,11 @@ namespace pxtsprite {
             }
         }
 
-        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
-            this.drawCore(col, row, draw);
-        }
-
-        protected doEditCore(bitmap: Bitmap) {
-            for (let c = 0; c < bitmap.width; c++) {
-                for (let r = 0; r < bitmap.height; r++) {
+        protected doEditCore(state: CanvasState) {
+            for (let c = 0; c < state.width; c++) {
+                for (let r = 0; r < state.height; r++) {
                     if (this.mask.get(c, r)) {
-                        bitmap.set(c, r, this.color);
+                        state.image.set(c, r, this.color);
                     }
                 }
             }
@@ -169,12 +173,12 @@ namespace pxtsprite {
      * Tool for drawing filled rectangles
      */
     export class RectangleEdit extends SelectionEdit {
-        protected doEditCore(bitmap: Bitmap) {
+        protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
             for (let c = tl[0]; c <= br[0]; c++) {
                 for (let r = tl[1]; r <= br[1]; r++) {
-                    bitmap.set(c, r, this.color);
+                    state.image.set(c, r, this.color);
                 }
             }
         }
@@ -184,27 +188,27 @@ namespace pxtsprite {
      * Tool for drawing empty rectangles
      */
     export class OutlineEdit extends SelectionEdit {
-        protected doEditCore(bitmap: Bitmap) {
+        protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
             for (let i = 0; i < this.toolWidth; i++) {
-                this.drawRectangle(bitmap,
+                this.drawRectangle(state,
                     [tl[0] + i, tl[1] + i],
                     [br[0] - i, br[1] - i]
                 );
             }
         }
 
-        protected drawRectangle(bitmap: Bitmap, tl: Coord, br: Coord) {
+        protected drawRectangle(state: CanvasState, tl: Coord, br: Coord) {
             if (tl[0] > br[0] || tl[1] > br[1]) return;
 
             for (let c = tl[0]; c <= br[0]; c++) {
-                bitmap.set(c, tl[1], this.color);
-                bitmap.set(c, br[1], this.color);
+                state.image.set(c, tl[1], this.color);
+                state.image.set(c, br[1], this.color);
             }
             for (let r = tl[1]; r <= br[1]; r++) {
-                bitmap.set(tl[0], r, this.color);
-                bitmap.set(br[0], r, this.color);
+                state.image.set(tl[0], r, this.color);
+                state.image.set(br[0], r, this.color);
             }
         }
     }
@@ -213,19 +217,15 @@ namespace pxtsprite {
      * Tool for drawing straight lines
      */
     export class LineEdit extends SelectionEdit {
-        protected doEditCore(bitmap: Bitmap) {
-            this.bresenham(this.startCol, this.startRow, this.endCol, this.endRow, bitmap);
-        }
-
-        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
-            this.drawCore(col, row, draw);
+        protected doEditCore(state: CanvasState) {
+            this.bresenham(this.startCol, this.startRow, this.endCol, this.endRow, state);
         }
 
         // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
-        protected bresenham(x0: number, y0: number, x1: number, y1: number, bitmap: Bitmap) {
+        protected bresenham(x0: number, y0: number, x1: number, y1: number, state: CanvasState) {
             const dx = x1 - x0;
             const dy = y1 - y0;
-            const draw = (c: number, r: number) => bitmap.set(c, r, this.color);
+            const draw = (c: number, r: number) => state.image.set(c, r, this.color);
             if (dx === 0) {
                 const startY = dy >= 0 ? y0 : y1;
                 const endY = dy >= 0 ? y1 : y0;
@@ -273,7 +273,7 @@ namespace pxtsprite {
      * Tool for circular outlines
      */
     export class CircleEdit extends SelectionEdit {
-        protected doEditCore(bitmap: Bitmap) {
+        protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
             const dx = br[0] - tl[0];
@@ -283,25 +283,25 @@ namespace pxtsprite {
             const cx = this.startCol;
             const cy = this.startRow;
 
-            this.midpoint(cx, cy, radius, bitmap);
+            this.midpoint(cx, cy, radius, state);
         }
 
         // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
-        midpoint(cx: number, cy: number, radius: number, bitmap: Bitmap) {
+        midpoint(cx: number, cy: number, radius: number, state: CanvasState) {
             let x = radius - 1;
             let y = 0;
             let dx = 1;
             let dy = 1;
             let err = dx - (radius * 2);
             while (x >= y) {
-                bitmap.set(cx + x, cy + y, this.color);
-                bitmap.set(cx + x, cy - y, this.color);
-                bitmap.set(cx + y, cy + x, this.color);
-                bitmap.set(cx + y, cy - x, this.color);
-                bitmap.set(cx - y, cy + x, this.color);
-                bitmap.set(cx - y, cy - x, this.color);
-                bitmap.set(cx - x, cy + y, this.color);
-                bitmap.set(cx - x, cy - y, this.color);
+                state.image.set(cx + x, cy + y, this.color);
+                state.image.set(cx + x, cy - y, this.color);
+                state.image.set(cx + y, cy + x, this.color);
+                state.image.set(cx + y, cy - x, this.color);
+                state.image.set(cx - y, cy + x, this.color);
+                state.image.set(cx - y, cy - x, this.color);
+                state.image.set(cx - x, cy + y, this.color);
+                state.image.set(cx - x, cy - y, this.color);
                 if (err <= 0) {
                     y++;
                     err += dy;
@@ -321,10 +321,12 @@ namespace pxtsprite {
         protected col: number;
         protected row: number;
 
-        start(col: number, row: number) {
+        start(col: number, row: number, state: CanvasState) {
             this.isStarted = true;
             this.col = col;
             this.row = row;
+
+            state.mergeFloatingLayer();
         }
 
         update(col: number, row: number) {
@@ -332,19 +334,19 @@ namespace pxtsprite {
             this.row = row;
         }
 
-        protected doEditCore(bitmap: Bitmap) {
-            const replColor = bitmap.get(this.col, this.row);
+        protected doEditCore(state: CanvasState) {
+            const replColor = state.image.get(this.col, this.row);
             if (replColor === this.color) {
                 return;
             }
 
-            const mask = new Bitmask(bitmap.width, bitmap.height);
+            const mask = new Bitmask(state.width, state.height);
             mask.set(this.col, this.row);
             const q: Coord[] = [[this.col, this.row]];
             while (q.length) {
                 const [c, r] = q.pop();
-                if (bitmap.get(c, r) === replColor) {
-                    bitmap.set(c, r, this.color);
+                if (state.image.get(c, r) === replColor) {
+                    state.image.set(c, r, this.color);
                     tryPush(c + 1, r);
                     tryPush(c - 1, r);
                     tryPush(c, r + 1);
@@ -358,6 +360,38 @@ namespace pxtsprite {
                     q.push([x, y]);
                 }
             }
+        }
+    }
+
+
+    export class MarqueeEdit extends SelectionEdit {
+        protected isMove = false;
+
+        start(cursorCol: number, cursorRow: number, state: CanvasState) {
+            this.isStarted = true;
+            this.startCol = cursorCol;
+            this.startRow = cursorRow;
+
+            if (state.inFloatingLayer(cursorCol, cursorRow)) {
+                this.isMove = true;
+            }
+            else {
+                state.mergeFloatingLayer();
+            }
+        }
+
+        protected doEditCore(state: CanvasState): void {
+            if (this.isMove) {
+                state.layerOffsetX = state.floatingLayer.x0 + this.endCol - this.startCol;
+                state.layerOffsetY = state.floatingLayer.y0 + this.endRow - this.startRow;
+            }
+            else {
+                state.copyToLayer(this.startCol, this.startRow, this.endCol - this.startCol, this.endRow - this.startRow, true);
+            }
+        }
+
+        getCursor(): Cursor {
+            return undefined;
         }
     }
 }

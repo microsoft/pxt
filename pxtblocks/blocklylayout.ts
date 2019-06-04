@@ -230,8 +230,8 @@ namespace pxt.blocks.layout {
     }
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
-        Blockly.utils.removeClass(svg as Element, "blocklySvg");
-        Blockly.utils.addClass(svg as Element, "blocklyPreview");
+        pxt.BrowserUtils.removeClass(svg, "blocklySvg");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview");
 
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
             .forEach(el => { if (el) el.parentNode.removeChild(el) });

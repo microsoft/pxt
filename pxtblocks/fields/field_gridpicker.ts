@@ -150,7 +150,7 @@ namespace pxtblockly {
                 if (value == this.getValue()) {
                     // This option is selected
                     menuItem.setAttribute('aria-selected', 'true');
-                    Blockly.utils.addClass(menuItem, 'goog-option-selected');
+                    pxt.BrowserUtils.addClass(menuItem, 'goog-option-selected');
                     backgroundColour = this.sourceBlock_.getColourTertiary();
 
                     // Save so we can scroll to it later
@@ -205,7 +205,7 @@ namespace pxtblockly {
                             this.tooltip_.style.display = title ? '' : 'none';
                         }
 
-                        Blockly.utils.addClass(menuItem, 'goog-menuitem-highlight');
+                        pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
                         tableContainer.setAttribute('aria-activedescendant', menuItem.id);
                     });
 
@@ -216,7 +216,7 @@ namespace pxtblockly {
                             this.tooltip_.style.display = 'none';
                         }
 
-                        Blockly.utils.removeClass(menuItem, 'goog-menuitem-highlight');
+                        pxt.BrowserUtils.removeClass(menuItem, 'goog-menuitem-highlight');
                         tableContainer.removeAttribute('aria-activedescendant');
                     });
                 } else {
@@ -232,10 +232,10 @@ namespace pxtblockly {
                                 // Clear all current hovers.
                                 const currentHovers = tableContainer.getElementsByClassName('goog-menuitem-highlight');
                                 for (let i = 0; i < currentHovers.length; i++) {
-                                    Blockly.utils.removeClass(currentHovers[i], 'goog-menuitem-highlight');
+                                    pxt.BrowserUtils.removeClass(currentHovers[i] as HTMLElement, 'goog-menuitem-highlight');
                                 }
                                 // Set hover on current item
-                                Blockly.utils.addClass(menuItem, 'goog-menuitem-highlight');
+                                pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
 
                                 this.updateSelectedBar_(content, value);
                             }
@@ -352,8 +352,8 @@ namespace pxtblockly {
                     let rowLength = menuItemsDom[row].childNodes.length
                     for (let col = 0; col < rowLength; ++col) {
                         const menuItem = menuItemsDom[row].childNodes[col] as HTMLElement
-                        menuItem.classList.remove("goog-menuitem-highlight")
-                        menuItem.classList.remove("goog-option-selected")
+                        pxt.BrowserUtils.removeClass(menuItem, "goog-menuitem-highlight");
+                        pxt.BrowserUtils.removeClass(menuItem, "goog-option-selected");
                     }
                 }
                 let firstItem = menuItemsDom[0].childNodes[0] as HTMLElement;
