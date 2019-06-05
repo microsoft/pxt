@@ -270,7 +270,7 @@ span.highlight-line {
 }
 
 #tutorialcard .prevbutton:hover, #tutorialcard .nextbutton:hover {
-    background-color: #cacbcd;
+    background-color: @lightGrey;
 
     > i, > span, > i.orange {
         color: @black!important;
@@ -370,16 +370,6 @@ span.highlight-line {
 .avatar-container .tooltip:before {
     background-color: @blue;
     color: @white;
-}
-
-.showTooltip .avatar-container:hover .tooltip,
-.showTooltip .avatar-container:hover .tooltip:before {
-    display: block;
-}
-
-#tutorialcard:not(.showTooltip) .tooltip,
-#tutorialcard:not(.showTooltip) .tooltip:before {
-    display: none;
 }
 
 /*******************************
