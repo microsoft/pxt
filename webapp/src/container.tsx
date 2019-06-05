@@ -158,6 +158,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+        this.showRecipesDialog = this.showRecipesDialog.bind(this);
     }
 
     showShareDialog() {
@@ -229,6 +230,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.pair();
     }
 
+    showRecipesDialog() {
+        pxt.tickEvent("menu.recipes");
+        this.props.parent.showRecipesDialog();
+    }
+
     pairBluetooth() {
         pxt.tickEvent("menu.pair.bluetooth")
         core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
@@ -276,6 +282,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
             && greenscreen.isSupported();
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
+        const recipes = !!targetTheme.recipes;
 
         // Electron does not currently support webusb
         const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
@@ -298,6 +305,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
             {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {recipes && <sui.Item role="menuitem" icon='' text={lf("Recipes")} onClick={this.showRecipesDialog} />}
             {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
@@ -573,8 +581,8 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
-                <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
-             </button>
+                <sui.Icon icon={`icon inverted chevron ${sideDocsCollapsed ? 'left' : 'right'}`} />
+            </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
                     <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"

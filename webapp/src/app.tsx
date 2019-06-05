@@ -103,6 +103,7 @@ export class ProjectView
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     chooseHwDialog: projects.ChooseHwDialog;
+    chooseRecipeDialog: tutorial.ChooseRecipeDialog;
     prevEditorId: string;
     screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
 
@@ -2697,6 +2698,11 @@ export class ProjectView
             this.chooseHwDialog.show()
     }
 
+    showRecipesDialog() {
+        if (this.chooseRecipeDialog)
+            this.chooseRecipeDialog.show()
+    }
+
     showRenameProjectDialogAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 
@@ -2867,14 +2873,18 @@ export class ProjectView
     exitTutorial(removeProject?: boolean) {
         pxt.tickEvent("tutorial.exit");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+        const tutorial = this.state.header && this.state.header.tutorial;
+        const stayInEditor = tutorial && !!tutorial.tutorialRecipe;
+
         this.exitTutorialAsync(removeProject)
             .finally(() => {
                 core.hideLoading("leavingtutorial");
-                this.openHome();
+                if (!stayInEditor)
+                    this.openHome();
             })
     }
 
-    exitTutorialAsync(removeProject?: boolean, openHome?: boolean) {
+    exitTutorialAsync(removeProject?: boolean): Promise<void> {
         let curr = pkg.mainEditorPkg().header;
         curr.isDeleted = removeProject;
         let files = pkg.mainEditorPkg().getAllFiles();
@@ -2984,6 +2994,10 @@ export class ProjectView
         this.chooseHwDialog = c;
     }
 
+    private handleChooseRecipeDialogRef = (c: tutorial.ChooseRecipeDialog) => {
+        this.chooseRecipeDialog = c;
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -3019,6 +3033,7 @@ export class ProjectView
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
+        const recipes = !!targetTheme.recipes;
 
         const collapseTooltip = lf("Hide the simulator");
 
@@ -3116,6 +3131,7 @@ export class ProjectView
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
+                {recipes? <tutorial.ChooseRecipeDialog parent={this} ref={this.handleChooseRecipeDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
