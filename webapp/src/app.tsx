@@ -3332,7 +3332,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.BrowserUtils.changeHash("");
             return true;
         case "recipe": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
-            pxt.tickEvent("hash.tutorial")
+            pxt.tickEvent("hash.recipe")
             editor.startTutorial(hash.arg, undefined, true);
             pxt.BrowserUtils.changeHash("");
             return true;
