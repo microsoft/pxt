@@ -311,6 +311,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
     }
 
     private hintOnClick(evt?: any) {
+        evt.stopPropagation();
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
@@ -381,12 +382,12 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div {... (this.state.showHintTooltip && hasHint && {'data-tooltip': tutorialHintTooltip})} data-position="bottom center" data-inverted>
-                        <div role="button" className='avatar-image' onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
+                        <div role="button" className='avatar-image' onClick={this.state.showHintTooltip ? this.hintOnClick : null} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={hasHint ? this.hintOnClick : null} onKeyDown={sui.fireClickOnEnter}>
+                        onClick={hasHint && this.state.showHintTooltip ? this.hintOnClick : null} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
