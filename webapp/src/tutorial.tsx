@@ -129,6 +129,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
     constructor(props: ISettingsProps) {
         super(props);
+
+        this.next = this.next.bind(this);
     }
 
     componentWillReceiveProps(nextProps: ISettingsProps) {
@@ -140,6 +142,17 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (this.state.renderModal != unplugged) {
             this.setState({ renderModal: unplugged });
         }
+    }
+
+    next() {
+        const options = this.props.parent.state.tutorialOptions;
+        const { tutorialStep, tutorial } = options;
+        this.setState({ visible: false });
+        const nextStep = tutorialStep + 1;
+
+        options.tutorialStep = nextStep;
+        pxt.tickEvent(`tutorial.hint.next`, { tutorial: tutorial, step: nextStep });
+        this.props.parent.setTutorialStep(nextStep);
     }
 
     toggleHint(showFullText?: boolean) {
@@ -161,25 +174,16 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
                 <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
             </div>
         } else {
-            const header = tutorialName;
-            const next = () => {
-                this.setState({ visible: false });
-                const nextStep = tutorialStep + 1;
-                options.tutorialStep = nextStep;
-                pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
-                this.props.parent.setTutorialStep(nextStep);
-            }
-
             const actions: sui.ModalButton[] = [{
                 label: lf("Ok"),
-                onclick: next,
+                onclick: this.next,
                 icon: 'check',
                 className: 'green'
             }]
 
             return <sui.Modal isOpen={visible} className="hintdialog"
-                closeIcon={true} header={header} buttons={actions}
-                onClose={next} dimmer={true} longer={true}
+                closeIcon={true} header={tutorialName} buttons={actions}
+                onClose={this.next} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <md.MarkedContent markdown={fullText} parent={this.props.parent} />
             </sui.Modal>
@@ -367,9 +371,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
 
-        this.toggleHint(true);
         if (unplugged) {
             this.nextTutorialStep();
+        } else {
+            this.toggleHint(true);
         }
     }
 
@@ -392,14 +397,20 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
+            if (th.elementRef) {
+                document.removeEventListener('click', this.hintOnClick);
+                th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+            }
+
             this.setState({showHintTooltip : true});
-            document.removeEventListener('click', this.hintOnClick);
-            if (th.elementRef) th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             this.props.parent.pokeUserActivity();
         } else {
+            if (th.elementRef) {
+                document.addEventListener('click', this.hintOnClick);
+                th.elementRef.addEventListener('click', this.expandedHintOnClick);
+            }
+
             this.setState({showHintTooltip : false});
-            document.addEventListener('click', this.hintOnClick);
-            if (th.elementRef) th.elementRef.addEventListener('click', this.expandedHintOnClick);
             this.props.parent.stopPokeUserActivity();
 
             const options = this.props.parent.state.tutorialOptions;
