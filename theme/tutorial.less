@@ -17,7 +17,7 @@
       Tutorial mode
 *******************************/
 .tutorial #maineditor .full-abs {
-    top: calc(@tutorialCardHeight - 0.5rem);
+    top: @tutorialCardHeight;
 }
 
 .tutorial.tutorialExpanded #maineditor .full-abs {
@@ -118,7 +118,7 @@ body#docs.tutorial {
 
 #tutorialcard .ui.tutorialsegment .avatar-image {
     position: absolute;
-    top: .9rem;
+    top: 1.25rem;
     left: 0.7rem;
     width: @avatarSize;
     height: @avatarSize;
@@ -167,7 +167,7 @@ body#docs.tutorial {
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
-    margin-left: @avatarMargin + 0.5rem;
+    margin-left: @avatarMargin + 0.35rem;
     overflow: hidden;
 }
 
@@ -328,7 +328,6 @@ span.highlight-line {
     z-index: @tutorialLightboxCardZIndex;
     border: 8px solid @primaryColor;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
-    max-height: 70vh;
 }
 
 .tutorialhint:before {
@@ -343,6 +342,11 @@ span.highlight-line {
     border: 16px solid;
     border-color: transparent @primaryColor transparent transparent;
     transform: rotateZ(-45deg);
+}
+
+.tutorialhint > div {
+    max-height: 60vh;
+    overflow: auto;
 }
 
 .tutorialhint.hidden {

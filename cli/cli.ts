@@ -59,8 +59,8 @@ function initTargetCommands() {
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
         let cli = require.main.require(cmdsjs)
-        if (cli.deployCoreAsync) {
-            pxt.commands.deployCoreAsync = cli.deployCoreAsync
+        if (cli.deployAsync) {
+            pxt.commands.deployFallbackAsync = cli.deployAsync
         }
         if (cli.addCommands) {
             cli.addCommands(p)
@@ -1032,7 +1032,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (fs.existsSync(hexCache)) {
         hexFiles = fs.readdirSync(hexCache)
             .filter(f => /\.hex$/.test(f))
-            .filter(f => fs.readFileSync(path.join(hexCache, f), { encoding: "utf8"}) != "SKIP")
+            .filter(f => fs.readFileSync(path.join(hexCache, f), { encoding: "utf8" }) != "SKIP")
             .map((f) => `@cdnUrl@/compile/${f}`);
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
@@ -3803,20 +3803,9 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.ast = true
             }
 
-            // this is suboptimal, but we need apisInfo for the python converter
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 pxt.log("pre-compiling apisInfo for Python")
-                const opts2 = U.clone(opts)
-                opts2.ast = true
-                opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                opts2.noEmit = true
-                // remove previously converted .ts files, so they don't end up in apisinfo
-                for (let f of opts2.sourceFiles) {
-                    if (U.endsWith(f, ".py"))
-                        opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
-                }
-                const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(res.ast, opts2.jres)
+                pxt.prepPythonOptions(opts)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
@@ -3996,11 +3985,12 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                     }
                     return null
                 case BuildOption.Deploy:
-                    if (!pxt.commands.deployCoreAsync) {
+                    if (pxt.commands.hasDeployFn())
+                        return pxt.commands.deployAsync(res)
+                    else {
                         pxt.log("no deploy functionality defined by this target")
                         return null;
                     }
-                    return pxt.commands.deployCoreAsync(res);
                 case BuildOption.Run:
                     return runCoreAsync(res);
                 default:
@@ -6150,11 +6140,11 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
                 initTargetCommands();
             }
 
-            if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
-                pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
+            if (!pxt.commands.deployFallbackAsync && build.thisBuild.deployAsync)
+                pxt.commands.deployFallbackAsync = build.thisBuild.deployAsync
 
             if (!args[0]) {
-                if (pxt.commands.deployCoreAsync) {
+                if (pxt.commands.deployFallbackAsync) {
                     pxt.log("running 'pxt deploy' (run 'pxt help' for usage)")
                     args = ["deploy"]
                 } else {
