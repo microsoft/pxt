@@ -118,8 +118,6 @@ body#docs.tutorial {
 
 #tutorialcard .ui.tutorialsegment .avatar-image {
     position: absolute;
-    top: 1.25rem;
-    left: 0.7rem;
     width: @avatarSize;
     height: @avatarSize;
     background-repeat: no-repeat;
@@ -285,24 +283,12 @@ span.highlight-line {
 
 #tutorialcard .ui.button.hintbutton {
     position: absolute;
-    top: .5rem;
-    left: .5rem;
     color: white; // match menubutton color
 }
 
 /*******************************
         Tutorial Hint
 *******************************/
-
-.tutorialsegment > div:first-child[data-tooltip]:after,
-.tutorialsegment > div:first-child[data-tooltip]:before {
-    top: 6rem;
-    left: 1.9rem;
-    transition: none;
-    background: @primaryColor;
-    border-color: @primaryColor;
-    z-index: @tutorialLightboxCardZIndex;
-}
 
 .ui.modal.hintdialog .content p {
     font-size: 16px;
@@ -320,13 +306,12 @@ span.highlight-line {
     position: absolute;
     max-width: 60%;
     min-width: 300px;
-    top: 7rem;
-    left: .7rem;
+    top: 6.5rem;
     padding: 10px 26px;
     border-radius: 1.2rem;
     background: @white;
     z-index: @tutorialLightboxCardZIndex;
-    border: 8px solid @primaryColor;
+    border: 8px solid @blue;
     box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, .3);
 }
 
@@ -340,7 +325,7 @@ span.highlight-line {
     top: -24px;
     bottom: auto;
     border: 16px solid;
-    border-color: transparent @primaryColor transparent transparent;
+    border-color: transparent @blue transparent transparent;
     transform: rotateZ(-45deg);
 }
 
@@ -351,8 +336,6 @@ span.highlight-line {
 
 .tutorialhint.hidden {
     display: none;
-    visibility: hidden;
-    animation: fade 1s;
 }
 
 .tutorialhint .lang-blocks .segment.raised {
@@ -362,20 +345,41 @@ span.highlight-line {
     text-align: center;
 }
 
-@keyframes fade {
-    0% {
-        width: 0;
-        height: 0;
-        opacity: 0;
-    }
-
-    100% {
-        opacity: 1;
-        width: auto;
-        height: auto;
-    }
+.shake {
+    animation: shake 1.5s ease-in-out;
 }
 
+/*******************************
+     Tutorial Tooltip
+*******************************/
+.avatar-container {
+    position: absolute;
+    top: .9rem;
+    left: .7rem;
+    width: 100%;
+}
+
+.avatar-container .tooltip {
+    top: 5rem;
+    left: 1.5rem;
+    max-width: 175px;
+}
+
+.avatar-container .tooltip ,
+.avatar-container .tooltip:before {
+    background-color: @blue;
+    color: @white;
+}
+
+.showTooltip .avatar-container:hover .tooltip,
+.showTooltip .avatar-container:hover .tooltip:before {
+    display: block;
+}
+
+#tutorialcard:not(.showTooltip) .tooltip,
+#tutorialcard:not(.showTooltip) .tooltip:before {
+    display: none;
+}
 
 /*******************************
         See More Button
@@ -429,14 +433,17 @@ span.highlight-line {
 
 /* <= Tablet (Mobile + Tablet) */
 @media only screen and (max-width: @largestTabletScreen) {
+    .avatar-container .tooltip {
+        left: 5rem;
+    }
 
+    .avatar-container .tooltip:before {
+        left: 2rem;
+    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    .tutorialsegment>div:first-child[data-tooltip]:after {
-        left: 6rem;
-    }
 }
 
 /* thin screen */
@@ -451,5 +458,51 @@ span.highlight-line {
     
     .modal.hintdialog img.ui.centered.image {
         max-height:12rem;
+    }
+}
+
+@keyframes shake {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    10% {
+        transform: rotate(-10deg);
+    }
+
+    20% {
+        transform: rotate(10deg);
+    }
+
+    30% {
+        transform: rotate(-10deg);
+    }
+
+    40% {
+        transform: rotate(10deg);
+    }
+
+    50% {
+        transform: rotate(-10deg);
+    }
+
+    60% {
+        transform: rotate(10deg);
+    }
+
+    70% {
+        transform: rotate(-10deg);
+    }
+
+    80% {
+        transform: rotate(10deg);
+    }
+
+    90% {
+        transform: rotate(-10deg);
+    }
+
+    100% {
+        transform: rotate(0deg);
     }
 }
