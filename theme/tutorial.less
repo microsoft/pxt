@@ -17,7 +17,7 @@
       Tutorial mode
 *******************************/
 .tutorial #maineditor .full-abs {
-    top: calc(@tutorialCardHeight - 0.5rem);
+    top: @tutorialCardHeight;
 }
 
 .tutorial.tutorialExpanded #maineditor .full-abs {
@@ -118,7 +118,7 @@ body#docs.tutorial {
 
 #tutorialcard .ui.tutorialsegment .avatar-image {
     position: absolute;
-    top: .9rem;
+    top: 1.25rem;
     left: 0.7rem;
     width: @avatarSize;
     height: @avatarSize;
@@ -167,7 +167,7 @@ body#docs.tutorial {
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
-    margin-left: @avatarMargin + 0.5rem;
+    margin-left: @avatarMargin + 0.35rem;
     overflow: hidden;
 }
 
