@@ -461,7 +461,13 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
             if (res instanceof Error) {
                 // ignore
             } else {
-                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards.filter(c => c.cardType == "tutorial")));
+                const editor: pxt.CodeCardEditorType = this.props.parent.isJavaScriptActive()
+                    ? "js" : this.props.parent.isPythonActive() ? "py"
+                        : "blocks";
+                this.prevGalleries = pxt.Util.concat(res.map(g =>
+                    g.cards.filter(c => c.cardType == "tutorial")
+                        .filter(c => c.editor == editor || (editor == "blocks" && !c.editor))
+                ));
             }
         }
         return this.prevGalleries || [];
@@ -471,7 +477,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
         const { visible } = this.state;
         if (!visible) return <div />;
 
-        let cards = this.fetchGallery();
+        const cards = this.fetchGallery();
         return (
             <sui.Modal isOpen={visible} className="recipedialog"
                 size="large"
@@ -481,7 +487,12 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
             >
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
-                        {cards.map(card =>
+                        {!cards.length && <div className="ui items">
+                            <div className="ui item">
+                                {lf("We couldn't find any tutorials for this editor.")}
+                            </div>
+                        </div>}
+                        {cards.length && cards.map(card =>
                             <codecard.CodeCardView
                                 key={'card' + card.name}
                                 name={card.name}
