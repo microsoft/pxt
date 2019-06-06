@@ -1852,6 +1852,17 @@ namespace pxt.blocks {
 
             xmlList.push(button);
 
+            //Initialize sprite wizard button
+            let spriteWizardButton = goog.dom.createDom('button') as HTMLElement;
+            spriteWizardButton.setAttribute('text', lf("Make a Sprite..."));
+            spriteWizardButton.setAttribute('callbackkey', 'CREATE_SPRITE');
+
+            workspace.registerButtonCallback('CREATE_SPRITE', function (button) {
+                console.log('Clicked!')
+            })
+
+            xmlList.push(spriteWizardButton);
+
             let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
             xmlList = xmlList.concat(blockList);
             return xmlList;
@@ -1991,7 +2002,7 @@ namespace pxt.blocks {
         const msg = Blockly.Msg;
 
         // New functions implementation messages
-        msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
+        msg.FUNCTION_CREATE_NEW = lf("sneeze - Make a Function...");
         msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
         msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
         msg.FUNCTION_WARNING_EMPTY_NAME = lf("Function and argument names cannot be empty.");
@@ -2184,7 +2195,7 @@ namespace pxt.blocks {
                 xmlList.push(headingLabel);
             }
 
-            const newFunction = lf("Make a Function...");
+            const newFunction = lf("cough - Make a Function...");
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
@@ -2228,6 +2239,7 @@ namespace pxt.blocks {
             }
 
             workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
+                console.log('running create function....');
                 let promptAndCheckWithAlert = (defaultName: string) => {
                     Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
