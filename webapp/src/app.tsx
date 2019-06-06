@@ -2822,7 +2822,7 @@ export class ProjectView
                 tutorialRecipe: !!recipe
             };
 
-            // start a tutorial within the context of an exisintg
+            // start a tutorial within the context of an existing program
             if (recipe) {
                 const header = pkg.mainEditorPkg().header;
                 header.tutorial = tutorialOptions;
