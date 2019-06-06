@@ -1,3 +1,4 @@
+/// <reference path="../../localtypings/projectheader.d.ts"/>
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
@@ -208,12 +209,6 @@ namespace pxt.Cloud {
 
     export interface JsonPublication extends JsonIdObject {
         time: number; // time when publication was created
-    }
-
-    export interface JsonScriptMeta {
-        blocksWidth?: number;
-        blocksHeight?: number;
-        versions?: TargetVersions
     }
 
     export interface JsonScript extends JsonPublication {
