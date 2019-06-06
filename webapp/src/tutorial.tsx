@@ -466,7 +466,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
                         : "blocks";
                 this.prevGalleries = pxt.Util.concat(res.map(g =>
                     g.cards.filter(c => c.cardType == "tutorial")
-                        .filter(c => c.editor == editor || (editor == "blocks" && !c.editor))
+                        .filter(c => (c.editor == editor) || (editor == "blocks" && !c.editor))
                 ));
             }
         }
@@ -489,10 +489,10 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
                     <div className="ui cards centered" role="listbox">
                         {!cards.length && <div className="ui items">
                             <div className="ui item">
-                                {lf("We couldn't find any tutorials for this editor.")}
+                                {lf("Oops, we couldn't find any tutorials for this editor.")}
                             </div>
                         </div>}
-                        {cards.length && cards.map(card =>
+                        {cards.length > 0 ? cards.map(card =>
                             <codecard.CodeCardView
                                 key={'card' + card.name}
                                 name={card.name}
@@ -503,7 +503,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
                                 // tslint:disable-next-line:react-this-binding-issue
                                 onClick={() => this.start(card)}
                             />
-                        )}
+                        ) : undefined}
                     </div>
                 </div>
             </sui.Modal>
