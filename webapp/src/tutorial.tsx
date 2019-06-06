@@ -8,6 +8,7 @@ import * as sounds from "./sounds";
 import * as core from "./core";
 import * as md from "./marked";
 import * as compiler from "./compiler";
+import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -124,7 +125,7 @@ export interface TutorialHintState {
 
 export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
     public elementRef: HTMLDivElement;
-    protected setRef: (el: HTMLDivElement) => void = (el) => {this.elementRef = el};
+    protected setRef: (el: HTMLDivElement) => void = (el) => { this.elementRef = el };
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -144,7 +145,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const tutorialHint = step.blockSolution;
         const fullText = step.contentMd;
 
-        return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
+        return <div className={`tutorialhint ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
             <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
         </div>
     }
@@ -211,7 +212,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     finishTutorial() {
         this.closeLightbox();
-        this.props.parent.completeTutorial();
+        this.props.parent.completeTutorialAsync().done();
     }
 
     private closeLightboxOnEscape = (e: KeyboardEvent) => {
@@ -347,7 +348,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
             show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
         }
-        this.setState({showSeeMore: show});
+        this.setState({ showSeeMore: show });
     }
 
     toggleHint(showFullText?: boolean) {
@@ -355,12 +356,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
-            this.setState({ showHintTooltip : true });
+            this.setState({ showHintTooltip: true });
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             document.removeEventListener('click', this.hintOnClick);
             this.props.parent.pokeUserActivity();
         } else {
-            this.setState({ showHintTooltip : false });
+            this.setState({ showHintTooltip: false });
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClick);
             this.props.parent.stopPokeUserActivity();
@@ -417,5 +418,95 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
+    }
+}
+
+export interface ChooseRecipeDialogState {
+    visible?: boolean;
+}
+
+export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRecipeDialogState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+        this.close = this.close.bind(this);
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    close() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    start(card: pxt.CodeCard) {
+        pxt.tickEvent("recipe." + card.url);
+        this.hide();
+        this.props.parent.startTutorial(card.url, undefined, true);
+    }
+
+    fetchGallery(): pxt.CodeCard[] {
+        const path = "/recipes";
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore
+            } else {
+                const editor: pxt.CodeCardEditorType = this.props.parent.isJavaScriptActive()
+                    ? "js" : this.props.parent.isPythonActive() ? "py"
+                        : "blocks";
+                this.prevGalleries = pxt.Util.concat(res.map(g =>
+                    g.cards.filter(c => c.cardType == "tutorial")
+                        .filter(c => (c.editor == editor) || (editor == "blocks" && !c.editor))
+                ));
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+        if (!visible) return <div />;
+
+        const cards = this.fetchGallery();
+        return (
+            <sui.Modal isOpen={visible} className="recipedialog"
+                size="large"
+                onClose={this.close} dimmer={true}
+                closeIcon={true} header={lf("Try a Tutorial")}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+            >
+                <div className="group">
+                    <div className="ui cards centered" role="listbox">
+                        {!cards.length && <div className="ui items">
+                            <div className="ui item">
+                                {lf("Oops, we couldn't find any tutorials for this editor.")}
+                            </div>
+                        </div>}
+                        {cards.length > 0 ? cards.map(card =>
+                            <codecard.CodeCardView
+                                key={'card' + card.name}
+                                name={card.name}
+                                ariaLabel={card.name}
+                                description={card.description}
+                                imageUrl={card.imageUrl}
+                                largeImageUrl={card.largeImageUrl}
+                                // tslint:disable-next-line:react-this-binding-issue
+                                onClick={() => this.start(card)}
+                            />
+                        ) : undefined}
+                    </div>
+                </div>
+            </sui.Modal>
+        )
     }
 }

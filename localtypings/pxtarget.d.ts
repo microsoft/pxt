@@ -330,6 +330,7 @@ declare namespace pxt {
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
         experimentalHw?: boolean; // enable experimental hardware
+        recipes?: boolean; // inlined tutorials
     }
 
     interface SocialOptions {
@@ -785,6 +786,7 @@ declare namespace pxt.tutorial {
         tutorialStepExpanded?: boolean; // display full step in dialog
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
+        tutorialRecipe?: boolean; // micro tutorial running within the context of a script
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
