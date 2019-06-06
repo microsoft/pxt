@@ -2848,10 +2848,14 @@ export class ProjectView
         // clear tutorial field
         const tutorial = this.state.header.tutorial;
         if (tutorial) {
-            this.state.header.tutorialCompleted = {
-                id: tutorial.tutorial,
-                steps: tutorial.tutorialStepInfo.length
-            }
+            // don't keep track of completion for microtutorials
+            if (this.state.tutorialOptions && this.state.tutorialOptions.tutorialRecipe)
+                this.state.header.tutorialCompleted = undefined;
+            else
+                this.state.header.tutorialCompleted = {
+                    id: tutorial.tutorial,
+                    steps: tutorial.tutorialStepInfo.length
+                }
             this.state.header.tutorial = undefined;
         }
 
