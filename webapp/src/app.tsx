@@ -2847,11 +2847,13 @@ export class ProjectView
 
         // clear tutorial field
         const tutorial = this.state.header.tutorial;
-        this.state.header.tutorialCompleted = {
-            id: tutorial.tutorial,
-            steps: tutorial.tutorialStepInfo.length
+        if (tutorial) {
+            this.state.header.tutorialCompleted = {
+                id: tutorial.tutorial,
+                steps: tutorial.tutorialStepInfo.length
+            }
+            this.state.header.tutorial = undefined;
         }
-        this.state.header.tutorial = undefined;
 
         if (pxt.BrowserUtils.isIE()) {
             // For some reason, going from a tutorial straight to the editor in
