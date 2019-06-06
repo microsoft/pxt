@@ -1,6 +1,7 @@
 /// <reference path="../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
+/// <reference path="../localtypings/projectheader.d.ts"/>
 /// <reference path="util.ts"/>
 /// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>

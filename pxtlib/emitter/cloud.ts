@@ -1,3 +1,4 @@
+/// <reference path="../../localtypings/projectheader.d.ts"/>
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
