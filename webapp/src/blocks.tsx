@@ -1148,6 +1148,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             })
         }
+
+        if (ns == "sprites") {
+            // TODO(dz):
+            extraBlocks.push({
+                name: `SPRITE_WIZARD_BUTTON`,
+                type: "button",
+                attributes: {
+                    blockId: `SPRITE_WIZARD_BUTTON`,
+                    label: "Create a Sprite...",
+                    weight: 0
+                },
+                callback: () => {
+                    console.log("Hello world!")
+                }
+            });
+        }
+
         return extraBlocks;
     }
 
