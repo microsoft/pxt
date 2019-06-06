@@ -444,7 +444,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
             if (res instanceof Error) {
                 // ignore
             } else {
-                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards.filter(c => c.cardType == "tutorial")));
             }
         }
         return this.prevGalleries || [];
