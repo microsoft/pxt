@@ -119,7 +119,7 @@ namespace pxt.editor.experiments {
             },
             {
                 id: "recipes",
-                name: lf("Recipes"),
+                name: lf("Tutorials in Context"),
                 description: lf("Micro-tutorials running within the context of a program.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);

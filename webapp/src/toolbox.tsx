@@ -116,6 +116,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
 
         this.setSelection = this.setSelection.bind(this);
         this.advancedClicked = this.advancedClicked.bind(this);
+        this.recipesClicked = this.recipesClicked.bind(this);
         this.recoverToolbox = this.recoverToolbox.bind(this);
     }
 
@@ -273,6 +274,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.showAdvanced();
     }
 
+    recipesClicked() {
+        const { editorname } = this.props;
+        pxt.tickEvent(`${editorname}.recipes`);
+        this.props.parent.parent.showRecipesDialog();
+    }
+
     showAdvanced() {
         const { parent } = this.props;
         if (this.selectedItem && this.selectedItem.props.treeRow
@@ -377,9 +384,10 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
         if (!visible) return <div style={{ display: 'none' }} />
 
+        const theme = pxt.appTarget.appTheme;
         const tutorialOptions = parent.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
-        const hasTopBlocks = !!pxt.appTarget.appTheme.topBlocks && !inTutorial;
+        const hasTopBlocks = !!theme.topBlocks && !inTutorial;
 
         if (loading || hasError) return <div>
             <div className="blocklyTreeRoot">
@@ -396,6 +404,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         </div>;
 
         const hasAdvanced = this.hasAdvancedCategories();
+        const hasRecipes = !!theme.recipes;
 
         let nonAdvancedCategories = this.getNonAdvancedCategories();
         const advancedCategories = hasAdvanced ? this.getAdvancedCategories() : [];
@@ -426,13 +435,14 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid}  toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
+                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
                         </CategoryItem>
                     ))}
-                    {hasAdvanced ? <TreeSeparator key="advancedseparator" /> : undefined}
+                    {hasAdvanced || hasRecipes ? <TreeSeparator key="advancedseparator" /> : undefined}
+                    {hasRecipes && <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.recipesTitle(), color: pxt.toolbox.getNamespaceColor('recipes'), icon: pxt.toolbox.getNamespaceIcon("icons") }} onCategoryClick={this.recipesClicked} />}
                     {hasAdvanced ? <CategoryItem toolbox={this} treeRow={{ nameid: "", name: pxt.toolbox.advancedTitle(), color: pxt.toolbox.getNamespaceColor('advanced'), icon: pxt.toolbox.getNamespaceIcon(showAdvanced ? 'advancedexpanded' : 'advancedcollapsed') }} onCategoryClick={this.advancedClicked} /> : undefined}
                     {showAdvanced ? advancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>

@@ -460,7 +460,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
             <sui.Modal isOpen={visible} className="recipedialog"
                 size="large"
                 onClose={this.close} dimmer={true}
-                closeIcon={true} header={lf("Try a Recipe")}
+                closeIcon={true} header={lf("Try a Tutorial")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className="group">
