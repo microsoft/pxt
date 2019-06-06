@@ -11,6 +11,7 @@ import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
+import { CreateSnippetBuilder } from './snippetBuilder'
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -25,6 +26,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
+    snippetDialog: CreateSnippetBuilder = null;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -1108,6 +1110,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.filterBlocks(subns, this.nsMap[ns]) || [];
     }
 
+    private openSpriteWizard() {
+        Promise.resolve()
+        .delay(10)
+        .then(() => {
+            if (!this.functionsDialog) {
+                const wrapper = document.body.appendChild(document.createElement('div'));
+                this.snippetDialog = ReactDOM.render(React.createElement(CreateSnippetBuilder), wrapper) as CreateSnippetBuilder;
+            }
+            this.snippetDialog.show();
+        });
+    }
+
     private getExtraBlocks(ns: string, subns: string) {
         if (subns) return [];
         let extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[] = [];
@@ -1160,7 +1174,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     weight: 0
                 },
                 callback: () => {
-                    console.log("Hello world!")
+                    this.openSpriteWizard();
                 }
             });
         }
