@@ -356,12 +356,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
-            this.setState({ showHintTooltip : true });
+            this.setState({ showHintTooltip: true });
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             document.removeEventListener('click', this.hintOnClick);
             this.props.parent.pokeUserActivity();
         } else {
-            this.setState({ showHintTooltip : false });
+            this.setState({ showHintTooltip: false });
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClick);
             this.props.parent.stopPokeUserActivity();
