@@ -920,6 +920,11 @@ namespace pxt.cpp {
 
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
+        U.iterMap(optSettings, (k, v) => {
+            if (v === null) {
+                delete optSettings[k];
+            }
+        })
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {

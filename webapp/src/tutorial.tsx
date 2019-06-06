@@ -9,6 +9,7 @@ import * as core from "./core";
 import * as md from "./marked";
 import * as compiler from "./compiler";
 import * as codecard from "./codecard";
+import { HintTooltip } from "./hinttooltip";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -156,14 +157,23 @@ interface TutorialCardState {
     showSeeMore?: boolean;
 }
 
-export class TutorialCard extends data.Component<ISettingsProps, TutorialCardState> {
-    public focusInitialized: boolean;
+interface TutorialCardProps extends ISettingsProps {
+    pokeUser?: boolean;
+}
+
+export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
+
+    public focusInitialized: boolean;
 
     constructor(props: ISettingsProps) {
         super(props);
+        const options = this.props.parent.state.tutorialOptions;
+        this.prevStep = options.tutorialStep;
+
         this.state = {
-            showSeeMore: false
+            showSeeMore: false,
+            showHintTooltip: !options.tutorialStepInfo[this.prevStep].fullscreen
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -176,7 +186,6 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.finishTutorial = this.finishTutorial.bind(this);
         this.toggleExpanded = this.toggleExpanded.bind(this);
 
-        this.prevStep = this.props.parent.state.tutorialOptions.tutorialStep;
     }
 
     previousTutorialStep() {
@@ -287,12 +296,16 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     componentDidMount() {
         this.setShowSeeMore();
+        this.props.parent.pokeUserActivity();
     }
 
     componentWillUnmount() {
         // Clear the markdown cache when we unmount
         md.MarkedContent.clearBlockSnippetCache();
         this.lastStep = -1;
+
+        // Clear any existing timers
+        this.props.parent.stopPokeUserActivity();
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -343,13 +356,16 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
         if (th && th.state && th.state.visible) {
-            this.setState({ showHintTooltip: true });
+            this.setState({ showHintTooltip : true });
             th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             document.removeEventListener('click', this.hintOnClick);
+            this.props.parent.pokeUserActivity();
         } else {
-            this.setState({ showHintTooltip: false });
+            this.setState({ showHintTooltip : false });
             th.elementRef.addEventListener('click', this.expandedHintOnClick);
             document.addEventListener('click', this.hintOnClick);
+            this.props.parent.stopPokeUserActivity();
+
             const options = this.props.parent.state.tutorialOptions;
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
         }
@@ -378,13 +394,14 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}`} >
+        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${this.state.showHintTooltip ? 'showTooltip' : ''}`} >
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div {... (this.state.showHintTooltip && hasHint && { 'data-tooltip': tutorialHintTooltip })} data-position="bottom center" data-inverted>
-                        <div role="button" className='avatar-image' onClick={this.state.showHintTooltip ? this.hintOnClick : null} onKeyDown={sui.fireClickOnEnter}></div>
+                    <div className="avatar-container">
+                        <div role="button" className={`avatar-image ${this.props.pokeUser ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
                         {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={this.hintOnClick} />}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
