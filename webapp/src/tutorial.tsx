@@ -450,7 +450,6 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
         return this.prevGalleries || [];
     }
 
-    /* tslint:disable:react-a11y-anchors */
     renderCore() {
         const { visible } = this.state;
         if (!visible) return <div />;
@@ -473,6 +472,7 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
                                 description={card.description}
                                 imageUrl={card.imageUrl}
                                 largeImageUrl={card.largeImageUrl}
+                                // tslint:disable-next-line:react-this-binding-issue
                                 onClick={() => this.start(card)}
                             />
                         )}
