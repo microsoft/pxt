@@ -54,7 +54,6 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
 
     openTutorialStep(step: number) {
         let options = this.props.parent.state.tutorialOptions;
-        options.tutorialStep = step;
         pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
         this.props.parent.setTutorialStep(step);
     }
@@ -150,7 +149,6 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         this.setState({ visible: false });
         const nextStep = tutorialStep + 1;
 
-        options.tutorialStep = nextStep;
         pxt.tickEvent(`tutorial.hint.next`, { tutorial: tutorial, step: nextStep });
         this.props.parent.setTutorialStep(nextStep);
     }
