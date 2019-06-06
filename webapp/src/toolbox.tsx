@@ -404,7 +404,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         </div>;
 
         const hasAdvanced = this.hasAdvancedCategories();
-        const hasRecipes = !!theme.recipes;
+        const hasRecipes = !!theme.recipes && !inTutorial;
 
         let nonAdvancedCategories = this.getNonAdvancedCategories();
         const advancedCategories = hasAdvanced ? this.getAdvancedCategories() : [];

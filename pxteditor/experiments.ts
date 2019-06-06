@@ -120,7 +120,8 @@ namespace pxt.editor.experiments {
             {
                 id: "recipes",
                 name: lf("Tutorials in Context"),
-                description: lf("Micro-tutorials running within the context of a program.")
+                description: lf("Micro-tutorials running within your program."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5646"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
