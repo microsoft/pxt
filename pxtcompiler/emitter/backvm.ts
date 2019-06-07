@@ -104,6 +104,9 @@ ${info.id}_IfaceVT:
         Function = 0x20,
         Literal = 0x21, // aux field contains literal type (string, hex, image, ...)
         VTable = 0x22,
+
+        // meta sections
+        MetaName = 0x80,
     }
 
     /* tslint:disable:no-trailing-whitespace */
@@ -154,6 +157,13 @@ _start_${name}:
                 .word ${bin.nonPtrGlobals} ; non-ptr globals
 `
         )
+
+        section("_name", SectionType.MetaName, () => `
+                .string ${JSON.stringify(opts.name)}
+                .word 0, 0, 0, 0 ; padding, so ' (2)' etc can be appended
+                `
+        )
+
         bin.procs.forEach(p => {
             section(p.label(), SectionType.Function, () => irToVM(ctx, bin, p),
                 [p.label() + "_Lit"])
