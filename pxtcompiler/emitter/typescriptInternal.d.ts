@@ -2,9 +2,9 @@
 
 declare namespace ts {
     function getNodeId(node: Node): number;
-    interface Node extends TextRange {
-        symbol?: Symbol;                // Symbol declared by node (initialized by binding)
-    }
+    // interface Node extends TextRange {
+    //     symbol?: Symbol;                // Symbol declared by node (initialized by binding)
+    // }
 
 
     export interface DiagnosticWithLocation extends Diagnostic {

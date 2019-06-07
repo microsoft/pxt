@@ -79,7 +79,7 @@ namespace ts.pxtc {
                         // Getter/Setter
                         let decl = getDecl(trg)
                         if (decl && decl.kind == SK.GetAccessor) {
-                            decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
+                            decl = getDeclarationOfKind(getSym(decl), SK.SetAccessor)
                             mkCallInfo(trg, [expr], false, decl);
                         } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || (target && target.switches.slowFields))) {
                             mkCallInfo(trg, [expr]);
@@ -139,7 +139,7 @@ namespace ts.pxtc {
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                qName: decl ? getFullName(checker, getSym(decl)) : "?",
                 args: args,
                 isExpression: hasRet
             };

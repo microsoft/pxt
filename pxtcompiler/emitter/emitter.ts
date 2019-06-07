@@ -401,6 +401,14 @@ namespace ts.pxtc {
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
 
+    export function getSym(node: Node): Symbol | null {
+        if (!node)
+            return null
+        // TODO(dz):
+        return (node as any).symbol // .symbol is an internal field we should probably avoid
+            || checker.getSymbolAtLocation(node)
+    }
+
     export function getComments(node: Node) {
         if (node.kind == SK.VariableDeclaration)
             node = node.parent.parent // we need variable stmt
@@ -413,8 +421,9 @@ namespace ts.pxtc {
             return cmt;
         }
 
-        if (node.symbol && node.symbol.declarations.length > 1) {
-            return node.symbol.declarations.map(cmtCore).join("\n")
+        let sym = getSym(node)
+        if (sym && sym.declarations.length > 1) {
+            return sym.declarations.map(cmtCore).join("\n")
         } else {
             return cmtCore(node)
         }
@@ -481,6 +490,10 @@ namespace ts.pxtc {
             return false;
         }
         // check if we like the class?
+        if (!t.symbol) {
+            console.log("No symbol found on type:")
+            console.dir(t)
+        }
         return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol.flags & SymbolFlags.Class))
     }
 
@@ -626,7 +639,7 @@ namespace ts.pxtc {
 
     function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
         for (let cl in classes) {
-            if (classes[cl].decl.symbol == decl.symbol) {
+            if (getSym(classes[cl].decl) == getSym(decl)) {
                 userError(9261, lf("Interface with same name as a class not supported"))
             }
         }
@@ -1817,8 +1830,9 @@ ${lbl}: .short 0xffff
         }
 
         function markUsed(decl: Declaration) {
-            if (opts.computeUsedSymbols && decl && decl.symbol)
-                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+            let sym = getSym(decl)
+            if (opts.computeUsedSymbols && decl && sym)
+                res.usedSymbols[getFullName(checker, sym)] = null
 
             if (decl && !isUsed(decl)) {
                 usedDecls[nodeKey(decl)] = decl
@@ -2066,12 +2080,12 @@ ${lbl}: .short 0xffff
                 let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
-                        return getFullName(checker, d.symbol)
+                        return getFullName(checker, getSym(d))
                     else if (e && e.kind == SK.StringLiteral)
                         return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
-                let fn = getFullName(checker, decl.symbol)
+                let fn = getFullName(checker, getSym(decl))
                 let lst = res.usedArguments[fn]
                 if (!lst) {
                     lst = res.usedArguments[fn] = []
@@ -2158,7 +2172,7 @@ ${lbl}: .short 0xffff
                             for (let d of sym.declarations || [sym.valueDeclaration]) {
                                 if (d.kind == SK.ModuleDeclaration) {
                                     for (let stmt of ((d as ModuleDeclaration).body as ModuleBlock).statements) {
-                                        if (stmt.symbol.name == attrs.helper) {
+                                        if (getSym(stmt).name == attrs.helper) {
                                             helperStmt = stmt
                                         }
                                     }
@@ -2503,7 +2517,7 @@ ${lbl}: .short 0xffff
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                qName: decl ? getFullName(checker, getSym(decl)) : "?",
                 args: [node.template],
                 isExpression: true
             };
@@ -2592,7 +2606,7 @@ ${lbl}: .short 0xffff
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
-                        userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
+                        userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(getSym(l))))
                     let v = loc.loadCore()
                     v = ir.op(EK.Incr, [v])
                     proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
@@ -2949,7 +2963,7 @@ ${lbl}: .short 0xffff
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 let decl = getDecl(trg)
                 if (decl && decl.kind == SK.GetAccessor) {
-                    decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
+                    decl = getDeclarationOfKind(getSym(decl), SK.SetAccessor)
                     if (!decl) {
                         unhandled(trg, lf("setter not available"), 9253)
                     }
@@ -3029,7 +3043,7 @@ ${lbl}: .short 0xffff
                 if (stmt.kind == SK.VariableStatement) {
                     let v = stmt as VariableStatement
                     for (let d of v.declarationList.declarations) {
-                        if (d.symbol.name == name) {
+                        if (getSym(d).name == name) {
                             return emitAsInt(d.initializer)
                         }
                     }
@@ -3044,7 +3058,7 @@ ${lbl}: .short 0xffff
             if (!dalEnm)
                 return null
             let decl = (dalEnm.valueDeclaration as EnumDeclaration).members
-                .filter(s => s.symbol.name == name)[0]
+                .filter(s => getSym(s).name == name)[0]
             if (decl)
                 return checker.getConstantValue(decl)
             return null
@@ -3362,6 +3376,11 @@ ${lbl}: .short 0xffff
         function emitBinaryExpression(node: BinaryExpression): ir.Expr {
             if (node.operatorToken.kind == SK.EqualsToken) {
                 return handleAssignment(node);
+            }
+
+            if (!getSym(node.left) || !getSym(node.right)) {
+                console.log("no  symbol on .left or .right")
+                console.dir(node)
             }
 
             let lt = typeOf(node.left)
@@ -3839,7 +3858,7 @@ ${lbl}: .short 0xffff
                     let jrname = attrs.jres
                     if (jrname) {
                         if (jrname == "true") {
-                            jrname = getFullName(checker, node.symbol)
+                            jrname = getFullName(checker, getSym(node))
                         }
                         let jr = U.lookup(opts.jres || {}, jrname)
                         if (!jr)
@@ -3934,6 +3953,9 @@ ${lbl}: .short 0xffff
                 lastSecondaryError = null
                 // if (!e.ksEmitterUserError)
                 let code = e.ksErrorCode || 9200
+                // TODO(dz): don't swallow errors in the compiler
+                if (code == 9200)
+                    throw e
                 error(node, code, e.message)
                 pxt.debug(e.stack)
                 return null
