@@ -2651,7 +2651,7 @@ namespace pxt.blocks {
     }
 
     function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
+        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
     }
 
     export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
