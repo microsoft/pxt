@@ -2812,6 +2812,7 @@ export class ProjectView
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
+                tutorialHintCounter: 0,
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code
@@ -2894,7 +2895,7 @@ export class ProjectView
     pokeUserActivity() {
         if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
             // animate tutorial hint after some time of user inactivity
-            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId);
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialHintCounter);
         }
     }
 
@@ -2903,7 +2904,14 @@ export class ProjectView
     }
 
     private tutorialCardHintCallback() {
-        this.setState({pokeUserComponent: ProjectView.tutorialCardId});
+        let tutorialOptions = this.state.tutorialOptions;
+        tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
+
+        this.setState({
+            pokeUserComponent: ProjectView.tutorialCardId,
+            tutorialOptions: tutorialOptions
+        });
+
         setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
     }
 
