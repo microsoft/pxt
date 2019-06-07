@@ -445,19 +445,21 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             tutorialHintTooltip += lf("Click to show a hint!");
         }
 
+        let hintOnClick = hasHint && this.state.showHintTooltip ? this.hintOnClick : null;
+
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${this.state.showHintTooltip ? 'showTooltip' : ''}`} >
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div className="avatar-container">
-                        <div role="button" className={`avatar-image ${hasHint && this.props.pokeUser ? 'shake' : ''}`} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
-                        {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={this.hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
-                        {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={this.hintOnClick} />}
+                        <div role="button" className={`avatar-image ${hasHint && this.props.pokeUser ? 'shake' : ''}`} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}></div>
+                        {hasHint && <sui.Button className="ui circular small label blue hintbutton hidelightbox" icon="lightbulb outline" tabIndex={-1} onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter} />}
+                        {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={hasHint && this.state.showHintTooltip ? this.hintOnClick : null} onKeyDown={sui.fireClickOnEnter}>
+                        onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
