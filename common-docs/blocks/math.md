@@ -129,7 +129,7 @@ let nextdown = Math.floor(4.97)
 
 ## Truncate
 
-The fractional part of a number is removed by _truncating_ it. If a number has the value `54.234` its truncated value is `54`. Truncation works the same way for a negative number. The truncacted value of `-34.913` is `-34`.
+The fractional part of a number is removed by _truncating_ it. If a number has the value `54.234` its truncated value is `54`. Truncation works the same way for a negative number. The truncated value of `-34.913` is `-34`.
 
 ```block
 let nonfraction = Math.trunc(87.23455)
