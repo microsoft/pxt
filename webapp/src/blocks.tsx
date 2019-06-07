@@ -1118,7 +1118,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 const wrapper = document.body.appendChild(document.createElement('div'));
                 this.snippetDialog = ReactDOM.render(React.createElement(CreateSnippetBuilder), wrapper) as CreateSnippetBuilder;
             }
-            this.snippetDialog.show();
+            this.snippetDialog.show(this.parent);
         });
     }
 

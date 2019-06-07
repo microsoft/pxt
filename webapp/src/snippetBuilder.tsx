@@ -3,13 +3,45 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as md from "./marked";
 import * as codecard from "./codecard"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface CreateSnippetBuilderState {
     visible?: boolean;
+    markdownContent?: string;
+    projectView?: pxt.editor.IProjectView;
 }
+
+
+const exampleBlock: string = `\`\`\`blocks
+enum SpriteKind {
+    Player,
+    Projectile,
+    Food,
+    Enemy
+}
+
+let mySprite = sprites.create(img\`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+\`, SpriteKind.Player)
+\`\`\``;
 
 export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateSnippetBuilderState> {
     static cachedFunctionTypes: pxt.FunctionEditorTypeInfo[] = null;
@@ -18,8 +50,8 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         super(props);
         this.state = {
             visible: false,
+            markdownContent: exampleBlock,
         };
-
         this.hide = this.hide.bind(this);
         this.cancel = this.cancel.bind(this);
         this.confirm = this.confirm.bind(this);
@@ -31,10 +63,11 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         });
     }
 
-    show() {
+    show(projectView: pxt.editor.IProjectView) {
         pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: false });
         this.setState({
-            visible: true
+            visible: true,
+            projectView,
         });
     }
 
@@ -48,7 +81,7 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
     }
 
     renderCore() {
-        const { visible } = this.state;
+        const { visible, markdownContent, projectView } = this.state;
         const actions: sui.ModalButton[] = [
             {
                 label: lf("Cancel"),
@@ -72,6 +105,7 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
                 <div>
                     <span className="ui text mobile only paramlabel">{lf("Add a parameter")}</span>
                     <div className="horizontal list">
+                        {projectView && <md.MarkedContent markdown={markdownContent} parent={projectView} />}
                     </div>
                     <div id="functionEditorWorkspace"></div>
                 </div>
