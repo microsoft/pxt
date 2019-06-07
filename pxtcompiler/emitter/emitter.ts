@@ -402,9 +402,12 @@ namespace ts.pxtc {
     let inCatchErrors = 0
 
     export function getSym(node: Node): Symbol | null {
+        if (!checker)
+            console.error("no checker!");
         if (!node)
             return null
-        // TODO(dz):
+        // TODO(dz): remove .symbol usage
+        // TODO(dz): is "checker" going to be defined always?
         return (node as any).symbol // .symbol is an internal field we should probably avoid
             || checker.getSymbolAtLocation(node)
     }
@@ -494,7 +497,9 @@ namespace ts.pxtc {
             console.log("No symbol found on type:")
             console.dir(t)
         }
-        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol.flags & SymbolFlags.Class))
+        let isClass = (t.objectFlags & ObjectFlags.Class)
+            || (t.symbol && t.symbol.flags & SymbolFlags.Class)
+        return !!isClass
     }
 
     function isObjectLiteral(t: Type) {
@@ -558,6 +563,8 @@ namespace ts.pxtc {
                 return t
             }
 
+            console.error(`unknown type: `)
+            console.dir(t)
             userError(9201, lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
         }
         return t
