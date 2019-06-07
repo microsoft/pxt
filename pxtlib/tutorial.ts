@@ -54,6 +54,7 @@ namespace pxt.tutorial {
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
         const filterblocksRegex = /```(filterblocks)\s*\n([\s\S]*?)\n```/gmi;
+        const hintTextRegex = /(^[\s\S]*?\S$)\s+((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
 
         // Download tutorial markdown
         let steps = tutorialmd.split(/^##[^#].*$/gmi);
@@ -87,12 +88,17 @@ namespace pxt.tutorial {
             stepInfo[i].headerContentMd = contentLines[0];
             stepInfo[i].contentMd = stepContent;
 
-            // everything after the first line currently treated as "Hint"
-            let blockSolution = contentLines.slice(1).join('\n');
-            if (blockSolution) {
-                // remove ```filterblocks ``` code, as it isn't displayed in the hint
-                blockSolution = blockSolution.replace(filterblocksRegex, '');
-                stepInfo[i].blockSolution = blockSolution;
+            // everything after the first ``` section OR the first image is currently treated as a "hint"
+            let hintText = stepContent.match(hintTextRegex);
+            let blockSolution;
+            if (hintText && hintText.length > 2) {
+                stepInfo[i].headerContentMd = hintText[1];
+                blockSolution = hintText[2];
+                if (blockSolution) {
+                    // remove ```filterblocks ``` code, as it isn't displayed in the hint
+                    blockSolution = blockSolution.replace(filterblocksRegex, '');
+                    stepInfo[i].blockSolution = blockSolution;
+                }
             }
 
             stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
