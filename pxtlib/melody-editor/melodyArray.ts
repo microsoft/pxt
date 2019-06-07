@@ -55,42 +55,75 @@ namespace pxtmelody {
         }
 
 
-        // function to turn into string?
-    }
-
-    export function stringRepresentation(melodyArray: MelodyArray): string {
-        let stringMelody: string = "";
-        let melody = melodyArray.getArray();
-        let queues: string[][];
-        queues = new Array(melodyArray.getWidth());
-        let numMelodies = 0;
-        // create queues of notes
-        for (var i = 0; i < melodyArray.getHeight(); i++) {
-            let noteCount = 0;
-            for (var j = 0; j < melodyArray.getWidth(); j++) {
-                if (melody[j][i]) {
-                    queues[i].push(noteConversion(j));
-                    noteCount++;
+        // function to turn into string
+        public getStringRepresentation(): string {
+            let stringMelody: string = "";
+            let queues: string[][];
+            queues = new Array(this.width);
+            let numMelodies = 0;
+            // create queues of notes
+            for (var i = 0; i < this.height; i++) {
+                let noteCount = 0;
+                queues[i] = [];
+                for (var j = 0; j < this.width; j++) {
+                    if (this.melody[j][i]) {
+                        queues[i].push(noteConversion(j));
+                        noteCount++;
+                    }
+                }
+                if (noteCount > numMelodies) {
+                    numMelodies = noteCount;
                 }
             }
-            if (noteCount > numMelodies) {
-                numMelodies = noteCount;
-            }
-        }
-        // create strings of melodies
-        for (var j = 0; j < numMelodies; j++) {
-            for (var i = 0; i < melodyArray.getWidth(); i++) {
-                if (queues[i] && queues[i].length > 1) { // if there is an element
-                    stringMelody += " " + queues[i].pop();
-                } else {
-                    stringMelody += " R"; // add rest if there is no selection for the note
+            // create strings of melodies
+            for (var j = 0; j < numMelodies; j++) {
+                for (var i = 0; i < this.width; i++) {
+                    if (queues[i] && queues[i].length > 0) { // if there is an element
+                        stringMelody += queues[i].shift() + " ";
+                    } else {
+                        stringMelody += "R "; // add rest if there is no selection for the note
+                    }
                 }
+                stringMelody += "-"; // this will be used to split each melody
             }
-            stringMelody += "\n";
+    
+            return stringMelody;
         }
-
-        return stringMelody;
     }
+
+    // export function stringRepresentation(melodyArray: MelodyArray): string {
+    //     let stringMelody: string = "";
+    //     let melody = melodyArray.getArray();
+    //     let queues: string[][];
+    //     queues = new Array(melodyArray.getWidth());
+    //     let numMelodies = 0;
+    //     // create queues of notes
+    //     for (var i = 0; i < melodyArray.getHeight(); i++) {
+    //         let noteCount = 0;
+    //         for (var j = 0; j < melodyArray.getWidth(); j++) {
+    //             if (melody[j][i]) {
+    //                 queues[i].push(noteConversion(j));
+    //                 noteCount++;
+    //             }
+    //         }
+    //         if (noteCount > numMelodies) {
+    //             numMelodies = noteCount;
+    //         }
+    //     }
+    //     // create strings of melodies
+    //     for (var j = 0; j < numMelodies; j++) {
+    //         for (var i = 0; i < melodyArray.getWidth(); i++) {
+    //             if (queues[i] && queues[i].length > 1) { // if there is an element
+    //                 stringMelody += " " + queues[i].pop();
+    //             } else {
+    //                 stringMelody += " R"; // add rest if there is no selection for the note
+    //             }
+    //         }
+    //         stringMelody += "\n";
+    //     }
+
+    //     return stringMelody;
+    // }
 
     export function noteConversion(rowNum: number): string {
         let note: string = "";
@@ -105,5 +138,20 @@ namespace pxtmelody {
             case 7: note = "C5"; break;
         }
         return note;
+    }
+
+    export function getRowNum(note: string): number {
+        let rowNum: number = 0;
+        switch(note) {
+            case "C": rowNum = 0; break;
+            case "D": rowNum = 1; break;
+            case "E": rowNum = 2; break;
+            case "F": rowNum = 3; break;
+            case "G": rowNum = 4; break;
+            case "A": rowNum = 5; break;
+            case "B": rowNum = 6; break;
+            case "C5": rowNum = 7; break;
+        }
+        return rowNum;
     }
 }
