@@ -4,7 +4,6 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as md from "./marked";
-import * as codecard from "./codecard"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -12,8 +11,12 @@ export interface CreateSnippetBuilderState {
     visible?: boolean;
     markdownContent?: string;
     projectView?: pxt.editor.IProjectView;
+    answers?: any;
 }
 
+const defaults: any = {
+    $nameToken: 'mySprite',
+};
 
 const exampleBlock: string = `\`\`\`blocks
 enum SpriteKind {
@@ -23,7 +26,7 @@ enum SpriteKind {
     Enemy
 }
 
-let mySprite = sprites.create(img\`
+let $nameToken = sprites.create(img\`
 . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . 
@@ -51,10 +54,28 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         this.state = {
             visible: false,
             markdownContent: exampleBlock,
+            answers: {},
         };
         this.hide = this.hide.bind(this);
         this.cancel = this.cancel.bind(this);
         this.confirm = this.confirm.bind(this);
+    }
+
+    replaceTokens(markdownContent: string) {
+        const { answers } = this.state;
+        let output = markdownContent;
+        const tokens = Object.keys(defaults);
+
+        for (let token of tokens) {
+            if (answers[token]) {
+                output = output.replace(token, answers[token]);
+            }
+            else {
+                output = output.replace(token, defaults[token]);
+            }
+        }
+
+        return output;
     }
 
     hide() {
@@ -72,7 +93,7 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
     }
 
     cancel() {
-        pxt.tickEvent("createfunction.cancel", undefined, { interactiveConsent: true });
+        pxt.tickEvent("snippetBuilder.cancel", undefined, { interactiveConsent: true });
         this.hide();
     }
 
@@ -80,8 +101,16 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         this.hide();
     }
 
+    textInputOnChange = (answerKey: string) => (v: string) => {
+        const answers = this.state.answers;
+        answers[answerKey] = v;
+
+        this.setState({ answers })
+        console.log(answers);
+    }
+
     renderCore() {
-        const { visible, markdownContent, projectView } = this.state;
+        const { visible, markdownContent, projectView, answers } = this.state;
         const actions: sui.ModalButton[] = [
             {
                 label: lf("Cancel"),
@@ -107,14 +136,17 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
                 <div>
                     <div className="list">
                         <div>
-                            <div>What is the name of your sprite?</div>
                             <div>
-                                <sui.Input />
+                                <sui.Input
+                                    onChange={this.textInputOnChange('$nameToken')}
+                                    label={'What is the name of your sprite?'}
+                                    value={answers['$nameToken'] || ''}
+                                />
                             </div>
                         </div>
                     </div>
                     <div id="functionEditorWorkspace">
-                        {projectView && <md.MarkedContent markdown={markdownContent} parent={projectView} />}
+                        {projectView && <md.MarkedContent markdown={this.replaceTokens(markdownContent)} parent={projectView} />}
                     </div>
                 </div>
             </sui.Modal>
