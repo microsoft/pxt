@@ -97,17 +97,25 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
             }
         ];
 
+        // TODO: Workspace component
+        // TODO: Make markdown editable by input
         return (
             <sui.Modal isOpen={visible} className="snippetBuilder" size="large"
                 closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={lf("Sprite Wizard")}
             >
                 <div>
-                    <span className="ui text mobile only paramlabel">{lf("Add a parameter")}</span>
-                    <div className="horizontal list">
+                    <div className="list">
+                        <div>
+                            <div>What is the name of your sprite?</div>
+                            <div>
+                                <sui.Input />
+                            </div>
+                        </div>
+                    </div>
+                    <div id="functionEditorWorkspace">
                         {projectView && <md.MarkedContent markdown={markdownContent} parent={projectView} />}
                     </div>
-                    <div id="functionEditorWorkspace"></div>
                 </div>
             </sui.Modal>
         )
