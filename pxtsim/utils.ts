@@ -4,8 +4,9 @@ namespace pxsim.util {
         if (!String.prototype.startsWith) {
             Object.defineProperty(String.prototype, 'startsWith', {
                 value: function(search: string, pos: number) {
+                    if (search === undefined || search == null) return false;
                     pos = !pos || pos < 0 ? 0 : +pos;
-                    return this.substring(pos, pos + search.length) === search;
+                    return (<string>this).substring(pos, pos + search.length) === search;
                 }
             });
         }
