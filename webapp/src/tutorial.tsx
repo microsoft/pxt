@@ -213,7 +213,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         this.state = {
             showSeeMore: false,
-            showHintTooltip: !options.tutorialStepInfo[this.prevStep].unplugged
+            showHintTooltip: !options.tutorialStepInfo[this.prevStep].fullscreen
         }
 
         this.toggleHint = this.toggleHint.bind(this);
@@ -331,12 +331,15 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             if (!!options.tutorialStepInfo[step].unplugged && !prevState.showHintTooltip) {
                 this.toggleHint(true);
             }
+
+            if (this.state.showHintTooltip) {
+                this.props.parent.pokeUserActivity();
+            }
         }
     }
 
     componentDidMount() {
         this.setShowSeeMore();
-        this.props.parent.pokeUserActivity();
     }
 
     componentWillUnmount() {
@@ -361,7 +364,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return tutorialStepInfo[tutorialStep].hasHint;
+        return tutorialStepInfo[tutorialStep].hasHint || tutorialStepInfo[tutorialStep].unplugged;
     }
 
     private hintOnClick(evt?: any) {

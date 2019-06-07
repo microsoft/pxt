@@ -915,8 +915,8 @@ export class ProjectView
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
-            const unplugged = tutorialOptions.tutorialStepInfo[step].unplugged;
-            if (unplugged) this.showTutorialHint(); // "@unplugged" represents modal
+            const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
+            if (fullscreen) this.showTutorialHint();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
