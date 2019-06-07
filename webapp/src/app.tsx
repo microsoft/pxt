@@ -916,7 +916,7 @@ export class ProjectView
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
-            if (fullscreen) this.showTutorialHint(true);
+            if (fullscreen) this.showTutorialHint();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -950,7 +950,7 @@ export class ProjectView
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
                         this.setState({ tutorialOptions: tutorialOptions });
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
-                        if (fullscreen) this.showTutorialHint(true);
+                        if (fullscreen) this.showTutorialHint();
                         //else {
                         //    this.showLightbox();
                         //}
@@ -1155,7 +1155,7 @@ export class ProjectView
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
-                if (fullscreen) this.showTutorialHint(true);
+                if (fullscreen) this.showTutorialHint();
                 //else this.showLightbox();
             })
             .catch(e => {
@@ -2884,7 +2884,7 @@ export class ProjectView
 
     showTutorialHint(showFullText?: boolean) {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        tc.toggleHint(showFullText);
+        if (tc) tc.toggleHint(showFullText);
     }
 
     ///////////////////////////////////////////////////////////

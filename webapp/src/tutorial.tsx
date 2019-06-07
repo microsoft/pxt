@@ -168,6 +168,8 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const fullText = step.contentMd;
 
         if (!this.state.renderModal) {
+            if (!tutorialHint) return <div />;
+
             return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
                 <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
             </div>
@@ -326,15 +328,18 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             this.setShowSeeMore();
             this.prevStep = step;
 
-            if (!!options.tutorialStepInfo[step].fullscreen && !prevState.showHintTooltip) {
+            if (!!options.tutorialStepInfo[step].unplugged && !prevState.showHintTooltip) {
                 this.toggleHint(true);
+            }
+
+            if (this.state.showHintTooltip) {
+                this.props.parent.pokeUserActivity();
             }
         }
     }
 
     componentDidMount() {
         this.setShowSeeMore();
-        this.props.parent.pokeUserActivity();
     }
 
     componentWillUnmount() {
@@ -359,7 +364,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return tutorialStepInfo[tutorialStep].hasHint;
+        return tutorialStepInfo[tutorialStep].hasHint || tutorialStepInfo[tutorialStep].unplugged;
     }
 
     private hintOnClick(evt?: any) {
@@ -372,7 +377,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (unplugged) {
             this.nextTutorialStep();
         } else {
-            this.toggleHint(true);
+            this.toggleHint();
         }
     }
 
@@ -394,28 +399,30 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (!this.hasHint()) return;
         this.closeLightbox();
         let th = this.refs["tutorialhint"] as TutorialHint;
-        if (th && th.state && th.state.visible) {
-            if (th.elementRef) {
-                document.removeEventListener('click', this.hintOnClick);
-                th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+        if (th) {
+            if (th.state && th.state.visible) {
+                if (th.elementRef) {
+                    document.removeEventListener('click', this.hintOnClick);
+                    th.elementRef.removeEventListener('click', this.expandedHintOnClick);
+                }
+
+                this.setState({showHintTooltip : true});
+                this.props.parent.pokeUserActivity();
+            } else {
+                if (th.elementRef) {
+                    document.addEventListener('click', this.hintOnClick);
+                    th.elementRef.addEventListener('click', this.expandedHintOnClick);
+                }
+
+                this.setState({showHintTooltip : false});
+                this.props.parent.stopPokeUserActivity();
+
+                const options = this.props.parent.state.tutorialOptions;
+                pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
             }
 
-            this.setState({showHintTooltip : true});
-            this.props.parent.pokeUserActivity();
-        } else {
-            if (th.elementRef) {
-                document.addEventListener('click', this.hintOnClick);
-                th.elementRef.addEventListener('click', this.expandedHintOnClick);
-            }
-
-            this.setState({showHintTooltip : false});
-            this.props.parent.stopPokeUserActivity();
-
-            const options = this.props.parent.state.tutorialOptions;
-            pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+            th.toggleHint(showFullText);
         }
-
-        th.toggleHint(showFullText);
     }
 
     renderCore() {
