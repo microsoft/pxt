@@ -2743,6 +2743,7 @@ export class ProjectView
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
+        this.hintManager.clearHintCookie();
         const scriptId = pxt.Cloud.parseScriptId(tutorialId);
         const ghid = pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;

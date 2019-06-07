@@ -18,9 +18,7 @@ export function setInitialLang(lang: string) {
 }
 
 export function getCookieLang() {
-    const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
-    const cookieValue = cookiePropRegex.exec(document.cookie);
-    return cookieValue && cookieValue[1] || null;
+    return pxt.Util.getCookie(pxt.Util.pxtLangCookieId);
 }
 
 export function setCookieLang(langId: string) {
@@ -28,12 +26,7 @@ export function setCookieLang(langId: string) {
         return;
     }
 
-    if (langId !== getCookieLang()) {
-        pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
-        const expiration = new Date();
-        expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
-        document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
-    }
+    pxt.Util.setCookie(pxt.Util.pxtLangCookieId, langId, pxt.Util.langCookieExpirationDays);
 }
 
 export class LanguagePicker extends data.Component<ISettingsProps, LanguagesState> {

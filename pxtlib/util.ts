@@ -886,6 +886,25 @@ namespace ts.pxtc.Util {
     export const pxtLangCookieId = "PXT_LANG";
     export const langCookieExpirationDays = 30;
 
+    export const pxtHintCookieId = "PXT_HINT";
+    export const hintCookieExpirationDays = 30;
+
+    export function getCookie(id: string) {
+        const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(id)}=(.*?)(?:;|$)`)
+        const cookieValue = cookiePropRegex.exec(document.cookie);
+        return cookieValue && cookieValue[1] || null;
+    }
+
+    export function setCookie(id: string, value: string, days: number) {
+        if (value !== getCookie(id)) {
+            pxt.tickEvent(`menu.lang.setcookielang.${value}`);
+            const expiration = new Date();
+            expiration.setTime(expiration.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${id}=${value}; expires=${expiration.toUTCString()}`;
+        }
+    }
+
+
     export interface Language {
         englishName: string;
         localizedName: string;

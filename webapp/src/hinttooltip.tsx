@@ -37,25 +37,42 @@ export class HintTooltip extends data.Component<HintTooltipProps, HintTooltipSta
 
 export class HintManager {
     private timer: number;
-    private defaultDuration: number = 30000;
+    private defaultDuration: number = 15000;
+    private defaultHintCount: number = 3;
     private hints: { [key: string]: any } = {};
 
     public addHint(id: string, callback: any, duration?: number) {
         this.hints[id] = pxt.Util.debounce(() => {
             callback();
             this.stopPokeUserActivity();
+            this.setHintCookie(this.getHintCookie() + 1);
         }, duration || this.defaultDuration);
     }
 
     // starts a timer, overwriting current timer
     public pokeUserActivity(id: string) {
-        this.stopPokeUserActivity();
-        this.timer = this.hints[id]();
+        if (this.getHintCookie() < this.defaultHintCount) {
+            this.stopPokeUserActivity();
+            this.timer = this.hints[id]();
+        }
     }
 
     // stops current user hint timer
     public stopPokeUserActivity() {
         clearTimeout(this.timer);
         this.timer = null;
+    }
+
+    public clearHintCookie() {
+        this.setHintCookie(0);
+    }
+
+    private getHintCookie() {
+        let cookieVal = pxt.Util.getCookie(pxt.Util.pxtHintCookieId);
+        return cookieVal && parseInt(cookieVal) || 0;
+    }
+
+    private setHintCookie(count: number) {
+        pxt.Util.setCookie(pxt.Util.pxtHintCookieId, count.toString(), pxt.Util.hintCookieExpirationDays);
     }
 }
