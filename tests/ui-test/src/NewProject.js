@@ -1,26 +1,60 @@
 const { By } = require('selenium-webdriver');
 
-function newProject() {
-    it('Get the code source', async () => {
-        //click New project on home page
-        await driver.findElement(By.className('ui card link buttoncard newprojectcard')).click();
-        await driver.sleep(8000);
 
-        //Click home close button
-        await driver.findElement(By.className('ui item link  icon openproject ')).click();
-        await driver.sleep(3000);
-        await driver.findElement(By.className('icon close remove circle ')).click();
-        await driver.sleep(3000);
+class DomObject {
 
-        //New project name and save it
-        await driver.findElement(By.className('ui item link  icon openproject ')).click();
-        await driver.sleep(3000);
-        await driver.findElement(By.id('projectNameInput')).sendKeys('fortest');
-        await driver.sleep(3000);
+    async actionForAll(actionName, ...findBys){
+        for (let findBy of findBys) {
+            if (findBy) {
+                console.debug(`Try to click the element by criteria: ${findBy}`);
 
-        await driver.findElement(By.className('ui button icon icon-and-text approve icon right labeled approve positive  ')).click();
-        await driver.sleep(3000);
-    })
-  
+                if (typeof findBy === 'string') {
+                    findBy = await By.css(findBy);
+                }
+        
+                let element = await driver.findElement(findBy);
+                await element[actionName]();
+                await driver.sleep(8000);            
+            }
+        }
+        return true;
+    }
+    async sendKeys(...findBys){
+        for (let findBy of findBys) {
+            if (findBy) {
+                console.debug(`Try to click the element by criteria: ${findBy}`);
+
+                if (typeof findBy === 'string') {
+                    findBy = By.css(findBy);
+                }
+        
+                let element = await driver.findElement(findBy).click();
+                await driver.sleep(8000);            
+            }
+        }
+        return true;
+    }
+
+
+    async click(...findBys) {
+        let x = await this.actionForAll("click", findBys);
+        return x;
+    }
 }
-exports.newProject = newProject;
+class NewProjectPage extends DomObject {
+
+    testGetCodeSource() {
+        it('Get the code source', async () => {
+            await this.click('.newprojectcard',
+                By.className('ui item link  icon openproject '),
+                By.className('icon close remove circle ')
+            );
+        });
+    }
+
+    test() {
+        this.testGetCodeSource();
+    }
+}
+
+export let newProjectPage = new NewProjectPage();
