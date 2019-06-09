@@ -462,6 +462,99 @@ namespace pxt {
             return dependencies;
         }
 
+        loadSync() {
+            if (this.isLoaded)
+                return;
+            if (this.level == 0)
+                pxt.setAppTargetVariant(null)
+            this.isLoaded = true;
+            const str = this.readFile(pxt.CONFIG_NAME) || " ";
+            this.parseConfig(str)
+            this.handleDynamicBoardDefinition();
+
+            const loadDeps = (from: Package, isCpp = false) =>
+                U.mapMap(from.dependencies(isCpp), (id, ver) => {
+                    const mod = from.loadDep(isCpp, id, ver)
+                    if (mod)
+                        mod.loadSync()
+                })
+
+            loadDeps(this)
+            this.patchAppTarget();
+
+            // TODO handle adding of missing packages
+
+            // load cpp-only deps
+            if (this.level == 0)
+                U.mapMap(this.parent.deps, (name, pkg) => {
+                    loadDeps(pkg, true)
+                })
+        }
+
+        private handleDynamicBoardDefinition() {
+            if (!appTarget.simulator || !appTarget.simulator.dynamicBoardDefinition)
+                return
+
+            if (this.level == 0)
+                this.patchCorePackage();
+
+            if (this.config.compileServiceVariant)
+                pxt.setAppTargetVariant(this.config.compileServiceVariant)
+
+            if (this.config.files.indexOf("board.json") < 0) return
+            const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
+            def.id = this.config.name;
+            appTarget.appTheme.boardName = def.boardName || lf("board");
+            appTarget.appTheme.driveDisplayName = def.driveDisplayName || lf("DRIVE");
+            let expandPkg = (v: string) => {
+                let m = /^pkg:\/\/(.*)/.exec(v)
+                if (m) {
+                    let fn = m[1]
+                    let content = this.readFile(fn)
+                    return U.toDataUri(content, U.getMime(fn))
+                } else {
+                    return v
+                }
+            }
+            let bd = appTarget.simulator.boardDefinition
+            if (typeof bd.visual == "object") {
+                let vis = bd.visual as pxsim.BoardImageDefinition
+                vis.image = expandPkg(vis.image)
+                vis.outlineImage = expandPkg(vis.outlineImage)
+            }
+        }
+
+        private loadDep(isCpp: boolean, id: string, ver: string): Package {
+            if (id == "hw" && pxt.hwVariant)
+                id = "hw---" + pxt.hwVariant
+            let mod = this.resolveDep(id)
+            ver = ver || "*"
+            if (mod) {
+                if (mod.invalid()) {
+                    // failed to resolve dependency, ignore
+                    mod.level = Math.min(mod.level, this.level + 1)
+                    mod.addedBy.push(this)
+                    return null
+                }
+
+                if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
+                    U.userError("Version spec mismatch on " + id)
+                if (!isCpp) {
+                    mod.level = Math.min(mod.level, this.level + 1)
+                    mod.addedBy.push(this)
+                }
+                return null
+            } else {
+                let mod = new Package(id, ver, this.parent, this)
+                if (isCpp)
+                    mod.cppOnly = true
+                this.parent.deps[id] = mod
+                // we can have "core---nrf52" to be used instead of "core" in other packages
+                this.parent.deps[id.replace(/---.*/, "")] = mod
+                return mod
+            }
+        }
+
         loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
@@ -482,79 +575,22 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
-            if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
-                if (this.level == 0)
-                    initPromise = initPromise.then(() => this.patchCorePackage());
-                initPromise = initPromise.then(() => {
-                    if (this.config.compileServiceVariant)
-                        pxt.setAppTargetVariant(this.config.compileServiceVariant)
-                    if (this.config.files.indexOf("board.json") < 0) return
-                    const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
-                    def.id = this.config.name;
-                    appTarget.appTheme.boardName = def.boardName || lf("board");
-                    appTarget.appTheme.driveDisplayName = def.driveDisplayName || lf("DRIVE");
-                    let expandPkg = (v: string) => {
-                        let m = /^pkg:\/\/(.*)/.exec(v)
-                        if (m) {
-                            let fn = m[1]
-                            let content = this.readFile(fn)
-                            return U.toDataUri(content, U.getMime(fn))
-                        } else {
-                            return v
-                        }
-                    }
-                    let bd = appTarget.simulator.boardDefinition
-                    if (typeof bd.visual == "object") {
-                        let vis = bd.visual as pxsim.BoardImageDefinition
-                        vis.image = expandPkg(vis.image)
-                        vis.outlineImage = expandPkg(vis.outlineImage)
-                    }
-                })
-            }
-
+            initPromise = initPromise.then(() => this.handleDynamicBoardDefinition())
 
             const loadDepsRecursive = (deps: pxt.Map<string>, from: Package, isCpp = false) => {
                 return U.mapStringMapAsync(deps || from.dependencies(isCpp), (id, ver) => {
-                    if (id == "hw" && pxt.hwVariant)
-                        id = "hw---" + pxt.hwVariant
-                    let mod = from.resolveDep(id)
-                    ver = ver || "*"
-                    if (mod) {
-                        if (mod.invalid()) {
-                            // failed to resolve dependency, ignore
-                            mod.level = Math.min(mod.level, from.level + 1)
-                            mod.addedBy.push(from)
-                            return Promise.resolve();
-                        }
-
-                        if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
-                            U.userError("Version spec mismatch on " + id)
-                        if (!isCpp) {
-                            mod.level = Math.min(mod.level, from.level + 1)
-                            mod.addedBy.push(from)
-                        }
-                        return Promise.resolve()
-                    } else {
-                        let mod = new Package(id, ver, from.parent, from)
-                        if (isCpp)
-                            mod.cppOnly = true
-                        from.parent.deps[id] = mod
-                        // we can have "core---nrf52" to be used instead of "core" in other packages
-                        from.parent.deps[id.replace(/---.*/, "")] = mod
+                    const mod = from.loadDep(isCpp, id, ver)
+                    if (mod)
                         return mod.loadAsync(isInstall)
-                    }
+                    else
+                        return Promise.resolve()
                 })
             }
 
             return initPromise
                 .then(() => loadDepsRecursive(null, this))
                 .then(() => {
-                    // get paletter config loading deps, so the more higher level packages take precedence
-                    if (this.config.palette && appTarget.runtime)
-                        appTarget.runtime.palette = U.clone(this.config.palette)
-                    // get screen size loading deps, so the more higher level packages take precedence
-                    if (this.config.screenSize && appTarget.runtime)
-                        appTarget.runtime.screenSize = U.clone(this.config.screenSize);
+                    this.patchAppTarget();
 
                     if (this.level === 0) {
                         // Check for missing packages. We need to add them 1 by 1 in case they conflict with eachother.
@@ -563,7 +599,6 @@ namespace pxt {
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
-                        let addPackagesPromise = Promise.resolve();
                         Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
@@ -602,6 +637,15 @@ namespace pxt {
                 .then(() => {
                     pxt.debug(`  installed ${this.id}`)
                 });
+        }
+
+        private patchAppTarget() {
+            // get paletter config loading deps, so the more higher level packages take precedence
+            if (this.config.palette && appTarget.runtime)
+                appTarget.runtime.palette = U.clone(this.config.palette);
+            // get screen size loading deps, so the more higher level packages take precedence
+            if (this.config.screenSize && appTarget.runtime)
+                appTarget.runtime.screenSize = U.clone(this.config.screenSize);
         }
 
         getFiles() {
@@ -766,7 +810,7 @@ namespace pxt {
             return this._jres
         }
 
-        getCompileOptionsAsync(target: pxtc.CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
+        getCompileOptionsSync(target: pxtc.CompileTarget = this.getTargetOptions()) {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
@@ -785,18 +829,42 @@ namespace pxt {
                 }
             }
 
+            opts.target.preferredEditor = this.getPreferredEditor()
+            pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
+            let ext = cpp.getExtensionInfo(this)
+            if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
+            if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
+
+            opts.extinfo = ext
+
+            for (const pkg of this.sortedDeps()) {
+                for (const f of pkg.getFiles()) {
+                    if (/\.(ts|asm|py)$/.test(f)) {
+                        let sn = f
+                        if (pkg.level > 0)
+                            sn = "pxt_modules/" + pkg.id + "/" + f
+                        opts.sourceFiles.push(sn)
+                        opts.fileSystem[sn] = pkg.readFile(f)
+                    }
+                }
+            }
+            opts.jres = this.getJRes()
+            const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
+            opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
+
+            return opts
+        }
+
+        getCompileOptionsAsync(target: pxtc.CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
+            let opts: pxtc.CompileOptions
             return this.loadAsync()
                 .then(() => {
-                    opts.target.preferredEditor = this.getPreferredEditor()
-                    pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
-                    let ext = cpp.getExtensionInfo(this)
-                    if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
-                    if (ext.enumsDTS) generateFile("enums.d.ts", ext.enumsDTS)
+                    opts = this.getCompileOptionsSync(target)
                     return (target.isNative
-                        ? this.host().getHexInfoAsync(ext)
+                        ? this.host().getHexInfoAsync(opts.extinfo)
                         : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
-                            ext = U.flatClone(ext)
+                            let ext = U.flatClone(opts.extinfo)
                             if (!target.keepCppFiles) {
                                 delete ext.compileData;
                                 delete ext.generatedFiles;
@@ -841,23 +909,7 @@ namespace pxt {
                         return Promise.resolve()
                     }
                 })
-                .then(() => {
-                    for (const pkg of this.sortedDeps()) {
-                        for (const f of pkg.getFiles()) {
-                            if (/\.(ts|asm|py)$/.test(f)) {
-                                let sn = f
-                                if (pkg.level > 0)
-                                    sn = "pxt_modules/" + pkg.id + "/" + f
-                                opts.sourceFiles.push(sn)
-                                opts.fileSystem[sn] = pkg.readFile(f)
-                            }
-                        }
-                    }
-                    opts.jres = this.getJRes()
-                    const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
-                    opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
-                    return opts;
-                })
+                .then(() => opts)
         }
 
         filesToBePublishedAsync(allowPrivate = false) {

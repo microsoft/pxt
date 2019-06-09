@@ -80,4 +80,18 @@ namespace pxt {
                 return pxtc.compile(opts)
             })
     }
+
+    export function simpleCompileSync(files: pxt.Map<string>, isNative: boolean) {
+        const host = new SimpleHost(files)
+        const mainPkg = new MainPackage(host)
+        mainPkg.loadSync()
+        let target = mainPkg.getTargetOptions()
+        if (target.hasHex)
+            target.isNative = isNative
+        const opts = mainPkg.getCompileOptionsSync(target)
+        if (target.isNative)
+            opts.hexinfo = { hex: ["SKIP"] }
+        prepPythonOptions(opts)
+        return pxtc.compile(opts)
+    }
 }
