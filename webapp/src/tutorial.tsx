@@ -182,7 +182,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
             }]
 
             return <sui.Modal isOpen={visible} className="hintdialog"
-                closeIcon={true} header={tutorialName} buttons={actions}
+                closeIcon={false} header={tutorialName} buttons={actions}
                 onClose={this.next} dimmer={true} longer={true}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape>
                 <md.MarkedContent markdown={fullText} parent={this.props.parent} />
