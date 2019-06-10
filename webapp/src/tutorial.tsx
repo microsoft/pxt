@@ -420,10 +420,13 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     showHint(visible: boolean, showFullText?: boolean) {
-        if (!this.hasHint()) return;
+        if (!this.hasHint()) {
+            this.removeHintOnClick();
+            return;
+        }
         this.closeLightbox();
         const th = this.refs["tutorialhint"] as TutorialHint;
-        if (!th) return; // mount/unmount document on click handlers
+        if (!th) return;
 
         if (!visible) {
             if (th.elementRef) {
