@@ -1118,7 +1118,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 const wrapper = document.body.appendChild(document.createElement('div'));
                 this.snippetDialog = ReactDOM.render(React.createElement(CreateSnippetBuilder), wrapper) as CreateSnippetBuilder;
             }
-            this.snippetDialog.show(this.parent);
+            this.snippetDialog.show(this.parent, this.editor);
         });
     }
 
@@ -1134,6 +1134,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     weight: pxt.appTarget.runtime.onStartWeight || 10
                 },
                 blockXml: `<block type="pxt-on-start"></block>`
+            });
+        }
+        // Inject "Create a Sprite..." button
+        if (ns == "sprites") {
+            // TODO(dz):
+            extraBlocks.push({
+                name: `SPRITE_WIZARD_BUTTON`,
+                type: "button",
+                attributes: {
+                    blockId: `SPRITE_WIZARD_BUTTON`,
+                    label: "Create a Sprite...",
+                    weight: 101,
+                    group: "Create"
+                },
+                callback: () => {
+                    this.openSpriteWizard();
+                }
             });
         }
         // Inject pause until block
@@ -1161,22 +1178,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     });
                 }
             })
-        }
-
-        if (ns == "sprites") {
-            // TODO(dz):
-            extraBlocks.push({
-                name: `SPRITE_WIZARD_BUTTON`,
-                type: "button",
-                attributes: {
-                    blockId: `SPRITE_WIZARD_BUTTON`,
-                    label: "Create a Sprite...",
-                    weight: 0
-                },
-                callback: () => {
-                    this.openSpriteWizard();
-                }
-            });
         }
 
         return extraBlocks;

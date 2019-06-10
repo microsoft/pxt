@@ -50,10 +50,6 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     show(initialMutation: Element, cb: Blockly.Functions.ConfirmEditCallback, mainWorkspace: Blockly.Workspace) {
-        console.log('should show');
-        console.log('cb =>', cb);
-        console.log('initialMutation =>', initialMutation);
-        console.log('mainWorkspace =>', mainWorkspace);
         pxt.tickEvent('createfunction.show', null, { interactiveConsent: false });
         this.setState({
             visible: true,

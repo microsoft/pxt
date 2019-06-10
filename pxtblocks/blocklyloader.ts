@@ -1852,17 +1852,6 @@ namespace pxt.blocks {
 
             xmlList.push(button);
 
-            //Initialize sprite wizard button
-            let spriteWizardButton = goog.dom.createDom('button') as HTMLElement;
-            spriteWizardButton.setAttribute('text', lf("Make a Sprite..."));
-            spriteWizardButton.setAttribute('callbackkey', 'CREATE_SPRITE');
-
-            workspace.registerButtonCallback('CREATE_SPRITE', function (button) {
-                console.log('Clicked!')
-            })
-
-            xmlList.push(spriteWizardButton);
-
             let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
             xmlList = xmlList.concat(blockList);
             return xmlList;
