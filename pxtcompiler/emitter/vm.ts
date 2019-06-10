@@ -38,7 +38,7 @@ namespace ts.pxtc.vm {
 
                     U.assert(v >= 0)
 
-                    if (formal == "$lbl") {
+                    if (v != 11111 && formal == "$lbl") {
                         v -= ln.bin.location() + 2
                         v >>= 1
                     }
