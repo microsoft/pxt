@@ -423,29 +423,28 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (!this.hasHint()) return;
         this.closeLightbox();
         const th = this.refs["tutorialhint"] as TutorialHint;
-        if (th) { // mount/unmount document on click handlers
-            if (!visible) {
-                if (th.elementRef) {
-                    this.removeHintOnClick();
-                    th.elementRef.removeEventListener('click', this.expandedHintOnClick);
-                }
+        if (!th) return; // mount/unmount document on click handlers
 
-                this.setState({ showHintTooltip: true });
-                this.props.parent.pokeUserActivity();
-            } else {
-                if (th.elementRef) {
-                    document.addEventListener('click', this.hintOnClick);
-                    th.elementRef.addEventListener('click', this.expandedHintOnClick);
-                }
-
-                this.setState({ showHintTooltip: false });
-                this.props.parent.stopPokeUserActivity();
-
-                const options = this.props.parent.state.tutorialOptions;
-                pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+        if (!visible) {
+            if (th.elementRef) {
+                this.removeHintOnClick();
+                th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             }
-        }
 
+            this.setState({ showHintTooltip: true });
+            this.props.parent.pokeUserActivity();
+        } else {
+            if (th.elementRef) {
+                document.addEventListener('click', this.hintOnClick);
+                th.elementRef.addEventListener('click', this.expandedHintOnClick);
+            }
+
+            this.setState({ showHintTooltip: false });
+            this.props.parent.stopPokeUserActivity();
+
+            const options = this.props.parent.state.tutorialOptions;
+            pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+        }
         th.showHint(visible, showFullText);
     }
 
