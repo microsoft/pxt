@@ -5,19 +5,21 @@ namespace pxtblockly {
         isFieldCustom_ = true;
         protected params: U;
         mobile = false; // add some check for mobile
-        title: string;
+        title: string = "Name this tune";
         private melody: pxtmelody.MelodyArray;
         soundingKeys: number = 0;
         numRow: number = 8;
         numCol: number = 8;
         tempo: number = 120;
         initialized: boolean = false;
+        stringRep: string;
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
             this.params = params;
-            this.melody = new pxtmelody.MelodyArray();
-            this.title = "Name this tune";
+            if (typeof this.melody === "undefined") {
+                this.melody = new pxtmelody.MelodyArray();
+            }
         }
 
         init() {
@@ -49,16 +51,19 @@ namespace pxtblockly {
         }
 
         getText() {
-            return this.getTypeScriptValue();
+            this.stringRep = this.getTypeScriptValue();
+            return this.stringRep;
         }
 
         setText(newText: string) {
-            if (newText == null || newText == "") { // ignore empty strings
+            if (newText == null || newText == "" || newText == "\"\"" || (this.stringRep && this.stringRep === newText)) { // ignore empty strings
                 return;
             }
+            this.stringRep = newText;
             this.parseTypeScriptValue(newText);
+            //super.setText(this.getTitle());
             super.setText(newText);
-            // Blockly.Field.prototype.setText.call(this, newText);
+            //this.setTitle(this.getTitle());
         }
 
 
@@ -66,15 +71,30 @@ namespace pxtblockly {
         protected onInit() {
             this.initialized = true;
             this.render_();
-            Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
+            if (typeof this.melody === "undefined") {
+                this.melody = new pxtmelody.MelodyArray();
+            }
+            // Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
+            // this.setTitle(this.getTitle());
         }
 
         // This should render what appears on the block when it is not being edited. It should be an
         // SVG (not HTML)
         protected renderPreview(group: SVGGElement) { // may not need the parameter?
-            // let textElement_ = document.createElement("label");
-            // textElement_.innerText = this.name;
-            // group.appendChild(textElement_);
+            // var size = this.getSize();
+            // var fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
+            // /** @type {!Element} */
+            // this.textElement_ = Blockly.utils.createSvgElement('text',
+            //     {'class': this.className_,
+            //       'x': fieldX,
+            //       'y': size.height / 2 + Blockly.BlockSvg.FIELD_TOP_PADDING,
+            //       'dominant-baseline': 'middle',
+            //       //'dy': goog.userAgent.EDGE_OR_IE ? Blockly.Field.IE_TEXT_OFFSET : '0',
+            //       'text-anchor': 'middle'},
+            //     this.fieldGroup_);
+            // //this.textElement_ = document.createElement("label"); // if I make it a label
+            // this.textElement_.textContent = this.getTitle();
+            // group.appendChild(this.textElement_);
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
@@ -152,9 +172,6 @@ namespace pxtblockly {
                 for(var j = 0; j < this.numCol; j++) {
                     let el = "cell-" + i + "-" + j;
                     document.getElementById(el).addEventListener("click", () => this.onNoteSelect(el));
-                    // if(typeof this.melody != "undefined" && this.melody.getArray()[i][j]) {
-                    //     this.updateColor(el, i, j);
-                    // }
                 }
             }
 
@@ -217,7 +234,8 @@ namespace pxtblockly {
         setTitle(name: string): void {
             if (this.title != name) {
                 this.title = name;
-                Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
+                this.textElement_.textContent = this.getTitle();
+                // Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
             }
         }
 
@@ -292,6 +310,10 @@ namespace pxtblockly {
         }
 
         createGridDispaly() {
+            if (typeof this.melody === "undefined") {
+                this.melody = new pxtmelody.MelodyArray();
+                return;
+            }
             for (var i = 0; i < this.numRow; i++) {
                 for (var j = 0; j < this.numCol; j++) {
                     if (this.melody.getValue(i, j)) {

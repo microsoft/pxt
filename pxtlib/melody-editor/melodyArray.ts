@@ -51,7 +51,7 @@ namespace pxtmelody {
         }
 
         public updateMelody(row: number, col: number) {
-            this.melody[row][col] = this.melody[row][col]? false:true;
+            this.melody[row][col] = !this.melody[row][col];
         }
 
 
@@ -90,40 +90,6 @@ namespace pxtmelody {
             return stringMelody;
         }
     }
-
-    // export function stringRepresentation(melodyArray: MelodyArray): string {
-    //     let stringMelody: string = "";
-    //     let melody = melodyArray.getArray();
-    //     let queues: string[][];
-    //     queues = new Array(melodyArray.getWidth());
-    //     let numMelodies = 0;
-    //     // create queues of notes
-    //     for (var i = 0; i < melodyArray.getHeight(); i++) {
-    //         let noteCount = 0;
-    //         for (var j = 0; j < melodyArray.getWidth(); j++) {
-    //             if (melody[j][i]) {
-    //                 queues[i].push(noteConversion(j));
-    //                 noteCount++;
-    //             }
-    //         }
-    //         if (noteCount > numMelodies) {
-    //             numMelodies = noteCount;
-    //         }
-    //     }
-    //     // create strings of melodies
-    //     for (var j = 0; j < numMelodies; j++) {
-    //         for (var i = 0; i < melodyArray.getWidth(); i++) {
-    //             if (queues[i] && queues[i].length > 1) { // if there is an element
-    //                 stringMelody += " " + queues[i].pop();
-    //             } else {
-    //                 stringMelody += " R"; // add rest if there is no selection for the note
-    //             }
-    //         }
-    //         stringMelody += "\n";
-    //     }
-
-    //     return stringMelody;
-    // }
 
     export function noteConversion(rowNum: number): string {
         let note: string = "";
