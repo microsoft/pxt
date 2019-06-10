@@ -11,7 +11,6 @@ namespace pxtblockly {
         numRow: number = 8;
         numCol: number = 8;
         tempo: number = 120;
-        initialized: boolean = false;
         stringRep: string;
 
         constructor(value: string, params: U, validator?: Function) {
@@ -23,9 +22,6 @@ namespace pxtblockly {
         }
 
         init() {
-            // if (this.initialized) {
-            //     return;
-            // }
             super.init();
             this.onInit();
         }
@@ -62,14 +58,13 @@ namespace pxtblockly {
             this.stringRep = newText;
             this.parseTypeScriptValue(newText);
             //super.setText(this.getTitle());
-            super.setText(newText);
+            //super.setText(newText);
             //this.setTitle(this.getTitle());
         }
 
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
-            this.initialized = true;
             this.render_();
             if (typeof this.melody === "undefined") {
                 this.melody = new pxtmelody.MelodyArray();
@@ -81,20 +76,20 @@ namespace pxtblockly {
         // This should render what appears on the block when it is not being edited. It should be an
         // SVG (not HTML)
         protected renderPreview(group: SVGGElement) { // may not need the parameter?
-            // var size = this.getSize();
-            // var fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
-            // /** @type {!Element} */
-            // this.textElement_ = Blockly.utils.createSvgElement('text',
-            //     {'class': this.className_,
-            //       'x': fieldX,
-            //       'y': size.height / 2 + Blockly.BlockSvg.FIELD_TOP_PADDING,
-            //       'dominant-baseline': 'middle',
-            //       //'dy': goog.userAgent.EDGE_OR_IE ? Blockly.Field.IE_TEXT_OFFSET : '0',
-            //       'text-anchor': 'middle'},
-            //     this.fieldGroup_);
-            // //this.textElement_ = document.createElement("label"); // if I make it a label
-            // this.textElement_.textContent = this.getTitle();
-            // group.appendChild(this.textElement_);
+            var size = this.getSize();
+            var fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
+            /** @type {!Element} */
+            this.textElement_ = Blockly.utils.createSvgElement('text',
+                {'class': this.className_,
+                  'x': fieldX,
+                  'y': size.height / 2 + Blockly.BlockSvg.FIELD_TOP_PADDING,
+                  'dominant-baseline': 'middle',
+                  //'dy': goog.userAgent.EDGE_OR_IE ? Blockly.Field.IE_TEXT_OFFSET : '0',
+                  'text-anchor': 'middle'},
+                this.fieldGroup_);
+            //this.textElement_ = document.createElement("label"); // if I make it a label
+            this.textElement_.textContent = this.getTitle();
+            group.appendChild(this.textElement_);
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
@@ -232,7 +227,7 @@ namespace pxtblockly {
         }
 
         setTitle(name: string): void {
-            if (this.title != name) {
+            if (this.title != name && this.textElement_) {
                 this.title = name;
                 this.textElement_.textContent = this.getTitle();
                 // Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
