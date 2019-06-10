@@ -20,8 +20,6 @@ export interface CreateSnippetBuilderState {
 }
 
 export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateSnippetBuilderState> {
-    static cachedFunctionTypes: pxt.FunctionEditorTypeInfo[] = null;
-
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
