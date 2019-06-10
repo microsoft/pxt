@@ -349,6 +349,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         // Clear any existing timers
         this.props.parent.stopPokeUserActivity();
+
+        // cleanup hintOnClick
+        document.removeEventListener('click', this.hintOnClick);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
