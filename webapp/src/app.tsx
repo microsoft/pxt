@@ -2884,7 +2884,7 @@ export class ProjectView
 
     showTutorialHint(showFullText?: boolean) {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        if (tc) tc.toggleHint(showFullText);
+        if (tc) tc.showHint(true, showFullText);
     }
 
     ///////////////////////////////////////////////////////////
