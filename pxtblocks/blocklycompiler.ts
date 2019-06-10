@@ -1485,7 +1485,11 @@ namespace pxt.blocks {
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
+                        pxt.reportError("blocks", "function already defined", {
+                            "details": fn.attributes.blockId,
+                            "qualifiedName": fn.qName,
+                            "packageName": fn.pkg,
+                        });
                         return;
                     }
                     e.renames.takenNames[fn.namespace] = true;
