@@ -233,6 +233,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     previousTutorialStep() {
+        this.removeHintOnClick();
         let options = this.props.parent.state.tutorialOptions;
         const currentStep = options.tutorialStep;
         const previousStep = currentStep - 1;
@@ -244,6 +245,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     nextTutorialStep() {
+        this.removeHintOnClick();
         let options = this.props.parent.state.tutorialOptions;
         const currentStep = options.tutorialStep;
         const nextStep = currentStep + 1;
@@ -256,6 +258,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     finishTutorial() {
         this.closeLightbox();
+        this.removeHintOnClick();
         this.props.parent.completeTutorial();
     }
 
@@ -354,6 +357,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         // Clear any existing timers
         this.props.parent.stopPokeUserActivity();
 
+        this.removeHintOnClick();
+    }
+
+    private removeHintOnClick() {
         // cleanup hintOnClick
         document.removeEventListener('click', this.hintOnClick);
     }
@@ -380,7 +387,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             pxt.reportError("tutorial", "leaking hintonclick");
             return;
         }
-        evt.stopPropagation();
+        if (evt)
+            evt.stopPropagation();
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
@@ -418,7 +426,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (th) { // mount/unmount document on click handlers
             if (!visible) {
                 if (th.elementRef) {
-                    document.removeEventListener('click', this.hintOnClick);
+                    this.removeHintOnClick();
                     th.elementRef.removeEventListener('click', this.expandedHintOnClick);
                 }
 
