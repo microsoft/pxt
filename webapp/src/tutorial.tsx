@@ -124,7 +124,7 @@ export interface TutorialHintState {
 
 export class TutorialHint extends data.Component<ISettingsProps, TutorialHintState> {
     public elementRef: HTMLDivElement;
-    protected setRef: (el: HTMLDivElement) => void = (el) => {this.elementRef = el};
+    protected setRef: (el: HTMLDivElement) => void = (el) => { this.elementRef = el };
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -154,7 +154,11 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
     }
 
     toggleHint(showFullText?: boolean) {
-        this.setState({ visible: !this.state.visible, showFullText: showFullText })
+        this.showHint(!this.state.visible, showFullText);
+    }
+
+    showHint(visible: boolean, showFullText?: boolean) {
+        this.setState({ visible, showFullText })
     }
 
     renderCore() {
@@ -170,7 +174,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!this.state.renderModal) {
             if (!tutorialHint) return <div />;
 
-            return <div className={`tutorialhint ${!visible ? 'hidden' : '' }`} ref={this.setRef}>
+            return <div className={`tutorialhint ${!visible ? 'hidden' : ''}`} ref={this.setRef}>
                 <md.MarkedContent markdown={this.state.showFullText ? fullText : tutorialHint} parent={this.props.parent} />
             </div>
         } else {
@@ -229,6 +233,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     previousTutorialStep() {
+        this.removeHintOnClick();
         let options = this.props.parent.state.tutorialOptions;
         const currentStep = options.tutorialStep;
         const previousStep = currentStep - 1;
@@ -240,6 +245,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     nextTutorialStep() {
+        this.removeHintOnClick();
         let options = this.props.parent.state.tutorialOptions;
         const currentStep = options.tutorialStep;
         const nextStep = currentStep + 1;
@@ -252,6 +258,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     finishTutorial() {
         this.closeLightbox();
+        this.removeHintOnClick();
         this.props.parent.completeTutorial();
     }
 
@@ -350,6 +357,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         // Clear any existing timers
         this.props.parent.stopPokeUserActivity();
 
+        this.removeHintOnClick();
+    }
+
+    private removeHintOnClick() {
         // cleanup hintOnClick
         document.removeEventListener('click', this.hintOnClick);
     }
@@ -371,8 +382,13 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     private hintOnClick(evt?: any) {
-        evt.stopPropagation();
         const options = this.props.parent.state.tutorialOptions;
+        if (!options) {
+            pxt.reportError("tutorial", "leaking hintonclick");
+            return;
+        }
+        if (evt)
+            evt.stopPropagation();
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
@@ -395,37 +411,44 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
             show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
         }
-        this.setState({showSeeMore: show});
+        this.setState({ showSeeMore: show });
     }
 
     toggleHint(showFullText?: boolean) {
-        if (!this.hasHint()) return;
+        const th = this.refs["tutorialhint"] as TutorialHint;
+        this.showHint(!(th && th.state && th.state.visible), showFullText);
+    }
+
+    showHint(visible: boolean, showFullText?: boolean) {
+        if (!this.hasHint()) {
+            this.removeHintOnClick();
+            return;
+        }
         this.closeLightbox();
-        let th = this.refs["tutorialhint"] as TutorialHint;
-        if (th) {
-            if (th.state && th.state.visible) {
-                if (th.elementRef) {
-                    document.removeEventListener('click', this.hintOnClick);
-                    th.elementRef.removeEventListener('click', this.expandedHintOnClick);
-                }
+        const th = this.refs["tutorialhint"] as TutorialHint;
+        if (!th) return;
 
-                this.setState({showHintTooltip : true});
-                this.props.parent.pokeUserActivity();
-            } else {
-                if (th.elementRef) {
-                    document.addEventListener('click', this.hintOnClick);
-                    th.elementRef.addEventListener('click', this.expandedHintOnClick);
-                }
-
-                this.setState({showHintTooltip : false});
-                this.props.parent.stopPokeUserActivity();
-
-                const options = this.props.parent.state.tutorialOptions;
-                pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
+        if (!visible) {
+            if (th.elementRef) {
+                this.removeHintOnClick();
+                th.elementRef.removeEventListener('click', this.expandedHintOnClick);
             }
 
-            th.toggleHint(showFullText);
+            this.setState({ showHintTooltip: true });
+            this.props.parent.pokeUserActivity();
+        } else {
+            if (th.elementRef) {
+                document.addEventListener('click', this.hintOnClick);
+                th.elementRef.addEventListener('click', this.expandedHintOnClick);
+            }
+
+            this.setState({ showHintTooltip: false });
+            this.props.parent.stopPokeUserActivity();
+
+            const options = this.props.parent.state.tutorialOptions;
+            pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
         }
+        th.showHint(visible, showFullText);
     }
 
     renderCore() {
