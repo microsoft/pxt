@@ -377,6 +377,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     private hintOnClick(evt?: any) {
         evt.stopPropagation();
         const options = this.props.parent.state.tutorialOptions;
+        if (!options) {
+            pxt.reportError("tutorial", "leaking hintonclick");
+            return;
+        }
         const { tutorialStepInfo, tutorialStep } = options;
         const step = tutorialStepInfo[tutorialStep];
         const unplugged = !!step.unplugged && tutorialStep < tutorialStepInfo.length - 1;
