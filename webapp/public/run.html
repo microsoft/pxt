@@ -103,7 +103,7 @@
         (function () {
         var loading = document.getElementById('loading');
         var id = /id(?:[:=])([^&?]+)/i.exec(window.location.href);
-        var code = window.frameElement.getAttribute('data-code')
+        var code = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
         var localToken = /local_token(?:[:=])([^&?]+)/i.exec(window.location.href);
         var hex = !!/hex(?:[:=])1/i.exec(window.location.href);
         var footer = !/nofooter(?:[:=])1/i.exec(window.location.href);
