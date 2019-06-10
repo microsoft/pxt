@@ -104,9 +104,12 @@ ${info.id}_IfaceVT:
         Function = 0x20,
         Literal = 0x21, // aux field contains literal type (string, hex, image, ...)
         VTable = 0x22,
+    }
 
-        // meta sections
-        MetaName = 0x80,
+    // this also handles dates after 2106-02-07 (larger than 2^32 seconds since the beginning of time)
+    function encodeTime(d: Date) {
+        const t = d.getTime() / 1000
+        return `${t >>> 0}, ${(t / 0x100000000) | 0}`
     }
 
     /* tslint:disable:no-trailing-whitespace */
@@ -147,6 +150,13 @@ _start_${name}:
             address++
         }
 
+        const now = new Date()
+        let encodedName = U.toUTF8(opts.name, true)
+        if (encodedName.length > 100) encodedName = encodedName.slice(0, 100)
+        let encodedLength = encodedName.length + 1
+        if (encodedLength & 1) encodedLength++
+        const paddingSize = 128 - encodedLength
+
         section("_info", SectionType.InfoHeader, () => `
                 ; magic - \\0 added by assembler
                 .string "\\nPXT64\\n"
@@ -155,13 +165,13 @@ _start_${name}:
                 .hex 0000000000000000 ; @SRCHASH@
                 .word ${bin.globalsWords}   ; num. globals
                 .word ${bin.nonPtrGlobals} ; non-ptr globals
+                .word 0, 0 ; last usage time
+                .word ${encodeTime(now)} ; installation time
+                .word ${encodeTime(now)} ; publication time - TODO
+                .space 64 ; reserved
+                .string ${JSON.stringify(encodedName)}
+                .space ${paddingSize} ; pad to 128 bytes
 `
-        )
-
-        section("_name", SectionType.MetaName, () => `
-                .string ${JSON.stringify(opts.name)}
-                .word 0, 0, 0, 0 ; padding, so ' (2)' etc can be appended
-                `
         )
 
         bin.procs.forEach(p => {
