@@ -1111,15 +1111,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private openSpriteWizard() {
-        Promise.resolve()
-        .delay(10)
-        .then(() => {
-            if (!this.functionsDialog) {
-                const wrapper = document.body.appendChild(document.createElement('div'));
-                this.snippetDialog = ReactDOM.render(React.createElement(CreateSnippetBuilder), wrapper) as CreateSnippetBuilder;
-            }
-            this.snippetDialog.show(this.parent, this.editor);
-        });
+        if (!this.snippetDialog) {
+            const wrapper = document.body.appendChild(document.createElement('div'));
+            this.snippetDialog = ReactDOM.render(React.createElement(CreateSnippetBuilder), wrapper) as CreateSnippetBuilder;
+        }
+        this.snippetDialog.show(this.parent, this.editor);
     }
 
     private getExtraBlocks(ns: string, subns: string) {
