@@ -71,6 +71,11 @@ namespace pxtsprite {
 
             if (cursor) {
                 this.repaint();
+                if (edit.showPreview) {
+                    edit.drawCursor(col, row, (c, r) => {
+                        this.drawColor(c, r, edit.color);
+                    });
+                }
                 this.context.strokeStyle = "#898989";
                 this.context.strokeRect((col + cursor.offsetX) * this.cellWidth, (row + cursor.offsetY) * this.cellHeight, cursor.width * this.cellWidth, cursor.height * this.cellHeight);
             }

@@ -46,6 +46,7 @@ namespace pxtsprite {
         protected startCol: number;
         protected startRow: number;
         isStarted: boolean;
+        showPreview: boolean;
 
         constructor (protected canvasWidth: number, protected canvasHeight: number, public color: number, protected toolWidth: number) {
         }
@@ -70,6 +71,10 @@ namespace pxtsprite {
 
         getCursor(): Cursor {
             return new Cursor(this.toolWidth, this.toolWidth);
+        }
+
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            draw(col, row);
         }
     }
 
@@ -96,6 +101,7 @@ namespace pxtsprite {
      */
     export class PaintEdit extends Edit {
         protected mask: Bitmask;
+        showPreview = true;
 
         constructor (canvasWidth: number, canvasHeight: number, color: number, toolWidth: number) {
             super(canvasWidth, canvasHeight, color, toolWidth);
@@ -153,6 +159,10 @@ namespace pxtsprite {
             }
         }
 
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            this.drawCore(col, row, draw);
+        }
+
         protected drawCore(col: number, row: number, setPixel: (col: number, row: number) => void) {
             col = col - Math.floor(this.toolWidth / 2);
             row = row - Math.floor(this.toolWidth / 2);
@@ -173,6 +183,8 @@ namespace pxtsprite {
      * Tool for drawing filled rectangles
      */
     export class RectangleEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
@@ -188,11 +200,13 @@ namespace pxtsprite {
      * Tool for drawing empty rectangles
      */
     export class OutlineEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
             for (let i = 0; i < this.toolWidth; i++) {
-                this.drawRectangle(state,
+                this.drawRectangle(state,   
                     [tl[0] + i, tl[1] + i],
                     [br[0] - i, br[1] - i]
                 );
@@ -217,6 +231,8 @@ namespace pxtsprite {
      * Tool for drawing straight lines
      */
     export class LineEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             this.bresenham(this.startCol, this.startRow, this.endCol, this.endRow, state);
         }
@@ -254,6 +270,10 @@ namespace pxtsprite {
             }
         }
 
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            this.drawCore(col, row, draw);
+        }
+
         // This is surely not the most efficient approach for drawing thick lines...
         protected drawCore(col: number, row: number, draw: (c: number, r: number) => void) {
             col = col - Math.floor(this.toolWidth / 2);
@@ -273,6 +293,8 @@ namespace pxtsprite {
      * Tool for circular outlines
      */
     export class CircleEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
@@ -320,6 +342,7 @@ namespace pxtsprite {
     export class FillEdit extends Edit {
         protected col: number;
         protected row: number;
+        showPreview = true;
 
         start(col: number, row: number, state: CanvasState) {
             this.isStarted = true;
@@ -366,6 +389,7 @@ namespace pxtsprite {
 
     export class MarqueeEdit extends SelectionEdit {
         protected isMove = false;
+        showPreview = false;
 
         start(cursorCol: number, cursorRow: number, state: CanvasState) {
             this.isStarted = true;
