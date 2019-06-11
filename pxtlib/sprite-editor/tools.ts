@@ -88,11 +88,17 @@ namespace pxtsprite {
         }
 
         protected topLeft(): Coord {
-            return [Math.min(this.startCol, this.endCol), Math.min(this.startRow, this.endRow)];
+            return {
+                x: Math.min(this.startCol, this.endCol),
+                y: Math.min(this.startRow, this.endRow)
+            };
         }
 
         protected bottomRight(): Coord {
-            return [Math.max(this.startCol, this.endCol), Math.max(this.startRow, this.endRow)];
+            return {
+                x: Math.max(this.startCol, this.endCol),
+                y: Math.max(this.startRow, this.endRow)
+        };
         }
     }
 
@@ -188,8 +194,8 @@ namespace pxtsprite {
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
-            for (let c = tl[0]; c <= br[0]; c++) {
-                for (let r = tl[1]; r <= br[1]; r++) {
+            for (let c = tl.x; c <= br.x; c++) {
+                for (let r = tl.y; r <= br.y; r++) {
                     state.image.set(c, r, this.color);
                 }
             }
@@ -204,31 +210,31 @@ namespace pxtsprite {
 
         protected doEditCore(state: CanvasState) {
             let tl = this.topLeft();
-            tl[0] -= Math.floor(this.toolWidth / 2);
-            tl[1] -= Math.floor(this.toolWidth / 2);
+            tl.x -= Math.floor(this.toolWidth / 2);
+            tl.y -= Math.floor(this.toolWidth / 2);
 
             let br = this.bottomRight();
-            br[0] += Math.floor(this.toolWidth / 2);
-            br[1] += Math.floor(this.toolWidth / 2);
+            br.x += Math.floor(this.toolWidth / 2);
+            br.y += Math.floor(this.toolWidth / 2);
 
             for (let i = 0; i < this.toolWidth; i++) {
                 this.drawRectangle(state,   
-                    [tl[0] + i, tl[1] + i],
-                    [br[0] - i, br[1] - i]
+                    {x: tl.x + i, y: tl.y + i},
+                    {x: br.x - i, y: br.y - i}
                 );
             }
         }
 
         protected drawRectangle(state: CanvasState, tl: Coord, br: Coord) {
-            if (tl[0] > br[0] || tl[1] > br[1]) return;
+            if (tl.x > br.x || tl.y > br.y) return;
 
-            for (let c = tl[0]; c <= br[0]; c++) {
-                state.image.set(c, tl[1], this.color);
-                state.image.set(c, br[1], this.color);
+            for (let c = tl.x; c <= br.x; c++) {
+                state.image.set(c, tl.y, this.color);
+                state.image.set(c, br.y, this.color);
             }
-            for (let r = tl[1]; r <= br[1]; r++) {
-                state.image.set(tl[0], r, this.color);
-                state.image.set(br[0], r, this.color);
+            for (let r = tl.y; r <= br.y; r++) {
+                state.image.set(tl.x, r, this.color);
+                state.image.set(br.x, r, this.color);
             }
         }
 
@@ -324,8 +330,8 @@ namespace pxtsprite {
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
-            const dx = br[0] - tl[0];
-            const dy = br[1] - tl[1];
+            const dx = br.x - tl.x;
+            const dy = br.y - tl.y;
 
             const radius = Math.floor(Math.hypot(dx, dy));
             const cx = this.startCol;
@@ -395,22 +401,22 @@ namespace pxtsprite {
 
             const mask = new Bitmask(state.width, state.height);
             mask.set(this.col, this.row);
-            const q: Coord[] = [[this.col, this.row]];
+            const q: Coord[] = [{x: this.col, y: this.row}];
             while (q.length) {
-                const [c, r] = q.pop();
-                if (state.image.get(c, r) === replColor) {
-                    state.image.set(c, r, this.color);
-                    tryPush(c + 1, r);
-                    tryPush(c - 1, r);
-                    tryPush(c, r + 1);
-                    tryPush(c, r - 1);
+                const curr = q.pop();
+                if (state.image.get(curr.x, curr.y) === replColor) {
+                    state.image.set(curr.x, curr.y, this.color);
+                    tryPush(curr.x + 1, curr.y);
+                    tryPush(curr.x - 1, curr.y);
+                    tryPush(curr.x, curr.y + 1);
+                    tryPush(curr.x, curr.y - 1);
                 }
             }
 
             function tryPush(x: number, y: number) {
                 if (x >= 0 && x < mask.width && y >= 0 && y < mask.height && !mask.get(x, y)) {
                     mask.set(x, y);
-                    q.push([x, y]);
+                    q.push({x: x, y: y});
                 }
             }
         }
