@@ -8,15 +8,55 @@ import * as compiler from './compiler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+type AnswerTypes = any; // Should include custom answer types for number, enums, string, image
+
+interface IGoToParameters {
+    [tokenType: string]: number;
+}
+
+interface IGoToOptions {
+    question: number;
+    parameters?: IGoToParameters;
+}
+
+interface IQuestionInput {
+    answerToken: string;
+    defaultAnswer: AnswerTypes;
+    type?: string;
+    label?: string;
+}
+
+interface IQuestions {
+    title: string;
+    output?: string;
+    goto?: IGoToOptions;
+    inputs: IQuestionInput[];
+}
+
+interface ISnippetConfig {
+    name: string;
+    outputType: string;
+    initialOutput?: string;
+    questions: IQuestions[];
+}
+
+interface IDefaultAnswersMap {
+    [answerToken: string]: AnswerTypes;
+}
+
+interface IAnswersMap {
+    [answerToken: string]: AnswerTypes;
+}
+
 export interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
     projectView?: pxt.editor.IProjectView;
-    answers?: any; // Will be typed once more clearly defined
+    answers?: IAnswersMap;
     currentQuestion: number;
-    defaults: any; // Will be typed once more clearly defined
+    defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
     mainWorkspace?: Blockly.Workspace;
-    config?: any; // Will be a config type
+    config?: ISnippetConfig; // Will be a config type
 }
 
 
@@ -51,7 +91,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      */
     buildDefaults() {
         const { config } = this.state;
-        const defaults: any = {};
+        const defaults: IDefaultAnswersMap = {};
 
         for (const question of config.questions) {
             const { inputs } = question;
@@ -120,7 +160,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      * @param mainWorkspace  - used to append the final xml to the DOM
      */
     show(projectView: pxt.editor.IProjectView, mainWorkspace: Blockly.Workspace) {
-        pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: false });
+        pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: true });
         this.setState({
             visible: true,
             mainWorkspace,
@@ -145,8 +185,12 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
                 const xmlDOM = Blockly.Xml.textToDom(resp)
+
                 Blockly.Xml.appendDomToWorkspace(xmlDOM, mainWorkspace);
-            });
+            }).catch((e) => {
+                pxt.reportException(e);
+                throw new Error(`Failed to decompile snippet output`);
+            });;
     }
 
     confirm() {
@@ -233,7 +277,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
                             <div>
                                 <div>{currQ.title}</div>
                                 <div className='list horizontal'>
-                                    {currQ.inputs.map((input: any) =>
+                                    {currQ.inputs.map((input: IQuestionInput) =>
                                         <div>
                                             <sui.Input
                                                 label={input.label && input.label}
@@ -256,7 +300,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
 }
 
 // This will be passed down as a prop but is currently static
-const staticConfig: any = {
+const staticConfig: ISnippetConfig = {
     name: "Sprite Builder",
     outputType: 'blocks',
     initialOutput: `enum SpriteKind {
@@ -293,7 +337,9 @@ const staticConfig: any = {
                     "type": "text"
             }],
             "output": "",
-            "goto": 2
+            "goto": {
+                "question": 2
+            }
         },
         {
             "title": "Where should your sprite be placed?",
@@ -312,7 +358,9 @@ const staticConfig: any = {
                 }
             ],
             "output": "$spriteName.setPosition($xLocation,$yLocation)",
-            "goto": 3
+            "goto": {
+                "question": 3
+            }
         },
         // {
         //     "title": "What should your sprite look like?",
@@ -331,26 +379,7 @@ const staticConfig: any = {
                 {
                     "answerToken": "spriteKind",
                     "defaultAnswer": "SpriteKind.Player",
-                    "type": {
-                        "options": [
-                            {
-                                "value": "SpriteKind.Player",
-                                "label": "Player"
-                            },
-                            {
-                                "value": "SpriteKind.Projectile",
-                                "label": "Projectile"
-                            },
-                            {
-                                "value": "SpriteKind.Food",
-                                "label": "Food"
-                            },
-                            {
-                                "value": "SpriteKind.Enemy",
-                                "label": "Enemy"
-                            }
-                        ]
-                    }
+                    "type": "dropdown"
                 }
             ],
             "output": "$spriteName.setKind($spriteKind)",
