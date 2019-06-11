@@ -203,8 +203,14 @@ namespace pxtsprite {
         showPreview = true;
 
         protected doEditCore(state: CanvasState) {
-            const tl = this.topLeft();
-            const br = this.bottomRight();
+            let tl = this.topLeft();
+            tl[0] -= Math.floor(this.toolWidth / 2);
+            tl[1] -= Math.floor(this.toolWidth / 2);
+
+            let br = this.bottomRight();
+            br[0] += Math.floor(this.toolWidth / 2);
+            br[1] += Math.floor(this.toolWidth / 2);
+
             for (let i = 0; i < this.toolWidth; i++) {
                 this.drawRectangle(state,   
                     [tl[0] + i, tl[1] + i],
