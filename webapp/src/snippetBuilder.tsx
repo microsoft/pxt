@@ -64,9 +64,6 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
         this.setState({ defaults });
     }
 
-    /**
-     * Calls build defaults on mount to create the defaults hashmap.
-     */
     componentDidMount() {
         // Sets default values
         this.buildDefaults();
@@ -111,9 +108,6 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
         return md
     }
 
-    /**
-     * Hides the modal
-     */
     hide() {
         this.setState({
             visible: false
@@ -134,9 +128,6 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
         });
     }
 
-    /**
-     * Closes the modal
-     */
     cancel() {
         pxt.tickEvent("snippetBuilder.cancel", undefined, { interactiveConsent: true });
         this.hide();
@@ -158,17 +149,11 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
             });
     }
 
-    /**
-     * Hides modal and injects our blocks to the work space.
-     */
     confirm() {
         this.injectBlocksToWorkspace();
         this.hide();
     }
 
-    /** 
-     * @param increment - this adds either 1 or -1 to the value of currentQuestion
-     */
     changePage(increment: 1 | -1) {
         const { currentQuestion } = this.state;
         this.setState({ currentQuestion: currentQuestion + increment });
@@ -194,17 +179,10 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
         }
     }
 
-    /**
-     * Calls changePage with a -1 decrementor
-     */
     backPage() {
         this.changePage(-1);
     }
 
-    /**
-     * @param answerToken - the answer token to update as defined by the given inputs answerToken in the config file
-     * Updates provided answerTokens state on input change
-     */
     textInputOnChange = (answerToken: string) => (v: string) => {
         const answers = this.state.answers;
         answers[answerToken] = v;
@@ -269,7 +247,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
                         }
                     </div>
                     <div id="snippetBuilderOutput">
-                        {projectView && <md.MarkedContent markdown={this.generateOutputMarkdown(output)} parent={projectView} />}
+                        {projectView && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={projectView} />}
                     </div>
                 </div>
             </sui.Modal>
