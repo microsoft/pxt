@@ -58,6 +58,7 @@ type ProjectCreationOptions = pxt.editor.ProjectCreationOptions;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { HintManager } from "./hinttooltip";
 
 pxsim.util.injectPolyphils();
 
@@ -113,6 +114,9 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
 
+    // component ID strings
+    private static readonly tutorialCardId = "tutorialcard";
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -146,6 +150,9 @@ export class ProjectView
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.initScreenshots();
+
+        // add user hint IDs and callback to hint manager
+        this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
     }
 
     private autoRunOnStart() {
@@ -900,7 +907,7 @@ export class ProjectView
         // save and typecheck
         this.typecheckNow();
         // Notify tutorial content pane
-        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
+        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
             tc.setPopout();
@@ -909,7 +916,7 @@ export class ProjectView
             tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
-            if (fullscreen) this.showTutorialHint(true);
+            if (fullscreen) this.showTutorialHint();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -917,7 +924,8 @@ export class ProjectView
 
     handleMessage(msg: pxsim.SimulatorMessage) {
         switch (msg.type) {
-            case "popoutcomplete":
+            case "opendoc":
+                window.open((msg as pxsim.SimulatorOpenDocMessage).url, "_blank");
                 this.setState({ sideDocsCollapsed: true, sideDocsLoadUrl: '' })
                 break;
             case "tutorial":
@@ -942,7 +950,7 @@ export class ProjectView
                         tutorialOptions.tutorialStepInfo = tt.stepInfo;
                         this.setState({ tutorialOptions: tutorialOptions });
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
-                        if (fullscreen) this.showTutorialHint(true);
+                        if (fullscreen) this.showTutorialHint();
                         //else {
                         //    this.showLightbox();
                         //}
@@ -1147,7 +1155,7 @@ export class ProjectView
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
-                if (fullscreen) this.showTutorialHint(true);
+                if (fullscreen) this.showTutorialHint();
                 //else this.showLightbox();
             })
             .catch(e => {
@@ -2004,7 +2012,7 @@ export class ProjectView
                         });
                     }
                 }
-                return pxt.commands.deployCoreAsync(resp, {
+                return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg)
@@ -2619,19 +2627,22 @@ export class ProjectView
     }
 
     showImportGithubDialog() {
-        dialogs.showImportGithubDialogAsync().done(url => {
-            if (url === "NEW") {
-                dialogs.showCreateGithubRepoDialogAsync()
-                    .then(url => {
-                        if (url)
-                            importGithubProject(url)
-                    })
-            } else if (!pxt.github.isGithubId(url)) {
-                core.errorNotification(lf("Sorry, the project url looks invalid."));
-            } else {
-                importGithubProject(url);
-            }
-        });
+        dialogs.showImportGithubDialogAsync()
+            .then(url => {
+                if (url === "NEW") {
+                    dialogs.showCreateGithubRepoDialogAsync()
+                        .then(url => {
+                            if (url) {
+                                importGithubProject(url);
+                            }
+                        })
+                } else if (url) {
+                    importGithubProject(url);
+                }
+            }, e => {
+                core.errorNotification(lf("Sorry, that repository looks invalid."));
+            })
+            .done();
     }
 
     showImportFileDialog(options?: pxt.editor.ImportFileOptions) {
@@ -2716,6 +2727,8 @@ export class ProjectView
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////
 
+    private hintManager: HintManager = new HintManager();
+
     startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
         // Check for Internet access
@@ -2799,6 +2812,7 @@ export class ProjectView
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
+                tutorialHintCounter: 0,
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code
@@ -2870,8 +2884,35 @@ export class ProjectView
     }
 
     showTutorialHint(showFullText?: boolean) {
-        let tc = this.refs["tutorialcard"] as tutorial.TutorialCard;
-        tc.toggleHint(showFullText);
+        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
+        if (tc) tc.showHint(true, showFullText);
+    }
+
+    ///////////////////////////////////////////////////////////
+    ////////////     User alert/notifications     /////////////
+    ///////////////////////////////////////////////////////////
+
+    pokeUserActivity() {
+        if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
+            // animate tutorial hint after some time of user inactivity
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialHintCounter);
+        }
+    }
+
+    stopPokeUserActivity() {
+        this.hintManager.stopPokeUserActivity();
+    }
+
+    private tutorialCardHintCallback() {
+        let tutorialOptions = this.state.tutorialOptions;
+        tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
+
+        this.setState({
+            pokeUserComponent: ProjectView.tutorialCardId,
+            tutorialOptions: tutorialOptions
+        });
+
+        setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3040,6 +3081,8 @@ export class ProjectView
                 </div>
             </div>
         }
+        const isRTL = pxt.Util.isUserLanguageRtl();
+        const showRightChevron = (this.state.collapseEditorTools || isRTL ) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3050,7 +3093,7 @@ export class ProjectView
                         <container.MainMenu parent={this} />
                     </header>}
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
-                    <tutorial.TutorialCard ref="tutorialcard" parent={this} />
+                    <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
                 </div> : undefined}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
@@ -3070,7 +3113,7 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
@@ -3420,9 +3463,9 @@ function initExtensionsAsync(): Promise<void> {
                     theEditor.resourceImporters.push(fi);
                 });
             }
-            if (res.deployCoreAsync) {
+            if (res.deployAsync) {
                 pxt.debug(`\tadded custom deploy core async`);
-                pxt.commands.deployCoreAsync = res.deployCoreAsync;
+                pxt.commands.deployCoreAsync = res.deployAsync;
             }
             if (res.saveOnlyAsync) {
                 pxt.debug(`\tadded custom save only async`);
@@ -3680,7 +3723,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (m.type == "tutorial" || m.type == "popoutcomplete") {
+        if (m.type == "tutorial" || m.type == "opendoc") {
             if (theEditor && theEditor.editor)
                 theEditor.handleMessage(m);
             return;

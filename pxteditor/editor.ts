@@ -70,6 +70,7 @@ namespace pxt.editor {
         debugging?: boolean;
         bannerVisible?: boolean;
         updatingEditorFile?: boolean;
+        pokeUserComponent?: string;
 
         highContrast?: boolean;
         print?: boolean;
@@ -203,6 +204,8 @@ namespace pxt.editor {
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
+        pokeUserActivity(): void;
+        stopPokeUserActivity(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -330,7 +333,7 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
-        deployCoreAsync?: (r: pxtc.CompileResult) => Promise<void>;
+        deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
