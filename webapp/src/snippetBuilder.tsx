@@ -10,7 +10,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface SnippetBuilderState {
     visible?: boolean;
-    output?: string;
+    tsOutput?: string;
     projectView?: pxt.editor.IProjectView;
     answers?: any; // Will be typed once more clearly defined
     currentQuestion: number;
@@ -35,7 +35,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
             currentQuestion: 0, // Index to track current question
             defaults: {},
             config: staticConfig, // This will be set when it is recieved
-            output: staticConfig.initialOutput
+            tsOutput: staticConfig.initialOutput
         };
 
         this.hide = this.hide.bind(this);
@@ -77,9 +77,9 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      * Loops over each token previously added to defaults and replaces with the answer value if one
      * exists. Otherwise it replaces the token with the provided default value.
      */
-    replaceTokens(output: string) {
+    replaceTokens(tsOutput: string) {
         const { answers, defaults } = this.state;
-        let tokenizedOutput = output;
+        let tokenizedOutput = tsOutput;
         const tokens = Object.keys(defaults);
 
         // Replaces output tokens with answer if available or default value
@@ -101,11 +101,11 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
      */
-    generateOutputMarkdown(output: string) {
+    generateOutputMarkdown(tsOutput: string) {
         const { config } = this.state;
         // Attaches starting and ending line based on output type
         let md = `\`\`\`${config.outputType}\n`;
-        md += this.replaceTokens(output);
+        md += this.replaceTokens(tsOutput);
         md += `\n\`\`\``;
 
         return md
@@ -148,10 +148,10 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      * our xmlDOM to the mainWorkspaces passed to the component.
      */
     injectBlocksToWorkspace() {
-        const { mainWorkspace, output } = this.state;
+        const { mainWorkspace, tsOutput } = this.state;
 
         compiler.getBlocksAsync()
-            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(output), blocksInfo))
+            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
                 const xmlDOM = Blockly.Xml.textToDom(resp)
                 Blockly.Xml.appendDomToWorkspace(xmlDOM, mainWorkspace);
@@ -181,13 +181,13 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      */
     nextPage() {
         const { config } = this.state;
-        const { currentQuestion, output } = this.state;
+        const { currentQuestion, tsOutput } = this.state;
         const nextQuestion = config.questions[currentQuestion + 1];
         // If next question exists
         if (nextQuestion) {
             // If output is not already appended
-            if (nextQuestion.output && output.indexOf(nextQuestion.output) === -1) {
-                this.setState({ output: `${output}\n${nextQuestion.output}`});
+            if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
+                this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`});
             }
             // Change page to page + 1
             this.changePage(1);
@@ -213,7 +213,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
     }
 
     renderCore() {
-        const { visible, output, projectView, answers, currentQuestion, config } = this.state;
+        const { visible, tsOutput, projectView, answers, currentQuestion, config } = this.state;
 
         const actions: sui.ModalButton[] = [
             {
