@@ -11,7 +11,7 @@ import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
-import { CreateSnippetBuilder } from './snippetBuilder'
+import { SnippetBuilder } from './snippetBuilder'
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -26,7 +26,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
-    snippetDialog: CreateSnippetBuilder = null;
+    snippetDialog: SnippetBuilder = null;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -1113,7 +1113,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private openSpriteWizard() {
         if (!this.snippetDialog) {
             const wrapper = document.body.appendChild(document.createElement('div'));
-            this.snippetDialog = ReactDOM.render(React.createElement(CreateSnippetBuilder), wrapper) as CreateSnippetBuilder;
+            this.snippetDialog = ReactDOM.render(React.createElement(SnippetBuilder), wrapper) as SnippetBuilder;
         }
         this.snippetDialog.show(this.parent, this.editor);
     }
@@ -1141,7 +1141,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 attributes: {
                     blockId: `SPRITE_WIZARD_BUTTON`,
                     label: "Create a Sprite...",
-                    weight: 101,
+                    weight: 101, // Weight set 1 above the create a sprite block so that it shows up first
                     group: "Create"
                 },
                 callback: () => {

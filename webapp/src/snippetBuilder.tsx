@@ -8,7 +8,7 @@ import * as compiler from './compiler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-export interface CreateSnippetBuilderState {
+export interface SnippetBuilderState {
     visible?: boolean;
     output?: string;
     projectView?: pxt.editor.IProjectView;
@@ -19,7 +19,14 @@ export interface CreateSnippetBuilderState {
     config?: any; // Will be a config type
 }
 
-export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateSnippetBuilderState> {
+
+/**
+ * Snippet builder takes a static config file and builds a modal with inputs and outputs based on config settings.
+ * An output type is attached to the start of your markdown allowing you to define a number of markdown output. (blocks, lang)
+ * An initial output is set and outputs defined at each questions are appended to the initial output.
+ * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
+ */
+export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilderState> {
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
@@ -27,8 +34,8 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
             answers: {},
             currentQuestion: 0, // Index to track current question
             defaults: {},
-            config: staticConfig,
-            output: staticConfig.output
+            config: staticConfig, // This will be set when it is recieved
+            output: staticConfig.initialOutput
         };
 
         this.hide = this.hide.bind(this);
@@ -38,6 +45,10 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         this.nextPage = this.nextPage.bind(this);
     }
 
+    /**
+     * Creates a hashmap with answerToken keys and the default value pair as 
+     * provided by our config file.
+     */
     buildDefaults() {
         const { config } = this.state;
         const defaults: any = {};
@@ -53,11 +64,19 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         this.setState({ defaults });
     }
 
+    /**
+     * Calls build defaults on mount to create the defaults hashmap.
+     */
     componentDidMount() {
         // Sets default values
         this.buildDefaults();
     }
 
+    /**
+     * @param output - Takes in a string and returns the tokenized output
+     * Loops over each token previously added to defaults and replaces with the answer value if one
+     * exists. Otherwise it replaces the token with the provided default value.
+     */
     replaceTokens(output: string) {
         const { answers, defaults } = this.state;
         let tokenizedOutput = output;
@@ -76,6 +95,12 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         return tokenizedOutput;
     }
 
+    /**
+     * 
+     * @param output - Accepts an output to convert to markdown
+     * This attaches three backticks to the front followed by an output type (blocks, lang)
+     * The current output is then tokenized and three backticks are appended to the end of the string.
+     */
     generateOutputMarkdown(output: string) {
         const { config } = this.state;
         // Attaches starting and ending line based on output type
@@ -86,12 +111,20 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         return md
     }
 
+    /**
+     * Hides the modal
+     */
     hide() {
         this.setState({
             visible: false
         });
     }
 
+    /**
+     * 
+     * @param projectView - used to access what would traditionally be in the parent prop
+     * @param mainWorkspace  - used to append the final xml to the DOM
+     */
     show(projectView: pxt.editor.IProjectView, mainWorkspace: Blockly.Workspace) {
         pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: false });
         this.setState({
@@ -101,39 +134,59 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         });
     }
 
+    /**
+     * Closes the modal
+     */
     cancel() {
         pxt.tickEvent("snippetBuilder.cancel", undefined, { interactiveConsent: true });
         this.hide();
     }
 
+    /**
+     * Takes the output from state, runs replace tokens, decompiles the resulting typescript
+     * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach 
+     * our xmlDOM to the mainWorkspaces passed to the component.
+     */
     injectBlocksToWorkspace() {
         const { mainWorkspace, output } = this.state;
 
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(output), blocksInfo))
             .then(resp => {
-                Blockly.Xml.appendDomToWorkspace(Blockly.Xml.textToDom(resp), mainWorkspace);
+                const xmlDOM = Blockly.Xml.textToDom(resp)
+                Blockly.Xml.appendDomToWorkspace(xmlDOM, mainWorkspace);
             });
     }
 
+    /**
+     * Hides modal and injects our blocks to the work space.
+     */
     confirm() {
         this.injectBlocksToWorkspace();
         this.hide();
     }
 
+    /** 
+     * @param increment - this adds either 1 or -1 to the value of currentQuestion
+     */
     changePage(increment: 1 | -1) {
         const { currentQuestion } = this.state;
         this.setState({ currentQuestion: currentQuestion + increment });
     }
 
+    /**
+     * Changes page by 1 if next question exists.
+     * Looks for output and appends the next questions output if it exists and
+     * is not already attached to the current output.
+     */
     nextPage() {
         const { config } = this.state;
         const { currentQuestion, output } = this.state;
         const nextQuestion = config.questions[currentQuestion + 1];
-        // If output exists
-        if (nextQuestion.output) {
+        // If next question exists
+        if (nextQuestion) {
             // If output is not already appended
-            if (output.indexOf(nextQuestion.output) === -1) {
+            if (nextQuestion.output && output.indexOf(nextQuestion.output) === -1) {
                 this.setState({ output: `${output}\n${nextQuestion.output}`});
             }
             // Change page to page + 1
@@ -141,13 +194,20 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
         }
     }
 
+    /**
+     * Calls changePage with a -1 decrementor
+     */
     backPage() {
         this.changePage(-1);
     }
 
-    textInputOnChange = (answerKey: string) => (v: string) => {
+    /**
+     * @param answerToken - the answer token to update as defined by the given inputs answerToken in the config file
+     * Updates provided answerTokens state on input change
+     */
+    textInputOnChange = (answerToken: string) => (v: string) => {
         const answers = this.state.answers;
-        answers[answerKey] = v;
+        answers[answerToken] = v;
 
         this.setState({ answers })
     }
@@ -184,8 +244,6 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
 
         const currQ = config.questions[currentQuestion];
 
-        // TODO: Workspace component
-
         return (
             <sui.Modal isOpen={visible} className="snippetBuilder" size="large"
                 closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
@@ -219,11 +277,11 @@ export class CreateSnippetBuilder extends data.Component<ISettingsProps, CreateS
     }
 }
 
-// This will be passed down as a prop
+// This will be passed down as a prop but is currently static
 const staticConfig: any = {
     name: "Sprite Builder",
     outputType: 'blocks',
-    output: `enum SpriteKind {
+    initialOutput: `enum SpriteKind {
         Player,
         Projectile,
         Food,
@@ -257,7 +315,7 @@ const staticConfig: any = {
                     "type": "text"
             }],
             "output": "",
-            "goTo": 2
+            "goto": 2
         },
         {
             "title": "Where should your sprite be placed?",
@@ -276,7 +334,7 @@ const staticConfig: any = {
                 }
             ],
             "output": "$spriteName.setPosition($xLocation,$yLocation)",
-            "goTo": 3
+            "goto": 3
         },
         // {
         //     "title": "What should your sprite look like?",
@@ -287,7 +345,7 @@ const staticConfig: any = {
         //         }
         //     ],
         //     "ouput": "${spriteName} = sprites.setImage(img```${spriteImage}```)",
-        //     "goTo": 1
+        //     "goto": 1
         // },
         {
             "title": "What kind of sprite should this be?",
@@ -318,9 +376,11 @@ const staticConfig: any = {
                 }
             ],
             "output": "$spriteName.setKind($spriteKind)",
-            "goTo": {
-                "4": { "spriteKind": 0 },
-                "default": null
+            "goto": {
+                "question": 4,
+                "parameters": {
+                    "spriteKind": 0
+                }
             }
         },
         {
@@ -330,7 +390,6 @@ const staticConfig: any = {
                     "answerToken": "gameLives",
                     "defaultAnswer": 3,
                     "type": "number",
-                    // "label": "img`livesImg` x ${gameLives}"
                 }
             ],
             "output": "info.setLife($gameLives)"
