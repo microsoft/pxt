@@ -1113,9 +1113,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private openSpriteWizard() {
         if (!this.snippetDialog) {
             const wrapper = document.body.appendChild(document.createElement('div'));
-            this.snippetDialog = ReactDOM.render(React.createElement(SnippetBuilder), wrapper) as SnippetBuilder;
+            this.snippetDialog = ReactDOM.render(React.createElement(SnippetBuilder, { parent: this.parent }), wrapper) as SnippetBuilder;
         }
-        this.snippetDialog.show(this.parent, this.editor);
+        this.snippetDialog.show(this.editor);
     }
 
     private getExtraBlocks(ns: string, subns: string) {

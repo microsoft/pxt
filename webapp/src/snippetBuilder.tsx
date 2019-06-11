@@ -51,7 +51,6 @@ interface IAnswersMap {
 export interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
-    projectView?: pxt.editor.IProjectView;
     answers?: IAnswersMap;
     currentQuestion: number;
     defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
@@ -121,12 +120,8 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
 
         // Replaces output tokens with answer if available or default value
         for (let token of tokens) {
-            if (answers[token]) {
-                tokenizedOutput = tokenizedOutput.split(`$${token}`).join(answers[token]);
-            }
-            else {
-                tokenizedOutput = tokenizedOutput.split(`$${token}`).join(defaults[token]);
-            }
+            const value = answers[token] || defaults[token];
+            tokenizedOutput = tokenizedOutput.split(`$${token}`).join(value);
         }
 
         return tokenizedOutput;
@@ -156,15 +151,13 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
 
     /**
      * 
-     * @param projectView - used to access what would traditionally be in the parent prop
      * @param mainWorkspace  - used to append the final xml to the DOM
      */
-    show(projectView: pxt.editor.IProjectView, mainWorkspace: Blockly.Workspace) {
+    show(mainWorkspace: Blockly.Workspace) {
         pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: true });
         this.setState({
             visible: true,
             mainWorkspace,
-            projectView,
         });
     }
 
@@ -195,6 +188,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
 
     confirm() {
         this.injectBlocksToWorkspace();
+        Blockly.hideChaff();
         this.hide();
     }
 
@@ -235,7 +229,8 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
     }
 
     renderCore() {
-        const { visible, tsOutput, projectView, answers, currentQuestion, config } = this.state;
+        const { visible, tsOutput, answers, currentQuestion, config } = this.state;
+        const { parent } = this.props;
 
         const actions: sui.ModalButton[] = [
             {
@@ -278,7 +273,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
                                 <div>{currQ.title}</div>
                                 <div className='list horizontal'>
                                     {currQ.inputs.map((input: IQuestionInput) =>
-                                        <div>
+                                        <div key={input.answerToken}>
                                             <sui.Input
                                                 label={input.label && input.label}
                                                 value={answers[input.answerToken] || ''}
@@ -291,7 +286,7 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
                         }
                     </div>
                     <div id="snippetBuilderOutput">
-                        {projectView && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={projectView} />}
+                        {parent && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
                     </div>
                 </div>
             </sui.Modal>
