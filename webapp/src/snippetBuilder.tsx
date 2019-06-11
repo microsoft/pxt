@@ -8,6 +8,10 @@ import * as compiler from './compiler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+interface ISnippetBuilderProps extends ISettingsProps {
+    mainWorkspace: Blockly.Workspace;
+}
+
 type AnswerTypes = any; // Should include custom answer types for number, enums, string, image
 
 interface IGoToParameters {
@@ -54,7 +58,6 @@ export interface SnippetBuilderState {
     answers?: IAnswersMap;
     currentQuestion: number;
     defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
-    mainWorkspace?: Blockly.Workspace;
     config?: ISnippetConfig; // Will be a config type
 }
 
@@ -65,8 +68,8 @@ export interface SnippetBuilderState {
  * An initial output is set and outputs defined at each questions are appended to the initial output.
  * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
  */
-export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilderState> {
-    constructor(props: ISettingsProps) {
+export class SnippetBuilder extends data.Component<ISnippetBuilderProps, SnippetBuilderState> {
+    constructor(props: ISnippetBuilderProps) {
         super(props);
         this.state = {
             visible: false,
@@ -149,15 +152,10 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
         });
     }
 
-    /**
-     * 
-     * @param mainWorkspace  - used to append the final xml to the DOM
-     */
-    show(mainWorkspace: Blockly.Workspace) {
+    show() {
         pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: true });
         this.setState({
             visible: true,
-            mainWorkspace,
         });
     }
 
@@ -172,7 +170,8 @@ export class SnippetBuilder extends data.Component<ISettingsProps, SnippetBuilde
      * our xmlDOM to the mainWorkspaces passed to the component.
      */
     injectBlocksToWorkspace() {
-        const { mainWorkspace, tsOutput } = this.state;
+        const { tsOutput } = this.state;
+        const { mainWorkspace } = this.props
 
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
