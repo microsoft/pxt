@@ -1945,6 +1945,7 @@ namespace pxt.blocks {
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
         msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
+        msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
@@ -1985,6 +1986,9 @@ namespace pxt.blocks {
 
         // New variable dialog
         msg.NEW_VARIABLE_TITLE = lf("New variable name:");
+
+        // Rename variable dialog
+        msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
     }
 
     function initFunctions() {
