@@ -225,6 +225,26 @@ namespace pxtsprite {
                 state.image.set(br[0], r, this.color);
             }
         }
+
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            this.drawCore(col, row, draw);
+        }
+
+        protected drawCore(col: number, row: number, setPixel: (col: number, row: number) => void) {
+            col = col - Math.floor(this.toolWidth / 2);
+            row = row - Math.floor(this.toolWidth / 2);
+            for (let i = 0; i < this.toolWidth; i++) {
+                for (let j = 0; j < this.toolWidth; j++) {
+                    const c = col + i;
+                    const r = row + j;
+
+                    if (c >= 0 && c < this.canvasWidth && r >= 0 && r < this.canvasHeight) {
+                        setPixel(col + i, row + j);
+                    }
+                }
+            }
+        }
+
     }
 
     /**
@@ -336,6 +356,10 @@ namespace pxtsprite {
                 }
             }
         }
+
+        getCursor(): Cursor {
+            return new Cursor(1, 1);
+        }
     }
 
 
@@ -383,6 +407,10 @@ namespace pxtsprite {
                     q.push([x, y]);
                 }
             }
+        }
+
+        getCursor(): Cursor {
+            return new Cursor(1, 1);
         }
     }
 
