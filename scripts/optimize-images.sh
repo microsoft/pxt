@@ -1,3 +1,6 @@
+for file in *.jpeg ; do
+    mv "$file" "${file/%.jpeg/.jpg}"
+done
 for file in $(find . -name "*.gif"); 
 do 
     magick convert "$file[0]" "${file%.gif}.png";
