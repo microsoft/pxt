@@ -295,6 +295,11 @@ namespace pxtsprite {
             edit.start(col, row, this.state);
         }
 
+        onEditEnd(col: number, row: number, edit: Edit) {
+            edit.end(col, row, this.state);
+            this.drawFloatingLayer();
+        }
+
         protected drawImage(image = this.image, context = this.context, left = 0, top = 0, transparency = !this.lightMode) {
             for (let c = 0; c < image.width; c++) {
                 for (let r = 0; r < image.height; r++) {

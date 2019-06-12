@@ -66,8 +66,13 @@ namespace pxtsprite {
             this.startCol = cursorCol;
             this.startRow = cursorRow;
 
-            state.mergeFloatingLayer();
         }
+
+
+        end(col: number, row: number, state: CanvasState): void {
+
+        }
+
 
         getCursor(): Cursor {
             return new Cursor(this.toolWidth, this.toolWidth);
@@ -81,10 +86,15 @@ namespace pxtsprite {
     export abstract class SelectionEdit extends Edit {
         protected endCol: number;
         protected endRow: number;
+        protected isDragged: boolean;
 
         update(col: number, row: number) {
             this.endCol = col;
             this.endRow = row;
+
+            if (!this.isDragged && !(col == this.startCol && row == this.startRow)) {
+                this.isDragged = true;
+            }
         }
 
         protected topLeft(): Coord {
@@ -435,22 +445,33 @@ namespace pxtsprite {
             this.isStarted = true;
             this.startCol = cursorCol;
             this.startRow = cursorRow;
-
-            if (state.inFloatingLayer(cursorCol, cursorRow)) {
-                this.isMove = true;
+            if (state.floatingLayer) {
+                if (state.inFloatingLayer(cursorCol, cursorRow)) {
+                    this.isMove = true;
+                } else {
+                    state.mergeFloatingLayer();
+                }
             }
-            else {
+        }
+
+        end(cursorCol: number, cursorRow: number, state: CanvasState) {
+            if (!this.isDragged && state.floatingLayer) {
                 state.mergeFloatingLayer();
             }
         }
 
         protected doEditCore(state: CanvasState): void {
-            if (this.isMove) {
-                state.layerOffsetX = state.floatingLayer.x0 + this.endCol - this.startCol;
-                state.layerOffsetY = state.floatingLayer.y0 + this.endRow - this.startRow;
-            }
-            else {
-                state.copyToLayer(this.startCol, this.startRow, this.endCol - this.startCol, this.endRow - this.startRow, true);
+            const tl = this.topLeft();
+            const br = this.bottomRight();
+
+            if (this.isDragged) {
+                if (this.isMove) {
+                    state.layerOffsetX = state.floatingLayer.x0 + this.endCol - this.startCol;
+                    state.layerOffsetY = state.floatingLayer.y0 + this.endRow - this.startRow;
+                }
+                else {
+                    state.copyToLayer(tl.x, tl.y, br.x - tl.x + 1, br.y - tl.y + 1, true);
+                }
             }
         }
 
