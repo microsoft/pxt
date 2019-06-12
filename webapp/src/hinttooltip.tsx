@@ -37,7 +37,8 @@ export class HintTooltip extends data.Component<HintTooltipProps, HintTooltipSta
 
 export class HintManager {
     private timer: number;
-    private defaultDuration: number = 30000;
+    private defaultDuration: number = 15000;
+    private defaultDisplayCount: number = 3;
     private hints: { [key: string]: any } = {};
 
     public addHint(id: string, callback: any, duration?: number) {
@@ -48,9 +49,12 @@ export class HintManager {
     }
 
     // starts a timer, overwriting current timer
-    public pokeUserActivity(id: string) {
-        this.stopPokeUserActivity();
-        this.timer = this.hints[id]();
+    // TODO: if/when we add more hints, should discuss whether this count is across all hints or per-hint
+    public pokeUserActivity(id: string, displayCount?: number) {
+        if (displayCount == undefined || displayCount < this.defaultDisplayCount) {
+            this.stopPokeUserActivity();
+            this.timer = this.hints[id]();
+        }
     }
 
     // stops current user hint timer

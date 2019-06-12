@@ -1,14 +1,14 @@
 namespace pxt {
     export const TS_CONFIG =             `{
-        "compilerOptions": {
-            "target": "es5",
-            "noImplicitAny": true,
-            "outDir": "built",
-            "rootDir": "."
-        },
-        "exclude": ["pxt_modules/**/*test.ts"]
-    }
-    `;
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "outDir": "built",
+        "rootDir": "."
+    },
+    "exclude": ["pxt_modules/**/*test.ts"]
+}
+`;
     const _defaultFiles: Map<string> = {
         "tsconfig.json": TS_CONFIG,
 
@@ -38,13 +38,10 @@ test:
 - [ ] Add "- beta" to the GitHub project description if you are still iterating it.
 - [ ] Turn on your automated build on https://travis-ci.org
 - [ ] Use "pxt bump" to create a tagged release on GitHub
+- [ ] On GitHub, create a new file named LICENSE. Select the MIT License template.
 - [ ] Get your package reviewed and approved @DOCS@extensions/approval
 
 Read more at @DOCS@extensions
-
-## License
-
-@LICENSE@
 
 ## Supported targets
 

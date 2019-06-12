@@ -273,7 +273,7 @@ export function init(): void {
         };
     } else if (pxt.BrowserUtils.isPxtElectron()) {
         pxt.debug(`deploy: electron`);
-        pxt.commands.deployFallbackAsync = electron.driveDeployAsync;
+        pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.debug(`deploy: hid`);

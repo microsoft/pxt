@@ -155,6 +155,18 @@ if (typeof atob === "undefined") {
     }
 }
 
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
+if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        value: function (search: string, pos: number) {
+            if (search === undefined || search == null) return false;
+            pos = !pos || pos < 0 ? 0 : +pos;
+            return (<string>this).substring(pos, pos + search.length) === search;
+        }
+    });
+}
+
 // Polyfill for Uint8Array.slice for IE and Safari
 // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
 if (!Uint8Array.prototype.slice) {

@@ -54,7 +54,7 @@ namespace pxt.tutorial {
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
         const filterblocksRegex = /```(filterblocks)\s*\n([\s\S]*?)\n```/gmi;
-        const hintTextRegex = /(^[\s\S]*?\S$)\s+((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+        const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
 
         // Download tutorial markdown
         let steps = tutorialmd.split(/^##[^#].*$/gmi);
