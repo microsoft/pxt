@@ -22,6 +22,7 @@ function browserDownloadAsync(text: string, name: string, contentType: string): 
 }
 
 export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    // TODO(dz): deploy fn
     let url = ""
     const ext = pxt.outputName().replace(/[^.]*/, "")
     const out = resp.outfiles[pxt.outputName()]
@@ -118,6 +119,7 @@ export function isNativeHost(): boolean {
 }
 
 function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    // TODO(dz): deploy fn
     pxt.debug(`native deploy`)
     core.infoNotification(lf("Flashing device..."));
     const out = resp.outfiles[pxt.outputName()];
@@ -142,6 +144,7 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
+    // TODO(dz): deploy fn
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
     if (!resp.success)
@@ -175,6 +178,7 @@ function pairBootloaderAsync(): Promise<void> {
 }
 
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
+    // TODO(dz): deploy fn
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
         .catch((e) => {
@@ -198,6 +202,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
 }
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    // TODO(dz): deploy fn
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading..."));
     let deploy = () => pxt.Util.requestAsync({
@@ -294,6 +299,7 @@ export function setWebUSBPaired(enabled: boolean) {
 }
 
 function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
+    // TODO(dz): deploy fn
     return pxt.usb.isPairedAsync().then(paired => {
         if (paired) {
             setWebUSBPaired(true);

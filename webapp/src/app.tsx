@@ -2012,11 +2012,23 @@ export class ProjectView
                         });
                     }
                 }
+
+                // TODO(dz):
                 console.log("starting deploy")
+                // setup our timeout cancellation token
+                let cancelToken = new pxt.Util.CancellationToken()
+                const deployTimeoutMs = 5000
+                let timeoutHandle = setTimeout(() => {
+                    cancelToken.cancel()
+                }, deployTimeoutMs)
+
+                // do the deploy
+                cancelToken.startOperation()
                 return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
-                    showNotification: (msg) => core.infoNotification(msg)
+                    showNotification: (msg) => core.infoNotification(msg),
+                    cancellationToken: cancelToken
                 })
                     .catch(e => {
                         if (e.notifyUser) {
@@ -2029,7 +2041,9 @@ export class ProjectView
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
                     })
-                console.log("deploy done")
+                    .finally(() => {
+                        clearTimeout(timeoutHandle)
+                    })
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));

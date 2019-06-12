@@ -2,6 +2,7 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 namespace pxt.winrt {
     export function driveDeployCoreAsync(res: pxtc.CompileResult): Promise<void> {
+        // TODO(dz): deploy fn
         const drives = pxt.appTarget.compile.deployDrives;
         pxt.Util.assert(!!drives);
         pxt.debug(`deploying to drives ${drives}`)

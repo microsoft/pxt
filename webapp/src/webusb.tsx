@@ -103,7 +103,7 @@ function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
         header: lf("No device detected..."),
         jsx: <div><p><strong>{lf("Do you want to pair your {0} to the editor?", boardName)}</strong></p>
             <p>{lf("You will get one-click downloads and data logging.")}</p></div>,
-    }).then(clickedYes =>  {
+    }).then(clickedYes => {
         if (clickedYes) {
             return showWebUSBPairingInstructionsAsync(resp)
         }
@@ -115,6 +115,7 @@ function askWebUSBPairAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    // TODO(dz): deploy fn
     pxt.tickEvent(`webusb.deploy`)
     return cmds.hidDeployCoreAsync(resp)
         .catch(e => askWebUSBPairAsync(resp));

@@ -109,6 +109,7 @@ export function initElectron(projectView: ProjectView): void {
 
 let deployingDeferred: Promise.Resolver<void> = null;
 export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<void> {
+    // TODO(dz): deploy fn
     if (!pxt.BrowserUtils.isPxtElectron()) {
         return cmds.browserDownloadDeployCoreAsync(compileResult);
     }
