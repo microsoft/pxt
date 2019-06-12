@@ -71,7 +71,9 @@ namespace pxtblockly {
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
-            div.id = "melody-editor";
+            let melodyDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            melodyDiv.id = "melody-editor";
+            div.appendChild(melodyDiv);
             let topDiv = goog.dom.createDom("div", {}) as HTMLElement;
             topDiv.className = "melody-top-bar-div";
 
@@ -90,7 +92,7 @@ namespace pxtblockly {
             melodyName.value = this.title;
             melodyName.addEventListener("input", () => this.setTitle(melodyName.value));
             topDiv.appendChild(melodyName);
-            div.appendChild(topDiv);
+            melodyDiv.appendChild(topDiv);
 
             let gridDiv = goog.dom.createDom("div", {}) as HTMLElement;
             gridDiv.className = "melody-grid-div";
@@ -98,27 +100,37 @@ namespace pxtblockly {
                 var row = document.createElement("div");
                 row.className = "row" + i;
                 for(var j = 0; j < this.numCol; j++) {
-                    var cell = document.createElement("button");
+                    var cell = document.createElement("button"); // button
                     cell.className = "cell";
                     cell.id = "cell-" + i + "-" + j;
                     row.appendChild(cell);
                 }
                 gridDiv.appendChild(row);
             }
-            div.appendChild(gridDiv);
+            melodyDiv.appendChild(gridDiv);
 
             let bottomDiv = goog.dom.createDom("div", {}) as HTMLElement;
             bottomDiv.className = "melody-bottom-bar-div";
+
+            let buttonBarDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            buttonBarDiv.className = "melody-button-bar-div";
 
             let doneButton = document.createElement("button");
             doneButton.id = "melody-done-button";
             doneButton.innerText="Done";
             doneButton.addEventListener("click", () => Blockly.DropDownDiv.hideIfOwner(this));
-
             let playButton = document.createElement("button");
             playButton.innerText="P"; // will be an icon
             let loopButton = document.createElement("button");
             loopButton.innerText = "L"; // will be an icon
+
+            buttonBarDiv.appendChild(playButton);
+            buttonBarDiv.appendChild(loopButton);
+            buttonBarDiv.appendChild(doneButton);
+
+
+            let sliderDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            sliderDiv.className = "slider-container";
 
             let tempoSlider = document.createElement("input");
             tempoSlider.id = "melody-tempo-slider";
@@ -128,16 +140,21 @@ namespace pxtblockly {
             tempoSlider.defaultValue = "120";
             tempoSlider.addEventListener("input", () => this.setTempo(+tempoSlider.value));
 
-            let tempoLabel = document.createElement("label");
-            tempoLabel.innerText = "120"; // will be updated according to slider
-            tempoLabel.id = "melody-tempo-label";
+            let tempoText = document.createElement("label");
+            tempoText.innerText = "120"; // will be updated according to slider
+            tempoText.id = "melody-tempo-text";
+            //tempoText.addEventListener("input", () => this.setTempo(+tempoText.value));
+            sliderDiv.appendChild(tempoText);
+            sliderDiv.appendChild(tempoSlider);
 
-            bottomDiv.appendChild(tempoLabel);
+            //bottomDiv.appendChild(tempoText);
             //bottomDiv.appendChild(tempoSlider);
-            bottomDiv.appendChild(playButton);
-            bottomDiv.appendChild(loopButton);
-            bottomDiv.appendChild(doneButton);
-            div.appendChild(bottomDiv);
+            bottomDiv.appendChild(sliderDiv);
+            // bottomDiv.appendChild(playButton);
+            // bottomDiv.appendChild(loopButton);
+            // bottomDiv.appendChild(doneButton);
+            bottomDiv.appendChild(buttonBarDiv);
+            melodyDiv.appendChild(bottomDiv);
 
             // create event listeners at the end because the DOM needs to finish loading
             for(var i = 0; i < this.numRow; i++) {
@@ -197,10 +214,12 @@ namespace pxtblockly {
 
         protected getDropdownBackgroundColour() {
             return this.sourceBlock_.getColour();
+            //return "#560649";
         }
 
         protected getDropdownBorderColour() {
             return this.sourceBlock_.getColourSecondary();
+            //return "#560649";
         }
 
         setTitle(melodyName: string): void {
@@ -221,7 +240,8 @@ namespace pxtblockly {
             if (this.tempo != tempo) {
                 this.tempo = tempo;
                 if (this.melody) {
-                    document.getElementById("melody-tempo-label").innerText = this.tempo + "";
+                    document.getElementById("melody-tempo-text").innerText = this.tempo + "";
+                    //document.getElementById("melody-tempo-slider").value = this.tempo + "";
                     this.melody.setTempo(this.tempo);
                 }
             }
