@@ -3040,7 +3040,7 @@ export class ProjectView
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
 
-        const collapseTooltip = lf("Hide the simulator");
+        const collapseIconTooltip = this.state.collapseEditorTools  ? lf("Show the simulator") : lf("Hide the simulator");
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
@@ -3113,8 +3113,8 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
