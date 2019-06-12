@@ -1428,7 +1428,7 @@ export class ProjectView
     }
 
     importUri(url: string, buf: ArrayBuffer) {
-        if (/\.png$/i.test(url)) {
+        if (this.isPNGFile(url)) {
             this.importPNGBuffer(buf);
         } else {
             // ignore
