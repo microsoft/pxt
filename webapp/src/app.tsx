@@ -1302,6 +1302,12 @@ export class ProjectView
             .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
+    importPNGBuffer(buf: ArrayBuffer) {
+        screenshot.decodeBlobAsync("data:image/png;base64," +
+            btoa(pxt.Util.uint8ArrayToString(new Uint8Array(buf))))
+            .then(buf => this.importProjectCoreAsync(buf));
+    }
+
     importAssetFile(file: File) {
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => {
@@ -1407,8 +1413,26 @@ export class ProjectView
                     pxt.tickEvent("dragandrop.open")
                     this.importFile(files[0]);
                 }
+            },
+            url => {
+                if (this.isPNGFile(url)) {
+                    pxt.Util.httpRequestCoreAsync({
+                        url,
+                        method: "GET",
+                        responseArrayBuffer: true
+                    }).then(resp => this.importUri(url, resp.buffer))
+                    .catch(e => core.handleNetworkError(e));
+                }
             }
         );
+    }
+
+    importUri(url: string, buf: ArrayBuffer) {
+        if (this.isPNGFile(url)) {
+            this.importPNGBuffer(buf);
+        } else {
+            // ignore
+        }
     }
 
     importFile(file: File, options?: pxt.editor.ImportFileOptions) {
