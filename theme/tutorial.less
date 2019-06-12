@@ -12,6 +12,7 @@
 @seeMoreButtonHeight: 3.5rem;
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
+@mobileAvatarMargin: 2rem;
 
 /*******************************
       Tutorial mode
@@ -373,6 +374,11 @@ span.highlight-line {
     color: @white;
 }
 
+#tutorialcard:not(.showTooltip) .tooltip,
+#tutorialcard:not(.showTooltip) .tooltip:before {
+    display: none;
+}
+
 /*******************************
         See More Button
 *******************************/
@@ -404,13 +410,48 @@ span.highlight-line {
 
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
-
+    .avatar-container .tooltip:before {
+        left: 2rem;
+    }
 }
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     #tutorialcard .ui.button.prevbutton {
         display: none;
+    }
+
+    // hide avatar, adjust card width
+    .avatar-image {
+        display: none;
+    }
+
+    .tutorial #tutorialcard .tutorialmessage {
+        width: ~'calc(100% - @{mobileAvatarMargin} - 0.5rem)';
+        margin-left: @mobileAvatarMargin + 0.35rem;
+    }
+
+    #tutorialcard:not(.hasHint) .tutorialmessage {
+        width: ~'calc(100% - .5rem)';
+        margin-left: 0.35rem;
+    }
+
+    // mobile hint positioning
+    .tutorialhint {
+        top: 3.5rem;
+    }
+
+    .tutorialhint:before {
+        left: -5px;
+    }
+
+    // mobile tutorial tooltip positioning
+    .avatar-container .tooltip {
+        top: 2rem;
+    }
+
+    .avatar-container .tooltip:before {
+        left: 1rem;
     }
 }
 
@@ -428,14 +469,6 @@ span.highlight-line {
     .avatar-container .tooltip {
         left: 5rem;
     }
-
-    .avatar-container .tooltip:before {
-        left: 2rem;
-    }
-}
-
-/* Mobile */
-@media only screen and (max-width: @largestMobileScreen) {
 }
 
 /* thin screen */
