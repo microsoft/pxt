@@ -1415,7 +1415,7 @@ export class ProjectView
                 }
             },
             url => {
-                if (/\.(png)$/i.test(url)) {
+                if (this.isPNGFile(url)) {
                     pxt.Util.httpRequestCoreAsync({
                         url,
                         method: "GET",
