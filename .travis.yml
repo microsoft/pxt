@@ -16,8 +16,6 @@ notifications:
 cache:
   directories:
     - node_modules
-services:
-  - xvfb
 addons:
   apt:
     sources:
