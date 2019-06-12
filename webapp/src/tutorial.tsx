@@ -251,7 +251,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     finishTutorial() {
         this.closeLightbox();
         this.removeHintOnClick();
-        this.props.parent.completeTutorial();
+        this.props.parent.completeTutorialAsync().done();
     }
 
     private closeLightboxOnEscape = (e: KeyboardEvent) => {
