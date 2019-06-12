@@ -2,21 +2,20 @@
 
 namespace pxtblockly {
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
-        isFieldCustom_ = true;
+        public isFieldCustom_ = true;
         protected params: U;
-        mobile = false; // add some check for mobile
-        title: string = "Name this tune";
+        private title: string = "Name this tune";
         private melody: pxtmelody.MelodyArray;
-        soundingKeys: number = 0;
-        numRow: number = 8;
-        numCol: number = 8;
-        tempo: number = 120;
-        stringRep: string;
+        private soundingKeys: number = 0;
+        private numRow: number = 8;
+        private numCol: number = 8;
+        private tempo: number = 120;
+        private stringRep: string;
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
             this.params = params;
-            if (typeof this.melody === "undefined") {
+            if (!this.melody) {
                 this.melody = new pxtmelody.MelodyArray();
             }
         }
@@ -28,7 +27,6 @@ namespace pxtblockly {
 
         render_() {
             super.render_();
-            this.renderPreview(this.fieldGroup_ as SVGGElement);
             this.size_.height = this.getPreviewHeight();
             this.size_.width = this.getPreviewWidth();
         }
@@ -58,38 +56,17 @@ namespace pxtblockly {
             this.stringRep = newText;
             this.parseTypeScriptValue(newText);
             //super.setText(this.getTitle());
-            //super.setText(newText);
-            //this.setTitle(this.getTitle());
+            //super.setText(newText); // this causes grid to come back empty from typescript 
         }
 
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
             this.render_();
-            if (typeof this.melody === "undefined") {
+            if (!this.melody) {
                 this.melody = new pxtmelody.MelodyArray();
             }
-            // Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
-            // this.setTitle(this.getTitle());
-        }
-
-        // This should render what appears on the block when it is not being edited. It should be an
-        // SVG (not HTML)
-        protected renderPreview(group: SVGGElement) { // may not need the parameter?
-            var size = this.getSize();
-            var fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
-            /** @type {!Element} */
-            this.textElement_ = Blockly.utils.createSvgElement('text',
-                {'class': this.className_,
-                  'x': fieldX,
-                  'y': size.height / 2 + Blockly.BlockSvg.FIELD_TOP_PADDING,
-                  'dominant-baseline': 'middle',
-                  //'dy': goog.userAgent.EDGE_OR_IE ? Blockly.Field.IE_TEXT_OFFSET : '0',
-                  'text-anchor': 'middle'},
-                this.fieldGroup_);
-            //this.textElement_ = document.createElement("label"); // if I make it a label
-            this.textElement_.textContent = this.getTitle();
-            group.appendChild(this.textElement_);
+            Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
@@ -108,11 +85,11 @@ namespace pxtblockly {
             editorGalleryToggle.appendChild(galleryButton);
 
             topDiv.appendChild(editorGalleryToggle);
-            let name = document.createElement("input");
-            name.id = "melody-name";
-            name.value = this.title;
-            name.addEventListener("input", () => this.setTitle(name.value));
-            topDiv.appendChild(name);
+            let melodyName = document.createElement("input");
+            melodyName.id = "melody-name";
+            melodyName.value = this.title;
+            melodyName.addEventListener("input", () => this.setTitle(melodyName.value));
+            topDiv.appendChild(melodyName);
             div.appendChild(topDiv);
 
             let gridDiv = goog.dom.createDom("div", {}) as HTMLElement;
@@ -179,11 +156,9 @@ namespace pxtblockly {
 
         // This is the string that will be inserted into the user's TypeScript code
         protected getTypeScriptValue(): string {
-            if (typeof this.melody != "undefined") { // check if exists -- not sure if this is the best way?
+            if (this.melody) {
                 return "\"" + this.melody.getStringRepresentation() + "\"";
-                //return this.melody.getStringRepresentation();
             }
-            //return "\"\"";
             return "";
             
         }
@@ -193,7 +168,7 @@ namespace pxtblockly {
             value = value.slice(1,-1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
             let melodies: string[] = value.split("-");
-            if (typeof this.melody === "undefined") {
+            if (!this.melody) {
                 this.melody = new pxtmelody.MelodyArray();
             }
             for (var i = 0; i < melodies.length-1; i++) {
@@ -226,12 +201,12 @@ namespace pxtblockly {
             return this.sourceBlock_.getColourSecondary();
         }
 
-        setTitle(name: string): void {
-            if (this.title != name && this.textElement_) {
-                this.title = name;
-                this.textElement_.textContent = this.getTitle();
-                // Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
+        setTitle(melodyName: string): void {
+            if (this.title != melodyName) {
+                this.title = melodyName;
+                Blockly.FieldLabel.prototype.setText.call(this, this.title);
             }
+            
         }
 
         getTitle(): string {
@@ -305,7 +280,7 @@ namespace pxtblockly {
         }
 
         createGridDispaly() {
-            if (typeof this.melody === "undefined") {
+            if (!this.melody) {
                 this.melody = new pxtmelody.MelodyArray();
                 return;
             }
