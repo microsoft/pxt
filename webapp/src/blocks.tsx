@@ -1110,7 +1110,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.filterBlocks(subns, this.nsMap[ns]) || [];
     }
 
-    private openSpriteWizard() {
+    // TODO(jb): Generalize to snippet builder and pass in specific config.
+    private openSnippetDialog() {
         if (!this.snippetDialog) {
             const wrapper = document.body.appendChild(document.createElement('div'));
             const props = { parent: this.parent, mainWorkspace: this.editor }
@@ -1136,7 +1137,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         // Inject "Create a Sprite..." button
         if (ns == "sprites") {
-            // TODO(dz):
+            // TODO(jb): This will be injected from the target. 
             extraBlocks.push({
                 name: `SPRITE_WIZARD_BUTTON`,
                 type: "button",
@@ -1147,7 +1148,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     group: "Create"
                 },
                 callback: () => {
-                    this.openSpriteWizard();
+                    this.openSnippetDialog();
                 }
             });
         }

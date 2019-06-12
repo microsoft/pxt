@@ -176,9 +176,13 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
-                const xmlDOM = Blockly.Xml.textToDom(resp)
-
-                Blockly.Xml.appendDomToWorkspace(xmlDOM, mainWorkspace);
+                // TODO(jb)
+                const xmlDOM = Blockly.Xml.textToDom(resp);
+                // TODO(jb) hard coded in topmost child should be generalized
+                const toAttach = xmlDOM.children[1].children[0].children[0];
+                const onStart = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
+                // Hard coded in top blocks
+                mainWorkspace.getTopBlocks(true)[0].getInput("HANDLER").connection.connect(onStart.previousConnection);
             }).catch((e) => {
                 pxt.reportException(e);
                 throw new Error(`Failed to decompile snippet output`);
@@ -292,7 +296,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         )
     }
 }
-
+// get config
 // This will be passed down as a prop but is currently static
 const staticConfig: ISnippetConfig = {
     name: "Sprite Builder",
@@ -322,6 +326,7 @@ const staticConfig: ISnippetConfig = {
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     \`, SpriteKind.Player)`,
+    // initialOutput: `info.setLife(3)`,
     questions: [
         {
             "title": "What should your sprite be called?",
