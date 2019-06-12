@@ -233,9 +233,8 @@ ${cmds}
 function codalBin() {
     let cs = pxt.appTarget.compileService
 
-    return cs.codalBinary ?
-        buildengine.thisBuild.buildPath + "/build/" + cs.codalBinary :
-        "built/yt/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "");
+    return buildengine.thisBuild.buildPath + "/build/" + (cs.codalBinary ? cs.codalBinary :
+        cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, ""));
 }
 
 let cachedMap = ""
