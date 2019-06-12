@@ -4,7 +4,8 @@ namespace pxtmelody {
         private tempo: number = 120;
         private width: number = 8;
         private height: number = 8;
-        private melody: boolean[][]; 
+        private melody: boolean[][];
+        private title: string = "Name this tune"; 
 
         // constructor
         constructor(tempo?: number) {
@@ -16,6 +17,13 @@ namespace pxtmelody {
             }
         }
         
+        public setTitle(title: string): void {
+            this.title = title;
+        }
+
+        public setTempo(tempo: number): void {
+            this.tempo = tempo;
+        }
         // setValue
 
         // getValue
@@ -61,6 +69,8 @@ namespace pxtmelody {
             let queues: string[][];
             queues = new Array(this.width);
             let numMelodies = 0;
+            // add name and tempo info
+            stringMelody += this.title + "-" + this.tempo + "-";
             // create queues of notes
             for (var i = 0; i < this.height; i++) {
                 let noteCount = 0;

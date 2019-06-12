@@ -27,8 +27,8 @@ namespace pxtblockly {
 
         render_() {
             super.render_();
-            this.size_.height = this.getPreviewHeight();
-            this.size_.width = this.getPreviewWidth();
+            //this.size_.height = this.getPreviewHeight();
+            //this.size_.width = this.getPreviewWidth();
         }
 
         showEditor_() {
@@ -171,7 +171,9 @@ namespace pxtblockly {
             if (!this.melody) {
                 this.melody = new pxtmelody.MelodyArray();
             }
-            for (var i = 0; i < melodies.length-1; i++) {
+            this.setTitle(melodies[0]);
+            this.setTempo(Number(melodies[1]));
+            for (var i = 2; i < melodies.length-1; i++) { // first two strings are name and tempo
                 let notes: string [] = melodies[i].split(" ");
                 for (var j = 0; j < notes.length-1; j++) {
                     if (notes[j] != "R") {
@@ -205,8 +207,10 @@ namespace pxtblockly {
             if (this.title != melodyName) {
                 this.title = melodyName;
                 Blockly.FieldLabel.prototype.setText.call(this, this.title);
+                if (this.melody) {
+                    this.melody.setTitle(this.title);
+                }   
             }
-            
         }
 
         getTitle(): string {
@@ -216,7 +220,10 @@ namespace pxtblockly {
         setTempo(tempo: number): void {
             if (this.tempo != tempo) {
                 this.tempo = tempo;
-                document.getElementById("melody-tempo-label").innerText = this.tempo + "";
+                if (this.melody) {
+                    document.getElementById("melody-tempo-label").innerText = this.tempo + "";
+                    this.melody.setTempo(this.tempo);
+                }
             }
         }
 
