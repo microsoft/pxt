@@ -56,7 +56,7 @@ export interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
     answers?: IAnswersMap;
-    currentQuestion: number;
+    history: number[];
     defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
     config?: ISnippetConfig; // Will be a config type
 }
@@ -74,7 +74,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         this.state = {
             visible: false,
             answers: {},
-            currentQuestion: 0, // Index to track current question
+            history: [0], // Index to track current question
             defaults: {},
             config: staticConfig, // This will be set when it is recieved
             tsOutput: staticConfig.initialOutput
@@ -195,11 +195,6 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         this.hide();
     }
 
-    changePage(increment: 1 | -1) {
-        const { currentQuestion } = this.state;
-        this.setState({ currentQuestion: currentQuestion + increment });
-    }
-
     /**
      * Changes page by 1 if next question exists.
      * Looks for output and appends the next questions output if it exists and
@@ -207,21 +202,24 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
      */
     nextPage() {
         const { config } = this.state;
-        const { currentQuestion, tsOutput } = this.state;
-        const nextQuestion = config.questions[currentQuestion + 1];
-        // If next question exists
-        if (nextQuestion) {
-            // If output is not already appended
+        const { history, tsOutput } = this.state;
+        const currentQuestion = config.questions[history[history.length - 1]];
+        const goto = currentQuestion.goto
+        if (goto) {
+            const nextQuestion = config.questions[goto.question];
+
             if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
                 this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`});
             }
-            // Change page to page + 1
-            this.changePage(1);
+            this.setState({ history: [...history, goto.question ]})
         }
     }
 
     backPage() {
-        this.changePage(-1);
+        const { history } = this.state;
+        if (history.length) {
+            this.setState({ history: history.slice(0, history.length - 1)});
+        }
     }
 
     textInputOnChange = (answerToken: string) => (v: string) => {
@@ -232,7 +230,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
     }
 
     renderCore() {
-        const { visible, tsOutput, answers, currentQuestion, config } = this.state;
+        const { visible, tsOutput, answers, config, history } = this.state;
         const { parent } = this.props;
 
         const actions: sui.ModalButton[] = [
@@ -262,7 +260,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
             }
         ];
 
-        const currQ = config.questions[currentQuestion];
+        const currQ = config.questions[history[history.length - 1]];
 
         return (
             <sui.Modal isOpen={visible} className="snippetBuilder" size="large"
@@ -296,7 +294,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         )
     }
 }
-// get config
+
 // This will be passed down as a prop but is currently static
 const staticConfig: ISnippetConfig = {
     name: "Sprite Builder",
@@ -326,7 +324,6 @@ const staticConfig: ISnippetConfig = {
     . . . . . . . . . . . . . . . .
     . . . . . . . . . . . . . . . .
     \`, SpriteKind.Player)`,
-    // initialOutput: `info.setLife(3)`,
     questions: [
         {
             "title": "What should your sprite be called?",
@@ -383,7 +380,7 @@ const staticConfig: ISnippetConfig = {
             ],
             "output": "$spriteName.setKind($spriteKind)",
             "goto": {
-                "question": 4,
+                "question": 1,
                 "parameters": {
                     "spriteKind": 0
                 }
