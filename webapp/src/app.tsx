@@ -2012,6 +2012,7 @@ export class ProjectView
                         });
                     }
                 }
+                console.log("starting deploy")
                 return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
@@ -2028,6 +2029,7 @@ export class ProjectView
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
                     })
+                console.log("deploy done")
             }).catch((e: Error) => {
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
@@ -2912,7 +2914,7 @@ export class ProjectView
             tutorialOptions: tutorialOptions
         });
 
-        setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
+        setTimeout(() => { this.setState({ pokeUserComponent: null }); }, 3000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3082,7 +3084,7 @@ export class ProjectView
             </div>
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
-        const showRightChevron = (this.state.collapseEditorTools || isRTL ) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
+        const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
