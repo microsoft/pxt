@@ -135,13 +135,6 @@ function initConfigAsync(): Promise<void> {
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config;
-        if (!atok)
-            p = p.then(() => passwordGetAsync(PXT_KEY))
-                .then(token => {
-                    if (!atok && token) {
-                        atok = token
-                    }
-                });
     }
 
     p.then(() => {
