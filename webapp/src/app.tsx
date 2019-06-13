@@ -2746,6 +2746,7 @@ export class ProjectView
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
+        let tutorialErrorMessage = lf("Please check your internet access and ensure the tutorial is valid.");
         let p: Promise<string>;
         if (/^\//.test(tutorialId)) {
             title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
@@ -2758,7 +2759,7 @@ export class ProjectView
                     }
                     return md;
                 }).catch((e) => {
-                    core.errorNotification(e.message);
+                    core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
                 });
         } else if (scriptId) {
@@ -2772,7 +2773,7 @@ export class ProjectView
                     reportId = scriptId;
                     return files["README.md"];
                 }).catch((e) => {
-                    core.errorNotification(e.message);
+                    core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
                 });
         } else if (!!ghid) {
@@ -2796,7 +2797,7 @@ export class ProjectView
                     autoChooseBoard = false;
                     return gh.files["README.md"];
                 }).catch((e) => {
-                    core.errorNotification(e.message);
+                    core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
                 });
         } else {
@@ -2829,7 +2830,7 @@ export class ProjectView
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
         ).catch((e) => {
-            core.errorNotification(e.message);
+            core.errorNotification(tutorialErrorMessage);
             core.handleNetworkError(e);
         }).finally(() => core.hideLoading("tutorial"));
     }
