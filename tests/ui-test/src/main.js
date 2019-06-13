@@ -4,11 +4,6 @@ import {chrome} from 'selenium-webdriver/chrome';
 
 import {newProjectPage} from './new-project'
 
-
-global.driver = new webdriver.Builder()
-    .forBrowser('chrome')
-    .build();
-
 describe('Micro:bit Test', function () {
     before(async () => {
         return await website.open("beta");
