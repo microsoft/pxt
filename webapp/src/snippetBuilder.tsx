@@ -164,6 +164,42 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         this.hide();
     }
 
+    findRootBlock(xmlDOM: Element, type?: string): Element {
+        for (const child in xmlDOM.children) {
+            const xmlChild = xmlDOM.children[child];
+
+            if (xmlChild.tagName === 'block') {
+                if (type) {
+                    const childType = xmlChild.getAttribute('type');
+
+                    if (childType && childType === type) {
+                        return xmlChild
+                        // return this.findRootBlock(xmlChild);
+                    }
+                } else {
+                    return xmlChild;
+                }
+            }
+
+            const childChildren = this.findRootBlock(xmlChild);
+            if (childChildren) {
+                return childChildren;
+            }
+        }
+        return null;
+    }
+
+    getOnStartBlock(mainWorkspace: Blockly.Workspace) {
+        const topBlocks = mainWorkspace.getTopBlocks(true);
+        for (const block of topBlocks) {
+            if (block.type === 'pxt-on-start') {
+                return block;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Takes the output from state, runs replace tokens, decompiles the resulting typescript
      * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach 
@@ -179,10 +215,11 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                 // TODO(jb)
                 const xmlDOM = Blockly.Xml.textToDom(resp);
                 // TODO(jb) hard coded in topmost child should be generalized
-                const toAttach = xmlDOM.children[1].children[0].children[0];
-                const onStart = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
+                const xmlOnStartBlock = this.findRootBlock(xmlDOM, 'pxt-on-start');
+                const toAttach = this.findRootBlock(xmlOnStartBlock);
+                const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
                 // Hard coded in top blocks
-                mainWorkspace.getTopBlocks(true)[0].getInput("HANDLER").connection.connect(onStart.previousConnection);
+                this.getOnStartBlock(mainWorkspace).getInput("HANDLER").connection.connect(rootConnection.previousConnection);
             }).catch((e) => {
                 pxt.reportException(e);
                 throw new Error(`Failed to decompile snippet output`);
@@ -277,8 +314,8 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                                         <div key={input.answerToken}>
                                             <sui.Input
                                                 label={input.label && input.label}
-                                                value={answers[input.answerToken] || ''}
                                                 onChange={this.textInputOnChange(input.answerToken)}
+                                                value={answers[input.answerToken] || ''}
                                             />
                                         </div>
                                     )}
@@ -306,24 +343,7 @@ const staticConfig: ISnippetConfig = {
         Enemy
     }
 
-    let $spriteName = sprites.create(img\`
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    . . . . . . . . . . . . . . . .
-    \`, SpriteKind.Player)`,
+    let $spriteName = sprites.create($spriteImage, $spriteKind)`,
     questions: [
         {
             "title": "What should your sprite be called?",
@@ -358,17 +378,37 @@ const staticConfig: ISnippetConfig = {
                 "question": 3
             }
         },
-        // {
-        //     "title": "What should your sprite look like?",
-        //     "inputs": [
-        //         {
-        //             "answerToken": "spriteImage",
-        //             "type": "spriteEditor"
-        //         }
-        //     ],
-        //     "ouput": "${spriteName} = sprites.setImage(img```${spriteImage}```)",
-        //     "goto": 1
-        // },
+        {
+            "title": "What should your sprite look like?",
+            "inputs": [
+                {
+                    "answerToken": "spriteImage",
+                    "type": "spriteEditor",
+                    defaultAnswer: `img\`
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    \``
+                }
+            ],
+            // "output": '$spriteName.setImage($spriteImage)',
+            "goto": {
+                question: 1,
+            }
+        },
         {
             "title": "What kind of sprite should this be?",
             "inputs": [
@@ -378,9 +418,9 @@ const staticConfig: ISnippetConfig = {
                     "type": "dropdown"
                 }
             ],
-            "output": "$spriteName.setKind($spriteKind)",
+            // "output": "$spriteName.setKind($spriteKind)",
             "goto": {
-                "question": 1,
+                "question": 4,
                 "parameters": {
                     "spriteKind": 0
                 }
