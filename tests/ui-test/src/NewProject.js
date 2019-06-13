@@ -1,42 +1,6 @@
-const { By } = require('selenium-webdriver');
+import {DomObject} from './lib/domObject';
+import {By} from 'selenium-webdriver';
 
-class DomObject {
-
-    async actionForAll(actionName, findBys) {
-        for (let findBy of findBys) {
-            if (findBy) {
-                console.debug(`Try to click the element by criteria: ${findBy}`);
-
-                if (typeof findBy === 'string') {
-                    findBy = await By.css(findBy);
-                }
-
-                let element = await driver.wait(until.elementLocated(findBy));
-                await driver.sleep(1000);
-                await element[actionName]();
-            }
-        }
-        return true;
-    }
-
-    async sendKeys(findBy, keys) {
-
-        if (typeof findBy === 'string') {
-            findBy = await By.css(findBy);
-        }
-
-        let element = await driver.findElement(findBy);
-        await element["actionName"](keys);
-        await driver.sleep(8000);
-        return true;
-    }
-
-
-    async click(...findBys) {
-        let i = await this.actionForAll('click', findBys);
-        return i;
-    }
-}
 class NewProjectPage extends DomObject {
 
     async getCodeSource() {
@@ -61,7 +25,6 @@ class NewProjectPage extends DomObject {
             return await this.testGetCodeSource();
         });
     }
-
 }
 
 export let newProjectPage = new NewProjectPage();

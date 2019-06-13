@@ -1,4 +1,4 @@
-import webdriver from 'selenium-webdriver';
+import {Builder, until} from 'selenium-webdriver';
 import {chrome} from 'selenium-webdriver/chrome';
 
 
@@ -13,7 +13,7 @@ class Website {
     async open(path = "") {
         var fullPath = this.getUrl(path);
         console.log(`Open url ${fullPath}`);
-        
+
         await driver.get(fullPath);
 
         console.info(`Opened URL ${fullPath}`);
@@ -35,10 +35,10 @@ class Website {
 }
 
 
-global.driver = new webdriver.Builder()
+global.driver = new Builder()
     .forBrowser('chrome')
     .build();
-global.until = webdriver.until;
+global.until = until;
 
 
 export let website = new Website();
