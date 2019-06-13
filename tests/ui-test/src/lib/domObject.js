@@ -22,7 +22,7 @@ export class DomObject {
 
     findBy(criteria){
         if (typeof criteria === 'string') {
-            return await By.css(criteria);
+            return By.css(criteria);
         }
         return criteria
     }
