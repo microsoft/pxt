@@ -3540,14 +3540,15 @@ declare module Blockly {
     
             /**
              * Show the context menu for this bubble.
-             * @param {!Event} e Mouse event.
+             * @param {!Event} _e Mouse event.
              * @private
              */
-            showContextMenu_(): void;
+            showContextMenu_(_e: Event): void;
     
             /**
              * Get whether this bubble is deletable or not.
              * @return {boolean} True if deletable.
+             * @package
              */
             isDeletable(): boolean;
     
@@ -3647,7 +3648,8 @@ declare module Blockly {
             moveDuringDrag(dragSurface: Blockly.BlockDragSurfaceSvg, newLoc: goog.math.Coordinate): void;
     
             /**
-             * Return the coordinates of the top-left corner of this bubble's body relative
+             * Return the coordinates of the top corner of this bubble's starting edge (e.g.
+             * top left corner in LTR and top right corner in RTL) relative
              * to the drawing surface's origin (0,0), in workspace units.
              * @return {!goog.math.Coordinate} Object with .x and .y properties.
              */
@@ -3672,11 +3674,6 @@ declare module Blockly.Bubble {
      * Width of the border around the bubble.
      */
     var BORDER_WIDTH: any /*missing*/;
-
-    /**
-     * Radius of the border around the bubble.
-     */
-    var BORDER_RADIUS: any /*missing*/;
 
     /**
      * Determines the thickness of the base of the arrow in relation to the size
@@ -3727,17 +3724,18 @@ declare module Blockly {
     class BubbleDragger__Class  { 
     
             /**
-             * Class for a bubble dragger.  It moves bubbles around the workspace when they
-             * are being dragged by a mouse or touch.
-             * @param {!Blockly.Bubble|!Blockly.WorkspaceCommentSvg} bubble The bubble to
-             *     drag.
+             * Class for a bubble dragger.  It moves things on the bubble canvas around the
+             * workspace when they are being dragged by a mouse or touch.  These can be
+             * block comments, mutators, warnings, or workspace comments.
+             * @param {!Blockly.Bubble|!Blockly.WorkspaceCommentSvg} bubble The item on the
+             *     bubble canvas to drag.
              * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag on.
              * @constructor
              */
             constructor(bubble: Blockly.Bubble|Blockly.WorkspaceCommentSvg, workspace: Blockly.WorkspaceSvg);
     
             /**
-             * The bubble that is being dragged.
+             * The item on the bubble canvas that is being dragged.
              * @type {!Blockly.Bubble|!Blockly.WorkspaceCommentSvg}
              * @private
              */
@@ -3830,6 +3828,7 @@ declare module Blockly {
     
             /**
              * Fire a move event at the end of a bubble drag.
+             * PXT Blockly: remove if statement check for ScratchBubble
              * @private
              */
             fireMoveEvent_(): void;
@@ -3891,6 +3890,7 @@ declare module Blockly {
     
             /**
              * Draw the comment icon.
+             * PXT Blockly: draw comment icon shape
              * @param {!Element} group The icon group.
              * @private
              */
@@ -3898,6 +3898,8 @@ declare module Blockly {
     
             /**
              * Create the editor for the comment's bubble.
+             * PXT Blockly: keep creatEditor_ and createTextEditor_
+             * functions separate, to leave space for top icons
              * @return {!Element} The top-level node of the editor.
              * @private
              */
@@ -3917,40 +3919,27 @@ declare module Blockly {
             createTextEditor_(): Element;
     
             /**
-             * Add the delete icon to the DOM
+             * PXT Blockly: Create the minimize toggle and delete icons that in the comment top bar.
              * @private
              */
-            addDeleteDom_(): void;
+            createTopBarIcons_(): void;
     
             /**
-             * Handle a mouse-down on comment's delete icon.
+             * PXT Blockly: Handle a mouse-down on comment's delete icon.
              * @param {!Event} e Mouse down event.
              * @private
              */
             deleteMouseDown_(e: Event): void;
     
             /**
-             * Handle a mouse-out on comment's delete icon.
-             * @param {!Event} e Mouse out event.
-             * @private
-             */
-            deleteMouseOut_(): void;
-    
-            /**
-             * Handle a mouse-up on comment's delete icon.
+             * PXT Blockly: Handle a mouse-up on comment's delete icon.
              * @param {!Event} e Mouse up event.
              * @private
              */
             deleteMouseUp_(e: Event): void;
     
             /**
-             * Add the minimize icon to the DOM
-             * @private
-             */
-            addMinimizeDom_(): void;
-    
-            /**
-             * Handle a mouse-up on comment's minimize icon.
+             * PXT Blockly: Handle a mouse-up on comment's minimize icon.
              * @param {!Event} e Mouse up event.
              * @private
              */
@@ -3970,28 +3959,11 @@ declare module Blockly {
             setVisible(visible: boolean): void;
     
             /**
-             * Focus this comment.  Highlight it visually.
-             */
-            addFocus(): void;
-    
-            /**
-             * Unfocus this comment.  Remove its highlighting.
-             */
-            removeFocus(): void;
-    
-            /**
              * Bring the comment to the top of the stack when clicked on.
              * @param {!Event} _e Mouse up event.
              * @private
              */
             textareaFocus_(_e: Event): void;
-    
-            /**
-             * Remove the focused attribute when the text area goes out of focus.
-             * @param {!Event} e blur event.
-             * @private
-             */
-            textareaBlur_(e: Event): void;
     
             /**
              * Get the dimensions of this comment's bubble.
@@ -16842,11 +16814,13 @@ declare module Blockly {
              * @param {string} content The content of this workspace comment.
              * @param {number} height Height of the comment.
              * @param {number} width Width of the comment.
+             * @param {boolean} minimized Whether this comment is in the minimized state
              * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
-             *     create a new ID.
+             *     create a new ID.  If the ID conflicts with an in-use ID, a new one will
+             *     be generated.
              * @constructor
              */
-            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, opt_id?: string);
+            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, minimized: boolean, opt_id?: string);
     
             /** @type {string} */
             id: string;
@@ -16874,6 +16848,13 @@ declare module Blockly {
             width_: number;
     
             /**
+             * The comment's minimized state.
+             * @type {boolean}
+             * @private
+             */
+            isMinimized_: boolean;
+    
+            /**
              * @type {!Blockly.Workspace}
              */
             workspace: Blockly.Workspace;
@@ -16897,6 +16878,7 @@ declare module Blockly {
             movable_: boolean;
     
             /**
+             * PXT Blockly
              * @type {boolean}
              * @private
              */
@@ -16915,7 +16897,7 @@ declare module Blockly {
             isComment: boolean;
     
             /**
-             * Optional text data that round-trips beween blocks and XML.
+             * PXT Blockly: Optional text data that round-trips beween blocks and XML.
              * Has no effect. May be used by 3rd parties for meta information.
              * @type {?string}
              */
@@ -16923,7 +16905,7 @@ declare module Blockly {
     
             /**
              * Dispose of this comment.
-             * @publc
+             * @public
              */
             dispose(): void;
     
@@ -16954,6 +16936,13 @@ declare module Blockly {
              * @public
              */
             setWidth(width: number): void;
+    
+            /**
+             * Get the height and width of this comment.
+             * @return {{height: number, width: number}} The height and width of this comment;
+             *     these numbers do not change as the workspace scales.
+             */
+            getHeightWidth(): { height: number; width: number };
     
             /**
              * Get stored location.
@@ -17021,9 +17010,16 @@ declare module Blockly {
             /**
              * Set this comment's content.
              * @param {string} content Comment content.
-             * @public
+             * @package
              */
             setContent(content: string): void;
+    
+            /**
+             * Check whether this comment is currently minimized.
+             * @return {boolean} True if minimized
+             * @package
+             */
+            isMinimized(): boolean;
     
             /**
              * Return the coordinates of the top-left corner of this comment relative to the
@@ -17041,9 +17037,16 @@ declare module Blockly {
             toXmlWithXY(opt_noId: boolean): Element;
     
             /**
-             * Encode a comment subtree as XML, but don't serialize the XY coordinates.
-             * This method avoids some expensive metrics-related calls that are made in
-             * toXmlWithXY().
+             * Get the truncated text for this comment to display in the minimized
+             * top bar.
+             * @return {string} The truncated comment text
+             * @package
+             */
+            getLabelText(): string;
+    
+            /**
+             * Encode a comment subtree as XML, but don't serialize the XY coordinates or
+             * width and height.  If you need that additional information use toXmlWithXY.
              * @param {boolean} opt_noId True if the encoder should skip the comment id.
              * @return {!Element} Tree of XML elements.
              * @package
@@ -17054,6 +17057,19 @@ declare module Blockly {
 }
 
 declare module Blockly.WorkspaceComment {
+
+    /**
+     * Maximum lable length (actual label length will include
+     * one additional character, the ellipsis).
+     * @private
+     */
+    var MAX_LABEL_LENGTH: any /*missing*/;
+
+    /**
+     * Maximum character length for comment text.
+     * @private
+     */
+    var COMMENT_TEXT_LIMIT: any /*missing*/;
 
     /**
      * Fire a create event for the given workspace comment, if comments are enabled.
@@ -17088,8 +17104,8 @@ declare module Blockly.Events {
     
             /**
              * Abstract class for a comment event.
-             * @param {Blockly.WorkspaceComment} comment The comment this event corresponds
-             *     to.
+             * @param {Blockly.WorkspaceComment} comment
+             *    The comment this event corresponds to.
              * @extends {Blockly.Events.Abstract}
              * @constructor
              */
@@ -17106,6 +17122,13 @@ declare module Blockly.Events {
              * @type {string}
              */
             workspaceId: string;
+    
+            /**
+             * The ID of the block this comment belongs to or null if it is not a block
+             * comment.
+             * @type {string}
+             */
+            blockId: string;
     
             /**
              * The event group id for the group this event belongs to. Groups define
@@ -17132,6 +17155,14 @@ declare module Blockly.Events {
              * @param {!Object} json JSON representation.
              */
             fromJson(json: Object): void;
+    
+            /**
+             * Helper function for finding the comment this event pertains to.
+             * @return {Blockly.WorkspaceComment}
+             *     The comment this event pertains to, or null if it no longer exists.
+             * @private
+             */
+            getComment_(): Blockly.WorkspaceComment;
     } 
     
 
@@ -17141,14 +17172,20 @@ declare module Blockly.Events {
     
             /**
              * Class for a comment change event.
-             * @param {Blockly.WorkspaceComment} comment The comment that is being changed.
-             *     Null for a blank event.
-             * @param {string} oldContents Previous contents of the comment.
-             * @param {string} newContents New contents of the comment.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The comment that is being changed. Null for a blank event.
+             * @param {!object} oldContents Object containing previous state of a comment's
+             *     properties. The possible properties can be: 'minimized', 'text', or
+             *     'width' and 'height' together. Must contain the same property (or in the
+             *     case of 'width' and 'height' properties) as the 'newContents' param.
+             * @param {!object} newContents Object containing the new state of a comment's
+             *     properties. The possible properties can be: 'minimized', 'text', or
+             *     'width' and 'height' together. Must contain the same property (or in the
+             *     case of 'width' and 'height' properties) as the 'oldContents' param.
              * @extends {Blockly.Events.CommentBase}
              * @constructor
              */
-            constructor(comment: Blockly.WorkspaceComment, oldContents: string, newContents: string);
+            constructor(comment: Blockly.WorkspaceComment, oldContents: object, newContents: object);
     
             /**
              * Type of this event.
@@ -17188,12 +17225,44 @@ declare module Blockly.Events {
     
             /**
              * Class for a comment creation event.
-             * @param {Blockly.WorkspaceComment} comment The created comment.
-             *     Null for a blank event.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The created comment. Null for a blank event.
+             * @param {string=} opt_blockId Optional id for the block this comment belongs
+             *     to, if it is a block comment.
              * @extends {Blockly.Events.CommentBase}
              * @constructor
              */
             constructor(comment: Blockly.WorkspaceComment);
+    
+            /**
+             * The text content of this comment.
+             * @type {string}
+             */
+            text: string;
+    
+            /**
+             * The XY position of this comment on the workspace.
+             * @type {goog.math.Coordinate}
+             */
+            xy: goog.math.Coordinate;
+    
+            /**
+             * The width of this comment when it is full size.
+             * @type {number}
+             */
+            width: number;
+    
+            /**
+             * The height of this comment when it is full size.
+             * @type {number}
+             */
+            height: number;
+    
+            /**
+             * Whether or not this comment is minimized.
+             * @type {boolean}
+             */
+            minimized: boolean;
     
             /**
              * Type of this event.
@@ -17203,7 +17272,8 @@ declare module Blockly.Events {
     
             /**
              * Encode the event as JSON.
-             * TODO (#1266): "Full" and "minimal" serialization.
+             * TODO (github.com/google/blockly/issues/1266): "Full" and "minimal"
+             * serialization.
              * @return {!Object} JSON representation.
              */
             toJson(): Object;
@@ -17228,8 +17298,8 @@ declare module Blockly.Events {
     
             /**
              * Class for a comment deletion event.
-             * @param {Blockly.WorkspaceComment} comment The deleted comment.
-             *     Null for a blank event.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The deleted comment. Null for a blank event.
              * @extends {Blockly.Events.CommentBase}
              * @constructor
              */
@@ -17243,7 +17313,8 @@ declare module Blockly.Events {
     
             /**
              * Encode the event as JSON.
-             * TODO (#1266): "Full" and "minimal" serialization.
+             * TODO (github.com/google/blockly/issues/1266): "Full" and "minimal"
+             * serialization.
              * @return {!Object} JSON representation.
              */
             toJson(): Object;
@@ -17268,8 +17339,8 @@ declare module Blockly.Events {
     
             /**
              * Class for a comment move event.  Created before the move.
-             * @param {Blockly.WorkspaceComment} comment The comment that is being moved.
-             *     Null for a blank event.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The comment that is being moved. Null for a blank event.
              * @extends {Blockly.Events.CommentBase}
              * @constructor
              */
@@ -17295,6 +17366,14 @@ declare module Blockly.Events {
             newCoordinate_: goog.math.Coordinate;
     
             /**
+             * Calculate the current, language agnostic location of the comment.
+             * This value should not report different numbers in LTR vs. RTL.
+             * @return {goog.math.Coordinate} The location of the comment.
+             * @private
+             */
+            currentLocation_(): goog.math.Coordinate;
+    
+            /**
              * Record the comment's new location.  Called after the move.  Can only be
              * called once.
              */
@@ -17316,7 +17395,8 @@ declare module Blockly.Events {
     
             /**
              * Encode the event as JSON.
-             * TODO (#1266): "Full" and "minimal" serialization.
+             * TODO (github.com/google/blockly/issues/1266): "Full" and "minimal"
+             * serialization.
              * @return {!Object} JSON representation.
              */
             toJson(): Object;
@@ -17345,25 +17425,20 @@ declare module Blockly.Events {
 declare module Blockly.WorkspaceCommentSvg {
 
     /**
+     * Radius of the border around the comment.
+     * @type {number}
+     * @const
+     * @private
+     */
+    var BORDER_WIDTH: number;
+
+    /**
      * Size of the resize icon.
      * @type {number}
      * @const
      * @private
      */
     var RESIZE_SIZE: number;
-
-    /**
-     * Radius of the border around the comment.
-     * @type {number}
-     * @const
-     * @private
-     */
-    var BORDER_RADIUS: number;
-
-    /**
-     * Width of the border around the comment.
-     */
-    var BORDER_WIDTH: any /*missing*/;
 
     /**
      * Offset from the foreignobject edge to the textarea edge.
@@ -17374,19 +17449,34 @@ declare module Blockly.WorkspaceCommentSvg {
     var TEXTAREA_OFFSET: number;
 
     /**
-     * Offset from the top to make room for a top bar.
-     * @type {number}
-     * @const
-     * @private
+     * The height of the comment top bar.
+     * @package
      */
-    var TOP_OFFSET: number;
+    var TOP_BAR_HEIGHT: any /*missing*/;
 
     /**
-     * Padding of the delete icon.
-     * @type {number}
-     * @const
+     * The size of the minimize arrow icon in the comment top bar.
+     * @private
      */
-    var DELETE_ICON_PADDING: number;
+    var MINIMIZE_ICON_SIZE: any /*missing*/;
+
+    /**
+     * The size of the delete icon in the comment top bar.
+     * @private
+     */
+    var DELETE_ICON_SIZE: any /*missing*/;
+
+    /**
+     * The inset for the top bar icons.
+     * @private
+     */
+    var TOP_BAR_ICON_INSET: any /*missing*/;
+
+    /**
+     * Width that a minimized comment should have.
+     * @private
+     */
+    var MINIMIZE_WIDTH: any /*missing*/;
 
     /**
      * Length of an uneditable text field in characters.
@@ -17401,12 +17491,6 @@ declare module Blockly.WorkspaceCommentSvg {
      * @const
      */
     var UNEDITABLE_LINE_GAP: number;
-
-    /**
-     * Draw the minimize icon
-     * @private
-     */
-    function drawDeleteIcon(svgGroup: any /* jsdoc error */): void;
 }
 
 declare module Blockly {
@@ -17421,12 +17505,13 @@ declare module Blockly {
              * @param {string} content The content of this workspace comment.
              * @param {number} height Height of the comment.
              * @param {number} width Width of the comment.
+             * @param {boolean} minimized Whether this comment is minimized.
              * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
              *     create a new ID.
              * @extends {Blockly.WorkspaceComment}
              * @constructor
              */
-            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, opt_id?: string);
+            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, minimized: boolean, opt_id?: string);
     
             /**
              * @type {SVGElement}
@@ -17475,13 +17560,6 @@ declare module Blockly {
              * @private
              */
             showContextMenu_(e: Event): void;
-    
-            /**
-             * Move this workspace comment to the top of the stack.
-             * @return {!boolean} Whether or not the comment has been moved.
-             * @private
-             */
-            promote_(): boolean;
     
             /**
              * Select this comment.  Highlight it visually.
@@ -17593,6 +17671,17 @@ declare module Blockly {
             clearTransformAttributes_(): void;
     
             /**
+             * Return the rendered size of the comment or the stored size if the comment is
+             * not rendered. This differs from getHeightWidth in the behavior of rendered
+             * minimized comments. This function reports the actual size of the minimized
+             * comment instead of the full sized comment height/width.
+             * @return {!{height: number, width: number}} Object with height and width
+             *    properties in workspace units.
+             * @package
+             */
+            getBubbleSize(): { height: number; width: number };
+    
+            /**
              * Returns the coordinates of a bounding box describing the dimensions of this
              * comment.
              * Coordinate system: workspace coordinates.
@@ -17639,7 +17728,7 @@ declare module Blockly {
             /**
              * Set this comment's content.
              * @param {string} content Comment content.
-             * @public
+             * @package
              */
             setContent(content: string): void;
     
@@ -17669,6 +17758,14 @@ declare module Blockly {
 }
 
 declare module Blockly.WorkspaceCommentSvg {
+
+    /**
+     * The width and height to use to size a workspace comment when it is first
+     * added, before it has been edited by the user.
+     * @type {number}
+     * @package
+     */
+    var DEFAULT_SIZE: number;
 
     /**
      * Decode an XML comment tag and create a rendered comment on the workspace.
