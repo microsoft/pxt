@@ -2731,12 +2731,7 @@ export class ProjectView
 
     startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
-        // Check for Internet access
-        if (!pxt.Cloud.isNavigatorOnline()) {
-            core.errorNotification(lf("No Internet access, please connect and try again."));
-        } else {
-            this.startTutorialAsync(tutorialId, tutorialTitle);
-        }
+        this.startTutorialAsync(tutorialId, tutorialTitle);
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
@@ -2762,7 +2757,10 @@ export class ProjectView
                         autoChooseBoard = true;
                     }
                     return md;
-                })
+                }).catch((e) => {
+                    core.errorNotification(e.message);
+                    core.handleNetworkError(e);
+                });
         } else if (scriptId) {
             pxt.tickEvent("tutorial.shared");
             p = workspace.downloadFilesByIdAsync(scriptId)
@@ -2773,6 +2771,9 @@ export class ProjectView
                     autoChooseBoard = false;
                     reportId = scriptId;
                     return files["README.md"];
+                }).catch((e) => {
+                    core.errorNotification(e.message);
+                    core.handleNetworkError(e);
                 });
         } else if (!!ghid) {
             p = pxt.packagesConfigAsync()
@@ -2794,6 +2795,9 @@ export class ProjectView
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     return gh.files["README.md"];
+                }).catch((e) => {
+                    core.errorNotification(e.message);
+                    core.handleNetworkError(e);
                 });
         } else {
             p = Promise.resolve(undefined);
@@ -2825,6 +2829,7 @@ export class ProjectView
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
         ).catch((e) => {
+            core.errorNotification(e.message);
             core.handleNetworkError(e);
         }).finally(() => core.hideLoading("tutorial"));
     }
