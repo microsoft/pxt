@@ -536,7 +536,7 @@ namespace pxsim {
         private getBoardGroundPin(): string {
             let pin = this.opts.boardDef.groundPins && this.opts.boardDef.groundPins[0] || null;
             if (!pin) {
-                console.log("No available ground pin on board!");
+                console.debug("No available ground pin on board!");
                 //TODO
             }
             return pin;
@@ -544,7 +544,7 @@ namespace pxsim {
         private getBoardThreeVoltPin(): string {
             let pin = this.opts.boardDef.threeVoltPins && this.opts.boardDef.threeVoltPins[0] || null;
             if (!pin) {
-                console.log("No available 3.3V pin on board!");
+                console.debug("No available 3.3V pin on board!");
                 //TODO
             }
             return pin;
@@ -552,7 +552,7 @@ namespace pxsim {
         private getBoardFiveVoltPin(): string {
             let pin = this.opts.boardDef.fiveVoltPins && this.opts.boardDef.fiveVoltPins[0] || null;
             if (!pin) {
-                console.log("No available 5V pin on board!");
+                console.debug("No available 5V pin on board!");
                 //TODO
             }
             return pin;
