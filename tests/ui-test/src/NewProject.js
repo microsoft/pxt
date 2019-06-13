@@ -2,24 +2,23 @@ const { By } = require('selenium-webdriver');
 
 class DomObject {
 
-    async actionForAll(actionName, ...findBys) {
-        async () => {
-            for (let findBy of findBys) {
-                if (findBy) {
-                    console.debug(`Try to click the element by criteria: ${findBy}`);
+    async actionForAll(actionName, findBys) {
+        for (let findBy of findBys) {
+            if (findBy) {
+                console.debug(`Try to click the element by criteria: ${findBy}`);
 
-                    if (typeof findBy === 'string') {
-                        findBy = await By.css(findBy);
-                    }
-
-                    let element = await driver.wait(until.elementLocated(findBy));
-                    await driver.sleep(1000);
-                    await element["click"]();
+                if (typeof findBy === 'string') {
+                    findBy = await By.css(findBy);
                 }
+
+                let element = await driver.wait(until.elementLocated(findBy));
+                await driver.sleep(1000);
+                await element[actionName]();
             }
-        };
+        }
         return true;
     }
+
     async sendKeys(findBy, keys) {
 
         if (typeof findBy === 'string') {
@@ -34,7 +33,8 @@ class DomObject {
 
 
     async click(...findBys) {
-        return this.actionForAll('click', findBys);
+        let i = await this.actionForAll('click', findBys);
+        return i;
     }
 }
 class NewProjectPage extends DomObject {
@@ -43,9 +43,7 @@ class NewProjectPage extends DomObject {
 
         console.debug("Start testGetCodeSource()");
 
-        await this.click('.newprojectcard',
-            By.className('ui item link  icon openproject ')
-        );
+        await this.click('.newprojectcard', '.openproject');
         await driver.sleep(1000);
 
         console.debug(`Input`);
@@ -58,9 +56,12 @@ class NewProjectPage extends DomObject {
         return await this.getCodeSource();
     }
 
-    async test() {
-        return await this.testGetCodeSource();
+    test(){
+        it('Get the code source', async () =>{
+            return await this.testGetCodeSource();
+        });
     }
+
 }
 
 export let newProjectPage = new NewProjectPage();

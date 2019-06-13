@@ -17,9 +17,5 @@ describe('Micro:bit Test', function () {
         website.close();
     });
 
-    it('Get the code source', async () =>{
-        
-        return await newProjectPage.test();
-
-    });
+    newProjectPage.test();
 })
