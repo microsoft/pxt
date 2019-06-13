@@ -10,12 +10,16 @@ global.driver = new webdriver.Builder()
     .build();
 
 describe('Micro:bit Test', function () {
-    before(function () {
-        website.open("beta");
+    before(async () => {
+        return await website.open("beta");
     });
     after(function () {
         website.close();
     });
 
-    newProjectPage.test();
+    it('Get the code source', async () =>{
+        
+        return await newProjectPage.test();
+
+    });
 })

@@ -1,3 +1,7 @@
+import webdriver from 'selenium-webdriver';
+import {chrome} from 'selenium-webdriver/chrome';
+
+
 const WEBSITE_URL = "https://makecode.microbit.org"
 
 class Website {
@@ -6,12 +10,14 @@ class Website {
         this.rootURL = rootURL;
     }
 
-    open(path = "") {
+    async open(path = "") {
         var fullPath = this.getUrl(path);
         console.log(`Open url ${fullPath}`);
-        driver.get(fullPath);
+        
+        await driver.get(fullPath);
 
-        driver.manage().window().maximize();
+        console.info(`Opened URL ${fullPath}`);
+        return await driver.manage().window().maximize();
     }
 
     getUrl(path) {
@@ -27,5 +33,12 @@ class Website {
     }
 
 }
+
+
+global.driver = new webdriver.Builder()
+    .forBrowser('chrome')
+    .build();
+global.until = webdriver.until;
+
 
 export let website = new Website();
