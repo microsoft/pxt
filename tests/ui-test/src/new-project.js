@@ -16,13 +16,9 @@ class NewProjectPage extends DomObject {
         return await this.click(By.className('icon close remove circle '));
     }
 
-    async testGetCodeSource() {
-        return await this.getCodeSource();
-    }
-
     test(){
         it('Get the code source', async () =>{
-            return await this.testGetCodeSource();
+            return await this.getCodeSource();
         });
     }
 }
