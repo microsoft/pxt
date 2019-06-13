@@ -1,18 +1,16 @@
 import {website} from "./lib/website";
 import webdriver from 'selenium-webdriver';
-import newProject from './NewProject'
+import {chrome} from 'selenium-webdriver/chrome';
 
-global.driver = new webdriver.Builder()
-    .forBrowser('chrome')
-    .build();
+import {newProjectPage} from './new-project'
 
 describe('Micro:bit Test', function () {
-    before(function () {
-        website.open("beta");
+    before(async () => {
+        return await website.open("beta");
     });
     after(function () {
         website.close();
     });
 
-    newProject.newProject();
+    newProjectPage.test();
 })
