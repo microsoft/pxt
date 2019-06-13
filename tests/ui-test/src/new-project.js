@@ -1,4 +1,4 @@
-import {DomObject} from './lib/domObject';
+import {DomObject} from './lib/dom-object';
 import {By} from 'selenium-webdriver';
 
 class NewProjectPage extends DomObject {

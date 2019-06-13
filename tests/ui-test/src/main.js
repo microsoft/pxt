@@ -2,7 +2,7 @@ import {website} from "./lib/website";
 import webdriver from 'selenium-webdriver';
 import {chrome} from 'selenium-webdriver/chrome';
 
-import {newProjectPage} from './newProject'
+import {newProjectPage} from './new-project'
 
 
 global.driver = new webdriver.Builder()
