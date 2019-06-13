@@ -11,9 +11,10 @@ class NewProjectPage extends DomObject {
         await driver.sleep(1000);
 
         console.debug(`Input`);
-        //   await driver.findElement(By.css('input#projectNameInput')).sendKeys('fortest');
+        await this.sendKeys('input#projectNameInput', 'fortest');
 
-        return await this.click(By.className('icon close remove circle '));
+        await this.click(By.className('icon close remove circle '));
+        return true;
     }
 
     test(){

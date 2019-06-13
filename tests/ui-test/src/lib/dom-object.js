@@ -30,7 +30,7 @@ export class DomObject {
     async sendKeys(criteria, keys) {
 
         let element = await driver.findElement(this.findBy(criteria));
-        await element["actionName"](keys);
+        await element.sendKeys(keys);
         
         return true;
     }
