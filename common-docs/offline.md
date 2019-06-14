@@ -18,6 +18,26 @@ When the editor loads in your browser it tells it to keep the MakeCode service f
 
 When running on actual hardware, the code you write in JavaScript is compiled into instructions which are understood by the processor on the board. Some of the files saved in the application cache are compiled code for the features on the board. To use the hardware features on your board, the editor provides blocks for them that you include in your programs. These blocks are available to your program when they're included as part of an added extension. The code in an extension is in TypeScript and sometimes also in C++. It's necessary to compile this code at least once on the server and then have the compiled files returned to the browser to get cached. Once cached, the editor can use them together with your code, even when offline. This one time compile process is called cloud compilation.
 
+## Extensions #extensions
+
+Extensions are, by default, downloaded from internet so typically need to be connected to use them. If you want to use a particular extension **offline**, you will need to follow these steps:
+
+* **while connected to internet**, create a new program in the editor and add the extension you need to use
+* click ``|Save|`` and store the downloaded file.
+
+This file contains the full sources of the extension. Save this file in a location that you can access offline.
+
+* **while offline**, go to the ``|Extensions|`` dialog and click on **Add file**
+* import the downloaded file created in the previous step
+
+### ~ hint
+
+#### Limitations
+
+Extensions that use C++ are not supported yet in a full offline scenario as they require cloud compilation.
+
+### ~
+
 ## Hosting MakeCode locally #local-serve
 
 The open source editions of MakeCode can be served locally on your own computer. More experienced users can download the entire [PXT Toolchain](https://github.com/Microsoft/pxt) and use the [command line interface](/cli) (CLI) to compile and deploy scripts locally. PXT provides a great out-of-the-box experience when used with [Visual Studio Code](/code), a lightweight cross-platform code editor. See the @githubUrl@ project page for instructions on setting up a MakeCode local server.
