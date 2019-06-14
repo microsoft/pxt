@@ -243,6 +243,15 @@ code.lang-spy
     min-height: 48px;
 }
 
+#docs .ui.card>.image .ui.cardimage {
+    height: 14.5rem;
+}
+
+#docs .ui.card .content {
+    padding-top: 25px;
+    padding-right: 0;
+}
+
 #docs-type {
     width: 100%;
     position: fixed;
