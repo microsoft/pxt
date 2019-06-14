@@ -21,9 +21,11 @@ namespace pxt.winrt {
             })
         }
 
+        // TODO(dz): waiting on getFoldersAsync
         return pxt.winrt.promisify(Windows.Storage.KnownFolders.removableDevices.getFoldersAsync())
             .then(ds => {
                 let df = ds.filter(d => drx.test(d.displayName));
+                // TODO(dz): waiting on writeAsync
                 let pdf = df.map(writeAsync);
                 let all = Promise.join(...pdf)
                 return all;

@@ -54,9 +54,16 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
         return Promise.resolve();
     }
 
-    if (resp.saveOnly && userContext) return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync); // save does the same as download as far iOS is concerned
-    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !userContext) return Promise.resolve();
-    else return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync);
+    if (resp.saveOnly && userContext) {
+        // TODO(dz): waiting on showUploadInstructionsAsync
+        return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync); // save does the same as download as far iOS is concerned
+    }
+    if (resp.saveOnly || pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !userContext)
+        return Promise.resolve();
+    else {
+        // TODO(dz): waiting on showUploadInstructionsAsync
+        return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync);
+    }
 }
 
 function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (options: any) => Promise<number>): Promise<void> {
@@ -124,6 +131,7 @@ function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     core.infoNotification(lf("Flashing device..."));
     const out = resp.outfiles[pxt.outputName()];
     const nativePostMessage = nativeHostPostMessageFunction();
+    // TODO(dz): waiting on nativePostMessage ???
     nativePostMessage(<pxt.editor.NativeHostMessage>{
         name: resp.downloadFileBaseName,
         download: out
@@ -152,18 +160,23 @@ export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.De
     core.infoNotification(lf("Downloading..."));
     let f = resp.outfiles[pxtc.BINARY_UF2]
     let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
+    // TODO(dz): waiting on initAsync
     return hidbridge.initAsync()
+        // TODO(dz): waiting on reflashAsync
         .then(dev => dev.reflashAsync(blocks))
         .catch((e) => {
             const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
             if (e.type === "repairbootloader") {
+                // TODO(dz): waiting on pairBootloaderAsync
                 return pairBootloaderAsync()
                     .then(() => hidDeployCoreAsync(resp))
             }
             if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync && !!troubleshootDoc) {
                 pxt.tickEvent("hid.flash.devicenotfound");
+                // TODO(dz): waiting on reportDeviceNotFoundAsync
                 return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
             } else {
+                // TODO(dz): waiting on saveOnlyAsync
                 return pxt.commands.saveOnlyAsync(resp);
             }
         });
@@ -182,12 +195,14 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
         .catch((e) => {
+            // TODO(dz): waiting on disconnectWrapperAsync
             return hidbridge.disconnectWrapperAsync()
                 .catch((e) => {
                     // Best effort disconnect; at this point we don't even know the state of the device
                     pxt.reportException(e);
                 })
                 .then(() => {
+                    // TODO(dz): waiting on confirmAsync
                     return core.confirmAsync({
                         header: lf("Something went wrong..."),
                         body: lf("Flashing your {0} took too long. Please disconnect your {0} from your computer and try reconnecting it.", pxt.appTarget.appTheme.boardName || lf("device")),
@@ -196,6 +211,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
                     });
                 })
                 .then(() => {
+                    // TODO(dz): waiting on saveOnlyAsync
                     return pxt.commands.saveOnlyAsync(r);
                 });
         });
@@ -205,6 +221,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     // TODO(dz): deploy fn
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading..."));
+    // TODO(dz): waiting on requestAsync
     let deploy = () => pxt.Util.requestAsync({
         url: "/api/deploy",
         headers: { "Authorization": Cloud.localToken },
@@ -219,6 +236,7 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         }
     });
 
+    // TODO(dz): waiting on deploy
     return deploy()
 }
 

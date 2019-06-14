@@ -118,5 +118,6 @@ export function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     // TODO(dz): deploy fn
     pxt.tickEvent(`webusb.deploy`)
     return cmds.hidDeployCoreAsync(resp)
+        // TODO(dz): waiting on askWebUSBPairAsync
         .catch(e => askWebUSBPairAsync(resp));
 }
