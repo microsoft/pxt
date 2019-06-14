@@ -400,6 +400,10 @@
             showDownloads();
         }
 
+        function hideLoader() {
+            $("#loader").remove();            
+        }
+
         function showAgree() {
             $("#agree-segment").removeClass("hidden");
             $("#read-segment").removeClass("hidden");
@@ -426,6 +430,7 @@
         $(function () {
             $.getJSON("https://makecode.com/api/config/@targetid@/targetconfig")
                 .then(function (data) {
+                    hideLoader();
                     if (data && data.electronManifest && data.electronManifest.latest) {
                         electronLatestVersion = data.electronManifest.latest;
                         showAgree();
@@ -434,6 +439,7 @@
                     }
                 })
                 .catch(function () {
+                    hideLoader();
                     showNoDownloads();
                 })
         });
