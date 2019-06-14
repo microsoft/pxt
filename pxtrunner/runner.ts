@@ -397,11 +397,11 @@ namespace pxt.runner {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
                     let url = mp[3] == "doc" ? (pxt.webConfig.isStatic ? `/docs${mp[4]}.html` : `${mp[4]}`) : `${docsUrl}?md=${mp[4]}`;
-                    window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
-                        window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
-                            type: "popoutcomplete"
+                        window.parent.postMessage(<pxsim.SimulatorOpenDocMessage>{
+                            type: "opendoc",
+                            url: BrowserUtils.urlJoin(verPrefix, url)
                         }, "*");
                 }
                 break;

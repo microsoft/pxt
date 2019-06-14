@@ -100,6 +100,8 @@ namespace pxsim.visuals {
                     this.addAll(allocRes);
                     if (!allocRes.requiresBreadboard && !opts.forceBreadboardRender)
                         useBreadboardView = false;
+                    else if (allocRes.hideBreadboard && this.breadboard)
+                        this.breadboard.hide();
                 }
             }
 

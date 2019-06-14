@@ -706,6 +706,9 @@ p.ui.font.small {
     .ui.tablet.only {
         display:unset !important;
     }
+    .collapse-button.ui.tablet.only {
+        display:inherit !important; // fix for simulator toggle, IE11 does not have "unset"
+    }
 }
 
 /* Mobile + Tablet */
@@ -740,6 +743,9 @@ p.ui.font.small {
     }
     .ui.portrait.hide {
         display:none !important;
+    }
+    .collapse-button.ui.computer.only {
+        display:none !important; // hide desktop simulator toggle
     }
 }
 
@@ -1116,10 +1122,10 @@ p.ui.font.small {
         border-top-left-radius: 100px;
         border-bottom-right-radius: 0;
         border-bottom-left-radius: 0;
-        top: unset;
+        top: auto;
         left: 40%;
         width: 20%;
-        height: unset;
+        height: auto;
         bottom: 10rem;
     }
     .collapsedEditorTools #togglesim {

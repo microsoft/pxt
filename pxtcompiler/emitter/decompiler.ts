@@ -1397,8 +1397,6 @@ ${output}</xml>`;
                     case SK.LessThanEqualsToken:
                     case SK.GreaterThanToken:
                     case SK.GreaterThanEqualsToken:
-                    // TODO: &&, ||, ! should check against non boolean l / r (e.g. not `1 || 2`)
-                    // https://github.com/Microsoft/pxt-arcade/issues/946
                     case SK.AmpersandAmpersandToken:
                     case SK.BarBarToken:
                         return undefined;
@@ -1409,10 +1407,12 @@ ${output}</xml>`;
 
             function checkBooleanCallExpression(n: CallExpression) {
                 const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
-                const type = callInfo.decl.type;
+                if (callInfo) {
+                    const type = callInfo.decl.type;
 
-                if (type && type.kind === SK.BooleanKeyword) {
-                    return undefined;
+                    if (type && type.kind === SK.BooleanKeyword) {
+                        return undefined;
+                    }
                 }
                 return Util.lf("Only functions that return booleans are allowed as conditions");
             }
