@@ -27,12 +27,14 @@ Extensions are, by default, downloaded from internet so typically you need to be
 
 This file contains the full source code of the extension. Save this file in a location that you can access later when offline.
 
-* **while offline**, go to the ``|Extensions|`` dialog and click on **Add file**
+* **while offline**, go to the ``|Extensions|`` dialog and click on **Import file**
 * import the downloaded file that was saved in the previous step.
 
 ### ~ hint
 
 #### Limitations
+
+Not all MakeCode editors support importing extensions as a source file. If importing is enabled, you will see an **Import File** button in the extensions dialog.
 
 Extensions that use C++ are not supported yet in a full offline scenario as they require cloud compilation.
 
