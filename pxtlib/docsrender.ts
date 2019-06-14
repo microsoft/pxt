@@ -291,7 +291,7 @@ namespace pxt.docs {
         // Add sidebar toggle
         const sidebarToggleHtml = `
             <a id="togglesidebar" class="launch icon item left" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
-                <i class="close icon"></i>
+                <i class="content icon"></i>
             </a>`
 
         params['sidebarToggle'] = sidebarToggleHtml;

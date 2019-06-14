@@ -84,12 +84,14 @@ function setupSidebar() {
                 document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width');
                 togglesidebar.setAttribute("aria-expanded", "false");
             },
-            context: $('#maincontent')
+            context: $('#maincontent'),
+            transition: 'push',
+            mobileTransition: 'push'
         })
         .sidebar(
             'attach events', '#togglesidebar'
         )
-        .sidebar('setting', 'transition', 'push')
+        
 
     $('.ui.dropdown')
         .dropdown();
@@ -239,6 +241,11 @@ function setupBlocklyAsync() {
                 })
         })
     }
+
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.docMenu && pxt.appTarget.appTheme.docMenu.length !== 0) {
+        setupMenu(pxt.appTarget.appTheme.docMenu);
+    }
+
     return promise;
 }
 
@@ -279,9 +286,94 @@ function responsiveResize(){
       });
 }
 
+function setElementsVisibility(){
+    var breadcrumb = document.querySelector('#breadcrumb-container');
+    var printBtn = document.querySelector('#printbtn');
+    var stickyColumn = document.querySelector('#sticky-column');
+
+    if (document.querySelector(".ui.hero") !== null){
+        printBtn.style.display = 'none';
+    }
+    if (breadcrumb.children.length === 0){
+        breadcrumb.style.display = 'none';
+    }
+    
+    setStickyColumn();
+    
+    if (stickyColumn.children.length === 0){
+        stickyColumn.style.display = 'none';
+        document.querySelector('#content-column').classList.replace('ten', 'fourteen');
+    } else {
+        stickyColumn.style.display = 'block';
+        document.querySelector('#content-column').classList.replace('fourteen', 'ten');
+    }
+    if (stickyColumn.children.length !== 0 && document.querySelector(".ui.hero") !== null) {
+        stickyColumn.firstElementChild.style.top = '21rem';
+    }
+}
+
+function setDocumentationMode(type) {
+    if (type === 0){
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('content-width');
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('full-width');
+    } else {
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('full-width');
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('content-width');
+    }
+}
+
+function setupMenu(menu) {   
+    var docsMenu = document.querySelector('#docs-type');
+    menu.forEach(function(item) {
+        var menuItem = document.createElement('a');
+        menuItem.rel = 'noopener';
+        menuItem.target = '_self';
+        menuItem.className = 'item';
+        menuItem.href = item.path;
+        menuItem.textContent = item.name;
+        docsMenu.append(menuItem);
+    });
+
+    var docnav = document.querySelector('.docnav');
+    menu.forEach(function(item) {
+        var menuItem = document.createElement('a');
+        menuItem.rel = 'noopener';
+        menuItem.target = '_self';
+        menuItem.className = 'item';
+        menuItem.href = item.path;
+        menuItem.textContent = item.name;
+        docnav.append(menuItem);
+    });
+
+}
+
+function setStickyColumn() {
+    var headings = document.querySelectorAll('.ui.text h2');
+    if (headings.length > 2){
+    var stickyColumn = document.querySelector('#sticky-column');
+    var linkList = document.createElement('ul');
+    var title = document.createElement('h3');
+    title.textContent = "Content";
+    title.className = 'title';
+    linkList.appendChild(title);
+    headings.forEach(function(heading){
+        var item = document.createElement('a');
+        item.textContent = heading.textContent;
+        item.onclick = function(){
+            heading.scrollIntoView({ 
+                behavior: 'smooth' 
+              });
+        }
+        linkList.appendChild(item);
+    });
+    stickyColumn.appendChild(linkList);
+    }
+}
+
 $(document).ready(function () {
     setupSidebar();
     setupSemantic();
     renderSnippets();
     responsiveResize();
+    setElementsVisibility();
 });

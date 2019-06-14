@@ -1,5 +1,5 @@
 body#root {
-    font-size: 12pt;  
+    font-size: 1rem;  
     background-color: white;  
 }
 
@@ -7,13 +7,10 @@ body#root {
     padding: 0rem;
 }
 
-#docs ul li {
-    list-style-type: none;
-}
-
 #docs ul li:before {
-  margin: 0 1em; 
+  margin-right: .5rem;
   content: "\25CF";
+  color: #4183c4;
 }
 
 #docs ul li.checked:before {
@@ -37,6 +34,10 @@ pre {
     line-height: 1.45;
     background-color: #f7f7f7;
     border-radius: 3px;
+}
+
+#docs-type {
+    display:flex;
 }
 
 code {
@@ -116,9 +117,10 @@ code.lang-spy
 
 /* Limit width of text so that it's readable
  */
- 
-.ui.text p,
-.ui.text li,
+.ui.text li {
+    transition: width .5s;
+    transition-timing-function: ease;
+}
 
 .ui.grid.mainbody {
     /*max-width: 1100px !important;*/
@@ -129,12 +131,18 @@ code.lang-spy
 
 .ui.grid.mainbody.full-width, .ui.vertical.footer.full-width {
     width: 100vw;
-    padding-right: 3rem;
+    padding-right: 0rem;
+    margin-left:0px !important;
 }
 
 .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
-    width: 84vw;
+    width: 80vw;
     margin-left: 1rem;
+}
+
+.ui.grid>.column:not(.row), .ui.grid>.row>.column {
+    padding-left: 0px;
+    padding-right: 0px;
 }
 
 #togglesidebar > i.icon {
@@ -220,9 +228,27 @@ code.lang-spy
     position: fixed;
     z-index: 1;
     width: 100%;
-    background-color: #eaeaea;
+    background-color: #6c196c;
     top:3rem;
 }
+
+#docs .ui.card {
+    flex-flow: column;
+    height: 20rem;
+}
+
+#docs .ui.card {
+    width: 100%;
+}
+
+#docs .ui.card > .image {
+    width: 100%;
+}
+
+#docs .ui.card > .image > div {
+    min-height: 14em !important;
+}
+
 .ui.grid.mainbody {
     margin-top: 4rem;
 }
@@ -230,8 +256,8 @@ code.lang-spy
     width: 70%;
 }
 .ui.visible.wide.left.sidebar~.fixed, .ui.visible.wide.left.sidebar~.pusher {
-    -webkit-transform: translate3d(254px,0,0);
-    transform: translate3d(254px,0,0);
+    -webkit-transform: translate3d(70vw,0,0);
+    transform: translate3d(70vw,0,0);
 }
 }
 
@@ -314,6 +340,10 @@ svg {
     left: 0;
     bottom: 4rem;
     overflow-y: auto;
+}
+
+.article-inner {
+    overflow-x: hidden;
 }
 
 .ui.vertical.menu .menu .item {
@@ -460,6 +490,19 @@ svg {
     .ui.vertical.segment.footer {
         margin-top: 4rem;
     }
+
+}
+
+@media only screen and (max-width: 1440px) {
+    #docs .ui.card {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+    #docs .ui.card {
+        width: 100%;
+    }
 }
 
 @media only screen and (min-width: 1145px) {
@@ -483,6 +526,18 @@ print only stuff
 }
 
 @media only print {
+
+    #root {
+        position: relative;
+    }
+    #sticky-column, #printbtn{
+        display:none !important;
+    }
+
+    #docs .ui.card{
+        width: 100%;
+    }
+
     .pusher .article {
         left: 0;
         position: relative;
@@ -503,7 +558,7 @@ print only stuff
     }
     body.pushable {
         background: #fff !important;        
-    }
+    } 
 
    
 }
