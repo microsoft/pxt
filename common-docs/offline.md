@@ -20,15 +20,19 @@ When running on actual hardware, the code you write in JavaScript is compiled in
 
 ## Extensions #extensions
 
-Extensions are, by default, downloaded from internet so typically you need to be connected to use them. If you want to use a particular extension **offline**, you will need to follow these steps:
+Extensions are, by default, downloaded from internet so typically you need to be connected to use them. If you want to use a particular extension while **offline**, you will need to follow these steps:
 
-* **while connected to internet**, create a new program in the editor and add the extension you need to use
-* click ``|Save|`` and store the downloaded file.
+### Download the extension
 
-This file contains the full source code of the extension. Save this file in a location that you can access later when offline.
+* **While connected to internet**, create a new project in the editor and then add the extension you need to use. You don't need to add any program code to the project.
+* Click ``|Save|`` (the project save icon), or ``|Download|``, and store the downloaded file. Save it to a folder location that you will remember and have access to when offline.
 
-* **while offline**, go to the ``|Extensions|`` dialog and click on **Import file**
-* import the downloaded file that was saved in the previous step.
+This file contains the full source code of the extension, allowing you to use the extension while offline.
+
+### Import the offline extension
+
+* **While offline**, go to the ``|Extensions|`` dialog and click on **Import file**.
+* Import the file you downloaded and saved earlier when you were online.
 
 ### ~ hint
 
