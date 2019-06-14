@@ -29,7 +29,7 @@ Some MakeCode editors are available as [offline apps](/offline). Also, when Make
 
 ## Can I use Extensions when I'm not connected to the internet?
 
-Yes, it is possible to save Extensions. Follow [these instructions](/offline#extensions).
+Yes, it is possible to save Extensions so that your programs can still use them when you're offline. Follow [these instructions](/offline#extensions).
 
 ## What happens when I clear the browser's cache and temporary files? #clear-data
 
