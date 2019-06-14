@@ -273,8 +273,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs;
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
-        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
-            && greenscreen.isSupported();
+        const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
 
         // Electron does not currently support webusb
