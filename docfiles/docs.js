@@ -345,6 +345,17 @@ function setupMenu(menu) {
         docnav.append(menuItem);
     });
 
+    var mobileMenu = document.querySelector('#docsMobile .activities');
+    menu.forEach(function(item) {
+        var menuItem = document.createElement('a');
+        menuItem.rel = 'noopener';
+        menuItem.target = '_self';
+        menuItem.className = 'item';
+        menuItem.href = item.path;
+        menuItem.textContent = item.name;
+        mobileMenu.append(menuItem);
+    });
+
 }
 
 function setStickyColumn() {

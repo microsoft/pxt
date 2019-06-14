@@ -202,7 +202,7 @@ code.lang-spy
     display: none;
 }
 
-@media (min-width: 320px) and (max-width: 480px) {
+@media (min-width: 320px) and (max-width: 970px) {
 .docnav {
     flex-wrap: wrap;
     height: 9rem;
@@ -212,9 +212,18 @@ code.lang-spy
     display: none;
 }
 
-#docs-header > div.menu > a > img + span {
-    display: none;
+#docsMobile {
+    padding-top: 4rem;
 }
+
+.mobile-menu {
+    display:block !important;
+}
+
+#sticky-column {
+    display:none !important;
+}
+
 #mobile-search-icon {
     display: inline;
 }
@@ -229,7 +238,21 @@ code.lang-spy
     z-index: 1;
     width: 100%;
     background-color: #6c196c;
-    top:3rem;
+    top: 48px;
+    height: auto;
+    min-height: 48px;
+}
+
+#docs-type {
+    width: 100%;
+    position: fixed;
+    top:48px;
+    background-color: #4c204c;
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    display:none;
 }
 
 #docs .ui.card {
@@ -250,7 +273,9 @@ code.lang-spy
 }
 
 .ui.grid.mainbody {
-    margin-top: 4rem;
+    margin-top: 5rem;
+    padding-left: 1rem;
+    padding-right: 1rem !important;
 }
 #docsMobile {
     width: 70%;
@@ -532,6 +557,10 @@ print only stuff
     }
     #sticky-column, #printbtn{
         display:none !important;
+    }
+
+    h2 {
+        page-break-before: avoid
     }
 
     #docs .ui.card{
