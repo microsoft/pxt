@@ -2,7 +2,7 @@
 
 ## [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
  
-April 5th, 2019 by [Jaqster](https://github.com/jaqster)
+June 15th, 2019 by [Jaqster](https://github.com/jaqster)
 
 It’s out! The 2019 MakeCode micro:bit update has been released!
 A BIG thanks to everyone who has been hammering on the Beta these past couple months to help us find bugs and come up with fixes. Unlike last year’s update...
