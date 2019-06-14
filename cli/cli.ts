@@ -59,8 +59,8 @@ function initTargetCommands() {
     if (fs.existsSync(cmdsjs)) {
         pxt.debug(`loading cli extensions...`)
         let cli = require.main.require(cmdsjs)
-        if (cli.deployCoreAsync) {
-            pxt.commands.deployCoreAsync = cli.deployCoreAsync
+        if (cli.deployAsync) {
+            pxt.commands.deployFallbackAsync = cli.deployAsync
         }
         if (cli.addCommands) {
             cli.addCommands(p)
@@ -135,13 +135,6 @@ function initConfigAsync(): Promise<void> {
     if (fs.existsSync(configPath())) {
         let config = <UserConfig>readJson(configPath())
         globalConfig = config;
-        if (!atok)
-            p = p.then(() => passwordGetAsync(PXT_KEY))
-                .then(token => {
-                    if (!atok && token) {
-                        atok = token
-                    }
-                });
     }
 
     p.then(() => {
@@ -158,86 +151,10 @@ function initConfigAsync(): Promise<void> {
     return p;
 }
 
-interface KeyTar {
-    setPassword(service: string, account: string, password: string): Promise<void>;
-    getPassword(service: string, account: string): Promise<string>;
-    deletePassword(service: string, account: string): Promise<void>;
-}
 
-function requireKeyTar(install = false): Promise<KeyTar> {
-    return Promise.resolve(nodeutil.lazyRequire("keytar", install) as KeyTar);
-}
-
-function passwordGetAsync(account: string): Promise<string> {
-    return requireKeyTar()
-        .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
-        .catch(e => process.env["PXT_PASSWORD"] || undefined)
-}
-
-function passwordDeleteAsync(account: string): Promise<void> {
-    return requireKeyTar()
-        .then(keytar => keytar.deletePassword("pxt/" + pxt.appTarget.id, account))
-        .catch(e => undefined);
-}
-
-function passwordUpdateAsync(account: string, password: string): Promise<void> {
-    return requireKeyTar(true)
-        .then(keytar => keytar.setPassword("pxt/" + pxt.appTarget.id, account, password))
-        .catch(e => undefined);
-}
-
-const PXT_KEY = "pxt";
-const GITHUB_KEY = "github";
-const CROWDIN_KEY = "crowdin";
-const LOGIN_PROVIDERS = [GITHUB_KEY, CROWDIN_KEY];
-export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    const service = parsed.args[0] as string;
-    const token = parsed.args[1] as string;
-
-    const usage = (msg: string) => {
-        const root = Cloud.apiRoot.replace(/api\/$/, "")
-        console.log(msg);
-        console.log("USAGE:")
-        console.log(`  pxt login <service> <token>`)
-        console.log(`where service can be github or crowdin; and <token> is obtained from`)
-        console.log(`* github: go to https://github.com/settings/tokens/new .`);
-        console.log(`* crowdin: go to https://crowdin.com/project/kindscript/settings#api.`);
-        return fatal("Bad usage")
-    }
-
-    if (service === "pxt") {
-        return fatal("'pxt login pxt' is deprecated. Pass your token via the PXT_ACCESS_TOKEN environment variable instead")
-    }
-
-    if (!service || LOGIN_PROVIDERS.indexOf(service) < 0)
-        return usage("missing provider");
-    if (!token)
-        return usage("missing token");
-    if (service == PXT_KEY && !/^https:\/\//.test(token))
-        return usage("invalid token");
-
-    return passwordUpdateAsync(service, token)
-        .then(() => { pxt.log(`${service} password saved.`); });
-}
-
-export function logoutAsync() {
-    return Promise.all(LOGIN_PROVIDERS.map(key => passwordDeleteAsync(key)))
-        .then(() => pxt.log('access tokens removed'));
-}
-
-let loadGithubTokenAsyncPromise: Promise<void> = undefined;
-export function loadGithubTokenAsync(): Promise<void> {
-    if (!loadGithubTokenAsyncPromise) {
-        if (process.env["GITHUB_ACCESS_TOKEN"]) pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"];
-        loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
-            .then(ghtoken => {
-                if (ghtoken) {
-                    pxt.github.token = ghtoken;
-                    pxt.debug(`github token loaded`);
-                }
-            });
-    }
-    return loadGithubTokenAsyncPromise;
+function loadGithubTokenAsync(): Promise<string> {
+    pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"];
+    return Promise.resolve(pxt.github.token);
 }
 
 function searchAsync(...query: string[]) {
@@ -718,7 +635,7 @@ function bumpAsync(parsed?: commandParser.ParsedCommand) {
 
 function uploadTaggedTargetAsync() {
     forceCloudBuild = true
-    return passwordGetAsync(GITHUB_KEY)
+    return loadGithubTokenAsync()
         .then(token => {
             if (!token) {
                 fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push releases.");
@@ -3972,11 +3889,12 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                     }
                     return null
                 case BuildOption.Deploy:
-                    if (!pxt.commands.deployCoreAsync) {
+                    if (pxt.commands.hasDeployFn())
+                        return pxt.commands.deployAsync(res)
+                    else {
                         pxt.log("no deploy functionality defined by this target")
                         return null;
                     }
-                    return pxt.commands.deployCoreAsync(res);
                 case BuildOption.Run:
                     return runCoreAsync(res);
                 default:
@@ -4001,14 +3919,11 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
         .then(() => {
             // Env var overrides credentials manager
             const envKey = process.env[pxt.crowdin.KEY_VARIABLE];
-            if (envKey) {
-                return Promise.resolve(envKey);
-            }
-            return passwordGetAsync(CROWDIN_KEY);
+            return Promise.resolve(envKey);
         })
         .then(key => {
             if (!key) {
-                pxt.log(`Crowdin operation skipped: credentials not found locally and '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
+                pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
                 return undefined;
             }
             const branch = pxt.appTarget.appTheme.crowdinBranch;
@@ -5263,7 +5178,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`-- testing github packages-- `);
-    pxt.log(`make sure to store your github token (using pxt login github TOKEN) to avoid throttling`)
+    pxt.log(`make sure to store your github token (GITHUB_ACCESS_TOKEN env var) to avoid throttling`)
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
@@ -5496,6 +5411,9 @@ PXT_NODOCKER     - don't use Docker image, and instead use host's
 PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
                    in the lower level runtime if any
 PXT_ASMDEBUG     - embed additional information in generated binary.asm file
+PXT_ACCESS_TOKEN - pxt access token
+GITHUB_ACCESS_TOKEN - github access token
+${pxt.crowdin.KEY_VARIABLE} - crowdin key
 `)
         return Promise.resolve();
     }, "[all|command]");
@@ -5525,16 +5443,6 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-
-    p.defineCommand({
-        name: "login",
-        help: "stores the PXT, GitHub or Crowdin access token",
-        onlineHelp: true,
-        argString: "<service> <token>",
-        numArgs: 2
-    }, loginAsync);
-
-    simpleCmd("logout", "clears access tokens", logoutAsync);
 
     p.defineCommand({
         name: "bump",
@@ -6119,11 +6027,11 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
                 initTargetCommands();
             }
 
-            if (!pxt.commands.deployCoreAsync && build.thisBuild.deployAsync)
-                pxt.commands.deployCoreAsync = build.thisBuild.deployAsync
+            if (!pxt.commands.deployFallbackAsync && build.thisBuild.deployAsync)
+                pxt.commands.deployFallbackAsync = build.thisBuild.deployAsync
 
             if (!args[0]) {
-                if (pxt.commands.deployCoreAsync) {
+                if (pxt.commands.deployFallbackAsync) {
                     pxt.log("running 'pxt deploy' (run 'pxt help' for usage)")
                     args = ["deploy"]
                 } else {

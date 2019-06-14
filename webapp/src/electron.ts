@@ -30,7 +30,6 @@ export function initElectron(projectView: ProjectView): void {
         } else {
             pxt.tickEvent("electron.drivedeploy.failure");
             const err = new Error("electron drive deploy failed");
-            pxt.reportException(err)
             deployingDeferred.reject(err);
         }
     });

@@ -526,6 +526,7 @@ export function showImportUrlDialogAsync() {
                     </h3>
                     <p>
                         {lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
+                        <br />
                         {lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
                     </p>
                 </div>
