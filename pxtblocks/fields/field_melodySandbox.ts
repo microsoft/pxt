@@ -12,6 +12,9 @@ namespace pxtblockly {
         private tempo: number = 120;
         private stringRep: string;
         private oneNotePerCol: boolean = true;
+        private isPlaying: boolean = false;
+        private isLooping: boolean = false;
+        private timeouts: any = []; // keep track of timeouts
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
@@ -129,12 +132,15 @@ namespace pxtblockly {
             let playButton = document.createElement("button");
             playButton.className = "ui button";
             playButton.id = "melody-play-button";
+            playButton.addEventListener("click", () => this.playMelody());
             let playIcon = document.createElement("i");
+            playIcon.id = "melody-play-icon";
             playIcon.className= "play icon";
             playButton.appendChild(playIcon);
             let loopButton = document.createElement("button");
             loopButton.className = "ui button";
             loopButton.id = "melody-loop-button";
+            loopButton.addEventListener("click", () => this.loopMelody());
             let loopIcon = document.createElement("i");
             loopIcon.className = "redo xicon";
             loopButton.appendChild(loopIcon);
@@ -178,7 +184,7 @@ namespace pxtblockly {
 
         // Runs when the editor is closed by clicking on the Blockly workspace
         protected onEditorClose() {
-            
+
         }
 
         // This is the string that will be inserted into the user's TypeScript code
@@ -270,7 +276,7 @@ namespace pxtblockly {
 
             // play sound if selected
             if (!this.melody.getValue(+row, +col)) {
-                //this.playNote(row);
+                this.playNote(row);
                 if (this.oneNotePerCol) { // clear all other notes in col
                     for (var i = 0; i< this.numRow; i++) {
                         if(this.melody.getValue(i, +col)) {
@@ -295,7 +301,7 @@ namespace pxtblockly {
 
 
 
-        playNote(rowNumber: string): void {
+        playNote(rowNumber: string, colNumber?: number): void {
             let tone: number = 0;
             let cnt: number = ++this.soundingKeys;
             switch(rowNumber) {
@@ -308,11 +314,24 @@ namespace pxtblockly {
                 case "6": tone = 494; break; // Middle B
                 case "7": tone = 523; break; // Tenor C 
             }
-            AudioContextManager.tone(tone);
-            setTimeout(function() {
-                if (this.soundingKeys == cnt)
+            
+            if (this.isPlaying) { // when melody is playing
+                this.timeouts.push(setTimeout(function() {
+                    AudioContextManager.tone(tone);
+                }, colNumber*300)); // adjust based on tempo
+                this.timeouts.push(setTimeout(function() {
                     AudioContextManager.stop();
-            }, 100);
+                }, (colNumber+1)*300));
+            } else { // when a single note is selected
+                AudioContextManager.tone(tone);
+                this.timeouts.push(setTimeout(function() {
+                    if (this.soundingKeys == cnt)
+                        AudioContextManager.stop();
+                }, 300));
+                this.timeouts.push(setTimeout(function() {
+                    AudioContextManager.stop();
+                }, 300));
+            }
         }
 
         updateColor(id: string, row: number, col: number) {
@@ -347,6 +366,46 @@ namespace pxtblockly {
         }
 
         // instead of using a bunch of switch statements - can create enum of objects
+
+        playMelody() {
+            // toggle icon
+            if (document.getElementById("melody-play-icon").className == "play icon") {
+                document.getElementById("melody-play-icon").className = "stop icon";
+                this.isPlaying = true;
+                for (var i = 0; i < this.numCol; i++) {
+                    for (var j = 0; j < this.numRow; j++) {
+                        if (this.melody.getValue(j,i)) {
+                            if (this.oneNotePerCol) {
+                                this.playNote(j+"", i);
+                                break;
+                            } // will support playing multiple notes in the future
+                        }
+                    }
+                }
+                if(!this.isLooping) {
+                    this.isPlaying = false;
+                    this.timeouts.push(setTimeout(function() {
+                        document.getElementById("melody-play-icon").className = "play icon";
+                    }, (this.numCol-1)*300)); // need to update based on tempo
+                } else {
+                    this.timeouts.push(setTimeout(
+                        this.playMelody, (this.numCol-1)*300));
+                }
+
+            } else {
+                document.getElementById("melody-play-icon").className = "play icon";
+                this.isPlaying = false;
+                for (var i = 0; i < this.timeouts.length; i++) {
+                    clearTimeout(this.timeouts[i]);
+                }
+                AudioContextManager.stop();
+            }
+            
+        }
+
+        loopMelody() {
+            this.isLooping = !this.isLooping;
+        }
 
 
     }
