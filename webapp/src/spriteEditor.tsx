@@ -42,7 +42,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
           const state = pxtsprite
             .imageLiteralToBitmap('', stateSprite || DEFAULT_SPRITE_STATE);
 
-          const contentDiv = document.getElementById('spriteEditorPopup') as HTMLDivElement;
+          const contentDiv = this.refs['spriteEditorPopup'] as HTMLDivElement;
           // TODO(jb) - This should be replaced with something real
           const blocksInfo = {
               apis: {
@@ -96,7 +96,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
                   >Edit your sprite</sui.Button>
                   {open &&
                       <div id='spriteEditorPopupWrapper' className='ui popup sprite-editor-snippet-popup'>
-                          <div id='spriteEditorPopup'>
+                          <div id='spriteEditorPopup' ref={'spriteEditorPopup'}>
                               <div id='snippetBuilderTopArrow' className='blocklyDropDownArrow arrowTop' style={{ transform: 'translate(242px, -9px) rotate(45deg)' }} />
                           </div>
                       </div>
