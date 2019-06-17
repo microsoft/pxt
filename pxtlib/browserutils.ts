@@ -1001,8 +1001,8 @@ namespace pxt.BrowserUtils {
         function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
             if (el.classList) {
                 el.classList.remove(cls);
-            } else {
-                el.className.baseVal = (el.className as string)
+            } else if (el.className && el.className.baseVal) {
+                el.className.baseVal = (el.className.baseVal as string)
                                     .split(/\s+/)
                                     .filter(c => c != cls)
                                     .join(" ");
