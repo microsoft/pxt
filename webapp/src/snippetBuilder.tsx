@@ -5,6 +5,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as md from "./marked";
 import * as compiler from './compiler';
+import { SpriteEditor } from './spriteEditor';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -23,7 +24,7 @@ interface IGoToOptions {
     parameters?: IGoToParameters;
 }
 
-interface IQuestionInput {
+export interface IQuestionInput {
     answerToken: string;
     defaultAnswer: AnswerTypes;
     type?: string;
@@ -52,7 +53,7 @@ interface IAnswersMap {
     [answerToken: string]: AnswerTypes;
 }
 
-export interface SnippetBuilderState {
+interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
     answers?: IAnswersMap;
@@ -80,6 +81,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
             tsOutput: staticConfig.initialOutput
         };
 
+        this.cleanup = this.cleanup.bind(this);
         this.hide = this.hide.bind(this);
         this.cancel = this.cancel.bind(this);
         this.confirm = this.confirm.bind(this);
@@ -159,9 +161,21 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         });
     }
 
+    cleanup() {
+        // Reset state to initial values
+        this.setState({
+            answers: {},
+            history: [0],
+            tsOutput: staticConfig.initialOutput,
+        });
+
+        Blockly.hideChaff();
+    }
+
     cancel() {
         pxt.tickEvent("snippetBuilder.cancel", undefined, { interactiveConsent: true });
         this.hide();
+        this.cleanup();
     }
 
     findRootBlock(xmlDOM: Element, type?: string): Element {
@@ -219,11 +233,16 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                 const toAttach = this.findRootBlock(xmlOnStartBlock);
                 const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
                 // Hard coded in top blocks
-                this.getOnStartBlock(mainWorkspace).getInput("HANDLER").connection.connect(rootConnection.previousConnection);
-            }).catch((e) => {
-                pxt.reportException(e);
+                this.getOnStartBlock(mainWorkspace)
+                    .getInput("HANDLER")
+                    .connection
+                    .connect(rootConnection.previousConnection);
+            })
+            .then(this.cleanup)
+            .catch((e) => {
+                // pxt.reportException(e);
                 throw new Error(`Failed to decompile snippet output`);
-            });;
+            });
     }
 
     confirm() {
@@ -254,17 +273,19 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
 
     backPage() {
         const { history } = this.state;
-        if (history.length) {
+        if (history.length > 1) {
             this.setState({ history: history.slice(0, history.length - 1)});
         }
     }
 
-    textInputOnChange = (answerToken: string) => (v: string) => {
-        const answers = this.state.answers;
-        answers[answerToken] = v;
-
-        this.setState({ answers })
-    }
+    onChange = (answerToken: string) => (v: string) => {
+            this.setState((prevState: SnippetBuilderState) => ({
+                answers: {
+                    ...prevState,
+                    [answerToken]: v,
+                }
+            }));
+        }
 
     renderCore() {
         const { visible, tsOutput, answers, config, history } = this.state;
@@ -285,7 +306,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
             },
             {
                 label: lf("Cancel"),
-                onclick: this.hide,
+                onclick: this.cancel,
                 icon: "cancel",
                 className: "cancel lightgrey"
             },
@@ -300,22 +321,22 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         const currQ = config.questions[history[history.length - 1]];
 
         return (
-            <sui.Modal isOpen={visible} className="snippetBuilder" size="large"
+            <sui.Modal isOpen={visible} className={'snippet-builder'} size="large"
                 closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name}
             >
                 <div>
-                    <div className="list">
+                    <div className="ui equal width grid">
                         {currQ &&
-                            <div>
+                            <div className='column'>
                                 <div>{currQ.title}</div>
-                                <div className='list horizontal'>
+                                <div className='horizontal list'>
                                     {currQ.inputs.map((input: IQuestionInput) =>
                                         <div key={input.answerToken}>
-                                            <sui.Input
-                                                label={input.label && input.label}
-                                                onChange={this.textInputOnChange(input.answerToken)}
-                                                value={answers[input.answerToken] || ''}
+                                            <InputHandler
+                                                input={input}
+                                                onChange={this.onChange(input.answerToken)}
+                                                value={answers[input.answerToken]}
                                             />
                                         </div>
                                     )}
@@ -323,12 +344,49 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                             </div>
                         }
                     </div>
-                    <div id="snippetBuilderOutput">
+                    <div id="snippetBuilderOutput" className='column'>
                         {parent && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
                     </div>
                 </div>
             </sui.Modal>
         )
+    }
+}
+
+interface IInputHandlerProps {
+    input: IQuestionInput;
+    onChange: (v: string) => void;
+    value: string;
+}
+
+class InputHandler extends data.Component<IInputHandlerProps, {}> {
+    constructor(props: IInputHandlerProps) {
+        super(props);
+    }
+
+    renderCore() {
+        const { value, input, onChange } = this.props;
+
+        switch (input.type) {
+            case 'spriteEditor':
+                return (
+                    <SpriteEditor
+                        input={input}
+                        onChange={onChange}
+                        value={value}
+                    />
+                );
+            case 'number':
+            case 'text':
+            default:
+                return (
+                    <sui.Input
+                        label={input.label && input.label}
+                        value={value || ''}
+                        onChange={onChange}
+                    />
+                )
+        }
     }
 }
 
