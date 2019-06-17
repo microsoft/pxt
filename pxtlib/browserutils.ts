@@ -218,6 +218,11 @@ namespace pxt.BrowserUtils {
         if (/bot|crawler|spider|crawling/i.test(navigator.userAgent))
             return true;
 
+        //Check target theme to see if this browser is blacklisted
+        if (pxt.appTarget.appTheme.browserBlacklist.indexOf(browser()) >= 0) {
+            return false
+        }
+
         // testing browser versions
         const versionString = browserVersion();
         const v = parseInt(versionString || "0")
