@@ -56,6 +56,7 @@ namespace pxtsprite {
         }
 
         repaint(): void {
+            this.clearContext(this.paintLayer.getContext("2d"));
             this.drawImage();
             if (this.state.floatingLayer) this.drawFloatingLayer();
             else this.hideOverlay();
@@ -109,10 +110,7 @@ namespace pxtsprite {
                 context.fillStyle = this.palette[color - 1];
                 context.fillRect(x, y, this.cellWidth, this.cellHeight);
             }
-            else if (transparency) {
-                context.clearRect(x, y, this.cellWidth, this.cellHeight);
-            }
-            else {
+            else if (!transparency) {
                 context.fillStyle = lightModeBackground;
                 context.fillRect(x, y, this.cellWidth, this.cellHeight);
             }
@@ -155,7 +153,7 @@ namespace pxtsprite {
                     return;
                 }
 
-                context.clearRect(0, 0, w, h);
+                this.clearContext(context);
                 context.globalAlpha = opacity;
                 context.fillStyle = "#898989";
 
@@ -343,32 +341,44 @@ namespace pxtsprite {
                 this.mouseRow
             ];
         }
+        protected drawFloatingLayer() {
+            if (!this.state.floatingLayer) {
+                return;
+            }
+            const context = this.paintLayer.getContext("2d");
+            this.drawImage(this.state.floatingLayer, context, this.state.layerOffsetX, this.state.layerOffsetY, true);
 
-        protected drawFloatingLayer(dashOffset = 0) {
+            this.drawSelectionAnimation();
+        }
+
+        protected drawSelectionAnimation(dashOffset = 0) {
             if (!this.state.floatingLayer) {
                 this.hideOverlay();
                 return;
             }
-
             this.showOverlay();
             const context = this.overlayLayer.getContext("2d");
-            context.clearRect(0, 0, this.overlayLayer.width, this.overlayLayer.height);
+            this.clearContext(context);
             context.globalAlpha = 1;
             context.strokeStyle = "#303030";
-            context.lineWidth = 5;
+            context.lineWidth = 2;
             context.setLineDash([5, 3]);
             context.lineDashOffset = dashOffset;
             context.strokeRect(this.state.layerOffsetX * this.cellWidth, this.state.layerOffsetY * this.cellHeight, this.state.floatingLayer.width * this.cellWidth, this.state.floatingLayer.height * this.cellHeight);
-            this.drawImage(this.state.floatingLayer, context, this.state.layerOffsetX, this.state.layerOffsetY, true);
+
 
             if (!this.lightMode && !this.selectAnimation && (!this.fadeAnimation || this.fadeAnimation.dead)) {
                 let drawLayer = () => {
                     dashOffset++
-                    requestAnimationFrame(() => this.drawFloatingLayer(dashOffset));
+                    requestAnimationFrame(() => this.drawSelectionAnimation(dashOffset));
                 };
 
                 this.selectAnimation = setInterval(drawLayer, 40)
             }
+        }
+
+        private clearContext(context: CanvasRenderingContext2D) {
+            context.clearRect(0, 0, this.paintLayer.width, this.paintLayer.height);
         }
 
         private initDragSurface() {

@@ -66,6 +66,7 @@ namespace pxtsprite {
             this.startCol = cursorCol;
             this.startRow = cursorRow;
 
+            state.mergeFloatingLayer();
         }
 
 
