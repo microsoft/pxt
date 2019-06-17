@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
+ 
+June 15th, 2019 by [Jaqster](https://github.com/jaqster)
+
+It’s out! The 2019 MakeCode micro:bit update has been released!
+A BIG thanks to everyone who has been hammering on the Beta these past couple months to help us find bugs and come up with fixes. Unlike last year’s update...
+**[Continue reading this blog post](/blog/microbit/2019-release)**
+
 ## [Project Alava: Programming Webs of Microcontrollers](/blog/alava/alava)
 
 April 26th, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball)
