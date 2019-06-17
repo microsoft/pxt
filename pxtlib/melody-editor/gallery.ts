@@ -4,7 +4,7 @@ namespace pxtmelody {
         src: string;
         alt: string;
     }
-    
+
     export enum items { // these are placeholders for now
         melody1,
         melody2,
@@ -168,14 +168,6 @@ namespace pxtmelody {
             this.contentDiv.appendChild(button);
         }
 
-        // protected resolve(bitmap: Bitmap) {
-        //     if (this.pending) {
-        //         const cb = this.pending;
-        //         this.pending = undefined;
-        //         cb(bitmap);
-        //     }
-        // }
-
         protected reject(reason: string) {
             if (this.pending) {
                 const cb = this.pending;
@@ -183,89 +175,5 @@ namespace pxtmelody {
                 cb(undefined, reason);
             }
         }
-
-        // protected handleSelection(value: string) {
-        //     this.resolve(this.getBitmap(value));
-        // }
-
-        // protected getBitmap(qName: string) {
-        //     const sym = this.info.apis.byQName[qName];
-        //     const jresURL = sym.attributes.jresURL;
-        //     const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
-        //     const magic = data.charCodeAt(0);
-        //     const w = data.charCodeAt(1);
-        //     const h = data.charCodeAt(2);
-
-        //     const out = new Bitmap(w, h);
-
-        //     let index = 4
-        //     if (magic === 0xe1) {
-        //         // Monochrome
-        //         let mask = 0x01
-        //         let v = data.charCodeAt(index++)
-        //         for (let x = 0; x < w; ++x) {
-        //             for (let y = 0; y < h; ++y) {
-        //                 out.set(x, y, (v & mask) ? 1 : 0);
-        //                 mask <<= 1
-        //                 if (mask == 0x100) {
-        //                     mask = 0x01
-        //                     v = data.charCodeAt(index++)
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     else {
-        //         // Color
-        //         for (let x = 0; x < w; x++) {
-        //             for (let y = 0; y < h; y += 2) {
-        //                 let v = data.charCodeAt(index++)
-        //                 out.set(x, y, v & 0xf);
-        //                 if (y != h - 1) {
-        //                     out.set(x, y + 1, (v >> 4) & 0xf);
-        //                 }
-        //             }
-        //             while (index & 3) index++
-        //         }
-        //     }
-
-        //     return out;
-        // }
-
-
-    //     protected getGalleryItems(qName: string): GalleryItem[] {
-    //         const syms = getFixedInstanceDropdownValues(this.info.apis, qName);
-    //         generateIcons(syms);
-
-    //         return syms.map(sym => {
-    //             return {
-    //                 qName: sym.qName,
-    //                 src: sym.attributes.iconURL,
-    //                 alt: sym.qName
-    //             };
-    //         });
-    //     }
-    // }
-
-    // function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-    //     return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-    //         && sym.attributes.fixedInstance
-    //         && isSubtype(apis, sym.retType, qName));
-    // }
-
-    // function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-    //     if (specific == general) return true
-    //     let inf = apis.byQName[specific]
-    //     if (inf && inf.extendsTypes)
-    //         return inf.extendsTypes.indexOf(general) >= 0
-    //     return false
-    // }
-
-    // function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
-    //     const imgConv = new pxt.ImageConverter();
-    //     instanceSymbols.forEach(v => {
-    //         if (v.attributes.jresURL && !v.attributes.iconURL && v.attributes.jresURL.indexOf("data:image/x-mkcd-f") == 0) {
-    //             v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
-    //         }
-    //     });
     }
 }

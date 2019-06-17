@@ -15,7 +15,7 @@ namespace pxtblockly {
         private isPlaying: boolean = false;
         private isLooping: boolean = false;
         private timeouts: any = []; // keep track of timeouts
-        private duration = 60000/this.tempo; //ms to hold note
+        private duration = 60000 / this.tempo; //ms to hold note
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
@@ -28,12 +28,6 @@ namespace pxtblockly {
         init() {
             super.init();
             this.onInit();
-        }
-
-        render_() {
-            super.render_();
-            //this.size_.height = this.getPreviewHeight();
-            //this.size_.width = this.getPreviewWidth();
         }
 
         showEditor_() {
@@ -63,8 +57,6 @@ namespace pxtblockly {
             }
             this.stringRep = newText;
             this.parseTypeScriptValue(newText);
-            //super.setText(this.getTitle());
-            //super.setText(newText); // this causes grid to come back empty from typescript 
         }
 
 
@@ -97,6 +89,7 @@ namespace pxtblockly {
             let melodyName = document.createElement("input");
             melodyName.className = "ui input";
             melodyName.id = "melody-name";
+            melodyName.maxLength = 25;
             melodyName.value = this.title;
             melodyName.addEventListener("input", () => this.setTitle(melodyName.value));
             topDiv.appendChild(melodyName);
@@ -104,11 +97,11 @@ namespace pxtblockly {
 
             let gridDiv = goog.dom.createDom("div", {}) as HTMLElement;
             gridDiv.className = "melody-grid-div";
-            for(var i = 0; i < this.numRow; i++) {
-                var row = document.createElement("div");
+            for (let i = 0; i < this.numRow; i++) {
+                let row = document.createElement("div");
                 row.className = "row" + i;
-                for(var j = 0; j < this.numCol; j++) {
-                    var cell = document.createElement("button"); // button
+                for (let j = 0; j < this.numCol; j++) {
+                    let cell = document.createElement("button"); // button
                     cell.className = "cell";
                     cell.id = "cell-" + i + "-" + j;
                     row.appendChild(cell);
@@ -126,7 +119,7 @@ namespace pxtblockly {
             let doneButton = document.createElement("button");
             doneButton.id = "melody-done-button";
             doneButton.className = "ui button";
-            doneButton.innerText="Done";
+            doneButton.innerText = "Done";
             doneButton.addEventListener("click", () => Blockly.DropDownDiv.hideIfOwner(this));
             let iconButtons = goog.dom.createDom("div", {}) as HTMLElement;
             iconButtons.className = "ui icon buttons";
@@ -136,7 +129,7 @@ namespace pxtblockly {
             playButton.addEventListener("click", () => this.playMelody());
             let playIcon = document.createElement("i");
             playIcon.id = "melody-play-icon";
-            playIcon.className= "play icon";
+            playIcon.className = "play icon";
             playButton.appendChild(playIcon);
             let loopButton = document.createElement("button");
             loopButton.className = "ui button";
@@ -175,8 +168,8 @@ namespace pxtblockly {
             div.appendChild(bottomDiv);
 
             // create event listeners at the end because the DOM needs to finish loading
-            for(var i = 0; i < this.numRow; i++) {
-                for(var j = 0; j < this.numCol; j++) {
+            for (let i = 0; i < this.numRow; i++) {
+                for (let j = 0; j < this.numCol; j++) {
                     let el = "cell-" + i + "-" + j;
                     document.getElementById(el).addEventListener("click", () => this.onNoteSelect(el));
                 }
@@ -195,12 +188,12 @@ namespace pxtblockly {
                 return "\"" + this.melody.getStringRepresentation() + "\"";
             }
             return "";
-            
+
         }
 
         // This should parse the string returned by getTypeScriptValue() and restore the state based on that
         protected parseTypeScriptValue(value: string) {
-            value = value.slice(1,-1); // remove the boundary quotes
+            value = value.slice(1, -1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
             let melodies: string[] = value.split("-");
             if (!this.melody) {
@@ -208,9 +201,9 @@ namespace pxtblockly {
             }
             this.setTitle(melodies[0]);
             this.setTempo(Number(melodies[1]));
-            for (var i = 2; i < melodies.length-1; i++) { // first two strings are name and tempo
-                let notes: string [] = melodies[i].split(" ");
-                for (var j = 0; j < notes.length-1; j++) {
+            for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
+                let notes: string[] = melodies[i].split(" ");
+                for (let j = 0; j < notes.length - 1; j++) {
                     if (notes[j] != "R") {
                         let rowPos: number = pxtmelody.getRowNum(notes[j]);
                         this.melody.updateMelody(rowPos, j);
@@ -246,7 +239,7 @@ namespace pxtblockly {
                 Blockly.FieldLabel.prototype.setText.call(this, this.title);
                 if (this.melody) {
                     this.melody.setTitle(this.title);
-                }   
+                }
             }
         }
 
@@ -256,14 +249,14 @@ namespace pxtblockly {
 
         setTempo(tempo: number): void {
             // reset text input if input is invalid
-            if(isNaN(tempo) || tempo <= 0 && document.getElementById("melody-tempo-text")) {
+            if (isNaN(tempo) || tempo <= 0 && document.getElementById("melody-tempo-text")) {
                 (<HTMLInputElement>document.getElementById("melody-tempo-text")).value = this.tempo + "";
                 return
             }
             // update tempo and duration values and display to reflect new tempo
             if (this.tempo != tempo) {
                 this.tempo = tempo;
-                this.duration = 60000/tempo;
+                this.duration = 60000 / tempo;
                 if (this.melody) {
                     this.melody.setTempo(this.tempo);
                 }
@@ -281,14 +274,14 @@ namespace pxtblockly {
             let params = id.split("-"); // params[1] is row, params[2] is cell
             let row = params[1];
             let col = params[2];
-            
+
 
             // play sound if selected
             if (!this.melody.getValue(+row, +col)) {
                 this.playNote(row);
                 if (this.oneNotePerCol) { // clear all other notes in col
-                    for (var i = 0; i< this.numRow; i++) {
-                        if(this.melody.getValue(i, +col)) {
+                    for (let i = 0; i < this.numRow; i++) {
+                        if (this.melody.getValue(i, +col)) {
                             // update melody array
                             this.melody.updateMelody(i, +col);
                             // set color to default
@@ -313,8 +306,8 @@ namespace pxtblockly {
         playNote(rowNumber: string, colNumber?: number): void {
             let tone: number = 0;
             let cnt: number = ++this.soundingKeys;
-            
-            switch(rowNumber) {
+
+            switch (rowNumber) {
                 case "0": tone = 262; break; // Middle C
                 case "1": tone = 294; break; // Middle D
                 case "2": tone = 330; break; // Middle E
@@ -324,21 +317,21 @@ namespace pxtblockly {
                 case "6": tone = 494; break; // Middle B
                 case "7": tone = 523; break; // Tenor C 
             }
-            
+
             if (this.isPlaying) { // when melody is playing
-                this.timeouts.push(setTimeout(function() {
+                this.timeouts.push(setTimeout(function () {
                     AudioContextManager.tone(tone);
-                }, colNumber*this.duration));
-                this.timeouts.push(setTimeout(function() {
+                }, colNumber * this.duration));
+                this.timeouts.push(setTimeout(function () {
                     AudioContextManager.stop();
-                }, (colNumber+1)*this.duration));
+                }, (colNumber + 1) * this.duration));
             } else { // when a single note is selected
                 AudioContextManager.tone(tone);
-                this.timeouts.push(setTimeout(function() {
+                this.timeouts.push(setTimeout(function () {
                     if (this.soundingKeys == cnt)
                         AudioContextManager.stop();
                 }, this.duration));
-                this.timeouts.push(setTimeout(function() {
+                this.timeouts.push(setTimeout(function () {
                     AudioContextManager.stop();
                 }, this.duration));
             }
@@ -346,7 +339,7 @@ namespace pxtblockly {
 
         updateColor(id: string, row: number, col: number) {
             let color: string = "";
-            switch(row) {
+            switch (row) {
                 case 0: color = "#A80000"; break; // red - Middle C
                 case 1: color = "#D83B01"; break; // orange - Middle D
                 case 2: color = "#FFB900"; break; // yellow - Middle E
@@ -355,7 +348,7 @@ namespace pxtblockly {
                 case 5: color = "#0078D7"; break; // blue - Middle A
                 case 6: color = "#B4009E"; break; // violet - Middle B
                 case 7: color = "#5C2D91"; break; // purple - Tenor C
-                default: return; 
+                default: return;
             }
             document.getElementById(id).style.backgroundColor = color;
         }
@@ -365,11 +358,11 @@ namespace pxtblockly {
                 this.melody = new pxtmelody.MelodyArray();
                 return;
             }
-            for (var i = 0; i < this.numRow; i++) {
-                for (var j = 0; j < this.numCol; j++) {
+            for (let i = 0; i < this.numRow; i++) {
+                for (let j = 0; j < this.numCol; j++) {
                     if (this.melody.getValue(i, j)) {
                         let id = "cell-" + i + "-" + j;
-                        this.updateColor(id, i, j); 
+                        this.updateColor(id, i, j);
                     }
                 }
             }
@@ -382,35 +375,35 @@ namespace pxtblockly {
             if (document.getElementById("melody-play-icon").className == "play icon") {
                 document.getElementById("melody-play-icon").className = "stop icon";
                 this.isPlaying = true;
-                for (var i = 0; i < this.numCol; i++) {
-                    for (var j = 0; j < this.numRow; j++) {
-                        if (this.melody.getValue(j,i)) {
+                for (let i = 0; i < this.numCol; i++) {
+                    for (let j = 0; j < this.numRow; j++) {
+                        if (this.melody.getValue(j, i)) {
                             if (this.oneNotePerCol) {
-                                this.playNote(j+"", i);
+                                this.playNote(j + "", i);
                                 break;
                             } // will support playing multiple notes in the future
                         }
                     }
                 }
-                if(!this.isLooping) {
+                if (!this.isLooping) {
                     this.isPlaying = false;
-                    this.timeouts.push(setTimeout(function() {
+                    this.timeouts.push(setTimeout(function () {
                         document.getElementById("melody-play-icon").className = "play icon";
-                    }, (this.numCol-1)*this.duration));
+                    }, (this.numCol - 1) * this.duration));
                 } else {
                     this.timeouts.push(setTimeout(
-                        this.playMelody, (this.numCol-1)*this.duration));
+                        this.playMelody, (this.numCol - 1) * this.duration));
                 }
 
             } else {
                 document.getElementById("melody-play-icon").className = "play icon";
                 this.isPlaying = false;
-                for (var i = 0; i < this.timeouts.length; i++) {
+                for (let i = 0; i < this.timeouts.length; i++) {
                     clearTimeout(this.timeouts[i]);
                 }
                 AudioContextManager.stop();
             }
-            
+
         }
 
         loopMelody() {

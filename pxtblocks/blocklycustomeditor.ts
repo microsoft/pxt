@@ -45,7 +45,6 @@ namespace pxt.blocks {
         registerFieldEditor('turnratio', pxtblockly.FieldTurnRatio);
         registerFieldEditor('protractor', pxtblockly.FieldProtractor);
         registerFieldEditor('position', pxtblockly.FieldPosition);
-        //registerFieldEditor('melody', pxtblockly.FieldMelodyEditor);
         registerFieldEditor('melody', pxtblockly.FieldCustomMelody);
     }
 

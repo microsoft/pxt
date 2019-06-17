@@ -5,18 +5,18 @@ namespace pxtmelody {
         private width: number = 8;
         private height: number = 8;
         private melody: boolean[][];
-        private title: string = "Name this tune"; 
+        private title: string = "Name this tune";
 
         // constructor
         constructor(tempo?: number) {
             if (tempo) this.tempo = tempo;
             // set all elements to false
             this.melody = new Array(this.width);
-            for (var i = 0; i < this.width; i++) {
+            for (let i = 0; i < this.width; i++) {
                 this.melody[i] = new Array(this.height).fill(false);
             }
         }
-        
+
         public setTitle(title: string): void {
             this.title = title;
         }
@@ -24,9 +24,7 @@ namespace pxtmelody {
         public setTempo(tempo: number): void {
             this.tempo = tempo;
         }
-        // setValue
 
-        // getValue
         public getArray(): boolean[][] {
             return this.melody;
         }
@@ -52,12 +50,6 @@ namespace pxtmelody {
             return this.height;
         }
 
-        public copy(): boolean[][] {
-            let copy = new MelodyArray();
-            copy.setArray(this.getArray());
-            return copy.getArray();
-        }
-
         public updateMelody(row: number, col: number) {
             this.melody[row][col] = !this.melody[row][col];
         }
@@ -72,10 +64,10 @@ namespace pxtmelody {
             // add name and tempo info
             stringMelody += this.title + "-" + this.tempo + "-";
             // create queues of notes
-            for (var i = 0; i < this.height; i++) {
+            for (let i = 0; i < this.height; i++) {
                 let noteCount = 0;
                 queues[i] = [];
-                for (var j = 0; j < this.width; j++) {
+                for (let j = 0; j < this.width; j++) {
                     if (this.melody[j][i]) {
                         queues[i].push(noteConversion(j));
                         noteCount++;
@@ -86,8 +78,8 @@ namespace pxtmelody {
                 }
             }
             // create strings of melodies
-            for (var j = 0; j < numMelodies; j++) {
-                for (var i = 0; i < this.width; i++) {
+            for (let j = 0; j < numMelodies; j++) {
+                for (let i = 0; i < this.width; i++) {
                     if (queues[i] && queues[i].length > 0) { // if there is an element
                         stringMelody += queues[i].shift() + " ";
                     } else {
@@ -96,14 +88,14 @@ namespace pxtmelody {
                 }
                 stringMelody += "-"; // this will be used to split each melody
             }
-    
+
             return stringMelody;
         }
     }
 
     export function noteConversion(rowNum: number): string {
         let note: string = "";
-        switch(rowNum) {
+        switch (rowNum) {
             case 0: note = "C"; break;
             case 1: note = "D"; break;
             case 2: note = "E"; break;
@@ -118,7 +110,7 @@ namespace pxtmelody {
 
     export function getRowNum(note: string): number {
         let rowNum: number = 0;
-        switch(note) {
+        switch (note) {
             case "C": rowNum = 0; break;
             case "D": rowNum = 1; break;
             case "E": rowNum = 2; break;
