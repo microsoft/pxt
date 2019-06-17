@@ -23,7 +23,7 @@ namespace pxsim {
                 if (el.classList) {
                     el.classList.add(cls);
                 } else {
-                    const classes = el.className.split(/\s+/) as string[];
+                    const classes = (el.className.baseVal as string || "").split(/\s+/) as string[];
                     if (classes.indexOf(cls) < 0) {
                         el.className.baseVal += " " + cls;
                     }
@@ -40,10 +40,10 @@ namespace pxsim {
                 if (el.classList) {
                     el.classList.remove(cls);
                 } else {
-                    el.className.baseVal = (el.className as string)
-                                        .split(/\s+/)
-                                        .filter(c => c != cls)
-                                        .join(" ");
+                    el.className.baseVal = (el.className.baseVal as string || "")
+                        .split(/\s+/)
+                        .filter(c => c != cls)
+                        .join(" ");
                 }
             }
         }
