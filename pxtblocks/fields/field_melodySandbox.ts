@@ -15,6 +15,7 @@ namespace pxtblockly {
         private isPlaying: boolean = false;
         private isLooping: boolean = false;
         private timeouts: any = []; // keep track of timeouts
+        private duration = 60000/this.tempo; //ms to hold note
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
@@ -255,6 +256,7 @@ namespace pxtblockly {
         setTempo(tempo: number): void {
             if (this.tempo != tempo) {
                 this.tempo = tempo;
+                this.duration = 60000/tempo;
                 if (this.melody) {
                     this.melody.setTempo(this.tempo);
                 }
@@ -304,6 +306,7 @@ namespace pxtblockly {
         playNote(rowNumber: string, colNumber?: number): void {
             let tone: number = 0;
             let cnt: number = ++this.soundingKeys;
+            
             switch(rowNumber) {
                 case "0": tone = 262; break; // Middle C
                 case "1": tone = 294; break; // Middle D
@@ -318,19 +321,19 @@ namespace pxtblockly {
             if (this.isPlaying) { // when melody is playing
                 this.timeouts.push(setTimeout(function() {
                     AudioContextManager.tone(tone);
-                }, colNumber*300)); // adjust based on tempo
+                }, colNumber*this.duration));
                 this.timeouts.push(setTimeout(function() {
                     AudioContextManager.stop();
-                }, (colNumber+1)*300));
+                }, (colNumber+1)*this.duration));
             } else { // when a single note is selected
                 AudioContextManager.tone(tone);
                 this.timeouts.push(setTimeout(function() {
                     if (this.soundingKeys == cnt)
                         AudioContextManager.stop();
-                }, 300));
+                }, this.duration));
                 this.timeouts.push(setTimeout(function() {
                     AudioContextManager.stop();
-                }, 300));
+                }, this.duration));
             }
         }
 
@@ -386,10 +389,10 @@ namespace pxtblockly {
                     this.isPlaying = false;
                     this.timeouts.push(setTimeout(function() {
                         document.getElementById("melody-play-icon").className = "play icon";
-                    }, (this.numCol-1)*300)); // need to update based on tempo
+                    }, (this.numCol-1)*this.duration));
                 } else {
                     this.timeouts.push(setTimeout(
-                        this.playMelody, (this.numCol-1)*300));
+                        this.playMelody, (this.numCol-1)*this.duration));
                 }
 
             } else {
