@@ -1,6 +1,6 @@
 namespace pxtmelody {
     export class MelodyArray {
-        // check that array is 9x8 
+        // check that array is 8x8 
         private tempo: number = 120;
         private width: number = 8;
         private height: number = 8;

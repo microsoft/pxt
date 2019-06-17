@@ -15,14 +15,11 @@ namespace pxtblockly {
         private isPlaying: boolean = false;
         private isLooping: boolean = false;
         private timeouts: any = []; // keep track of timeouts
-        private duration = 60000 / this.tempo; //ms to hold note
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
             this.params = params;
-            if (!this.melody) {
-                this.melody = new pxtmelody.MelodyArray();
-            }
+            this.createMelodyIfDoesntExist();
         }
 
         init() {
@@ -37,12 +34,14 @@ namespace pxtblockly {
             Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
             goog.style.setStyle(contentDiv, "max-height", "500px");
+            //contentDiv.setAttribute("max-height", "500px");
             this.renderEditor(Blockly.DropDownDiv.getContentDiv() as HTMLDivElement);
-            this.createGridDispaly();
+            this.createGridDisplay();
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
                 this.onEditorClose();
                 // revert all style attributes for dropdown div
                 goog.style.setStyle(contentDiv, "max-height", null);
+                //contentDiv.setAttribute("max-height", "500px");
             });
         }
 
@@ -63,18 +62,16 @@ namespace pxtblockly {
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
             this.render_();
-            if (!this.melody) {
-                this.melody = new pxtmelody.MelodyArray();
-            }
+            this.createMelodyIfDoesntExist();
             Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
-            let topDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            let topDiv = document.createElement("div");
             topDiv.className = "melody-top-bar-div";
 
-            let editorGalleryToggle = goog.dom.createDom("div", {}) as HTMLElement;
+            let editorGalleryToggle = document.createElement("div");
             editorGalleryToggle.id = "melody-toggle";
             let editorButton = document.createElement("button");
             editorButton.innerText = "Editor";
@@ -95,7 +92,7 @@ namespace pxtblockly {
             topDiv.appendChild(melodyName);
             div.appendChild(topDiv);
 
-            let gridDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            let gridDiv = document.createElement("div");
             gridDiv.className = "melody-grid-div";
             for (let i = 0; i < this.numRow; i++) {
                 let row = document.createElement("div");
@@ -110,10 +107,10 @@ namespace pxtblockly {
             }
             div.appendChild(gridDiv);
 
-            let bottomDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            let bottomDiv = document.createElement("div");
             bottomDiv.className = "melody-bottom-bar-div";
 
-            let buttonBarDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            let buttonBarDiv = document.createElement("div");
             buttonBarDiv.className = "melody-button-bar-div";
 
             let doneButton = document.createElement("button");
@@ -121,7 +118,7 @@ namespace pxtblockly {
             doneButton.className = "ui button";
             doneButton.innerText = "Done";
             doneButton.addEventListener("click", () => Blockly.DropDownDiv.hideIfOwner(this));
-            let iconButtons = goog.dom.createDom("div", {}) as HTMLElement;
+            let iconButtons = document.createElement("div");
             iconButtons.className = "ui icon buttons";
             let playButton = document.createElement("button");
             playButton.className = "ui button";
@@ -144,7 +141,7 @@ namespace pxtblockly {
             buttonBarDiv.appendChild(iconButtons);
             buttonBarDiv.appendChild(doneButton);
 
-            let sliderDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            let sliderDiv = document.createElement("div");
             sliderDiv.className = "slider-container";
 
             let tempoSlider = document.createElement("input");
@@ -196,9 +193,7 @@ namespace pxtblockly {
             value = value.slice(1, -1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
             let melodies: string[] = value.split("-");
-            if (!this.melody) {
-                this.melody = new pxtmelody.MelodyArray();
-            }
+            this.createMelodyIfDoesntExist();
             this.setTitle(melodies[0]);
             this.setTempo(Number(melodies[1]));
             for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
@@ -256,7 +251,6 @@ namespace pxtblockly {
             // update tempo and duration values and display to reflect new tempo
             if (this.tempo != tempo) {
                 this.tempo = tempo;
-                this.duration = 60000 / tempo;
                 if (this.melody) {
                     this.melody.setTempo(this.tempo);
                 }
@@ -267,6 +261,19 @@ namespace pxtblockly {
                     (<HTMLInputElement>document.getElementById("melody-tempo-slider")).value = this.tempo + "";
                 }
             }
+        }
+
+        // ms to hold note
+        getDuration(): number {
+            return 60000 / this.tempo;
+        }
+
+        createMelodyIfDoesntExist(): boolean {
+            if (!this.melody) {
+                this.melody = new pxtmelody.MelodyArray();
+                return true;
+            }
+            return false;
         }
 
         onNoteSelect(id: string): void {
@@ -321,19 +328,19 @@ namespace pxtblockly {
             if (this.isPlaying) { // when melody is playing
                 this.timeouts.push(setTimeout(function () {
                     AudioContextManager.tone(tone);
-                }, colNumber * this.duration));
+                }, colNumber * this.getDuration()));
                 this.timeouts.push(setTimeout(function () {
                     AudioContextManager.stop();
-                }, (colNumber + 1) * this.duration));
+                }, (colNumber + 1) * this.getDuration()));
             } else { // when a single note is selected
                 AudioContextManager.tone(tone);
                 this.timeouts.push(setTimeout(function () {
                     if (this.soundingKeys == cnt)
                         AudioContextManager.stop();
-                }, this.duration));
+                }, this.getDuration()));
                 this.timeouts.push(setTimeout(function () {
                     AudioContextManager.stop();
-                }, this.duration));
+                }, this.getDuration()));
             }
         }
 
@@ -353,11 +360,8 @@ namespace pxtblockly {
             document.getElementById(id).style.backgroundColor = color;
         }
 
-        createGridDispaly() {
-            if (!this.melody) {
-                this.melody = new pxtmelody.MelodyArray();
-                return;
-            }
+        createGridDisplay() {
+            if (this.createMelodyIfDoesntExist()) return;
             for (let i = 0; i < this.numRow; i++) {
                 for (let j = 0; j < this.numCol; j++) {
                     if (this.melody.getValue(i, j)) {
@@ -389,10 +393,10 @@ namespace pxtblockly {
                     this.isPlaying = false;
                     this.timeouts.push(setTimeout(function () {
                         document.getElementById("melody-play-icon").className = "play icon";
-                    }, (this.numCol - 1) * this.duration));
+                    }, (this.numCol - 1) * this.getDuration()));
                 } else {
                     this.timeouts.push(setTimeout(
-                        this.playMelody, (this.numCol - 1) * this.duration));
+                        this.playMelody, (this.numCol - 1) * this.getDuration()));
                 }
 
             } else {
