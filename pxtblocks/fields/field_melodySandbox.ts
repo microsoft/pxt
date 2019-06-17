@@ -164,6 +164,7 @@ namespace pxtblockly {
             tempoSlider.addEventListener("input", () => this.setTempo(+tempoSlider.value));
 
             let tempoText = document.createElement("input");
+            tempoText.type = "number";
             tempoText.value = this.tempo + ""; // will be updated according to slider
             tempoText.id = "melody-tempo-text";
             tempoText.addEventListener("input", () => this.setTempo(+tempoText.value));
@@ -254,6 +255,12 @@ namespace pxtblockly {
         }
 
         setTempo(tempo: number): void {
+            // reset text input if input is invalid
+            if(isNaN(tempo) || tempo <= 0 && document.getElementById("melody-tempo-text")) {
+                (<HTMLInputElement>document.getElementById("melody-tempo-text")).value = this.tempo + "";
+                return
+            }
+            // update tempo and duration values and display to reflect new tempo
             if (this.tempo != tempo) {
                 this.tempo = tempo;
                 this.duration = 60000/tempo;
