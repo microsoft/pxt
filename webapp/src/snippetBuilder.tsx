@@ -281,7 +281,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
     onChange = (answerToken: string) => (v: string) => {
             this.setState((prevState: SnippetBuilderState) => ({
                 answers: {
-                    ...prevState,
+                    ...prevState.answers,
                     [answerToken]: v,
                 }
             }));
@@ -325,27 +325,25 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                 closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name}
             >
-                <div>
-                    <div className="ui equal width grid">
-                        {currQ &&
-                            <div className='column'>
-                                <div>{currQ.title}</div>
-                                <div className='horizontal list'>
-                                    {currQ.inputs.map((input: IQuestionInput) =>
-                                        <div key={input.answerToken}>
-                                            <InputHandler
-                                                input={input}
-                                                onChange={this.onChange(input.answerToken)}
-                                                value={answers[input.answerToken]}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                <div className="ui equal width grid">
+                    {currQ &&
+                        <div className='ui grid snippet input-section column'>
+                            <div className='row'>{currQ.title}</div>
+                            <div className='ui equal width grid row'>
+                                {currQ.inputs.map((input: IQuestionInput) =>
+                                    <div key={input.answerToken} className='column'>
+                                        <InputHandler
+                                            input={input}
+                                            onChange={this.onChange(input.answerToken)}
+                                            value={answers[input.answerToken]}
+                                        />
+                                    </div>
+                                )}
                             </div>
-                        }
-                    </div>
-                    <div id="snippetBuilderOutput" className='column'>
-                        {parent && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
+                        </div>
+                    }
+                    <div id="snippetBuilderOutput" className='snippet output-section column'>
+                        {parent && <md.MarkedContent className='snippet-markdown-content' markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
                     </div>
                 </div>
             </sui.Modal>

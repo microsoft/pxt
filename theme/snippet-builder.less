@@ -1,4 +1,16 @@
 .snippet-builder {
-    max-height: 800px;
-    min-height: 800px;
+    overflow: visible;
+    .content {
+        min-height: 30em;
+        max-height: 30em;
+        overflow: scroll;
+        .snippet-markdown-content {
+            .raised {
+                height: 25em;
+                min-height: 25em;
+                max-height: 25em;
+                overflow: scroll;
+            }
+        }
+    }
 }
