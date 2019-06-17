@@ -229,7 +229,7 @@ namespace pxtsprite {
             br.y += Math.floor(this.toolWidth / 2);
 
             for (let i = 0; i < this.toolWidth; i++) {
-                this.drawRectangle(state,   
+                this.drawRectangle(state,
                     {x: tl.x + i, y: tl.y + i},
                     {x: br.x - i, y: br.y - i}
                 );
