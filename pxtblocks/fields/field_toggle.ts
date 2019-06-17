@@ -8,9 +8,9 @@ namespace pxtblockly {
         private params: any;
 
         private state_: boolean;
-        private checkElement_: any;
+        private checkElement_: SVGElement;
 
-        private toggleThumb_: any;
+        private toggleThumb_: SVGElement;
 
         public CURSOR = 'pointer';
 
@@ -195,11 +195,11 @@ namespace pxtblockly {
                 const size = this.getSize();
                 const innerWidth = this.getInnerWidth();
                 if (newState) {
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOn');
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOff');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOn');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOff');
                 } else {
-                    pxtblockly.svg.removeClass(this.checkElement_, 'blocklyToggleOn');
-                    pxtblockly.svg.addClass(this.checkElement_, 'blocklyToggleOff');
+                    pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOn');
+                    pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOff');
                 }
                 const outputShape = this.getOutputShape();
                 let width = 0, halfWidth = 0;
@@ -220,7 +220,7 @@ namespace pxtblockly {
                     case Blockly.OUTPUT_SHAPE_SQUARE:
                         width = 5 + innerWidth;
                         halfWidth = width / 2;
-                        this.toggleThumb_.setAttribute('width', width);
+                        this.toggleThumb_.setAttribute('width', "" + width);
                         this.toggleThumb_.setAttribute('x', `-${halfWidth}`);
                         leftPadding = rightPadding = outputShape == Blockly.OUTPUT_SHAPE_SQUARE ? 2 : -6;
                         break;
@@ -232,7 +232,7 @@ namespace pxtblockly {
         updateTextNode_() {
             super.updateTextNode_();
             if (this.textElement_)
-                pxtblockly.svg.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
+                pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
         }
 
         render_() {
@@ -241,7 +241,7 @@ namespace pxtblockly {
                 goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
                 let textNode = document.createTextNode(this.getDisplayText_());
                 this.textElement_.appendChild(textNode);
-                pxtblockly.svg.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
+                pxt.BrowserUtils.addClass(this.textElement_ as SVGElement, 'blocklyToggleText');
                 this.updateWidth();
 
                 // Update text centering, based on newly calculated width.

@@ -535,7 +535,8 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
             function: 0xf109,
             bucket: 0xf102,
             undo: 0xf118,
-            redo: 0xf111
+            redo: 0xf111,
+            rectangularselection: 0xf113
         },
         writeFiles: false,
     }, function (error, res) {

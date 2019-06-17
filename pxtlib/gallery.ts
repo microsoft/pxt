@@ -43,7 +43,9 @@ namespace pxt.gallery {
         if (!m) return undefined;
 
         const dependencies = parsePackagesFromMarkdown(md);
-        const src = m[2];
+        let src = m[2];
+        // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
+        src = tutorial.patchArcadeSnippets(src);
         const features = parseFeaturesFromMarkdown(md);
         return {
             name,
