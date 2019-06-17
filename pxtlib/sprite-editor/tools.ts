@@ -221,12 +221,12 @@ namespace pxtsprite {
 
         protected doEditCore(state: CanvasState) {
             let tl = this.topLeft();
-            tl.x -= Math.floor(this.toolWidth / 2);
-            tl.y -= Math.floor(this.toolWidth / 2);
+            tl.x -= this.toolWidth >> 1;
+            tl.y -= this.toolWidth >> 1;
 
             let br = this.bottomRight();
-            br.x += Math.floor(this.toolWidth / 2);
-            br.y += Math.floor(this.toolWidth / 2);
+            br.x += this.toolWidth >> 1;
+            br.y += this.toolWidth >> 1;
 
             for (let i = 0; i < this.toolWidth; i++) {
                 this.drawRectangle(state,

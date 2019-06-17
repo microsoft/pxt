@@ -56,7 +56,7 @@ namespace pxtsprite {
         }
 
         repaint(): void {
-            this.clearContext(this.paintLayer.getContext("2d"));
+            this.clearContext(this.context);
             this.drawImage();
             if (this.state.floatingLayer) this.drawFloatingLayer();
             else this.hideOverlay();
@@ -345,8 +345,7 @@ namespace pxtsprite {
             if (!this.state.floatingLayer) {
                 return;
             }
-            const context = this.paintLayer.getContext("2d");
-            this.drawImage(this.state.floatingLayer, context, this.state.layerOffsetX, this.state.layerOffsetY, true);
+            this.drawImage(this.state.floatingLayer, this.context, this.state.layerOffsetX, this.state.layerOffsetY, true);
 
             this.drawSelectionAnimation();
         }
@@ -378,6 +377,7 @@ namespace pxtsprite {
         }
 
         private clearContext(context: CanvasRenderingContext2D) {
+            // Paint Layer has the same dimensions as all other contexts
             context.clearRect(0, 0, this.paintLayer.width, this.paintLayer.height);
         }
 
