@@ -1302,6 +1302,12 @@ export class ProjectView
             .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
+    importPNGBuffer(buf: ArrayBuffer) {
+        screenshot.decodeBlobAsync("data:image/png;base64," +
+            btoa(pxt.Util.uint8ArrayToString(new Uint8Array(buf))))
+            .then(buf => this.importProjectCoreAsync(buf));
+    }
+
     importAssetFile(file: File) {
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => {
@@ -1407,8 +1413,26 @@ export class ProjectView
                     pxt.tickEvent("dragandrop.open")
                     this.importFile(files[0]);
                 }
+            },
+            url => {
+                if (this.isPNGFile(url)) {
+                    pxt.Util.httpRequestCoreAsync({
+                        url,
+                        method: "GET",
+                        responseArrayBuffer: true
+                    }).then(resp => this.importUri(url, resp.buffer))
+                    .catch(e => core.handleNetworkError(e));
+                }
             }
         );
+    }
+
+    importUri(url: string, buf: ArrayBuffer) {
+        if (this.isPNGFile(url)) {
+            this.importPNGBuffer(buf);
+        } else {
+            // ignore
+        }
     }
 
     importFile(file: File, options?: pxt.editor.ImportFileOptions) {
@@ -2737,12 +2761,7 @@ export class ProjectView
 
     startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
         pxt.tickEvent("tutorial.start");
-        // Check for Internet access
-        if (!pxt.Cloud.isNavigatorOnline()) {
-            core.errorNotification(lf("No Internet access, please connect and try again."));
-        } else {
-            this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
-        }
+        this.startTutorialAsync(tutorialId, tutorialTitle);
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
@@ -2756,6 +2775,7 @@ export class ProjectView
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
+        let tutorialErrorMessage = lf("Please check your internet access and ensure the tutorial is valid.");
         let p: Promise<string>;
 
         // make sure we are in the editor
@@ -2771,7 +2791,10 @@ export class ProjectView
                         autoChooseBoard = true;
                     }
                     return md;
-                })
+                }).catch((e) => {
+                    core.errorNotification(tutorialErrorMessage);
+                    core.handleNetworkError(e);
+                });
         } else if (scriptId) {
             pxt.tickEvent("tutorial.shared");
             p = workspace.downloadFilesByIdAsync(scriptId)
@@ -2782,6 +2805,9 @@ export class ProjectView
                     autoChooseBoard = false;
                     reportId = scriptId;
                     return files["README.md"];
+                }).catch((e) => {
+                    core.errorNotification(tutorialErrorMessage);
+                    core.handleNetworkError(e);
                 });
         } else if (!!ghid) {
             p = pxt.packagesConfigAsync()
@@ -2803,6 +2829,9 @@ export class ProjectView
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     return gh.files["README.md"];
+                }).catch((e) => {
+                    core.errorNotification(tutorialErrorMessage);
+                    core.handleNetworkError(e);
                 });
         } else {
             p = Promise.resolve(undefined);
@@ -2825,6 +2854,7 @@ export class ProjectView
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
+                tutorialHintCounter: 0,
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code,
@@ -2844,8 +2874,10 @@ export class ProjectView
                 tutorial: tutorialOptions,
                 preferredEditor: tutorialInfo.editor,
                 dependencies
-            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
-        }).catch((e) => {
+            });
+        }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
+        ).catch((e) => {
+            core.errorNotification(tutorialErrorMessage);
             core.handleNetworkError(e);
         }).finally(() => core.hideLoading("tutorial"));
     }
@@ -2917,7 +2949,7 @@ export class ProjectView
 
     showTutorialHint(showFullText?: boolean) {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        if (tc) tc.toggleHint(showFullText);
+        if (tc) tc.showHint(true, showFullText);
     }
 
     ///////////////////////////////////////////////////////////
@@ -2927,7 +2959,7 @@ export class ProjectView
     pokeUserActivity() {
         if (!!this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial) {
             // animate tutorial hint after some time of user inactivity
-            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId);
+            this.hintManager.pokeUserActivity(ProjectView.tutorialCardId, this.state.tutorialOptions.tutorialHintCounter);
         }
     }
 
@@ -2936,7 +2968,14 @@ export class ProjectView
     }
 
     private tutorialCardHintCallback() {
-        this.setState({pokeUserComponent: ProjectView.tutorialCardId});
+        let tutorialOptions = this.state.tutorialOptions;
+        tutorialOptions.tutorialHintCounter = tutorialOptions.tutorialHintCounter + 1;
+
+        this.setState({
+            pokeUserComponent: ProjectView.tutorialCardId,
+            tutorialOptions: tutorialOptions
+        });
+
         setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
     }
 
@@ -3070,7 +3109,7 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
 
-        const collapseTooltip = lf("Hide the simulator");
+        const collapseIconTooltip = this.state.collapseEditorTools  ? lf("Show the simulator") : lf("Hide the simulator");
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
@@ -3143,8 +3182,8 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">

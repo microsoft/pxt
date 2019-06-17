@@ -76,8 +76,25 @@ namespace pxt {
                 return mainPkg.getCompileOptionsAsync(target)
             })
             .then(opts => {
+                patchTS(mainPkg.targetVersion(), opts)
                 prepPythonOptions(opts)
                 return pxtc.compile(opts)
             })
+    }
+
+    export function patchTS(version: string, opts: pxtc.CompileOptions) {
+        if (!version)
+            return
+        pxt.debug(`applying TS patches relative to ${version}`)
+        for (let fn of Object.keys(opts.fileSystem)) {
+            if (fn.indexOf("/") == -1 && U.endsWith(fn, ".ts")) {
+                const ts = opts.fileSystem[fn]
+                const ts2 = pxt.patching.patchJavaScript(version, ts)
+                if (ts != ts2) {
+                    pxt.debug(`applying TS patch to ${fn}`)
+                    opts.fileSystem[fn] = ts2
+                }
+            }
+        }
     }
 }

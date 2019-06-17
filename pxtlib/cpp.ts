@@ -596,6 +596,9 @@ namespace pxt.cpp {
 
                 pointerIncPre += allConvs
 
+                if (needsStackSave)
+                    pointerIncPre += "  if (panicCode) { ctx->sp = prevSP; return; }\n"
+
                 const call = `::${fi.name}(${refs.join(", ")})`
 
                 if (fi.argsFmt[0] == "V") {

@@ -106,6 +106,12 @@ ${info.id}_IfaceVT:
         VTable = 0x22,
     }
 
+    // this also handles dates after 2106-02-07 (larger than 2^32 seconds since the beginning of time)
+    function encodeTime(d: Date) {
+        const t = d.getTime() / 1000
+        return `${t >>> 0}, ${(t / 0x100000000) | 0}`
+    }
+
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
@@ -144,6 +150,13 @@ _start_${name}:
             address++
         }
 
+        const now = new Date()
+        let encodedName = U.toUTF8(opts.name, true)
+        if (encodedName.length > 100) encodedName = encodedName.slice(0, 100)
+        let encodedLength = encodedName.length + 1
+        if (encodedLength & 1) encodedLength++
+        const paddingSize = 128 - encodedLength
+
         section("_info", SectionType.InfoHeader, () => `
                 ; magic - \\0 added by assembler
                 .string "\\nPXT64\\n"
@@ -152,8 +165,15 @@ _start_${name}:
                 .hex 0000000000000000 ; @SRCHASH@
                 .word ${bin.globalsWords}   ; num. globals
                 .word ${bin.nonPtrGlobals} ; non-ptr globals
+                .word 0, 0 ; last usage time
+                .word ${encodeTime(now)} ; installation time
+                .word ${encodeTime(now)} ; publication time - TODO
+                .space 64 ; reserved
+                .string ${JSON.stringify(encodedName)}
+                .space ${paddingSize} ; pad to 128 bytes
 `
         )
+
         bin.procs.forEach(p => {
             section(p.label(), SectionType.Function, () => irToVM(ctx, bin, p),
                 [p.label() + "_Lit"])
