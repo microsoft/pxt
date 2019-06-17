@@ -33,6 +33,11 @@ try {
     }
 } catch (e) { }
 
+if (!mapFn) {
+    mapFn = "built/yt/build/bbc-microbit-classic-gcc/source/pxt-microbit-app.map"
+    if (!fs.existsSync(mapFn)) mapFn = ""
+}
+
 if (mapFn) {
     let inText = false
     let addrBeg = 0
