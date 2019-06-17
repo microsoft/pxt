@@ -49,6 +49,7 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
+        unsupportedBrowsers?: string[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
     }
 
     interface ProjectTemplate {
@@ -327,7 +328,6 @@ declare namespace pxt {
         qrCode?: boolean; // generate QR code for shared urls
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
-        unsupportedBrowsers?: string[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
     }
 
     interface SocialOptions {

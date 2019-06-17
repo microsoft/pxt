@@ -219,7 +219,7 @@ namespace pxt.BrowserUtils {
             return true;
 
         //Check target theme to see if this browser is blacklisted
-        if (pxt.appTarget.appTheme.unsupportedBrowsers && pxt.appTarget.appTheme.unsupportedBrowsers.indexOf(browser()) >= 0) {
+        if (pxt.appTarget.unsupportedBrowsers && pxt.appTarget.unsupportedBrowsers.indexOf(browser()) >= 0) {
             return false
         }
 
