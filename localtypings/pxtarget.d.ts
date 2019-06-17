@@ -327,7 +327,7 @@ declare namespace pxt {
         qrCode?: boolean; // generate QR code for shared urls
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
-        browserBlacklist?: string[] // blacklist of browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        unsupportedBrowsers?: string[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
     }
 
     interface SocialOptions {
