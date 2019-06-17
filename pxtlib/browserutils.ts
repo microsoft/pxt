@@ -1003,9 +1003,9 @@ namespace pxt.BrowserUtils {
                 el.classList.remove(cls);
             } else {
                 el.className.baseVal = (el.className + "")
-                                    .split(/\s+/)
-                                    .filter(c => c != cls)
-                                    .join(" ");
+                    .split(/\s+/)
+                    .filter(c => c != cls)
+                    .join(" ");
             }
         }
     }
