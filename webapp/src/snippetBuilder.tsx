@@ -60,6 +60,7 @@ interface SnippetBuilderState {
     history: number[];
     defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
     config?: ISnippetConfig; // Will be a config type
+    actions?: sui.ModalButton[];
 }
 
 
@@ -106,6 +107,52 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         }
 
         this.setState({ defaults });
+    }
+
+    toggleActionButton() {
+        let newActionButton: sui.ModalButton;
+        if (this.isLastQuestion()) {
+            newActionButton =             {
+                label: lf("Done"),
+                onclick: this.confirm,
+                icon: "check",
+                className: "approve positive"
+            };
+        } else {
+            newActionButton = {
+                label: lf("Next"),
+                onclick: this.nextPage,
+                icon: 'arrow right',
+                className: 'arrow right',
+            };
+        }
+        if (this.state.actions[1] !== newActionButton) {
+            this.setState({
+                actions: [
+                    this.state.actions[0],
+                    newActionButton
+                ]
+            });
+        }
+    }
+
+    initializeActionButtons() {
+        const actions: sui.ModalButton[] = [
+            {
+                label: lf("Back"),
+                onclick: this.backPage,
+                icon: 'arrow left',
+                className: 'arrow left',
+            },
+            {
+                label: lf("Next"),
+                onclick: this.nextPage,
+                icon: 'arrow right',
+                className: 'arrow right',
+            },
+        ];
+
+        this.setState({ actions });
     }
 
     componentDidMount() {
@@ -156,6 +203,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
 
     show() {
         pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: true });
+        this.initializeActionButtons();
         this.setState({
             visible: true,
         });
@@ -251,30 +299,53 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         this.hide();
     }
 
+    getCurrentQuestion() {
+        const { history, config } = this.state;
+
+        return config.questions[history[history.length - 1]];
+    }
+
+    getNextQuestion() {
+        const { config } = this.state;
+        const currentQuestion = this.getCurrentQuestion();
+        if (currentQuestion.goto) {
+            return config.questions[currentQuestion.goto.question];
+        }
+        return null;
+    }
+
+    isLastQuestion() {
+        if (this.getCurrentQuestion().goto) {
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Changes page by 1 if next question exists.
      * Looks for output and appends the next questions output if it exists and
      * is not already attached to the current output.
      */
     nextPage() {
-        const { config } = this.state;
         const { history, tsOutput } = this.state;
-        const currentQuestion = config.questions[history[history.length - 1]];
-        const goto = currentQuestion.goto
+        const currentQuestion = this.getCurrentQuestion();
+        const goto = currentQuestion.goto;
+
         if (goto) {
-            const nextQuestion = config.questions[goto.question];
+            const nextQuestion = this.getNextQuestion();
 
             if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
                 this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`});
             }
-            this.setState({ history: [...history, goto.question ]})
+            this.setState({ history: [...history, goto.question ]}, this.toggleActionButton)
         }
     }
 
     backPage() {
         const { history } = this.state;
         if (history.length > 1) {
-            this.setState({ history: history.slice(0, history.length - 1)});
+            this.setState({ history: history.slice(0, history.length - 1)}, this.toggleActionButton);
         }
     }
 
@@ -288,49 +359,22 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         }
 
     renderCore() {
-        const { visible, tsOutput, answers, config, history } = this.state;
+        const { visible, tsOutput, answers, config, history, actions } = this.state;
         const { parent } = this.props;
 
-        const actions: sui.ModalButton[] = [
-            {
-                label: lf("Back"),
-                onclick: this.backPage,
-                icon: 'arrow left',
-                className: 'arrow left',
-            },
-            {
-                label: lf("Next"),
-                onclick: this.nextPage,
-                icon: 'arrow right',
-                className: 'arrow right',
-            },
-            {
-                label: lf("Cancel"),
-                onclick: this.cancel,
-                icon: "cancel",
-                className: "cancel lightgrey"
-            },
-            {
-                label: lf("Done"),
-                onclick: this.confirm,
-                icon: "check",
-                className: "approve positive"
-            }
-        ];
-
-        const currQ = config.questions[history[history.length - 1]];
+        const currentQuestion = this.getCurrentQuestion();
 
         return (
             <sui.Modal isOpen={visible} className={'snippet-builder'} size="large"
-                closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
-                dimmer={true} buttons={actions} header={config.name}
+                closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
+                dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
                 <div className="ui equal width grid">
-                    {currQ &&
+                    {currentQuestion &&
                         <div className='ui grid snippet input-section column'>
-                            <div className='row'>{currQ.title}</div>
+                            <div className='row'>{currentQuestion.title}</div>
                             <div className='ui equal width grid row'>
-                                {currQ.inputs.map((input: IQuestionInput) =>
+                                {currentQuestion.inputs.map((input: IQuestionInput) =>
                                     <div key={input.answerToken} className='column'>
                                         <InputHandler
                                             input={input}
