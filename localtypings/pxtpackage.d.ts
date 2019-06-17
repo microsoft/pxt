@@ -67,6 +67,7 @@ declare namespace pxt {
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
         skipLocalization?: boolean;
+        snippetBuilders?: SnippetConfig[];
     }
 
     interface PackageExtension {
@@ -157,5 +158,37 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+    }
+
+    interface SnippetConfig {
+        name: string;
+        outputType: string;
+        initialOutput?: string;
+        questions: SnippetQuestions[];
+    }
+
+    type SnippetAnswerTypes = any; // TODO(jb) Should include custom answer types for number, enums, string, image
+
+    interface SnippetGoToParameters {
+        [tokenType: string]: number;
+    }
+
+    interface SnippetGoToOptions {
+        question: number;
+        parameters?: SnippetGoToParameters;
+    }
+
+    interface SnippetQuestionInput {
+        answerToken: string;
+        defaultAnswer: SnippetAnswerTypes;
+        type?: string;
+        label?: string;
+    }
+
+    interface SnippetQuestions {
+        title: string;
+        output?: string;
+        goto?: SnippetGoToOptions;
+        inputs: SnippetQuestionInput[];
     }
 }

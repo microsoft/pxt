@@ -14,51 +14,51 @@ interface ISnippetBuilderProps extends ISettingsProps {
 
 type AnswerTypes = any; // Should include custom answer types for number, enums, string, image
 
-interface IGoToParameters {
+interface GoToParameters {
     [tokenType: string]: number;
 }
 
-interface IGoToOptions {
+interface GoToOptions {
     question: number;
-    parameters?: IGoToParameters;
+    parameters?: GoToParameters;
 }
 
-interface IQuestionInput {
+interface QuestionInput {
     answerToken: string;
     defaultAnswer: AnswerTypes;
     type?: string;
     label?: string;
 }
 
-interface IQuestions {
+interface Questions {
     title: string;
     output?: string;
-    goto?: IGoToOptions;
-    inputs: IQuestionInput[];
+    goto?: GoToOptions;
+    inputs: QuestionInput[];
 }
 
-interface ISnippetConfig {
+interface SnippetConfig {
     name: string;
     outputType: string;
     initialOutput?: string;
-    questions: IQuestions[];
+    questions: Questions[];
 }
 
-interface IDefaultAnswersMap {
+interface DefaultAnswersMap {
     [answerToken: string]: AnswerTypes;
 }
 
-interface IAnswersMap {
+interface AnswersMap {
     [answerToken: string]: AnswerTypes;
 }
 
 export interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
-    answers?: IAnswersMap;
+    answers?: AnswersMap;
     history: number[];
-    defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
-    config?: ISnippetConfig; // Will be a config type
+    defaults: DefaultAnswersMap; // Will be typed once more clearly defined
+    config?: SnippetConfig; // Will be a config type
 }
 
 
@@ -93,7 +93,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
      */
     buildDefaults() {
         const { config } = this.state;
-        const defaults: IDefaultAnswersMap = {};
+        const defaults: DefaultAnswersMap = {};
 
         for (const question of config.questions) {
             const { inputs } = question;
@@ -310,7 +310,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                             <div>
                                 <div>{currQ.title}</div>
                                 <div className='list horizontal'>
-                                    {currQ.inputs.map((input: IQuestionInput) =>
+                                    {currQ.inputs.map((input: QuestionInput) =>
                                         <div key={input.answerToken}>
                                             <sui.Input
                                                 label={input.label && input.label}
@@ -333,7 +333,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
 }
 
 // This will be passed down as a prop but is currently static
-const staticConfig: ISnippetConfig = {
+const staticConfig: SnippetConfig = {
     name: "Sprite Builder",
     outputType: 'blocks',
     initialOutput: `enum SpriteKind {
