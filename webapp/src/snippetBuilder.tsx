@@ -16,44 +16,12 @@ interface SnippetBuilderProps extends ISettingsProps {
     config: pxt.SnippetConfig;
 }
 
-type AnswerTypes = any; // Should include custom answer types for number, enums, string, image
-
-interface GoToParameters {
-    [tokenType: string]: number;
-}
-
-interface GoToOptions {
-    question: number;
-    parameters?: GoToParameters;
-}
-
-interface QuestionInput {
-    answerToken: string;
-    defaultAnswer: AnswerTypes;
-    type?: string;
-    label?: string;
-}
-
-interface Questions {
-    title: string;
-    output?: string;
-    goto?: GoToOptions;
-    inputs: QuestionInput[];
-}
-
-interface SnippetConfig {
-    name: string;
-    outputType: string;
-    initialOutput?: string;
-    questions: Questions[];
-}
-
 interface DefaultAnswersMap {
-    [answerToken: string]: AnswerTypes;
+    [answerToken: string]: pxt.SnippetAnswerTypes;
 }
 
 interface AnswersMap {
-    [answerToken: string]: AnswerTypes;
+    [answerToken: string]: pxt.SnippetAnswerTypes;
 }
 
 export interface SnippetBuilderState {
@@ -316,7 +284,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                             <div>
                                 <div>{currQ.title}</div>
                                 <div className='list horizontal'>
-                                    {currQ.inputs.map((input: QuestionInput) =>
+                                    {currQ.inputs.map((input: pxt.SnippetQuestionInput) =>
                                         <div key={input.answerToken}>
                                             <sui.Input
                                                 label={input.label && input.label}
