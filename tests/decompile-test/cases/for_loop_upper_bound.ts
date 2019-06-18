@@ -2,6 +2,14 @@ for (let i = 0; i < 5; i++) {
     let newValue = "hello number " + i;
 }
 
+for (let i = 0; i < (5); i++) {
+    let newValue = "hello number " + i;
+}
+
+for (let i = 0; i < (((((5))))); i++) {
+    let newValue = "hello number " + i;
+}
+
 for (let i = 0; i < 5.5; i++) {
     let newValue = "hello number " + i;
 }
