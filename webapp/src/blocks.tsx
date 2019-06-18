@@ -11,7 +11,7 @@ import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
-import { initializeSnippetExtensions } from './loadSnippetExtensions';
+import { initializeSnippetExtensions } from './snippetBuilder';
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
