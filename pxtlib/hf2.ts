@@ -425,7 +425,7 @@ namespace pxt.HF2 {
                 })
         }
 
-        reflashAsync(blocks: pxtc.UF2.Block[], cancellationToken: pxt.Util.CancellationToken) {
+        reflashAsync(blocks: pxtc.UF2.Block[], cancellationToken?: pxt.Util.CancellationToken) {
             log(`reflash`)
             return this.flashAsync(blocks, cancellationToken)
                 .then(() => Promise.delay(100))
@@ -461,7 +461,7 @@ namespace pxt.HF2 {
                         .then(() => this.pingAsync()))
         }
 
-        flashAsync(blocks: pxtc.UF2.Block[], cancellationToken: pxt.U.CancellationToken) {
+        flashAsync(blocks: pxtc.UF2.Block[], cancellationToken?: pxt.U.CancellationToken) {
             let start = Date.now()
             let fstart = 0
             let loopAsync = (pos: number): Promise<void> => {
