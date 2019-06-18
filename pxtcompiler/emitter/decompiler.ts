@@ -1475,7 +1475,7 @@ ${output}</xml>`;
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     if (condition.right.kind === SK.NumericLiteral) {
-                        const decrementedValue = parseInt(condition.right.getFullText()) - 1;
+                        const decrementedValue = parseFloat(condition.right.getFullText()) - 1;
                         const valueField = getNumericLiteral(decrementedValue + "");
                         r.inputs.push(mkValue("TO", valueField, wholeNumberType));
                     } else {
