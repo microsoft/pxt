@@ -113,7 +113,7 @@ namespace pxt.editor.experiments {
                 description: lf("Use the JavaScript debugger to debug extension code")
             },
             {
-                id: "spriteWizard",
+                id: "snippetBuilder",
                 name: lf("Sprite Wizard"),
                 description: lf("Make a sprite using the new Sprite Wizard")
             },

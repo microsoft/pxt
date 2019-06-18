@@ -11,7 +11,7 @@ import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
-import { SnippetBuilder } from './snippetBuilder'
+import { initializeSnippetExtensions } from './loadSnippetExtensions';
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -26,7 +26,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
     functionsDialog: CreateFunctionDialog = null;
-    snippetDialog: SnippetBuilder = null;
 
     showCategories: boolean = true;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
@@ -1110,41 +1109,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return this.filterBlocks(subns, this.nsMap[ns]) || [];
     }
 
-    // TODO(jb): Generalize to snippet builder and pass in specific config.
-    private openSnippetDialog(config: pxt.SnippetConfig) {
-        if (!this.snippetDialog) {
-            const wrapper = document.body.appendChild(document.createElement('div'));
-            const props = { parent: this.parent, mainWorkspace: this.editor, config };
-            this.snippetDialog = ReactDOM.render(
-                React.createElement(SnippetBuilder, props),
-                wrapper
-            ) as SnippetBuilder;
-        }
-        this.snippetDialog.show();
-    }
-
-    loadSnippetExtensions(snippetExtensions: pxt.PackageConfig[], ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[]) {
-        snippetExtensions.forEach(config => {
-            config.snippetBuilders.forEach(snippet => {
-                if (ns == snippet.namespace) {
-                    extraBlocks.push({
-                        name: `SNIPPET${name}_BUTTON`,
-                        type: "button",
-                        attributes: {
-                            blockId: `SNIPPET${name}_BUTTON`,
-                            label: snippet.label ? Util.rlf(snippet.label) : Util.lf("Editor"),
-                            weight: 101,
-                            group: snippet.group && snippet.group,
-                        },
-                        callback: () => {
-                            this.openSnippetDialog(snippet);
-                        }
-                    });
-                }
-            });
-        })
-    }
-
     private getExtraBlocks(ns: string, subns: string) {
         if (subns) return [];
         let extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[] = [];
@@ -1187,14 +1151,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         }
 
-        if (pxt.appTarget.appTheme.spriteWizard) {
-            // Filter snippet extensions from all packages
-            const snippetExtensions = pkg.allEditorPkgs()
-                .map(ep => ep.getKsPkg())
-                .map(p => !!p && p.config)
-                .filter(config => config.snippetBuilders);
+        if (pxt.appTarget.appTheme.snippetBuilder) {
             // Push snippet extension into extraBlocks
-            this.loadSnippetExtensions(snippetExtensions, ns, extraBlocks);
+            initializeSnippetExtensions(ns, extraBlocks, this.editor, this.parent);
         }
 
         return extraBlocks;
