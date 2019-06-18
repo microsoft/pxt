@@ -403,7 +403,7 @@ namespace pxtsprite {
                 this.altDown = true;
             }
 
-            if (this.activeTool === PaintTool.Marquee && this.state.floatingLayer) {
+            if (this.state.floatingLayer) {
                 let didSomething = true;
 
                 switch (event.keyCode) {
