@@ -95,7 +95,7 @@ namespace pxt.tutorial {
                 stepInfo[i].headerContentMd = hintText[1];
                 blockSolution = hintText[2];
                 if (blockSolution) {
-                    // remove ```filterblocks ``` code, as it isn't displayed in the hint
+                    // remove hidden snippets
                     blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
                     stepInfo[i].blockSolution = blockSolution;
                 }
