@@ -150,7 +150,7 @@
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
 <block type="math_number">
-<field name="NUM">2.1415926</field>
+<field name="NUM">4.5</field>
 </block>
 </value>
 <statement name="DO">
@@ -184,18 +184,8 @@
 </value>
 <value name="TO">
 <shadow type="math_whole_number"><field name="NUM">0</field></shadow>
-<block type="math_arithmetic">
-<field name="OP">MINUS</field>
-<value name="A">
-<shadow type="math_number">
-<field name="NUM">-5</field>
-</shadow>
-</value>
-<value name="B">
-<shadow type="math_number">
-<field name="NUM">1</field>
-</shadow>
-</value>
+<block type="math_number">
+<field name="NUM">2.1415926</field>
 </block>
 </value>
 <statement name="DO">
@@ -221,14 +211,6 @@
 </block>
 </statement>
 <next>
-<block type="variables_set">
-<field name="VAR">myNum</field>
-<value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">5</field>
-</shadow>
-</value>
-<next>
 <block type="pxt_controls_for">
 <value name="VAR">
 <shadow type="variables_get_reporter">
@@ -240,10 +222,9 @@
 <block type="math_arithmetic">
 <field name="OP">MINUS</field>
 <value name="A">
-<shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="variables_get">
-<field name="VAR">myNum</field>
-</block>
+<shadow type="math_number">
+<field name="NUM">-5</field>
+</shadow>
 </value>
 <value name="B">
 <shadow type="math_number">
@@ -275,6 +256,14 @@
 </block>
 </statement>
 <next>
+<block type="variables_set">
+<field name="VAR">myNum</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+<next>
 <block type="pxt_controls_for">
 <value name="VAR">
 <shadow type="variables_get_reporter">
@@ -287,18 +276,8 @@
 <field name="OP">MINUS</field>
 <value name="A">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="math_arithmetic">
-<field name="OP">ADD</field>
-<value name="A">
-<shadow type="math_number">
-<field name="NUM">5</field>
-</shadow>
-</value>
-<value name="B">
-<shadow type="math_number">
-<field name="NUM">3</field>
-</shadow>
-</value>
+<block type="variables_get">
+<field name="VAR">myNum</field>
 </block>
 </value>
 <value name="B">
@@ -330,6 +309,64 @@
 </value>
 </block>
 </statement>
+<next>
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">q</field>
+</shadow>
+</value>
+<value name="TO">
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<statement name="DO">
+<block type="variables_set">
+<field name="VAR">newValue9</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text_join">
+<mutation items="2" />
+<value name="ADD0">
+<shadow type="text">
+<field name="TEXT">hello number </field>
+</shadow>
+</value>
+<value name="ADD1">
+<shadow type="text"><field name="TEXT"></field></shadow>
+<block type="variables_get">
+<field name="VAR">q</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</statement>
+</block>
+</next>
 </block>
 </next>
 </block>
