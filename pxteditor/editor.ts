@@ -202,7 +202,7 @@ namespace pxt.editor {
         setTutorialStep(step: number): void;
         setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
-        completeTutorial(): void;
+        completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
@@ -265,7 +265,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean): void;
         showLightbox(): void;
         hideLightbox(): void;
 
@@ -282,6 +282,7 @@ namespace pxt.editor {
         showExitAndSaveDialog(): void;
         showChooseHwDialog(): void;
         showExperimentsDialog(): void;
+        showRecipesDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;

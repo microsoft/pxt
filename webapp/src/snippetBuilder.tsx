@@ -9,57 +9,26 @@ import { SpriteEditor } from './spriteEditor';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-interface ISnippetBuilderProps extends ISettingsProps {
+interface SnippetBuilderProps extends ISettingsProps {
     mainWorkspace: Blockly.Workspace;
+    config: pxt.SnippetConfig;
 }
 
-type AnswerTypes = any; // Should include custom answer types for number, enums, string, image
-
-interface IGoToParameters {
-    [tokenType: string]: number;
+interface DefaultAnswersMap {
+    [answerToken: string]: pxt.SnippetAnswerTypes;
 }
 
-interface IGoToOptions {
-    question: number;
-    parameters?: IGoToParameters;
-}
-
-export interface IQuestionInput {
-    answerToken: string;
-    defaultAnswer: AnswerTypes;
-    type?: string;
-    label?: string;
-}
-
-interface IQuestions {
-    title: string;
-    output?: string;
-    goto?: IGoToOptions;
-    inputs: IQuestionInput[];
-}
-
-interface ISnippetConfig {
-    name: string;
-    outputType: string;
-    initialOutput?: string;
-    questions: IQuestions[];
-}
-
-interface IDefaultAnswersMap {
-    [answerToken: string]: AnswerTypes;
-}
-
-interface IAnswersMap {
-    [answerToken: string]: AnswerTypes;
+interface AnswersMap {
+    [answerToken: string]: pxt.SnippetAnswerTypes;
 }
 
 interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
-    answers?: IAnswersMap;
+    answers?: AnswersMap;
     history: number[];
-    defaults: IDefaultAnswersMap; // Will be typed once more clearly defined
-    config?: ISnippetConfig; // Will be a config type
+    defaults: DefaultAnswersMap; // Will be typed once more clearly defined
+    config?: pxt.SnippetConfig; // Will be a config type
     actions?: sui.ModalButton[];
 }
 
@@ -70,16 +39,16 @@ interface SnippetBuilderState {
  * An initial output is set and outputs defined at each questions are appended to the initial output.
  * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
  */
-export class SnippetBuilder extends data.Component<ISnippetBuilderProps, SnippetBuilderState> {
-    constructor(props: ISnippetBuilderProps) {
+export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetBuilderState> {
+    constructor(props: SnippetBuilderProps) {
         super(props);
         this.state = {
             visible: false,
             answers: {},
             history: [0], // Index to track current question
             defaults: {},
-            config: staticConfig, // This will be set when it is recieved
-            tsOutput: staticConfig.initialOutput
+            config: props.config,
+            tsOutput: props.config.initialOutput
         };
 
         this.cleanup = this.cleanup.bind(this);
@@ -96,7 +65,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
      */
     buildDefaults() {
         const { config } = this.state;
-        const defaults: IDefaultAnswersMap = {};
+        const defaults: DefaultAnswersMap = {};
 
         for (const question of config.questions) {
             const { inputs } = question;
@@ -214,7 +183,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         this.setState({
             answers: {},
             history: [0],
-            tsOutput: staticConfig.initialOutput,
+            tsOutput: this.props.config.initialOutput,
         });
 
         Blockly.hideChaff();
@@ -274,10 +243,11 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
-                // TODO(jb)
+                // Convert XML text to xml dom in order to parse
                 const xmlDOM = Blockly.Xml.textToDom(resp);
                 // TODO(jb) hard coded in topmost child should be generalized
                 const xmlOnStartBlock = this.findRootBlock(xmlDOM, 'pxt-on-start');
+                // Finds the on start blocks children
                 const toAttach = this.findRootBlock(xmlOnStartBlock);
                 const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
                 // Hard coded in top blocks
@@ -374,7 +344,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                         <div className='ui grid snippet input-section column'>
                             <div className='row'>{currentQuestion.title}</div>
                             <div className='ui equal width grid row'>
-                                {currentQuestion.inputs.map((input: IQuestionInput) =>
+                                {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
                                     <div key={input.answerToken} className='column'>
                                         <InputHandler
                                             input={input}
@@ -395,14 +365,14 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
     }
 }
 
-interface IInputHandlerProps {
-    input: IQuestionInput;
+interface InputHandlerProps {
+    input: pxt.SnippetQuestionInput;
     onChange: (v: string) => void;
     value: string;
 }
 
-class InputHandler extends data.Component<IInputHandlerProps, {}> {
-    constructor(props: IInputHandlerProps) {
+class InputHandler extends data.Component<InputHandlerProps, {}> {
+    constructor(props: InputHandlerProps) {
         super(props);
     }
 
@@ -431,111 +401,3 @@ class InputHandler extends data.Component<IInputHandlerProps, {}> {
         }
     }
 }
-
-// This will be passed down as a prop but is currently static
-const staticConfig: ISnippetConfig = {
-    name: "Sprite Builder",
-    outputType: 'blocks',
-    initialOutput: `enum SpriteKind {
-        Player,
-        Projectile,
-        Food,
-        Enemy
-    }
-
-    let $spriteName = sprites.create($spriteImage, $spriteKind)`,
-    questions: [
-        {
-            "title": "What should your sprite be called?",
-            "inputs": [{
-                    "answerToken": "spriteName",
-                    "defaultAnswer": "mySprite",
-                    "type": "text"
-            }],
-            "output": "",
-            "goto": {
-                "question": 2
-            }
-        },
-        {
-            "title": "Where should your sprite be placed?",
-            "inputs": [
-                {
-                    "label": "x:",
-                    "defaultAnswer": 80,
-                    "answerToken": "xLocation",
-                    "type": "number"
-                },
-                {
-                    "label": "y:",
-                    "defaultAnswer": 60,
-                    "answerToken": "yLocation",
-                    "type": "number"
-                }
-            ],
-            "output": "$spriteName.setPosition($xLocation,$yLocation)",
-            "goto": {
-                "question": 3
-            }
-        },
-        {
-            "title": "What should your sprite look like?",
-            "inputs": [
-                {
-                    "answerToken": "spriteImage",
-                    "type": "spriteEditor",
-                    defaultAnswer: `img\`
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    \``
-                }
-            ],
-            // "output": '$spriteName.setImage($spriteImage)',
-            "goto": {
-                question: 1,
-            }
-        },
-        {
-            "title": "What kind of sprite should this be?",
-            "inputs": [
-                {
-                    "answerToken": "spriteKind",
-                    "defaultAnswer": "SpriteKind.Player",
-                    "type": "dropdown"
-                }
-            ],
-            // "output": "$spriteName.setKind($spriteKind)",
-            "goto": {
-                "question": 4,
-                "parameters": {
-                    "spriteKind": 0
-                }
-            }
-        },
-        {
-            "title": "How many lives should your player have?",
-            "inputs": [
-                {
-                    "answerToken": "gameLives",
-                    "defaultAnswer": 3,
-                    "type": "number",
-                }
-            ],
-            "output": "info.setLife($gameLives)"
-        }
-    ]
-};
