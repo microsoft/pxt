@@ -49,7 +49,11 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
-        unsupportedBrowsers?: string[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        unsupportedBrowsers?: BrowserOptions[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+    }
+
+    interface BrowserOptions {
+        id: string;
     }
 
     interface ProjectTemplate {
