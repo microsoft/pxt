@@ -213,14 +213,16 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
-                // TODO(jb)
+                // Convert XML text to xml dom in order to parse
                 const xmlDOM = Blockly.Xml.textToDom(resp);
                 // TODO(jb) hard coded in topmost child should be generalized
                 const xmlOnStartBlock = this.findRootBlock(xmlDOM, 'pxt-on-start');
+                // Finds the on start blocks children
                 const toAttach = this.findRootBlock(xmlOnStartBlock);
                 const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
-                // Hard coded in top blocks
-                this.getOnStartBlock(mainWorkspace).getInput("HANDLER").connection.connect(rootConnection.previousConnection);
+                // Connects new blocks to start block
+                this.getOnStartBlock(mainWorkspace)
+                    .getInput("HANDLER").connection.connect(rootConnection.previousConnection);
             }).catch((e) => {
                 pxt.reportException(e);
                 throw new Error(`Failed to decompile snippet output`);
