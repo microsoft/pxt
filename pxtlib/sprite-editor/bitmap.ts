@@ -2,7 +2,10 @@ namespace pxtsprite {
     // These are the characters used to output literals (but we support aliases for some of these)
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
 
-    export type Coord = [number, number];
+    export interface Coord {
+        x: number,
+        y: number
+    }
 
     /**
      * 16-color sprite

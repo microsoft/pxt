@@ -103,6 +103,12 @@ namespace pxtsprite {
                     const color = this.state.image.get(col, row);
                     this.sidebar.setColor(color);
                 } else {
+                    this.paintSurface.onEditEnd(col, row, this.edit);
+                    if (this.state.floatingLayer && !this.paintSurface.state.floatingLayer) {
+                        this.pushState(true);
+                        this.state = this.paintSurface.state.copy();
+                        this.rePaint();
+                    }
                     this.commit();
                     this.shiftAction();
                 }
@@ -331,10 +337,10 @@ namespace pxtsprite {
                 const ch = this.closeHandler;
                 this.closeHandler = undefined;
                 ch();
-                if (this.state.floatingLayer) {
-                    this.state.mergeFloatingLayer();
-                    this.pushState(true);
-                }
+            }
+            if (this.state.floatingLayer) {
+                this.state.mergeFloatingLayer();
+                this.pushState(true);
             }
         }
 

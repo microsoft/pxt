@@ -46,6 +46,7 @@ namespace pxtsprite {
         protected startCol: number;
         protected startRow: number;
         isStarted: boolean;
+        showPreview: boolean;
 
         constructor (protected canvasWidth: number, protected canvasHeight: number, public color: number, protected toolWidth: number) {
         }
@@ -68,26 +69,47 @@ namespace pxtsprite {
             state.mergeFloatingLayer();
         }
 
+
+        end(col: number, row: number, state: CanvasState): void {
+
+        }
+
+
         getCursor(): Cursor {
             return new Cursor(this.toolWidth, this.toolWidth);
+        }
+
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            draw(col, row);
         }
     }
 
     export abstract class SelectionEdit extends Edit {
         protected endCol: number;
         protected endRow: number;
+        protected isDragged: boolean;
 
         update(col: number, row: number) {
             this.endCol = col;
             this.endRow = row;
+
+            if (!this.isDragged && !(col == this.startCol && row == this.startRow)) {
+                this.isDragged = true;
+            }
         }
 
         protected topLeft(): Coord {
-            return [Math.min(this.startCol, this.endCol), Math.min(this.startRow, this.endRow)];
+            return {
+                x: Math.min(this.startCol, this.endCol),
+                y: Math.min(this.startRow, this.endRow)
+            };
         }
 
         protected bottomRight(): Coord {
-            return [Math.max(this.startCol, this.endCol), Math.max(this.startRow, this.endRow)];
+            return {
+                x: Math.max(this.startCol, this.endCol),
+                y: Math.max(this.startRow, this.endRow)
+        };
         }
     }
 
@@ -96,6 +118,7 @@ namespace pxtsprite {
      */
     export class PaintEdit extends Edit {
         protected mask: Bitmask;
+        showPreview = true;
 
         constructor (canvasWidth: number, canvasHeight: number, color: number, toolWidth: number) {
             super(canvasWidth, canvasHeight, color, toolWidth);
@@ -153,6 +176,10 @@ namespace pxtsprite {
             }
         }
 
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            this.drawCore(col, row, draw);
+        }
+
         protected drawCore(col: number, row: number, setPixel: (col: number, row: number) => void) {
             col = col - Math.floor(this.toolWidth / 2);
             row = row - Math.floor(this.toolWidth / 2);
@@ -173,11 +200,13 @@ namespace pxtsprite {
      * Tool for drawing filled rectangles
      */
     export class RectangleEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
-            for (let c = tl[0]; c <= br[0]; c++) {
-                for (let r = tl[1]; r <= br[1]; r++) {
+            for (let c = tl.x; c <= br.x; c++) {
+                for (let r = tl.y; r <= br.y; r++) {
                     state.image.set(c, r, this.color);
                 }
             }
@@ -188,35 +217,65 @@ namespace pxtsprite {
      * Tool for drawing empty rectangles
      */
     export class OutlineEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
-            const tl = this.topLeft();
-            const br = this.bottomRight();
+            let tl = this.topLeft();
+            tl.x -= this.toolWidth >> 1;
+            tl.y -= this.toolWidth >> 1;
+
+            let br = this.bottomRight();
+            br.x += this.toolWidth >> 1;
+            br.y += this.toolWidth >> 1;
+
             for (let i = 0; i < this.toolWidth; i++) {
                 this.drawRectangle(state,
-                    [tl[0] + i, tl[1] + i],
-                    [br[0] - i, br[1] - i]
+                    {x: tl.x + i, y: tl.y + i},
+                    {x: br.x - i, y: br.y - i}
                 );
             }
         }
 
         protected drawRectangle(state: CanvasState, tl: Coord, br: Coord) {
-            if (tl[0] > br[0] || tl[1] > br[1]) return;
+            if (tl.x > br.x || tl.y > br.y) return;
 
-            for (let c = tl[0]; c <= br[0]; c++) {
-                state.image.set(c, tl[1], this.color);
-                state.image.set(c, br[1], this.color);
+            for (let c = tl.x; c <= br.x; c++) {
+                state.image.set(c, tl.y, this.color);
+                state.image.set(c, br.y, this.color);
             }
-            for (let r = tl[1]; r <= br[1]; r++) {
-                state.image.set(tl[0], r, this.color);
-                state.image.set(br[0], r, this.color);
+            for (let r = tl.y; r <= br.y; r++) {
+                state.image.set(tl.x, r, this.color);
+                state.image.set(br.x, r, this.color);
             }
         }
+
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            this.drawCore(col, row, draw);
+        }
+
+        protected drawCore(col: number, row: number, setPixel: (col: number, row: number) => void) {
+            col = col - Math.floor(this.toolWidth / 2);
+            row = row - Math.floor(this.toolWidth / 2);
+            for (let i = 0; i < this.toolWidth; i++) {
+                for (let j = 0; j < this.toolWidth; j++) {
+                    const c = col + i;
+                    const r = row + j;
+
+                    if (c >= 0 && c < this.canvasWidth && r >= 0 && r < this.canvasHeight) {
+                        setPixel(col + i, row + j);
+                    }
+                }
+            }
+        }
+
     }
 
     /**
      * Tool for drawing straight lines
      */
     export class LineEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             this.bresenham(this.startCol, this.startRow, this.endCol, this.endRow, state);
         }
@@ -254,6 +313,10 @@ namespace pxtsprite {
             }
         }
 
+        drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
+            this.drawCore(col, row, draw);
+        }
+
         // This is surely not the most efficient approach for drawing thick lines...
         protected drawCore(col: number, row: number, draw: (c: number, r: number) => void) {
             col = col - Math.floor(this.toolWidth / 2);
@@ -273,11 +336,13 @@ namespace pxtsprite {
      * Tool for circular outlines
      */
     export class CircleEdit extends SelectionEdit {
+        showPreview = true;
+
         protected doEditCore(state: CanvasState) {
             const tl = this.topLeft();
             const br = this.bottomRight();
-            const dx = br[0] - tl[0];
-            const dy = br[1] - tl[1];
+            const dx = br.x - tl.x;
+            const dy = br.y - tl.y;
 
             const radius = Math.floor(Math.hypot(dx, dy));
             const cx = this.startCol;
@@ -314,12 +379,17 @@ namespace pxtsprite {
                 }
             }
         }
+
+        getCursor(): Cursor {
+            return new Cursor(1, 1);
+        }
     }
 
 
     export class FillEdit extends Edit {
         protected col: number;
         protected row: number;
+        showPreview = true;
 
         start(col: number, row: number, state: CanvasState) {
             this.isStarted = true;
@@ -342,51 +412,67 @@ namespace pxtsprite {
 
             const mask = new Bitmask(state.width, state.height);
             mask.set(this.col, this.row);
-            const q: Coord[] = [[this.col, this.row]];
+            const q: Coord[] = [{x: this.col, y: this.row}];
             while (q.length) {
-                const [c, r] = q.pop();
-                if (state.image.get(c, r) === replColor) {
-                    state.image.set(c, r, this.color);
-                    tryPush(c + 1, r);
-                    tryPush(c - 1, r);
-                    tryPush(c, r + 1);
-                    tryPush(c, r - 1);
+                const curr = q.pop();
+                if (state.image.get(curr.x, curr.y) === replColor) {
+                    state.image.set(curr.x, curr.y, this.color);
+                    tryPush(curr.x + 1, curr.y);
+                    tryPush(curr.x - 1, curr.y);
+                    tryPush(curr.x, curr.y + 1);
+                    tryPush(curr.x, curr.y - 1);
                 }
             }
 
             function tryPush(x: number, y: number) {
                 if (x >= 0 && x < mask.width && y >= 0 && y < mask.height && !mask.get(x, y)) {
                     mask.set(x, y);
-                    q.push([x, y]);
+                    q.push({x: x, y: y});
                 }
             }
+        }
+
+        getCursor(): Cursor {
+            return new Cursor(1, 1);
         }
     }
 
 
     export class MarqueeEdit extends SelectionEdit {
         protected isMove = false;
+        showPreview = false;
 
         start(cursorCol: number, cursorRow: number, state: CanvasState) {
             this.isStarted = true;
             this.startCol = cursorCol;
             this.startRow = cursorRow;
-
-            if (state.inFloatingLayer(cursorCol, cursorRow)) {
-                this.isMove = true;
+            if (state.floatingLayer) {
+                if (state.inFloatingLayer(cursorCol, cursorRow)) {
+                    this.isMove = true;
+                } else {
+                    state.mergeFloatingLayer();
+                }
             }
-            else {
+        }
+
+        end(cursorCol: number, cursorRow: number, state: CanvasState) {
+            if (!this.isDragged && state.floatingLayer) {
                 state.mergeFloatingLayer();
             }
         }
 
         protected doEditCore(state: CanvasState): void {
-            if (this.isMove) {
-                state.layerOffsetX = state.floatingLayer.x0 + this.endCol - this.startCol;
-                state.layerOffsetY = state.floatingLayer.y0 + this.endRow - this.startRow;
-            }
-            else {
-                state.copyToLayer(this.startCol, this.startRow, this.endCol - this.startCol, this.endRow - this.startRow, true);
+            const tl = this.topLeft();
+            const br = this.bottomRight();
+
+            if (this.isDragged) {
+                if (this.isMove) {
+                    state.layerOffsetX = state.floatingLayer.x0 + this.endCol - this.startCol;
+                    state.layerOffsetY = state.floatingLayer.y0 + this.endRow - this.startRow;
+                }
+                else {
+                    state.copyToLayer(tl.x, tl.y, br.x - tl.x + 1, br.y - tl.y + 1, true);
+                }
             }
         }
 
