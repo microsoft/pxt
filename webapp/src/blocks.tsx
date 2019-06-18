@@ -1187,13 +1187,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         }
 
-        // Filter snippet extensions from all packages
-        const snippetExtensions = pkg.allEditorPkgs()
-            .map(ep => ep.getKsPkg())
-            .map(p => !!p && p.config)
-            .filter(config => config.snippetBuilders);
-        // Push snippet extension into extraBlocks
-        this.loadSnippetExtensions(snippetExtensions, ns, extraBlocks);
+        if (pxt.appTarget.appTheme.spriteWizard) {
+            // Filter snippet extensions from all packages
+            const snippetExtensions = pkg.allEditorPkgs()
+                .map(ep => ep.getKsPkg())
+                .map(p => !!p && p.config)
+                .filter(config => config.snippetBuilders);
+            // Push snippet extension into extraBlocks
+            this.loadSnippetExtensions(snippetExtensions, ns, extraBlocks);
+        }
 
         return extraBlocks;
     }

@@ -111,6 +111,11 @@ namespace pxt.editor.experiments {
                 id: "debugExtensionCode",
                 name: lf("Debug Extension Code"),
                 description: lf("Use the JavaScript debugger to debug extension code")
+            },
+            {
+                id: "spriteWizard",
+                name: lf("Sprite Wizard"),
+                description: lf("Make a sprite using the new Sprite Wizard")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

@@ -327,6 +327,7 @@ declare namespace pxt {
         qrCode?: boolean; // generate QR code for shared urls
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
+        spriteWizard?: boolean; // Sprite wizard experimental feature
     }
 
     interface SocialOptions {
