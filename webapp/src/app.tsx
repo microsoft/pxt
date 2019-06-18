@@ -682,7 +682,7 @@ export class ProjectView
                 if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
                     // The simulator has paused on the first statement, so we need to send the breakpoints
                     // and continue
-                    let breakpoints: number[];''
+                    let breakpoints: number[];
                     if (this.isAnyEditeableJavaScriptOrPackageActive()) {
                         breakpoints = this.textEditor.getBreakpoints();
                     }
@@ -692,7 +692,7 @@ export class ProjectView
 
                     breakpoints = breakpoints || [];
                     simulator.driver.setBreakpoints(breakpoints);
-        
+
                     if (breakpoints.indexOf(brk.breakpointId) === -1) {
                         this.dbgPauseResume();
                         return true;
