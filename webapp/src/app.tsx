@@ -1421,7 +1421,7 @@ export class ProjectView
                         method: "GET",
                         responseArrayBuffer: true
                     }).then(resp => this.importUri(url, resp.buffer))
-                    .catch(e => core.handleNetworkError(e));
+                        .catch(e => core.handleNetworkError(e));
                 }
             }
         );
@@ -1942,7 +1942,10 @@ export class ProjectView
                 this.checkWebUSBVariant = false
                 this.checkForHwVariant()
             })
-        if (pxt.usb.isEnabled && this.checkWebUSBVariant) {
+        if (pxt.usb.isEnabled
+            && pxt.appTarget.appTheme
+            && pxt.appTarget.appTheme.checkForHwVariantWebUSB
+            && this.checkWebUSBVariant) {
             hidbridge.initAsync(true)
                 .then(wr => {
                     if (wr.familyID) {
@@ -2976,7 +2979,7 @@ export class ProjectView
             tutorialOptions: tutorialOptions
         });
 
-        setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
+        setTimeout(() => { this.setState({ pokeUserComponent: null }); }, 3000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3109,7 +3112,7 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
 
-        const collapseIconTooltip = this.state.collapseEditorTools  ? lf("Show the simulator") : lf("Hide the simulator");
+        const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
