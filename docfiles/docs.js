@@ -63,6 +63,32 @@ function scrollActiveHeaderIntoView() {
 }
 
 function setupSidebar() {
+
+    var tocMenu = document.querySelectorAll('#docsMobile div.ui.list.menuContainer.toc > div.item');
+    tocMenu.forEach(function(item) {
+        item.className = 'ui accordion item visible';
+        item.setAttribute('role','tree');
+
+        var icon = item.firstElementChild;
+        icon.className = 'dropdown icon chevron right';
+        var anchor = icon.nextElementSibling;
+        anchor.setAttribute('role','treeitem');
+        anchor.setAttribute('aria-expanded', 'false');
+        var menu = anchor.nextElementSibling;
+        menu.className = 'content';
+        var menuChildren = Array.prototype.slice.call(menu.children)
+        menuChildren.forEach(function(el) {
+            if (el.tagName == 'DIV'){
+                el.setAttribute('role','');
+                el.className = 'accordion item visible';
+            }
+        });
+        var wrapper = document.createElement('div');
+        wrapper.className = 'title';
+        wrapper.append(icon);
+        wrapper.append(anchor);
+        item.insertBefore(wrapper, menu);
+    });
     // do not use pxt.appTarget in this function
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
@@ -355,7 +381,6 @@ function setupMenu(menu) {
         menuItem.textContent = item.name;
         mobileMenu.append(menuItem);
     });
-
 }
 
 function setStickyColumn() {

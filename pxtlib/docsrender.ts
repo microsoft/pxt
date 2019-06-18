@@ -231,7 +231,7 @@ namespace pxt.docs {
         }
 
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = TOC.map(e => recTOC(e, 1)).join("\n")
+        params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
 
         if (theme.appStoreID)
             params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
@@ -290,9 +290,10 @@ namespace pxt.docs {
 
         // Add sidebar toggle
         const sidebarToggleHtml = `
-            <a id="togglesidebar" class="launch icon item left" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
+            <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
                 <i class="content icon"></i>
-            </a>`
+            </a>
+        `
 
         params['sidebarToggle'] = sidebarToggleHtml;
 
