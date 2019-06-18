@@ -53,7 +53,7 @@ namespace pxt.tutorial {
     }
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
-        const hiddenSnippetRegex = /```(filterblocks|package)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config)\s*\n([\s\S]*?)\n```/gmi;
         const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
 
         // Download tutorial markdown
@@ -95,7 +95,7 @@ namespace pxt.tutorial {
                 stepInfo[i].headerContentMd = hintText[1];
                 blockSolution = hintText[2];
                 if (blockSolution) {
-                    // remove hidden snippets
+                    // remove hidden snippets from the hint
                     blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
                     stepInfo[i].blockSolution = blockSolution;
                 }
