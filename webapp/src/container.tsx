@@ -273,8 +273,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs;
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
-        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
-            && greenscreen.isSupported();
+        const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
 
         // Electron does not currently support webusb
@@ -378,7 +377,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     exitTutorial() {
         pxt.tickEvent("menu.exitTutorial", undefined, { interactiveConsent: true });
-        this.props.parent.exitTutorial();
+        if (this.props.parent.state.tutorialOptions
+            && this.props.parent.state.tutorialOptions.tutorialRecipe)
+            this.props.parent.completeTutorialAsync().done();
+        else
+            this.props.parent.exitTutorial();
     }
 
     showReportAbuse() {
@@ -567,14 +570,14 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     renderCore() {
         const { sideDocsCollapsed, docsUrl } = this.state;
         const isRTL = pxt.Util.isUserLanguageRtl();
-        const showLeftChevron = (sideDocsCollapsed || isRTL ) && !( sideDocsCollapsed && isRTL); // Collapsed XOR RTL
+        const showLeftChevron = (sideDocsCollapsed || isRTL) && !(sideDocsCollapsed && isRTL); // Collapsed XOR RTL
         if (!docsUrl) return null;
 
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
-             </button>
+            </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
                     <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"

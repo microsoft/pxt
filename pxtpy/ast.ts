@@ -179,6 +179,7 @@ namespace pxt.py {
         decorator_list: Expr[];
         baseClass?: ClassDef;
         isEnum?: boolean;
+        isNamespace?: boolean;
     }
     export interface Return extends Stmt {
         kind: "Return";

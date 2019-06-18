@@ -18,9 +18,8 @@ The MakeCode approach to solving this issue is to render the **JavaScript** code
 
 ## Plugins
 
-Here are some integration samples for various documentation/blogging engines.
+Here is an integration sample:
 
-* [GitBook plugin](https://plugins.gitbook.com/plugin/pxt)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
 
 ## Custom rendering

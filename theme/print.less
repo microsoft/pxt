@@ -22,6 +22,8 @@
     }
 
     #docs {
+        position: inherit !important; /* otherwise prints a single page */
+
         .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
             page-break-inside: avoid;
         }
@@ -38,7 +40,7 @@
             background: #fff !important;        
             font-size: 12pt;
             line-height: 1.3;
-        }
+        }        
         /* hide videos */
         div.ui.embed.mdvid {
             display: none !important;
