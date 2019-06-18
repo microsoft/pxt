@@ -1,5 +1,6 @@
 namespace pxt.commands {
     export interface DeployOptions {
+        cancellationToken?: pxt.Util.CancellationToken;
         reportError?: (e: string) => void;
         showNotification?: (msg: string) => void;
         reportDeviceNotFoundAsync?: (docPath: string, resp?: ts.pxtc.CompileResult) => Promise<void>;

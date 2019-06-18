@@ -56,7 +56,7 @@ namespace pxt.editor {
         simState?: SimState;
         autoRun?: boolean;
         resumeOnVisibility?: boolean;
-        compiling?: boolean;
+        compileToken?: pxt.Util.CancellationToken;
         isSaving?: boolean;
         publishing?: boolean;
         hideEditorFloats?: boolean;

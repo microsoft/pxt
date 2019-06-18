@@ -425,9 +425,9 @@ namespace pxt.HF2 {
                 })
         }
 
-        reflashAsync(blocks: pxtc.UF2.Block[]) {
+        reflashAsync(blocks: pxtc.UF2.Block[], cancellationToken: pxt.Util.CancellationToken) {
             log(`reflash`)
-            return this.flashAsync(blocks)
+            return this.flashAsync(blocks, cancellationToken)
                 .then(() => Promise.delay(100))
                 .then(() => this.reconnectAsync())
         }
@@ -461,10 +461,11 @@ namespace pxt.HF2 {
                         .then(() => this.pingAsync()))
         }
 
-        flashAsync(blocks: pxtc.UF2.Block[]) {
+        flashAsync(blocks: pxtc.UF2.Block[], cancellationToken: pxt.U.CancellationToken) {
             let start = Date.now()
             let fstart = 0
             let loopAsync = (pos: number): Promise<void> => {
+                if (cancellationToken) cancellationToken.throwIfCancelled();
                 if (pos >= blocks.length)
                     return Promise.resolve()
                 let b = blocks[pos]
@@ -477,6 +478,7 @@ namespace pxt.HF2 {
             }
             return this.switchToBootloaderAsync()
                 .then(() => {
+                    if (cancellationToken) cancellationToken.throwIfCancelled();
                     let size = blocks.length * 256
                     log(`Starting flash (${Math.round(size / 1024)}kB).`)
                     fstart = Date.now()

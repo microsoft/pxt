@@ -1421,7 +1421,7 @@ export class ProjectView
                         method: "GET",
                         responseArrayBuffer: true
                     }).then(resp => this.importUri(url, resp.buffer))
-                    .catch(e => core.handleNetworkError(e));
+                        .catch(e => core.handleNetworkError(e));
                 }
             }
         );
@@ -1972,7 +1972,19 @@ export class ProjectView
 
     beforeCompile() { }
 
+    cancelCompile() {
+        if (this.state.compileToken)
+            this.state.compileToken.cancel();
+    }
+
+
     compile(saveOnly = false) {
+        if (this.state.compileToken) {
+            // already compiling?
+            pxt.tickEvent("compile.double");
+            return;
+        }
+
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
 
@@ -1989,13 +2001,10 @@ export class ProjectView
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
 
-        if (this.state.compiling) {
-            pxt.tickEvent("compile.double");
-            return;
-        }
-
         const simRestart = this.state.simState != pxt.editor.SimState.Stopped;
-        this.setState({ compiling: true });
+        const compileToken = new pxt.Util.CancellationToken().startOperation();
+        this.setState({ compileToken });
+        core.infoNotification(lf("Compiling..."), compileToken);
         this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
@@ -2004,7 +2013,7 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-
+                compileToken.throwIfCancelled();
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
@@ -2023,6 +2032,7 @@ export class ProjectView
                 else
                     return resp
             }).then(resp => {
+                compileToken.throwIfCancelled();
                 if (!resp) return Promise.resolve();
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
@@ -2038,11 +2048,14 @@ export class ProjectView
                     }
                 }
                 return pxt.commands.deployAsync(resp, {
+                    cancellationToken: compileToken,
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg)
                 })
-                    .catch(e => {
+                    .catch(e => {                        // operation got cancelled
+                        if (pxt.Util.CancellationToken.isCancelledError(e))
+                            return;
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
                         } else {
@@ -2054,12 +2067,18 @@ export class ProjectView
                             try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
+                if (pxt.Util.CancellationToken.isCancelledError(e))
+                    return;
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
                 if (userContextWindow)
                     try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
-                this.setState({ compiling: false, isSaving: false });
+                if (userContextWindow) {
+                    try { userContextWindow.close() } catch (e) { }
+                    userContextWindow = undefined;
+                }
+                this.setState({ compileToken: undefined, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
             .done();
@@ -2976,7 +2995,7 @@ export class ProjectView
             tutorialOptions: tutorialOptions
         });
 
-        setTimeout(() => { this.setState({pokeUserComponent: null}); }, 3000);
+        setTimeout(() => { this.setState({ pokeUserComponent: null }); }, 3000);
     }
 
     ///////////////////////////////////////////////////////////
@@ -3109,7 +3128,7 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
 
-        const collapseIconTooltip = this.state.collapseEditorTools  ? lf("Show the simulator") : lf("Hide the simulator");
+        const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 

@@ -105,24 +105,24 @@ export function cancelAsyncLoading(id: string) {
 ////////////       Notification msg           /////////////
 ///////////////////////////////////////////////////////////
 
-function showNotificationMsg(kind: string, msg: string) {
-    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: highContrast });
+function showNotificationMsg(kind: string, msg: string, cancellationToken?: pxt.U.CancellationToken) {
+    coretsx.pushNotificationMessage({ kind: kind, text: msg, hc: highContrast, cancellationToken });
 }
 
-export function errorNotification(msg: string) {
+export function errorNotification(msg: string, cancellationToken?: pxt.U.CancellationToken) {
     pxt.tickEvent("notification.error", { message: msg })
     debugger // trigger a breakpoint when a debugger is connected, like in U.oops()
-    showNotificationMsg("err", msg)
+    showNotificationMsg("err", msg, cancellationToken)
 }
 
-export function warningNotification(msg: string) {
+export function warningNotification(msg: string, cancellationToken?: pxt.U.CancellationToken) {
     pxt.log("warning: " + msg)
-    showNotificationMsg("warn", msg)
+    showNotificationMsg("warn", msg, cancellationToken)
 }
 
-export function infoNotification(msg: string) {
+export function infoNotification(msg: string, cancellationToken?: pxt.U.CancellationToken) {
     pxt.debug(msg)
-    showNotificationMsg("info", msg)
+    showNotificationMsg("info", msg, cancellationToken)
 }
 
 ///////////////////////////////////////////////////////////
