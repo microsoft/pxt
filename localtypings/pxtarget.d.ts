@@ -331,6 +331,7 @@ declare namespace pxt {
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
         experimentalHw?: boolean; // enable experimental hardware
         recipes?: boolean; // inlined tutorials
+        checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
     }
 
     interface SocialOptions {
