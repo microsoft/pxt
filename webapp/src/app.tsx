@@ -2047,6 +2047,7 @@ export class ProjectView
                         });
                     }
                 }
+                pxt.tickEvent("deploy.start")
                 return pxt.commands.deployAsync(resp, {
                     cancellationToken: compileToken,
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
@@ -2079,7 +2080,9 @@ export class ProjectView
                     userContextWindow = undefined;
                 }
                 this.setState({ compileToken: undefined, isSaving: false });
-                if (simRestart) this.runSimulator();
+                pxt.tickEvent("deploy.end")
+                if (simRestart)
+                    this.runSimulator();
             })
             .done();
     }
