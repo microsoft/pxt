@@ -1,3 +1,7 @@
+@namespace
+class SpriteKind:
+  Taco = 123
+
 class Foo:
   def qux2(self):
     z = 12

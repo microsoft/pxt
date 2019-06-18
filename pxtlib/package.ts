@@ -797,14 +797,19 @@ namespace pxt {
                         : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
                             ext = U.flatClone(ext)
-                            delete ext.compileData;
-                            delete ext.generatedFiles;
-                            delete ext.extensionFiles;
+                            if (!target.keepCppFiles) {
+                                delete ext.compileData;
+                                delete ext.generatedFiles;
+                                delete ext.extensionFiles;
+                            }
                             opts.extinfo = ext
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
+                .then(() =>
+                    appTarget.compile.shortPointers || appTarget.compile.nativeType == "vm" ||
+                        this.config.binaryonly || !opts.target.isNative ? null
+                        : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         const headerString = JSON.stringify({

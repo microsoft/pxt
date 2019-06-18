@@ -22,21 +22,6 @@ namespace pxsim.svg {
         );
     }
 
-    export function hasClass(el: SVGElement, cls: string): boolean {
-        if (el.classList) return el.classList.contains(cls);
-        else return el.className.baseVal.indexOf(cls) > -1;
-    }
-
-    export function addClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.add(cls);
-        else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
-    }
-
-    export function removeClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.remove(cls);
-        else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
-    }
-
     export function hydrate(el: SVGElement, props: any) {
         for (let k in props) {
             if (k == "title") {
@@ -174,7 +159,7 @@ namespace pxsim.svg {
     }
 
     export function animate(el: SVGElement, cls: string) {
-        svg.addClass(el, cls);
+        pxsim.U.addClass(el, cls);
         let p = el.parentElement;
         if (p) {
             p.removeChild(el);

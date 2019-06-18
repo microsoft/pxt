@@ -45,11 +45,6 @@ function genericContent(props: UiProps) {
     return retVal;
 }
 
-function removeClass(el: HTMLElement, cls: string) {
-    if (el.classList) el.classList.remove(cls);
-    else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
-}
-
 export function fireClickOnEnter(e: React.KeyboardEvent<HTMLElement>): void {
     const charCode = core.keyCodeFromEvent(e);
     if (charCode === core.ENTER_KEY || charCode === core.SPACE_KEY) {
@@ -107,18 +102,18 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     private blur(el: HTMLElement) {
         if (this.isActive(el)) {
-            el.classList.remove("active");
+            pxt.BrowserUtils.removeClass(el, "active");
         }
     }
 
     private setActive(el: HTMLElement) {
         if (!this.isActive(el)) {
-            el.classList.add("active");
+            pxt.BrowserUtils.addClass(el, "active");
         }
     }
 
     private isActive(el: HTMLElement) {
-        return el && el.classList.contains("active");
+        return el && pxt.BrowserUtils.containsClass(el, "active");
     }
 
     getChildren() {
@@ -127,9 +122,9 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         for (let i = 0; i < menu.childNodes.length; i++) {
             const child = menu.childNodes[i] as HTMLElement;
             // Remove separators
-            if (child.classList.contains("divider")) continue;
+            if (pxt.BrowserUtils.containsClass(child, "divider")) continue;
             // Check if item is intended for mobile only views
-            if (child.classList.contains("mobile") && !pxt.BrowserUtils.isMobile()) continue;
+            if (pxt.BrowserUtils.containsClass(child, "mobile") && !pxt.BrowserUtils.isMobile()) continue;
             children.push(child);
         }
         return children;
@@ -216,7 +211,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             const menu = this.refs["menu"] as HTMLElement;
             if (dropdown.offsetLeft + menu.offsetWidth > window.innerWidth) {
                 // Add left class to the menu
-                pxsim.U.addClass(menu, 'left');
+                pxt.BrowserUtils.addClass(menu, 'left');
             }
         }
 
@@ -806,7 +801,7 @@ export class Menu extends data.Component<MenuProps, MenuState> {
         let i = 0
 
         while (activeNodeIndex === -1 && i < menuItems.length) {
-            if ((menuItems[i] as HTMLElement).classList.contains("active")) {
+            if (pxt.BrowserUtils.containsClass(menuItems[i] as HTMLElement, "active")) {
                 activeNodeIndex = i
             }
 

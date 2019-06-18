@@ -111,6 +111,17 @@ namespace pxt.editor.experiments {
                 id: "debugExtensionCode",
                 name: lf("Debug Extension Code"),
                 description: lf("Use the JavaScript debugger to debug extension code")
+            },
+            {
+                id: "experimentalHw",
+                name: lf("Experimental Hardware"),
+                description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
+            },
+            {
+                id: "recipes",
+                name: lf("Tutorials in Context"),
+                description: lf("Micro-tutorials running within your program."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5646"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

@@ -8,6 +8,7 @@ import * as sounds from "./sounds";
 import * as core from "./core";
 import * as md from "./marked";
 import * as compiler from "./compiler";
+import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -250,7 +251,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     finishTutorial() {
         this.closeLightbox();
         this.removeHintOnClick();
-        this.props.parent.completeTutorial();
+        this.props.parent.completeTutorialAsync().done();
     }
 
     private closeLightboxOnEscape = (e: KeyboardEvent) => {
@@ -491,5 +492,95 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
             </div>
         </div>;
+    }
+}
+
+export interface ChooseRecipeDialogState {
+    visible?: boolean;
+}
+
+export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRecipeDialogState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+        this.close = this.close.bind(this);
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    close() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    start(card: pxt.CodeCard) {
+        pxt.tickEvent("recipe." + card.url);
+        this.hide();
+        this.props.parent.startTutorial(card.url, undefined, true);
+    }
+
+    fetchGallery(): pxt.CodeCard[] {
+        const path = "/recipes";
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore
+            } else {
+                const editor: pxt.CodeCardEditorType = this.props.parent.isJavaScriptActive()
+                    ? "js" : this.props.parent.isPythonActive() ? "py"
+                        : "blocks";
+                this.prevGalleries = pxt.Util.concat(res.map(g =>
+                    g.cards.filter(c => c.cardType == "tutorial")
+                        .filter(c => (c.editor == editor) || (editor == "blocks" && !c.editor))
+                ));
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+        if (!visible) return <div />;
+
+        const cards = this.fetchGallery();
+        return (
+            <sui.Modal isOpen={visible} className="recipedialog"
+                size="large"
+                onClose={this.close} dimmer={true}
+                closeIcon={true} header={lf("Try a Tutorial")}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+            >
+                <div className="group">
+                    <div className="ui cards centered" role="listbox">
+                        {!cards.length && <div className="ui items">
+                            <div className="ui item">
+                                {lf("Oops, we couldn't find any tutorials for this editor.")}
+                            </div>
+                        </div>}
+                        {cards.length > 0 ? cards.map(card =>
+                            <codecard.CodeCardView
+                                key={'card' + card.name}
+                                name={card.name}
+                                ariaLabel={card.name}
+                                description={card.description}
+                                imageUrl={card.imageUrl}
+                                largeImageUrl={card.largeImageUrl}
+                                // tslint:disable-next-line:react-this-binding-issue
+                                onClick={() => this.start(card)}
+                            />
+                        ) : undefined}
+                    </div>
+                </div>
+            </sui.Modal>
+        )
     }
 }
