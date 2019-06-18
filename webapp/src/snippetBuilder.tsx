@@ -8,8 +8,9 @@ import * as compiler from './compiler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-interface ISnippetBuilderProps extends ISettingsProps {
+interface SnippetBuilderProps extends ISettingsProps {
     mainWorkspace: Blockly.Workspace;
+    config: pxt.SnippetConfig;
 }
 
 type AnswerTypes = any; // Should include custom answer types for number, enums, string, image
@@ -58,7 +59,7 @@ export interface SnippetBuilderState {
     answers?: AnswersMap;
     history: number[];
     defaults: DefaultAnswersMap; // Will be typed once more clearly defined
-    config?: SnippetConfig; // Will be a config type
+    config?: pxt.SnippetConfig; // Will be a config type
 }
 
 
@@ -68,16 +69,16 @@ export interface SnippetBuilderState {
  * An initial output is set and outputs defined at each questions are appended to the initial output.
  * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
  */
-export class SnippetBuilder extends data.Component<ISnippetBuilderProps, SnippetBuilderState> {
-    constructor(props: ISnippetBuilderProps) {
+export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetBuilderState> {
+    constructor(props: SnippetBuilderProps) {
         super(props);
         this.state = {
             visible: false,
             answers: {},
             history: [0], // Index to track current question
             defaults: {},
-            config: staticConfig, // This will be set when it is recieved
-            tsOutput: staticConfig.initialOutput
+            config: props.config,
+            tsOutput: props.config.initialOutput
         };
 
         this.hide = this.hide.bind(this);
@@ -254,7 +255,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
 
     backPage() {
         const { history } = this.state;
-        if (history.length) {
+        if (history.length > 1) {
             this.setState({ history: history.slice(0, history.length - 1)});
         }
     }
@@ -323,7 +324,7 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
                             </div>
                         }
                     </div>
-                    <div id="snippetBuilderOutput">
+                    <div className='snippetBuilderOutput'>
                         {parent && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
                     </div>
                 </div>
@@ -331,111 +332,3 @@ export class SnippetBuilder extends data.Component<ISnippetBuilderProps, Snippet
         )
     }
 }
-
-// This will be passed down as a prop but is currently static
-const staticConfig: SnippetConfig = {
-    name: "Sprite Builder",
-    outputType: 'blocks',
-    initialOutput: `enum SpriteKind {
-        Player,
-        Projectile,
-        Food,
-        Enemy
-    }
-
-    let $spriteName = sprites.create($spriteImage, $spriteKind)`,
-    questions: [
-        {
-            "title": "What should your sprite be called?",
-            "inputs": [{
-                    "answerToken": "spriteName",
-                    "defaultAnswer": "mySprite",
-                    "type": "text"
-            }],
-            "output": "",
-            "goto": {
-                "question": 2
-            }
-        },
-        {
-            "title": "Where should your sprite be placed?",
-            "inputs": [
-                {
-                    "label": "x:",
-                    "defaultAnswer": 80,
-                    "answerToken": "xLocation",
-                    "type": "number"
-                },
-                {
-                    "label": "y:",
-                    "defaultAnswer": 60,
-                    "answerToken": "yLocation",
-                    "type": "number"
-                }
-            ],
-            "output": "$spriteName.setPosition($xLocation,$yLocation)",
-            "goto": {
-                "question": 3
-            }
-        },
-        {
-            "title": "What should your sprite look like?",
-            "inputs": [
-                {
-                    "answerToken": "spriteImage",
-                    "type": "spriteEditor",
-                    defaultAnswer: `img\`
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    . . . . . . . . . . . . . . . .
-                    \``
-                }
-            ],
-            // "output": '$spriteName.setImage($spriteImage)',
-            "goto": {
-                question: 1,
-            }
-        },
-        {
-            "title": "What kind of sprite should this be?",
-            "inputs": [
-                {
-                    "answerToken": "spriteKind",
-                    "defaultAnswer": "SpriteKind.Player",
-                    "type": "dropdown"
-                }
-            ],
-            // "output": "$spriteName.setKind($spriteKind)",
-            "goto": {
-                "question": 4,
-                "parameters": {
-                    "spriteKind": 0
-                }
-            }
-        },
-        {
-            "title": "How many lives should your player have?",
-            "inputs": [
-                {
-                    "answerToken": "gameLives",
-                    "defaultAnswer": 3,
-                    "type": "number",
-                }
-            ],
-            "output": "info.setLife($gameLives)"
-        }
-    ]
-};

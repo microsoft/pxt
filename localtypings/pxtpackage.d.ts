@@ -162,6 +162,9 @@ declare namespace pxt {
 
     interface SnippetConfig {
         name: string;
+        namespace: string;
+        group?: string;
+        label: string;
         outputType: string;
         initialOutput?: string;
         questions: SnippetQuestions[];

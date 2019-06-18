@@ -1111,14 +1111,38 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     // TODO(jb): Generalize to snippet builder and pass in specific config.
-    private openSnippetDialog() {
+    private openSnippetDialog(config: pxt.SnippetConfig) {
         if (!this.snippetDialog) {
             const wrapper = document.body.appendChild(document.createElement('div'));
-            const props = { parent: this.parent, mainWorkspace: this.editor }
+            const props = { parent: this.parent, mainWorkspace: this.editor, config };
             this.snippetDialog = ReactDOM.render(
-                React.createElement(SnippetBuilder, props), wrapper) as SnippetBuilder;
+                React.createElement(SnippetBuilder, props),
+                wrapper
+            ) as SnippetBuilder;
         }
         this.snippetDialog.show();
+    }
+
+    loadSnippetExtensions(snippetExtensions: pxt.PackageConfig[], ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[]) {
+        snippetExtensions.forEach(config => {
+            config.snippetBuilders.forEach(snippet => {
+                if (ns == snippet.namespace) {
+                    extraBlocks.push({
+                        name: `SNIPPET${name}_BUTTON`,
+                        type: "button",
+                        attributes: {
+                            blockId: `SNIPPET${name}_BUTTON`,
+                            label: snippet.label ? Util.rlf(snippet.label) : Util.lf("Editor"),
+                            weight: 101,
+                            group: snippet.group && snippet.group,
+                        },
+                        callback: () => {
+                            this.openSnippetDialog(snippet);
+                        }
+                    });
+                }
+            });
+        })
     }
 
     private getExtraBlocks(ns: string, subns: string) {
@@ -1135,23 +1159,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 blockXml: `<block type="pxt-on-start"></block>`
             });
         }
-        // Inject "Create a Sprite..." button
-        if (ns == "sprites") {
-            // TODO(jb): This will be injected from the target. 
-            extraBlocks.push({
-                name: `SPRITE_WIZARD_BUTTON`,
-                type: "button",
-                attributes: {
-                    blockId: `SPRITE_WIZARD_BUTTON`,
-                    label: "Create a Sprite...",
-                    weight: 101, // Weight set 1 above the create a sprite block so that it shows up first
-                    group: "Create"
-                },
-                callback: () => {
-                    this.openSnippetDialog();
-                }
-            });
-        }
+
         // Inject pause until block
         const pauseUntil = snippets.getPauseUntil();
         if (pauseUntil && ns == pauseUntil.attributes.blockNamespace) {
@@ -1178,6 +1186,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             })
         }
+
+        // Filter snippet extensions from all packages
+        const snippetExtensions = pkg.allEditorPkgs()
+            .map(ep => ep.getKsPkg())
+            .map(p => !!p && p.config)
+            .filter(config => config.snippetBuilders);
+        // Push snippet extension into extraBlocks
+        this.loadSnippetExtensions(snippetExtensions, ns, extraBlocks);
 
         return extraBlocks;
     }
