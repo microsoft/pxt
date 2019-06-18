@@ -405,8 +405,12 @@ namespace pxtsprite {
 
             if (this.activeTool === PaintTool.Marquee && this.state.floatingLayer) {
                 let didSomething = true;
+
                 switch (event.keyCode) {
-                    case 8: // Backspace
+                    case 8: // backspace
+                    case 46: // delete
+                        event.preventDefault();
+                        event.stopPropagation();
                         this.state.floatingLayer = undefined;
                         break;
                     case 37: // Left arrow
