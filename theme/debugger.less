@@ -11,19 +11,56 @@
         Debugger
 *******************************/
 
+/* Top bar menu */
+.menubar .debugger-menu-item.centered {
+    position: fixed;
+    align-content: center;
+    justify-content: center;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+    min-height: inherit;
+    width: 33%;
+}
+
+/* Debugger toolbox */
+.debuggerToolbox.elements {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Debugger toolbox flyout */
+.debugging .blocklyFlyout {
+    display: none!important;
+}
+
+.debugging .blocklyFlyoutScrollbar {
+    display: none!important;
+}
+
 /* Debugger toolbar */
 .debugtoolbar {
-    position: absolute;
-    top: @mainMenuHeight;
+    // don't show the toolbar unless we're debugging.
+    display: none;
+}
+
+.debugging .debugtoolbar {
+    width: 100%;
     z-index: @debuggerToolsZIndex;
+    display: flex;
     .ui.menu {
-        box-shadow: 0 2px 8px #a8a8a8;
         border-radius: 0 !important;
-        border: 0 !important;
+        border-left: none;
+        display: flex;
+        width: 100%;
         .item {
             padding-left: 10px;
             padding-right: 10px;
-            border-radius: 0 !important;
+        }
+        .separator-after {
+            border-right: 1px solid #dddddd;
         }
     }
 }
@@ -38,11 +75,15 @@
 }
 
 /* Debugger toolbar buttons */
-.ui.button.dbg-btn .icon.blue {
-    color: #72BDFF !important;
+
+.ui.item.dbg-btn {
+    white-space: pre;
+}
+.ui.item.dbg-btn .icon.blue {
+    color: #0078D7!important;
 }
 
-.ui.button.dbg-btn .icon.red {
+.ui.item.dbg-btn .icon.red {
     color: #F6876D !important;
 }
 
@@ -50,30 +91,80 @@
     color: #87D282 !important;
 }
 
+.ui.item.link.dbg-btn.dbg-exit {
+    background-color: #cccccc;
+    color: rgb(255, 21, 0);
+}
+
+.ui.item.link.dbg-btn.disabled {
+    color: rgba(40, 40, 40, .3);
+}
+
 /* Debugger variables view */
+.ui.varExplorer {
+    width: 100%;
+    .ui.variableTableHeader {
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
+        padding-left: 1rem;
+        border: none;
+        font-family: @pageFont;
+        font-size: larger;
+        color: black;
+    }
+}
 .ui.segment.debugvariables {
-    position: absolute;
-    right: 1rem;
-    top: 3.5rem;
-    margin-top: 0rem;
-    
+    width: 100%;
+    display: none;
+    max-width: 100%;
+    font-family: "Helvetica Neue", "Segoe UI", Helvetica, sans-serif;
+
     .ui.middle.aligned.list {
         overflow-y: auto;
         max-height: 25rem;
     }
+    .item {
+        max-width: 100%;
+    }
+    .variableAndValue {
+        display: flex;
+        padding-right: 0.4rem;
+        padding-left: 0.4rem;
+    }
 
+    .transparent{
+        opacity: 0;
+    }
     .variable {
-        color: white;
+        padding: 0.15rem;
     }
-    .variable.changed {
-        outline: solid 2px yellow;
+    .variable.varname {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        flex-grow: 2;
     }
-    .variable .varname {
-        font-weight: bold;
+    .variable.detail {
+        overflow: hidden;
+        text-align: right;
+        max-width: 50%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
-    .variable .detail {
-        background:white;
-        color:black;
+    .varval.number {
+        color: @debugNumberVariable;
+    }
+    .varval.string {
+        color: @debugStringVariable
+    }
+    .varval.boolean {
+        color: @debugBooleanVariable;
+    }
+    .varval.array {
+        color: @debugArrayVariable;
+    }
+    .varval.Sprite {
+        color: @debugSpriteVariable;
     }
     .previousval {
         text-decoration: line-through;
@@ -82,8 +173,21 @@
     }
 }
 
+.debugging .ui.segment.debugvariables {
+    display: block;
+    margin: 0;
+    border: none;
+}
+
+.ui.segment.debugvariables:not(.frozen) .item:nth-child(even) {
+    background-color: @debugVariableEven;
+}
+.ui.segment.debugvariables:not(.frozen) .item:nth-child(odd) {
+    background-color: @debugVariableOdd;
+}
+
 .ui.segment.debugvariables.frozen {
-    background: #eee;
+    background: @debugVariableFrozen;
 }
 /* sim overlay */
 div.simframe div.pause-overlay {
@@ -94,7 +198,7 @@ div.simframe div.pause-overlay {
     width: 100%;
     height: 100%;
     position: absolute;
-    z-index: 100;    
+    z-index: 100;
 }
 
 /* Old debugger view */
@@ -102,9 +206,35 @@ div.simframe div.pause-overlay {
     margin: 0.9em 0 0 0;
 }
 
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    .debugtoolbar {
-        top: @mobileMenuHeight;
+.monaco-breakpoint {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml, %3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle fill='red' cx='50%25' cy='50%25' r='30%25' /%3E%3C/svg%3E");
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.monaco-breakpoint:hover {
+    opacity: 0.7;
+}
+
+.monaco-breakpoint.active {
+    opacity: 1;
+}
+
+.callstack-row {
+    cursor: pointer;
+}
+
+@media only screen and (min-width: @computerBreakpoint) {
+    .debugger div.monacoToolboxDiv {
+        min-width: calc(@blocklyRowWidthWide + 100px);
+    }
+}
+
+@media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
+    .debugger div.monacoToolboxDiv {
+        min-width: calc(@blocklyRowWidthTablet + 100px);
     }
 }

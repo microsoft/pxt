@@ -10,6 +10,7 @@ import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
+import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -28,6 +29,7 @@ interface ScriptSearchState {
     mode?: ScriptSearchMode;
     experimentsState?: string;
     features?: string[];
+    closeIcon?: boolean;
     resolve?: () => void;
 }
 
@@ -37,17 +39,18 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.state = {
             searchFor: '',
             visible: false,
-            mode: ScriptSearchMode.Extensions
+            mode: ScriptSearchMode.Extensions,
+            closeIcon: true
         }
 
         this.hide = this.hide.bind(this);
-        this.handleSearchKeyUpdate = this.handleSearchKeyUpdate.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.addUrl = this.addUrl.bind(this);
         this.addBundle = this.addBundle.bind(this);
         this.installGh = this.installGh.bind(this);
         this.addLocal = this.addLocal.bind(this);
         this.toggleExperiment = this.toggleExperiment.bind(this);
+        this.importExtensionFile = this.importExtensionFile.bind(this);
     }
 
     private hide() {
@@ -71,17 +74,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             visible: true,
             searchFor: '',
             mode: ScriptSearchMode.Extensions,
+            closeIcon: true,
             features: undefined,
             resolve: undefined
         })
     }
 
-    showBoardsAsync(features?: string[]): Promise<void> {
+    showBoardsAsync(features?: string[], closeIcon?: boolean): Promise<void> {
         return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
+                closeIcon: !!closeIcon,
                 features,
                 resolve
             })
@@ -90,7 +95,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     showExperiments() {
         this.setState({
-            visible: true, searchFor: '', mode: ScriptSearchMode.Experiments,
+            visible: true, searchFor: '',
+            mode: ScriptSearchMode.Experiments,
+            closeIcon: true,
             experimentsState: pxt.editor.experiments.state(),
             features: undefined,
             resolve: undefined
@@ -102,19 +109,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             data: [],
             status: data.FetchStatus.Complete
         };
-        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions)
+            return emptyResult;
 
-        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-
+        const scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (!scriptid) {
             return emptyResult;
         }
 
         const res = this.getDataWithStatus(`cloud-search:${scriptid}`);
-
-        if (res.data && res.data.statusCode === 404)
+        if (!res.data || (res.data && res.data.statusCode === 404))
             res.data = []; // No shared project with that URL exists
-
+        // cloud may return single result, wrapping in array
+        if (!Array.isArray(res.data))
+            res.data = [res.data];
         return res;
     }
 
@@ -151,8 +159,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     fetchLocal(): pxt.workspace.Header[] {
-        if (this.state.mode != ScriptSearchMode.Boards &&
-            this.state.mode != ScriptSearchMode.Extensions) return [];
+        if (this.state.mode != ScriptSearchMode.Extensions) return [];
         return workspace.getHeaders()
             .filter(h => !!h.githubId)
     }
@@ -166,8 +173,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const features = this.state.features;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
+            .filter(pk => !pk.hidden)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
-            .filter(pk => boards || !pkg.mainPkg.deps[pk.name]) // don't show package already referenced in extensions
+            .filter(pk => boards || !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
             .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
             .filter(pk => boards == !!pk.core) // show core in "boards" mode
             .filter(pk => !features || features.every(f => pk.features && pk.features.indexOf(f) > -1)); // ensure features are supported
@@ -192,20 +200,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    handleSearchKeyUpdate(ev: React.KeyboardEvent<HTMLElement>) {
-        if (ev.keyCode == 13) this.handleSearch();
-
-    }
-
-    handleSearch() {
-        let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-
+    handleSearch(str: string) {
         // Hidden navigation, used to test /beta or other versions inside released UWP apps
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(str);
         let urlPath = urlPathExec && urlPathExec[1];
         if (urlPath) {
-            if (urlPath === "devtools" && electron.isPxtElectron()) {
+            if (urlPath === "devtools" && pxt.BrowserUtils.isPxtElectron()) {
                 electron.openDevTools();
                 this.hide();
                 this.afterHide();
@@ -336,16 +337,27 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.forceUpdate();
     }
 
-    renderCore() {
-        if (!this.state.visible) return <div></div>;
+    importExtensionFile() {
+        pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.showImportFileDialog({ extension: true });
+    }
 
-        const mode = this.state.mode;
+    renderCore() {
+        const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
+
+        if (!visible) return <div></div>;
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal();
         const experiments = this.fetchExperiments();
-        const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
+        const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
+        const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showImportFile = mode == ScriptSearchMode.Extensions
+            && pxt.appTarget.appTheme.importExtensionFiles
+            && !disableFileAccessinMaciOs
+            && !searchFor;
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -368,7 +380,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         bundles.sort(compareConfig)
         const isEmpty = () => {
-            if (!this.state.searchFor || isSearching) {
+            if (!searchFor || isSearching) {
                 return false;
             }
             return bundles.length + ghdata.data.length + urldata.data.length === 0;
@@ -385,12 +397,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 : "/extensions";
 
         const experimentsChanged = mode == ScriptSearchMode.Experiments
-            && this.state.experimentsState != pxt.editor.experiments.state();
+            && experimentsState != pxt.editor.experiments.state();
+
         return (
-            <sui.Modal isOpen={this.state.visible} dimmer={true}
+            <sui.Modal isOpen={visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
                 onClose={this.hide}
-                closeIcon={true} header={headerText}
+                closeIcon={closeIcon}
+                header={headerText}
                 helpUrl={helpPath}
                 closeOnDimmerClick closeOnEscape
                 description={description}>
@@ -401,15 +415,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
-                        <div className="ui search">
-                            <div className="ui fluid action input" role="search">
-                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, this.state.searchFor)}</div>
-                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")} onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching} />
-                                <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
-                                    <sui.Icon icon="search" />
-                                </button>
-                            </div>
-                        </div> : undefined}
+                        <SearchInput key="search"
+                            ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
+                            placeholder={lf("Search or enter project URL...")}
+                            searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
+                            disabled={isSearching} /> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :
@@ -494,12 +504,22 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
+                            {showImportFile ? <codecard.CodeCardView
+                                ariaLabel={lf("Open files from your computer")}
+                                role="button"
+                                key={'import'}
+                                icon="upload ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Import File...")}
+                                description={lf("Open files from your computer")}
+                                onClick={this.importExtensionFile}
+                            /> : undefined}
                         </div>
                     }
                     {isEmpty() ?
                         <div className="ui items">
                             <div className="ui item">
-                                {lf("We couldn't find any extensions matching '{0}'", this.state.searchFor)}
+                                {lf("We couldn't find any extensions matching '{0}'", searchFor)}
                             </div>
                         </div>
                         : undefined}

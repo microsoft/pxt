@@ -194,6 +194,7 @@ namespace ts.pxtc.assembler {
         public numArgs: number[];
         public opcode: number;
         public stack: number;
+        public isLong: boolean;
 
         constructor(public bin: File, public text: string) {
         }
@@ -252,6 +253,7 @@ namespace ts.pxtc.assembler {
         public errors: InlineError[] = [];
         public buf: number[];
         private labels: pxt.Map<number> = {};
+        private equs: pxt.Map<number> = {};
         private userLabelsCache: pxt.Map<number>;
         private stackpointers: pxt.Map<number> = {};
         private stack = 0;
@@ -289,7 +291,13 @@ namespace ts.pxtc.assembler {
             if (!s)
                 return null;
 
-            if (s == "0") return 0;
+            // fast path
+            if (/^\d+$/.test(s))
+                return parseInt(s, 10)
+
+            const minP = s.indexOf("-")
+            if (minP > 0)
+                return this.parseOneInt(s.slice(0, minP)) - this.parseOneInt(s.slice(minP + 1))
 
             let mul = 1
 
@@ -311,7 +319,9 @@ namespace ts.pxtc.assembler {
                 s = s.slice(1)
             }
 
-            let v: number = null
+            // decimal encoding; fast-ish path
+            if (/^\d+$/.test(s))
+                return mul * parseInt(s, 10)
 
             // allow or'ing of 1 to least-signficant bit
             if (U.endsWith(s, "|1")) {
@@ -326,7 +336,15 @@ namespace ts.pxtc.assembler {
                 return this.parseOneInt(s.slice(0, s.length - 2)) + 1
             }
 
+            let shm = /(.*)>>(\d+)$/.exec(s)
+            if (shm) {
+                let left = this.parseOneInt(shm[1])
+                let mask = this.baseOffset & ~0xffffff
+                left &= ~mask;
+                return left >> parseInt(shm[2])
+            }
 
+            let v: number = null
 
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {
@@ -339,15 +357,11 @@ namespace ts.pxtc.assembler {
                 }
             }
 
-            // decimal encoding
-            let m = /^(\d+)$/i.exec(s)
-            if (m) v = parseInt(m[1], 10)
-
             // stack-specific processing
 
             // more special characters to handle
             if (s.indexOf("@") >= 0) {
-                m = /^(\w+)@(-?\d+)$/.exec(s)
+                let m = /^(\w+)@(-?\d+)$/.exec(s)
                 if (m) {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
@@ -422,12 +436,16 @@ namespace ts.pxtc.assembler {
                     v = this.ei.postProcessAbsAddress(this, v)
                 }
             }
+            if (v == null && this.equs.hasOwnProperty(scoped)) {
+                v = this.equs[scoped]
+                // no post-processing
+            }
             if (v == null && direct) {
-                if (this.finalEmit)
+                if (this.finalEmit) {
                     this.directiveError(lf("unknown label: {0}", name));
-                else
+                } else
                     // use a number over 1 byte
-                    v = 33333;
+                    v = 11111;
             }
             return v;
         }
@@ -457,7 +475,7 @@ namespace ts.pxtc.assembler {
             // this.pushError(lf("directive error: {0}", msg))
         }
 
-        private emitString(l: string) {
+        private emitString(l: string, utf16 = false) {
             function byteAt(s: string, i: number) { return (s.charCodeAt(i) || 0) & 0xff }
 
             let m = /^\s*([\w\.]+\s*:\s*)?.\w+\s+(".*")\s*$/.exec(l)
@@ -466,9 +484,15 @@ namespace ts.pxtc.assembler {
                 this.directiveError(lf("expecting string"))
             } else {
                 this.align(2);
-                // s.length + 1 to NUL terminate
-                for (let i = 0; i < s.length + 1; i += 2) {
-                    this.emitShort((byteAt(s, i + 1) << 8) | byteAt(s, i))
+                if (utf16) {
+                    for (let i = 0; i < s.length; i++) {
+                        this.emitShort(s.charCodeAt(i))
+                    }
+                } else {
+                    // s.length + 1 to NUL terminate
+                    for (let i = 0; i < s.length + 1; i += 2) {
+                        this.emitShort((byteAt(s, i + 1) << 8) | byteAt(s, i))
+                    }
                 }
             }
         }
@@ -570,6 +594,9 @@ namespace ts.pxtc.assembler {
                 case ".string":
                     this.emitString(l.text);
                     break;
+                case ".utf16":
+                    this.emitString(l.text, true);
+                    break;
                 case ".align":
                     expectOne();
                     num0 = this.parseOneInt(words[1]);
@@ -637,6 +664,20 @@ namespace ts.pxtc.assembler {
                 case ".skip":
                 case ".space":
                     this.emitSpace(words);
+                    break;
+
+                case ".set":
+                case ".equ":
+                    if (!/^\w+$/.test(words[1]))
+                        this.directiveError(lf("expecting name"))
+                    const nums = this.parseNumbers(words.slice(words[2] == "," || words[2] == "="
+                        ? 2 : 1))
+                    if (nums.length != 1)
+                        this.directiveError(lf("expecting one value"))
+                    if (this.equs[words[1]] !== undefined &&
+                        this.equs[words[1]] != nums[0])
+                        this.directiveError(lf("redefinition of {0}", words[1]))
+                    this.equs[words[1]] = nums[0]
                     break;
 
                 case ".startaddr":
@@ -873,9 +914,14 @@ namespace ts.pxtc.assembler {
                     let lblname = this.scopedName(l.words[0])
                     this.prevLabel = lblname
                     if (this.finalEmit) {
+                        if (this.equs[lblname] != null)
+                            this.directiveError(lf(".equ redefined as label"))
                         let curr = this.labels[lblname]
                         if (curr == null)
                             oops()
+                        if (this.errors.length == 0 && curr != this.location()) {
+                            oops(`invalid location: ${this.location()} != ${curr} at ${lblname}`)
+                        }
                         assert(this.errors.length > 0 || curr == this.location())
                         if (this.reallyFinalEmit) {
                             this.stackAtLabel[lblname] = this.stack
@@ -905,13 +951,21 @@ namespace ts.pxtc.assembler {
 
 
         public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
+            let lenPrev = 0
+            let size = (lbl: string) => {
+                let curr = this.labels[lbl] || lenPrev
+                let sz = curr - lenPrev
+                lenPrev = curr
+                return sz
+            }
             let lenTotal = this.buf ? this.location() : 0
-            let lenThumb = this.labels["_program_end"] || lenTotal;
-            let lenFrag = this.labels["_frag_start"] || 0
-            if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
-            let lenLit = this.labels["_program_end"]
-            if (lenLit) lenLit -= this.labels["_js_end"]
-            let totalSize = lenTotal + this.baseOffset
+            let lenCode = size("_code_end")
+            let lenHelpers = size("_helpers_end")
+            let lenVtables = size("_vtables_end")
+            let lenLiterals = size("_literals_end")
+            let lenAllCode = lenPrev
+            let totalSize = (lenTotal + this.baseOffset) & 0xffffff
+
             if (flashSize && totalSize > flashSize)
                 U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))
             flashSize = flashSize || 128 * 1024
@@ -920,11 +974,12 @@ namespace ts.pxtc.assembler {
                 flashSize - totalSize)
             let res =
                 // ARM-specific
-                lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
-                    lenThumb, lenFrag, lenLit, lenTotal - lenThumb) +
-                lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
+                lf("; generated code sizes (bytes): {0} (incl. {1} user, {2} helpers, {3} vtables, {4} lits); src size {5}\n",
+                    lenAllCode, lenCode, lenHelpers, lenVtables, lenLiterals,
+                    lenTotal - lenAllCode) +
+                lf("; assembly: {0} lines; density: {1} bytes/stmt; ({2} stmts)\n",
                     this.lines.length,
-                    Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
+                    Math.round(100 * lenCode / numStmts) / 100, numStmts) +
                 totalInfo + "\n" +
                 this.stats + "\n\n"
 
@@ -1049,23 +1104,6 @@ namespace ts.pxtc.assembler {
         constructor(ei: AbstractProcessor) {
             super(ei)
         }
-
-        public location() {
-            // the this.buf stores bytes here
-            return this.buf.length
-        }
-
-        protected emitShort(op: number) {
-            assert(0 <= op && op <= 0xffff);
-            this.buf.push(op & 0xff);
-            this.buf.push(op >> 8);
-        }
-
-        protected emitOpCode(op: number) {
-            assert(0 <= op && op <= 0xff);
-            this.buf.push(op);
-        }
-
     }
 
     // describes the encodings of various parts of an instruction

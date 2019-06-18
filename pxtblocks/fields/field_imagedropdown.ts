@@ -48,7 +48,7 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
             // Populate the drop-down with the icons for this field.
-            let dropdownDiv = Blockly.DropDownDiv.getContentDiv();
+            let dropdownDiv = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
             let contentDiv = document.createElement('div');
             // Accessibility properties
             contentDiv.setAttribute('role', 'menu');
@@ -122,18 +122,13 @@ namespace pxtblockly {
             if (pxt.BrowserUtils.isFirefox()) {
                 // This is to compensate for the scrollbar that overlays content in Firefox. It
                 // gets removed in onHide_()
-                Blockly.DropDownDiv.getContentDiv().style.paddingRight = "20px";
+                dropdownDiv.style.paddingRight = "20px";
             }
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
-            let scale = this.sourceBlock_.workspace.scale;
-            // Offset for icon-type horizontal blocks.
-            let secondaryYOffset = (
-                -(Blockly.BlockSvg.MIN_BLOCK_Y * scale) - (Blockly.BlockSvg.FIELD_Y_OFFSET * scale)
-            );
             Blockly.DropDownDiv.showPositionedByBlock(
-                this, this.sourceBlock_, this.onHide_.bind(this), secondaryYOffset);
+                this, this.sourceBlock_, this.onHide_.bind(this));
 
             if (this.sourceBlock_.isShadow()) {
                 this.savedPrimary_ = this.sourceBlock_.getColour();
@@ -162,11 +157,12 @@ namespace pxtblockly {
          * Callback for when the drop-down is hidden.
          */
         protected onHide_() {
-            Blockly.DropDownDiv.content_.removeAttribute('role');
-            Blockly.DropDownDiv.content_.removeAttribute('aria-haspopup');
-            Blockly.DropDownDiv.content_.removeAttribute('aria-activedescendant');
-            Blockly.DropDownDiv.getContentDiv().style.width = '';
-            Blockly.DropDownDiv.getContentDiv().style.paddingRight = '';
+            let content = Blockly.DropDownDiv.getContentDiv() as HTMLElement;
+            content.removeAttribute('role');
+            content.removeAttribute('aria-haspopup');
+            content.removeAttribute('aria-activedescendant');
+            content.style.width = '';
+            content.style.paddingRight = '';
 
             if (this.sourceBlock_) {
                 if (this.sourceBlock_.isShadow()) {
@@ -205,9 +201,10 @@ namespace pxtblockly {
                 );
                 this.textElement_.parentNode.appendChild(this.arrow_);
             }
-            if (this.sourceBlock_ && this.sourceBlock_.rendered) {
-                this.sourceBlock_.render();
-                this.sourceBlock_.bumpNeighbours_();
+            const sourceBlock = this.sourceBlock_ as Blockly.BlockSvg;
+            if (sourceBlock && sourceBlock.rendered) {
+                sourceBlock.render();
+                sourceBlock.bumpNeighbours_();
             }
         };
 

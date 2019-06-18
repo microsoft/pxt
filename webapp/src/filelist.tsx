@@ -79,7 +79,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = pkg.getPkgId() == "this";
-        const parent = this.props.parent;
         return pkg.sortedFiles().map(file => {
             let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             return (
@@ -156,30 +155,41 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private addTypeScriptFile() {
         core.promptAsync({
             header: lf("Add new file?"),
-            body: lf("Please provide a name for your new file. The .ts extension will be added automatically. Don't use spaces or special characters."),
-            defaultValue: ""
+            body: lf("Please provide a name for your new file. Don't use spaces or special characters.")
         }).then(str => {
             str = str || ""
             str = str.trim()
             str = str.replace(/\.[tj]s$/, "")
             str = str.trim()
+            let ext = "ts"
+            let comment = "//"
+            if (pxt.U.endsWith(str, ".py")) {
+                str = str.slice(0, str.length - 3)
+                ext = "py"
+                comment = "#"
+            }
+            if (pxt.U.endsWith(str, ".md")) {
+                str = str.slice(0, str.length - 3)
+                ext = "md"
+                comment = ">"
+            }
             if (!str)
                 return Promise.resolve()
             if (!/^[\w\-]+$/.test(str)) {
                 core.warningNotification(lf("Invalid file name"))
                 return Promise.resolve()
             }
-            str += ".ts"
+            str += "." + ext
             if (pkg.mainEditorPkg().sortedFiles().some(f => f.name == str)) {
                 core.warningNotification(lf("File already exists"))
                 return Promise.resolve()
             }
-            return this.props.parent.updateFileAsync(str, "// Add your code here\n", true)
+            return this.props.parent.updateFileAsync(str, comment + " " + pxt.U.lf("Add your code here") + "\n", true)
         }).done()
     }
 
     private addCustomBlocksFile() {
-        if (this.props.parent.state.header.githubId) {
+        if (this.props.parent.state.header.githubId || pxt.appTarget.appTheme.addNewTypeScriptFile) {
             this.addTypeScriptFile()
             return
         }

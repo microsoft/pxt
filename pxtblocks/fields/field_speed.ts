@@ -5,13 +5,14 @@ namespace pxtblockly {
     export interface FieldSpeedOptions extends Blockly.FieldCustomOptions {
         min?: string;
         max?: string;
+        format?: string;
         label?: string;
     }
 
     export class FieldSpeed extends Blockly.FieldSlider implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
 
-        private params: any;
+        private params: FieldSpeedOptions;
 
         private speedSVG: SVGElement;
         private circleBar: SVGCircleElement;
@@ -33,6 +34,7 @@ namespace pxtblockly {
             if (this.params['min']) this.min_ = parseFloat(this.params.min);
             if (this.params['max']) this.max_ = parseFloat(this.params.max);
             if (this.params['label']) this.labelText_ = this.params.label;
+            if (!this.params.format) this.params.format = "{0}%";
         }
 
         createLabelDom_(labelText: string) {
@@ -59,7 +61,7 @@ namespace pxtblockly {
             this.reporter = pxsim.svg.child(this.speedSVG, "text", {
                 'x': 100, 'y': 80,
                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-                'style': 'font-size: 50px',
+                'style': `font-size: ${Math.max(14, 50 - 5 * (this.params.format.length - 4))}px`,
                 'class': 'sim-text inverted number'
             }) as SVGTextElement;
 
@@ -77,7 +79,7 @@ namespace pxtblockly {
         setReadout_(readout: Element, value: string) {
             this.updateSpeed(parseFloat(value));
             // Update reporter
-            this.reporter.textContent = `${value}%`;
+            this.reporter.textContent = ts.pxtc.U.rlf(this.params.format, value);
         }
 
         private updateSpeed(speed: number) {

@@ -16,7 +16,7 @@ We do not "downgrade" scripts; the old target should refuse to open any scripts 
 
 For each of the following scenarios, complete the steps in both blocks and JavaScript.
 To see a list of JavaScript upgrades, you can check the `pxtarget.json` for the target.
-Blockly upgrades are present in that file as well but can also be added in a target's editor extesions.
+Blockly upgrades are present in that file as well but can also be added in a target's editor extensions.
 Also note that `v0` and `v1` here refer to an old version of the editor and the current version of the editor respectively.
 
 ## Test scenarios:

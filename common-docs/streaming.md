@@ -6,7 +6,7 @@ Streaming is an optional feature and may not be enabled in this editor.
 
 ### ~
 
-The PXT parses the log entry for numberial data. When it detects a data stream, it automatically starts 
+The PXT parses the log entry for numerical data. When it detects a data stream, it automatically starts 
 collecting and aggregating it. The streamed data can then be download to a file or uploaded to the cloud (optional).
 
 ## #setup

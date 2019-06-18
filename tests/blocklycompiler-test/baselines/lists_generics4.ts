@@ -1,4 +1,9 @@
 let item = ""
 let myList: string[] = []
-myList = ["", ""]
-item = myList.pop()
+if (true) {
+    myList = ["", ""]
+    item = myList.pop()
+} else {
+    item = item
+    myList = myList
+}

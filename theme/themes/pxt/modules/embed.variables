@@ -1,0 +1,6 @@
+/*******************************
+         Site Overrides
+*******************************/
+
+@placeholderBackground: rgba(0, 0, 0, 0.1);
+@hoverPlaceholderBackground: rgba(0, 0, 0, 0.1);

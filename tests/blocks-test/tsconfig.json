@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "out": "../../built/tests/blocksrunner.js",
+        "newLine": "LF",
+        "types": ["chai", "mocha", "bluebird"],
+        "sourceMap": false
+    },
+    "files": [
+        "blocksrunner.ts"
+    ]
+}

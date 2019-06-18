@@ -32,7 +32,7 @@ function testLambdas() {
 function testLambdaDecrCapture() {
     let x = 6
     function b(s: string) {
-        assert(s.length == x)
+        assert(s.length == x, "dc")
     }
     b("fo0" + "bAr")
 }

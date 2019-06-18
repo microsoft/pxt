@@ -28,4 +28,4 @@ Math.randomRange(0,5);
 [logic](/blocks/logic), [loops](/blocks/loops), [variables](/blocks/variables),
 [math](/reference/math), [text](/reference/text), [arrays](/reference/arrays)
 
-[on-start](/blocks/on-start), [javascript blocks](/blocks/javascript-blocks), [custom blocks](blocks/custom)
+[on-start](/blocks/on-start), [javascript blocks](/blocks/javascript-blocks), [custom blocks](/blocks/custom)

@@ -38,4 +38,14 @@ namespace language {
 
     }
 
+    /**
+     * The arguments on event handlers are variables by default, but they can
+     * also be special "reporter" blocks that can only be used inside the event
+     * handler itself, mimicking the behavior of locally scoped variables.
+     */
+    //% block="on some event $handlerArg from $arg"
+    //% draggableParameters="reporter"
+    export function onEventWithHandlerReporterArgs(arg: number, handler: (handlerStringArg: string, handlerBoolArg: boolean) => void) {
+
+    }
 }

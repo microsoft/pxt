@@ -1,43 +1,83 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-  <block type="pxt-on-start" id="q#:z$@}s.9hgO(*%6aI7" x="-203" y="157">
+  <variables>
+    <variable type="" id="FU]!Df]#njGG++ID!4/9">myList</variable>
+    <variable type="" id="Q.p)F/}ene4e0L.vQw*n">item</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
     <statement name="HANDLER">
-      <block type="variables_set" id="%N]t}m^n=lK9Y)VN9v1%">
-        <field name="VAR">myList</field>
-        <value name="VALUE">
-          <shadow type="math_number" id="(#dy}VL[B~W%P(eGLhn|">
-            <field name="NUM">0</field>
+      <block type="controls_if">
+        <mutation else="1"></mutation>
+        <value name="IF0">
+          <shadow type="logic_boolean">
+            <field name="BOOL">TRUE</field>
           </shadow>
-          <block type="lists_create_with" id="d(XdDFB6.H,#-]i*[//{">
-            <mutation items="1"></mutation>
-            <value name="ADD0">
-              <shadow type="math_number" id="kisi9Z.bSP,GI0.0S0XY">
-                <field name="NUM">0</field>
-              </shadow>
-            </value>
-          </block>
         </value>
-        <next>
-          <block type="variables_set" id="c*EydZvr[mcS$i7fh]D4">
-            <field name="VAR">item</field>
+        <statement name="DO0">
+          <block type="variables_set">
+            <field name="VAR" id="FU]!Df]#njGG++ID!4/9" variabletype="">myList</field>
             <value name="VALUE">
-              <shadow type="math_number" id="Ke).)S=vUuX)u#Lf#{PJ">
+              <shadow type="math_number" id="(#dy}VL[B~W%P(eGLhn|">
                 <field name="NUM">0</field>
               </shadow>
-              <block type="lists_index_get" id="2ic(|.)d3^r5kqk%=~#W">
-                <value name="LIST">
-                  <block type="variables_get" id="ycM6k)z.@QJ[@bs^,87n">
-                    <field name="VAR">myList</field>
-                  </block>
-                </value>
-                <value name="INDEX">
-                  <shadow type="math_number" id="(3;tAfWN$XEMx5k17iqv">
+              <block type="lists_create_with">
+                <mutation items="1"></mutation>
+                <value name="ADD0">
+                  <shadow type="math_number">
                     <field name="NUM">0</field>
                   </shadow>
                 </value>
               </block>
             </value>
+            <next>
+              <block type="variables_set">
+                <field name="VAR" id="Q.p)F/}ene4e0L.vQw*n" variabletype="">item</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="Ke).)S=vUuX)u#Lf#{PJ">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block type="lists_index_get">
+                    <value name="LIST">
+                      <block type="variables_get">
+                        <field name="VAR" id="FU]!Df]#njGG++ID!4/9" variabletype="">myList</field>
+                      </block>
+                    </value>
+                    <value name="INDEX">
+                      <shadow type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </next>
           </block>
-        </next>
+        </statement>
+        <statement name="ELSE">
+          <block type="variables_set">
+            <field name="VAR" id="FU]!Df]#njGG++ID!4/9" variabletype="">myList</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="(#dy}VL[B~W%P(eGLhn|">
+                <field name="NUM">0</field>
+              </shadow>
+              <block type="variables_get">
+                <field name="VAR" id="FU]!Df]#njGG++ID!4/9" variabletype="">myList</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set">
+                <field name="VAR" id="Q.p)F/}ene4e0L.vQw*n" variabletype="">item</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="lJi5+r{,Om^-KN{s+qs.">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block type="variables_get">
+                    <field name="VAR" id="Q.p)F/}ene4e0L.vQw*n" variabletype="">item</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </statement>
       </block>
     </statement>
   </block>

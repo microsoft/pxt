@@ -1,7 +1,6 @@
 templater.sh
 web/_temp
-webapp/public/blockly/blockly_uncompressed.js
-webapp/public/blockly/core
+webapp/public/blockly
 webapp/public/closure-library
 node_modules
 *.sw?
@@ -24,3 +23,5 @@ paper.dvi
 paper.fls
 paper.fdb_latexmk
 paper.aux
+tests/**/*.local.*
+package-lock.json

@@ -1,5 +1,16 @@
 namespace pxsim.util {
     export function injectPolyphils() {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
+        if (!String.prototype.startsWith) {
+            Object.defineProperty(String.prototype, 'startsWith', {
+                value: function(search: string, pos: number) {
+                    if (search === undefined || search == null) return false;
+                    pos = !pos || pos < 0 ? 0 : +pos;
+                    return (<string>this).substring(pos, pos + search.length) === search;
+                }
+            });
+        }
+
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
         if (!Array.prototype.fill) {
             Object.defineProperty(Array.prototype, 'fill', {
@@ -53,7 +64,7 @@ namespace pxsim.util {
             Object.defineProperty(Array.prototype, 'find', {
                 writable: true,
                 enumerable: true,
-                value: function(predicate: (value: any, index: number, obj: any[] ) => boolean) {
+                value: function (predicate: (value: any, index: number, obj: any[]) => boolean) {
                     // 1. Let O be ? ToObject(this value).
                     if (this == null) {
                         throw new TypeError('"this" is null or not defined');
@@ -83,7 +94,7 @@ namespace pxsim.util {
                         // d. If testResult is true, return kValue.
                         const kValue = o[k];
                         if (predicate.call(thisArg, kValue, k, o)) {
-                        return kValue;
+                            return kValue;
                         }
                         // e. Increase k by 1.
                         k++;
@@ -138,6 +149,97 @@ namespace pxsim.util {
                 value: Array.prototype.fill,
                 writable: true,
                 enumerable: true
+            });
+        }
+        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.some
+        if (!Uint8Array.prototype.some) {
+            Object.defineProperty(Uint8Array.prototype, 'some', {
+                value: Array.prototype.some,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint16Array.prototype.some) {
+            Object.defineProperty(Uint16Array.prototype, 'some', {
+                value: Array.prototype.some,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint32Array.prototype.some) {
+            Object.defineProperty(Uint32Array.prototype, 'some', {
+                value: Array.prototype.some,
+                writable: true,
+                enumerable: true
+            });
+        }
+        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
+        if (!Uint8Array.prototype.reverse) {
+            Object.defineProperty(Uint8Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint16Array.prototype.reverse) {
+            Object.defineProperty(Uint16Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint32Array.prototype.reverse) {
+            Object.defineProperty(Uint32Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        // Inject Math imul polyfill
+        if (!Math.imul) {
+            // for explanations see:
+            // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
+            // (but the code below doesn't come from there; I wrote it myself)
+            // TODO use Math.imul if available
+            Math.imul = function (a: number, b: number): number {
+                const ah = (a >>> 16) & 0xffff;
+                const al = a & 0xffff;
+                const bh = (b >>> 16) & 0xffff;
+                const bl = b & 0xffff;
+                // the shift by 0 fixes the sign on the high part
+                // the final |0 converts the unsigned value into a signed value
+                return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+            }
+        }
+
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+        if (typeof Object.assign != 'function') {
+            // Must be writable: true, enumerable: false, configurable: true
+            Object.defineProperty(Object, "assign", {
+                value: function assign(target: any, varArgs: any) { // .length of function is 2
+                    'use strict';
+                    if (target == null) { // TypeError if undefined or null
+                        throw new TypeError('Cannot convert undefined or null to object');
+                    }
+
+                    let to = Object(target);
+
+                    for (let index = 1; index < arguments.length; index++) {
+                        let nextSource = arguments[index];
+
+                        if (nextSource != null) { // Skip over if undefined or null
+                            for (let nextKey in nextSource) {
+                                // Avoid bugs when hasOwnProperty is shadowed
+                                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                                    to[nextKey] = nextSource[nextKey];
+                                }
+                            }
+                        }
+                    }
+                    return to;
+                },
+                writable: true,
+                configurable: true
             });
         }
     }

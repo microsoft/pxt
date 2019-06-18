@@ -1,39 +1,79 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-  <block type="pxt-on-start" id="q#:z$@}s.9hgO(*%6aI7" x="-203" y="157">
+  <variables>
+    <variable type="" id="zvMS:U.dZrJDNk2DeRLy">myList</variable>
+    <variable type="" id="JMV)uO^3vT*r4)zm+w,;">item</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
     <statement name="HANDLER">
-      <block type="array_push" id="W@~#qBIOefv.,m/-H=b}">
-        <value name="list">
-          <block type="variables_get" id="Za=Z9NFEis!Z5$f1=1Tq">
-            <field name="VAR">myList</field>
-          </block>
+      <block type="controls_if">
+        <mutation else="1"></mutation>
+        <value name="IF0">
+          <shadow type="logic_boolean">
+            <field name="BOOL">TRUE</field>
+          </shadow>
         </value>
-        <value name="value">
-          <block type="text" id="!YWl9}bT2Y!XkWNf6)zt">
-            <field name="TEXT"></field>
-          </block>
-        </value>
-        <next>
-          <block type="variables_set" id="c*EydZvr[mcS$i7fh]D4">
-            <field name="VAR">item</field>
-            <value name="VALUE">
-              <shadow type="math_number" id="Ke).)S=vUuX)u#Lf#{PJ">
-                <field name="NUM">0</field>
-              </shadow>
-              <block type="lists_index_get" id="2ic(|.)d3^r5kqk%=~#W">
-                <value name="LIST">
-                  <block type="variables_get" id="ycM6k)z.@QJ[@bs^,87n">
-                    <field name="VAR">myList</field>
-                  </block>
-                </value>
-                <value name="INDEX">
-                  <shadow type="math_number" id="(3;tAfWN$XEMx5k17iqv">
-                    <field name="NUM">0</field>
-                  </shadow>
-                </value>
+        <statement name="DO0">
+          <block type="array_push">
+            <value name="list">
+              <block type="variables_get">
+                <field name="VAR" id="zvMS:U.dZrJDNk2DeRLy" variabletype="">myList</field>
               </block>
             </value>
+            <value name="value">
+              <block type="text">
+                <field name="TEXT"></field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set">
+                <field name="VAR" id="JMV)uO^3vT*r4)zm+w,;" variabletype="">item</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="Ke).)S=vUuX)u#Lf#{PJ">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block type="lists_index_get">
+                    <value name="LIST">
+                      <block type="variables_get">
+                        <field name="VAR" id="zvMS:U.dZrJDNk2DeRLy" variabletype="">myList</field>
+                      </block>
+                    </value>
+                    <value name="INDEX">
+                      <shadow type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </next>
           </block>
-        </next>
+        </statement>
+        <statement name="ELSE">
+          <block type="variables_set">
+            <field name="VAR" id="JMV)uO^3vT*r4)zm+w,;" variabletype="">item</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="O,0N^W^Xee=Um_(1sc[x">
+                <field name="NUM">0</field>
+              </shadow>
+              <block type="variables_get">
+                <field name="VAR" id="JMV)uO^3vT*r4)zm+w,;" variabletype="">item</field>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set">
+                <field name="VAR" id="zvMS:U.dZrJDNk2DeRLy" variabletype="">myList</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="O,0N^W^Xee=Um_(1sc[x">
+                    <field name="NUM">0</field>
+                  </shadow>
+                  <block type="variables_get">
+                    <field name="VAR" id="zvMS:U.dZrJDNk2DeRLy" variabletype="">myList</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </statement>
       </block>
     </statement>
   </block>

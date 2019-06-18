@@ -95,6 +95,7 @@ namespace pxsim.visuals {
 
     export interface GenericBoardProps {
         visualDef: BoardImageDefinition;
+        boardDef: BoardDefinition;
         wireframe?: boolean;
     }
 
@@ -142,7 +143,7 @@ namespace pxsim.visuals {
                 "y": "0px"
             });
             if (props.wireframe)
-                svg.addClass(this.element, "sim-board-outline")
+                pxsim.U.addClass(this.element, "sim-board-outline")
             this.style = <SVGStyleElement>svg.child(this.element, "style", {});
             this.style.textContent += BOARD_SYTLE;
             this.defs = <SVGDefsElement>svg.child(this.element, "defs", {});
@@ -158,6 +159,25 @@ namespace pxsim.visuals {
             //this.g.appendChild(backgroundCover);
 
             // ----- pins
+            const mkRoundPin = (): SVGElAndSize => {
+                let el = svg.elt("circle");
+                let width = SQUARE_PIN_WIDTH;
+                svg.hydrate(el, {
+                    class: "sim-board-pin",
+                    r: width / 2,
+                });
+                return { el: el, w: width, h: width, x: 0, y: 0 };
+            }
+            const mkRoundHoverPin = (): SVGElAndSize => {
+                let el = svg.elt("circle");
+                let width = SQUARE_PIN_HOVER_WIDTH;
+                svg.hydrate(el, {
+                    class: "sim-board-pin-hover",
+                    r: width / 2
+                });
+                return { el: el, w: width, h: width, x: 0, y: 0 };
+            }
+
             const mkSquarePin = (): SVGElAndSize => {
                 let el = svg.elt("rect");
                 let width = SQUARE_PIN_WIDTH;
@@ -192,15 +212,15 @@ namespace pxsim.visuals {
                     rowCount: rowCount,
                     colCount: colCount,
                     pinDist: PIN_DIST,
-                    mkPin: mkSquarePin,
-                    mkHoverPin: mkSquareHoverPin,
+                    mkPin: visDef.useCrocClips ? mkRoundPin : mkSquarePin,
+                    mkHoverPin: visDef.useCrocClips ? mkRoundHoverPin : mkSquareHoverPin,
                     getRowName: getRowName,
                     getColName: getColName,
                     getGroupName: getGroupName,
                 });
                 let pins = gridRes.allPins;
                 let pinsG = gridRes.g;
-                svg.addClass(gridRes.g, "sim-board-pin-group");
+                pxsim.U.addClass(gridRes.g, "sim-board-pin-group");
                 return gridRes;
             };
             let pinBlocks = visDef.pinBlocks.map(mkPinBlockGrid);
@@ -240,15 +260,15 @@ namespace pxsim.visuals {
             };
             const mkLabel = (pinX: number, pinY: number, txt: string, pos: "above" | "below"): GridLabel => {
                 let el = mkLabelTxtEl(pinX, pinY, PIN_LBL_SIZE, txt, pos);
-                svg.addClass(el, "sim-board-pin-lbl");
+                pxsim.U.addClass(el, "sim-board-pin-lbl");
                 let hoverEl = mkLabelTxtEl(pinX, pinY, PIN_LBL_HOVER_SIZE, txt, pos);
-                svg.addClass(hoverEl, "sim-board-pin-lbl-hover");
+                pxsim.U.addClass(hoverEl, "sim-board-pin-lbl-hover");
                 let label: GridLabel = { el: el, hoverEl: hoverEl, txt: txt };
                 return label;
             }
             this.allLabels = this.allPins.map((p, pIdx) => {
                 let blk = pinToBlockDef[pIdx];
-                return mkLabel(p.cx, p.cy, p.col, blk.labelPosition);
+                return mkLabel(p.cx, p.cy, p.col, blk.labelPosition || "above");
             });
             //catalog labels
             this.allPins.forEach((pin, pinIdx) => {
@@ -267,8 +287,28 @@ namespace pxsim.visuals {
             });
         }
 
-        public getCoord(pinNm: string): Coord {
+        private findPin(pinNm: string): GridPin {
             let pin = this.pinNmToPin[pinNm];
+            if (!pin && this.props.boardDef.gpioPinMap) {
+                pinNm = this.props.boardDef.gpioPinMap[pinNm];
+                if (pinNm)
+                    pin = this.pinNmToPin[pinNm];
+            }
+            return pin;
+        }
+
+        private findPinLabel(pinNm: string): GridLabel {
+            let pin = this.pinNmToLbl[pinNm];
+            if (!pin && this.props.boardDef.gpioPinMap) {
+                pinNm = this.props.boardDef.gpioPinMap[pinNm];
+                if (pinNm)
+                    pin = this.pinNmToLbl[pinNm];
+            }
+            return pin;
+        }
+
+        public getCoord(pinNm: string): Coord {
+            let pin = this.findPin(pinNm);
             if (!pin)
                 return null;
             return [pin.cx, pin.cy];
@@ -290,13 +330,13 @@ namespace pxsim.visuals {
         }
 
         public highlightPin(pinNm: string) {
-            let lbl = this.pinNmToLbl[pinNm];
-            let pin = this.pinNmToPin[pinNm];
+            let lbl = this.findPinLabel(pinNm);
+            let pin = this.findPin(pinNm);
             if (lbl && pin) {
-                svg.addClass(lbl.el, "highlight");
-                svg.addClass(lbl.hoverEl, "highlight");
-                svg.addClass(pin.el, "highlight");
-                svg.addClass(pin.hoverEl, "highlight");
+                pxsim.U.addClass(lbl.el, "highlight");
+                pxsim.U.addClass(lbl.hoverEl, "highlight");
+                pxsim.U.addClass(pin.el, "highlight");
+                pxsim.U.addClass(pin.hoverEl, "highlight");
             }
         }
     }

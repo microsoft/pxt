@@ -24,14 +24,14 @@ function onOOB(v: OOB) {
 }
 
 export function tryInit() {
-    if (Cloud.isLocalHost() && Cloud.localToken) {
+    if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken) {
         pxt.mkTCPSocket = (h, p) => new TCPSocket(h, p)
     }
 }
 
 function init() {
     if (!iface) {
-        if (!Cloud.isLocalHost() || !Cloud.localToken)
+        if (!pxt.BrowserUtils.isLocalHost() || !Cloud.localToken)
             U.userError(lf("TCP sockets not available here"))
         pxt.debug('initializing tcp pipe');
         iface = pxt.worker.makeWebSocket(

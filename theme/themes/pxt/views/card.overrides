@@ -23,10 +23,12 @@
     .content {
         margin-left: 4rem;
         min-width: 5rem;
-        padding-left: 1.5rem;
         height: 8rem;
         .header {
             word-wrap: break-word;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
     }
     .meta {
@@ -48,6 +50,37 @@
     }
 }
 
+.ui.card.file.positive, .ui.card.file.positive:focus {
+    border-color: @green;
+}
+
+.ui.card.file.warning {
+    border-color: @warningBackgroundColor;
+}
+
+.ui.card.file .selected-label {
+    border-color: transparent !important;
+    cursor: pointer;
+    i.icon {
+        cursor: pointer;
+        font-size: 2rem;
+        left: 0;
+        top: 1rem;
+    }
+}
+
+/*
+.ui.card.file:not(.positive) {
+    .selected-label {
+        display: none;
+    }
+    &:hover {
+        .selected-label {
+            display: block;
+        }
+    }
+}*/
+
 /*-------------------
         Link
 --------------------*/
@@ -67,8 +100,7 @@ a.ui.card:focus,
 
 /* New project card */
 
-.ui.card.link.newprojectcard {
-    background: fade(@primaryColor, 90%) !important;
+.ui.card.link.buttoncard {
     border: @borderWidth solid @solidBorderColor;
     text-align: center;
     color: @white;
@@ -83,8 +115,15 @@ a.ui.card:focus,
     }
 }
 
-.ui.card.newprojectcard:hover {
+.ui.card.buttoncard:hover {
     border: @linkHoverBorder;
+}
+
+.ui.card.link.newprojectcard {
+    background: fade(@primaryColor, 90%) !important;
+}
+.ui.card.link.scriptmanagercard {
+    background: fade(@secondaryColor, 90%) !important;
 }
 
 
@@ -162,4 +201,18 @@ a.ui.card:focus,
     display: flex;
     justify-content: center;
     background: rgba(0,0,0,0.1);
+}
+
+/* Mobile only */
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.card, .ui.cards>.card {
+        .content .description {
+            display: none;
+        }
+        .content .header {
+            font-size: 80%;
+            font-weight: normal;
+        }
+    }
 }

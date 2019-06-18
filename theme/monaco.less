@@ -1,6 +1,7 @@
 /* Import all components */
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
+@import 'spriteeditor.less';
 
 /* Reference import */
 @import (reference) "semantic.less";
@@ -44,6 +45,11 @@
 }
 .monaco-editor.vs .suggest-widget .details > .monaco-scrollable-element > .body > .type, .monaco-editor .suggest-widget .monaco-list .monaco-list-row .type-label {
     color: #FFB900 !important;
+}
+
+/* The view lines in the monaco editor sometimes ignore the editor width and cause a scrollbar to appear */
+.monaco-editor.vs {
+    overflow: hidden;
 }
 
 /* Monaco Editor Main tokens */
@@ -192,6 +198,7 @@
 /* Fix for monaco editor Signature bug in Safari */
 .monaco-editor .parameter-hints-widget {
     flex-direction: row !important;
+    z-index: @monacoHintsZIndex !important;
 }
 
 .line-numbers {
@@ -220,4 +227,14 @@
 
 .monacoDraggableBlock:focus {
     outline: none; /* We highlight the focused item in the toolbox, no need to outline */
+}
+
+.monaco-field-editor-frame {
+    padding: 4px;
+    position: relative;
+}
+
+.pxt-view-zone {
+    width: 100%;
+    z-index: calc(@monacoFlyoutZIndex - 1);
 }

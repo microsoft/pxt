@@ -1,34 +1,44 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="pxt-on-start">
-<statement name="HANDLER">
-<block type="test_customFieldEditor">
-<value name="value">
-<shadow type="test_customShadowField">
-<field name="value">100</field>
-</shadow>
-</value>
-<next>
-<block type="test_customFieldEditorWithMutation">
-<value name="value">
-<shadow type="test_customShadowField">
-<mutation customfield="&#123;&#34;test&#34;&#58;&#34;0&#34;&#125;" />
-<field name="value">100</field>
-</shadow>
-</value>
-<next>
-<block type="test_customFieldEditorOnParentBlock">
-<field name="value">100</field>
-<next>
-<block type="test_customTextFieldEditorOnParentBlock">
-<field name="text">text</field>
-</block>
-</next>
-</block>
-</next>
-</block>
-</next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
-</block>
-</statement>
-</block>
-</xml>
+    <block type="pxt-on-start">
+    <statement name="HANDLER">
+    <block type="test_sliderFieldEditor">
+    <value name="value">
+    <shadow type="math_number_minmax">
+    <mutation min="0" max="500" />
+    <field name="SLIDER">10</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="test_customFieldEditor">
+    <value name="value">
+    <shadow type="test_customShadowField">
+    <field name="value">100</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="test_customFieldEditorWithMutation">
+    <value name="value">
+    <shadow type="test_customShadowField">
+    <mutation customfield="&#123;&#34;test&#34;&#58;&#34;0&#34;&#125;" />
+    <field name="value">100</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="test_customFieldEditorOnParentBlock">
+    <field name="value">100</field>
+    <next>
+    <block type="test_customTextFieldEditorOnParentBlock">
+    <field name="text">text</field>
+    </block>
+    </next>
+    </block>
+    </next>
+    </block>
+    </next>
+    </block>
+    </next>
+    <comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+    </block>
+    </statement>
+    </block>
+    </xml>

@@ -93,13 +93,6 @@ namespace pxsim.instructions {
             }
             `;
 
-    function addClass(el: HTMLElement, cls: string) {
-        //TODO move to library
-        if (el.classList) el.classList.add(cls);
-        //BUG: won't work if element has class that is prefix of new class
-        //TODO: make github issue (same issue exists svg.addClass)
-        else if (el.className.indexOf(cls) < 0) el.className += " " + cls;
-    }
     function mkTxt(p: [number, number], txt: string, size: number) {
         let el = svg.elt("text")
         let [x, y] = p;
@@ -123,9 +116,10 @@ namespace pxsim.instructions {
         crocClips?: boolean
     };
 
-    function mkBoardImgSvg(def: string | BoardImageDefinition): visuals.SVGElAndSize {
+    function mkBoardImgSvg(def: BoardDefinition): visuals.SVGElAndSize {
         const boardView = pxsim.visuals.mkBoardView({
-            visual: def
+            visual: def.visual,
+            boardDef: def
         });
         return boardView.getView();
     }
@@ -205,7 +199,7 @@ namespace pxsim.instructions {
             let txtH = size / txtAspectRatio[1];
             let [cx, y] = [elDims.l + elDims.w / 2, elDims.t - LBL_VERT_PAD - txtH / 2];
             let lbl = visuals.mkTxt(cx, y, size, 0, opts.top, xOff, yOff);
-            svg.addClass(lbl, "cmp-lbl");
+            pxsim.U.addClass(lbl, "cmp-lbl");
             svgEl.appendChild(lbl);
 
             let len = txtW * opts.top.length;
@@ -219,7 +213,7 @@ namespace pxsim.instructions {
             let txtH = size / txtAspectRatio[1];
             let [cx, y] = [elDims.l + elDims.w / 2, elDims.t + elDims.h + LBL_VERT_PAD + txtH / 2];
             let lbl = visuals.mkTxt(cx, y, size, 0, opts.bot, xOff, yOff);
-            svg.addClass(lbl, "cmp-lbl");
+            pxsim.U.addClass(lbl, "cmp-lbl");
             svgEl.appendChild(lbl);
 
             let len = txtW * opts.bot.length;
@@ -234,7 +228,7 @@ namespace pxsim.instructions {
             let len = txtW * opts.right.length;
             let [cx, cy] = [elDims.l + elDims.w + LBL_RIGHT_PAD + len / 2, elDims.t + elDims.h / 2];
             let lbl = visuals.mkTxt(cx, cy, size, 0, opts.right, xOff, yOff);
-            svg.addClass(lbl, "cmp-lbl");
+            pxsim.U.addClass(lbl, "cmp-lbl");
             svgEl.appendChild(lbl);
 
             updateT(cy - txtH / 2);
@@ -248,7 +242,7 @@ namespace pxsim.instructions {
             let len = txtW * opts.left.length;
             let [cx, cy] = [elDims.l - LBL_LEFT_PAD - len / 2, elDims.t + elDims.h / 2];
             let lbl = visuals.mkTxt(cx, cy, size, 0, opts.left, xOff, yOff);
-            svg.addClass(lbl, "cmp-lbl");
+            pxsim.U.addClass(lbl, "cmp-lbl");
             svgEl.appendChild(lbl);
 
             updateT(cy - txtH / 2);
@@ -354,10 +348,11 @@ namespace pxsim.instructions {
         };
         let boardHost = new visuals.BoardHost(pxsim.visuals.mkBoardView({
             visual: opts.boardDef.visual,
+            boardDef: opts.boardDef,
             wireframe: opts.wireframe
         }), opts);
         let view = boardHost.getView();
-        svg.addClass(view, "board-svg");
+        pxsim.U.addClass(view, "board-svg");
 
         //set smiley
         //HACK
@@ -376,7 +371,7 @@ namespace pxsim.instructions {
     function drawSteps(board: visuals.BoardHost, step: number, props: BoardProps) {
         let view = board.getView();
         if (step > 0) {
-            svg.addClass(view, "grayed");
+            pxsim.U.addClass(view, "grayed");
         }
 
         for (let i = 0; i <= step; i++) {
@@ -388,7 +383,7 @@ namespace pxsim.instructions {
                     if (i === step) {
                         //highlight locations pins
                         partInst.breadboardConnections.forEach(bbLoc => board.highlightBreadboardPin(bbLoc));
-                        svg.addClass(cmp.element, "notgrayed");
+                        pxsim.U.addClass(cmp.element, "notgrayed");
                     }
                 });
             }
@@ -396,7 +391,8 @@ namespace pxsim.instructions {
             let wires = props.stepToWires[i];
             if (wires) {
                 wires.forEach(w => {
-                    let wire = board.addWire(w)
+                    let wire = board.addWire(w);
+                    if (!wire) return;
                     //last step
                     if (i === step) {
                         //location highlights
@@ -406,7 +402,7 @@ namespace pxsim.instructions {
                             board.highlightBoardPin((<BoardLoc>w.start).pin);
                         }
                         if (w.end.type == "breadboard") {
-                            let lbls = board.highlightBreadboardPin((<BBLoc>w.end));
+                            board.highlightBreadboardPin((<BBLoc>w.end));
                         } else {
                             board.highlightBoardPin((<BoardLoc>w.end).pin);
                         }
@@ -420,7 +416,7 @@ namespace pxsim.instructions {
     function mkPanel() {
         //panel
         let panel = document.createElement("div");
-        addClass(panel, "instr-panel");
+        pxsim.U.addClass(panel, "instr-panel");
 
         return panel;
     }
@@ -428,7 +424,7 @@ namespace pxsim.instructions {
         let panel = mkPanel();
 
         // board and breadboard
-        let boardImg = mkBoardImgSvg(props.boardDef.visual);
+        let boardImg = mkBoardImgSvg(props.boardDef);
         let board = wrapSvg(boardImg, { left: QUANT_LBL(1), leftSize: QUANT_LBL_SIZE, cmpScale: PARTS_BOARD_SCALE });
         panel.appendChild(board);
         let bbRaw = mkBBSvg();
@@ -448,7 +444,7 @@ namespace pxsim.instructions {
                 leftSize: QUANT_LBL_SIZE,
                 cmpScale: PARTS_CMP_SCALE,
             });
-            addClass(cmp, "partslist-cmp");
+            pxsim.U.addClass(cmp, "partslist-cmp");
             panel.appendChild(cmp);
         });
 
@@ -463,7 +459,7 @@ namespace pxsim.instructions {
                 cmpScale: PARTS_WIRE_SCALE,
                 crocClips: style == "croc"
             })
-            addClass(cmp, "partslist-wire");
+            pxsim.U.addClass(cmp, "partslist-wire");
             panel.appendChild(cmp);
         })
 
@@ -479,17 +475,17 @@ namespace pxsim.instructions {
 
         //number
         let numDiv = document.createElement("div");
-        addClass(numDiv, "panel-num-outer");
-        addClass(numDiv, "noselect");
+        pxsim.U.addClass(numDiv, "panel-num-outer");
+        pxsim.U.addClass(numDiv, "noselect");
         panel.appendChild(numDiv)
         let num = document.createElement("div");
-        addClass(num, "panel-num");
+        pxsim.U.addClass(num, "panel-num");
         num.textContent = (step + 1) + "";
         numDiv.appendChild(num)
 
         // add requirements
         let reqsDiv = document.createElement("div");
-        addClass(reqsDiv, "reqs-div")
+        pxsim.U.addClass(reqsDiv, "reqs-div")
         panel.appendChild(reqsDiv);
         let wires = (props.stepToWires[step] || []);
         let mkLabel = (loc: Loc) => {
@@ -513,7 +509,7 @@ namespace pxsim.instructions {
                 cmpHeight: REQ_WIRE_HEIGHT,
                 crocClips: croc
             })
-            addClass(cmp, "cmp-div");
+            pxsim.U.addClass(cmp, "cmp-div");
             reqsDiv.appendChild(cmp);
         });
         let cmps = (props.stepToCmps[step] || []);
@@ -542,7 +538,7 @@ namespace pxsim.instructions {
                     cmpHeight: REQ_CMP_HEIGHT,
                     cmpScale: scale
                 })
-                addClass(cmp, "cmp-div");
+                pxsim.U.addClass(cmp, "cmp-div");
                 reqsDiv.appendChild(cmp);
             });
         });
@@ -561,7 +557,7 @@ namespace pxsim.instructions {
     function mkFinalPanel(props: BoardProps) {
 
         let panel = mkPanel();
-        addClass(panel, "back-panel");
+        pxsim.U.addClass(panel, "back-panel");
         let board = mkBlankBoardAndBreadboard(props, BACK_PAGE_BOARD_WIDTH, false)
         board.addAll(props.allAlloc);
         panel.appendChild(board.getView());

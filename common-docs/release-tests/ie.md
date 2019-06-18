@@ -4,7 +4,7 @@
 
 Look for these specific issues with Internet Explorer.
 
-* Discrepancies in CSS rendering - colors, alignement, font sizes
+* Discrepancies in CSS rendering - colors, alignment, font sizes
 * Block rendering
 
 ## Known limitations

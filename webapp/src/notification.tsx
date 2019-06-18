@@ -120,7 +120,7 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         }
 
         const targetTheme = pxt.appTarget.appTheme;
-        const isApp = pxt.winrt.isWinRT() || electron.isElectron();
+        const isApp = pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;

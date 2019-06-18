@@ -39,3 +39,36 @@ function testToString() {
 
 testToString()
 testClass()
+
+
+class CtorOptional {
+    constructor(opts?: string) {
+    }
+}
+function testCtorOptional() {
+    let co = new CtorOptional();
+    let co2 = new CtorOptional("");
+}
+testCtorOptional();
+
+namespace ClassInit {
+    const seven = 7
+    class FooInit {
+        baz: number
+        qux = seven
+        constructor(public foo: number, public bar: string) {
+            this.baz = this.foo + 1
+        }
+        semicolonTest() { };
+    }
+
+    export function classInit() {
+        let f = new FooInit(13, "blah" + "baz")
+        assert(f.foo == 13, "i0")
+        assert(f.bar == "blahbaz", "i1")
+        assert(f.baz == 14, "i2")
+        assert(f.qux == 7, "i3")
+    }
+}
+
+ClassInit.classInit()

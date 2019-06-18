@@ -18,71 +18,17 @@ namespace ts.pxtc {
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
+    export const BINARY_PXT64 = "binary.pxt64";
 
     export const NATIVE_TYPE_THUMB = "thumb";
-
-    export interface ParameterDesc {
-        name: string;
-        description: string;
-        type: string;
-        initializer?: string;
-        default?: string;
-        properties?: PropertyDesc[];
-        handlerParameters?: PropertyDesc[];
-        options?: pxt.Map<PropertyOption>;
-        isEnum?: boolean;
-    }
-
-    export interface PropertyDesc {
-        name: string;
-        type: string;
-    }
-
-    export interface PropertyOption {
-        value: any;
-    }
-
-    export enum SymbolKind {
-        None,
-        Method,
-        Property,
-        Function,
-        Variable,
-        Module,
-        Enum,
-        EnumMember,
-        Class,
-        Interface,
-    }
-
-    export interface SymbolInfo {
-        attributes: CommentAttrs;
-        name: string;
-        namespace: string;
-        kind: SymbolKind;
-        parameters: ParameterDesc[];
-        retType: string;
-        extendsTypes?: string[]; // for classes and interfaces
-        isContextual?: boolean;
-        qName?: string;
-        pkg?: string;
-        snippet?: string;
-        snippetName?: string;
-        blockFields?: ParsedBlockDef;
-        isReadOnly?: boolean;
-        combinedProperties?: string[];
-    }
-
-    export interface ApisInfo {
-        byQName: pxt.Map<SymbolInfo>;
-        jres?: pxt.Map<pxt.JRes>;
-    }
+    export const NATIVE_TYPE_VM = "vm";
 
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
         enumsByName: pxt.Map<EnumInfo>;
+        kindsByName: pxt.Map<KindInfo>;
     }
 
     export interface EnumInfo {
@@ -90,9 +36,19 @@ namespace ts.pxtc {
         memberName: string;
         blockId: string;
         isBitMask: boolean;
+        isHash: boolean;
         firstValue?: number;
         initialMembers: string[];
         promptHint: string;
+    }
+
+    export interface KindInfo {
+        name: string;
+        memberName: string;
+        createFunctionName: string;
+        blockId: string;
+        promptHint: string;
+        initialMembers: string[];
     }
 
     export interface CompletionEntry {
@@ -102,155 +58,10 @@ namespace ts.pxtc {
     }
 
     export interface CompletionInfo {
-        entries: pxt.Map<SymbolInfo>;
+        entries: SymbolInfo[];
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
-    }
-
-
-    export interface CommentAttrs {
-        debug?: boolean; // requires ?dbg=1
-        shim?: string;
-        enumval?: string;
-        helper?: string;
-        help?: string;
-        async?: boolean;
-        promise?: boolean;
-        hidden?: boolean;
-        undeletable?: boolean;
-        callingConvention: ir.CallingConvention;
-        block?: string; // format of the block, used at namespace level for category name
-        blockId?: string; // unique id of the block
-        blockGap?: string; // pixels in toolbox after the block is inserted
-        blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
-        blockImportId?: string;
-        blockBuiltin?: boolean;
-        blockNamespace?: string;
-        blockIdentity?: string;
-        blockAllowMultiple?: boolean; // override single block behavior for events
-        blockHidden?: boolean; // not available directly in toolbox
-        blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
-        blockCombine?: boolean;
-        blockCombineShadow?: string;
-        blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
-        fixedInstances?: boolean;
-        fixedInstance?: boolean;
-        decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
-        constantShim?: boolean;
-        indexedInstanceNS?: string;
-        indexedInstanceShim?: string;
-        defaultInstance?: string;
-        autoCreate?: string;
-        noRefCounting?: boolean;
-        color?: string;
-        colorSecondary?: string;
-        colorTertiary?: string;
-        icon?: string;
-        jresURL?: string;
-        iconURL?: string;
-        imageLiteral?: number;
-        weight?: number;
-        parts?: string;
-        trackArgs?: number[];
-        advanced?: boolean;
-        deprecated?: boolean;
-        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
-        // On block
-        subcategory?: string;
-        group?: string;
-        whenUsed?: boolean;
-        jres?: string;
-        useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
-        topblock?: boolean;
-        topblockWeight?: number;
-        // On namepspace
-        subcategories?: string[];
-        groups?: string[];
-        groupIcons?: string[];
-        labelLineWidth?: string;
-        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
-        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
-
-        // on interfaces
-        indexerGet?: string;
-        indexerSet?: string;
-
-        mutate?: string;
-        mutateText?: string;
-        mutatePrefix?: string;
-        mutateDefaults?: string;
-        mutatePropertyEnum?: string;
-        inlineInputMode?: string; // can be inline, external, or auto
-        expandableArgumentMode?: string; // can be disabled, enabled, or toggle
-        draggableParameters?: boolean;
-
-
-        /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
-
-        enumName?: string; // The name of the enum as it will appear in the code
-        enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
-        enumStartValue?: number; // The lowest value to emit when going from blocks to TS
-        enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
-        enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
-        enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
-
-        /* end enum-only attributes */
-
-        optionalVariableArgs?: boolean;
-        toolboxVariableArgs?: string;
-
-        _name?: string;
-        _source?: string;
-        _def?: ParsedBlockDef;
-        _expandedDef?: ParsedBlockDef;
-        _untranslatedBlock?: string; // The block definition before it was translated
-        _shadowOverrides?: pxt.Map<string>;
-        jsDoc?: string;
-        paramHelp?: pxt.Map<string>;
-        // foo.defl=12 -> paramDefl: { foo: "12" }
-        paramDefl: pxt.Map<string>;
-
-        paramMin?: pxt.Map<string>; // min range
-        paramMax?: pxt.Map<string>; // max range
-        // Map for custom field editor parameters
-        paramFieldEditor?: pxt.Map<string>; //.fieldEditor
-        paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
-        paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
-    }
-
-
-    export type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
-    export type BlockPart = BlockContentPart | BlockBreak;
-
-    export interface BlockLabel {
-        kind: "label";
-        text: string;
-        style?: string[];
-        cssClass?: string;
-    }
-
-    export interface BlockParameter {
-        kind: "param";
-        ref: boolean;
-        name: string;
-        shadowBlockId?: string;
-        varName?: string;
-    }
-
-    export interface BlockBreak {
-        kind: "break";
-    }
-
-    export interface BlockImage {
-        kind: "image";
-        uri: string;
-    }
-
-    export interface ParsedBlockDef {
-        parts: ReadonlyArray<(BlockPart)>;
-        parameters: ReadonlyArray<BlockParameter>;
     }
 
     export interface LocationInfo {
@@ -267,6 +78,7 @@ namespace ts.pxtc {
 
     export interface FunctionLocationInfo extends LocationInfo {
         functionName: string;
+        argumentNames?: string[];
     }
 
     export interface KsDiagnostic extends LocationInfo {
@@ -428,6 +240,7 @@ namespace ts.pxtc {
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
         const enumsByName: pxt.Map<EnumInfo> = {};
+        const kindsByName: pxt.Map<KindInfo> = {};
 
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
@@ -474,6 +287,7 @@ namespace ts.pxtc {
                     },
                     name: tp,
                     namespace: s.namespace,
+                    fileName: s.fileName,
                     qName: `${mkey}.${tp}`,
                     pkg: s.pkg,
                     kind: SymbolKind.Property,
@@ -543,8 +357,37 @@ namespace ts.pxtc {
                     memberName: s.attributes.enumMemberName,
                     firstValue: isNaN(firstValue) ? undefined : firstValue,
                     isBitMask: s.attributes.enumIsBitMask,
+                    isHash: s.attributes.enumIsHash,
                     initialMembers: s.attributes.enumInitialMembers,
                     promptHint: s.attributes.enumPromptHint
+                };
+            }
+
+            if (s.attributes.shim === "KIND_GET" && s.attributes.blockId) {
+                const kindNamespace = s.attributes.kindNamespace || s.attributes.blockNamespace || s.namespace;
+
+                if (kindsByName[kindNamespace]) {
+                    console.warn(`More than one block defined for kind ${kindNamespace}`);
+                    continue;
+                }
+
+                const initialMembers: string[] = [];
+                if (info.byQName[kindNamespace]) {
+                    for (const api of pxtc.Util.values(info.byQName)) {
+                        if (api.namespace === kindNamespace && api.attributes.isKind) {
+                            initialMembers.push(api.name);
+                        }
+                    }
+                }
+
+
+                kindsByName[kindNamespace] = {
+                    blockId: s.attributes.blockId,
+                    name: kindNamespace,
+                    memberName: s.attributes.kindMemberName || kindNamespace,
+                    initialMembers: initialMembers,
+                    promptHint: s.attributes.enumPromptHint || Util.lf("Create a new kind..."),
+                    createFunctionName: s.attributes.kindCreateFunction || "create"
                 };
             }
 
@@ -607,7 +450,8 @@ namespace ts.pxtc {
             apis: info,
             blocks,
             blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
-            enumsByName
+            enumsByName,
+            kindsByName
         }
 
         function filterCategories(banned: string[]) {
@@ -620,12 +464,17 @@ namespace ts.pxtc {
         }
     }
 
+    export let apiLocalizationStrings: pxt.Map<string> = {};
+
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
 
+        const errors: pxt.Map<number> = {};
         return mainPkg.localizationStringsAsync(lang)
             .then(loc => Util.values(apis.byQName).forEach(fn => {
+                if (apiLocalizationStrings)
+                    Util.jsonMergeFrom(loc, apiLocalizationStrings);
                 const jsDoc = loc[fn.qName]
                 if (jsDoc) {
                     fn.attributes.jsDoc = jsDoc;
@@ -659,7 +508,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
@@ -671,14 +520,18 @@ namespace ts.pxtc {
                 }
                 updateBlockDef(fn.attributes);
             }))
-            .then(() => apis);
+            .then(() => apis)
+            .finally(() => {
+                if (Object.keys(errors).length)
+                    pxt.reportError(`loc.errors`, `invalid translation`, errors);
+            })
     }
 
     export function emptyExtInfo(): ExtensionInfo {
         let cs = pxt.appTarget.compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
-        const docker = cs.buildEngine == "dockermake";
+        const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},
@@ -705,9 +558,11 @@ namespace ts.pxtc {
         "constantShim",
         "blockCombine",
         "enumIsBitMask",
+        "enumIsHash",
         "decompileIndirectFixedInstances",
-        "draggableParameters",
-        "topblock"
+        "topblock",
+        "callInDebugger",
+        "duplicateShadowOnDrag"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -730,6 +585,8 @@ namespace ts.pxtc {
                         } else {
                             res.paramDefl[n.slice(0, n.length - 5)] = v
                         }
+                        if (!res.explicitDefaults) res.explicitDefaults = []
+                        res.explicitDefaults.push(n.slice(0, n.length - 5))
                     } else if (U.endsWith(n, ".shadow")) {
                         if (!res._shadowOverrides) res._shadowOverrides = {};
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
@@ -791,6 +648,7 @@ namespace ts.pxtc {
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
                 if (!res.paramDefl[name]) {
+                    // these don't add to res.explicitDefaults
                     let m = /\beg\.?:\s*(.+)/.exec(desc);
                     if (m && m[1]) {
                         let defaultValue = /(?:"([^"]*)")|(?:'([^']*)')|(?:([^\s,]+))/g.exec(m[1]);
@@ -843,6 +701,14 @@ namespace ts.pxtc {
             }
             catch (e) {
                 res.groupIcons = undefined;
+            }
+        }
+        if (res.groupHelp) {
+            try {
+                res.groupHelp = JSON.parse(res.groupHelp as any);
+            }
+            catch (e) {
+                res.groupHelp = undefined;
             }
         }
         updateBlockDef(res);
@@ -1186,6 +1052,7 @@ namespace ts.pxtc {
         export const UF2_FLAG_NONE = 0x00000000
         export const UF2_FLAG_NOFLASH = 0x00000001
         export const UF2_FLAG_FILE = 0x00001000
+        export const UF2_FLAG_FAMILY_ID_PRESENT = 0x00002000
 
         export interface Block {
             flags: number;
@@ -1194,6 +1061,7 @@ namespace ts.pxtc {
             blockNo: number;
             numBlocks: number;
             fileSize: number;
+            familyId: number;
             filename?: string;
             data: Uint8Array;
         }
@@ -1211,6 +1079,8 @@ namespace ts.pxtc {
             if (payloadSize > 476)
                 payloadSize = 256
             let filename: string = null
+            let familyId = 0
+            let fileSize = 0
             if (flags & UF2_FLAG_FILE) {
                 let fnbuf = block.slice(32 + payloadSize)
                 let len = fnbuf.indexOf(0)
@@ -1218,14 +1088,21 @@ namespace ts.pxtc {
                     fnbuf = fnbuf.slice(0, len)
                 }
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
+                fileSize = wordAt(28)
             }
+
+            if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
+                familyId = wordAt(28)
+            }
+
             return {
                 flags,
                 targetAddr: wordAt(12),
                 payloadSize,
                 blockNo: wordAt(20),
                 numBlocks: wordAt(24),
-                fileSize: wordAt(28),
+                fileSize,
+                familyId,
                 data: block.slice(32, 32 + payloadSize),
                 filename
             }
@@ -1255,7 +1132,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
-                if (endAddr && bl.targetAddr  + 256 > endAddr) break;
+                if (endAddr && bl.targetAddr + 256 > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr
@@ -1315,15 +1192,19 @@ namespace ts.pxtc {
             ptrs: number[];
             filename?: string;
             filesize: number;
+            familyId: number;
         }
 
-        export function newBlockFile(): BlockFile {
+        export function newBlockFile(familyId?: string | number): BlockFile {
+            if (typeof familyId == "string")
+                familyId = parseInt(familyId)
             return {
                 currBlock: null,
                 currPtr: -1,
                 blocks: [],
                 ptrs: [],
-                filesize: 0
+                filesize: 0,
+                familyId: familyId || 0
             }
         }
 
@@ -1418,12 +1299,15 @@ namespace ts.pxtc {
                     currBlock = new Uint8Array(512)
                     if (f.filename)
                         flags |= UF2_FLAG_FILE
+                    else if (f.familyId)
+                        flags |= UF2_FLAG_FAMILY_ID_PRESENT
                     setWord(currBlock, 0, UF2_MAGIC_START0)
                     setWord(currBlock, 4, UF2_MAGIC_START1)
                     setWord(currBlock, 8, flags)
                     setWord(currBlock, 12, needAddr << 8)
                     setWord(currBlock, 16, 256)
                     setWord(currBlock, 20, f.blocks.length)
+                    setWord(currBlock, 28, f.familyId)
                     setWord(currBlock, 512 - 4, UF2_MAGIC_END)
                     if (f.filename) {
                         U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
@@ -1470,11 +1354,20 @@ namespace ts.pxtc.service {
     export interface OpArg {
         fileName?: string;
         fileContent?: string;
+        infoType?: InfoType;
         position?: number;
         options?: CompileOptions;
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
+        projectSearch?: ProjectSearchOptions;
+        snippet?: SnippetOptions;
+        runtime?: pxt.RuntimeOptions;
+    }
+
+    export interface SnippetOptions {
+        qName: string;
+        python?: boolean;
     }
 
     export interface SearchOptions {
@@ -1501,16 +1394,17 @@ namespace ts.pxtc.service {
         builtinBlock?: boolean;
     }
 
+    export interface ProjectSearchOptions {
+        term: string;
+        headers: ProjectSearchInfo[];
+    }
+
+    export interface ProjectSearchInfo {
+        name: string;
+        id?: string;
+    }
+
     export interface BlocksOptions {
         bannedCategories?: string[];
-    }
-}
-
-namespace ts.pxtc.ir {
-
-    export enum CallingConvention {
-        Plain,
-        Async,
-        Promise,
     }
 }

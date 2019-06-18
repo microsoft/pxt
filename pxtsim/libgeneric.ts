@@ -3,9 +3,6 @@ namespace pxsim {
     // user-defined record, another collection)
     export class RefCollection extends RefObject {
         private data: any[] = [];
-        //undefiend or null values need to be handled specially to support default values
-        //default values of boolean, string, number & object arrays are respectively, false, null, 0, null
-        //All of the default values are implemented by mapping undefined\null to zero.
 
         constructor() {
             super();
@@ -24,10 +21,15 @@ namespace pxsim {
             for (let i = 0; i < this.data.length; ++i) {
                 if (i > 0)
                     s += ",";
-                s += RefObject.toDebugString(this.data[i]);
-                if (s.length > 15) {
+                let newElem = RefObject.toDebugString(this.data[i]);
+                if (s.length + newElem.length > 100) {
+                    if (i == 0) {
+                        s += newElem.substr(0, 100);
+                    }
                     s += "..."
                     break;
+                } else {
+                    s += newElem;
                 }
             }
             s += "]"
@@ -52,11 +54,7 @@ namespace pxsim {
         }
 
         pop() {
-            let x = this.data.pop();
-            if (x == undefined) { //treat null & undefined as the same
-                return 0;
-            }
-            return x;
+            return this.data.pop();;
         }
 
         getLength() {
@@ -68,10 +66,7 @@ namespace pxsim {
         }
 
         getAt(x: number) {
-            if (this.data[x] != undefined) {
-                return this.data[x];
-            }
-            return 0;
+            return this.data[x];
         }
 
         setAt(x: number, y: any) {
@@ -84,30 +79,11 @@ namespace pxsim {
 
         removeAt(x: number) {
             let ret = this.data.splice(x, 1)
-            if (ret[0] == undefined) {
-                return 0;
-            }
-            return ret[0]; //return the deleted element.
+            return ret[0]; // return the deleted element.
         }
 
         indexOf(x: number, start: number) {
-            if (x != 0) {
-                return this.data.indexOf(x, start);
-            }
-            //As we treat undefined same as 0 which is default value for all the arrays, will need to search both.
-            let defaultValueIndex = this.data.indexOf(x, start);
-            let undefinedIndex = -1;
-            for (let i = start; i < this.data.length; i++) {
-                if (this.data[i] == undefined) {
-                    undefinedIndex = i;
-                    break;
-                }
-            }
-
-            if (defaultValueIndex < undefinedIndex || undefinedIndex == -1) {
-                return defaultValueIndex;
-            }
-            return undefinedIndex;
+            return this.data.indexOf(x, start);
         }
 
         print() {
@@ -118,6 +94,10 @@ namespace pxsim {
     export namespace Array_ {
         export function mk() {
             return new RefCollection();
+        }
+
+        export function isArray(c: any) {
+            return c instanceof RefCollection
         }
 
         export function length(c: RefCollection) {
@@ -192,12 +172,21 @@ namespace pxsim {
     }
 
     export namespace Math_ {
-        export function imul(x: number, y: number) {
-            return intMult(x, y)
-        }
+        // for explanations see:
+        // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
+        // (but the code below doesn't come from there; I wrote it myself)
+        export const imul = Math.imul || function (a: number, b: number) {
+            const ah = (a >>> 16) & 0xffff;
+            const al = a & 0xffff;
+            const bh = (b >>> 16) & 0xffff;
+            const bl = b & 0xffff;
+            // the shift by 0 fixes the sign on the high part
+            // the final |0 converts the unsigned value into a signed value
+            return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+        };
 
         export function idiv(x: number, y: number) {
-            return (x / y) >> 0
+            return ((x | 0) / (y | 0)) | 0
         }
 
         export function round(n: number) { return Math.round(n) }
@@ -253,20 +242,6 @@ namespace pxsim {
         }
     }
 
-    // for explanations see:
-    // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
-    // (but the code below doesn't come from there; I wrote it myself)
-    // TODO use Math.imul if available
-    function intMult(a: number, b: number) {
-        const ah = (a >>> 16) & 0xffff;
-        const al = a & 0xffff;
-        const bh = (b >>> 16) & 0xffff;
-        const bl = b & 0xffff;
-        // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value
-        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-    }
-
     export namespace Number_ {
         export function lt(x: number, y: number) { return x < y; }
         export function le(x: number, y: number) { return x <= y; }
@@ -292,7 +267,7 @@ namespace pxsim {
         export function adds(x: number, y: number) { return (x + y) | 0; }
         export function subs(x: number, y: number) { return (x - y) | 0; }
         export function divs(x: number, y: number) { return Math.floor(x / y) | 0; }
-        export function muls(x: number, y: number) { return intMult(x, y); }
+        export function muls(x: number, y: number) { return Math_.imul(x, y); }
         export function ands(x: number, y: number) { return x & y; }
         export function orrs(x: number, y: number) { return x | y; }
         export function eors(x: number, y: number) { return x ^ y; }
@@ -311,7 +286,7 @@ namespace pxsim {
         export function adds(x: number, y: number) { return toInt(x + y); }
         export function subs(x: number, y: number) { return toInt(x - y); }
         export function divs(x: number, y: number) { return toInt(Math.floor(x / y)); }
-        export function muls(x: number, y: number) { return toInt(intMult(x, y)); }
+        export function muls(x: number, y: number) { return toInt(Math_.imul(x, y)); }
         export function ands(x: number, y: number) { return toInt(x & y); }
         export function orrs(x: number, y: number) { return toInt(x | y); }
         export function eors(x: number, y: number) { return toInt(x ^ y); }
@@ -382,10 +357,6 @@ namespace pxsim {
 
         export function length(s: string) {
             return s.length
-        }
-
-        export function isEmpty(s: string): boolean {
-            return s == null || s.length == 0;
         }
 
         export function substr(s: string, start: number, length?: number) {
@@ -572,12 +543,21 @@ namespace pxsim {
         }
 
         function inRange(buf: RefBuffer, off: number) {
+            pxtrt.nullCheck(buf)
             return 0 <= off && off < buf.data.length
+        }
+
+        export function getUint8(buf: RefBuffer, off: number) {
+            return getByte(buf, off);
         }
 
         export function getByte(buf: RefBuffer, off: number) {
             if (inRange(buf, off)) return buf.data[off]
             else return 0;
+        }
+
+        export function setUint8(buf: RefBuffer, off: number, v: number) {
+            setByte(buf, off, v);
         }
 
         export function setByte(buf: RefBuffer, off: number, v: number) {
@@ -614,6 +594,10 @@ namespace pxsim {
                 res += hex[buf.data[i] & 0xf];
             }
             return res;
+        }
+
+        export function toString(buf: RefBuffer): string {
+            return U.fromUTF8(U.uint8ArrayToString(buf.data))
         }
 
         function memmove(dst: Uint8Array, dstOff: number, src: Uint8Array, srcOff: number, len: number) {
@@ -693,5 +677,10 @@ namespace pxsim {
             memmove(buf.data, dstOffset, src.data, srcOffset, length)
         }
     }
+}
 
+namespace pxsim.control {
+    export function createBufferFromUTF8(str: string) {
+        return new pxsim.RefBuffer(U.stringToUint8Array(U.toUTF8(str)));
+    }
 }

@@ -1,0 +1,24 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="shadow_template2">
+<value name="img">
+<shadow type="imageeditor2"/>
+<block type="typescript_expression">
+<field name="EXPRESSION">img&#96;1234&#96;</field>
+</block>
+</value>
+<next>
+<block type="shadow_template2">
+<value name="img">
+<shadow type="imageeditor2">
+<field name="img">1234</field>
+</shadow>
+</value>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;templateStrings.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

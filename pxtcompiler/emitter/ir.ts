@@ -21,6 +21,7 @@ namespace ts.pxtc.ir {
         Sequence,
         JmpValue,
         Nop,
+        InstanceOf,
     }
 
     let currExprId = 0
@@ -39,6 +40,7 @@ namespace ts.pxtc.ir {
         argIdx: number;
         method: string;
         returnsRef?: boolean;
+        refTag?: pxt.BuiltInType;
     }
 
     export interface MaskInfo {
@@ -130,6 +132,7 @@ namespace ts.pxtc.ir {
                 case EK.Incr:
                 case EK.Decr:
                 case EK.FieldAccess:
+                case EK.InstanceOf:
                     return this.args[0].canUpdateCells()
 
                 case EK.RuntimeCall:
@@ -159,8 +162,6 @@ namespace ts.pxtc.ir {
         Always = 1,
         IfZero,
         IfNotZero,
-        IfJmpValEq,
-        IfLambda
     }
 
     export class Stmt extends Node {
@@ -237,6 +238,9 @@ namespace ts.pxtc.ir {
                     case EK.Sequence:
                         return "(" + e.args.map(str).join("; ") + ")"
 
+                    case EK.InstanceOf:
+                        return "(" + str(e.args[0]) + " instanceof " + (e.data as ClassInfo).id + ")"
+
                     case EK.Store:
                         return `{ ${str(e.args[0])} := ${str(e.args[1])} }`
 
@@ -259,10 +263,6 @@ namespace ts.pxtc.ir {
                                 return `    if (! ${inner}) ${fin}`
                             case JmpMode.IfNotZero:
                                 return `    if (${inner}) ${fin}`
-                            case JmpMode.IfJmpValEq:
-                                return `    if (r0 == ${inner}) ${fin}`
-                            case JmpMode.IfLambda:
-                                return `    if (LAMBDA) return ${inner}`
                             default: throw oops();
                         }
                     case ir.SK.StackEmpty:
@@ -284,11 +284,20 @@ namespace ts.pxtc.ir {
         _isLocal = false;
         _isGlobal = false;
         _debugType = "?";
+        isUserVariable = false;
         bitSize = BitSize.None;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
-            if (def && info) {
-                setCellProps(this)
+            if (def) {
+                const s = getSourceFileOfNode(def);
+                if (s && s.fileName) {
+                    if (!/^pxt_modules\//.test(s.fileName)) {
+                        this.isUserVariable = true
+                    }
+                }
+                if (info) {
+                    setCellProps(this)
+                }
             }
         }
 
@@ -415,7 +424,8 @@ namespace ts.pxtc.ir {
         virtualIndex: number;
         ifaceIndex: number;
         mapMethod?: string;
-        mapIdx?: number;
+        classInfo?: ClassInfo;
+        isThis?: boolean;
     }
 
     export interface ProcQuery {
@@ -456,6 +466,8 @@ namespace ts.pxtc.ir {
         debugInfo: ProcDebugInfo;
         fillDebugInfo: (th: assembler.File) => void;
         classInfo: ClassInfo;
+        perfCounterName: string;
+        perfCounterNo = 0;
 
         body: Stmt[] = [];
         lblNo = 0;
@@ -467,6 +479,10 @@ namespace ts.pxtc.ir {
             this.locals = []
             this.captured = []
             this.args = []
+        }
+
+        vtLabel() {
+            return this.label() + (isStackMachine() ? "" : "_args")
         }
 
         label() {
@@ -503,6 +519,15 @@ namespace ts.pxtc.ir {
             lbl.lblName = lblName
             lbl.lbl = lbl
             this.emit(lbl)
+        }
+
+        getFullName() {
+            let name = this.getName()
+            if (this.action) {
+                let info = ts.pxtc.nodeLocationInfo(this.action)
+                name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
+            }
+            return name
         }
 
         getName() {
@@ -757,6 +782,8 @@ namespace ts.pxtc.ir {
     }
 
     export function op(kind: EK, args: Expr[], data?: any): Expr {
+        if (target.gc && (kind == EK.Incr || kind == EK.Decr))
+            return args[0]
         return new Expr(kind, args, data)
     }
 
@@ -787,12 +814,9 @@ namespace ts.pxtc.ir {
         return sharedCore(expr, null)
     }
 
-    export function ptrlit(lbl: string, jsInfo: string, full = false): Expr {
+    export function ptrlit(lbl: string, jsInfo: string): Expr {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
-        if (full) {
-            r.args = []
-        }
         return r
     }
 
@@ -825,6 +849,9 @@ namespace ts.pxtc.ir {
             complexArgs.push(a)
         }
         complexArgs.reverse()
+
+        if (isStackMachine())
+            complexArgs = []
 
         let precomp: ir.Expr[] = []
         let flattened = topExpr.args.map(a => {

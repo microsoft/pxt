@@ -30,7 +30,6 @@ export interface DataFetchResult<T> {
 }
 
 const virtualApis: pxt.Map<VirtualApi> = {}
-let targetConfig: pxt.TargetConfig = undefined;
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
@@ -250,6 +249,7 @@ export interface VirtualApi {
     isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
     isOffline?: () => boolean;
+    onInvalidated?: () => void;
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
@@ -273,6 +273,8 @@ export function invalidate(prefix: string) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
                 queue(lookup(ce.path))
+            if (ce.api.onInvalidated)
+                ce.api.onInvalidated();
         }
     })
 }
@@ -333,6 +335,14 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         unsubscribe(this)
         this.renderCoreOk = true;
         return this.renderCore();
+    }
+
+    setStateAsync<K extends keyof TState>(state: Pick<TState, K>): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.setState(state, () => {
+                resolve();
+            })
+        })
     }
 }
 

@@ -17,14 +17,14 @@ const TEXTS_TABLE = "texts";
 const HEADERS_TABLE = "headers";
 const KEYPATH = "id";
 
-let _db: pxtc.Util.IDBWrapper;
+let _db: pxt.BrowserUtils.IDBWrapper;
 
-function getDbAsync(): Promise<pxtc.Util.IDBWrapper> {
+function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
     if (_db) {
         return Promise.resolve(_db);
     }
 
-    _db = new pxtc.Util.IDBWrapper("__pxt_idb_workspace", 1, (ev, r) => {
+    _db = new pxt.BrowserUtils.IDBWrapper("__pxt_idb_workspace", 1, (ev, r) => {
         const db = r.result as IDBDatabase;
         db.createObjectStore(TEXTS_TABLE, { keyPath: KEYPATH });
         db.createObjectStore(HEADERS_TABLE, { keyPath: KEYPATH });

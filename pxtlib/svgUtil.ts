@@ -22,6 +22,8 @@ namespace pxt.svgUtil {
         percent
     }
 
+    const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+
     export class BaseElement<T extends SVGElement> {
         el: T;
         protected titleElement: SVGTitleElement;
@@ -40,6 +42,11 @@ namespace pxt.svgUtil {
             return this;
         }
 
+        setAttributeNS(ns: string, name: string, value: string | number | boolean): this {
+            this.el.setAttributeNS(ns, name, value.toString());
+            return this;
+        }
+
         id(id: string): this {
             return this.setAttribute("id", id);
         }
@@ -49,12 +56,12 @@ namespace pxt.svgUtil {
         }
 
         appendClass(className: string): this {
-            addClass(this.el, className);
+            pxt.BrowserUtils.addClass(this.el, className);
             return this;
         }
 
         removeClass(className: string): void {
-            removeClass(this.el, className);
+            pxt.BrowserUtils.removeClass(this.el, className);
         }
 
         title(text: string) {
@@ -470,7 +477,7 @@ namespace pxt.svgUtil {
         constructor() { super("image") }
 
         src(url: string) {
-            return this.setAttribute("href", url);
+            return this.setAttributeNS(XLINK_NAMESPACE, "href", url);
         }
 
         width(width: number, unit = LengthUnit.px): this {
@@ -682,16 +689,6 @@ namespace pxt.svgUtil {
             case LengthUnit.percent: return value + "%";
             default: return value.toString();
         }
-    }
-
-    function addClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.add(cls);
-        else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
-    }
-
-    function removeClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.remove(cls);
-        else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
     }
 }
 

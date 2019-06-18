@@ -1,5 +1,5 @@
 class A {
-    x: number = 42 // TS9209 - field initializers
+    x: number = 42
     foo(x:number) {}
 }
 class B extends A {  // ok

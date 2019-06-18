@@ -16,6 +16,127 @@ namespace ts.pxtc {
 }
 
 namespace ts.pxtc.Util {
+
+    export class CancellationToken {
+        private pending = false;
+        private cancelled = false;
+        private resolve: () => void;
+        private deferred: Promise<void>;
+        private progressHandler: (completed: number, total: number) => void;
+
+        static ERROR_MESSAGE = "OperationCancelled";
+        startOperation() {
+            this.pending = true;
+        }
+
+        isRunning() {
+            return this.pending;
+        }
+
+        onProgress(progressHandler: (completed: number, total: number) => void) {
+            this.progressHandler = progressHandler;
+        }
+
+        reportProgress(completed: number, total: number) {
+            if (this.progressHandler) {
+                this.progressHandler(completed, total);
+            }
+        }
+
+        cancel() {
+            this.cancelled = true;
+            this.pending = false;
+        }
+
+        cancelAsync() {
+            if (this.cancelled || !this.pending) {
+                this.cancelled = true;
+                this.pending = false;
+                return Promise.resolve();
+            }
+            this.cancelled = true;
+            this.deferred = new Promise(resolve => {
+                this.resolve = resolve;
+            });
+
+            return this.deferred;
+        }
+
+        isCancelled() {
+            return this.cancelled;
+        }
+
+        throwIfCancelled() {
+            if (this.isCancelled()) {
+                const e = new Error(CancellationToken.ERROR_MESSAGE);
+                (<any>e).type = "cancelled";
+                throw e;
+            }
+        }
+
+        resolveCancel() {
+            this.pending = false;
+            if (this.deferred) {
+                this.resolve();
+                this.deferred = undefined;
+                this.resolve = undefined;
+            }
+        }
+    }
+
+    export function codalHash16(s: string): number {
+        // same hashing as https://github.com/lancaster-university/codal-core/blob/c1fe7a4c619683a50d47cb0c19d15b8ff3bd16a1/source/drivers/PearsonHash.cpp#L26
+        const hashTable = [
+            251, 175, 119, 215, 81, 14, 79, 191, 103, 49, 181, 143, 186, 157, 0,
+            232, 31, 32, 55, 60, 152, 58, 17, 237, 174, 70, 160, 144, 220, 90, 57,
+            223, 59, 3, 18, 140, 111, 166, 203, 196, 134, 243, 124, 95, 222, 179,
+            197, 65, 180, 48, 36, 15, 107, 46, 233, 130, 165, 30, 123, 161, 209, 23,
+            97, 16, 40, 91, 219, 61, 100, 10, 210, 109, 250, 127, 22, 138, 29, 108,
+            244, 67, 207, 9, 178, 204, 74, 98, 126, 249, 167, 116, 34, 77, 193,
+            200, 121, 5, 20, 113, 71, 35, 128, 13, 182, 94, 25, 226, 227, 199, 75,
+            27, 41, 245, 230, 224, 43, 225, 177, 26, 155, 150, 212, 142, 218, 115,
+            241, 73, 88, 105, 39, 114, 62, 255, 192, 201, 145, 214, 168, 158, 221,
+            148, 154, 122, 12, 84, 82, 163, 44, 139, 228, 236, 205, 242, 217, 11,
+            187, 146, 159, 64, 86, 239, 195, 42, 106, 198, 118, 112, 184, 172, 87,
+            2, 173, 117, 176, 229, 247, 253, 137, 185, 99, 164, 102, 147, 45, 66,
+            231, 52, 141, 211, 194, 206, 246, 238, 56, 110, 78, 248, 63, 240, 189,
+            93, 92, 51, 53, 183, 19, 171, 72, 50, 33, 104, 101, 69, 8, 252, 83, 120,
+            76, 135, 85, 54, 202, 125, 188, 213, 96, 235, 136, 208, 162, 129, 190,
+            132, 156, 38, 47, 1, 7, 254, 24, 4, 216, 131, 89, 21, 28, 133, 37, 153,
+            149, 80, 170, 68, 6, 169, 234, 151
+        ]
+
+        // REF: https://en.wikipedia.org/wiki/Pearson_hashing
+        function eightBitHash(s: Uint8Array): number {
+            let hash = 0;
+            for (let i = 0; i < s.length; i++) {
+                let c = s[i];
+                hash = hashTable[hash ^ c];
+            }
+            return hash;
+        }
+        function hashN(s: string, byteCount: number): number {
+            // this hash is used by enum.isHash. So any modification should be considered a breaking change.
+            let hash;
+            const buffer = new Uint8Array(s.length); // TODO unicode
+            for (let i = 0; i < s.length; ++i) {
+                const c = s.charCodeAt(i);
+                buffer[i] = c & 0xff;
+            }
+            let res = 0;
+            for (let i = 0; i < byteCount; ++i) {
+                hash = eightBitHash(buffer);
+                res |= hash << (8 * i);
+                buffer[0] = (buffer[0] + 1) % 255;
+            }
+            return res;
+        }
+
+
+        if (!s) return 0;
+        return hashN(s, 2);
+    }
+
     export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
         for (let i = 0; i < data.length; ++i) {
             const char = data[i]
@@ -30,6 +151,17 @@ namespace ts.pxtc.Util {
                 }, "*")
             }
         }
+    }
+
+    export function blobReadAsDataURL(blob: Blob): Promise<string> {
+        if (!blob) return Promise.resolve(undefined);
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(<string>reader.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(blob);
+        });
     }
 
     export function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
@@ -144,6 +276,14 @@ namespace ts.pxtc.Util {
             ptr += c.length
         }
         return r
+    }
+
+    export function jsonTryParse(s: string): any {
+        try {
+            return JSON.parse(s);
+        } catch (e) {
+            return undefined;
+        }
     }
 
     export function jsonMergeFrom(trg: any, src: any) {
@@ -282,6 +422,12 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function toSet<T>(arr: T[], f: (t: T) => string): pxt.Map<boolean> {
+        let r: pxt.Map<boolean> = {}
+        arr.forEach(e => { r[f(e)] = true })
+        return r
+    }
+
     export interface ArrayLike<T> {
         [index: number]: T;
         length: number;
@@ -292,6 +438,7 @@ namespace ts.pxtc.Util {
             return a;
         }
         let r: T[] = []
+        if (!a) return r;
         for (let i = 0; i < a.length; ++i)
             r.push(a[i])
         return r
@@ -328,7 +475,7 @@ namespace ts.pxtc.Util {
     // leading edge, instead of the trailing.
     export function debounce(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function () {
+        return function (this: any) {
             let context = this
             let args = arguments;
             let later = function () {
@@ -339,6 +486,7 @@ namespace ts.pxtc.Util {
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
             if (callNow) func.apply(context, args);
+            return timeout;
         };
     }
 
@@ -347,7 +495,7 @@ namespace ts.pxtc.Util {
     // function on the leading edge, instead of the trailing.
     export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function () {
+        return function (this: any) {
             let context = this;
             let args = arguments;
             let later = function () {
@@ -532,7 +680,7 @@ namespace ts.pxtc.Util {
         return decodeURIComponent(escaped)
     }
 
-    export function toUTF8(str: string) {
+    export function toUTF8(str: string, cesu8?: boolean) {
         let res = "";
         if (!str) return res;
         for (let i = 0; i < str.length; ++i) {
@@ -541,7 +689,7 @@ namespace ts.pxtc.Util {
             else if (code <= 0x7ff) {
                 res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
             } else {
-                if (0xd800 <= code && code <= 0xdbff) {
+                if (!cesu8 && 0xd800 <= code && code <= 0xdbff) {
                     let next = str.charCodeAt(++i);
                     if (!isNaN(next))
                         code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
@@ -701,7 +849,7 @@ namespace ts.pxtc.Util {
         function downloadFromCloudAsync(strings?: pxt.Map<string>) {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `${pxt.Cloud.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag) headers["If-None-Match"] = etag;
@@ -710,7 +858,7 @@ namespace ts.pxtc.Util {
                 if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
-                    return translationDbAsync()
+                    return pxt.BrowserUtils.translationDbAsync()
                         .then(db => db.setAsync(lang, filename, branch, etag, resp.json || strings))
                         .then(() => resp.json || strings);
                 }
@@ -723,9 +871,9 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return translationDbAsync()
+        return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(lang, filename, branch))
-            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
+            .then((entry: pxt.BrowserUtils.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;
@@ -740,26 +888,87 @@ namespace ts.pxtc.Util {
 
     }
 
-    export function normalizeLanguageCode(code: string): string {
-        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
-        if (langParts && langParts[1] && langParts[2]) {
-            return `${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`;
-        } else {
-            return code.toLowerCase();
-        }
+    export const pxtLangCookieId = "PXT_LANG";
+    export const langCookieExpirationDays = 30;
+
+    export interface Language {
+        englishName: string;
+        localizedName: string;
     }
 
+    export const allLanguages: pxt.Map<Language> = {
+        "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
+        "ar": { englishName: "Arabic", localizedName: "العربية" },
+        "bg": { englishName: "Bulgarian", localizedName: "български" },
+        "ca": { englishName: "Catalan", localizedName: "Català" },
+        "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "da": { englishName: "Danish", localizedName: "Dansk" },
+        "de": { englishName: "German", localizedName: "Deutsch" },
+        "el": { englishName: "Greek", localizedName: "Ελληνικά" },
+        "en": { englishName: "English", localizedName: "English" },
+        "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
+        "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
+        "fi": { englishName: "Finnish", localizedName: "Suomi" },
+        "fr": { englishName: "French", localizedName: "Français" },
+        "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "he": { englishName: "Hebrew", localizedName: "עברית" },
+        "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
+        "hu": { englishName: "Hungarian", localizedName: "Magyar" },
+        "hy-AM": { englishName: "Armenian (Armenia)", localizedName: "Հայերէն (Հայաստան)" },
+        "id": { englishName: "Indonesian", localizedName: "Bahasa Indonesia" },
+        "is": { englishName: "Icelandic", localizedName: "Íslenska" },
+        "it": { englishName: "Italian", localizedName: "Italiano" },
+        "ja": { englishName: "Japanese", localizedName: "日本語" },
+        "ko": { englishName: "Korean", localizedName: "한국어" },
+        "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
+        "nl": { englishName: "Dutch", localizedName: "Nederlands" },
+        "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "pl": { englishName: "Polish", localizedName: "Polski" },
+        "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
+        "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
+        "ro": { englishName: "Romanian", localizedName: "Română" },
+        "ru": { englishName: "Russian", localizedName: "Русский" },
+        "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+        "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
+        "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
+        "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+        "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
+        "tr": { englishName: "Turkish", localizedName: "Türkçe" },
+        "uk": { englishName: "Ukrainian", localizedName: "Українська" },
+        "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
+        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
+    };
+
     export function isLocaleEnabled(code: string): boolean {
-        code = normalizeLanguageCode(code);
-        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+        let [lang, baseLang] = normalizeLanguageCode(code);
+        let appTheme = pxt.appTarget.appTheme;
+        if (appTheme && appTheme.availableLocales) {
+            if (appTheme.availableLocales.indexOf(lang) > -1) {
+                return true;
+            }
+            //check for base language if we didn't find the full language. Example: nl for nl-NL
+            if (baseLang && appTheme.availableLocales.indexOf(baseLang) > -1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
-        code = normalizeLanguageCode(code);
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
+        code = normalizeLanguageCode(code)[0];
+        if (code === "en-US")
+            code = "en"; // special case for built-in language
+        if (code === userLanguage() || (!isLocaleEnabled(code) && !force)) {
+            pxt.debug(`loc: ${code} (using built-in)`)
             return Promise.resolve();
+        }
 
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+        pxt.debug(`loc: ${code}`);
+        return downloadTranslationsAsync(targetId, baseUrl, code,
+            pxtBranch, targetBranch, live,
+            ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -768,32 +977,52 @@ namespace ts.pxtc.Util {
                         localizeLive = true;
                     }
                 }
-                return Promise.resolve();
+
+                // Download api translations
+                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                    targetId, baseUrl, code,
+                    pxtBranch, targetBranch, live,
+                    ts.pxtc.Util.TranslationsKind.Apis)
+                    .then(trs => {
+                        if (trs)
+                            ts.pxtc.apiLocalizationStrings = trs;
+                    }) : Promise.resolve();
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
-            return Promise.resolve<pxt.Map<string>>(undefined);
-
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+    export enum TranslationsKind {
+        Editor,
+        Sim,
+        Apis
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
-        let translationsCacheId = `${code}/${live}`;
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
+        translationKind = translationKind || TranslationsKind.Editor;
+        code = normalizeLanguageCode(code)[0];
+        if (code === "en-US" || code === "en") // shortcut
+            return Promise.resolve(undefined);
+
+        let translationsCacheId = `${code}/${live}/${translationKind}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = [
-            { branch: pxtBranch, path: "strings.json" },
-            { branch: targetBranch, path: targetId + "/target-strings.json" },
-            { branch: targetBranch, path: targetId + "/sim-strings.json" }
-        ];
+        let stringFiles: { branch: string, staticName: string, path: string }[];
+        switch (translationKind) {
+            case TranslationsKind.Editor:
+                stringFiles = [
+                    { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
+                    { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                ];
+                break;
+            case TranslationsKind.Sim:
+                stringFiles = [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
+                break;
+            case TranslationsKind.Apis:
+                stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+        }
         let translations: pxt.Map<string>;
-
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             if (!translations) {
@@ -823,21 +1052,25 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, translationKind);
                 }
 
                 return Promise.resolve(translations);
             });
         } else {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    if (tr) {
-                        translations = tr;
-                        translationsCache()[translationsCacheId] = translations;
-                    }
-                }, e => {
-                    console.error('failed to load localizations')
-                })
+            return Promise.all(stringFiles.map(p =>
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.staticName}`)
+                    .catch(e => undefined))
+            ).then(resps => {
+                let tr: pxt.Map<string> = {};
+                resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));
+                if (Object.keys(tr).length) {
+                    translations = tr;
+                    translationsCache()[translationsCacheId] = translations;
+                }
+            }, e => {
+                console.error('failed to load localizations')
+            })
                 .then(() => translations);
         }
     }

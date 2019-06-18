@@ -49,7 +49,8 @@ function basicEnumTest(existing: number[], expected: number) {
         promptHint: "",
         initialMembers: ["does", "not", "matter"],
         blockId: "",
-        isBitMask: false
+        isBitMask: false,
+        isHash: false,
     }, existing, expected);
 }
 
@@ -60,7 +61,8 @@ function bitmaskEnumTest(existing: number[], expected: number) {
         promptHint: "",
         initialMembers: ["does", "not", "matter"],
         blockId: "",
-        isBitMask: true
+        isBitMask: true,
+        isHash: false,
     }, existing, expected);
 }
 
@@ -72,6 +74,7 @@ function startValueEnumTest(existing: number[], expected: number) {
         initialMembers: ["does", "not", "matter"],
         blockId: "",
         isBitMask: false,
+        isHash: false,
         firstValue: 3
     }, existing, expected);
 }

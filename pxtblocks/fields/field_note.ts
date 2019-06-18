@@ -178,7 +178,7 @@ namespace pxtblockly {
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
-            FieldNote.superClass_.constructor.call(this, text, validator);
+            (FieldNote as any).superClass_.constructor.call(this, text, validator);
             this.note_ = text;
 
             if (params.editorColour) {
@@ -219,7 +219,7 @@ namespace pxtblockly {
          * Install this field on a block.
          */
         init() {
-            FieldNote.superClass_.init.call(this);
+            (FieldNote as any).superClass_.init.call(this);
             this.noteFreq_.length = 0;
             this.noteName_.length = 0;
             let thisField = this;
@@ -242,7 +242,7 @@ namespace pxtblockly {
                     else if (thisField.minNote_ >= 28 && thisField.maxNote_ <= 63) {
                         name = Notes[i].altPrefixedName || name;
                     }
-                    thisField.noteName_.push(name);
+                    thisField.noteName_.push(ts.pxtc.Util.rlf(name));
                     thisField.noteFreq_.push(Notes[i].freq);
                 }
 
@@ -415,7 +415,7 @@ namespace pxtblockly {
         /**
          * Create a piano under the note field.
          */
-        showEditor_(opt_quietInput?: boolean): void {
+        showEditor_(e: Event): void {
             this.updateColor();
 
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
@@ -427,7 +427,10 @@ namespace pxtblockly {
             //  change Note name to number frequency
             Blockly.FieldNumber.prototype.setText.call(this, this.getText());
 
-            FieldNote.superClass_.showEditor_.call(this, true);
+            const quietInput = (goog.userAgent.MOBILE || goog.userAgent.ANDROID ||
+                goog.userAgent.IPAD);
+            const readOnly = quietInput;
+            (FieldNote as any).superClass_.showEditor_.call(this, e, false, readOnly);
 
             let pianoWidth: number;
             let pianoHeight: number;
@@ -460,7 +463,6 @@ namespace pxtblockly {
                 pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
             //  Check if Mobile, pagination -> true
-            let quietInput = opt_quietInput || false;
             if (!quietInput && (goog.userAgent.MOBILE || goog.userAgent.ANDROID)) {
                 pagination = true;
                 mobile = true;
@@ -643,7 +645,7 @@ namespace pxtblockly {
                     if (soundingKeys == cnt)
                         AudioContextManager.stop();
                 }, 300);
-                FieldNote.superClass_.dispose.call(this);
+                (FieldNote as any).superClass_.dispose.call(this);
             }
             /** get width of blockly editor space
              * @return {number} width of the blockly editor workspace
@@ -810,7 +812,7 @@ namespace pxtblockly {
             let secondaryX = primaryX;
             let secondaryY = position.top;
             // Set bounds to workspace; show the drop-down.
-            (Blockly.DropDownDiv as any).setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);
+            (Blockly.DropDownDiv as any).setBoundsElement((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode);
             (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
                 this.onHide.bind(this));
         }
@@ -826,7 +828,7 @@ namespace pxtblockly {
          */
         dispose() {
             (Blockly.DropDownDiv as any).hideIfOwner(this);
-            Blockly.FieldTextInput.superClass_.dispose.call(this);
+            (Blockly.FieldTextInput as any).superClass_.dispose.call(this);
         }
 
         private updateColor() {

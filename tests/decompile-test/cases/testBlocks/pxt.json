@@ -1,6 +1,6 @@
 {
     "name": "testBlocks",
-    "description": "Project that defines a variety of blocks to be used in decopmiler test cases",
+    "description": "Project that defines a variety of blocks to be used in decompiler test cases",
     "files": [
         "basic.ts",
         "banned.ts",
@@ -12,7 +12,9 @@
         "constantShim.ts",
         "cp.ts",
         "templateStrings.ts",
-        "classHandlerParameter.ts"
+        "classHandlerParameter.ts",
+        "globals.ts",
+        "spritekind.ts"
     ],
     "public": true,
     "dependencies": {},

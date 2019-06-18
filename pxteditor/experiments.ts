@@ -22,7 +22,7 @@ namespace pxt.editor.experiments {
         })
         if (experiments.length && Object.keys(r).length) {
             pxt.tickEvent("experiments.loaded", r);
-            pxt.setAppTargetVariant(null);
+            pxt.reloadAppTargetVariant();
         }
     }
 
@@ -71,6 +71,57 @@ namespace pxt.editor.experiments {
                 name: "Bluetooth Download",
                 description: lf("Download code via Web Bluetooth"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/4807"
+            },
+            {
+                id: "simScreenshot",
+                name: lf("Simulator Screenshots"),
+                description: lf("Download screenshots of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
+            },
+            {
+                id: "python",
+                name: lf("Static Python"),
+                description: lf("Use Static Python to code your device"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5390"
+            },
+            {
+                id: "simGif",
+                name: lf("Simulator Gifs"),
+                description: lf("Download gifs of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5297"
+            },
+            {
+                id: "autoWebUSBDownload",
+                name: lf("WebUSB Download"),
+                description: lf("Automatically try to download via WebUSB"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5344"
+            },
+            {
+                id: "qrCode",
+                name: lf("Shared QR Code"),
+                description: lf("Generate a QR Code form the shared project url"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5456"
+            },
+            {
+                id: "importExtensionFiles",
+                name: lf("Import Extension Files"),
+                description: lf("Import Extensions from compiled project files")
+            },
+            {
+                id: "debugExtensionCode",
+                name: lf("Debug Extension Code"),
+                description: lf("Use the JavaScript debugger to debug extension code")
+            },
+            {
+                id: "experimentalHw",
+                name: lf("Experimental Hardware"),
+                description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
+            },
+            {
+                id: "recipes",
+                name: lf("Tutorials in Context"),
+                description: lf("Micro-tutorials running within your program."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5646"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

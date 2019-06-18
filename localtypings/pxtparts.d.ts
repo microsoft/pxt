@@ -3,16 +3,25 @@ declare namespace pxsim {
     interface PinBlockDefinition {
         x: number,
         y: number,
-        labelPosition: "above" | "below";
+        labelPosition?: "above" | "below";
         labels: string[]
     }
-    interface LEDDefinition {
+    interface BoxDefinition {
         x: number;
         y: number;
         w?: number;
         h?: number;
+    }
+    interface LEDDefinition extends BoxDefinition {
         color: string;
         label: string;
+    }
+    interface TouchPadDefinition extends BoxDefinition {
+        label: string; // pin name
+    }
+    interface ButtonDefinition extends BoxDefinition {
+        index?: number; // by button index
+        label?: string; // pin name
     }
     interface BoardImageDefinition {
         image: string,
@@ -21,7 +30,11 @@ declare namespace pxsim {
         height: number,
         pinDist: number,
         pinBlocks: PinBlockDefinition[],
-        leds?: LEDDefinition[]
+        buttons?: ButtonDefinition[];
+        touchPads?: TouchPadDefinition[];
+        leds?: LEDDefinition[];
+        reset?: BoxDefinition;
+        useCrocClips?: boolean;
     }
     interface BoardDefinition {
         id?: string, // optional board id (set to the package id, multiboard only)
@@ -31,7 +44,8 @@ declare namespace pxsim {
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
-        threeVoltPins: string[],
+        threeVoltPins?: string[],
+        fiveVoltPins?: string[],
         attachPowerOnRight?: boolean,
         onboardComponents?: string[],
         pinStyles?: { [pin: string]: PinStyle },
@@ -80,7 +94,7 @@ declare namespace pxsim {
         // the exact centers of each pin; must have as many locations as the "numberOfPins" property
         pinLocations: XY[],
     }
-    export type XY = {x: number, y: number}
+    export type XY = { x: number, y: number }
     export interface PartPinDefinition {
         target: UninstantiatedPinTarget, // e.g.: "ground", "MISO", etc.; see PinType
         style: PinStyle, // e.g.: "male", "female", "solder"; see PinStyle
@@ -165,13 +179,26 @@ declare namespace pxsim {
     export interface DebuggerBreakpointMessage extends DebuggerMessage {
         breakpointId: number;
         globals: Variables;
-        stackframes: {
-            locals: Variables;
-            funcInfo: any; // pxtc.FunctionLocationInfo
-            breakpointId: number;
-        }[];
+        stackframes: StackFrameInfo[];
         exceptionMessage?: string;
         exceptionStack?: string;
+    }
+
+    export interface StackFrameInfo {
+        locals: Variables;
+        funcInfo: any; // pxtc.FunctionLocationInfo
+        breakpointId: number;
+        arguments?: FunctionArgumentsInfo;
+    }
+
+    export interface FunctionArgumentsInfo {
+        thisParam: any;
+        params: FunctionArgument[];
+    }
+
+    export interface FunctionArgument {
+        name: string;
+        value: any;
     }
 
     // subtype=trace
@@ -195,6 +222,7 @@ declare namespace pxsim {
 
     export interface VariablesRequestMessage extends DebuggerMessage {
         variablesReference: string;
+        fields?: string[]
     }
 
     export interface VariablesMessage extends DebuggerMessage {

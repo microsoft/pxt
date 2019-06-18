@@ -1,4 +1,8 @@
 declare namespace pxt {
+
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardEditorType = "blocks" | "js" | "py";
+
     interface Map<T> {
         [index: string]: T;
     }
@@ -37,7 +41,9 @@ declare namespace pxt {
         files: string[];
         simFiles?: string[];
         testFiles?: string[];
+        preferredEditor?: string; // tsprj, blocksprj, pyprj
         testDependencies?: pxt.Map<string>;
+        cppDependencies?: pxt.Map<string>;
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
@@ -55,10 +61,14 @@ declare namespace pxt {
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
-            includeDirs: string[];
+            corePackage?: string;
+            includeDirs?: string[];
             excludePrefix?: string[];
         };
         features?: string[];
+        hidden?: boolean; // hide package from package selection dialog
+        skipLocalization?: boolean;
+        experimentalHw?: boolean;
     }
 
     interface PackageExtension {
@@ -99,6 +109,7 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelIcon?: string;
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
@@ -117,7 +128,8 @@ declare namespace pxt {
         buyUrl?: string;
         feedbackUrl?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+        cardType?: CodeCardType;
+        editor?: CodeCardEditorType;
 
         header?: string;
         any?: number;
@@ -126,14 +138,19 @@ declare namespace pxt {
         blocks?: number;
         javascript?: number;
 
+        tutorialStep?: number;
+        tutorialLength?: number;
+
         icon?: string;
         iconContent?: string; // Text instead of icon name
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event
+        onLabelClicked?: (e: any) => void;
 
         target?: string;
         className?: string;
+        variant?: string;
     }
 
     interface JRes {

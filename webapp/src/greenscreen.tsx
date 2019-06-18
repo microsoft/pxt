@@ -11,19 +11,22 @@ export interface WebCamProps {
 export interface WebCamState {
     devices?: MediaDeviceInfo[];
     hasPrompt?: boolean;
+    userFacing?: boolean;
 }
 
-export function isSupported(): boolean {
+function isMediaDevicesSupported(): boolean {
     return typeof navigator !== undefined
         && !!navigator.mediaDevices
         && !!navigator.mediaDevices.enumerateDevices
-        && !!navigator.mediaDevices.getUserMedia;
+        && !!navigator.mediaDevices.getUserMedia
+        && !pxt.BrowserUtils.isElectron()
+        && !pxt.BrowserUtils.isUwpEdge();
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {
     private deviceId: string;
     private stream: MediaStream;
-    private v: HTMLVideoElement;
+    private video: HTMLVideoElement;
 
     constructor(props: WebCamProps) {
         super(props);
@@ -46,8 +49,16 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
             }).then(stream => {
                 try {
                     this.stream = stream;
-                    this.v.srcObject = this.stream;
-                    this.v.play();
+                    this.video.srcObject = this.stream;
+                    this.video.play();
+                    // store info
+                    const track = this.stream.getVideoTracks()[0];
+                    if (track) {
+                        const settings = track.getSettings();
+                        // https://w3c.github.io/mediacapture-main/#dom-videofacingmodeenum
+                        const userFacing = settings.facingMode !== "environment";
+                        this.setState({ userFacing });
+                    }
                 }
                 catch (e) {
                     pxt.debug(`greenscreen: play failed, ${e}`)
@@ -66,10 +77,11 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     componentDidMount() {
-        navigator.mediaDevices.enumerateDevices()
-            .then(devices => {
-                this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
-            })
+        if (isMediaDevicesSupported())
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
+                })
     }
 
     componentWillUnmount() {
@@ -90,22 +102,22 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
             } catch (e) { }
             this.stream = undefined;
         }
-        if (this.v) {
+        if (this.video) {
             try {
-                this.v.srcObject = undefined;
+                this.video.srcObject = undefined;
             } catch (e) { }
         }
     }
 
     private handleVideoRef = (ref: any) => {
-        this.v = ref;
+        this.video = ref;
     }
 
     render() {
         // playsInline required for iOS
-        const { hasPrompt, devices } = this.state;
+        const { hasPrompt, devices, userFacing } = this.state;
         return <div className="videoContainer">
-            <video playsInline ref={this.handleVideoRef} />
+            <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} />
             {hasPrompt ?
                 <sui.Modal isOpen={hasPrompt} onClose={this.handleClose} closeIcon={true}
                     dimmer={true} header={lf("Choose a camera")}>

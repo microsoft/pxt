@@ -25,7 +25,11 @@ Read more about [saving](/save) projects.
 
 ## Can I use MakeCode when I'm not connected to the internet? #work-offline
 
-Yes, when MakeCode first loads in the browser, it tells the browser to download the files it needs to work locally. If you later want to add an extension to use with your program, you will need to connect again. See the page about using MakeCode [offline](/offline).
+Some MakeCode editors are available as [offline apps](/offline). Also, when MakeCode first loads in the browser, a cached version of MakeCode is stored automatically. If later you want to add an extension to use with your program, you will need to connect again. For more information see the page about using MakeCode [offline](/offline).
+
+## Can I use Extensions when I'm not connected to the internet?
+
+Yes, it is possible to save Extensions so that your programs can still use them when you're offline. Follow [these instructions](/offline#extensions).
 
 ## What happens when I clear the browser's cache and temporary files? #clear-data
 
@@ -46,10 +50,14 @@ When you share a project it's saved to the public cloud for MakeCode. Anyone can
 
 When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by the editor.
 
-## I don't see my question here. What's next?
+## I just added / approved a new translation in Crowdin, when will it show up?
 
-Can't find your question? Please see our [support](/support) page.
+[Translations](https://makecode.com/translate) are managed by the [Crowdin](https://crowdin.com/project/kindscript) site. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. The process usually takes 10 - 30 minutes from when a new translation is approved to when it will appear in an online editor.
 
 ## Where is the "Add Package" button?
 
 Packages were renamed to **Extensions** to align with other code editors. You will now find the **Extensions** menu selection that replaces the **Add Package** button.
+
+## I don't see my question here. What's next?
+
+Can't find your question? Please see our [support](/support) page.

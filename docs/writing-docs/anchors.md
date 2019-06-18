@@ -52,4 +52,4 @@ and section `also` contains the See also paragraph.
 
 ## Accessible sections
 
-In order to assist navigation into and out of subsections (using assistive technologies like screen readers), keep the section levels in sequenece. This means that a section immediatlely following a `#` begins with a `##` and not a `###`. The same sequencing applies to down level sections too.
+In order to assist navigation into and out of subsections (using assistive technologies like screen readers), keep the section levels in sequence. This means that a section immediately following a `#` begins with a `##` and not a `###`. The same sequencing applies to down level sections too.

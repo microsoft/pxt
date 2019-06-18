@@ -136,6 +136,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     icon: md.icon,
                     groups: md.groups,
                     groupIcons: md.groupIcons,
+                    groupHelp: md.groupHelp,
                     labelLineWidth: md.labelLineWidth,
                     blocks: blocks,
                     advanced: isAdvanced
@@ -182,6 +183,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                         icon: md.icon,
                         groups: md.groups,
                         groupIcons: md.groupIcons,
+                        groupHelp: md.groupHelp,
                         labelLineWidth: md.labelLineWidth,
                         blocks: blocks,
                         subcategories: subcategories,
@@ -203,14 +205,17 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
+    abstract hideFlyout(): void;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
-    protected abstract showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string): void;
+    protected abstract showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string): void;
     protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
-        const { nameid: ns, name, subns, icon, color, groups, groupIcons, labelLineWidth, blocks } = treeRow;
+        const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelp, labelLineWidth, blocks } = treeRow;
+        const inTutorial = this.parent.state.tutorialOptions
+            && !!this.parent.state.tutorialOptions.tutorial;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
@@ -230,8 +235,18 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         if (groups && groupIcons) {
             let groupIconsList = groupIcons;
             for (let i = 0; i < sortedGroups.length; i++) {
-                let icon = groupIconsList[i];
-                groupIconsDict[sortedGroups[i]] = icon || '';
+                let groupIcon = groupIconsList[i];
+                groupIconsDict[sortedGroups[i]] = groupIcon || '';
+            }
+        }
+
+        // Create a dict of group help callback pairs
+        let groupHelpDict: { [group: string]: string } = {}
+        if (groups && groupHelp) {
+            let groupHelpCallbackList = groupHelp;
+            for (let i = 0; i < sortedGroups.length; i++) {
+                let helpCallback = groupHelpCallbackList[i];
+                groupHelpDict[sortedGroups[i]] = helpCallback || '';
             }
         }
 
@@ -259,8 +274,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 if (!blockGroups[group] || !blockGroups[group].length) continue;
 
                 // Add the group label
-                if (group != 'other') {
-                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth);
+                if (group != 'other' && !inTutorial) {
+                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpDict[group]);
                 }
 
                 // Add the blocks in that group

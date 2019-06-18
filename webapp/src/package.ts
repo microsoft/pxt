@@ -2,6 +2,7 @@ import * as workspace from "./workspace";
 import * as data from "./data";
 import * as core from "./core";
 import * as db from "./db";
+import * as compiler from "./compiler";
 
 import Util = pxt.Util;
 
@@ -15,7 +16,6 @@ let extWeight: pxt.Map<number> = {
 }
 
 export function setupAppTarget(trgbundle: pxt.TargetBundle) {
-    //if (!trgbundle.appTheme) trgbundle.appTheme = {};
     pxt.setAppTarget(trgbundle)
 }
 
@@ -26,6 +26,7 @@ export class File implements pxt.editor.IFile {
     numDiagnosticsOverride: number;
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
+    virtual: boolean;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
@@ -48,14 +49,23 @@ export class File implements pxt.editor.IFile {
         return ""
     }
 
-    static tsFileNameRx = /\.ts$/;
-    static blocksFileNameRx = /\.blocks$/;
-    getVirtualFileName(): string {
-        if (File.blocksFileNameRx.test(this.name))
-            return this.name.replace(File.blocksFileNameRx, '.ts');
-        if (File.tsFileNameRx.test(this.name))
-            return this.name.replace(File.tsFileNameRx, '.blocks');
-        return undefined;
+    getVirtualFileName(forPrj: string): string {
+        const ext = this.name.replace(/.*\./, "");
+        const basename = ext ? this.name.slice(0, -ext.length - 1) : this.name;
+        const isExtOk = /^blocks|py|ts$/.test(ext);
+        if (!isExtOk) return undefined;
+
+        switch (forPrj) {
+            case pxt.BLOCKS_PROJECT_NAME:
+                return basename + ".blocks";
+            case pxt.JAVASCRIPT_PROJECT_NAME:
+                return basename + ".ts";
+            case pxt.PYTHON_PROJECT_NAME:
+                return basename + ".py";
+            default:
+                pxt.U.oops();
+                return undefined;
+        }
     }
 
     weight() {
@@ -194,6 +204,7 @@ export class EditorPackage {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
                 return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
+                    .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }
 
@@ -234,8 +245,9 @@ export class EditorPackage {
         return this.ksPkg && this.ksPkg.level == 0;
     }
 
-    setFile(n: string, v: string) {
+    setFile(n: string, v: string, virtual?: boolean) {
         let f = new File(this, n, v)
+        if (virtual) f.virtual = true;
         this.files[n] = f
         data.invalidate("open-meta:")
         return f
@@ -247,10 +259,15 @@ export class EditorPackage {
         return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
     }
 
-    setContentAsync(n: string, v: string) {
+    setContentAsync(n: string, v: string): Promise<void> {
         let f = this.files[n];
-        if (!f) f = this.setFile(n, v);
-        return f.setContentAsync(v);
+        let p = Promise.resolve();
+        if (!f) {
+            f = this.setFile(n, v);
+            p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
+            p.then(() => this.savePkgAsync())
+        }
+        return p.then(() => f.setContentAsync(v));
     }
 
     setFiles(files: pxt.Map<string>) {
@@ -331,6 +348,7 @@ export class EditorPackage {
         let res: EditorPackage[] = []
         for (let k of depkeys) {
             if (/---/.test(k)) continue
+            if (deps[k].cppOnly) continue
             res.push(getEditorPkg(deps[k]))
         }
         if (this.assetsPkg)
@@ -344,6 +362,7 @@ export class EditorPackage {
     }
 
     lookupFile(name: string) {
+        if (name.indexOf("pxt_modules/") === 0) name = name.slice(12);
         return this.filterFiles(f => f.getName() == name)[0]
     }
 }
@@ -387,7 +406,7 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: pxt.Package) {
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -417,6 +436,16 @@ class Host
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
+        } else if (proto == "pkg") {
+            const filesSrc = mainPkg.readFile(pkg.verArgument().replace(/^\.\//, ''));
+            const files = ts.pxtc.Util.jsonTryParse(filesSrc);
+            if (files)
+                epkg.setFiles(files);
+            else pxt.log(`failed to resolve ${pkg.version()}`);
+            return Promise.resolve();
+        } else if (proto == "invalid") {
+            pxt.log(`skipping invalid pkg ${pkg.id}`);
+            return Promise.resolve();
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
@@ -481,9 +510,13 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
+        .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) throw new Error(lf("invalid pxt.json file"));
+            if (!config) {
+                mainPkg.configureAsInvalidPackage(lf("invalid pxt.json file"));
+                return mainEditorPkg().afterMainLoadAsync();
+            }
+
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
         })
@@ -533,9 +566,12 @@ data.mountVirtualApi("open-pkg-meta", {
             return {}
 
         const files = f.sortedFiles();
-        const numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
+        let numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
             || (file.diagnostics ? file.diagnostics.length : 0)
             || 0), 0);
+        const ks = f.getKsPkg();
+        if (ks && ks.invalid())
+            numErrors++;
         return <PackageMeta>{
             numErrors
         }

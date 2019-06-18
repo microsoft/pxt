@@ -101,8 +101,12 @@ export class Editor implements pxt.editor.IEditor {
     setDiagnostics(file: pkg.File, snapshot: any): void { }
     setViewState(view: ViewState): void { }
 
-    saveToTypeScript(): Promise<string> {
-        return Promise.resolve('');
+    /**
+     * Serializes code to typescript.
+     * @returns undefined if there is nothing to save
+     */
+    saveToTypeScriptAsync(): Promise<string> {
+        return Promise.resolve(undefined);
     }
 
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean { return false; }
@@ -115,9 +119,15 @@ export class Editor implements pxt.editor.IEditor {
         return true
     }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
+    filterToolbox(showCategories?: boolean) {
     }
 
     insertBreakpoint() {
+    }
+
+    updateBreakpoints() {
+    }
+
+    updateToolbox() {
     }
 }

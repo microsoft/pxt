@@ -1,3 +1,7 @@
 let item: string[] = []
-item = []
-item.push("")
+if (true) {
+    item = []
+    item.push("")
+} else {
+    item = item
+}

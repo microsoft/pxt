@@ -103,13 +103,25 @@ export const buildEngines: Map<BuildEngine> = {
 
     dockermake: {
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
-        buildAsync: () => runDockerAsync(["make"]),
+        buildAsync: () => runDockerAsync(["make", "-j8"]),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchDockermakeHexInfo,
         prepBuildDirAsync: noopAsync,
         buildPath: "built/dockermake",
         moduleConfig: "package.json",
         deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
+    },
+
+    dockercross: {
+        updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
+        buildAsync: () => runDockerAsync(["make"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchDockerCrossHexInfo,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockercross",
+        moduleConfig: "package.json",
+        deployAsync: noopAsync,
         appPath: "pxtapp"
     },
 
@@ -164,6 +176,13 @@ function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
     }
 }
 
+function patchDockerCrossHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/bld/all.tgz.b64"
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
 function patchCSharpDll(extInfo: pxtc.ExtensionInfo) {
     let hexPath = thisBuild.buildPath + "/lib.cs"
     return {
@@ -199,7 +218,7 @@ function platformioUploadAsync(r: pxtc.CompileResult) {
         })
 }
 
-export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, extInfo: pxtc.ExtensionInfo) {
+export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, extInfo: pxtc.ExtensionInfo, forceBuild: boolean) {
     let tasks = Promise.resolve()
     let buildCachePath = buildEngine.buildPath + "/buildcache.json"
     let buildCache: BuildCache = {}
@@ -207,7 +226,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         buildCache = nodeutil.readJson(buildCachePath)
     }
 
-    if (buildCache.sha == extInfo.sha) {
+    if (!forceBuild && (buildCache.sha == extInfo.sha && !process.env["PXT_RUNTIME_DEV"])) {
         pxt.debug("Skipping C++ build.")
         return tasks
     }
@@ -246,7 +265,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     let modSha = U.sha256(extInfo.generatedFiles["/" + buildEngine.moduleConfig])
     let needDal = false
-    if (buildCache.modSha !== modSha) {
+    if (buildCache.modSha !== modSha || forceBuild) {
         tasks = tasks
             .then(buildEngine.setPlatformAsync)
             .then(buildEngine.updateEngineAsync)
@@ -257,7 +276,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 needDal = true
             })
     } else {
-        pxt.debug("Skipping C++ build update.")
+        pxt.debug(`Skipping C++ build update.`)
     }
 
     tasks = tasks
@@ -319,10 +338,10 @@ function runPlatformioAsync(args: string[]) {
 function runDockerAsync(args: string[]) {
     let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
     let cs = pxt.appTarget.compileService
+    let dargs = cs.dockerArgs || ["-u", "build"]
     return nodeutil.spawnAsync({
         cmd: "docker",
-        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src", "-u", "build",
-            cs.dockerImage].concat(args),
+        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
         cwd: thisBuild.buildPath
     })
 }
@@ -371,7 +390,12 @@ function updateCodalBuildAsync() {
 // TODO: DAL specific code should be lifted out
 export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
     create = false) {
-    let constName = "dal.d.ts"
+    const constName = "dal.d.ts";
+    let constPath = constName;
+    const config = mainPkg && mainPkg.config;
+    const corePackage = config && config.dalDTS && config.dalDTS.corePackage;
+    if (corePackage)
+        constPath = path.join(corePackage, constName);
     let vals: Map<string> = {}
     let done: Map<string> = {}
     let excludeSyms: string[] = []
@@ -396,10 +420,6 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         return null
     }
 
-    function isValidInt(v: string) {
-        return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
-    }
-
     function extractConstants(fileName: string, src: string, dogenerate = false): string {
         let lineNo = 0
         // let err = (s: string) => U.userError(`${fileName}(${lineNo}): ${s}\n`)
@@ -422,7 +442,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 } else {
                     vals[n] = "?"
                     // TODO: DAL-specific code
-                    if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
+                    if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT|PXT_VTABLE_SHIFT$/.test(n))
                         pxt.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
             }
@@ -465,20 +485,21 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     if (mainPkg && (create ||
         (mainPkg.getFiles().indexOf(constName) >= 0 && (rebuild || !fs.existsSync(constName))))) {
-        pxt.log(`rebuilding ${constName}...`)
+        pxt.log(`rebuilding ${constName} into ${constPath}...`)
         let files: string[] = []
         let foundConfig = false
 
         for (let d of mainPkg.sortedDeps()) {
             if (d.config.dalDTS) {
-                for (let dn of d.config.dalDTS.includeDirs) {
-                    dn = buildEngine.buildPath + "/" + dn
-                    if (U.endsWith(dn, ".h")) files.push(dn)
-                    else {
-                        let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
-                        U.pushRange(files, here)
+                if (d.config.dalDTS.includeDirs)
+                    for (let dn of d.config.dalDTS.includeDirs) {
+                        dn = buildEngine.buildPath + "/" + dn
+                        if (U.endsWith(dn, ".h")) files.push(dn)
+                        else {
+                            let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                            U.pushRange(files, here)
+                        }
                     }
-                }
                 excludeSyms = d.config.dalDTS.excludePrefix || excludeSyms
                 foundConfig = true
             }
@@ -519,12 +540,12 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         for (let fn of files) {
             let v = extractConstants(fn, fc[fn], true)
             if (v) {
-                consts += "    // " + fn.replace(/\\/g, "/") + "\n"
+                consts += "    // " + fn.replace(/\\/g, "/").replace(buildEngine.buildPath, "") + "\n"
                 consts += v
             }
         }
         consts += "}\n"
-        fs.writeFileSync(constName, consts)
+        fs.writeFileSync(constPath, consts)
     }
 }
 
@@ -544,33 +565,56 @@ function getCSharpCommand() {
     return process.platform == "win32" ? "mcs.bat" : "mcs";
 }
 
-function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
-    const firmware = pxt.outputName()
-    const encoding = pxt.isOutputText() ? "utf8" : "base64";
+function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
+    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_HEX].filter(f => !!res.outfiles[f])[0];
+    if (!firmwareName) { // something went wrong heres
+        pxt.reportError("compile", `firmware missing from built files (${Object.keys(res.outfiles).join(', ')})`)
+        return Promise.resolve();
+    }
 
-    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy
-        && hid.isInstalled(true)) {
-        let f = res.outfiles[pxtc.BINARY_UF2]
-        let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
+    const firmware = res.outfiles[firmwareName];
+    const encoding = firmwareName == pxtc.BINARY_HEX
+        ? "utf8" : "base64";
+
+
+    function copyDeployAsync() {
+        return getBoardDrivesAsync()
+            .then(drives => filterDrives(drives))
+            .then(drives => {
+                if (drives.length == 0) {
+                    pxt.log("cannot find any drives to deploy to");
+                    return Promise.resolve(0);
+                }
+                pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
+                const writeHexFile = (drivename: string) => {
+                    return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
+                        .then(() => pxt.debug("   wrote to " + drivename))
+                        .catch(() => pxt.log(`   failed writing to ${drivename}`));
+                };
+                return Promise.map(drives, d => writeHexFile(d))
+                    .then(() => drives.length);
+            }).then(() => { });
+    }
+
+    function hidDeployAsync() {
+        const f = firmware
+        const blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
         return hid.initAsync()
             .then(dev => dev.flashAsync(blocks))
     }
 
-    return getBoardDrivesAsync()
-        .then(drives => filterDrives(drives))
-        .then(drives => {
-            if (drives.length == 0) {
-                pxt.log("cannot find any drives to deploy to");
-                return Promise.resolve(0);
-            }
-            pxt.log(`copying ${firmware} to ` + drives.join(", "));
-            const writeHexFile = (filename: string) => {
-                return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware], encoding)
-                    .then(() => pxt.log("   wrote hex file to " + filename));
-            };
-            return Promise.map(drives, d => writeHexFile(d))
-                .then(() => drives.length);
-        }).then(() => { });
+    let p = Promise.resolve();
+    if (pxt.appTarget.compile
+        && pxt.appTarget.compile.useUF2
+        && !pxt.appTarget.serial.noDeploy
+        && hid.isInstalled(true)) {
+        // try hid or simply bail out
+        p = p.then(() => hidDeployAsync())
+            .catch(e => copyDeployAsync());
+    } else {
+        p = p.then(() => copyDeployAsync())
+    }
+    return p;
 }
 
 function getBoardDrivesAsync(): Promise<string[]> {

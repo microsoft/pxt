@@ -52,7 +52,16 @@
    Breakpoints
 --------------------*/
 
+@tabletBreakpoint: 814px; // iPhone X landscape is 812px;
 /*
+default semantic
+@mobileBreakpoint            : 320px;
+@tabletBreakpoint            : 768px;
+@computerBreakpoint          : 992px;
+@largeMonitorBreakpoint      : 1200px;
+@widescreenMonitorBreakpoint : 1920px;
+
+// experiment
 @mobileBreakpoint            : unit( (63 * @emSize), px);
 @tabletBreakpoint            : unit( (79 * @emSize), px);
 @computerBreakpoint          : unit( (91 * @emSize), px);
@@ -140,6 +149,7 @@
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
+@thinMenuHeight: 3rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;
@@ -176,7 +186,9 @@
 --------------------*/
 
 @extensionsHeaderBackground: @mainMenuInvertedBackground;
+@extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%);
 @extensionsBackground: @blocklySvgColor;
+@extensionsHeaderColor: white;
 
 /*-------------------
    Side Docs
@@ -282,3 +294,25 @@
     Greenscreen
 -------------------*/
 @greenScreenColor: #00ff00;
+@greenScreenBlockColor: #107c10; // loops category typically uses green
+                                   // keep in sync with pxtarget blocks color changes
+@greenScreenGreen: #005d51; // a green that does not get erased by chromekey 
+
+
+
+/*-------------------
+    Debugger
+-------------------*/
+// TODO: Chance this for the color we want for variables in the debugger.
+@debugNumberVariable: darkorchid;
+@debugStringVariable: coral;
+@debugBooleanVariable: darkturquoise;
+@debugArrayVariable: #663905;
+@debugSpriteVariable: blue;
+
+@debugVariableOdd: #fafafa;
+@debugVariableEven: #f0f0f0;
+@debugVariableFrozen: #eee;
+
+@DebuggerBackgroundPrimaryColor: #e67e22;
+@DebuggerBackgroundSecondaryColor: lightgreen;

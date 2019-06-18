@@ -1,5 +1,6 @@
 /// <reference path="../localtypings/monaco.d.ts" />
 /// <reference path="../built/pxtlib.d.ts"/>
+/// <reference path="../built/pxtblocks.d.ts"/>
 
 namespace pxt.vs {
 
@@ -37,7 +38,8 @@ namespace pxt.vs {
                 let proto = "pkg:" + fp;
                 if (/\.(ts)$/.test(f) && fp != currFile) {
                     if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
-                        let content = pkg.readFile(f) || " ";
+                        // inserting a space creates syntax errors in Python
+                        let content = pkg.readFile(f) || "\n";
                         libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                     }
                     modelMap[fp] = "1";
@@ -116,6 +118,7 @@ namespace pxt.vs {
 
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
+        const hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
 
         let editor = monaco.editor.create(element, {
             model: null,
@@ -127,15 +130,19 @@ namespace pxt.vs {
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             formatOnPaste: true,
+            folding: hasFieldEditors,
+            glyphMargin: hasFieldEditors,
             minimap: {
                 enabled: false
             },
             autoIndent: true,
+            useTabStops: true,
             dragAndDrop: true,
             matchBrackets: true,
             occurrencesHighlight: false,
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
+            renderIndentGuides: true,
             //accessibilitySupport: 'on',
             accessibilityHelpUrl: "" //TODO: Add help url explaining how to use the editor with a screen reader
         });

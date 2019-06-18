@@ -1,5 +1,71 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
+ 
+June 15th, 2019 by [Jaqster](https://github.com/jaqster)
+
+It’s out! The 2019 MakeCode micro:bit update has been released!
+A BIG thanks to everyone who has been hammering on the Beta these past couple months to help us find bugs and come up with fixes. Unlike last year’s update...
+**[Continue reading this blog post](/blog/microbit/2019-release)**
+
+## [Project Alava: Programming Webs of Microcontrollers](/blog/alava/alava)
+
+April 26th, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball)
+
+As you know, the MakeCode team is primarily a bunch of web-heads who fell in love with
+microcontrollers. Since early 2016, we've been bringing web technology to the world of microcontrollers.
+**[Continue reading this blog post](/blog/alava/alava)**
+
+## [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)
+ 
+April 5th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Believe it or not, we are getting ready to ship the **Summer 2019 release** of **MakeCode for the micro:bit**! Thank you to everyone who helped us identify bugs and suggest new features.
+**[Continue reading this blog post](/blog/microbit/2019-beta)**
+
+## [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
+ 
+March 12th, 2019 by [Jaqster](https://github.com/jaqster)
+
+We've decided to supplement the curriculum by providing some additional Educator materials that would help new teachers learn and teach the course. We didn’t change the course at all, just added some extra materials, like...
+**[Continue reading this blog post](/blog/microbit/csintro-educator)**
+
+## [MakeCode Arcade: Retro Gaming, Modern Programming](/blog/arcade/01-18-2019)
+
+January 18th, 2019 by Microsoft MakeCode Team
+
+The MakeCode team is excited to announce a completely new retro gaming experience, 
+spanning the worlds of the web browser and the microcontroller!
+**[Continue reading this blog post](/blog/arcade/01-18-2019)**
+
+## [Cartoon Network Projects for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/cn-projects)
+ 
+January 7th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Happy New Year! And what better way to start 2019 than with a series of brand-new projects for Circuit Playground Express inspired by Cartoon Network!
+**[Continue reading this blog post](/blog/adafruit-circuit-playground-express/cn-projects)**
+
+## [New Maker Course for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/maker-course)
+ 
+December 6th, 2018 by [Jaqster](https://github.com/jaqster)
+
+We are so excited to partner with Rob Morrill on this new curriculum for the Adafruit Circuit Playground Express...
+**[Continue reading this blog post](/blog/adafruit-circuit-playground-express/maker-course)**
+
+## [MakeCode for Minecraft update](/blog/minecraft/11-07-2018)
+ 
+November 7th, 2018 by [Jaqster](https://github.com/jaqster)
+
+Another month, another release! The MakeCode team is very excited to release this update to the coding experience for Minecraft.
+**[Continue reading this blog post](/blog/minecraft/11-07-2018)**
+
+## [MakeCode tutorials for CS Ed week 2018 and beyond](/blog/csed-week/csed-week-2018)
+ 
+October 23th, 2018 by [Jaqster](https://github.com/jaqster)
+ 
+With Computer Science Education week just around the corner, we’ve compiled a list of some of our favorite tutorials, guides, and projects...
+**[Continue reading this blog post](/blog/csed-week/csed-week-2018)**
+ 
 ## [MakeCode for the micro:bit update releases on October 26th!](/blog/microbit/v1-release-date)
 
 October 12th, 2018 by [Jaqster](https://github.com/jaqster)

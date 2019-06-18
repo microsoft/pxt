@@ -101,7 +101,7 @@ namespace pxtblockly {
             Blockly.DropDownDiv.setColour(this.sourceBlock_.getColour(), this.sourceBlock_.getColourTertiary());
 
             // Calculate positioning based on the field position.
-            let scale = this.sourceBlock_.workspace.scale;
+            let scale = (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).scale;
             let bBox = { width: this.size_.width, height: this.size_.height };
             bBox.width *= scale;
             bBox.height *= scale;
@@ -111,7 +111,7 @@ namespace pxtblockly {
             let secondaryX = primaryX;
             let secondaryY = position.top;
             // Set bounds to workspace; show the drop-down.
-            (Blockly.DropDownDiv as any).setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);
+            (Blockly.DropDownDiv as any).setBoundsElement((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode);
             (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
                 this.onHide_.bind(this));
 

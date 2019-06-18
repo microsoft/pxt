@@ -1,7 +1,5 @@
 namespace pxt {
-    export const defaultFiles: Map<string> = {
-        "tsconfig.json":
-            `{
+    export const TS_CONFIG =             `{
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
@@ -10,7 +8,9 @@ namespace pxt {
     },
     "exclude": ["pxt_modules/**/*test.ts"]
 }
-`,
+`;
+    const _defaultFiles: Map<string> = {
+        "tsconfig.json": TS_CONFIG,
 
         "test.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
@@ -38,13 +38,10 @@ test:
 - [ ] Add "- beta" to the GitHub project description if you are still iterating it.
 - [ ] Turn on your automated build on https://travis-ci.org
 - [ ] Use "pxt bump" to create a tagged release on GitHub
-- [ ] Get your package reviewed and approved @DOCS@packages/approval
+- [ ] On GitHub, create a new file named LICENSE. Select the MIT License template.
+- [ ] Get your package reviewed and approved @DOCS@extensions/approval
 
-Read more at @DOCS@packages/build-your-own
-
-## License
-
-@LICENSE@
+Read more at @DOCS@extensions
 
 ## Supported targets
 
@@ -108,14 +105,20 @@ cache:
     "tasks": [{
         "label": "pxt deploy",
         "type": "shell",
-        "command": "pxt deploy",
+        "command": "pxt deploy --local",
         "group": "build",
         "problemMatcher": [ "$tsc" ]
     }, {
         "label": "pxt build",
         "type": "shell",
-        "command": "pxt build",
-        "group": "test",
+        "command": "pxt build --local",
+        "group": "build",
+        "problemMatcher": [ "$tsc" ]
+    }, {
+        "label": "pxt install",
+        "type": "shell",
+        "command": "pxt install",
+        "group": "build",
         "problemMatcher": [ "$tsc" ]
     }, {
         "label": "pxt clean",
@@ -134,8 +137,7 @@ cache:
 `
     }
 
-
-    export function packageFiles(name: string) {
+    export function packageFiles(name: string): pxt.Map<string> {
         let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
         let config = U.clone(prj.config);
         // remove blocks file
@@ -153,14 +155,14 @@ cache:
         }
 
         const files: Map<string> = {};
-        for (const f in defaultFiles)
-            files[f] = defaultFiles[f];
+        for (const f in _defaultFiles)
+            files[f] = _defaultFiles[f];
         for (const f in prj.files)
             if (f != "README.md") // this one we need to keep
                 files[f] = prj.files[f];
 
         const pkgFiles = Object.keys(files).filter(s =>
-            /\.(md|ts|asm|cpp|h)$/.test(s))
+            /\.(md|ts|asm|cpp|h|py)$/.test(s))
 
         const fieldsOrder = [
             "name",

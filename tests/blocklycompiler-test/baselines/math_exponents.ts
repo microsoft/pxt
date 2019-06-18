@@ -1,2 +1,1 @@
-let item = 0
-item = 1 ** (2 + 2)
+let item = 1 ** (2 + 2)

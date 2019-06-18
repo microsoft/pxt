@@ -72,6 +72,14 @@
     font-family: @serialConsoleFont;
 }
 
+#serialConsole.noconsole {
+    display:none;
+}
+
+#serialConsole.nochart {
+    height: calc(100% - 2.5rem);
+}
+
 #serialConsole span {
     word-wrap: break-word;
 }
@@ -79,6 +87,14 @@
 #serialCharts {
     height: calc(70% - 2.5rem);
     overflow-y: auto;
+}
+
+#serialCharts.nochart {
+    display: none;
+}
+
+#serialCharts.noconsole {
+    height: calc(100% - 2.5rem);
 }
 
 #serialCharts .seriallabel {
@@ -135,6 +151,12 @@
 
 #serialPreview .label:focus {
     outline: none;
+}
+
+.fullscreensim #serialPreview,
+.simView #serialPreview {
+    display: none !important;
+    z-index: -10 !important;
 }
 
 .serialindicator {

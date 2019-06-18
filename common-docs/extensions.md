@@ -9,7 +9,7 @@ The Blocks and JavaScript definitions will be automatically loaded in the editor
 
 ## Custom extensions
 
-The [Build Your Own Extension](/extensions/build-your-own) manual is for advanced users who want to publish their own extension. 
+The [Build Your Own Extension](https://makecode.com/extensions/getting-started) manual is for advanced users who want to publish their own extension. 
 
 ## ~ hint
 

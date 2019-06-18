@@ -137,8 +137,9 @@ namespace pxtblockly {
         }
 
         private clearLedDragHandler = (ev: MouseEvent) => {
-            pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().removeEventListener(evid, this.dontHandleMouseEvent_));
-            this.sourceBlock_.getSvgRoot().removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
+            const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
+            pxsim.pointerEvents.down.forEach(evid => svgRoot.removeEventListener(evid, this.dontHandleMouseEvent_));
+            svgRoot.removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
             document.removeEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
             document.removeEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
@@ -168,15 +169,16 @@ namespace pxtblockly {
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
             pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
+                const svgRoot = (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot();
                 this.currentDragState_ = !this.cellState[x][y];
 
                 // select and hide chaff
                 Blockly.hideChaff();
-                this.sourceBlock_.select();
+                (this.sourceBlock_ as Blockly.BlockSvg).select();
 
                 this.toggleRect(x, y);
-                pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().addEventListener(evid, this.dontHandleMouseEvent_));
-                this.sourceBlock_.getSvgRoot().addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
+                pxsim.pointerEvents.down.forEach(evid => svgRoot.addEventListener(evid, this.dontHandleMouseEvent_));
+                svgRoot.addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
                 document.addEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
@@ -231,7 +233,7 @@ namespace pxtblockly {
         }
 
         setValue(newValue: string | number, restoreState = true) {
-            super.setValue(newValue);
+            super.setValue(String(newValue));
             if (this.elt) {
                 if (restoreState) this.restoreStateFromString();
 

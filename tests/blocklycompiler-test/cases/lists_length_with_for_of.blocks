@@ -1,24 +1,29 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-  <block id="]exU%DBA`~5*jpXI%+?z" type="pxt-on-start" x="50" y="130">
+  <variables>
+    <variable type="" id="e0Tbq-rBQ)!kI3yw`iJV">value</variable>
+    <variable type="" id="CR_=({S|Ee;P:(}vVeAw">list</variable>
+    <variable type="" id="XpWX`b1LO@pqR!fXLuFQ">item</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
     <statement name="HANDLER">
-      <block id="$ek^,L#29xpgQR_U+rv*" type="controls_for_of">
-        <field name="VAR">value</field>
+      <block type="controls_for_of">
+        <field name="VAR" id="e0Tbq-rBQ)!kI3yw`iJV" variabletype="">value</field>
         <value name="LIST">
-          <shadow id="xM-4ZoiP1T]?(++ydg?#" type="variables_get">
-            <field name="VAR">list</field>
+          <shadow type="variables_get">
+            <field name="VAR" id="CR_=({S|Ee;P:(}vVeAw" variabletype="">list</field>
           </shadow>
         </value>
         <statement name="DO">
-          <block id="tl_-%xivc_@^YxNnudmX" type="variables_set">
-            <field name="VAR">item</field>
+          <block type="variables_set">
+            <field name="VAR" id="XpWX`b1LO@pqR!fXLuFQ" variabletype="">item</field>
             <value name="VALUE">
               <shadow id="D75K(TFB~I+;CzZGC-7," type="math_number">
                 <field name="NUM">0</field>
               </shadow>
-              <block id="+-tXpBk7^J{~BR$p__/X" type="lists_length">
+              <block type="lists_length">
                 <value name="VALUE">
-                  <block id="$^,h%p-$J[d_){{kjs%!" type="variables_get">
-                    <field name="VAR">list</field>
+                  <block type="variables_get">
+                    <field name="VAR" id="CR_=({S|Ee;P:(}vVeAw" variabletype="">list</field>
                   </block>
                 </value>
               </block>

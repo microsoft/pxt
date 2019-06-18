@@ -16,4 +16,5 @@ This page was written using this documentation system, check it out at https://g
 * [Anchors](/writing-docs/anchors)
 * [Routing](/writing-docs/routing)
 * [Tutorials](/writing-docs/tutorials)
+* [User Tutorials](/writing-docs/user-tutorials)
 * [Testing](/writing-docs/testing)

@@ -19,6 +19,8 @@
     .videoContainer video {
         min-width:100%;
         min-height:100%;
+    }
+    .videoContainer video.flipx {
         transform: scaleX(-1);
     }
 
@@ -41,6 +43,14 @@
 
     .blocklyTreeRow, .blocklyTreeRow.blocklyTreeSelected {
         box-shadow: 1px 1px #000;
+    }
+
+    .blocklyBlockBackground {
+        stroke-width: 2px;
+    }
+
+    .blocklyBlockBackground[fill="@{greenScreenBlockColor}"] {
+        fill: @greenScreenGreen !important;
     }
 
     .pxtToolbox:not(.invertedToolbox) {

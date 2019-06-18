@@ -12,7 +12,7 @@ The blocks you use in your project are found in the **Toolbox**. The Toolbox is 
 
 ### JavaScript editor
 
-The JavaScript editor is a fully functional text editor that's code aware. This means that it can help complete functions and statements for you by providing hints and text completion. A detailed discription of the JavaScript editor features is here:  https://makecode.com/js/editor.
+The JavaScript editor is a fully functional text editor that's code aware. This means that it can help complete functions and statements for you by providing hints and text completion. A detailed description of the JavaScript editor features is here:  https://makecode.com/js/editor.
 
 #### #jseditor-images
 

@@ -8,7 +8,7 @@ function postPreFix() {
     let x = new Testrec()
     lazyAcc = 0
     recordId(x).num = 12
-    assert(x.num == 12 && lazyAcc == 1, "X0")
+    assert(x.num == 12 && lazyAcc == 1, "X0-")
     let y = recordId(x).num++
     assert(x.num == 13 && lazyAcc == 2, "X1")
     assert(y == 12, "X2")

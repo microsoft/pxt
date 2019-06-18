@@ -9,6 +9,7 @@ namespace pxt {
 namespace pxt.analytics {
     const defaultProps: Map<string> = {};
     const defaultMeasures: Map<number> = {};
+    let enabled = false;
 
     export function addDefaultProperties(props: Map<string | number>) {
         Object.keys(props).forEach(k => {
@@ -21,8 +22,9 @@ namespace pxt.analytics {
     }
 
     export function enable() {
-        if (!pxt.aiTrackException || !pxt.aiTrackEvent) return;
+        if (!pxt.aiTrackException || !pxt.aiTrackEvent || enabled) return;
 
+        enabled = true;
         pxt.debug('setting up app insights')
 
         const te = pxt.tickEvent;
@@ -38,14 +40,15 @@ namespace pxt.analytics {
                 const measures: Map<number> = defaultMeasures || {};
                 Object.keys(data).forEach(k => {
                     if (typeof data[k] == "string") props[k] = <string>data[k];
-                    else measures[k] = <number>data[k];
+                    else if (typeof data[k] == "number") measures[k] = <number>data[k];
+                    else props[k] = JSON.stringify(data[k] || '');
                 });
                 pxt.aiTrackEvent(id, props, measures);
             }
         };
 
         const rexp = pxt.reportException;
-        pxt.reportException = function (err: any, data: pxt.Map<string>): void {
+        pxt.reportException = function (err: any, data: pxt.Map<string | number>): void {
             if (rexp) rexp(err, data);
             const props: pxt.Map<string> = {
                 target: pxt.appTarget.id,
@@ -56,7 +59,7 @@ namespace pxt.analytics {
         };
 
         const re = pxt.reportError;
-        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
+        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string | number>): void {
             if (re) re(cat, msg, data);
             try {
                 throw msg

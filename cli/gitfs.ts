@@ -5,6 +5,7 @@ import * as util from 'util';
 import U = pxt.Util;
 
 export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
+    pxt.log(`uploading refs to ${pxt.Cloud.apiRoot}`);
     let gitCatFile: child_process.ChildProcess
     let gitCatFileBuf = new U.PromiseBuffer<Buffer>()
 

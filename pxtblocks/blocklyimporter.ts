@@ -2,6 +2,51 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+
+    /**
+     * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids
+     * @param dom
+     * @param workspace
+     */
+    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
+        pxt.tickEvent(`blocks.domtow`)
+        try {
+            Blockly.Events.disable();
+            const newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
+            applyMetaComments(workspace);
+            return newBlockIds;
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
+    function applyMetaComments(workspace: Blockly.Workspace) {
+        // process meta comments
+        // @highlight -> highlight block
+        workspace.getAllBlocks()
+            .filter(b => !!b.comment && b.comment instanceof Blockly.Comment)
+            .forEach(b => {
+                const c = (<Blockly.Comment>b.comment).getText();
+                if (/@highlight/.test(c)) {
+                    const cc = c.replace(/@highlight/g, '').trim();
+                    b.setCommentText(cc || null);
+                    (workspace as Blockly.WorkspaceSvg).highlightBlock(b.id)
+                }
+            });
+    }
+
+    export function clearWithoutEvents(workspace: Blockly.Workspace) {
+        pxt.tickEvent(`blocks.clear`)
+        if (!workspace) return;
+        try {
+            Blockly.Events.disable();
+            workspace.clear();
+            workspace.clearUndo();
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
     export function saveWorkspaceXml(ws: Blockly.Workspace): string {
         let xml = Blockly.Xml.workspaceToDom(ws, true);
         let text = Blockly.Xml.domToPrettyText(xml);
@@ -23,11 +68,11 @@ namespace pxt.blocks {
         return getChildrenWithAttr(parent, "block", "type", type);
     }
 
-    export function getChildrenWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
+    export function getChildrenWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {
         return Util.toArray(parent.getElementsByTagName(tag)).filter(b => b.getAttribute(attr) === value);
     }
 
-    export function getFirstChildWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
+    export function getFirstChildWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {
         const res = getChildrenWithAttr(parent, tag, attr, value);
         return res.length ? res[0] : undefined;
     }
@@ -36,10 +81,10 @@ namespace pxt.blocks {
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
     export function loadWorkspaceXml(xml: string, skipReport = false) {
-        const workspace = new Blockly.Workspace();
+        const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);
-            Blockly.Xml.domToWorkspace(dom, workspace);
+            pxt.blocks.domToWorkspaceNoEvents(dom, workspace);
             return workspace;
         } catch (e) {
             if (!skipReport)
@@ -103,13 +148,34 @@ namespace pxt.blocks {
     }
 
     /**
-     * This callback is populated from the editor extension result. 
+     * Patch to transform old function blocks to new ones, and rename child nodes
+     */
+    function patchFunctionBlocks(dom: Element, info: pxtc.BlocksInfo) {
+        let functionNodes = pxt.U.toArray(dom.querySelectorAll("block[type=procedures_defnoreturn]"));
+        functionNodes.forEach(node => {
+            node.setAttribute("type", "function_definition");
+            node.querySelector("field[name=NAME]").setAttribute("name", "function_name");
+        })
+
+        let functionCallNodes = pxt.U.toArray(dom.querySelectorAll("block[type=procedures_callnoreturn]"));
+        functionCallNodes.forEach(node => {
+            node.setAttribute("type", "function_call");
+            node.querySelector("field[name=NAME]").setAttribute("name", "function_name");
+        })
+    }
+
+    /**
+     * This callback is populated from the editor extension result.
      * Allows a target to provide version specific blockly updates
      */
     export let extensionBlocklyPatch: (pkgTargetVersion: string, dom: Element) => void;
 
     export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
+            // If it's the first project we're importing in the session, Blockly is not initialized
+            // and blocks haven't been injected yet
+            pxt.blocks.initializeAndInject(info);
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, "application/xml");
 
@@ -138,6 +204,15 @@ namespace pxt.blocks {
                                 pxt.debug(`patched block value ${k} -> ${up.map[k]}`);
                             });
                     }))
+
+                // patch enum variables
+                upgrades.filter(up => up.type == "userenum")
+                    .forEach(up => Object.keys(up.map).forEach(k => {
+                        getChildrenWithAttr(doc, "variable", "type", k).forEach(el => {
+                            el.setAttribute("type", up.map[k]);
+                            pxt.debug(`patched enum variable type ${k} -> ${up.map[k]}`);
+                        })
+                    }));
             }
 
             // build upgrade map
@@ -156,6 +231,9 @@ namespace pxt.blocks {
 
             // patch floating blocks
             patchFloatingBlocks(doc.documentElement, info);
+
+            // patch function blocks
+            patchFunctionBlocks(doc.documentElement, info)
 
             // apply extension patches
             if (pxt.blocks.extensionBlocklyPatch)

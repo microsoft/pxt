@@ -22,6 +22,12 @@ export class Editor extends srceditor.Editor {
         this.setFileName = this.setFileName.bind(this);
         this.isUserConfigActive = this.isUserConfigActive.bind(this);
         this.applyUserConfig = this.applyUserConfig.bind(this);
+        this.goBack = this.goBack.bind(this);
+    }
+
+    goBack() {
+        pxt.tickEvent("pxtjson.backButton", undefined, { interactiveConsent: true })
+        this.parent.openPreviousEditor()
     }
 
     prepare() {
@@ -65,25 +71,42 @@ export class Editor extends srceditor.Editor {
         this.parent.forceUpdate();
     }
 
+    private optionaldepConfig() {
+        // will contain all flatton configs
+        let cfg: any = {};
+        // look at all config coming dependencies
+        pkg.mainPkg.sortedDeps()
+            .filter(dep => dep.config && dep.config.yotta && dep.config.yotta.optionalConfig)
+            .forEach(dep => Util.jsonMergeFrom(cfg, dep.config.yotta.optionalConfig));
+        return cfg;
+    }
+
     isUserConfigActive(uc: pxt.CompilationConfig) {
-        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        let cfg = this.optionaldepConfig();
+        if (this.config.yotta && this.config.yotta.config)
+            Util.jsonMergeFrom(cfg, this.config.yotta.config);
+        // flatten configs
+        cfg = Util.jsonFlatten(cfg);
+
         const ucfg = Util.jsonFlatten(uc.config);
         return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
     }
 
     applyUserConfig(uc: pxt.CompilationConfig) {
-        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
-        const ucfg = Util.jsonFlatten(uc.config);
+        const depcfg = Util.jsonFlatten(this.optionaldepConfig());
+        const prjcfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        const usercfg = Util.jsonFlatten(uc.config);
         if (this.isUserConfigActive(uc)) {
-            Object.keys(ucfg).forEach(k => delete cfg[k]);
+            Object.keys(usercfg).forEach(k => {
+                delete prjcfg[k];
+            });
         } else {
-            Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
+            Object.keys(usercfg).forEach(k => prjcfg[k] = usercfg[k]);
         }
         // update cfg
-        if (Object.keys(cfg).length) {
+        if (Object.keys(prjcfg).length) {
             if (!this.config.yotta) this.config.yotta = {};
-            Object.keys(cfg).filter(k => cfg[k] === null).forEach(k => delete cfg[k]);
-            this.config.yotta.config = Util.jsonUnFlatten(cfg);
+            this.config.yotta.config = Util.jsonUnFlatten(prjcfg);
         } else {
             if (this.config.yotta) {
                 delete this.config.yotta.config;
@@ -99,7 +122,9 @@ export class Editor extends srceditor.Editor {
         this.nameInput = c;
     }
 
-    display() {
+    display(): JSX.Element {
+        if (!this.isVisible) return undefined;
+
         const c = this.config;
         let userConfigs: pxt.CompilationConfig[] = [];
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())
@@ -131,11 +156,14 @@ export class Editor extends srceditor.Editor {
             <div className="ui content">
                 <h3 className="ui small header">
                     <div className="content">
-                        {lf("Project Settings")}
+                        <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
+                            <sui.Icon icon="arrow left" />
+                            <span className="ui text landscape only">{lf("Go back")}</span>
+                        </sui.Button>
                     </div>
                 </h3>
                 <div className="ui segment form text">
-                    <sui.Input ref={this.handleNameInputRef} id={"fileNameInput"} label={lf("Name")} ariaLabel={lf("Type a name for your project")} value={c.name || ''} onChange={this.setFileName} />
+                    <sui.Input ref={this.handleNameInputRef} id={"fileNameInput"} label={lf("Name")} ariaLabel={lf("Type a name for your project")} value={c.name || ''} onChange={this.setFileName} autoComplete={false} />
                     {userConfigs.map(uc =>
                         <UserConfigCheckbox
                             key={`userconfig-${uc.description}`}

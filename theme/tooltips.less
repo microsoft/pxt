@@ -1,0 +1,74 @@
+
+
+@tooltipBackground: @primaryColor;
+@tooltipBorder: darken(@tooltipBackground, 10%);
+
+.pxt-tooltip {
+    color: @white;
+    background-color: @tooltipBackground !important;
+    border: 1px solid @tooltipBorder !important;
+    padding: .75rem 1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.25rem !important;
+}
+
+.pxt-tooltip {
+    &.place-top {
+        &:after {
+            border-top-color: @tooltipBorder !important;
+        }
+    }
+    &.place-bottom {
+        &:after {
+            border-bottom-color: @tooltipBorder !important;
+        }
+    }
+    &.place-left {
+        &:after {
+            border-left-color: @tooltipBorder !important;
+        }
+    }
+    &.place-right {
+        &:after {
+            border-right-color: @tooltipBorder !important;
+        }
+    }
+}
+
+
+
+/*******************************
+     Clickable DOM Tooltip
+*******************************/
+
+.tooltip, .tooltip:before {
+    display: none;
+    position: absolute;
+    line-height: 1.4285em;
+    background: @white;
+    color: @black;
+    text-align: center;
+    z-index: 44;
+    transition: all .1s ease;
+    cursor: pointer;
+}
+
+.tooltip.show, .tooltip.show:before {
+    display: block;
+}
+
+.tooltip {
+    transform: translateX(-50%);
+    padding: .833em 1em;
+    margin-top: .5em;
+    border-radius: .28571429rem;
+}
+
+.tooltip:before {
+    content: "";
+    top: -.35rem;
+    left: 50%;
+    width: .71428571em;
+    height: .71428571em;
+    transform: rotate(45deg) scale(1)!important;
+}

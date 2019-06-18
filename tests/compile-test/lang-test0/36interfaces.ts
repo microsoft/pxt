@@ -35,12 +35,13 @@ namespace Ifaces {
         msg("Ifaces.run")
         let a = new A()
         assert(foo(a) + "X" == "12QA42X")
-        assert((a as IFoo).twoArg(1, 2) == 1)
+        assert((a as IFoo).twoArg(1, 2) == 1, "t")
         a = new B()
-        assert(foo(a) + "X" == "13QA42X")
+        assert(foo(a) + "X" == "13QA42X", "b")
         let q = a as IFoo
         q.baz = "Z"
-        assert(foo(q) + "X" == "13Z42X")
+        assert(foo(q) + "X" == "13Z42X", "x")
+        msg("Ifaces.runDONE")
     }
 }
 

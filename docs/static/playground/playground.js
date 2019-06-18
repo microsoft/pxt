@@ -1,4 +1,4 @@
-/// <reference path="../../node_modules/monaco-editor/monaco.d.ts" />
+/// <reference path="../../../node_modules/monaco-editor/monaco.d.ts" />
 
 (function () {
 
@@ -206,11 +206,10 @@
             samplePath = 'static/playground/samples/' + samplePath;
 
             var js = xhr(samplePath + '/sample.js').then(function (response) { return response.responseText });
-            monaco.Promise.join([js]).then(function (_) {
-                var js = _[0];
+            js.then(function (_) {
                 LOADED_SAMPLES.push({
                     id: sampleId,
-                    js: js
+                    js: _
                 });
                 return callback(null, findLoadedSample(sampleId));
             }, function (err) {
@@ -352,26 +351,24 @@
 
     function xhr(url) {
         if (preloaded[url]) {
-            return monaco.Promise.as({
+            return Promise.resolve({
                 responseText: preloaded[url]
             });
         }
 
         var req = null;
-        return new monaco.Promise(function (c, e, p) {
+        return new Promise(function (resolve, reject) {
             req = new XMLHttpRequest();
             req.onreadystatechange = function () {
                 if (req._canceled) { return; }
 
                 if (req.readyState === 4) {
                     if ((req.status >= 200 && req.status < 300) || req.status === 1223) {
-                        c(req);
+                        resolve(req);
                     } else {
-                        e(req);
+                        reject(req);
                     }
                     req.onreadystatechange = function () { };
-                } else {
-                    p(req);
                 }
             };
 

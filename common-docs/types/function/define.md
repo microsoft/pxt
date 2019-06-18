@@ -36,7 +36,7 @@ If you had some functions with the names **function1**, **function2**, and **fun
 you probably wouldn't remember what each one does the next time you looked at your code. That's why it's
 best to give your functions names that tell you what the code inside is going to accomplish.
 
-## Agruments
+## Arguments
 
 After you make the name of the function, you add the _argument list_. In JavaScript, the argument list is inside two **(** **)** braces. Right now, your functions don't use any arguments.
 

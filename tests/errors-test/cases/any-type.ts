@@ -1,1 +1,1 @@
-let x: any = 0 // TS9263
+let x: any = 0

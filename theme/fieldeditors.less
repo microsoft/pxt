@@ -233,3 +233,53 @@
     display: inline-block;
     vertical-align: middle;
 }
+
+
+////// position picker ////////
+#custom-content .blocklyLightboxDiv {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    z-index: 993;
+}
+ #custom-content .blocklyCanvasOverlayDiv {
+    position: absolute;
+    cursor: none;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 10000;
+     .cross-x, .cross-y {
+        background-color: #575E75;
+        position: absolute;
+    }
+     .cross-x {
+        width: 100%;
+        height: 2px;
+        z-index: 10;
+    }
+    
+    .cross-y {
+        width: 2px;
+        height: 100%;
+        z-index: 10;
+    }
+    .label {
+        position: absolute;
+        color: #575E75;
+        font-size: 100%;
+    }
+}
+
+.positionEyedropper {
+    background: none;
+    outline: none;
+    border: none;
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 5px;
+    cursor: pointer;
+}
+
+.positionEyedropper:hover {
+    background: #eee;
+}

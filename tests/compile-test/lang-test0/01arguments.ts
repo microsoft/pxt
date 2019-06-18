@@ -19,6 +19,8 @@ function testDefaultArgs() {
 }
 
 function optargs(x: number, y?: number, z?: number) {
+    if (y == undefined)
+        y = 0
     return x + y;
 }
 

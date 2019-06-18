@@ -18,19 +18,16 @@ export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
 export let driver: pxsim.SimulatorDriver;
-let nextFrameId: number = 0;
-const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
-let tutorialMode: boolean;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
-let dirty = false;
-
-let debuggerDOM: HTMLElement;
 
 export function setTranslations(translations: pxt.Map<string>) {
-    simTranslations = translations;
+    if (simTranslations !== translations) {
+        simTranslations = translations;
+        setDirty();
+    }
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
@@ -45,10 +42,10 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     debuggerDiv.className = 'ui item landscape only';
     root.appendChild(debuggerDiv);
 
-    debuggerDOM = document.getElementById('debugger')
     let options: pxsim.SimulatorDriverOptions = {
+        restart: () => cfg.restartSimulator(),
         revealElement: (el) => {
-            if (pxt.options.light) return;
+            if (pxt.options.light || driver.isLoanedSimulator(el)) return;
             // Play enter animation
             const animation = pxt.appTarget.appTheme.simAnimationEnter || 'fly right in';
             el.style.animationDuration = '500ms';
@@ -207,7 +204,11 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onTopLevelCodeEnd: () => {
             postSimEditorEvent("toplevelfinished");
         },
-        stoppedClass: getStoppedClass()
+        stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
+        invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
+        autoRun: pxt.appTarget.simulator && (pxt.options.light
+            ? !!pxt.appTarget.simulator.autoRunLight
+            : !!pxt.appTarget.simulator.autoRun)
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
@@ -224,6 +225,7 @@ function postSimEditorEvent(subtype: string, exception?: string) {
     }
 }
 
+let tutorialMode: boolean = false;
 export function setState(editor: string, tutMode?: boolean) {
     if (config && config.editor != editor) {
         config.editor = editor;
@@ -233,20 +235,18 @@ export function setState(editor: string, tutMode?: boolean) {
     tutorialMode = tutMode;
 }
 
-export function makeDirty() { // running outdated code
-    pxsim.U.addClass(driver.container, getInvalidatedClass());
-    dirty = true;
+export function setDirty() { // running outdated code
+    if (driver) driver.setDirty();
 }
 
-export function isDirty(): boolean { // in need of a restart?
-    return dirty;
+export function setPending() {
+    if (driver) driver.setPending();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, mute?: boolean,
     highContrast?: boolean, light?: boolean,
     clickTrigger?: boolean) {
-    makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
@@ -269,45 +269,47 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         version: pkg.version(),
         clickTrigger: clickTrigger
     }
+    //if (pxt.options.debug)
+    //    pxt.debug(JSON.stringify(opts, null, 2))
     postSimEditorEvent("started");
 
     driver.run(js, opts);
 }
 
 export function mute(mute: boolean) {
+    if (!driver) return;
     driver.mute(mute);
-    pxsim.U.removeChildren(debuggerDOM);
 }
 
-export function stop(unload?: boolean) {
+export function stop(unload?: boolean, starting?: boolean) {
     if (!driver) return;
+    driver.stopSound();
+    driver.stop(unload, starting);
+}
 
-    makeClean();
-    driver.stop(unload);
-    pxsim.U.removeChildren(debuggerDOM);
+export function suspend() {
+    if (!driver) return;
+    driver.suspend();
 }
 
 export function hide(completeHandler?: () => void) {
-    if (!pxt.appTarget.simulator.headless) {
-        makeDirty();
-    }
+    if (!driver) return;
     driver.hide(completeHandler);
-    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function unhide() {
+    if (!driver) return;
     driver.unhide();
 }
 
 export function setTraceInterval(intervalMs: number) {
+    if (!driver) return;
     driver.setTraceInterval(intervalMs);
 }
 
 export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
-
     driver.postMessage(message);
-    pxsim.U.removeChildren(debuggerDOM);
 }
 
 export function dbgPauseResume() {
@@ -335,93 +337,3 @@ export function dbgStepOut() {
         driver.resume(pxsim.SimulatorDebuggerCommand.StepOut);
     }
 }
-
-function makeClean() {
-    pxsim.U.removeClass(driver.container, getInvalidatedClass());
-    dirty = false;
-}
-
-function getInvalidatedClass() {
-    if (pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass) {
-        return pxt.appTarget.simulator.invalidatedClass;
-    }
-    return "sepia";
-}
-
-function getStoppedClass() {
-    if (pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass) {
-        return pxt.appTarget.simulator.stoppedClass;
-    }
-    return undefined;
-}
-
-/*
-function updateDebuggerButtonsInternal(brk: pxsim.DebuggerBreakpointMessage = null) {
-    function btn(icon: string, name: string, label: string, click: () => void) {
-        let b = document.createElement('button');
-        b.className = `ui mini button teal ${icon ? 'icon' : ''}`;
-        b.title = pxt.Util.htmlEscape(label);
-        if (icon) {
-            let i = document.createElement('i');
-            i.className = `${icon} icon`;
-            b.appendChild(i);
-        }
-        if (name) b.appendChild(document.createTextNode(pxt.Util.htmlEscape(name)));
-        b.addEventListener('click', click);
-        return b;
-    }
-
-    pxsim.U.removeChildren(debuggerDOM);
-    if (!driver.runOptions.debug) return;
-    let advanced = config.editor == 'tsprj';
-
-    if (driver.state == pxsim.SimulatorState.Paused) {
-        let $resume = btn("play", lf("Resume"), lf("Resume execution"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Resume));
-        let $stepOver = btn("xicon stepover", lf("Step over"), lf("Step over next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepOver));
-        let $stepInto = btn("xicon stepinto", lf("Step into"), lf("Step into next function call"), () => driver.resume(pxsim.SimulatorDebuggerCommand.StepInto));
-        debuggerDOM.appendChild($resume).appendChild($stepOver)
-        if (advanced)
-            debuggerDOM.appendChild($stepInto);
-    } else if (driver.state == pxsim.SimulatorState.Running) {
-        let $pause = btn("pause", lf("Pause"), lf("Pause execution on the next instruction"), () => driver.resume(pxsim.SimulatorDebuggerCommand.Pause));
-        debuggerDOM.appendChild($pause);
-    }
-
-    if (!brk || !advanced) return;
-
-    function vars(hd: string, frame: pxsim.Variables) {
-        let frameView = document.createElement('div');
-        let heading = document.createElement('h4');
-        heading.appendChild(document.createTextNode(hd));
-        frameView.appendChild(heading);
-        for (let k of Object.keys(frame)) {
-            let v = frame[k]
-            let sv = ""
-            switch (typeof (v)) {
-                case "number": sv = v + ""; break;
-                case "boolean": sv = v + ""; break;
-                case "string": sv = JSON.stringify(v); break;
-                case "object":
-                    if (v == null) sv = "null";
-                    else if (v.id !== undefined) sv = "(object)"
-                    else if (v.text) sv = v.text;
-                    else sv = "(unknown)"
-                    break;
-                default: U.oops()
-            }
-            let n = k.replace(/___\d+$/, "")
-            frameView.appendChild(document.createElement('div').appendChild(document.createTextNode(`${n}: ${sv}`)));
-        }
-        return frameView
-    }
-
-    let dbgView = document.createElement('div');
-    dbgView.className = "ui segment debuggerview";
-    dbgView.appendChild(vars(U.lf("globals"), brk.globals))
-    brk.stackframes.forEach(sf => {
-        let info = sf.funcInfo as pxtc.FunctionLocationInfo
-        dbgView.appendChild(vars(info.functionName, sf.locals))
-    })
-    debuggerDOM.appendChild(dbgView);
-}
-*/

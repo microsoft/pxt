@@ -51,6 +51,18 @@ namespace template {
         return img;
     }
 
+
+    /**
+     * Image editor...
+     * @param img the iamge
+     */
+    //% blockId=imageeditor2 block="%img" shim=TD_ID
+    //% img.fieldEditor="gridpicker"
+    //% img.fieldOptions.taggedTemplate="img"
+    export function imageEditor2(img: Image): Image {
+        return img;
+    }
+
     /**
      * Image editor...
      * @param img the iamge
@@ -66,6 +78,16 @@ namespace template {
      */
     //% blockId=shadow_template block="%img=imageeditor"
     export function shadowBlockTemplate(img: Image): void {
+
+    }
+
+
+    /**
+     * Image editor...
+     * @param img the iamge
+     */
+    //% blockId=shadow_template2 block="%img=imageeditor2"
+    export function shadowBlockTemplate2(img: Image): void {
 
     }
 

@@ -153,30 +153,42 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
             }
         })
 
-    core.confirmAsync({
-        header: lf("About"),
-        hideCancel: true,
-        agreeLbl: lf("Ok"),
-        agreeClass: "positive",
-        buttons,
-        jsx: <div>
-            {githubUrl && versions ?
-                renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
-                : undefined}
-            {versions ?
-                renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
-                : undefined}
-            {showCompile ?
-                renderCompileLink(compileService)
-                : undefined}
-            <p><br /></p>
-            <p>
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
-                &nbsp;&nbsp;&nbsp; {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-            </p>
-            {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
-        </div>
-    }).done();
+    pxt.targetConfigAsync()
+        .then(config => {
+            const isPxtElectron = pxt.BrowserUtils.isPxtElectron();
+            const electronManifest = config && config.electronManifest;
+            return core.confirmAsync({
+                header: lf("About"),
+                hideCancel: true,
+                agreeLbl: lf("Ok"),
+                agreeClass: "positive",
+                buttons,
+                jsx: <div>
+                    {isPxtElectron ?
+                        (!pxt.Cloud.isOnline() || !electronManifest)
+                            ? <p>{lf("Please connect to internet to check for updates")}</p>
+                            : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
+                                ? <a href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
+                                : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
+                        : undefined}
+                    {githubUrl && versions ?
+                        renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
+                        : undefined}
+                    {versions ?
+                        renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
+                        : undefined}
+                    {showCompile ?
+                        renderCompileLink(compileService)
+                        : undefined}
+                    <p><br /></p>
+                    <p>
+                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
+                        &nbsp;&nbsp;&nbsp; {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
+                    </p>
+                    {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
+                </div>
+            })
+        }).done();
 }
 
 
@@ -221,25 +233,25 @@ export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], up
         hasCloseIcon: true,
         hideCancel: true,
         jsx: <div className="wizard-wrapper">
-                <ExtensionErrorWizard
-                    openLegacyEditor={openLegacyEditor}
-                    affectedPackages={badPackages}
-                    updatePackages={updatePackages}
-                    onProjectOpen={onProjectOpen}
-                    token={token} />
-            </div>
+            <ExtensionErrorWizard
+                openLegacyEditor={openLegacyEditor}
+                affectedPackages={badPackages}
+                updatePackages={updatePackages}
+                onProjectOpen={onProjectOpen}
+                token={token} />
+        </div>
     })
-    .then(() => {
-        if (!projectOpen) {
-            core.showLoading(loaderId, lf("Stopping update..."))
-            return token.cancelAsync();
-        }
-        return Promise.resolve();
-    })
-    .then(() => {
-        core.hideLoading(loaderId)
-        return projectOpen;
-    });
+        .then(() => {
+            if (!projectOpen) {
+                core.showLoading(loaderId, lf("Stopping update..."))
+                return token.cancelAsync();
+            }
+            return Promise.resolve();
+        })
+        .then(() => {
+            core.hideLoading(loaderId)
+            return projectOpen;
+        });
 }
 
 interface ExtensionErrorWizardProps {
@@ -298,32 +310,32 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
         });
 
         this.props.updatePackages(pkgs, this.props.token)
-        .then(success => {
-            if (this.props.token.isCancelled()) return;
+            .then(success => {
+                if (this.props.token.isCancelled()) return;
 
-            pxt.tickEvent("update.endExtensionUpdate", {
-                success: "" + success,
-                duration:  Date.now() - startTime
-            });
-
-            if (!success) {
-                this.setState({
-                    updateError: true,
-                    updating: false
-                });
-            }
-            else {
-                this.setState({
-                    updating: false,
-                    updateComplete: true
+                pxt.tickEvent("update.endExtensionUpdate", {
+                    success: "" + success,
+                    duration: Date.now() - startTime
                 });
 
-                setTimeout(() => {
-                    if (this.props.token.isCancelled()) return;
-                    this.openProject(true);
-                }, 1500);
-            }
-        })
+                if (!success) {
+                    this.setState({
+                        updateError: true,
+                        updating: false
+                    });
+                }
+                else {
+                    this.setState({
+                        updating: false,
+                        updateComplete: true
+                    });
+
+                    setTimeout(() => {
+                        if (this.props.token.isCancelled()) return;
+                        this.openProject(true);
+                    }, 1500);
+                }
+            })
     }
 
     openProject(quiet = false) {
@@ -375,13 +387,13 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
                 lf("Updating extension {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
 
             return <div>
-                    { showProgressBar ?
-                        <ProgressBar percentage={100 * (packagesUpdated / affectedPackages.length)} label={progressString} /> :
-                        <div className="ui centered inline inverted text loader">
-                            { progressString }
-                        </div>
-                    }
-                </div>
+                {showProgressBar ?
+                    <ProgressBar percentage={100 * (packagesUpdated / affectedPackages.length)} label={progressString} /> :
+                    <div className="ui centered inline inverted text loader">
+                        {progressString}
+                    </div>
+                }
+            </div>
         }
         else if (updateComplete) {
             return <div>
@@ -396,8 +408,8 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
             lf("Looks like there are some errors in the extensions added to this project. How would you like to proceed?");
 
         return <div>
-                <p>{message}</p>
-                <WizardMenu actions={this.buildActionList()} />
+            <p>{message}</p>
+            <WizardMenu actions={this.buildActionList()} />
         </div>
     }
 }
@@ -416,14 +428,14 @@ class ProgressBar extends React.Component<ProgressBarProps, {}> {
         percentage = Math.max(Math.min(percentage, 100), 2);
 
         return <div>
-                <div className="progress-bar-container">
-                    <svg className="progress-bar" width="100%" height="100%">
-                        <rect className="progress-bar-bg" width="100%" height="100%" rx={cornerRadius} ry={cornerRadius}/>
-                        <rect className="progress-bar-content" width={percentage.toString() + "%"} height="100%" rx={cornerRadius} ry={cornerRadius}/>
-                    </svg>
-                </div>
-                { label ? <p className="progress-bar-label">{label}</p> : undefined }
+            <div className="progress-bar-container">
+                <svg className="progress-bar" width="100%" height="100%">
+                    <rect className="progress-bar-bg" width="100%" height="100%" rx={cornerRadius} ry={cornerRadius} />
+                    <rect className="progress-bar-content" width={percentage.toString() + "%"} height="100%" rx={cornerRadius} ry={cornerRadius} />
+                </svg>
             </div>
+            {label ? <p className="progress-bar-label">{label}</p> : undefined}
+        </div>
     }
 }
 
@@ -434,7 +446,7 @@ interface WizardMenuProps {
 class WizardMenu extends sui.StatelessUIElement<WizardMenuProps> {
     render() {
         return <div className="ui relaxed list" role="menu">
-            { this.props.actions.map(({text, title, callback}, i) =>
+            {this.props.actions.map(({ text, title, callback }, i) =>
                 <div className="item wizard-action" aria-label={title} title={title} onClick={callback} role="menuitem" key={i}>
                     <span className="left floated"><i className="medium arrow right icon"></i></span>
                     <sui.Link>{text}</sui.Link>
@@ -514,6 +526,7 @@ export function showImportUrlDialogAsync() {
                     </h3>
                     <p>
                         {lf("The content below is provided by a user, and is not endorsed by Microsoft.")}
+                        <br />
                         {lf("If you think it's not appropriate, please report abuse through Settings -> Report Abuse.")}
                     </p>
                 </div>
@@ -658,27 +671,27 @@ export function showImportGithubDialogAsync() {
         })).then(() => res)
 }
 
-export function showImportFileDialogAsync() {
+export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions) {
     let input: HTMLInputElement;
-    let ext = ".mkcd";
+    let exts = [pxt.appTarget.compile.saveAsPNG ? ".png" : ".mkcd"];
     if (pxt.appTarget.compile.hasHex) {
-        ext = ".hex";
+        exts.push(".hex");
     }
     if (pxt.appTarget.compile.useUF2) {
-        ext = ".uf2";
-    }
-    if (pxt.appTarget.compile.saveAsPNG) {
-        ext = ".png";
+        exts.push(".uf2");
     }
     return core.confirmAsync({
-        header: lf("Open {0} file", ext),
+        header: lf("Open {0} file", exts.join(lf(" or "))),
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
         jsx: <div className="ui form">
             <div className="ui field">
-                <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", ext)}</label>
+                <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", exts.join(lf(" or ")))}</label>
                 <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
+            </div>
+            <div className="ui secondary segment">
+                {lf("You can import files by dragging and dropping them anywhere in the editor!")}
             </div>
         </div>,
     }).then(res => {
@@ -690,6 +703,15 @@ export function showImportFileDialogAsync() {
 }
 
 export function showReportAbuseAsync(pubId?: string) {
+    // send users to github directly for unwanted repoes
+    const ghid = /^https:\/\/github.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
+    if (ghid) {
+        pxt.tickEvent("reportabuse.github");
+        window.open("https://github.com/contact/report-content", "_blank");
+        return;
+    }
+
+    // shared script id section
     let urlInput: HTMLInputElement;
     let reasonInput: HTMLTextAreaElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
@@ -699,7 +721,7 @@ export function showReportAbuseAsync(pubId?: string) {
             urlInput = el.querySelectorAll('input')[0] as HTMLInputElement;
             reasonInput = el.querySelectorAll('textarea')[0] as HTMLTextAreaElement;
             if (pubId)
-                urlInput.value = (shareUrl + pubId);
+                urlInput.value = shareUrl + pubId;
         },
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">

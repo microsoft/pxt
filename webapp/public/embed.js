@@ -7,14 +7,16 @@
     var scripts = [
         "/blb/highlight.js/highlight.pack.js",
         "/blb/bluebird.min.js",
-        "/blb/semantic.js",
         "/blb/marked/marked.min.js",
-        "/blb/target.js",
-        "/blb/pxtembed.js"
     ]
 
     if (typeof jQuery == "undefined")
-        scripts.unshift("/blb/jquery.js")
+        scripts.unshift("/doccdn/jquery.js")
+    if (typeof jQuery == "undefined" || !jQuery.prototype.sidebar)
+        scripts.push("/doccdn/semantic.js")
+    if (!window.pxtTargetBundle)
+        scripts.push("/blb/target.js");
+    scripts.push("/blb/pxtembed.js");
 
     var pxtCallbacks = []
 

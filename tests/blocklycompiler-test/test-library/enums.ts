@@ -31,4 +31,15 @@ namespace userEnums {
     export function userEnumShimBitMask(arg: number) {
         return arg;
     }
+
+    /**
+     * Test enum define block for a hash
+     */
+    //% shim=ENUM_GET
+    //% blockId=enum_user_shim_hash block="%arg"
+    //% enumName="EnumHash" enumMemberName="whatever" enumPromptHint="whatever"  enumInitialMembers="whatever,dontcare"
+    //% enumIsHash=true
+    export function userEnumShimHash(arg: number) {
+        return arg;
+    }
 }

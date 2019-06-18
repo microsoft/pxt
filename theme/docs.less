@@ -69,6 +69,7 @@
         border: 0 !important;
         margin-bottom: 1.275em;
         box-shadow: none;
+        tab-size: 4;
     }
     .mainbody div.codewidget.valid, code.valid{
         background: @docsSegementBackgroundColorValid !important;
@@ -99,7 +100,7 @@
         margin-left: 4em;
         margin-bottom: 1em;
     }
-    code.lang-typescript {
+    code.lang-typescript, code.lang-python {
         overflow-wrap: break-word;
     }
     /* Cards */
@@ -184,6 +185,78 @@
     }
     table tr:nth-child(2n) {
         background-color: #f8f8f8;
+    }
+
+    /* Warning Message Box */
+    .ui.warning.message {
+        padding: 2em;
+    }
+
+    .ui.warning.message > .content:before {
+        content: '\f05a';
+        font-family: Icons;
+        font-size: 1.3em;
+        vertical-align: top;
+    }
+
+    .ui.warning.message > .content > h4 {
+        display: inline;
+        margin-left: 1em;
+        font-weight: 500;
+    }
+
+    /* Alert Message Box */
+     .ui.negative.message {
+        padding: 2em;
+    }
+
+    .ui.negative.message > .content:before {
+        content: '\f071';
+        font-family: Icons;
+        font-size: 1.3em;
+        vertical-align: top;
+    }
+
+    .ui.negative.message > .content > h4 {
+        display: inline;
+        margin-left: 1em;
+        font-weight: 500;
+    }
+
+    /* Tip Message Box */
+    .ui.positive.message {
+        padding: 2em;
+    }
+
+    .ui.positive.message > .content:before {
+        content: '\f058';
+        font-family: Icons;
+        font-size: 1.3em;
+        vertical-align: top;
+    }
+
+    .ui.positive.message > .content > h4 {
+        display: inline;
+        margin-left: 1em;
+        font-weight: 500;
+    }
+
+    /* Hint Message Box */
+    .ui.info.message {
+        padding: 2em;
+    }
+
+    .ui.info.message > .content:before {
+        content: '\f15c';
+        font-family: Icons;
+        font-size: 1.3em;
+        vertical-align: top;
+    }
+
+    .ui.info.message > .content > h4 {
+        display: inline;
+        margin-left: 1em;
+        font-weight: 500;
     }
 }
 
