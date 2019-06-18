@@ -112,6 +112,16 @@ See the micro:bit tutorial gallery https://github.com/Microsoft/pxt-microbit/blo
 
 ### ~
 
+## Tutorials in Context
+
+Tutorials in context are micro-tutorials that run within your current program. They need to be enabled separately. The format is the same as other tutorials.
+
+* (editor maintainer) add a ``recipes: true`` entry in the ``appTheme`` section of your ``pxtarget.json`` editor
+* add a ``/docs/recipes.md`` file that contains the gallery of micro-tutorials
+
+In order to select the proper language (blocks vs JavaScript vs Python), you should add
+a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry for Python tutorials to each code card.
+
 ## Format
 
 The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions: 

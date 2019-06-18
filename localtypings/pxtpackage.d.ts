@@ -1,6 +1,7 @@
 declare namespace pxt {
 
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
         [index: string]: T;
@@ -67,6 +68,7 @@ declare namespace pxt {
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
         skipLocalization?: boolean;
+        experimentalHw?: boolean;
     }
 
     interface PackageExtension {
@@ -127,6 +129,7 @@ declare namespace pxt {
         feedbackUrl?: string;
         responsive?: boolean;
         cardType?: CodeCardType;
+        editor?: CodeCardEditorType;
 
         header?: string;
         any?: number;

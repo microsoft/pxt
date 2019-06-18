@@ -949,6 +949,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (fs.existsSync(hexCache)) {
         hexFiles = fs.readdirSync(hexCache)
             .filter(f => /\.hex$/.test(f))
+            .filter(f => fs.readFileSync(path.join(hexCache, f), { encoding: "utf8" }) != "SKIP")
             .map((f) => `@cdnUrl@/compile/${f}`);
         pxt.log(`hex cache:\n\t${hexFiles.join('\n\t')}`)
     }
@@ -2515,7 +2516,7 @@ class Host
             }
         }
         check(p)
-        if (U.endsWith(filename, ".uf2"))
+        if (U.endsWith(filename, ".uf2") || U.endsWith(filename, ".pxt64"))
             nodeutil.writeFileSync(p, contents, { encoding: "base64" })
         else if (U.endsWith(filename, ".elf"))
             nodeutil.writeFileSync(p, contents, {
@@ -2838,6 +2839,29 @@ export function timeAsync() {
         .then(loop)
         .then(loop)
         .then(() => console.log("MIN", min))
+}
+
+export function exportCppAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir();
+    return mainPkg.loadAsync()
+        .then(() => {
+            setBuildEngine();
+            let target = mainPkg.getTargetOptions()
+            if (target.hasHex)
+                target.isNative = true
+            target.keepCppFiles = true
+            return mainPkg.getCompileOptionsAsync(target)
+        })
+        .then(opts => {
+            for (let s of Object.keys(opts.extinfo.extensionFiles)) {
+                let s2 = s.replace("/pxtapp/", "")
+                if (s2 == s) continue
+                if (s2 == "main.cpp") continue
+                const trg = path.join(parsed.args[0], s2)
+                nodeutil.mkdirP(path.dirname(trg))
+                fs.writeFileSync(trg, opts.extinfo.extensionFiles[s])
+            }
+        })
 }
 
 export function formatAsync(parsed: commandParser.ParsedCommand) {
@@ -3696,20 +3720,9 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.ast = true
             }
 
-            // this is suboptimal, but we need apisInfo for the python converter
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 pxt.log("pre-compiling apisInfo for Python")
-                const opts2 = U.clone(opts)
-                opts2.ast = true
-                opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                opts2.noEmit = true
-                // remove previously converted .ts files, so they don't end up in apisinfo
-                for (let f of opts2.sourceFiles) {
-                    if (U.endsWith(f, ".py"))
-                        opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
-                }
-                const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(res.ast, opts2.jres)
+                pxt.prepPythonOptions(opts)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
@@ -5892,6 +5905,13 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             debug: { description: "Keeps the browser open to debug tests" }
         }
     }, blockTestsAsync);
+
+    p.defineCommand({
+        name: "exportcpp",
+        help: "Export all generated C++ files to given directory",
+        advanced: true,
+        argString: "<target-directory>"
+    }, exportCppAsync);
 
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {

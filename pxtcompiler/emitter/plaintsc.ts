@@ -40,8 +40,10 @@ namespace ts.pxtc {
             output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
         }
 
+        let nl = sys ? sys.newLine : "\n"
+
         const category = DiagnosticCategory[diagnostic.category].toLowerCase();
-        output += `${category} TS${diagnostic.code}: ${flattenDiagnosticMessageText(diagnostic.messageText, sys.newLine)}${sys.newLine}`;
+        output += `${category} TS${diagnostic.code}: ${flattenDiagnosticMessageText(diagnostic.messageText, nl)}${nl}`;
 
         return output
     }

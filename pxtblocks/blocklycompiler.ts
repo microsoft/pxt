@@ -420,7 +420,7 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
-                            if (call.attrs.shim === "ENUM_GET") return;
+                            if (call.attrs.shim === "ENUM_GET" || call.attrs.shim === "KIND_GET") return;
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
@@ -877,6 +877,7 @@ namespace pxt.blocks {
         renames: RenameMap;
         stats: pxt.Map<number>;
         enums: pxtc.EnumInfo[];
+        kinds: pxtc.KindInfo[];
         idToScope: pxt.Map<Scope>;
         blockDeclarations: pxt.Map<VarInfo[]>;
         blocksInfo: pxtc.BlocksInfo;
@@ -905,6 +906,7 @@ namespace pxt.blocks {
             },
             stats: {},
             enums: [],
+            kinds: [],
             idToScope: {},
             blockDeclarations: {},
             allVariables: [],
@@ -1157,6 +1159,10 @@ namespace pxt.blocks {
             const enumName = func.attrs.enumName;
             const enumMember = b.getFieldValue("MEMBER").replace(/^\d+/, "");
             return H.mkPropertyAccess(enumMember, mkText(enumName));
+        }
+        else if (func.attrs.shim === "KIND_GET") {
+            const info = e.kinds.filter(k => k.blockId === func.attrs.blockId)[0];
+            return H.mkPropertyAccess(b.getFieldValue("MEMBER"), mkText(info.name));
         }
         else {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
@@ -1482,6 +1488,10 @@ namespace pxt.blocks {
                 Object.keys(blockInfo.enumsByName).forEach(k => e.enums.push(blockInfo.enumsByName[k]));
             }
 
+            if (blockInfo.kindsByName) {
+                Object.keys(blockInfo.kindsByName).forEach(k => e.kinds.push(blockInfo.kindsByName[k]));
+            }
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
@@ -1627,6 +1637,20 @@ namespace pxt.blocks {
                         mkText(`enum ${info.name}`),
                         mkBlock([declarations])
                     ]));
+                }
+            });
+
+            e.kinds.forEach(info => {
+                const models = w.getVariablesOfType("KIND_" + info.name);
+                if (models && models.length) {
+                    const userDefined = models.map(m => m.name).filter(n => info.initialMembers.indexOf(n) === -1);
+
+                    if (userDefined.length) {
+                        stmtsEnums.push(mkGroup([
+                            mkText(`namespace ${info.name}`),
+                            mkBlock(userDefined.map(varName => mkStmt(mkText(`export const ${varName} = ${info.name}.${info.createFunctionName}()`))))
+                        ]));
+                    }
                 }
             });
 
