@@ -332,6 +332,7 @@ declare namespace pxt {
         spriteWizard?: boolean; // Sprite wizard experimental feature
         experimentalHw?: boolean; // enable experimental hardware
         recipes?: boolean; // inlined tutorials
+        checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
     }
 
     interface SocialOptions {
