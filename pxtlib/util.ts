@@ -27,6 +27,7 @@ namespace ts.pxtc.Util {
         static ERROR_MESSAGE = "OperationCancelled";
         startOperation() {
             this.pending = true;
+            return this
         }
 
         isRunning() {
