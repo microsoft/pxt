@@ -1,18 +1,16 @@
 body#root {
-    font-size: 12pt;    
+    font-size: 1rem;  
+    background-color: white;  
 }
 
 #docs ul {
     padding: 0rem;
 }
 
-#docs ul li {
-    list-style-type: none;
-}
-
 #docs ul li:before {
-  margin: 0 1em; 
+  margin-right: .5rem;
   content: "\25CF";
+  color: #4183c4;
 }
 
 #docs ul li.checked:before {
@@ -36,6 +34,10 @@ pre {
     line-height: 1.45;
     background-color: #f7f7f7;
     border-radius: 3px;
+}
+
+#docs-type {
+    display:flex;
 }
 
 code {
@@ -115,11 +117,182 @@ code.lang-spy
 
 /* Limit width of text so that it's readable
  */
- 
-.ui.text p,
-.ui.text li,
-.ui.container.mainbody {
-    max-width: 1100px !important;
+.ui.text li {
+    transition: width .5s;
+    transition-timing-function: ease;
+}
+
+.ui.grid.mainbody {
+    /*max-width: 1100px !important;*/
+    margin-left: 1rem !important;
+    transition: width .5s;
+    transition-timing-function: ease;
+}
+
+.ui.grid.mainbody.full-width, .ui.vertical.footer.full-width {
+    width: 100vw;
+    padding-right: 0rem;
+    margin-left:0px !important;
+}
+
+.ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
+    width: 80vw;
+    margin-left: 1rem;
+}
+
+.ui.grid>.column:not(.row), .ui.grid>.row>.column {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+#togglesidebar > i.icon {
+    transition: transform .2s ease;
+}
+
+#togglesidebar > i.icon.content {
+    transform: rotate(0deg);
+}
+
+#togglesidebar > i.icon.close {
+    transform: rotate(90deg);
+}
+
+.ui.vertical.footer {
+    background-color: #292A33;
+}
+
+.ui.vertical.footer .item {
+    color: white;
+    font-size:1rem !important;
+    font-weight: 500;
+}
+
+.ui.vertical.footer a.item {
+    border-right: 1px solid #ffffff30;
+    line-height: 1rem !important;
+    vertical-align: middle;
+}
+
+.poweredBy > span.item {
+    margin-right:.5rem;
+}
+
+.docnav {
+    display: flex;
+    align-items: center;
+    height: 4rem;
+    background-color: #F5F5FA;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: -16px;
+}
+
+.docnav > a.item {
+    margin-right: 2rem;
+}
+
+.docnav .divider {
+    background-color: #D5DBED;
+    width: 1px;
+    height: 30px;
+    margin-right: 1rem;
+}
+
+#mobile-search-icon {
+    display: none;
+}
+
+@media (min-width: 320px) and (max-width: 970px) {
+.docnav {
+    flex-wrap: wrap;
+    height: 9rem;
+    padding-left: 2rem;
+}
+#tocsearch2 {
+    display: none;
+}
+
+#docsMobile {
+    padding-top: 4rem;
+}
+
+.mobile-menu {
+    display:block !important;
+}
+
+#sticky-column {
+    display:none !important;
+}
+
+#mobile-search-icon {
+    display: inline;
+}
+#docs-header {
+    position: fixed;
+    top: 0;
+    z-index: 1;
+    width: 100%;
+}
+#docs .topspace {
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+    background-color: #6c196c;
+    top: 48px;
+    height: auto;
+    min-height: 48px;
+}
+
+#docs .ui.card>.image .ui.cardimage {
+    height: 14.5rem;
+}
+
+#docs .ui.card .content {
+    padding-top: 25px;
+    padding-right: 0;
+}
+
+#docs-type {
+    width: 100%;
+    position: fixed;
+    top:48px;
+    background-color: #4c204c;
+    height: auto;
+    min-height: 48px;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    display:none;
+}
+
+#docs .ui.card {
+    flex-flow: column;
+    height: 20rem;
+}
+
+#docs .ui.card {
+    width: 100%;
+}
+
+#docs .ui.card > .image {
+    width: 100%;
+}
+
+#docs .ui.card > .image > div {
+    min-height: 14em !important;
+}
+
+.ui.grid.mainbody {
+    margin-top: 5rem;
+    padding-left: 1rem;
+    padding-right: 1rem !important;
+}
+#docsMobile {
+    width: 70%;
+}
+.ui.visible.wide.left.sidebar~.fixed, .ui.visible.wide.left.sidebar~.pusher {
+    -webkit-transform: translate3d(70vw,0,0);
+    transform: translate3d(70vw,0,0);
+}
 }
 
 /* wrap cards header */
@@ -199,8 +372,12 @@ svg {
     top: 0;
     right: 0;
     left: 0;
-    bottom: 0;
+    bottom: 4rem;
     overflow-y: auto;
+}
+
+.article-inner {
+    overflow-x: hidden;
 }
 
 .ui.vertical.menu .menu .item {
@@ -347,6 +524,19 @@ svg {
     .ui.vertical.segment.footer {
         margin-top: 4rem;
     }
+
+}
+
+@media only screen and (max-width: 1440px) {
+    #docs .ui.card {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+    #docs .ui.card {
+        width: 100%;
+    }
 }
 
 @media only screen and (min-width: 1145px) {
@@ -370,6 +560,22 @@ print only stuff
 }
 
 @media only print {
+
+    #root {
+        position: relative;
+    }
+    #sticky-column, #printbtn{
+        display:none !important;
+    }
+
+    h2 {
+        page-break-before: avoid
+    }
+
+    #docs .ui.card{
+        width: 100%;
+    }
+
     .pusher .article {
         left: 0;
         position: relative;
@@ -390,5 +596,8 @@ print only stuff
     }
     body.pushable {
         background: #fff !important;        
-    }
+    } 
+
+   
 }
+ 

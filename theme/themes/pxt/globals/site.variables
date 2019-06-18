@@ -7,6 +7,8 @@
 
 @primaryColor: @pink;
 @secondaryColor: @grey;
+@docsPrimaryColor    : #6C196C;
+@docsAccentColor     : #FC6483;
 
 @red:#A80000;
 @orange:#D83B01;
@@ -37,7 +39,7 @@
 @importGoogleFonts: false;
 
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
-@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Times New Roman", serif;
 
 @emSize      : 18px;
 @fontSize    : 18px;

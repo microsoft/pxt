@@ -120,6 +120,23 @@ Message boxes bring special attention to an idea or to something that the user m
 ### ~
 ```
 
+### Hero
+
+### ~hero
+
+# Hero Title 
+A brief description of the page
+
+### ~
+```
+### ~hero
+
+# Hero Title
+[brief description]
+
+### ~
+```
+
 ## Buttons
 
 As a navigation aid, the button macro is used to move to another page within the target's document tree.
