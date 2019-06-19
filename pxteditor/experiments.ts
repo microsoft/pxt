@@ -114,8 +114,8 @@ namespace pxt.editor.experiments {
             },
             {
                 id: "snippetBuilder",
-                name: lf("Sprite Wizard"),
-                description: lf("Make a sprite using the new Sprite Wizard")
+                name: lf("Snippet Builder"),
+                description: lf("Try out the new snippet dialogs.")
             },
             {
                 id: "experimentalHw",
