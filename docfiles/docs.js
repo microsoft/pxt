@@ -63,6 +63,32 @@ function scrollActiveHeaderIntoView() {
 }
 
 function setupSidebar() {
+
+    var tocMenu = document.querySelectorAll('#docsMobile div.ui.list.menuContainer.toc > div.item');
+    tocMenu.forEach(function(item) {
+        item.className = 'ui accordion item visible';
+        item.setAttribute('role','tree');
+
+        var icon = item.firstElementChild;
+        icon.className = 'dropdown icon chevron right';
+        var anchor = icon.nextElementSibling;
+        anchor.setAttribute('role','treeitem');
+        anchor.setAttribute('aria-expanded', 'false');
+        var menu = anchor.nextElementSibling;
+        menu.className = 'content';
+        var menuChildren = Array.prototype.slice.call(menu.children)
+        menuChildren.forEach(function(el) {
+            if (el.tagName == 'DIV'){
+                el.setAttribute('role','');
+                el.className = 'accordion item visible';
+            }
+        });
+        var wrapper = document.createElement('div');
+        wrapper.className = 'title';
+        wrapper.append(icon);
+        wrapper.append(anchor);
+        item.insertBefore(wrapper, menu);
+    });
     // do not use pxt.appTarget in this function
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
@@ -70,18 +96,28 @@ function setupSidebar() {
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
+                document.querySelector('#togglesidebar > i').classList.remove('content');
+                document.querySelector('#togglesidebar > i').classList.add('close');
+                document.querySelector("#docs .ui.grid.mainbody").classList.remove('full-width');
+                document.querySelector("#docs .ui.grid.mainbody").classList.add('content-width');
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
                 scrollActiveHeaderIntoView();
             },
             onHidden: function () {
+                document.querySelector('#togglesidebar > i').classList.remove('close');
+                document.querySelector('#togglesidebar > i').classList.add('content');
+                document.querySelector("#docs .ui.grid.mainbody").classList.remove('content-width');
+                document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width');
                 togglesidebar.setAttribute("aria-expanded", "false");
             },
-            context: $('#docs')
+            context: $('#maincontent'),
+            transition: 'push',
+            mobileTransition: 'push'
         })
-        .sidebar('setting', 'transition', 'overlay')
         .sidebar(
             'attach events', '#togglesidebar'
-        );
+        )
+        
 
     $('.ui.dropdown')
         .dropdown();
@@ -231,6 +267,11 @@ function setupBlocklyAsync() {
                 })
         })
     }
+
+    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.docMenu && pxt.appTarget.appTheme.docMenu.length !== 0) {
+        setupMenu(pxt.appTarget.appTheme.docMenu);
+    }
+
     return promise;
 }
 
@@ -271,9 +312,104 @@ function responsiveResize(){
       });
 }
 
+function setElementsVisibility(){
+    var breadcrumb = document.querySelector('#breadcrumb-container');
+    var printBtn = document.querySelector('#printbtn');
+    var stickyColumn = document.querySelector('#sticky-column');
+
+    if (document.querySelector(".ui.hero") !== null){
+        printBtn.style.display = 'none';
+    }
+    if (breadcrumb.children.length === 0){
+        breadcrumb.style.display = 'none';
+    }
+    
+    setStickyColumn();
+    
+    if (stickyColumn.children.length === 0){
+        stickyColumn.style.display = 'none';
+        document.querySelector('#content-column').classList.replace('ten', 'fourteen');
+    } else {
+        stickyColumn.style.display = 'block';
+        document.querySelector('#content-column').classList.replace('fourteen', 'ten');
+    }
+    if (stickyColumn.children.length !== 0 && document.querySelector(".ui.hero") !== null) {
+        stickyColumn.firstElementChild.style.top = '21rem';
+    }
+}
+
+function setDocumentationMode(type) {
+    if (type === 0){
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('content-width');
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('full-width');
+    } else {
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('full-width');
+        document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('content-width');
+    }
+}
+
+function setupMenu(menu) {   
+    var docsMenu = document.querySelector('#docs-type');
+    menu.forEach(function(item) {
+        var menuItem = document.createElement('a');
+        menuItem.rel = 'noopener';
+        menuItem.target = '_self';
+        menuItem.className = 'item';
+        menuItem.href = item.path;
+        menuItem.textContent = item.name;
+        docsMenu.append(menuItem);
+    });
+
+    var docnav = document.querySelector('.docnav');
+    menu.forEach(function(item) {
+        var menuItem = document.createElement('a');
+        menuItem.rel = 'noopener';
+        menuItem.target = '_self';
+        menuItem.className = 'item';
+        menuItem.href = item.path;
+        menuItem.textContent = item.name;
+        docnav.append(menuItem);
+    });
+
+    var mobileMenu = document.querySelector('#docsMobile .activities');
+    menu.forEach(function(item) {
+        var menuItem = document.createElement('a');
+        menuItem.rel = 'noopener';
+        menuItem.target = '_self';
+        menuItem.className = 'item';
+        menuItem.href = item.path;
+        menuItem.textContent = item.name;
+        mobileMenu.append(menuItem);
+    });
+}
+
+function setStickyColumn() {
+    var headings = document.querySelectorAll('.ui.text h2');
+    if (headings.length > 2){
+    var stickyColumn = document.querySelector('#sticky-column');
+    var linkList = document.createElement('ul');
+    var title = document.createElement('h3');
+    title.textContent = "Content";
+    title.className = 'title';
+    linkList.appendChild(title);
+    headings.forEach(function(heading){
+        var item = document.createElement('a');
+        item.textContent = heading.textContent;
+        item.onclick = function(){
+            heading.scrollIntoView({ 
+                behavior: 'smooth' 
+              });
+        }
+        linkList.appendChild(item);
+    });
+    stickyColumn.appendChild(linkList);
+    }
+}
+
 $(document).ready(function () {
     setupSidebar();
     setupSemantic();
     renderSnippets();
     responsiveResize();
+    setElementsVisibility();
 });

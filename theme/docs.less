@@ -4,13 +4,21 @@
 
 /* Background and foreground */
 @docsBackgroundColor: white;
-@docsTextColor: #505473;
+@docsTextColor: #292A33;
 @docsLineHeight: 1.7;
-@docsPrimaryColorLighter: fadeout(@primaryColor, 95%);
-@docsPrimaryColorHover: fadeout(@primaryColor, 90%);
+@docsPrimaryColorDarker: darken(@docsPrimaryColor, 7%);
+@docsPrimaryColorLight: fadeout(@docsPrimaryColor, 80%);
+@docsPrimaryColorLighter: fadeout(@docsPrimaryColor, 95%);
+@docsPrimaryColorHover: fadeout(@docsPrimaryColor, 90%);
+@docsSecondaryColor: fadeout(@docsPrimaryColor, 10%);
+@docsHeroColor: fadeout(@docsPrimaryColor, 7%);
 
 /* Text color */
-@docsHeadingColor: #1A1C33;
+@docsHeadingColor: #292A33;
+
+/* Text Font */
+@docsReadingText: 'Helvetica', 'Helvetica Neue', 'Arial', Sans-serif; //'Times New Roman', Serif;
+@docsPageFont: 'Helvetica', 'Helvetica Neue', 'Arial', Sans-serif;
 
 /* Link color */
 @docsLinkColor: #4183c4;
@@ -28,19 +36,22 @@
 @docsCardImageBackgroundColor: rgba(0,0,0,.05);
 
 @docsCardBorderColor: #e9eef2;
-@docsCardHoverBorderColor: #1dacf4;
+@docsCardHoverBorderColor: #D5DBED;
 
 /*Docs Header*/
 #docs-header {
     color: white;
-    padding-left: 0px;
-    padding-right: 1rem;
+    padding-left: 0;
+    padding-right: 0;
     padding-top: 0;
     padding-bottom: 0;
-    background-color: @primaryColor;
+    background-color: @docsPrimaryColorDarker;
     margin-top: 0;
     margin-bottom: 0;
-    &.ui.menu {border-radius: 0px; }
+    div.menu {
+        align-items: center;
+    }
+    &.ui.menu {border-radius: 0px; height: 48px; }
     .left.floated {
         display: flex;
         align-items: center;
@@ -51,22 +62,46 @@
     img {
         margin-right:7px
     } 
-    .ui.input input {
+    #docs-type {
         font-family: @docsPageFont;
     }
-}
-
-#docs-header + div {
-   background-color: @primaryColor; 
+    .ui.input input {
+        font-family: @docsPageFont;
+        height: 36px;
+        border-radius: 2px;
+        width: 170px;
+    }
 }
 
 #togglesidebar + div.menu > a { 
     height:100%;
 }
 
+#togglesidebar {
+    padding:0px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-right: 0px !important;
+    background-color: white;
+    color: @docsPrimaryColor;
+    border-radius: 0 0 0 0;
+}
+
+.divider-pipe {
+    width: 2px;
+    height: 36px;
+    background-color: hsla(0, 0%, 100%, 0.2);
+    margin-right: 1rem;
+}
+
+.divider-pipe + div {
+    font-weight: 600;
+    font-family: sans-serif;
+}
+
 /*Search input*/
 .search.link.icon {
-    color: @primaryColor;
+    color: @docsPrimaryColor;
 }
 
 #docs {
@@ -80,13 +115,30 @@
         -webkit-touch-callout: none;
         -webkit-font-smoothing: antialiased;
     }
+    hr {
+        margin-top: 1rem;
+        border: 1px solid @docsPrimaryColorLight;
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
     h1, h2, h3, h4, h5, h6 {
         font-family: @docsHeaderFont;
         color: @docsHeadingColor;
-        font-weight: 400;
+        font-weight: 600;
+        font-size: 2rem;
+    }
+    h2 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin-top: 5rem;
+        &:not(:first-of-type) {
+            padding-top: 60px;
+            border-top: 2px solid @docsCardHoverBorderColor;
+        }
     }
     h1 {
-        margin-bottom: .85em;
+        margin-bottom: 0.5em;
+        font-size: 3.5rem;
     }
     .ui.menu, .ui.list .list>.item .header, .ui.list>.item .header, .ui.card>.content>.header, .ui.cards>.card>.content>.header {
        font-family: @docsPageFont;
@@ -96,6 +148,10 @@
         color: @docsTextColor;
         line-height: @docsLineHeight;
     }
+    ul li {
+        list-style-type: none;
+    }
+    p { font-family: @docsReadingText }
     /* Link color */
     a {
         color: @docsLinkColor;
@@ -108,7 +164,78 @@
         -webkit-font-smoothing: auto !important;
     }
     .topspace {
-        padding-top:18px;
+        height: 3.05rem;
+        display: flex;
+        align-items: center;
+        background-color: @docsPrimaryColor;
+    }
+    .ui.centered.image, .ui.centered.images {
+        margin-left: 0px;
+        margin-right: auto;
+    }
+    
+    #docsMobile > div > div.divider {
+        border-bottom: 1px solid #0808081a;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    #sticky-column ul {
+        margin-left: 5rem;
+        padding: 2rem;
+        position: sticky;
+        top: 3rem;
+        right: 11rem;
+        display: flex;
+        flex-flow: column;
+        background-color: white;
+        border: 1px solid #bdbcbc;
+        border-radius: 6px;
+        overflow-y: overlay;
+        overflow-wrap: break-word;
+        a {
+            line-height: 24px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        a.title {
+            color: white;
+        }
+        h3.title {
+            font-size: 1.28rem;
+            color: @docsPrimaryColorDarker;
+        }
+    }
+
+    .ui.hero {
+        background-color: @docsHeroColor;
+        background-image: data-uri('../docs/static/logo/icons/pattern2.png');
+        margin-top: -32px;
+        width: 105vw;
+        margin-left: -12vw;
+        height: 240px;
+        padding: 50px;
+        padding-left: 14%;
+        background-position-x: 38px;
+        background-position-y: -16px;
+        background-blend-mode: soft-light;
+        .main-description {
+            padding-left: 1rem;
+            h1 { 
+                font-size: 4rem;
+                font-weight: 600;
+                margin-bottom: 0px;
+                color: white;
+                text-shadow: 1px 1px @docsPrimaryColorDarker;
+            }
+            p { 
+                font-size: 24px;
+                color: white;
+                font-family: helvetica;
+                font-weight: 600;
+                text-shadow: 1px 1px @docsPrimaryColorDarker;
+            }
+        }
     }
 
     /* Code segments */
@@ -157,35 +284,80 @@
         padding: 0 !important;
         background: @docsCardBackgroundColor;
         color: @docsCardColor;
-        border-radius: 0.5rem !important;
-        border: 2px solid @docsCardBorderColor;
+        border-radius: 0%;
         text-decoration: none; /* Remove underline applied by a link */
+        flex-flow: row;
+        align-items: flex-start;
+        height: 8.6rem;
+        border: none;
+        font-family: 'Times New Roman';
+        flex-grow: 2;
+        flex-basis: 425px;
+        width: 425px;
         > .image {
             background: @docsCardImageBackgroundColor;
+            background-size: contain;
+            width: 15rem;
+            .ui.cardimage {
+                height: 8.5rem;
+            }
+        }
+        .ui.imagewrapper {
+            overflow: hidden;
+            border-top-left-radius: 0rem;
+            border-top-right-radius: 0rem;
         }
         .header {
             color: @docsCardHeaderColor;
+            font-size:20px;
+            text-transform: uppercase;
+            word-break: break-word;
+            &:after {
+                content: "";
+                width: 40px;
+                height: 4px;
+                background-color: @docsCardHoverBorderColor; 
+                display: block;
+                margin-top: .5rem;
+                transition: width .4s ease-out;
+            }
+        }
+        .content {
+            padding-top: 0px;
+            padding-right: 0px;
         }
         .content .ui.description {
             color: @docsCardContentColor;
         }
     }
     .ui.card:hover {
-        border: 2px solid @docsCardHoverBorderColor;
+        border: 0px solid @docsCardHoverBorderColor;
+        .header:after {
+            background-color: @docsAccentColor;
+            width: 60px;
+        }
+        .ui.imagewrapper:after {
+            content: "";
+            width: 12px;
+            height: 100%;
+            background-color:  @docsAccentColor;;
+            position: absolute;
+            top: 0px;
+        }
     }
 
     /* Breadcrumb */
     .ui.breadcrumb {
         .divider {
-        color: @primaryColor;
+        color: whitesmoke;
         margin-right: .25rem;
         margin-right: .25rem;
         }
         a {
-            color: @docsHeadingColor;
+            color: whitesmoke;
         }
         a.active {
-            color: @primaryColor;
+            color: white;
         }
     }
 
@@ -200,7 +372,7 @@
         margin-left: 19px;
     }
     .toc .inverted .item a.header.active {
-        color: @primaryColor !important;
+        color: @docsPrimaryColor !important;
         font-weight: normal;
     }
     .toc a.item {
@@ -257,7 +429,7 @@
     div.menu > a.item > i:hover {
         width: 26px;
         height: 26px;
-        background-color: @primaryColor;
+        background-color: @docsPrimaryColor;
         padding-top: 3px;
         padding-left: 0px;
     }
@@ -273,7 +445,7 @@
     /* Edit Icon */
     div.menu > a.item > i.edit.icon {
         background: no-repeat center;
-        .icon-add-fill('../docs/static/logo/icons/editor.svg', @primaryColor);
+        .icon-add-fill('../docs/static/logo/icons/editor.svg', @docsPrimaryColor);
     }
 
     div.menu > a.item > i.edit.icon:before {
@@ -283,7 +455,7 @@
     /* Download Icon */
     div.menu > a.item > i.download.icon {
         background: no-repeat center;
-        .icon-add-fill('../docs/static/logo/icons/download.svg', @primaryColor);
+        .icon-add-fill('../docs/static/logo/icons/download.svg', @docsPrimaryColor);
     }
 
     div.menu > a.item > i.download.icon:before {
@@ -293,13 +465,13 @@
     /* Javascript Icon */
     div.menu > a.item > i.icon.xicon.js {
         background: no-repeat center;
-        border: 1px solid @primaryColor;
-        .icon-add-fill('../docs/static/logo/icons/javascript-v2.svg', @primaryColor);
+        border: 1px solid @docsPrimaryColor;
+        .icon-add-fill('../docs/static/logo/icons/javascript-v2.svg', @docsPrimaryColor);
     }
 
     div.menu > a.item > i.icon.xicon.js:hover {
         background: no-repeat center;
-        background-color: @primaryColor;
+        background-color: @docsPrimaryColor;
         background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/javascript-v1.svg')
     }
 
@@ -319,7 +491,7 @@
     #printbtn i.icon.print {
         background: no-repeat center;
         background-size: contain;
-        .icon-add-fill('../docs/static/logo/icons/print.svg', @primaryColor);
+        .icon-add-fill('../docs/static/logo/icons/print.svg', @docsPrimaryColor);
         height: 1.3em;
         width: 1.3em;
     }
@@ -331,13 +503,13 @@
     /* Python Icon */
     div.menu > a.item > i.icon.xicon.python {
         background: no-repeat center;
-        border: 1px solid @primaryColor;
-        .icon-add-fill('../docs/static/logo/icons/python-v2.svg', @primaryColor);
+        border: 1px solid @docsPrimaryColor;
+        .icon-add-fill('../docs/static/logo/icons/python-v2.svg', @docsPrimaryColor);
     }
 
     div.menu > a.item > i.icon.xicon.python:hover {
         background: no-repeat center;
-        background-color: @primaryColor;
+        background-color: @docsPrimaryColor;
         background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/python-v1.svg')
     }
 
@@ -348,13 +520,13 @@
     /* Blocks Icon */
     div.menu > a.item > i.icon.xicon.blocks {
         background: no-repeat center;
-        border: 1px solid @primaryColor;
-        .icon-add-fill('../docs/static/logo/icons/blocks-v2.svg', @primaryColor);
+        border: 1px solid @docsPrimaryColor;
+        .icon-add-fill('../docs/static/logo/icons/blocks-v2.svg', @docsPrimaryColor);
     }
 
     div.menu > a.item > i.icon.xicon.blocks:hover {
         background: no-repeat center;
-        background-color: @primaryColor;
+        background-color: @docsPrimaryColor;
         background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/blocks-v1.svg')
     }
 
@@ -365,13 +537,13 @@
      /* Play in Emulator Icon */
     div.menu > a.item > i.play.icon{ 
         background: no-repeat center;
-        border: 1px solid @primaryColor;
-        .icon-add-fill('../docs/static/logo/icons/emulator-v2.svg', @primaryColor);
+        border: 1px solid @docsPrimaryColor;
+        .icon-add-fill('../docs/static/logo/icons/emulator-v2.svg', @docsPrimaryColor);
     }
 
     div.menu > a.item > i.play.icon:hover {
         background: no-repeat center;
-        background-color: @primaryColor;
+        background-color: @docsPrimaryColor;
         background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/emulator-v1.svg')
     }
 
@@ -397,29 +569,29 @@
         margin-left: -4px;
     }
     .ui.inverted.menu .active.item {
-        color: @primaryColor !important;
+        color: @docsPrimaryColor !important;
     }
     .menuContainer .chevron.right.icon {
         float:left;
         margin-top:1px;
-        color: @primaryColor;
+        color: @docsPrimaryColor;
         font-family: Icons;
     }
     .menuContainer .dropdown.icon.chevron.down {
         float: left;
-        color: @primaryColor;
+        color: @docsPrimaryColor;
     }
 
     .menuContainer .chevron.right.icon{
         float:left;
         margin-top:1px;
-        color: @primaryColor;
+        color: @docsPrimaryColor;
         font-family: Icons;
     }
 
     .menuContainer .dropdown.icon.chevron.down{
         float: left;
-        color: @primaryColor;
+        color: @docsPrimaryColor;
     }
 
     /* Message Boxes */
@@ -460,7 +632,7 @@
         content: "\f078";
         font-family: Icons;
         margin-right: 6px;
-        color: @primaryColor;
+        color: @docsPrimaryColor;
         transform: rotate(-90deg);
     }
     .header.active + .menu {
@@ -477,8 +649,15 @@
     .ui.accordion .title {
         margin-left: 10px;    
     }
-    .ui.accordion  div.content a.item { 
-        padding-left: 65px !important;
+
+    .ui.accordion  div.content > a.item {
+        margin-left: -0.6rem;
+        padding-left: 95px!important;
+    }
+
+    .ui.accordion  div.content > div > div.content > a.item {
+        padding-left: 98px !important;
+        margin-left: -3rem;
     }
 
     .ui.accordion  div.content div.item { 
@@ -494,7 +673,11 @@
     }
 
     .ui.breadcrumb:first-child {
-        margin-top: 20px;
+        margin-top: 0px;
+    }
+
+    .message p {
+        margin-left: 3rem;
     }
 
     /* Warning Message Box */
@@ -568,10 +751,20 @@
         margin-left: 1em;
         font-weight: 500;
     }
+
+    .pusher .article {
+        left: -260px;
+    }
 }
 
 #docsMobile {
     background-color: @backgroundGrey !important;
+    div.activities {
+        a:hover { font-weight: 600; color: @docsPrimaryColorDarker !important;}
+        .item {
+            padding-left: 2rem;
+        }
+    }
     .item {
         color: black;
         line-height: 1.16666667em;
@@ -582,9 +775,12 @@
     }
     .ui.list.menuContainer {
         color: black;
+        padding-top:1rem;
+        padding-bottom:1rem;
         a.item {
             font-weight: normal;
-            padding: 12px 15px !important;
+            padding: .96rem 1.5rem !important;
+            padding-left: 2.1rem !important;
         }
         a.item:hover {
         text-decoration: underline;
@@ -607,7 +803,7 @@
             font-weight: 600;
         }
         .active.item, .header.active {
-            color: @primaryColor !important;
+            color: @docsPrimaryColor !important;
         }
         .header {
             color: black !important;
@@ -617,7 +813,7 @@
 
         div.item > div.menu > a.item.active:before {
             content: "\f078";
-            color: @primaryColor;
+            color: @docsPrimaryColor;
             font-family: Icons;
             margin-right: 6px;
             transform: rotate(-90deg);
@@ -628,12 +824,12 @@
         .chevron.right.icon {
             float:left;
             margin-top:1px;
-            color: @primaryColor;
+            color: @docsPrimaryColor;
             font-family: Icons;
         }
         .dropdown.icon.chevron.down {
             float: left;
-            color: @primaryColor;
+            color: @docsPrimaryColor;
         }
 
          /* Accordion */
@@ -646,8 +842,15 @@
         .ui.accordion .title {
             margin-left: 10px;
         }
-        .ui.accordion  div.content a.item {
-            padding-left: 65px !important;
+
+        .ui.accordion  div.content > a.item {
+            margin-left: -1rem;
+            padding-left: 101px!important;
+        }
+    
+        .ui.accordion  div.content > div > div.content > a.item {
+            padding-left: 98px !important;
+            margin-left: -3rem;
         }
 
         .ui.accordion  div.content div.item { 
@@ -683,7 +886,7 @@
 
 .footer {
     > .container {
-        padding: 3em 0;
+        padding: 6em 0;
     }
     .poweredBy a {
         display: inline-block;
