@@ -972,12 +972,18 @@ namespace pxt.BrowserUtils {
     }
 
     // Keep these helpers unified with pxtsim/runtime.ts
-    export function containsClass(el: SVGElement | HTMLElement, cls: string) {
-        if (el.classList) {
-            return el.classList.contains(cls);
-        } else {
-            const classes = (el.className + "").split(/\s+/) as string[];
-            return !(classes.indexOf(cls) < 0)
+    export function containsClass(el: SVGElement | HTMLElement, classes: string) {
+        return classes
+            .split(/\s+/)
+            .every(cls => containsSingleClass(el, cls));
+
+        function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                return el.classList.contains(cls);
+            } else {
+                const classes = (el.className + "").split(/\s+/);
+                return !(classes.indexOf(cls) < 0);
+            }
         }
     }
 
@@ -990,7 +996,7 @@ namespace pxt.BrowserUtils {
             if (el.classList) {
                 el.classList.add(cls);
             } else {
-                const classes = (el.className + "").split(/\s+/) as string[];
+                const classes = (el.className + "").split(/\s+/);
                 if (classes.indexOf(cls) < 0) {
                     el.className.baseVal += " " + cls;
                 }
