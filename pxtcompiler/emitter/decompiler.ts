@@ -1474,13 +1474,20 @@ ${output}</xml>`;
                 r.inputs = [getDraggableVariableBlock("VAR", renamed)];
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
-                    const ex = mkExpr("math_arithmetic");
-                    ex.fields = [getField("OP", "MINUS")];
-                    ex.inputs = [
-                        getValue("A", condition.right, numberType),
-                        getValue("B", 1, numberType)
-                    ];
-                    r.inputs.push(mkValue("TO", ex, wholeNumberType));
+                    const unwrappedRightSide = unwrapNode(condition.right);
+                    if (unwrappedRightSide.kind === SK.NumericLiteral) {
+                        const decrementedValue = parseFloat((unwrappedRightSide as LiteralExpression).text) - 1;
+                        const valueField = getNumericLiteral(decrementedValue + "");
+                        r.inputs.push(mkValue("TO", valueField, wholeNumberType));
+                    } else {
+                        const ex = mkExpr("math_arithmetic");
+                        ex.fields = [getField("OP", "MINUS")];
+                        ex.inputs = [
+                            getValue("A", unwrappedRightSide, numberType),
+                            getValue("B", 1, numberType)
+                        ];
+                        r.inputs.push(mkValue("TO", ex, wholeNumberType));
+                    }
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
                     r.inputs.push(getValue("TO", condition.right, wholeNumberType));

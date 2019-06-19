@@ -19,6 +19,7 @@ namespace pxsim {
         localizedStrings?: Map<string>;
         version?: string;
         clickTrigger?: boolean;
+        breakOnStart?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {

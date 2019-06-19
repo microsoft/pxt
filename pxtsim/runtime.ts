@@ -713,7 +713,7 @@ namespace pxsim {
             let entryPoint: LabelFn;
             let pxtrt = pxsim.pxtrt
             let breakpoints: Uint8Array = null
-            let breakAlways = false
+            let breakAlways = !!msg.breakOnStart;
             let globals = this.globals
             let yieldSteps = yieldMaxSteps
             // ---
