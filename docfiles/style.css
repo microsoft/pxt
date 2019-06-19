@@ -205,6 +205,38 @@ code.lang-spy
 }
 
 @media (min-width: 320px) and (max-width: 970px) {
+
+#docs .ui.hero {
+    margin-top: -48px;
+    width: 105vw;
+    margin-left: -10vw;
+    padding-left: 18%;
+}
+
+#docs .ui.hero .main-description {
+    margin-top: 1rem;
+}
+
+#docs .ui.hero .main-description h1 {
+    font-size: 3rem;
+}
+
+#docs .ui.breadcrumb:first-child {
+    margin-top: 16px;
+}
+
+#docs h1 {
+        margin-bottom: .5em;
+        font-size: 2.5rem;
+}
+#docs h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-top: 2rem;
+}
+#docs h2:not(:first-of-type) {
+    padding-top: 35px;
+}
 .docnav {
     flex-wrap: wrap;
     height: 9rem;
@@ -247,6 +279,12 @@ code.lang-spy
     top: 48px;
     height: auto;
     min-height: 48px;
+    display: block !important;
+}
+
+#docs .ui.cards {
+    justify-content: center;
+    margin-top: 1rem;
 }
 
 #docs .ui.card>.image .ui.cardimage {
@@ -288,7 +326,7 @@ code.lang-spy
 }
 
 .ui.grid.mainbody {
-    margin-top: 5rem;
+    margin-top: 7rem;
     padding-left: 1rem;
     padding-right: 1rem !important;
 }
@@ -301,6 +339,11 @@ code.lang-spy
 }
 }
 
+@media (min-width: 200px) and (max-width: 400px) {
+    #docs .ui.hero .main-description {
+        margin-top: 0rem;
+    }
+}
 /* wrap cards header */
 .ui.card > .content > .header {
     word-break: break-all;
@@ -542,6 +585,15 @@ svg {
 @media only screen and (max-width: 1440px) {
     #docs .ui.card {
         width: 100%;
+    }
+}
+
+@media only screen and (max-width: 1024px) {
+    .sticky-list {
+        position: fixed;
+        top: 11vh;
+        right: 3rem;
+        width: 25%;
     }
 }
 
