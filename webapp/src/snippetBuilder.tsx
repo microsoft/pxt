@@ -9,6 +9,7 @@ import { SpriteEditor } from './spriteEditor';
 import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -255,13 +256,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
                 // Hard coded in top blocks
                 this.getOnStartBlock(mainWorkspace)
-                    .getInput("HANDLER")
-                    .connection
-                    .connect(rootConnection.previousConnection);
-            })
-            .then(this.cleanup)
-            .catch((e) => {
-                // pxt.reportException(e);
+                    .getInput("HANDLER").connection.connect(rootConnection.previousConnection);
+            }).catch((e) => {
+                core.errorNotification(e);
                 throw new Error(`Failed to decompile snippet output`);
             });
     }
@@ -342,17 +339,17 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
-                <div className="ui equal width grid">
+                <div className="list">
                     {currentQuestion &&
-                        <div className='ui grid snippet input-section column'>
-                            <div className='row'>{currentQuestion.title}</div>
-                            <div className='ui equal width grid row'>
+                        <div>
+                            <div>{pxt.Util.rlf(currentQuestion.title)}</div>
+                            <div className='list horizontal'>
                                 {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
-                                    <div key={input.answerToken} className='column'>
-                                        <InputHandler
-                                            input={input}
+                                    <div key={input.answerToken}>
+                                        <sui.Input
+                                            label={input.label && pxt.Util.rlf(input.label)}
                                             onChange={this.onChange(input.answerToken)}
-                                            value={answers[input.answerToken]}
+                                            value={answers[input.answerToken] || ''}
                                         />
                                     </div>
                                 )}
@@ -375,7 +372,7 @@ interface InputHandlerProps {
 }
 
 class InputHandler extends data.Component<InputHandlerProps, {}> {
-    constructor(props: InputHandlerProps) {
+    constructor(props:   InputHandlerProps) {
         super(props);
     }
 
@@ -414,7 +411,7 @@ function getSnippetExtensions() {
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
     const wrapper = document.body.appendChild(document.createElement('div'));
-    const props = { parent: parent, mainWorkspace: editor, config };
+    const props = { parent:   parent, mainWorkspace: editor, config };
     const snippetBuilder = ReactDOM.render(
         React.createElement(SnippetBuilder, props),
         wrapper
@@ -426,8 +423,9 @@ export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.Bl
     const snippetExtensions = getSnippetExtensions();
 
     snippetExtensions.forEach(config => {
-        config.snippetBuilders.forEach(snippet => {
-            if (ns == snippet.namespace) {
+        config.snippetBuilders
+            .filter(snippet => snippet.namespace == ns)
+            .forEach(snippet => {
                 extraBlocks.push({
                     name: `SNIPPET${name}_BUTTON`,
                     type: "button",
@@ -441,7 +439,6 @@ export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.Bl
                         openSnippetDialog(snippet, editor, parent);
                     }
                 });
-            }
-        });
+            });
     })
 }
