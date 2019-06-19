@@ -104,6 +104,47 @@
     color: @docsPrimaryColor;
 }
 
+.sticky-list {
+    position: fixed;
+    top: 12vh;
+    right: 6rem;
+    width: 23%;
+    font-family: @docsHeaderFont;
+}
+.sticky-list ul {
+    margin-left: 3rem;
+    padding: 2rem;
+    width: auto;
+    display: flex;
+    flex-flow: column;
+    background-color: white;
+    border: 1px solid #bdbcbc;
+    border-radius: 6px;
+    overflow-y: overlay;
+    overflow-wrap: break-word;
+    display: flex;
+    flex-flow: column;
+    background-color: white;
+    border: 1px solid #bdbcbc;
+    border-radius: 6px;
+    overflow-y: overlay;
+    overflow-wrap: break-word;
+    font-family: @docsHeaderFont;
+    a {
+        line-height: 24px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    a.title {
+        color: white;
+    }
+    h3.title {
+        font-size: 1.28rem;
+        color: @docsPrimaryColorDarker;
+        font-family: @docsHeaderFont;
+    }
+}
+
 #docs {
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont;
@@ -169,6 +210,9 @@
         align-items: center;
         background-color: @docsPrimaryColor;
     }
+    .pushable {
+        height: initial;
+    }
     .ui.centered.image, .ui.centered.images {
         margin-left: 0px;
         margin-right: auto;
@@ -180,39 +224,12 @@
         margin-bottom: 1rem;
     }
 
-    #sticky-column ul {
-        margin-left: 5rem;
-        padding: 2rem;
-        position: sticky;
-        top: 3rem;
-        right: 11rem;
-        display: flex;
-        flex-flow: column;
-        background-color: white;
-        border: 1px solid #bdbcbc;
-        border-radius: 6px;
-        overflow-y: overlay;
-        overflow-wrap: break-word;
-        a {
-            line-height: 24px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        a.title {
-            color: white;
-        }
-        h3.title {
-            font-size: 1.28rem;
-            color: @docsPrimaryColorDarker;
-        }
-    }
-
     .ui.hero {
         background-color: @docsHeroColor;
         background-image: data-uri('../docs/static/logo/icons/pattern2.png');
         margin-top: -32px;
         width: 105vw;
-        margin-left: -12vw;
+        margin-left: -7vw;
         height: 240px;
         padding: 50px;
         padding-left: 14%;
@@ -220,7 +237,7 @@
         background-position-y: -16px;
         background-blend-mode: soft-light;
         .main-description {
-            padding-left: 1rem;
+            margin-left: -6vw;
             h1 { 
                 font-size: 4rem;
                 font-weight: 600;
@@ -294,8 +311,8 @@
         height: 8.6rem;
         border: none;
         font-family: 'Times New Roman';
-        flex-basis: 600px;
-        width: 600px;
+        flex-basis: 560px;
+        width: 560px;
         > .image {
             background: @docsCardImageBackgroundColor;
             background-size: contain;
@@ -312,7 +329,6 @@
         .header {
             color: @docsCardHeaderColor;
             font-size:20px;
-            text-transform: uppercase;
             word-break: break-word;
             &:after {
                 content: "";
@@ -468,17 +484,16 @@
     div.menu > a.item > i.icon.xicon.js {
         background: no-repeat center;
         border: 1px solid @docsPrimaryColor;
-        .icon-add-fill('../docs/static/logo/icons/javascript-v2.svg', @docsPrimaryColor);
+        color: @docsPrimaryColor;
+        font-size: 16px;
     }
 
     div.menu > a.item > i.icon.xicon.js:hover {
         background: no-repeat center;
         background-color: @docsPrimaryColor;
-        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/javascript-v1.svg')
-    }
-
-    div.menu > a.item > i.icon.xicon.js:before {
-        content: "" !important;
+        &:before {
+            color: white;
+        }
     }
 
     #printbtn.circular.ui.icon.right.floated.button {
@@ -506,17 +521,16 @@
     div.menu > a.item > i.icon.xicon.python {
         background: no-repeat center;
         border: 1px solid @docsPrimaryColor;
-        .icon-add-fill('../docs/static/logo/icons/python-v2.svg', @docsPrimaryColor);
+        color: @docsPrimaryColor;
+        font-size: 16px;     
     }
 
     div.menu > a.item > i.icon.xicon.python:hover {
         background: no-repeat center;
         background-color: @docsPrimaryColor;
-        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/python-v1.svg')
-    }
-
-    div.menu > a.item > i.icon.xicon.python:before {
-        content: "" !important;
+        &:before {
+            color: white;
+        }
     }
 
     /* Blocks Icon */
