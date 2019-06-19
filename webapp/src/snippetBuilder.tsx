@@ -8,6 +8,7 @@ import * as compiler from './compiler';
 import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -195,7 +196,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 this.getOnStartBlock(mainWorkspace)
                     .getInput("HANDLER").connection.connect(rootConnection.previousConnection);
             }).catch((e) => {
-                pxt.reportException(e);
+                core.errorNotification(e);
                 throw new Error(`Failed to decompile snippet output`);
             });;
     }
@@ -282,12 +283,12 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                     <div className="list">
                         {currQ &&
                             <div>
-                                <div>{currQ.title}</div>
+                                <div>{pxt.Util.rlf(currQ.title)}</div>
                                 <div className='list horizontal'>
                                     {currQ.inputs.map((input: pxt.SnippetQuestionInput) =>
                                         <div key={input.answerToken}>
                                             <sui.Input
-                                                label={input.label && input.label}
+                                                label={input.label && pxt.Util.rlf(input.label)}
                                                 onChange={this.textInputOnChange(input.answerToken)}
                                                 value={answers[input.answerToken] || ''}
                                             />
@@ -328,8 +329,9 @@ export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.Bl
     const snippetExtensions = getSnippetExtensions();
 
     snippetExtensions.forEach(config => {
-        config.snippetBuilders.forEach(snippet => {
-            if (ns == snippet.namespace) {
+        config.snippetBuilders
+            .filter(snippet => snippet.namespace == ns)
+            .forEach(snippet => {
                 extraBlocks.push({
                     name: `SNIPPET${name}_BUTTON`,
                     type: "button",
@@ -343,7 +345,6 @@ export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.Bl
                         openSnippetDialog(snippet, editor, parent);
                     }
                 });
-            }
-        });
+            });
     })
 }
