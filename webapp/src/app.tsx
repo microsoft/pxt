@@ -2415,7 +2415,7 @@ export class ProjectView
                         core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                         simulator.stop();
                         this.setState({ simState: pxt.editor.SimState.Stopped });
-            }
+                    }
                 })
                 .finally(() => {
                     if (!cancellationToken.isCancelled()) cancellationToken.resolveCancel()
