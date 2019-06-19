@@ -33,15 +33,13 @@ namespace pxtblockly {
             Blockly.DropDownDiv.clearContent();
             Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
-            goog.style.setStyle(contentDiv, "max-height", "500px");
-            //contentDiv.setAttribute("max-height", "500px");
+            contentDiv.style.maxHeight = "500px";
             this.renderEditor(Blockly.DropDownDiv.getContentDiv() as HTMLDivElement);
             this.createGridDisplay();
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
                 this.onEditorClose();
                 // revert all style attributes for dropdown div
-                goog.style.setStyle(contentDiv, "max-height", null);
-                //contentDiv.setAttribute("max-height", "500px");
+                contentDiv.style.maxHeight = null;
             });
         }
 
@@ -200,7 +198,7 @@ namespace pxtblockly {
                 let notes: string[] = melodies[i].split(" ");
                 for (let j = 0; j < notes.length - 1; j++) {
                     if (notes[j] != "R") {
-                        let rowPos: number = pxtmelody.getRowNum(notes[j]);
+                        let rowPos: number = pxtmelody.noteToRow(notes[j]);
                         this.melody.updateMelody(rowPos, j);
                     }
                 }

@@ -69,7 +69,7 @@ namespace pxtmelody {
                 queues[i] = [];
                 for (let j = 0; j < this.width; j++) {
                     if (this.melody[j][i]) {
-                        queues[i].push(noteConversion(j));
+                        queues[i].push(rowToNote(j));
                         noteCount++;
                     }
                 }
@@ -93,7 +93,7 @@ namespace pxtmelody {
         }
     }
 
-    export function noteConversion(rowNum: number): string {
+    export function rowToNote(rowNum: number): string {
         let note: string = "";
         switch (rowNum) {
             case 0: note = "C"; break;
@@ -108,7 +108,7 @@ namespace pxtmelody {
         return note;
     }
 
-    export function getRowNum(note: string): number {
+    export function noteToRow(note: string): number {
         let rowNum: number = 0;
         switch (note) {
             case "C": rowNum = 0; break;
