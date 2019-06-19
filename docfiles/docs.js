@@ -53,15 +53,6 @@ function searchSubmit(form) {
     if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, { interactiveConsent: true })
 }
 
-function scrollActiveHeaderIntoView() {
-    var activeHeaders = document.getElementsByClassName("header active");
-    for (var i = 0; i < activeHeaders.length; ++i) {
-        var activeHeader = activeHeaders.item(i);
-        if (activeHeader.scrollIntoView)
-            activeHeader.scrollIntoView()
-    }
-}
-
 function setupSidebar() {
 
     var tocMenu = document.querySelectorAll('#docsMobile div.ui.list.menuContainer.toc > div.item');
@@ -101,7 +92,6 @@ function setupSidebar() {
                 document.querySelector("#docs .ui.grid.mainbody").classList.remove('full-width');
                 document.querySelector("#docs .ui.grid.mainbody").classList.add('content-width');
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
-                scrollActiveHeaderIntoView();
             },
             onHidden: function () {
                 document.querySelector('#togglesidebar > i').classList.remove('close');
@@ -161,7 +151,6 @@ function setupSidebar() {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
 
-    scrollActiveHeaderIntoView();
 }
 
 function setupSemantic() {
@@ -384,7 +373,7 @@ function setupMenu(menu) {
 }
 
 function setStickyColumn() {
-    var headings = document.querySelectorAll('.ui.text h2');
+    var headings = document.querySelectorAll('.ui.text > h2');
     if (headings.length > 2){
     var stickyColumn = document.querySelector('#sticky-column');
     var linkList = document.createElement('ul');
@@ -396,13 +385,19 @@ function setStickyColumn() {
         var item = document.createElement('a');
         item.textContent = heading.textContent;
         item.onclick = function(){
-            heading.scrollIntoView({ 
-                behavior: 'smooth' 
-              });
+            $("html, body").animate({
+                scrollTop: heading.offsetTop
+            }, 1000);
         }
         linkList.appendChild(item);
     });
-    stickyColumn.appendChild(linkList);
+    var wrapper = document.createElement('div');
+    wrapper.className = 'sticky-list';
+    wrapper.appendChild(linkList);
+    var div = document.createElement('div');
+    stickyColumn.appendChild(div);
+    document.querySelector('#root').appendChild(wrapper);
+    
     }
 }
 

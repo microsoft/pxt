@@ -159,6 +159,10 @@ code.lang-spy
 
 .ui.vertical.footer {
     background-color: #292A33;
+<<<<<<< HEAD
+    margin-top: 5rem;
+=======
+>>>>>>> master
 }
 
 .ui.vertical.footer .item {
@@ -224,6 +228,13 @@ code.lang-spy
     display:none !important;
 }
 
+<<<<<<< HEAD
+.sticky-list {
+    display:none !important;
+}
+
+=======
+>>>>>>> master
 #mobile-search-icon {
     display: inline;
 }
@@ -368,12 +379,21 @@ svg {
 }
 
 .pusher .article-inner {
-    position: absolute;
+    position: relative;
     top: 0;
     right: 0;
     left: 0;
     bottom: 4rem;
+<<<<<<< HEAD
+    overflow-y: hidden;
+    height: 100%;
+}
+
+.article-inner {
+    overflow-x: hidden;
+=======
     overflow-y: auto;
+>>>>>>> master
 }
 
 .article-inner {

@@ -294,7 +294,6 @@ namespace pxt.docs {
                 <i class="content icon"></i>
             </a>
         `
-
         params['sidebarToggle'] = sidebarToggleHtml;
 
         // Add search bars
