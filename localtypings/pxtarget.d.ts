@@ -49,6 +49,11 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
+        unsupportedBrowsers?: BrowserOptions[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+    }
+
+    interface BrowserOptions {
+        id: string;
     }
 
     interface ProjectTemplate {
@@ -331,6 +336,7 @@ declare namespace pxt {
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
         experimentalHw?: boolean; // enable experimental hardware
         recipes?: boolean; // inlined tutorials
+        checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
     }
 
     interface SocialOptions {
