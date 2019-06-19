@@ -114,8 +114,9 @@
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
+        var codeFromData = undefined;
         try {
-            var codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+            codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
         } catch (e) {
             /**
              *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
