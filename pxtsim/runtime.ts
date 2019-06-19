@@ -14,7 +14,7 @@ namespace pxsim {
                 if (el.classList) {
                     return el.classList.contains(cls);
                 } else {
-                    const classes = (el.className + "").split(/\s+/) as string[];
+                    const classes = (el.className + "").split(/\s+/);
                     return !(classes.indexOf(cls) < 0);
                 }
             }
@@ -29,7 +29,7 @@ namespace pxsim {
                 if (el.classList) {
                     el.classList.add(cls);
                 } else {
-                    const classes = (el.className + "").split(/\s+/) as string[];
+                    const classes = (el.className + "").split(/\s+/);
                     if (classes.indexOf(cls) < 0) {
                         el.className.baseVal += " " + cls;
                     }
