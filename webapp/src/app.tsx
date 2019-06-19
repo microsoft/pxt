@@ -679,6 +679,25 @@ export class ProjectView
                 core.warningNotification(lf("Program Error: {0}", brk.exceptionMessage));
             },
             highlightStatement: (stmt, brk) => {
+                if (this.state.debugging && !simulator.driver.areBreakpointsSet() && brk && !brk.exceptionMessage) {
+                    // The simulator has paused on the first statement, so we need to send the breakpoints
+                    // and continue
+                    let breakpoints: number[];
+                    if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+                        breakpoints = this.textEditor.getBreakpoints();
+                    }
+                    else if (this.isBlocksActive()) {
+                        breakpoints = this.blocksEditor.getBreakpoints();
+                    }
+
+                    breakpoints = breakpoints || [];
+                    simulator.driver.setBreakpoints(breakpoints);
+
+                    if (breakpoints.indexOf(brk.breakpointId) === -1) {
+                        this.dbgPauseResume();
+                        return true;
+                    }
+                }
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
                 return false;
             },
@@ -2291,11 +2310,9 @@ export class ProjectView
             simulator.driver.stopSound();
             simulator.driver.restart(); // fast restart
         }
-        // TODO: typescript breakpoints
-        if (isDebug)
-            this.blocksEditor.setBreakpointsFromBlocks();
-        else
+        if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
+        }
     }
 
     startSimulator(opts?: pxt.editor.SimulatorStartOptions) {

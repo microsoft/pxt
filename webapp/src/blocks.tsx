@@ -42,12 +42,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (blockId) map[blockId] = breakpoint.id;
         });
         this.breakpointsByBlock = map;
-        this.setBreakpointsFromBlocks();
     }
 
     setBreakpointsFromBlocks(): void {
-        let breakpoints: number[] = []
-        let map = this.breakpointsByBlock;
+        this.breakpointsSet = this.getBreakpoints();
+        simulator.driver.setBreakpoints(this.breakpointsSet);
+    }
+
+    getBreakpoints() {
+        const breakpoints: number[] = []
+        const map = this.breakpointsByBlock;
         if (map && this.editor) {
             this.editor.getAllBlocks().forEach(block => {
                 if (map[block.id] && block.isBreakpointSet()) {
@@ -55,9 +59,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             });
         }
-
-        this.breakpointsSet = breakpoints;
-        simulator.driver.setBreakpoints(breakpoints);
+        return breakpoints;
     }
 
     addBreakpointFromEvent(blockId: string) {
