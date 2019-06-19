@@ -267,7 +267,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         localizedStrings: simTranslations,
         refCountingDebug: pxt.options.debug,
         version: pkg.version(),
-        clickTrigger: clickTrigger
+        clickTrigger: clickTrigger,
+        breakOnStart: debug
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
