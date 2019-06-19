@@ -48,10 +48,10 @@ namespace pxtsprite {
         private bottomBar: ReporterBar;
         private gallery: Gallery;
 
-        private state: Bitmap;
+        private state: CanvasState;
 
         // When changing the size, keep the old bitmap around so that we can restore it
-        private cachedState: Bitmap;
+        private cachedState: CanvasState;
 
         private edit: Edit;
         private activeTool: PaintTool = PaintTool.Normal;
@@ -61,8 +61,8 @@ namespace pxtsprite {
         private cursorCol = 0;
         private cursorRow = 0;
 
-        private undoStack: Bitmap[] = [];
-        private redoStack: Bitmap[] = [];
+        private undoStack: CanvasState[] = [];
+        private redoStack: CanvasState[] = [];
 
         private columns: number = 16;
         private rows: number = 16;
@@ -80,7 +80,7 @@ namespace pxtsprite {
             this.columns = bitmap.width;
             this.rows = bitmap.height;
 
-            this.state = bitmap.copy()
+            this.state = new CanvasState(bitmap.copy())
 
             this.root = new svg.SVG();
             this.root.setClass("sprite-canvas-controls");
@@ -100,9 +100,15 @@ namespace pxtsprite {
             this.paintSurface.up((col, row) => {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
                 if (this.altDown) {
-                    const color = this.state.get(col, row);
+                    const color = this.state.image.get(col, row);
                     this.sidebar.setColor(color);
                 } else {
+                    this.paintSurface.onEditEnd(col, row, this.edit);
+                    if (this.state.floatingLayer && !this.paintSurface.state.floatingLayer) {
+                        this.pushState(true);
+                        this.state = this.paintSurface.state.copy();
+                        this.rePaint();
+                    }
                     this.commit();
                     this.shiftAction();
                 }
@@ -145,12 +151,17 @@ namespace pxtsprite {
 
         setCell(col: number, row: number, color: number, commit: boolean): void {
             if (commit) {
-                this.state.set(col, row, color);
+                this.state.image.set(col, row, color);
                 this.paintCell(col, row, color);
             }
             else if (this.edit) {
                 if (!this.edit.isStarted) {
-                    this.edit.start(col, row);
+                    this.paintSurface.onEditStart(col, row, this.edit);
+
+                    if (this.state.floatingLayer && !this.paintSurface.state.floatingLayer) {
+                        this.pushState(true);
+                        this.state = this.paintSurface.state.copy();
+                    }
                 }
                 this.edit.update(col, row);
                 this.cursorCol = col;
@@ -223,7 +234,7 @@ namespace pxtsprite {
             }
         }
 
-        initializeUndoRedo(undoStack: Bitmap[], redoStack: Bitmap[]) {
+        initializeUndoRedo(undoStack: CanvasState[], redoStack: CanvasState[]) {
             if (undoStack) {
                 this.undoStack = undoStack;
             }
@@ -274,7 +285,7 @@ namespace pxtsprite {
                 this.undoStack.push(this.cachedState)
                 this.redoStack = [];
             }
-            this.state = resizeBitmap(this.cachedState, width, height);
+            this.state.image = resizeBitmap(this.cachedState.image, width, height);
             this.afterResize(true);
         }
 
@@ -310,7 +321,7 @@ namespace pxtsprite {
                 else if (result) {
                     this.redoStack = [];
                     this.pushState(true);
-                    this.restore(result);
+                    this.restore(new CanvasState(result));
                     this.hideGallery();
                     this.header.toggle.toggle(true);
                 }
@@ -323,7 +334,13 @@ namespace pxtsprite {
 
         closeEditor() {
             if (this.closeHandler) {
-                this.closeHandler();
+                const ch = this.closeHandler;
+                this.closeHandler = undefined;
+                ch();
+            }
+            if (this.state.floatingLayer) {
+                this.state.mergeFloatingLayer();
+                this.pushState(true);
             }
         }
 
@@ -386,13 +403,47 @@ namespace pxtsprite {
                 this.altDown = true;
             }
 
+            if (this.state.floatingLayer) {
+                let didSomething = true;
+
+                switch (event.keyCode) {
+                    case 8: // backspace
+                    case 46: // delete
+                        event.preventDefault();
+                        event.stopPropagation();
+                        this.state.floatingLayer = undefined;
+                        break;
+                    case 37: // Left arrow
+                        this.state.layerOffsetX--;
+                        break;
+                    case 38: // Up arrow
+                        this.state.layerOffsetY--;
+                        break;
+                    case 39: // Right arrow
+                        this.state.layerOffsetX++;
+                        break;
+                    case 40: // Down arrow
+                        this.state.layerOffsetY++;
+                        break;
+                    default:
+                        didSomething = false;
+                }
+
+                if (didSomething) {
+                    this.updateEdit();
+                    this.pushState(true);
+                    this.paintSurface.restore(this.state, true);
+                }
+            }
+
             const tools = [
                 PaintTool.Fill,
                 PaintTool.Normal,
                 PaintTool.Rectangle,
                 PaintTool.Erase,
                 PaintTool.Circle,
-                PaintTool.Line
+                PaintTool.Line,
+                PaintTool.Marquee
             ]
 
             tools.forEach(tool => {
@@ -462,7 +513,7 @@ namespace pxtsprite {
             this.bottomBar.updateDimensions(this.columns, this.rows);
             this.layout();
 
-            if (showOverlay) this.paintSurface.showOverlay();
+            if (showOverlay) this.paintSurface.showResizeOverlay();
 
             // Canvas size changed and some edits rely on that (like paint)
             this.updateEdit();
@@ -474,9 +525,9 @@ namespace pxtsprite {
             }
         }
 
-        private paintEdit(edit: Edit, col: number, row: number) {
+        private paintEdit(edit: Edit, col: number, row: number, gestureEnd = false) {
             this.paintSurface.restore(this.state);
-            this.paintSurface.applyEdit(edit, col, row);
+            this.paintSurface.applyEdit(edit, col, row, gestureEnd);
         }
 
         private commit() {
@@ -485,8 +536,8 @@ namespace pxtsprite {
                     this.cachedState = undefined;
                 }
                 this.pushState(true);
-                this.paintEdit(this.edit, this.cursorCol, this.cursorRow);
-                this.state.apply(this.paintSurface.image);
+                this.paintEdit(this.edit, this.cursorCol, this.cursorRow, true);
+                this.state = this.paintSurface.state.copy();
                 this.updateEdit();
                 this.redoStack = [];
             }
@@ -516,14 +567,14 @@ namespace pxtsprite {
             }
         }
 
-        private restore(bitmap: Bitmap) {
-            if (bitmap.width !== this.state.width || bitmap.height !== this.state.height) {
-                this.state = bitmap;
+        private restore(state: CanvasState) {
+            if (state.width !== this.state.width || state.height !== this.state.height) {
+                this.state = state;
                 this.afterResize(false);
             }
             else {
-                this.state.apply(bitmap);
-                this.paintSurface.restore(bitmap, true);
+                this.state = state.copy();
+                this.paintSurface.restore(state, true);
             }
         }
 
@@ -551,6 +602,8 @@ namespace pxtsprite {
                     return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
                 case PaintTool.Fill:
                     return new FillEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Marquee:
+                    return new MarqueeEdit(this.columns, this.rows, this.color, this.toolWidth);
             }
         }
 

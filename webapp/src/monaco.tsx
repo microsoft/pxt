@@ -1039,10 +1039,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.breakpoints = new BreakpointCollection(breakpoints);
                 this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
             }
-            else {
-                // The simulator got restarted
-                this.sendBreakpoints();
-            }
 
             if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
             if (this.feWidget) this.feWidget.close();
@@ -1075,9 +1071,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.forceDiagnosticsUpdate();
     }
 
+    getBreakpoints() {
+        return this.breakpoints ? this.breakpoints.getActiveBreakpoints() : [];
+    }
+
     private sendBreakpoints() {
         if (this.breakpoints) {
-            simulator.driver.setBreakpoints(this.breakpoints.getActiveBreakpoints());
+            simulator.driver.setBreakpoints(this.getBreakpoints());
         }
     }
 

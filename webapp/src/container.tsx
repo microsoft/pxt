@@ -377,7 +377,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     exitTutorial() {
         pxt.tickEvent("menu.exitTutorial", undefined, { interactiveConsent: true });
-        this.props.parent.exitTutorial();
+        if (this.props.parent.state.tutorialOptions
+            && this.props.parent.state.tutorialOptions.tutorialRecipe)
+            this.props.parent.completeTutorialAsync().done();
+        else
+            this.props.parent.exitTutorial();
     }
 
     showReportAbuse() {
@@ -566,14 +570,14 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     renderCore() {
         const { sideDocsCollapsed, docsUrl } = this.state;
         const isRTL = pxt.Util.isUserLanguageRtl();
-        const showLeftChevron = (sideDocsCollapsed || isRTL ) && !( sideDocsCollapsed && isRTL); // Collapsed XOR RTL
+        const showLeftChevron = (sideDocsCollapsed || isRTL) && !(sideDocsCollapsed && isRTL); // Collapsed XOR RTL
         if (!docsUrl) return null;
 
         /* tslint:disable:react-iframe-missing-sandbox */
         return <div>
             <button id="sidedocstoggle" role="button" aria-label={sideDocsCollapsed ? lf("Expand the side documentation") : lf("Collapse the side documentation")} className="ui icon button large" onClick={this.toggleVisibility}>
                 <sui.Icon icon={`icon inverted chevron ${showLeftChevron ? 'left' : 'right'}`} />
-             </button>
+            </button>
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
                     <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"

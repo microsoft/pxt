@@ -142,6 +142,14 @@ namespace ts.pxtc {
         return !target.jsRefCounting && !target.isNative
     }
 
+    export function isStackMachine() {
+        return target.isNative && target.nativeType == NATIVE_TYPE_VM
+    }
+
+    export function needsNumberConversions() {
+        return target.isNative && target.nativeType != NATIVE_TYPE_VM
+    }
+
     export function isThumb() {
         return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
     }
@@ -162,22 +170,22 @@ namespace ts.pxtc {
     // everything else (except as indicated with CommentAttrs), operates and returns regular ints
 
     function fromInt(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromInt", [e])
     }
 
     function fromBool(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromBool", [e])
     }
 
     function fromFloat(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromFloat", [e])
     }
 
     function fromDouble(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromDouble", [e])
     }
 
@@ -548,6 +556,15 @@ namespace ts.pxtc {
             userError(9201, lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
         }
         return t
+    }
+
+    export function taggedSpecial(v: any) {
+        if (v === null) return taggedNull
+        else if (v === undefined) return taggedUndefined
+        else if (v === false) return taggedFalse
+        else if (v === true) return taggedTrue
+        else if (isNaN(v)) return taggedNaN
+        else return null
     }
 
     function typeOf(node: Node) {
@@ -1180,7 +1197,10 @@ namespace ts.pxtc {
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
-                processorEmit(bin, opts, res)
+                if (opts.target.nativeType == NATIVE_TYPE_VM)
+                    vmEmit(bin, opts)
+                else
+                    processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -1301,7 +1321,7 @@ namespace ts.pxtc {
                 let finfo = fieldIndexCore(inf, fld, false)
                 inf.itable.push({
                     name: fname,
-                    info: (finfo.idx + 1) * 4,
+                    info: (finfo.idx + 1) * (isStackMachine() ? 1 : 4),
                     idx: getIfaceMemberId(fname),
                     proc: null
                 })
@@ -1411,7 +1431,8 @@ namespace ts.pxtc {
                 for (let mem of decl.members) {
                     if (mem.kind == SK.PropertyDeclaration) {
                         let pdecl = <PropertyDeclaration>mem
-                        info.allfields.push(pdecl)
+                        if (!isStatic(pdecl))
+                            info.allfields.push(pdecl)
                     } else if (mem.kind == SK.Constructor) {
                         for (let p of (mem as FunctionLikeDeclaration).parameters) {
                             if (isCtorField(p))
@@ -1591,7 +1612,7 @@ ${lbl}: .short 0xffff
                 r = ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                r = ir.ptrlit(lbl + "meta", JSON.stringify(str))
+                r = ir.ptrlit(lbl, JSON.stringify(str))
             }
             r.isStringLiteral = true
             return r
@@ -1809,6 +1830,8 @@ ${lbl}: .short 0xffff
         }
 
         function markFunctionUsed(decl: EmittableAsCall) {
+            if (isStackMachine() && isClassFunction(decl))
+                getIfaceMemberId(getName(decl), true)
             getFunctionInfo(decl).isUsed = true
             markUsed(decl)
         }
@@ -2108,7 +2131,7 @@ ${lbl}: .short 0xffff
                 assert(!bin.finalPass || !!baseCtor, "!bin.finalPass || !!baseCtor")
                 let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
-                return mkProcCallCore(baseCtor, null, ctorArgs)
+                return mkProcCallCore(baseCtor, ctorArgs)
             }
             if (isMethod) {
                 let isSuper = false
@@ -2138,7 +2161,11 @@ ${lbl}: .short 0xffff
                     if (info.decl.kind == SK.MethodDeclaration)
                         markFunctionUsed(info.decl)
                 }
-                if (info.virtualParent && !isSuper && !target.switches.slowMethods) {
+
+                const needsVCall = info.virtualParent && !isSuper
+                const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
+
+                if (needsVCall && !forceIfaceCall) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     let r = mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
                     if (args[0].kind == SK.ThisKeyword)
@@ -2191,7 +2218,7 @@ ${lbl}: .short 0xffff
                         // the property lookup to get the lambda
                         args.shift()
                     }
-                } else if (decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
+                } else if (needsVCall || decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
                     let name = getName(decl)
                     return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {
@@ -2213,11 +2240,11 @@ ${lbl}: .short 0xffff
             return mkMethodCall(null, -1, null, args.map(x => emitExpr(x)))
         }
 
-        function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
+        function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
             let data: ir.ProcId = {
                 proc: proc,
-                virtualIndex: vidx,
-                ifaceIndex: ifaceIdx
+                virtualIndex: null,
+                ifaceIndex: null
             }
             return ir.op(EK.ProcCall, args, data)
         }
@@ -2240,7 +2267,7 @@ ${lbl}: .short 0xffff
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
             let proc = lookupProc(decl)
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
-            return mkProcCallCore(proc, null, args)
+            return mkProcCallCore(proc, args)
         }
 
         function layOutGlobals() {
@@ -2716,7 +2743,7 @@ ${lbl}: .short 0xffff
             } else {
                 proc.emitClrs(lbl, null);
             }
-            if (hasRet)
+            if (hasRet || isStackMachine())
                 proc.emitLbl(lbl)
 
             // nothing should be on work list in final pass - everything should be already marked as used
@@ -2892,9 +2919,14 @@ ${lbl}: .short 0xffff
         }
 
         function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, needsCheck = true): FieldAccessInfo {
+            if (isStatic(fld))
+                U.oops("fieldIndex on static field: " + getName(fld))
             let attrs = parseComments(fld)
+            let idx = info.allfields.indexOf(fld)
+            if (idx < 0 && bin.finalPass)
+                U.oops("missing field")
             return {
-                idx: info.allfields.indexOf(fld),
+                idx,
                 name: getName(fld),
                 isRef: true,
                 shimName: attrs.shim,
@@ -2968,7 +3000,7 @@ ${lbl}: .short 0xffff
         }
 
         function mapIntOpName(n: string) {
-            if (opts.target.isNative && isThumb()) {
+            if (isThumb()) {
                 switch (n) {
                     case "numops::adds":
                     case "numops::subs":
@@ -2977,6 +3009,14 @@ ${lbl}: .short 0xffff
                     case "numops::orrs":
                         return "@nomask@" + n
                 }
+            }
+
+            if (isStackMachine()) {
+                switch (n) {
+                    case "pxt::switch_eq":
+                        return "numops::eq"
+                }
+
             }
 
             return n
@@ -3045,7 +3085,7 @@ ${lbl}: .short 0xffff
         function valueToInt(e: ir.Expr): number {
             if (e.exprKind == ir.EK.NumberLiteral) {
                 let v = e.data
-                if (opts.target.isNative) {
+                if (opts.target.isNative && !isStackMachine()) {
                     if (v == taggedNull || v == taggedUndefined || v == taggedFalse)
                         return 0
                     if (v == taggedTrue)
@@ -3075,16 +3115,12 @@ ${lbl}: .short 0xffff
         }
 
         function emitLit(v: number | boolean) {
-            if (opts.target.isNative) {
-                if (v === null) return ir.numlit(taggedNull)
-                else if (v === undefined) return ir.numlit(taggedUndefined)
-                else if (v === false) return ir.numlit(taggedFalse)
-                else if (v === true) return ir.numlit(taggedTrue)
+            if (opts.target.isNative && !isStackMachine()) {
+                const numlit = taggedSpecial(v)
+                if (numlit != null) return ir.numlit(numlit)
                 else if (typeof v == "number") {
                     if (fitsTaggedInt(v as number)) {
                         return ir.numlit(((v as number) << 1) | 1)
-                    } else if (v != v) {
-                        return ir.numlit(taggedNaN)
                     } else {
                         let lbl = bin.emitDouble(v as number)
                         return ir.ptrlit(lbl, JSON.stringify(v))
@@ -3145,7 +3181,7 @@ ${lbl}: .short 0xffff
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                if (!opts.target.isNative)
+                if (!needsNumberConversions())
                     return r
                 let f = fmt[i + 1]
                 let isNumber = isNumberLike(a)
@@ -3481,6 +3517,8 @@ ${lbl}: .short 0xffff
             }
             if (!inner)
                 inner = emitExpr(expr)
+            if (isStackMachine())
+                return inner
             // in all cases decr is internal, so no mask
             return ir.rtcall("numops::toBoolDecr", [inner])
         }
@@ -3646,7 +3684,7 @@ ${lbl}: .short 0xffff
 
             // TODO this should be changed to use standard indexer lookup and int handling
             let toInt = (e: ir.Expr) => {
-                return ir.rtcall("pxt::toInt", [e])
+                return needsNumberConversions() ? ir.rtcall("pxt::toInt", [e]) : e
             }
 
             // c = a[i]

@@ -49,6 +49,11 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
+        unsupportedBrowsers?: BrowserOptions[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+    }
+
+    interface BrowserOptions {
+        id: string;
     }
 
     interface ProjectTemplate {
@@ -180,11 +185,13 @@ declare namespace pxt {
         codalDefinitions?: any;
 
         dockerImage?: string;
+        dockerArgs?: string[];
 
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
+        skipCloudBuild?: boolean;
     }
 
     interface AppTheme {
@@ -327,6 +334,9 @@ declare namespace pxt {
         qrCode?: boolean; // generate QR code for shared urls
         importExtensionFiles?: boolean; // import extensions from files
         debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
+        experimentalHw?: boolean; // enable experimental hardware
+        recipes?: boolean; // inlined tutorials
+        checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
     }
 
     interface SocialOptions {
@@ -439,6 +449,7 @@ declare namespace ts.pxtc {
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
         imageRefTag?: number;
+        keepCppFiles?: boolean;
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -501,6 +512,7 @@ declare namespace ts.pxtc {
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
+        expose?: boolean; // expose to VM despite being in pxt:: namespace
         decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
         constantShim?: boolean;
         indexedInstanceNS?: string;
@@ -570,6 +582,13 @@ declare namespace ts.pxtc {
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
 
         /* end enum-only attributes */
+
+
+        isKind?: boolean; // annotation for built-in kinds in library code
+        kindMemberName?: string; // The name a member of the kind as it will appear in the blocks editor. If the kind was "Colors" this would be "color"
+        kindNamespace?: string; // defaults to blockNamespace or the namesapce of this API
+        kindCreateFunction?: string; // defaults to kindNamespace.create()
+        kindPromptHint?: string; // Defaults to "Create a new kind..."
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -706,7 +725,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue";
+        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue" | "userenum";
         map?: pxt.Map<string>;
     }
 
@@ -729,6 +748,7 @@ declare namespace ts.pxtc {
         enumsDTS: string;
         onlyPublic: boolean;
         commBase?: number;
+        skipCloudBuild?: boolean;
     }
 
     interface HexInfo {
@@ -773,6 +793,7 @@ declare namespace pxt.tutorial {
         tutorialStepExpanded?: boolean; // display full step in dialog
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
+        tutorialRecipe?: boolean; // micro tutorial running within the context of a script
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
