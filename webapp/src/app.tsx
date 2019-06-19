@@ -2059,12 +2059,19 @@ export class ProjectView
                         });
                     }
                 }
+                pxt.tickEvent("deploy.start")
                 return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg)
                 })
+                    .then(() => {
+                        pxt.tickEvent("deploy.finished")
+                    }, () => {
+                        pxt.tickEvent("deploy.unfinished")
+                    })
                     .catch(e => {
+                        pxt.tickEvent("deploy.exception")
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
                         } else {
