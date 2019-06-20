@@ -13,7 +13,7 @@ namespace pxtblockly {
         private stringRep: string;
         private oneNotePerCol: boolean = true;
         private isPlaying: boolean = false;
-        private timeouts: any = []; // keep track of timeouts
+        private timeouts: number[] = []; // keep track of timeouts
 
         // html references
         private topDiv: HTMLDivElement;
@@ -129,13 +129,13 @@ namespace pxtblockly {
             this.doneButton.id = "melody-done-button";
             pxt.BrowserUtils.addClass(this.doneButton, "ui button");
             this.doneButton.innerText = "Done";
-            this.doneButton.addEventListener("click", () => Blockly.DropDownDiv.hideIfOwner(this));
+            this.doneButton.addEventListener("click", () => this.onDone());
             this.iconButtons = document.createElement("div");
             pxt.BrowserUtils.addClass(this.iconButtons, "ui icon buttons");
             this.playButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.playButton, "ui button");
             this.playButton.id = "melody-play-button";
-            this.playButton.addEventListener("click", () => this.playMelody());
+            this.playButton.addEventListener("click", () => this.togglePlay());
             this.playIcon = document.createElement("i");
             this.playIcon.id = "melody-play-icon";
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
@@ -164,7 +164,17 @@ namespace pxtblockly {
 
         // Runs when the editor is closed by clicking on the Blockly workspace
         protected onEditorClose() {
+            if (this.isPlaying) {
+                this.stopMelody();
+            }
+        }
 
+        // when click done
+        onDone() {
+            if (this.isPlaying) {
+                this.stopMelody();
+            }
+            Blockly.DropDownDiv.hideIfOwner(this);
         }
 
         // This is the string that will be inserted into the user's TypeScript code
@@ -359,12 +369,22 @@ namespace pxtblockly {
 
         // instead of using a bunch of switch statements - can create enum of objects
 
-        playMelody() {
-            // toggle icon
+        togglePlay() {
             if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) {
                 pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
                 this.isPlaying = true;
+                this.playMelody();
+            } else {
+                pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
+                pxt.BrowserUtils.addClass(this.playIcon, "play icon");
+                this.isPlaying = false;
+                this.stopMelody();
+            }
+        }
+
+        playMelody() {
+            if (this.isPlaying) {
                 for (let i = 0; i < this.numCol; i++) {
                     for (let j = 0; j < this.numRow; j++) {
                         if (this.melody.getValue(j, i)) {
@@ -375,17 +395,23 @@ namespace pxtblockly {
                         }
                     }
                 }
-                this.timeouts.push(setTimeout( // call the melody again after it finishes - not currently working
-                    this.playMelody, (this.numCol - 1) * this.getDuration()));
+                this.timeouts.push(setTimeout( // call the melody again after it finishes
+                    () => this.playMelody(), (this.numCol) * this.getDuration()));
             } else {
-                pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
-                pxt.BrowserUtils.addClass(this.playIcon, "play icon");
-                this.isPlaying = false;
                 for (let i = 0; i < this.timeouts.length; i++) {
                     clearTimeout(this.timeouts[i]);
+                    this.timeouts.shift();
                 }
                 AudioContextManager.stop();
             }
+        }
+
+        stopMelody() {
+            for (let i = 0; i < this.timeouts.length; i++) {
+                clearTimeout(this.timeouts[i]);
+                this.timeouts.shift();
+            }
+            AudioContextManager.stop();
         }
 
     }
