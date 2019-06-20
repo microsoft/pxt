@@ -2,12 +2,12 @@
 import * as React from 'react';
 import * as sui from './sui';
 import * as data from './data';
-import { IQuestionInput } from './snippetBuilder';
 
 interface ISpriteEditorProps {
-    input: IQuestionInput;
+    input: pxt.SnippetQuestionInput;
     onChange: (v: string) => void;
     value: string;
+    blocksInfo: pxtc.BlocksInfo;
 }
 
 interface ISpriteEditorState {
@@ -37,18 +37,12 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
       }
 
       renderSpriteEditor() {
-          const { value } = this.props;
+          const { value, blocksInfo } = this.props;
           const stateSprite = value && this.stripImageLiteralTags(value);
           const state = pxtsprite
             .imageLiteralToBitmap('', stateSprite || DEFAULT_SPRITE_STATE);
 
           const contentDiv = this.refs['spriteEditorPopup'] as HTMLDivElement;
-          // TODO(jb) - This should be replaced with something real
-          const blocksInfo = {
-              apis: {
-                  byQName: {},
-              } as pxtc.ApisInfo,
-          } as pxtc.BlocksInfo;
 
           let spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false);
           spriteEditor.render(contentDiv);
@@ -68,7 +62,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
           spriteEditor.addKeyListeners();
           spriteEditor.onClose(() => {
               const newSpriteState = pxtsprite
-                .bitmapToImageLiteral(spriteEditor.bitmap(), pxt.editor.FileType.Text);
+                .bitmapToImageLiteral(spriteEditor.bitmap().image, pxt.editor.FileType.Text);
               this.setState({
                   open: false,
                 });

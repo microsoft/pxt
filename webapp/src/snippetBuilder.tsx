@@ -36,6 +36,8 @@ interface SnippetBuilderState {
     actions?: sui.ModalButton[];
 }
 
+let thisBlocksInfo: pxtc.BlocksInfo;
+
 
 /**
  * Snippet builder takes a static config file and builds a modal with inputs and outputs based on config settings.
@@ -339,25 +341,29 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
-                <div className="list">
-                    {currentQuestion &&
-                        <div>
-                            <div>{pxt.Util.rlf(currentQuestion.title)}</div>
-                            <div className='list horizontal'>
-                                {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
-                                    <div key={input.answerToken}>
-                                        <sui.Input
-                                            label={input.label && pxt.Util.rlf(input.label)}
-                                            onChange={this.onChange(input.answerToken)}
-                                            value={answers[input.answerToken] || ''}
-                                        />
+                <div>
+                    <div className="ui equal width grid">
+                        {currentQuestion &&
+                            <div className='column'>
+                                <div className='horizontal list'>
+                                    <div>{pxt.Util.rlf(currentQuestion.title)}</div>
+                                    <div className='list horizontal'>
+                                        {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
+                                            <div key={input.answerToken}>
+                                                <InputHandler
+                                                    onChange={this.onChange(input.answerToken)}
+                                                    input={input}
+                                                    value={answers[input.answerToken] || ''}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                </div>
                             </div>
+                        }
+                        <div id="snippetBuilderOutput" className='snippet output-section column'>
+                            {parent && <md.MarkedContent className='snippet-markdown-content' markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
                         </div>
-                    }
-                    <div id="snippetBuilderOutput" className='snippet output-section column'>
-                        {parent && <md.MarkedContent className='snippet-markdown-content' markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
                     </div>
                 </div>
             </sui.Modal>
@@ -386,6 +392,7 @@ class InputHandler extends data.Component<InputHandlerProps, {}> {
                         input={input}
                         onChange={onChange}
                         value={value}
+                        blocksInfo={thisBlocksInfo}
                     />
                 );
             case 'number':
@@ -419,8 +426,9 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
     snippetBuilder.show();
 }
 
-export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
+export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView, blocksInfo: pxtc.BlocksInfo) {
     const snippetExtensions = getSnippetExtensions();
+    thisBlocksInfo = blocksInfo
 
     snippetExtensions.forEach(config => {
         config.snippetBuilders
