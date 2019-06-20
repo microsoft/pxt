@@ -398,19 +398,13 @@ namespace pxtblockly {
                 this.timeouts.push(setTimeout( // call the melody again after it finishes
                     () => this.playMelody(), (this.numCol) * this.getDuration()));
             } else {
-                for (let i = 0; i < this.timeouts.length; i++) {
-                    clearTimeout(this.timeouts[i]);
-                    this.timeouts.shift();
-                }
+                while (this.timeouts.length) clearTimeout(this.timeouts.shift());
                 AudioContextManager.stop();
             }
         }
 
         stopMelody() {
-            for (let i = 0; i < this.timeouts.length; i++) {
-                clearTimeout(this.timeouts[i]);
-                this.timeouts.shift();
-            }
+            while (this.timeouts.length) clearTimeout(this.timeouts.shift());
             AudioContextManager.stop();
         }
 
