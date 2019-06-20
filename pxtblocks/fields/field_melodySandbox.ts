@@ -13,8 +13,29 @@ namespace pxtblockly {
         private stringRep: string;
         private oneNotePerCol: boolean = true;
         private isPlaying: boolean = false;
-        private isLooping: boolean = false;
+        // private isLooping: boolean = false;
         private timeouts: any = []; // keep track of timeouts
+
+        // html references
+        private topDiv: HTMLDivElement;
+        private editorGalleryToggle: HTMLDivElement;
+        private editorButton: HTMLButtonElement;
+        private galleryButton:  HTMLButtonElement;
+        private melodyName: HTMLInputElement;
+        private gridDiv: HTMLDivElement;
+        private bottomDiv: HTMLDivElement;
+        private buttonBarDiv: HTMLDivElement;
+        private doneButton:  HTMLButtonElement;
+        private iconButtons: HTMLDivElement;
+        private playButton:  HTMLButtonElement;
+        private playIcon: HTMLElement;
+        // private loopButton:  HTMLButtonElement;
+        // private loopIcon: HTMLElement;
+        // private sliderDiv: HTMLDivElement;
+        // private tempoSlider: HTMLInputElement;
+        private tempoText: HTMLInputElement;
+
+
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
@@ -66,101 +87,97 @@ namespace pxtblockly {
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
-            let topDiv = document.createElement("div");
-            topDiv.className = "melody-top-bar-div";
+            this.topDiv = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
+            this.editorGalleryToggle = document.createElement("div");
+            this.editorGalleryToggle.id = "melody-toggle";
+            this.editorButton = document.createElement("button");
+            this.editorButton.innerText = "Editor";
+            pxt.BrowserUtils.addClass(this.editorButton, "ui left attached button");
+            this.galleryButton = document.createElement("button");
+            this.galleryButton.innerText = "Gallery";
+            pxt.BrowserUtils.addClass(this.galleryButton, "right attached ui button");
+            this.editorGalleryToggle.appendChild(this.editorButton);
+            this.editorGalleryToggle.appendChild(this.galleryButton);
+            this.topDiv.appendChild(this.editorGalleryToggle);
+            this.melodyName = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.melodyName, "ui input");
+            this.melodyName.id = "melody-name";
+            this.melodyName.maxLength = 25;
+            this.melodyName.value = this.title;
+            this.melodyName.addEventListener("input", () => this.setTitle(this.melodyName.value));
+            this.topDiv.appendChild(this.melodyName);
+            div.appendChild(this.topDiv);
 
-            let editorGalleryToggle = document.createElement("div");
-            editorGalleryToggle.id = "melody-toggle";
-            let editorButton = document.createElement("button");
-            editorButton.innerText = "Editor";
-            editorButton.className = "ui left attached button";
-            let galleryButton = document.createElement("button");
-            galleryButton.innerText = "Gallery";
-            galleryButton.className = "right attached ui button";
-            editorGalleryToggle.appendChild(editorButton);
-            editorGalleryToggle.appendChild(galleryButton);
-
-            topDiv.appendChild(editorGalleryToggle);
-            let melodyName = document.createElement("input");
-            melodyName.className = "ui input";
-            melodyName.id = "melody-name";
-            melodyName.maxLength = 25;
-            melodyName.value = this.title;
-            melodyName.addEventListener("input", () => this.setTitle(melodyName.value));
-            topDiv.appendChild(melodyName);
-            div.appendChild(topDiv);
-
-            let gridDiv = document.createElement("div");
-            gridDiv.className = "melody-grid-div";
+            this.gridDiv = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.gridDiv, "melody-grid-div");
             for (let i = 0; i < this.numRow; i++) {
                 let row = document.createElement("div");
-                row.className = "row" + i;
+                pxt.BrowserUtils.addClass(row, "row" + i);
                 for (let j = 0; j < this.numCol; j++) {
-                    let cell = document.createElement("button"); // button
-                    cell.className = "cell";
+                    let cell = document.createElement("button");
+                    pxt.BrowserUtils.addClass(cell, "cell");
                     cell.id = "cell-" + i + "-" + j;
                     row.appendChild(cell);
                 }
-                gridDiv.appendChild(row);
+                this.gridDiv.appendChild(row);
             }
-            div.appendChild(gridDiv);
+            div.appendChild(this.gridDiv);
 
-            let bottomDiv = document.createElement("div");
-            bottomDiv.className = "melody-bottom-bar-div";
+            this.bottomDiv = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
 
-            let buttonBarDiv = document.createElement("div");
-            buttonBarDiv.className = "melody-button-bar-div";
+            this.buttonBarDiv = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.buttonBarDiv, "melody-button-bar-div");
 
-            let doneButton = document.createElement("button");
-            doneButton.id = "melody-done-button";
-            doneButton.className = "ui button";
-            doneButton.innerText = "Done";
-            doneButton.addEventListener("click", () => Blockly.DropDownDiv.hideIfOwner(this));
-            let iconButtons = document.createElement("div");
-            iconButtons.className = "ui icon buttons";
-            let playButton = document.createElement("button");
-            playButton.className = "ui button";
-            playButton.id = "melody-play-button";
-            playButton.addEventListener("click", () => this.playMelody());
-            let playIcon = document.createElement("i");
-            playIcon.id = "melody-play-icon";
-            playIcon.className = "play icon";
-            playButton.appendChild(playIcon);
-            let loopButton = document.createElement("button");
-            loopButton.className = "ui button";
-            loopButton.id = "melody-loop-button";
-            loopButton.addEventListener("click", () => this.loopMelody());
-            let loopIcon = document.createElement("i");
-            loopIcon.className = "redo xicon";
-            loopButton.appendChild(loopIcon);
+            this.doneButton = document.createElement("button");
+            this.doneButton.id = "melody-done-button";
+            pxt.BrowserUtils.addClass(this.doneButton, "ui button");
+            this.doneButton.innerText = "Done";
+            this.doneButton.addEventListener("click", () => Blockly.DropDownDiv.hideIfOwner(this));
+            this.iconButtons = document.createElement("div");
+            pxt.BrowserUtils.addClass(this.iconButtons, "ui icon buttons");
+            this.playButton = document.createElement("button");
+            pxt.BrowserUtils.addClass(this.playButton, "ui button");
+            this.playButton.id = "melody-play-button";
+            this.playButton.addEventListener("click", () => this.playMelody());
+            this.playIcon = document.createElement("i");
+            this.playIcon.id = "melody-play-icon";
+            pxt.BrowserUtils.addClass(this.playIcon, "play icon");
+            this.playButton.appendChild(this.playIcon);
+            // this.loopButton = document.createElement("button");
+            // pxt.BrowserUtils.addClass(this.loopButton, "ui button");
+            // this.loopButton.id = "melody-loop-button";
+            // this.loopButton.addEventListener("click", () => this.loopMelody());
+            // this.loopIcon = document.createElement("i");
+            // pxt.BrowserUtils.addClass(this.loopIcon, "redo xicon");
+            // this.loopButton.appendChild(this.loopIcon);
+            // this.iconButtons.appendChild(this.playButton);
+            // this.iconButtons.appendChild(this.loopButton);
+            this.buttonBarDiv.appendChild(this.playButton);
+            this.buttonBarDiv.appendChild(this.doneButton);
 
-            iconButtons.appendChild(playButton);
-            iconButtons.appendChild(loopButton);
-            buttonBarDiv.appendChild(iconButtons);
-            buttonBarDiv.appendChild(doneButton);
+            // this.sliderDiv = document.createElement("div");
+            // pxt.BrowserUtils.addClass(this.sliderDiv, "slider-container");
+            // this.tempoSlider = document.createElement("input");
+            // this.tempoSlider.id = "melody-tempo-slider";
+            // this.tempoSlider.type = "range";
+            // pxt.BrowserUtils.addClass(this.tempoSlider, "ui range");
+            // this.tempoSlider.min = "60";
+            // this.tempoSlider.max = "200";
+            // this.tempoSlider.defaultValue = this.tempo + "";
+            // this.tempoSlider.addEventListener("input", () => this.setTempo(+this.tempoSlider.value));
 
-            let sliderDiv = document.createElement("div");
-            sliderDiv.className = "slider-container";
-
-            let tempoSlider = document.createElement("input");
-            tempoSlider.id = "melody-tempo-slider";
-            tempoSlider.type = "range";
-            tempoSlider.className = "ui range";
-            tempoSlider.min = "60";
-            tempoSlider.max = "200";
-            tempoSlider.defaultValue = this.tempo + "";
-            tempoSlider.addEventListener("input", () => this.setTempo(+tempoSlider.value));
-
-            let tempoText = document.createElement("input");
-            tempoText.type = "number";
-            tempoText.value = this.tempo + ""; // will be updated according to slider
-            tempoText.id = "melody-tempo-text";
-            tempoText.addEventListener("input", () => this.setTempo(+tempoText.value));
-            sliderDiv.appendChild(tempoText);
-            sliderDiv.appendChild(tempoSlider);
-            bottomDiv.appendChild(sliderDiv);
-            bottomDiv.appendChild(buttonBarDiv);
-            div.appendChild(bottomDiv);
+            this.tempoText = document.createElement("input");
+            this.tempoText.type = "number";
+            this.tempoText.value = this.tempo + ""; // will be updated according to slider
+            this.tempoText.id = "melody-tempo-text";
+            this.tempoText.addEventListener("input", () => this.setTempo(+this.tempoText.value));
+            // this.sliderDiv.appendChild(this.tempoText);
+            // this.sliderDiv.appendChild(this.tempoSlider);
+            this.bottomDiv.appendChild(this.tempoText);
+            this.bottomDiv.appendChild(this.buttonBarDiv);
+            div.appendChild(this.bottomDiv);
 
             // create event listeners at the end because the DOM needs to finish loading
             for (let i = 0; i < this.numRow; i++) {
@@ -242,8 +259,8 @@ namespace pxtblockly {
 
         setTempo(tempo: number): void {
             // reset text input if input is invalid
-            if (isNaN(tempo) || tempo <= 0 && document.getElementById("melody-tempo-text")) {
-                (<HTMLInputElement>document.getElementById("melody-tempo-text")).value = this.tempo + "";
+            if (isNaN(tempo) || tempo <= 0 && this.tempoText) {
+                this.tempoText.value = this.tempo + "";
                 return
             }
             // update tempo and duration values and display to reflect new tempo
@@ -252,12 +269,12 @@ namespace pxtblockly {
                 if (this.melody) {
                     this.melody.setTempo(this.tempo);
                 }
-                if (document.getElementById("melody-tempo-text")) {
-                    (<HTMLInputElement>document.getElementById("melody-tempo-text")).value = this.tempo + "";
+                if (this.tempoText) {
+                    this.tempoText.value = this.tempo + "";
                 }
-                if (document.getElementById("melody-tempo-slider")) {
-                    (<HTMLInputElement>document.getElementById("melody-tempo-slider")).value = this.tempo + "";
-                }
+                // if (this.tempoSlider) {
+                //     this.tempoSlider.value = this.tempo + "";
+                // }
             }
         }
 
@@ -374,8 +391,9 @@ namespace pxtblockly {
 
         playMelody() {
             // toggle icon
-            if (document.getElementById("melody-play-icon").className == "play icon") {
-                document.getElementById("melody-play-icon").className = "stop icon";
+            if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) { 
+                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
+                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
                 this.isPlaying = true;
                 for (let i = 0; i < this.numCol; i++) {
                     for (let j = 0; j < this.numRow; j++) {
@@ -387,18 +405,22 @@ namespace pxtblockly {
                         }
                     }
                 }
-                if (!this.isLooping) {
-                    this.isPlaying = false;
-                    this.timeouts.push(setTimeout(function () {
-                        document.getElementById("melody-play-icon").className = "play icon";
-                    }, (this.numCol - 1) * this.getDuration()));
-                } else {
-                    this.timeouts.push(setTimeout(
-                        this.playMelody, (this.numCol - 1) * this.getDuration()));
-                }
-
+                // if (!this.isLooping) {
+                //     this.isPlaying = false;
+                //     this.timeouts.push(setTimeout(function () {
+                //         // toggle to play when the melody finishes playing
+                //         pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
+                //         pxt.BrowserUtils.addClass(this.playIcon, "play icon");
+                //     }, (this.numCol - 1) * this.getDuration()));
+                // } else {
+                //     this.timeouts.push(setTimeout(
+                //         this.playMelody, (this.numCol - 1) * this.getDuration()));
+                // }
+                this.timeouts.push(setTimeout(
+                this.playMelody, (this.numCol - 1) * this.getDuration()));
             } else {
-                document.getElementById("melody-play-icon").className = "play icon";
+                pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
+                pxt.BrowserUtils.addClass(this.playIcon, "play icon");
                 this.isPlaying = false;
                 for (let i = 0; i < this.timeouts.length; i++) {
                     clearTimeout(this.timeouts[i]);
@@ -408,9 +430,9 @@ namespace pxtblockly {
 
         }
 
-        loopMelody() {
-            this.isLooping = !this.isLooping;
-        }
+        // loopMelody() {
+        //     this.isLooping = !this.isLooping;
+        // }
 
 
     }
