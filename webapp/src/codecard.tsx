@@ -71,6 +71,8 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
 
+        const descriptions = (card && card.description instanceof Array) ? card.description : [card.description as string];
+
         const clickHandler = card.onClick ? (e: any) => {
             if (e.target && e.target.tagName == "A")
                 return;
@@ -114,7 +116,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.shortName || card.name || card.description ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                    {card.description ? <div className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(card.description)}</div> : null}
+                    {descriptions && descriptions.map(element => {
+                        return <div className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
+                    })};
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}

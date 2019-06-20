@@ -8,7 +8,7 @@
         label?: string;
 
         color?: string; // one of semantic ui colors
-        description?: string;
+        description?: string | string[]; // either a single string, or an array of multiple strings
         blocksXml?: string;
         typeScript?: string;
         imageUrl?: string;
