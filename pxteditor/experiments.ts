@@ -113,6 +113,11 @@ namespace pxt.editor.experiments {
                 description: lf("Use the JavaScript debugger to debug extension code")
             },
             {
+                id: "snippetBuilder",
+                name: lf("Snippet Builder"),
+                description: lf("Try out the new snippet dialogs.")
+            },
+            {
                 id: "experimentalHw",
                 name: lf("Experimental Hardware"),
                 description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
