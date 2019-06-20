@@ -2061,23 +2061,27 @@ export class ProjectView
                 }
                 pxt.tickEvent("deploy.start")
                 return pxt.commands.deployAsync(resp, {
-                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
-                    reportError: (e) => core.errorNotification(e),
+                    reportDeviceNotFoundAsync: (docPath, compileResult) => {
+                        pxt.tickEvent("deploy.devicenotfound")
+                        return this.showDeviceNotFoundDialogAsync(docPath, compileResult)
+                    },
+                    reportError: (e) => {
+                        pxt.tickEvent("deploy.reporterror")
+                        return core.errorNotification(e)
+                    },
                     showNotification: (msg) => core.infoNotification(msg)
                 })
                     .then(() => {
                         pxt.tickEvent("deploy.finished")
-                    }, () => {
-                        pxt.tickEvent("deploy.unfinished")
                     })
                     .catch(e => {
-                        pxt.tickEvent("deploy.exception")
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
                         } else {
                             const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
                             core.warningNotification(errorText);
                         }
+                        pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser })
                         pxt.reportException(e);
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
