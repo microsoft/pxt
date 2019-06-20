@@ -71,7 +71,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
 
-        const descriptions = (card && card.description instanceof Array) ? card.description : [card.description as string];
+        const descriptions = card && card.description && (card.description instanceof Array ? card.description : [card.description]);
 
         const clickHandler = card.onClick ? (e: any) => {
             if (e.target && e.target.tagName == "A")
@@ -113,12 +113,13 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     {card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined}
                     {card.iconContent || undefined}
                 </div></div> : undefined}
-            {card.shortName || card.name || card.description ?
+            {(card.shortName || card.name || descriptions) ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                    {descriptions && descriptions.map(element => {
-                        return <div className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
-                    })};
+                    {descriptions && descriptions.map((element, index) => {
+                            return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>
+                        })
+                    }
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}

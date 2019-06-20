@@ -609,9 +609,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {tags ? <div className="ui labels">
                         {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
                         </div>)}</div> : undefined}
-                    {descriptions.map(desc => {
-                        return <p className="detail">
-                                desc
+                    {descriptions && descriptions.map((desc, index) => {
+                        return <p key={`line${index}`} className="detail">
+                                {desc}
                             </p>
                     })}
                     <div className="actions">
