@@ -13,26 +13,21 @@ namespace pxtblockly {
         private stringRep: string;
         private oneNotePerCol: boolean = true;
         private isPlaying: boolean = false;
-        // private isLooping: boolean = false;
         private timeouts: any = []; // keep track of timeouts
 
         // html references
         private topDiv: HTMLDivElement;
         private editorGalleryToggle: HTMLDivElement;
         private editorButton: HTMLButtonElement;
-        private galleryButton:  HTMLButtonElement;
+        private galleryButton: HTMLButtonElement;
         private melodyName: HTMLInputElement;
         private gridDiv: HTMLDivElement;
         private bottomDiv: HTMLDivElement;
         private buttonBarDiv: HTMLDivElement;
-        private doneButton:  HTMLButtonElement;
+        private doneButton: HTMLButtonElement;
         private iconButtons: HTMLDivElement;
-        private playButton:  HTMLButtonElement;
+        private playButton: HTMLButtonElement;
         private playIcon: HTMLElement;
-        // private loopButton:  HTMLButtonElement;
-        // private loopIcon: HTMLElement;
-        // private sliderDiv: HTMLDivElement;
-        // private tempoSlider: HTMLInputElement;
         private tempoText: HTMLInputElement;
 
 
@@ -145,36 +140,14 @@ namespace pxtblockly {
             this.playIcon.id = "melody-play-icon";
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
-            // this.loopButton = document.createElement("button");
-            // pxt.BrowserUtils.addClass(this.loopButton, "ui button");
-            // this.loopButton.id = "melody-loop-button";
-            // this.loopButton.addEventListener("click", () => this.loopMelody());
-            // this.loopIcon = document.createElement("i");
-            // pxt.BrowserUtils.addClass(this.loopIcon, "redo xicon");
-            // this.loopButton.appendChild(this.loopIcon);
-            // this.iconButtons.appendChild(this.playButton);
-            // this.iconButtons.appendChild(this.loopButton);
             this.buttonBarDiv.appendChild(this.playButton);
             this.buttonBarDiv.appendChild(this.doneButton);
-
-            // this.sliderDiv = document.createElement("div");
-            // pxt.BrowserUtils.addClass(this.sliderDiv, "slider-container");
-            // this.tempoSlider = document.createElement("input");
-            // this.tempoSlider.id = "melody-tempo-slider";
-            // this.tempoSlider.type = "range";
-            // pxt.BrowserUtils.addClass(this.tempoSlider, "ui range");
-            // this.tempoSlider.min = "60";
-            // this.tempoSlider.max = "200";
-            // this.tempoSlider.defaultValue = this.tempo + "";
-            // this.tempoSlider.addEventListener("input", () => this.setTempo(+this.tempoSlider.value));
 
             this.tempoText = document.createElement("input");
             this.tempoText.type = "number";
             this.tempoText.value = this.tempo + ""; // will be updated according to slider
             this.tempoText.id = "melody-tempo-text";
             this.tempoText.addEventListener("input", () => this.setTempo(+this.tempoText.value));
-            // this.sliderDiv.appendChild(this.tempoText);
-            // this.sliderDiv.appendChild(this.tempoSlider);
             this.bottomDiv.appendChild(this.tempoText);
             this.bottomDiv.appendChild(this.buttonBarDiv);
             div.appendChild(this.bottomDiv);
@@ -272,9 +245,6 @@ namespace pxtblockly {
                 if (this.tempoText) {
                     this.tempoText.value = this.tempo + "";
                 }
-                // if (this.tempoSlider) {
-                //     this.tempoSlider.value = this.tempo + "";
-                // }
             }
         }
 
@@ -300,7 +270,7 @@ namespace pxtblockly {
 
             // play sound if selected
             if (!this.melody.getValue(+row, +col)) {
-                this.playNote(row);
+                this.playNote(+row);
                 if (this.oneNotePerCol) { // clear all other notes in col
                     for (let i = 0; i < this.numRow; i++) {
                         if (this.melody.getValue(i, +col)) {
@@ -325,19 +295,19 @@ namespace pxtblockly {
 
 
 
-        playNote(rowNumber: string, colNumber?: number): void {
+        playNote(rowNumber: number, colNumber?: number): void {
             let tone: number = 0;
             let cnt: number = ++this.soundingKeys;
 
             switch (rowNumber) {
-                case "0": tone = 262; break; // Middle C
-                case "1": tone = 294; break; // Middle D
-                case "2": tone = 330; break; // Middle E
-                case "3": tone = 349; break; // Middle F
-                case "4": tone = 392; break; // Middle G
-                case "5": tone = 440; break; // Middle A
-                case "6": tone = 494; break; // Middle B
-                case "7": tone = 523; break; // Tenor C 
+                case 0: tone = 262; break; // Middle C
+                case 1: tone = 294; break; // Middle D
+                case 2: tone = 330; break; // Middle E
+                case 3: tone = 349; break; // Middle F
+                case 4: tone = 392; break; // Middle G
+                case 5: tone = 440; break; // Middle A
+                case 6: tone = 494; break; // Middle B
+                case 7: tone = 523; break; // Tenor C 
             }
 
             if (this.isPlaying) { // when melody is playing
@@ -391,7 +361,7 @@ namespace pxtblockly {
 
         playMelody() {
             // toggle icon
-            if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) { 
+            if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) {
                 pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
                 this.isPlaying = true;
@@ -399,25 +369,14 @@ namespace pxtblockly {
                     for (let j = 0; j < this.numRow; j++) {
                         if (this.melody.getValue(j, i)) {
                             if (this.oneNotePerCol) {
-                                this.playNote(j + "", i);
+                                this.playNote(j, i);
                                 break;
                             } // will support playing multiple notes in the future
                         }
                     }
                 }
-                // if (!this.isLooping) {
-                //     this.isPlaying = false;
-                //     this.timeouts.push(setTimeout(function () {
-                //         // toggle to play when the melody finishes playing
-                //         pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
-                //         pxt.BrowserUtils.addClass(this.playIcon, "play icon");
-                //     }, (this.numCol - 1) * this.getDuration()));
-                // } else {
-                //     this.timeouts.push(setTimeout(
-                //         this.playMelody, (this.numCol - 1) * this.getDuration()));
-                // }
-                this.timeouts.push(setTimeout(
-                this.playMelody, (this.numCol - 1) * this.getDuration()));
+                this.timeouts.push(setTimeout( // call the melody again after it finishes - not currently working
+                    this.playMelody, (this.numCol - 1) * this.getDuration()));
             } else {
                 pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "play icon");
@@ -427,13 +386,7 @@ namespace pxtblockly {
                 }
                 AudioContextManager.stop();
             }
-
         }
-
-        // loopMelody() {
-        //     this.isLooping = !this.isLooping;
-        // }
-
 
     }
 }
