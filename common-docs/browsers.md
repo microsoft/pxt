@@ -5,10 +5,10 @@
 You need one of these browsers running on Windows 7, Windows 8, Windows 8.1, or
 Windows 10:
 
-* Internet Explorer 11
 * Microsoft Edge
 * Google Chrome
 * Mozilla Firefox
+* Internet Explorer 11 (Not for MakeCode Arcade)
 
 ## Mac
 
@@ -42,7 +42,7 @@ version of one of the following:
 
 ## Chrome OS
 
-* Version 58 or higher
+* Version 69 or higher
 
 ## How to check your OS or browser
 
