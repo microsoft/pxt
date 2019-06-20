@@ -262,22 +262,8 @@ namespace pxsim {
         }
 
         const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
-        let metallicBuffer: AudioBuffer
         let noiseBuffer: AudioBuffer
         let squareBuffer: AudioBuffer[] = []
-
-        function getMetallicBuffer() {
-            if (!metallicBuffer) {
-                const bufferSize = 1024;
-                metallicBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
-                const output = metallicBuffer.getChannelData(0);
-
-                for (let i = 0; i < bufferSize; i++) {
-                    output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
-                }
-            }
-            return metallicBuffer
-        }
 
         function getNoiseBuffer() {
             if (!noiseBuffer) {
@@ -313,8 +299,7 @@ namespace pxsim {
         #define SW_TRIANGLE 1
         #define SW_SAWTOOTH 2
         #define SW_SINE 3 // TODO remove it? it takes space
-        #define SW_NOISE 4
-        #define SW_REAL_NOISE 5
+        #define SW_NOISE 5
         #define SW_SQUARE_10 11
         #define SW_SQUARE_50 15
         */
@@ -341,9 +326,7 @@ namespace pxsim {
             }
 
             let buffer: AudioBuffer
-            if (waveFormIdx == 4)
-                buffer = getMetallicBuffer()
-            else if (waveFormIdx == 5)
+            if (waveFormIdx == 5)
                 buffer = getNoiseBuffer()
             else if (11 <= waveFormIdx && waveFormIdx <= 15)
                 buffer = getSquareBuffer((waveFormIdx - 10) * 10)
