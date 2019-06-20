@@ -89,9 +89,14 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
                       onClick={this.openSpriteEditor}
                   >Edit your sprite</sui.Button>
                   {open &&
-                      <div id='spriteEditorPopupWrapper' className='ui popup sprite-editor-snippet-popup'>
-                          <div id='spriteEditorPopup' ref={'spriteEditorPopup'}>
-                              <div id='snippetBuilderTopArrow' className='blocklyDropDownArrow arrowTop' style={{ transform: 'translate(242px, -9px) rotate(45deg)' }} />
+                      <div className='ui popup sprite-editor-snippet-popup'>
+                          <div className='sprite-editor-popup' ref={'spriteEditorPopup'}>
+                            <div
+                                className='sprite-editor-arrow blocklyDropDownArrow arrowTop'
+                                style={{
+                                    transform: 'translate(242px, -9px) rotate(45deg)',
+                                }}
+                            />
                           </div>
                       </div>
                   }

@@ -29,6 +29,7 @@ interface AnswersMap {
 interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
+    mdOutput?: string;
     answers?: AnswersMap;
     history: number[];
     defaults: DefaultAnswersMap; // Will be typed once more clearly defined
@@ -81,7 +82,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             }
         }
 
-        this.setState({ defaults });
+        this.setState({ defaults }, this.generateOutputMarkdown);
     }
 
     toggleActionButton() {
@@ -156,19 +157,18 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
     /**
      * 
-     * @param output - Accepts an output to convert to markdown
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
      */
-    generateOutputMarkdown(tsOutput: string) {
-        const { config } = this.state;
+    generateOutputMarkdown = pxt.Util.debounce(() => {
+        const { config, tsOutput } = this.state;
         // Attaches starting and ending line based on output type
         let md = `\`\`\`${config.outputType}\n`;
         md += this.replaceTokens(tsOutput);
         md += `\n\`\`\``;
 
-        return md
-    }
+        this.setState({ mdOutput: md });
+    }, 300, false);
 
     hide() {
         this.setState({
@@ -327,11 +327,11 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                     ...prevState.answers,
                     [answerToken]: v,
                 }
-            }));
+            }), this.generateOutputMarkdown);
         }
 
     renderCore() {
-        const { visible, tsOutput, answers, config, history, actions } = this.state;
+        const { visible, tsOutput, answers, config, mdOutput, actions } = this.state;
         const { parent } = this.props;
 
         const currentQuestion = this.getCurrentQuestion();
@@ -341,29 +341,28 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
-                <div>
-                    <div className="ui equal width grid">
+                <div className="ui equal width grid">
+                    <div className='column snippet-question'>
                         {currentQuestion &&
-                            <div className='column'>
-                                <div className='horizontal list'>
-                                    <div>{pxt.Util.rlf(currentQuestion.title)}</div>
-                                    <div className='list horizontal'>
-                                        {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
-                                            <div key={input.answerToken}>
-                                                <InputHandler
-                                                    onChange={this.onChange(input.answerToken)}
-                                                    input={input}
-                                                    value={answers[input.answerToken] || ''}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
+                            <div className='ui segment raised'>
+                                <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
+                                <div className='ui equal width grid'>
+                                    {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
+                                        <span className='column'>
+                                            <InputHandler
+                                                onChange={this.onChange(input.answerToken)}
+                                                input={input}
+                                                value={answers[input.answerToken] || ''}
+                                                key={input.answerToken}
+                                            />
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         }
-                        <div id="snippetBuilderOutput" className='snippet output-section column'>
-                            {parent && <md.MarkedContent className='snippet-markdown-content' markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
-                        </div>
+                    </div>
+                    <div className='snippet output-section column'>
+                        {mdOutput && <md.MarkedContent className='snippet-markdown-content' markdown={mdOutput} parent={parent} />}
                     </div>
                 </div>
             </sui.Modal>

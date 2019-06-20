@@ -1,17 +1,26 @@
 .snippet-builder {
     overflow: visible;
+    min-height: 30em;
+    max-height: 30em;
+    .snippet-question {
+        h6 {
+            font-weight: bolder;
+        }
+    }
     .content {
-        min-height: 30em;
-        max-height: 30em;
         overflow: scroll;
-        .snippet-markdown-content {
-            .raised {
-                height: 25em;
-                min-height: 25em;
-                max-height: 25em;
-                overflow: scroll;
-                border: none;
-                box-shadow: none;
+        .snippet.output-section.column {
+            padding-top: 0;
+            .snippet-markdown-content {
+                .raised {
+                    height: 25em;
+                    min-height: 25em;
+                    max-height: 25em;
+                    overflow: scroll;
+                    border: none;
+                    box-shadow: none;
+                    padding-top: 0;
+                }
             }
         }
     }

@@ -238,8 +238,7 @@
     -ms-interpolation-mode: nearest-neighbor;
 }
 /** Sprite Editor React component styling*/
-
-#spriteEditorPopupWrapper {
+.ui.popup.sprite-editor-snippet-popup {
     background: none;
     transform: translate(-141px, 0px);
     top: auto;
@@ -251,13 +250,12 @@
     position: fixed;
     margin-top: 5px;
 }
-
-#spriteEditorPopupWrapper:before {
+.ui.popup.sprite-editor-snippet-popup:before {
     content: none;
 }
 
-#spriteEditorPopup {
-    #snippetBuilderTopArrow {
+.sprite-editor-snippet-popup {
+    .blocklyDropDownArrow.arrowTop {
         background: #4B7BEC;
         z-index: 0;
         position: fixed;
@@ -265,7 +263,6 @@
         left: auto;
         border: none;
     }
-
     .blocklyDropDownArrow.arrowBottom {
         background: rgb(44, 62, 80);
     }
