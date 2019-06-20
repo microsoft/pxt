@@ -2557,7 +2557,7 @@ export class ProjectView
 
     private debouncedSaveProjectName = Util.debounce(() => {
         this.saveProjectNameAsync().done();
-    }, 2000, false);
+    }, 500, false);
 
     updateHeaderName(name: string) {
         this.setState({
