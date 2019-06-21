@@ -1167,6 +1167,9 @@ namespace pxsim {
                 clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
+
+                // Time reamining needs to be at least 1. Setting to 0 causes fibers
+                // to never resume after breaking
                 if (timeRemaining <= 0) timeRemaining = 1;
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, timeRemaining))
             });
