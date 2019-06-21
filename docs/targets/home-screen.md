@@ -55,8 +55,8 @@ as a JavaScript array of ``CodeCard`` instance.
 ```
 ````
 
-The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are used to display the card in the home screen. A page with a URL that starts with ``https://`` will automatically open in a new tab. If you want to include a multiple line description, you can
-use an array of strings instead of a single string:
+The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are used to display the card in the home screen. A page with a URL that starts with ``https://`` will automatically open in a new tab. If you want to have multiple lines in the description, you can
+use an array of strings instead of a single string. The multiple lines are combined into a single paragraph:
 
 ```codecard
 [
