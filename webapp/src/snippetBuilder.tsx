@@ -119,6 +119,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 onclick: this.backPage,
                 icon: 'arrow left',
                 className: 'arrow left',
+                labelPosition: 'left',
             },
             {
                 label: lf("Next"),
@@ -308,7 +309,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             const nextQuestion = this.getNextQuestion();
 
             if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
-                this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`});
+                this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`}, this.generateOutputMarkdown);
             }
             this.setState({ history: [...history, goto.question ]}, this.toggleActionButton)
         }
@@ -331,7 +332,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         }
 
     renderCore() {
-        const { visible, tsOutput, answers, config, mdOutput, actions } = this.state;
+        const { visible, answers, config, mdOutput, actions } = this.state;
         const { parent } = this.props;
 
         const currentQuestion = this.getCurrentQuestion();
@@ -344,20 +345,24 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 <div className="ui equal width grid">
                     <div className='column snippet-question'>
                         {currentQuestion &&
-                            <div className='ui segment raised'>
-                                <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
-                                <div className='ui equal width grid'>
-                                    {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
-                                        <span className='column'>
-                                            <InputHandler
-                                                onChange={this.onChange(input.answerToken)}
-                                                input={input}
-                                                value={answers[input.answerToken] || ''}
-                                                key={input.answerToken}
-                                            />
-                                        </span>
-                                    )}
+                            <div>
+                                <div className='ui segment raised'>
+                                    <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
+                                    <div className='ui equal width grid'>
+                                        {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
+                                            <span className='column' key={`span-${input.answerToken}`}>
+                                                <InputHandler
+                                                    onChange={this.onChange(input.answerToken)}
+                                                    input={input}
+                                                    value={answers[input.answerToken] || ''}
+                                                    key={input.answerToken}
+                                                />
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
+                                {currentQuestion.hint &&
+                                <div className='hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
                             </div>
                         }
                     </div>
@@ -370,6 +375,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 }
 
+/**
+ * TODO(jb) Break this out into a special input class
+ */
 interface InputHandlerProps {
     input: pxt.SnippetQuestionInput;
     onChange: (v: string) => void;
@@ -379,12 +387,32 @@ interface InputHandlerProps {
 class InputHandler extends data.Component<InputHandlerProps, {}> {
     constructor(props:   InputHandlerProps) {
         super(props);
+        this.numberOnChange = this.numberOnChange.bind(this);
     }
+
+    numberOnChange = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onChange(e.target.value)
+    dropdownOnChange = (value: string) => () => this.props.onChange(value);
 
     renderCore() {
         const { value, input, onChange } = this.props;
 
         switch (input.type) {
+            case 'dropdown':
+                return (
+                    <sui.DropdownMenu className='inline button' role="menuitem"
+                        onChange={onChange}
+                        text={value.length ? pxt.Util.rlf(input.options[value]) : pxt.Util.rlf(input.options[Object.keys(input.options)[0]])}
+                        icon={'dropdown'}>
+                        {Object.keys(input.options).map((optionValue) =>
+                            <sui.Item
+                                role="menuitem"
+                                value={optionValue}
+                                key={input.options[optionValue]}
+                                text={pxt.Util.rlf(input.options[optionValue])}
+                                onClick={this.dropdownOnChange(optionValue)}
+                            />)}
+                    </sui.DropdownMenu>
+                )
             case 'spriteEditor':
                 return (
                     <SpriteEditor
@@ -395,6 +423,27 @@ class InputHandler extends data.Component<InputHandlerProps, {}> {
                     />
                 );
             case 'number':
+
+                return (
+                    <div>
+                        <span>{input.label && input.label}</span>
+                        <input
+                            type='range'
+                            className={'slider blocklyMockSlider'}
+                            role={'slider'}
+                            max={input.max}
+                            min={input.min}
+                            value={value}
+                            onChange={this.numberOnChange}
+                            aria-valuemin={input.min}
+                            aria-valuemax={input.max}
+                            aria-valuenow={value}
+                            style={{
+                                marginLeft: 0
+                            }}
+                        />
+                    </div>
+                )
             case 'text':
             default:
                 return (
@@ -407,6 +456,7 @@ class InputHandler extends data.Component<InputHandlerProps, {}> {
         }
     }
 }
+
 function getSnippetExtensions() {
     return pkg
         .allEditorPkgs()

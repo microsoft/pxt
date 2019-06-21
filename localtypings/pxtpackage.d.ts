@@ -175,13 +175,9 @@ declare namespace pxt {
 
     type SnippetAnswerTypes = any; // TODO(jb) Should include custom answer types for number, enums, string, image
 
-    interface SnippetGoToParameters {
-        [tokenType: string]: number;
-    }
-
     interface SnippetGoToOptions {
         question: number;
-        parameters?: SnippetGoToParameters;
+        parameters?: pxt.Map<string>;
     }
 
     interface SnippetQuestionInput {
@@ -189,6 +185,9 @@ declare namespace pxt {
         defaultAnswer: SnippetAnswerTypes;
         type?: string;
         label?: string;
+        max?: number;
+        min?: number;
+        options?: pxt.Map<string>;
     }
 
     interface SnippetQuestions {
@@ -196,5 +195,6 @@ declare namespace pxt {
         output?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];
+        hint?: string;
     }
 }

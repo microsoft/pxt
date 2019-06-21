@@ -7,6 +7,12 @@
             font-weight: bolder;
         }
     }
+
+    .hint.ui.segment {
+        border: none;
+        box-shadow: none;
+    }
+
     .content {
         overflow: scroll;
         .snippet.output-section.column {
@@ -24,4 +30,171 @@
             }
         }
     }
+}
+
+/**
+Inputs
+*/
+/**
+====================*****
+SLIDER
+====================*****
+*/
+input.slider.blocklyMockSlider {
+    margin-top: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px; 
+    padding: 0;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    background: rgb(56, 92, 177);
+}
+input.slider.blocklyMockSlider[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+  }
+  
+  input.slider.blocklyMockSlider[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+  }
+  
+  input.slider.blocklyMockSlider[type=range]:focus {
+    outline: none; 
+  }
+  
+  input.slider.blocklyMockSlider[type=range]::-ms-track {
+    width: 100%;
+    cursor: pointer;
+    background: transparent; 
+    border-color: transparent;
+    color: transparent;
+}
+
+input.slider.blocklyMockSlider[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    margin-top: -1px;
+    position: absolute;
+    background-color: white;
+    border-radius: 100%;
+    -webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    -moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+  
+input.slider.blocklyMockSlider[type=range]::-moz-range-thumb {
+    width: 26px;
+    height: 26px;
+    margin-top: -1px;
+    position: absolute;
+    background-color: white;
+    border-radius: 100%;
+    -webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    -moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+  
+input.slider.blocklyMockSlider[type=range]::-ms-thumb {
+    width: 26px;
+    height: 26px;
+    margin-top: -1px;
+    position: absolute;
+    background-color: white;
+    border-radius: 100%;
+    -webkit-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    -moz-box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+input.slider.blocklyMockSlider[type=range]::-webkit-slider-runnable-track {
+    cursor: pointer;
+    margin-top: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    padding: 0;
+}
+  
+input.slider.blocklyMockSlider[type=range]:focus::-webkit-slider-runnable-track {
+    background: #547AB2;
+}
+  
+input.slider.blocklyMockSlider[type=range]::-moz-range-track {
+    cursor: pointer;
+    margin-top: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    padding: 0;
+}
+  
+input.slider.blocklyMockSlider[type=range]::-ms-track {
+    cursor: pointer;
+    margin: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    padding: 0;
+}
+input.slider.blocklyMockSlider[type=range]::-ms-fill-lower {
+    cursor: pointer;
+    margin: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    padding: 0;
+}
+
+input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-lower {
+    background: #3071a9;
+    padding: 0;
+}
+
+input.slider.blocklyMockSlider[type=range]::-ms-fill-upper {
+    cursor: pointer;
+    margin-top: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    padding: 0;
+}
+
+input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
+    background: #547AB2;
+    padding: 0;
 }
