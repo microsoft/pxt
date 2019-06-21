@@ -4,7 +4,7 @@ namespace pxtblockly {
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         protected params: U;
-        private title: string = "Name this tune";
+        private title: string = pxt.Util.lf("Name this tune");
         private melody: pxtmelody.MelodyArray;
         private soundingKeys: number = 0;
         private numRow: number = 8;
@@ -23,12 +23,12 @@ namespace pxtblockly {
         private melodyName: HTMLInputElement;
         private gridDiv: HTMLDivElement;
         private bottomDiv: HTMLDivElement;
-        private buttonBarDiv: HTMLDivElement;
         private doneButton: HTMLButtonElement;
-        private iconButtons: HTMLDivElement;
         private playButton: HTMLButtonElement;
         private playIcon: HTMLElement;
-        private tempoText: HTMLInputElement;
+        private tempoInput: HTMLInputElement;
+        private tempoDiv: HTMLDivElement;
+        private tempoLabel: HTMLLabelElement;
 
 
 
@@ -49,7 +49,7 @@ namespace pxtblockly {
             Blockly.DropDownDiv.clearContent();
             Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
-            contentDiv.style.maxHeight = "500px";
+            contentDiv.style.maxHeight = "550px";
             this.renderEditor(Blockly.DropDownDiv.getContentDiv() as HTMLDivElement);
             this.createGridDisplay();
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
@@ -122,34 +122,35 @@ namespace pxtblockly {
             this.bottomDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
 
-            this.buttonBarDiv = document.createElement("div");
-            pxt.BrowserUtils.addClass(this.buttonBarDiv, "melody-button-bar-div");
-
             this.doneButton = document.createElement("button");
             this.doneButton.id = "melody-done-button";
             pxt.BrowserUtils.addClass(this.doneButton, "ui button");
             this.doneButton.innerText = "Done";
             this.doneButton.addEventListener("click", () => this.onDone());
-            this.iconButtons = document.createElement("div");
-            pxt.BrowserUtils.addClass(this.iconButtons, "ui icon buttons");
             this.playButton = document.createElement("button");
-            pxt.BrowserUtils.addClass(this.playButton, "ui button");
+            pxt.BrowserUtils.addClass(this.playButton, "ui icon button");
             this.playButton.id = "melody-play-button";
             this.playButton.addEventListener("click", () => this.togglePlay());
             this.playIcon = document.createElement("i");
             this.playIcon.id = "melody-play-icon";
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
-            this.buttonBarDiv.appendChild(this.playButton);
-            this.buttonBarDiv.appendChild(this.doneButton);
-
-            this.tempoText = document.createElement("input");
-            this.tempoText.type = "number";
-            this.tempoText.value = this.tempo + ""; // will be updated according to slider
-            this.tempoText.id = "melody-tempo-text";
-            this.tempoText.addEventListener("input", () => this.setTempo(+this.tempoText.value));
-            this.bottomDiv.appendChild(this.tempoText);
-            this.bottomDiv.appendChild(this.buttonBarDiv);
+            this.tempoDiv = document.createElement("div");
+            this.tempoDiv.id = "melody-tempo-div";
+            this.tempoLabel = document.createElement("label");
+            this.tempoLabel.id = "melody-tempo-label";
+            this.tempoLabel.innerText = "Tempo";
+            this.tempoInput = document.createElement("input");
+            pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
+            this.tempoInput.type = "number";
+            this.tempoInput.value = this.tempo + ""; // will be updated according to slider
+            this.tempoInput.id = "melody-tempo-input";
+            this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
+            this.tempoDiv.appendChild(this.tempoLabel);
+            this.tempoDiv.appendChild(this.tempoInput);
+            this.bottomDiv.appendChild(this.tempoDiv);
+            this.bottomDiv.appendChild(this.playButton);
+            this.bottomDiv.appendChild(this.doneButton);
             div.appendChild(this.bottomDiv);
 
             // create event listeners at the end because the DOM needs to finish loading
@@ -218,12 +219,10 @@ namespace pxtblockly {
 
         protected getDropdownBackgroundColour() {
             return this.sourceBlock_.getColour();
-            //return "#560649";
         }
 
         protected getDropdownBorderColour() {
             return this.sourceBlock_.getColourSecondary();
-            //return "#560649";
         }
 
         setTitle(melodyName: string): void {
@@ -242,8 +241,8 @@ namespace pxtblockly {
 
         setTempo(tempo: number): void {
             // reset text input if input is invalid
-            if (isNaN(tempo) || tempo <= 0 && this.tempoText) {
-                this.tempoText.value = this.tempo + "";
+            if (isNaN(tempo) || tempo <= 0 && this.tempoInput) {
+                this.tempoInput.value = this.tempo + "";
                 return
             }
             // update tempo and duration values and display to reflect new tempo
@@ -252,8 +251,8 @@ namespace pxtblockly {
                 if (this.melody) {
                     this.melody.setTempo(this.tempo);
                 }
-                if (this.tempoText) {
-                    this.tempoText.value = this.tempo + "";
+                if (this.tempoInput) {
+                    this.tempoInput.value = this.tempo + "";
                 }
             }
         }
@@ -277,7 +276,6 @@ namespace pxtblockly {
             let row = params[1];
             let col = params[2];
 
-
             // play sound if selected
             if (!this.melody.getValue(+row, +col)) {
                 this.playNote(+row);
@@ -287,16 +285,16 @@ namespace pxtblockly {
                             // update melody array
                             this.melody.updateMelody(i, +col);
                             // set color to default
-                            document.getElementById("cell-" + i + "-" + col).style.backgroundColor = "";
+                            pxt.BrowserUtils.removeClass(document.getElementById("cell-" + i + "-" + col), this.getColorClass(i));
                         }
                     }
 
                 }
                 // update button/div color
-                this.updateColor(id, +row, +col);
+                pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(+row));
             } else {
                 // set color to default
-                document.getElementById(id).style.backgroundColor = "";
+                pxt.BrowserUtils.removeClass(document.getElementById(id), this.getColorClass(+row));
             }
 
             // update melody array
@@ -321,38 +319,37 @@ namespace pxtblockly {
             }
 
             if (this.isPlaying) { // when melody is playing
-                this.timeouts.push(setTimeout(function () {
+                this.timeouts.push(setTimeout(() => {
                     AudioContextManager.tone(tone);
                 }, colNumber * this.getDuration()));
-                this.timeouts.push(setTimeout(function () {
+                this.timeouts.push(setTimeout(() => {
                     AudioContextManager.stop();
                 }, (colNumber + 1) * this.getDuration()));
             } else { // when a single note is selected
                 AudioContextManager.tone(tone);
-                this.timeouts.push(setTimeout(function () {
+                this.timeouts.push(setTimeout(() => {
                     if (this.soundingKeys == cnt)
                         AudioContextManager.stop();
                 }, this.getDuration()));
-                this.timeouts.push(setTimeout(function () {
+                this.timeouts.push(setTimeout(() => {
                     AudioContextManager.stop();
                 }, this.getDuration()));
             }
         }
 
-        updateColor(id: string, row: number, col: number) {
-            let color: string = "";
+        getColorClass(row: number): string {
+            let colorClass = "";
             switch (row) {
-                case 0: color = "#A80000"; break; // red - Middle C
-                case 1: color = "#D83B01"; break; // orange - Middle D
-                case 2: color = "#FFB900"; break; // yellow - Middle E
-                case 3: color = "#107C10"; break; // green - Middle F
-                case 4: color = "#008272"; break; // teal - Middle G
-                case 5: color = "#0078D7"; break; // blue - Middle A
-                case 6: color = "#B4009E"; break; // violet - Middle B
-                case 7: color = "#5C2D91"; break; // purple - Tenor C
-                default: return;
+                case 0: colorClass = "melody-red"; break; // Middle C
+                case 1: colorClass = "melody-orange"; break; // Middle D
+                case 2: colorClass = "melody-yellow"; break; // Middle E
+                case 3: colorClass = "melody-green"; break; // Middle F
+                case 4: colorClass = "melody-teal"; break; // Middle G
+                case 5: colorClass = "melody-blue"; break; // Middle A
+                case 6: colorClass = "melody-violet"; break; // Middle B
+                case 7: colorClass = "melody-purple"; break; // Tenor C
             }
-            document.getElementById(id).style.backgroundColor = color;
+            return colorClass;
         }
 
         createGridDisplay() {
@@ -361,13 +358,11 @@ namespace pxtblockly {
                 for (let j = 0; j < this.numCol; j++) {
                     if (this.melody.getValue(i, j)) {
                         let id = "cell-" + i + "-" + j;
-                        this.updateColor(id, i, j);
+                        pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(i));
                     }
                 }
             }
         }
-
-        // instead of using a bunch of switch statements - can create enum of objects
 
         togglePlay() {
             if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) {
