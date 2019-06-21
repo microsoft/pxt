@@ -527,7 +527,7 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
 
 export interface ProjectsDetailProps extends ISettingsProps {
     name: string;
-    description?: string | string[];
+    description?: string;
     imageUrl?: string;
     largeImageUrl?: string;
     youTubeId?: string;
@@ -577,7 +577,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
-        const descriptions = description instanceof Array ? description : [description];
+        const descriptions = description && description.split("\n");
 
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") {

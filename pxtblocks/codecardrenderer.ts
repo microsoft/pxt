@@ -106,12 +106,10 @@ namespace pxt.docs.codeCard {
                 else div(ct, 'header', 'div', name);
             }
             if (card.description) {
-                let descr = div(ct, 'ui description');
-                let descriptionsAsArray = card.description instanceof Array ? card.description : [card.description];
+                const descr = div(ct, 'ui description');
+                const shortenedDescription = card.description.split('.')[0] + '.';
 
-                descriptionsAsArray.forEach(description => {
-                    descr.appendChild(document.createTextNode(description.split('.')[0] + '.'));
-                })
+                descr.appendChild(document.createTextNode(shortenedDescription));
             }
         }
 

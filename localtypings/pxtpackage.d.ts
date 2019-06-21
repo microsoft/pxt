@@ -115,7 +115,7 @@ declare namespace pxt {
         tabIndex?: number;
 
         color?: string; // one of semantic ui colors
-        description?: string | string[];
+        description?: string;
         extracontent?: string;
         blocksXml?: string;
         typeScript?: string;

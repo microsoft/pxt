@@ -71,7 +71,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
 
-        const descriptions = card && card.description && (card.description instanceof Array ? card.description : [card.description]);
+        const descriptions = card && card.description && card.description.split("\n");
 
         const clickHandler = card.onClick ? (e: any) => {
             if (e.target && e.target.tagName == "A")

@@ -55,17 +55,13 @@ as a JavaScript array of ``CodeCard`` instance.
 ```
 ````
 
-The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are used to display the card in the home screen. A page with a URL that starts with ``https://`` will automatically open in a new tab. If you want to have multiple lines in the description, you can
-use an array of strings instead of a single string. The multiple lines are combined into a single paragraph:
+The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are used to display the card in the home screen. A page with a URL that starts with ``https://`` will automatically open in a new tab. If you want to have multiple paragraphs in the description, you can use ``\n`` to separate the description into separate paragraphs:
 
 ```codecard
 [
 {
   "name": "Ping Pong",
-  "description": [
-      "A game of bouncing ball",
-      "That you can play"
-  ],
+  "description": "A game of bouncing ball\nThat you can play",
   "url":"/examples/ping-pong",
   "imageUrl": "/static/examples/ping-pong.png",
   "cardType": "example"
