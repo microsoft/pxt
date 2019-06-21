@@ -2059,6 +2059,7 @@ export class ProjectView
                         });
                     }
                 }
+                let deployStartTime = Date.now()
                 pxt.tickEvent("deploy.start")
                 return pxt.commands.deployAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => {
@@ -2072,7 +2073,8 @@ export class ProjectView
                     showNotification: (msg) => core.infoNotification(msg)
                 })
                     .then(() => {
-                        pxt.tickEvent("deploy.finished")
+                        let elapsed = Date.now() - deployStartTime
+                        pxt.tickEvent("deploy.finished", { "elapsedMs": elapsed })
                     })
                     .catch(e => {
                         if (e.notifyUser) {
@@ -2081,7 +2083,8 @@ export class ProjectView
                             const errorText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload failed, please try again.") : lf("Download failed, please try again.");
                             core.warningNotification(errorText);
                         }
-                        pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser })
+                        let elapsed = Date.now() - deployStartTime
+                        pxt.tickEvent("deploy.exception", { "notifyUser": e.notifyUser, "elapsedMs": elapsed })
                         pxt.reportException(e);
                         if (userContextWindow)
                             try { userContextWindow.close() } catch (e) { }
