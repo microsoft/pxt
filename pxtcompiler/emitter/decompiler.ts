@@ -1453,9 +1453,8 @@ ${output}</xml>`;
             function checkBooleanCallExpression(n: CallExpression) {
                 const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
                 if (callInfo) {
-                    const type = callInfo.decl.type;
-
-                    if (type && type.kind === SK.BooleanKeyword) {
+                    const api = env.blocks.apis.byQName[callInfo.qName];
+                    if (api && api.retType == "boolean") {
                         return undefined;
                     }
                 }
