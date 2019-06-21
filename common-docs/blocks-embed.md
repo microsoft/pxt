@@ -85,6 +85,7 @@ export interface RenderBlocksResponseMessage extends SimulatorMessage {
     uri?: string;
     width?: number;
     height?: number;
+    error?: string;
 }
 ```
 

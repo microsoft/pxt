@@ -213,6 +213,7 @@ namespace pxsim {
         height?: number;
         css?: string;
         uri?: string;
+        error?: string;
     }
 
     export function print(delay: number = 0) {
