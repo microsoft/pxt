@@ -14,6 +14,7 @@ namespace ts.pxtc.decompiler {
     }
 
     export const FILE_TOO_LARGE_CODE = 9266;
+    export const DECOMPILER_ERROR = 9267;
     const SK = ts.SyntaxKind;
 
     /**
@@ -423,7 +424,18 @@ namespace ts.pxtc.decompiler {
                 }]);
             }
             else {
-                throw e;
+                // don't throw
+                pxt.reportException(e);
+                result.success = false;
+                result.diagnostics = pxtc.patchUpDiagnostics([{
+                    file,
+                    start: file.getFullStart(),
+                    length: file.getFullWidth(),
+                    messageText: e.message,
+                    category: ts.DiagnosticCategory.Error,
+                    code: DECOMPILER_ERROR
+                }]);
+                return result;
             }
         }
 
