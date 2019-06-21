@@ -1167,7 +1167,7 @@ namespace pxsim {
                 clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
-                if (timeRemaining < 0) timeRemaining = 0;
+                if (timeRemaining <= 0) timeRemaining = 1;
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, timeRemaining))
             });
             this.lastPauseTimestamp = U.now();
