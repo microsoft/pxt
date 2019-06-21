@@ -8,7 +8,7 @@ Windows 10:
 * Microsoft Edge
 * Google Chrome
 * Mozilla Firefox
-* Internet Explorer 11 (Not for MakeCode Arcade)
+* Internet Explorer 11 (Exception: for MakeCode Arcade use one of the other browsers)
 
 ## Mac
 
