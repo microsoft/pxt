@@ -2574,14 +2574,17 @@ export class ProjectView
             })
     }
 
-    private debouncedSaveProjectName = Util.debounce(() => {
-        this.saveProjectNameAsync().done();
-    }, 2000, false);
+    private debouncedSaveProjectName: () => void;
 
     updateHeaderName(name: string) {
         this.setState({
             projectName: name
         })
+        if (!this.debouncedSaveProjectName) {
+            this.debouncedSaveProjectName = Util.debounce(() => {
+                this.saveProjectNameAsync().done();
+            }, pxt.options.light ? 2000 : 500, false);
+        }
         this.debouncedSaveProjectName();
     }
 
