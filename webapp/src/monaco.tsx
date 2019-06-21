@@ -1702,7 +1702,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelIcon.setAttribute('role', 'presentation');
             labelIcon.style.display = 'inline-block';
             labelIcon.style.color = `${pxt.toolbox.convertColor(iconColor)}`;
-            if (icon.length === 1) {
+            if (icon && icon.length === 1) {
                 labelIcon.textContent = icon;
             }
             labelDiv.appendChild(labelIcon);
