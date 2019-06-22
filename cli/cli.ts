@@ -38,6 +38,7 @@ Error.stackTraceLimit = 100;
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
     forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
@@ -49,6 +50,12 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     if (local) {
         forceCloudBuild = false;
         forceLocalBuild = true;
+    }
+
+    if (hwvariant) {
+        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
+        pxt.debug(`setting hardware variant to ${hwvariant}`);
+        pxt.setHwVariant(hwvariant)
     }
 }
 
@@ -2608,7 +2615,7 @@ class Host
                 }
                 let proto = pkg.verProtocol()
                 if (proto == "file") {
-                    pxt.log(`skipping download of local pkg: ${pkg.version()}`)
+                    pxt.debug(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
                 } else if (proto == "invalid") {
                     pxt.log(`skipping invalid pkg ${pkg.id}`);
@@ -5447,6 +5454,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
+            },
+            hwvariant: {
+                description: "specify Hardware variant used for this compilation",
+                argument: "hwvariant",
+                type: "string",
+                aliases: ["hw"]
             }
         },
         onlineHelp: true
@@ -5493,6 +5506,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
             },
+            hwvariant: {
+                description: "specify Hardware variant used for this compilation",
+                argument: "hwvariant",
+                type: "string",
+                aliases: ["hw"]
+            },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
             ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] },
@@ -5509,26 +5528,26 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "packages the target into static HTML pages",
         onlineHelp: true,
         flags: {
-            "route": {
+            route: {
                 description: "route appended to generated files",
                 argument: "route",
                 type: "string",
                 aliases: ["r"]
             },
-            "githubpages": {
+            githubpages: {
                 description: "Generate a web site compatible with GitHub pages",
                 aliases: ["ghpages", "gh"]
             },
-            "output": {
+            output: {
                 description: "Specifies the output folder for the generated files",
                 argument: "output",
                 aliases: ["o"]
             },
-            "minify": {
+            minify: {
                 description: "minify all generated js files",
                 aliases: ["m", "uglify"]
             },
-            "bump": {
+            bump: {
                 description: "bump version number prior to package"
             },
             cloudbuild: {
