@@ -639,8 +639,10 @@ function getBoardDrivesAsync(): Promise<string[]> {
     } else if (process.platform == "linux") {
         const rx = new RegExp(pxt.appTarget.compile.deployDrives)
         const user = process.env["USER"]
-        return readDirAsync(`/media/${user}`)
-            .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+        if (nodeutil.existsDirSync(`/media/${user}`))
+            return readDirAsync(`/media/${user}`)
+                .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+        return Promise.resolve([]);
     } else {
         return Promise.resolve([])
     }

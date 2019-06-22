@@ -2630,7 +2630,7 @@ class Host
 
 let mainPkg = new pxt.MainPackage(new Host())
 
-export function installAsync(parsed?: commandParser.ParsedCommand) {
+export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     if (packageName) {
@@ -3848,11 +3848,11 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             U.iterMap(res.outfiles, (fn, c) => {
                 if (fn !== pxtc.BINARY_JS) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
-                    pxt.log(`package written to ${"built/" + fn}`);
+                    pxt.debug(`package written to ${"built/" + fn}`);
                 }
                 else {
                     mainPkg.host().writeFile(mainPkg, "built/debug/" + fn, c);
-                    pxt.log(`package written to ${"built/debug/" + fn}`);
+                    pxt.debug(`package written to ${"built/debug/" + fn}`);
                 }
             });
 
@@ -4506,12 +4506,17 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
-    if (parsed.flags["debug"])
+    if (parsed && parsed.flags["debug"])
         mode = BuildOption.DebugSim;
-    const clean = parsed.flags["clean"];
-    const warnDiv = !!parsed.flags["warndiv"];
-    const ignoreTests = !!parsed.flags["ignoreTests"];
+    else if (parsed && parsed.flags["deploy"])
+        mode = BuildOption.Deploy;
+    const clean = parsed && parsed.flags["clean"];
+    const warnDiv = parsed && !!parsed.flags["warndiv"];
+    const ignoreTests = parsed && !!parsed.flags["ignoreTests"];
+    const install = parsed && !!parsed.flags["install"];
+
     return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => install ? installAsync() : Promise.resolve())
         .then(() => buildCoreAsync({ mode, warnDiv, ignoreTests }))
         .then((compileOpts) => { });
 }
@@ -5460,6 +5465,10 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 argument: "hwvariant",
                 type: "string",
                 aliases: ["hw"]
+            },
+            install: {
+                description: "install any missing package before build",
+                aliases: ["i"]
             }
         },
         onlineHelp: true
@@ -5513,9 +5522,14 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 aliases: ["hw"]
             },
             debug: { description: "Emit debug information with build" },
+            deploy: { description: "Deploy to device if connected" },
             warndiv: { description: "Warns about division operators" },
             ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] },
-            clean: { description: "Clean before build" }
+            clean: { description: "Clean before build" },
+            install: {
+                description: "install any missing package before build",
+                aliases: ["i"]
+            }
         }
     }, buildAsync);
 
