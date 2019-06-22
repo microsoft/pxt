@@ -3841,9 +3841,11 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             U.iterMap(res.outfiles, (fn, c) => {
                 if (fn !== pxtc.BINARY_JS) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
+                    pxt.log(`package written to ${"built/" + fn}`);
                 }
                 else {
                     mainPkg.host().writeFile(mainPkg, "built/debug/" + fn, c);
+                    pxt.log(`package written to ${"built/debug/" + fn}`);
                 }
             });
 
@@ -3859,8 +3861,6 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                     breakpoints: res.breakpoints
                 }));
             }
-
-            pxt.log(`package built; written to ${pxt.outputName()}`);
 
             if (res.usedSymbols && compileOptions.computeUsedSymbols) {
                 const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)

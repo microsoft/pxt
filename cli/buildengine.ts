@@ -566,7 +566,7 @@ function getCSharpCommand() {
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
-    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_HEX].filter(f => !!res.outfiles[f])[0];
+    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_ELF].filter(f => !!res.outfiles[f])[0];
     if (!firmwareName) { // something went wrong heres
         pxt.reportError("compile", `firmware missing from built files (${Object.keys(res.outfiles).join(', ')})`)
         return Promise.resolve();
