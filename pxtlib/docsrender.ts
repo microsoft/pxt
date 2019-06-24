@@ -230,8 +230,6 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
-        params["selectLang"] = lf("Select Language");
-        params["helptranslate"] = lf("Help us translate");
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
 
@@ -338,9 +336,7 @@ namespace pxt.docs {
             "appstoremeta",
             "sidebarToggle",
             "searchBar1",
-            "searchBar2",
-            "selectLang",
-            "helptranslate"
+            "searchBar2"
         ])
 
         // Normalize any path URL with any version path in the current URL
