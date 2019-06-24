@@ -57,12 +57,9 @@ namespace pxtmelody {
 
         // function to turn into string
         public getStringRepresentation(): string {
-            let stringMelody: string = "";
-            let queues: string[][];
-            queues = new Array(this.width);
+            let stringMelody: string = this.title + "-" + this.tempo + "-"
+            let queues: string[][] = new Array(this.width);
             let numMelodies = 0;
-            // add name and tempo info
-            stringMelody += this.title + "-" + this.tempo + "-";
             // create queues of notes
             for (let i = 0; i < this.height; i++) {
                 let noteCount = 0;

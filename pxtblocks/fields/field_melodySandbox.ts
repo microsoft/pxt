@@ -48,10 +48,13 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
             Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
+
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
             contentDiv.style.maxHeight = "550px";
+
             this.renderEditor(Blockly.DropDownDiv.getContentDiv() as HTMLDivElement);
             this.createGridDisplay();
+
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
                 this.onEditorClose();
                 // revert all style attributes for dropdown div
@@ -84,23 +87,29 @@ namespace pxtblockly {
         protected renderEditor(div: HTMLDivElement) {
             this.topDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
+
             this.editorGalleryToggle = document.createElement("div");
             this.editorGalleryToggle.id = "melody-toggle";
+
             this.editorButton = document.createElement("button");
             this.editorButton.innerText = "Editor";
             pxt.BrowserUtils.addClass(this.editorButton, "ui left attached button");
+
             this.galleryButton = document.createElement("button");
             this.galleryButton.innerText = "Gallery";
             pxt.BrowserUtils.addClass(this.galleryButton, "right attached ui button");
+
             this.editorGalleryToggle.appendChild(this.editorButton);
             this.editorGalleryToggle.appendChild(this.galleryButton);
-            this.topDiv.appendChild(this.editorGalleryToggle);
+
             this.melodyName = document.createElement("input");
             pxt.BrowserUtils.addClass(this.melodyName, "ui input");
             this.melodyName.id = "melody-name";
             this.melodyName.maxLength = 25;
             this.melodyName.value = this.title;
             this.melodyName.addEventListener("input", () => this.setTitle(this.melodyName.value));
+
+            this.topDiv.appendChild(this.editorGalleryToggle);
             this.topDiv.appendChild(this.melodyName);
             div.appendChild(this.topDiv);
 
@@ -127,27 +136,34 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.doneButton, "ui button");
             this.doneButton.innerText = "Done";
             this.doneButton.addEventListener("click", () => this.onDone());
+
             this.playButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.playButton, "ui icon button");
             this.playButton.id = "melody-play-button";
             this.playButton.addEventListener("click", () => this.togglePlay());
+
             this.playIcon = document.createElement("i");
             this.playIcon.id = "melody-play-icon";
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
+
             this.tempoDiv = document.createElement("div");
             this.tempoDiv.id = "melody-tempo-div";
+
             this.tempoLabel = document.createElement("label");
             this.tempoLabel.id = "melody-tempo-label";
             this.tempoLabel.innerText = "Tempo";
+
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
             this.tempoInput.value = this.tempo + ""; // will be updated according to slider
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
+
             this.tempoDiv.appendChild(this.tempoLabel);
             this.tempoDiv.appendChild(this.tempoInput);
+
             this.bottomDiv.appendChild(this.tempoDiv);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
@@ -192,9 +208,11 @@ namespace pxtblockly {
             value = value.slice(1, -1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
             let melodies: string[] = value.split("-");
+
             this.createMelodyIfDoesntExist();
             this.setTitle(melodies[0]);
             this.setTempo(Number(melodies[1]));
+
             for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
                 let notes: string[] = melodies[i].split(" ");
                 for (let j = 0; j < notes.length - 1; j++) {
@@ -241,7 +259,7 @@ namespace pxtblockly {
 
         setTempo(tempo: number): void {
             // reset text input if input is invalid
-            if (isNaN(tempo) || tempo <= 0 && this.tempoInput) {
+            if ((isNaN(tempo) || tempo <= 0) && this.tempoInput) {
                 this.tempoInput.value = this.tempo + "";
                 return
             }
@@ -273,39 +291,35 @@ namespace pxtblockly {
         onNoteSelect(id: string): void {
             // parse element id
             let params = id.split("-"); // params[1] is row, params[2] is cell
-            let row = params[1];
-            let col = params[2];
+            let row = +params[1];
+            let col = +params[2];
 
             // play sound if selected
-            if (!this.melody.getValue(+row, +col)) {
-                this.playNote(+row);
+            if (!this.melody.getValue(row, col)) {
+                this.playNote(row);
                 if (this.oneNotePerCol) { // clear all other notes in col
                     for (let i = 0; i < this.numRow; i++) {
-                        if (this.melody.getValue(i, +col)) {
+                        if (this.melody.getValue(i, col)) {
                             // update melody array
-                            this.melody.updateMelody(i, +col);
+                            this.melody.updateMelody(i, col);
                             // set color to default
                             pxt.BrowserUtils.removeClass(document.getElementById("cell-" + i + "-" + col), this.getColorClass(i));
                         }
                     }
-
                 }
                 // update button/div color
-                pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(+row));
+                pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(row));
             } else {
                 // set color to default
-                pxt.BrowserUtils.removeClass(document.getElementById(id), this.getColorClass(+row));
+                pxt.BrowserUtils.removeClass(document.getElementById(id), this.getColorClass(row));
             }
-
             // update melody array
-            this.melody.updateMelody(+row, +col);
+            this.melody.updateMelody(row, col);
         }
-
-
 
         playNote(rowNumber: number, colNumber?: number): void {
             let tone: number = 0;
-            let cnt: number = ++this.soundingKeys;
+            let count: number = ++this.soundingKeys;
 
             switch (rowNumber) {
                 case 0: tone = 262; break; // Middle C
@@ -319,20 +333,21 @@ namespace pxtblockly {
             }
 
             if (this.isPlaying) { // when melody is playing
+                // start note
                 this.timeouts.push(setTimeout(() => {
                     AudioContextManager.tone(tone);
                 }, colNumber * this.getDuration()));
+                // stop note
                 this.timeouts.push(setTimeout(() => {
                     AudioContextManager.stop();
                 }, (colNumber + 1) * this.getDuration()));
             } else { // when a single note is selected
+                // start note
                 AudioContextManager.tone(tone);
+                // stop note
                 this.timeouts.push(setTimeout(() => {
-                    if (this.soundingKeys == cnt)
+                    if (this.soundingKeys == count)
                         AudioContextManager.stop();
-                }, this.getDuration()));
-                this.timeouts.push(setTimeout(() => {
-                    AudioContextManager.stop();
                 }, this.getDuration()));
             }
         }
@@ -393,8 +408,7 @@ namespace pxtblockly {
                 this.timeouts.push(setTimeout( // call the melody again after it finishes
                     () => this.playMelody(), (this.numCol) * this.getDuration()));
             } else {
-                while (this.timeouts.length) clearTimeout(this.timeouts.shift());
-                AudioContextManager.stop();
+                this.stopMelody();
             }
         }
 
