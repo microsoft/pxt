@@ -211,6 +211,9 @@ namespace pxsim {
         svg?: string;
         width?: number;
         height?: number;
+        css?: string;
+        uri?: string;
+        error?: string;
     }
 
     export function print(delay: number = 0) {
