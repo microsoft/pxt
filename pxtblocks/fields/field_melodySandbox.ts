@@ -4,7 +4,7 @@ namespace pxtblockly {
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         protected params: U;
-        private title: string = pxt.Util.lf("Name this tune");
+        private title: string = pxt.Util.lf("- - - - - - - -");
         private melody: pxtmelody.MelodyArray;
         private soundingKeys: number = 0;
         private numRow: number = 8;
@@ -20,7 +20,6 @@ namespace pxtblockly {
         private editorGalleryToggle: HTMLDivElement;
         private editorButton: HTMLButtonElement;
         private galleryButton: HTMLButtonElement;
-        private melodyName: HTMLInputElement;
         private gridDiv: HTMLDivElement;
         private bottomDiv: HTMLDivElement;
         private doneButton: HTMLButtonElement;
@@ -77,31 +76,28 @@ namespace pxtblockly {
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
-            Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
+            this.updateFieldLabel();
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
             this.topDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
+
             this.editorGalleryToggle = document.createElement("div");
             this.editorGalleryToggle.id = "melody-toggle";
+
             this.editorButton = document.createElement("button");
             this.editorButton.innerText = "Editor";
             pxt.BrowserUtils.addClass(this.editorButton, "ui left attached button");
+
             this.galleryButton = document.createElement("button");
             this.galleryButton.innerText = "Gallery";
             pxt.BrowserUtils.addClass(this.galleryButton, "right attached ui button");
+
             this.editorGalleryToggle.appendChild(this.editorButton);
             this.editorGalleryToggle.appendChild(this.galleryButton);
             this.topDiv.appendChild(this.editorGalleryToggle);
-            this.melodyName = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.melodyName, "ui input");
-            this.melodyName.id = "melody-name";
-            this.melodyName.maxLength = 25;
-            this.melodyName.value = this.title;
-            this.melodyName.addEventListener("input", () => this.setTitle(this.melodyName.value));
-            this.topDiv.appendChild(this.melodyName);
             div.appendChild(this.topDiv);
 
             this.gridDiv = document.createElement("div");
@@ -127,27 +123,34 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.doneButton, "ui button");
             this.doneButton.innerText = "Done";
             this.doneButton.addEventListener("click", () => this.onDone());
+
             this.playButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.playButton, "ui icon button");
             this.playButton.id = "melody-play-button";
             this.playButton.addEventListener("click", () => this.togglePlay());
+
             this.playIcon = document.createElement("i");
             this.playIcon.id = "melody-play-icon";
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
+
             this.tempoDiv = document.createElement("div");
             this.tempoDiv.id = "melody-tempo-div";
+
             this.tempoLabel = document.createElement("label");
             this.tempoLabel.id = "melody-tempo-label";
             this.tempoLabel.innerText = "Tempo";
+
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
-            this.tempoInput.value = this.tempo + ""; // will be updated according to slider
+            this.tempoInput.value = this.tempo + "";
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
+
             this.tempoDiv.appendChild(this.tempoLabel);
             this.tempoDiv.appendChild(this.tempoInput);
+
             this.bottomDiv.appendChild(this.tempoDiv);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
@@ -191,19 +194,21 @@ namespace pxtblockly {
         protected parseTypeScriptValue(value: string) {
             value = value.slice(1, -1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
-            let melodies: string[] = value.split("-");
+            //let melodies: string[] = value.split("-");
             this.createMelodyIfDoesntExist();
-            this.setTitle(melodies[0]);
-            this.setTempo(Number(melodies[1]));
-            for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
-                let notes: string[] = melodies[i].split(" ");
+            this.updateFieldLabel();
+            //this.setTitle(melodies[0]);
+            //this.setTempo(Number(melodies[1]));
+            //for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
+                //let notes: string[] = melodies[i].split(" ");
+                let notes: string[] = value.split(" ");
                 for (let j = 0; j < notes.length - 1; j++) {
-                    if (notes[j] != "R") {
+                    if (notes[j] != "-") {
                         let rowPos: number = pxtmelody.noteToRow(notes[j]);
                         this.melody.updateMelody(rowPos, j);
                     }
                 }
-            }
+           // }
         }
 
         // The width of the preview on the block itself
@@ -225,18 +230,9 @@ namespace pxtblockly {
             return this.sourceBlock_.getColourSecondary();
         }
 
-        setTitle(melodyName: string): void {
-            if (this.title != melodyName) {
-                this.title = melodyName;
-                Blockly.FieldLabel.prototype.setText.call(this, this.title);
-                if (this.melody) {
-                    this.melody.setTitle(this.title);
-                }
-            }
-        }
-
-        getTitle(): string {
-            return this.title;
+        updateFieldLabel(): void {
+            this.title = this.melody.getStringRepresentation().substring(0, this.melody.getStringRepresentation().length - 2);
+            Blockly.FieldLabel.prototype.setText.call(this, this.title);
         }
 
         setTempo(tempo: number): void {
@@ -272,7 +268,7 @@ namespace pxtblockly {
 
         onNoteSelect(id: string): void {
             // parse element id
-            let params = id.split("-"); // params[1] is row, params[2] is cell
+            let params = id.split("-"); // params[1] is row, params[2] is col
             let row = params[1];
             let col = params[2];
 
@@ -288,7 +284,6 @@ namespace pxtblockly {
                             pxt.BrowserUtils.removeClass(document.getElementById("cell-" + i + "-" + col), this.getColorClass(i));
                         }
                     }
-
                 }
                 // update button/div color
                 pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(+row));
@@ -299,9 +294,8 @@ namespace pxtblockly {
 
             // update melody array
             this.melody.updateMelody(+row, +col);
+            this.updateFieldLabel();
         }
-
-
 
         playNote(rowNumber: number, colNumber?: number): void {
             let tone: number = 0;
