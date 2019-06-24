@@ -2574,14 +2574,17 @@ export class ProjectView
             })
     }
 
-    private debouncedSaveProjectName = Util.debounce(() => {
-        this.saveProjectNameAsync().done();
-    }, 2000, false);
+    private debouncedSaveProjectName: () => void;
 
     updateHeaderName(name: string) {
         this.setState({
             projectName: name
         })
+        if (!this.debouncedSaveProjectName) {
+            this.debouncedSaveProjectName = Util.debounce(() => {
+                this.saveProjectNameAsync().done();
+            }, pxt.options.light ? 2000 : 500, false);
+        }
         this.debouncedSaveProjectName();
     }
 
@@ -2783,7 +2786,7 @@ export class ProjectView
 
     startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
         pxt.tickEvent("tutorial.start");
-        this.startTutorialAsync(tutorialId, tutorialTitle);
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
