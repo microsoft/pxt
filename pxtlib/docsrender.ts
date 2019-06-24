@@ -280,22 +280,6 @@ namespace pxt.docs {
         `
         params['accMenu'] = accMenuHtml;
 
-        // Add print button
-        const printBtnHtml = `
-        <div id="printbtn" class="circular ui icon top right floated pointing dropdown button hideprint" title="${lf("Print this page")}">
-                <i class="icon print"></i>
-                <div class="menu">
-                <div class="item" data-value="color">
-                    <p>${lf("Color")}</p>
-                </div>
-                <div class="item" data-value="bw">
-                    <p>${lf("Black & White")}</p>
-                </div>
-                </div>
-        </div>`
-
-        params['printBtn'] = printBtnHtml;
-
         // Add sidebar toggle
         const sidebarToggleHtml = `
             <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
@@ -336,7 +320,6 @@ namespace pxt.docs {
             "TOC",
             "prev",
             "next",
-            "printBtn",
             "breadcrumb",
             "targetlogo",
             "github",
