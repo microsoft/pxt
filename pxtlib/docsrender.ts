@@ -309,8 +309,8 @@ namespace pxt.docs {
 
         let style = '';
         if (theme.accentColor) style += `
-        .ui.accent { color: ${theme.accentColor}; }
-        .ui.inverted.accent { background: ${theme.accentColor}; }
+.ui.accent { color: ${theme.accentColor}; }
+.ui.inverted.accent { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
         params["tocclass"] = theme.lightToc ? "lighttoc" : "inverted";
