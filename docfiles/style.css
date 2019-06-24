@@ -204,6 +204,37 @@ code.lang-spy
     display: none;
 }
 
+#mobile-search-close {
+    display: none;
+}
+
+#mobile-search-icon.mobile-only-close {
+    display: none;
+}
+
+#mobile-search-icon.mobile-only-open {
+    display: none;
+}
+
+#mobile-search-close.mobile-only-close {
+    display: none;
+}
+
+#mobile-search-close.mobile-only-open {
+    display: none;
+}
+
+#tocsearch2 {
+    display: none;
+}
+
+@media (min-width: 970) and (max-width: 1144){
+    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
+        width: 64vw;
+        margin-left: 1rem;
+    }
+}
+
 @media (min-width: 320px) and (max-width: 970px) {
 
 #docs .ui.hero {
@@ -237,13 +268,45 @@ code.lang-spy
 #docs h2:not(:first-of-type) {
     padding-top: 35px;
 }
+
 .docnav {
     flex-wrap: wrap;
     height: 9rem;
     padding-left: 2rem;
 }
-#tocsearch2 {
+
+#tocsearch1 {
     display: none;
+}
+
+#tocsearch2 {
+    display: block;
+    visibility: hidden;
+    background-color: #000000ad;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 48px;
+    transition: opacity 0.3s ease-in, visibility .3s ease-in;
+    opacity: 0;
+    touch-action: none;
+}
+
+#tocsearch2 .ui.icon.input {
+    position: fixed;
+    width: 100vw;
+    left: 0%;
+    top: 3rem;
+    padding: 1rem;
+}
+
+#tocsearch2 .ui.icon.input i{
+    right: 1rem;
+}
+
+#tocsearch2 .ui.icon.input input{
+    right: 1rem;
 }
 
 #docsMobile {
@@ -263,8 +326,26 @@ code.lang-spy
 }
 
 #mobile-search-icon {
-    display: inline;
+    display: block;
+    text-decoration: none;
 }
+
+#mobile-search-icon.mobile-only-close {
+    display: none;
+}
+
+#mobile-search-icon.mobile-only-open {
+    display: block;
+}
+
+#mobile-search-close.mobile-only-close {
+    display: none;
+}
+
+#mobile-search-close.mobile-only-open {
+    display: block;
+}
+
 #docs-header {
     position: fixed;
     top: 0;
@@ -586,6 +667,11 @@ svg {
     #docs .ui.card {
         width: 100%;
     }
+
+    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
+        width: 70vw;
+        margin-left: 1rem;
+    }
 }
 
 @media only screen and (max-width: 1024px) {
@@ -600,6 +686,11 @@ svg {
 @media only screen and (max-width: 1200px) {
     #docs .ui.card {
         width: 100%;
+    }
+
+    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
+        width: 63vw;
+        margin-left: 1rem;
     }
 }
 

@@ -11,7 +11,14 @@
         </div>
     <div class="item right">
         <a id="mobile-search-icon"><i class="icon search"></i></a>
+        <a id="mobile-search-close"><i class="icon close"></i></a>
         <form id="tocsearch2" role="form" method="get" target="_blank" action="https://www.bing.com/search">
+            <div class="ui icon input">
+                <input type="hidden" name="q1" value="site:@homeurl@" />
+                @searchBar2@
+            </div>
+        </form>
+        <form id="tocsearch1" role="form" method="get" target="_blank" action="https://www.bing.com/search">
             <div class="ui icon input">
                 <input type="hidden" name="q1" value="site:@homeurl@" />
                 @searchBar2@
