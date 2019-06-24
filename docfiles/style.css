@@ -322,7 +322,30 @@ code.lang-spy
 }
 
 .sticky-list {
-    display:none !important;
+    display:none;
+    position: fixed;
+    top: 96px;
+    right: 0rem;
+    width: 100%;
+    z-index: 99;
+    background-color: #000000b8;
+}
+
+button.sticky-close {
+    position: absolute;
+    top: -48px;
+    right: -4px;
+    background-color: white;
+    height: 48px;
+    width: 48px;
+    border: none;
+}
+
+.sticky-list ul {
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    margin-top:0;
 }
 
 #mobile-search-icon {
@@ -346,6 +369,15 @@ code.lang-spy
     display: block;
 }
 
+#sticky-btn {
+    position: fixed;
+    right: .67rem;
+    z-index: 100;
+    color: white;
+    top: 3.7rem;
+    display: block !important;
+}
+
 #docs-header {
     position: fixed;
     top: 0;
@@ -361,6 +393,35 @@ code.lang-spy
     height: auto;
     min-height: 48px;
     display: block !important;
+}
+
+#breadcrumb-container {
+    font-family: 'Helvetica Neue',Arial,Helvetica,sans-serif;
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+    background-color: #6c196c;
+    top: 48px;
+    height: 48px;
+    min-height: 48px;
+    display: block !important;
+}
+
+#breadcrumb-container .ui.breadcrumb:first-child {
+    margin-top: -66px;
+}
+
+#breadcrumb-container .ui.breadcrumb a {
+    color: #f5f5f5;
+}
+
+#breadcrumb-container .ui.breadcrumb .divider {
+    color: #f5f5f5;
+    margin-right: .25rem;
+}
+
+#breadcrumb-container .ui.breadcrumb a.active {
+    color: #fff;
 }
 
 #docs .ui.cards {
@@ -658,7 +719,7 @@ svg {
         left: 0px;
     }
     .ui.vertical.segment.footer {
-        margin-top: 4rem;
+        margin-top: 2rem;
     }
 
 }
@@ -674,7 +735,7 @@ svg {
     }
 }
 
-@media only screen and (max-width: 1024px) {
+@media (min-width: 971) and (max-width: 1024) {
     .sticky-list {
         position: fixed;
         top: 11vh;
