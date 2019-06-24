@@ -2786,7 +2786,7 @@ export class ProjectView
 
     startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
         pxt.tickEvent("tutorial.start");
-        this.startTutorialAsync(tutorialId, tutorialTitle);
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
