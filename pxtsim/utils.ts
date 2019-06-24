@@ -1,5 +1,16 @@
 namespace pxsim.util {
     export function injectPolyphils() {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/startsWith
+        if (!String.prototype.startsWith) {
+            Object.defineProperty(String.prototype, 'startsWith', {
+                value: function(search: string, pos: number) {
+                    if (search === undefined || search == null) return false;
+                    pos = !pos || pos < 0 ? 0 : +pos;
+                    return (<string>this).substring(pos, pos + search.length) === search;
+                }
+            });
+        }
+
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
         if (!Array.prototype.fill) {
             Object.defineProperty(Array.prototype, 'fill', {
@@ -199,6 +210,37 @@ namespace pxsim.util {
                 // the final |0 converts the unsigned value into a signed value
                 return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
             }
+        }
+
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#Polyfill
+        if (typeof Object.assign != 'function') {
+            // Must be writable: true, enumerable: false, configurable: true
+            Object.defineProperty(Object, "assign", {
+                value: function assign(target: any, varArgs: any) { // .length of function is 2
+                    'use strict';
+                    if (target == null) { // TypeError if undefined or null
+                        throw new TypeError('Cannot convert undefined or null to object');
+                    }
+
+                    let to = Object(target);
+
+                    for (let index = 1; index < arguments.length; index++) {
+                        let nextSource = arguments[index];
+
+                        if (nextSource != null) { // Skip over if undefined or null
+                            for (let nextKey in nextSource) {
+                                // Avoid bugs when hasOwnProperty is shadowed
+                                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                                    to[nextKey] = nextSource[nextKey];
+                                }
+                            }
+                        }
+                    }
+                    return to;
+                },
+                writable: true,
+                configurable: true
+            });
         }
     }
 

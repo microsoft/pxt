@@ -4,28 +4,54 @@ namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
     let tracePauseMs = 0;
     export namespace U {
-        export function addClass(element: HTMLElement, classes: string) {
-            if (!element) return;
-            if (!classes || classes.length == 0) return;
-            function addSingleClass(el: HTMLElement, singleCls: string) {
-                if (el.classList) el.classList.add(singleCls);
-                else if (el.className.indexOf(singleCls) < 0) el.className += ' ' + singleCls;
+        // Keep these helpers unified with pxtlib/browserutils.ts
+        export function containsClass(el: SVGElement | HTMLElement, classes: string) {
+            return classes
+                .split(/\s+/)
+                .every(cls => containsSingleClass(el, cls));
+
+            function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    return el.classList.contains(cls);
+                } else {
+                    const classes = (el.className + "").split(/\s+/);
+                    return !(classes.indexOf(cls) < 0);
+                }
             }
-            classes.split(' ').forEach((cls) => {
-                addSingleClass(element, cls);
-            });
         }
 
-        export function removeClass(element: HTMLElement, classes: string) {
-            if (!element) return;
-            if (!classes || classes.length == 0) return;
-            function removeSingleClass(el: HTMLElement, singleCls: string) {
-                if (el.classList) el.classList.remove(singleCls);
-                else el.className = el.className.replace(singleCls, '').replace(/\s{2,}/, ' ');
+        export function addClass(el: SVGElement | HTMLElement, classes: string) {
+            classes
+                .split(/\s+/)
+                .forEach(cls => addSingleClass(el, cls));
+
+            function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    el.classList.add(cls);
+                } else {
+                    const classes = (el.className + "").split(/\s+/);
+                    if (classes.indexOf(cls) < 0) {
+                        el.className.baseVal += " " + cls;
+                    }
+                }
             }
-            classes.split(' ').forEach((cls) => {
-                removeSingleClass(element, cls);
-            });
+        }
+
+        export function removeClass(el: SVGElement | HTMLElement, classes: string) {
+            classes
+                .split(/\s+/)
+                .forEach(cls => removeSingleClass(el, cls));
+
+            function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    el.classList.remove(cls);
+                } else {
+                    el.className.baseVal = (el.className + "")
+                        .split(/\s+/)
+                        .filter(c => c != cls)
+                        .join(" ");
+                }
+            }
         }
 
         export function remove(element: Element) {
@@ -185,8 +211,15 @@ namespace pxsim {
 
     const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
-        public runOptions: SimulatorRunMessage;
-        public messageListeners: MessageListener[] = [];
+        id: string;
+        bus: pxsim.EventBus;
+        runOptions: SimulatorRunMessage;
+        messageListeners: MessageListener[] = [];
+
+        constructor() {
+            this.id = "b" + Math.round(Math.random() * 2147483647);
+            this.bus = new pxsim.EventBus(runtime);
+        }
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
@@ -249,11 +282,6 @@ namespace pxsim {
     }
 
     export class CoreBoard extends BaseBoard {
-        id: string;
-
-        // the bus
-        bus: pxsim.EventBus;
-
         // updates
         updateSubscribers: (() => void)[];
 
@@ -264,8 +292,6 @@ namespace pxsim {
 
         constructor() {
             super()
-            this.id = "b" + Math.round(Math.random() * 2147483647);
-            this.bus = new pxsim.EventBus(runtime);
 
             // updates
             this.updateSubscribers = []
@@ -309,23 +335,25 @@ namespace pxsim {
         }
     }
 
-    export type EventValueToActionArgs<T> = (value: T) => any[];
+    export type EventValueToActionArgs = (value: EventIDType) => any[];
 
     enum LogType {
         UserSet, BackAdd, BackRemove
     }
 
-    export class EventQueue<T> {
+    export type EventIDType = number | string;
+
+    export class EventQueue {
         max: number = 5;
-        events: T[] = [];
+        events: EventIDType[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
         private _handlers: RefAction[] = [];
         private _addRemoveLog: { act: RefAction, log: LogType }[] = [];
 
-        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
+        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs) { }
 
-        public push(e: T, notifyOne: boolean): Promise<void> {
+        public push(e: EventIDType, notifyOne: boolean): Promise<void> {
             if (this.awaiters.length > 0) {
                 if (notifyOne) {
                     const aw = this.awaiters.shift();
@@ -455,6 +483,7 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        idleTimer: number = undefined;
         recording = false;
         recordingTimer = 0;
         recordingLastImageData: ImageData = undefined;
@@ -572,6 +601,7 @@ namespace pxsim {
             this.dead = true
             // TODO fix this
             this.stopRecording();
+            this.stopIdle();
             this.setRunning(false);
         }
 
@@ -651,6 +681,7 @@ namespace pxsim {
                     });
                 } else {
                     this.stopRecording();
+                    this.stopIdle();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
                         frameid: Embed.frameid,
@@ -688,7 +719,7 @@ namespace pxsim {
             let entryPoint: LabelFn;
             let pxtrt = pxsim.pxtrt
             let breakpoints: Uint8Array = null
-            let breakAlways = false
+            let breakAlways = !!msg.breakOnStart;
             let globals = this.globals
             let yieldSteps = yieldMaxSteps
             // ---
@@ -1097,6 +1128,26 @@ namespace pxsim {
             c.numstops++;
         }
 
+        startIdle() {
+            // schedules handlers to run every 20ms
+            if (this.idleTimer === undefined) {
+                this.idleTimer = setInterval(() => {
+                    if (!this.running || this.pausedOnBreakpoint) return;
+                    const bus = this.board.bus;
+                    if (bus)
+                        bus.queueIdle();
+                }, 20);
+            }
+        }
+
+        stopIdle() {
+            if (this.idleTimer !== undefined) {
+                clearInterval(this.idleTimer);
+                this.idleTimer = undefined;
+            }
+        }
+
+
         // Wrapper for the setTimeout
         schedule(fn: Function, timeout: number): number {
             if (this.pausedOnBreakpoint) {
@@ -1122,7 +1173,10 @@ namespace pxsim {
                 clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
-                if (timeRemaining < 0) timeRemaining = 0;
+
+                // Time reamining needs to be at least 1. Setting to 0 causes fibers
+                // to never resume after breaking
+                if (timeRemaining <= 0) timeRemaining = 1;
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, timeRemaining))
             });
             this.lastPauseTimestamp = U.now();

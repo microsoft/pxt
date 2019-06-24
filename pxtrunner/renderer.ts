@@ -124,8 +124,9 @@ namespace pxt.runner {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
                     const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
-                    const url = getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text()) + deps;
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    const url = getRunUrl(options) + "#nofooter=1" + deps;
+                    const data = encodeURIComponent($js.text());
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" data-code="${data}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -236,6 +237,9 @@ namespace pxt.runner {
         if (!options.emPixels) options.emPixels = 18;
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
+
+        // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
+        $el.text(pxt.tutorial.patchArcadeSnippets($el.text()));
 
         renderQueue.push({ el: $el, source: $el.text(), options, render });
         $el.addClass("lang-shadow");
@@ -735,7 +739,8 @@ namespace pxt.runner {
 
         function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
-                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
+                // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
+                $(e).text(pxt.tutorial.patchArcadeSnippets($(e).text().replace(/^\s*\r?\n/, '')))
                 hljs.highlightBlock(e)
             }
             const opts = pxt.U.clone(woptions);
@@ -776,6 +781,35 @@ namespace pxt.runner {
         });
     }
 
+    function renderGhost(options: ClientRenderOptions) {
+        let c = $('code.lang-ghost');
+        if (options.snippetReplaceParent)
+            c = c.parent();
+        c.remove();
+    }
+
+    function renderSims(options: ClientRenderOptions) {
+        if (!options.simulatorClass) return;
+        // simulators
+        $('.' + options.simulatorClass).each((i, c) => {
+            let $c = $(c);
+            let padding = '81.97%';
+            if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
+            let $sim = $(`<div class="ui centered card"><div class="ui content">
+                    <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
+                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
+                    </div>
+                    </div></div>`)
+            const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
+            const url = getRunUrl(options) + "#nofooter=1" + deps;
+            const data = encodeURIComponent($c.text().trim());
+            $sim.find("iframe").attr("src", url);
+            $sim.find("iframe").attr("data-code", data);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.replaceWith($sim);
+        });
+    }
+
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
         pxt.analytics.enable();
         if (!options) options = {}
@@ -783,26 +817,10 @@ namespace pxt.runner {
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
 
         mergeConfig(options);
-        if (options.simulatorClass) {
-            // simulators
-            $('.' + options.simulatorClass).each((i, c) => {
-                let $c = $(c);
-                let padding = '81.97%';
-                if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                let $sim = $(`<div class="ui centered card"><div class="ui content">
-                    <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
-                    <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
-                    </div>
-                    </div></div>`)
-                const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
-                const url = getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()) + deps;
-                $sim.find("iframe").attr("src", url);
-                if (options.snippetReplaceParent) $c = $c.parent();
-                $c.replaceWith($sim);
-            });
-        }
 
         renderQueue = [];
+        renderGhost(options);
+        renderSims(options);
         renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))

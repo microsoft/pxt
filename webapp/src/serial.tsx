@@ -241,8 +241,10 @@ export class Editor extends srceditor.Editor {
                     this.chartIdx++;
                     this.charts.push(homeChart)
                     this.chartRoot.appendChild(homeChart.getElement());
-                    this.chartRoot.classList.remove("nochart");
-                    if (this.consoleRoot) this.consoleRoot.classList.remove("nochart");
+                    pxt.BrowserUtils.removeClass(this.chartRoot, "nochart");
+                    if (this.consoleRoot) {
+                        pxt.BrowserUtils.removeClass(this.consoleRoot, "nochart");
+                    }
                 }
                 homeChart.addPoint(variable, nvalue, receivedTime)
             })
@@ -305,8 +307,12 @@ export class Editor extends srceditor.Editor {
             this.consoleRoot.removeChild(this.consoleRoot.firstChild)
         }
         if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
-            if (this.chartRoot) this.chartRoot.classList.remove("noconsole");
-            if (this.consoleRoot) this.consoleRoot.classList.remove("noconsole");
+            if (this.chartRoot) {
+                pxt.BrowserUtils.removeClass(this.chartRoot, "noconsole");
+            }
+            if (this.consoleRoot) {
+                pxt.BrowserUtils.removeClass(this.consoleRoot, "noconsole");
+            }
         }
     }
 
@@ -337,13 +343,13 @@ export class Editor extends srceditor.Editor {
     clear() {
         if (this.chartRoot) {
             this.clearNode(this.chartRoot);
-            this.chartRoot.classList.add("noconsole")
-            this.chartRoot.classList.add("nochart")
+            pxt.BrowserUtils.addClass(this.chartRoot, "noconsole");
+            pxt.BrowserUtils.addClass(this.chartRoot, "nochart");
         }
         if (this.consoleRoot) {
             this.clearNode(this.consoleRoot);
-            this.consoleRoot.classList.add("noconsole")
-            this.consoleRoot.classList.add("nochart")
+            pxt.BrowserUtils.addClass(this.consoleRoot, "noconsole");
+            pxt.BrowserUtils.addClass(this.consoleRoot, "nochart");
         }
         this.charts = []
         this.serialInputDataBuffer = ""

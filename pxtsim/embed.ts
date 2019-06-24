@@ -19,6 +19,7 @@ namespace pxsim {
         localizedStrings?: Map<string>;
         version?: string;
         clickTrigger?: boolean;
+        breakOnStart?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -29,6 +30,10 @@ namespace pxsim {
     export interface SimulatorMuteMessage extends SimulatorMessage {
         type: "mute";
         mute: boolean;
+    }
+
+    export interface SimulatorStopSoundMessage extends SimulatorMessage {
+        type: "stopsound";
     }
 
     export interface SimulatorDocMessage extends SimulatorMessage {
@@ -54,8 +59,9 @@ namespace pxsim {
         type: "toplevelcodefinished";
     }
 
-    export interface SimulatorDocsReadyMessage extends SimulatorMessage {
-        type: "popoutcomplete";
+    export interface SimulatorOpenDocMessage extends SimulatorMessage {
+        type: "opendoc";
+        url: string;
     }
 
     export interface SimulatorStateMessage extends SimulatorMessage {
@@ -243,6 +249,7 @@ namespace pxsim {
                 case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
                 case "stop": stop(); break;
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "stopsound": stopSound(); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
                 case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
@@ -292,6 +299,10 @@ namespace pxsim {
 
         function mute(mute: boolean) {
             AudioContextManager.mute(mute);
+        }
+
+        function stopSound() {
+            AudioContextManager.stopAll();
         }
 
         function queue(msg: SimulatorMessage) {

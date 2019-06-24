@@ -1,6 +1,7 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
         [index: string]: T;
@@ -67,6 +68,8 @@ declare namespace pxt {
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
         skipLocalization?: boolean;
+        snippetBuilders?: SnippetConfig[];
+        experimentalHw?: boolean;
     }
 
     interface PackageExtension {
@@ -127,6 +130,7 @@ declare namespace pxt {
         feedbackUrl?: string;
         responsive?: boolean;
         cardType?: CodeCardType;
+        editor?: CodeCardEditorType;
 
         header?: string;
         any?: number;
@@ -157,5 +161,40 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+    }
+
+    interface SnippetConfig {
+        name: string;
+        namespace: string;
+        group?: string;
+        label: string;
+        outputType: string;
+        initialOutput?: string;
+        questions: SnippetQuestions[];
+    }
+
+    type SnippetAnswerTypes = any; // TODO(jb) Should include custom answer types for number, enums, string, image
+
+    interface SnippetGoToParameters {
+        [tokenType: string]: number;
+    }
+
+    interface SnippetGoToOptions {
+        question: number;
+        parameters?: SnippetGoToParameters;
+    }
+
+    interface SnippetQuestionInput {
+        answerToken: string;
+        defaultAnswer: SnippetAnswerTypes;
+        type?: string;
+        label?: string;
+    }
+
+    interface SnippetQuestions {
+        title: string;
+        output?: string;
+        goto?: SnippetGoToOptions;
+        inputs: SnippetQuestionInput[];
     }
 }

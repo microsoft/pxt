@@ -39,6 +39,10 @@ namespace pxtsprite {
                     this.containerDiv.style.display = "none";
                 }
             });
+
+            this.contentDiv.addEventListener('wheel', e => {
+                e.stopPropagation();
+            }, true)
         }
 
         getElement() {

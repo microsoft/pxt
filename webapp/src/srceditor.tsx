@@ -128,6 +128,10 @@ export class Editor implements pxt.editor.IEditor {
     updateBreakpoints() {
     }
 
+    getBreakpoints(): number[] {
+        return [];
+    }
+
     updateToolbox() {
     }
 }

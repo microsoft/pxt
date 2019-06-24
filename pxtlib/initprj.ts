@@ -1,7 +1,5 @@
 namespace pxt {
-    export const defaultFiles: Map<string> = {
-        "tsconfig.json":
-            `{
+    export const TS_CONFIG =             `{
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
@@ -10,7 +8,9 @@ namespace pxt {
     },
     "exclude": ["pxt_modules/**/*test.ts"]
 }
-`,
+`;
+    const _defaultFiles: Map<string> = {
+        "tsconfig.json": TS_CONFIG,
 
         "test.ts": `// tests go here; this will not be compiled when this package is used as a library
 `,
@@ -38,13 +38,10 @@ test:
 - [ ] Add "- beta" to the GitHub project description if you are still iterating it.
 - [ ] Turn on your automated build on https://travis-ci.org
 - [ ] Use "pxt bump" to create a tagged release on GitHub
+- [ ] On GitHub, create a new file named LICENSE. Select the MIT License template.
 - [ ] Get your package reviewed and approved @DOCS@extensions/approval
 
 Read more at @DOCS@extensions
-
-## License
-
-@LICENSE@
 
 ## Supported targets
 
@@ -140,8 +137,7 @@ cache:
 `
     }
 
-
-    export function packageFiles(name: string) {
+    export function packageFiles(name: string): pxt.Map<string> {
         let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
         let config = U.clone(prj.config);
         // remove blocks file
@@ -159,8 +155,8 @@ cache:
         }
 
         const files: Map<string> = {};
-        for (const f in defaultFiles)
-            files[f] = defaultFiles[f];
+        for (const f in _defaultFiles)
+            files[f] = _defaultFiles[f];
         for (const f in prj.files)
             if (f != "README.md") // this one we need to keep
                 files[f] = prj.files[f];

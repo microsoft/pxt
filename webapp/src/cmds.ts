@@ -4,6 +4,7 @@ import * as electron from "./electron";
 import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
+import * as compiler from "./compiler";
 import Cloud = pxt.Cloud;
 
 let tryPairedDevice = false;
@@ -198,7 +199,7 @@ function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptio
 
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
-    core.infoNotification(lf("Uploading .hex file..."));
+    core.infoNotification(lf("Uploading..."));
     let deploy = () => pxt.Util.requestAsync({
         url: "/api/deploy",
         headers: { "Authorization": Cloud.localToken },
@@ -217,7 +218,10 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 }
 
 export function init(): void {
-    pxt.onAppTargetChanged = init;
+    pxt.onAppTargetChanged = () => {
+        pxt.debug('app target changed')
+        init()
+    }
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
@@ -236,17 +240,17 @@ export function init(): void {
     const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
     if (isNativeHost()) {
         pxt.debug(`deploy: webkit host`);
-        pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
     } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
         pxt.debug(`deploy: webusb`);
-        pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = webusb.webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.debug(`deploy: winrt`);
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
+            pxt.commands.deployFallbackAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
@@ -255,7 +259,7 @@ export function init(): void {
             if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
                 pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             }
-            pxt.commands.deployCoreAsync = pxt.winrt.driveDeployCoreAsync;
+            pxt.commands.deployFallbackAsync = pxt.winrt.driveDeployCoreAsync;
         }
         pxt.commands.browserDownloadAsync = pxt.winrt.browserDownloadAsync;
         pxt.commands.saveOnlyAsync = (resp: pxtc.CompileResult) => {
@@ -273,13 +277,13 @@ export function init(): void {
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.debug(`deploy: hid`);
-        pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = hidDeployCoreAsync;
     } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.debug(`deploy: localhost`);
-        pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.debug(`deploy: browser`);
-        pxt.commands.deployCoreAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
+        pxt.commands.deployFallbackAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
     }
 }
 

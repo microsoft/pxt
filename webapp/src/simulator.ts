@@ -24,7 +24,10 @@ let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
-    simTranslations = translations;
+    if (simTranslations !== translations) {
+        simTranslations = translations;
+        setDirty();
+    }
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
@@ -233,11 +236,11 @@ export function setState(editor: string, tutMode?: boolean) {
 }
 
 export function setDirty() { // running outdated code
-    driver.setDirty();
+    if (driver) driver.setDirty();
 }
 
 export function setPending() {
-    driver.setPending();
+    if (driver) driver.setPending();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
@@ -264,7 +267,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         localizedStrings: simTranslations,
         refCountingDebug: pxt.options.debug,
         version: pkg.version(),
-        clickTrigger: clickTrigger
+        clickTrigger: clickTrigger,
+        breakOnStart: debug
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
@@ -280,6 +284,7 @@ export function mute(mute: boolean) {
 
 export function stop(unload?: boolean, starting?: boolean) {
     if (!driver) return;
+    driver.stopSound();
     driver.stop(unload, starting);
 }
 

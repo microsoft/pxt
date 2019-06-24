@@ -280,9 +280,20 @@ namespace pxt.py {
                 return emitTypeAliasDecl(s)
             } else if (ts.isEmptyStatement(s)) {
                 return []
+            } else if (ts.isModuleDeclaration(s)) {
+                return emitModuleDeclaration(s);
             } else {
                 throw Error(`Not implemented: statement kind ${s.kind}`);
             }
+        }
+        function emitModuleDeclaration(s: ts.ModuleDeclaration): string[] {
+            let name = getName(s.name)
+            let stmts = s.body && s.body.getChildren()
+                .map(emitNode)
+                .reduce((p, c) => p.concat(c), [])
+                .map(n => indent1(n));
+
+            return [`@namespace`, `class ${name}:`].concat(stmts);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
             let typeStr = emitType(s.type)
@@ -327,8 +338,9 @@ namespace pxt.py {
                 return null
 
             let initDecls = s.initializer as ts.VariableDeclarationList
-            if (initDecls.declarations.length !== 1)
+            if (initDecls.declarations.length !== 1) {
                 return null
+            }
 
             let decl = initDecls.declarations[0]
             result.name = getName(decl.name)
@@ -354,13 +366,14 @@ namespace pxt.py {
                 return null
             if (!ts.isIdentifier(s.condition.left))
                 return null
-            if (s.condition.left.text != result.name)
+            if (getName(s.condition.left) != result.name)
                 return null
-            if (!isConstExp(s.condition.right) || !isNumberType(s.condition.right)) {
-                // TODO allow variables?
-                // TODO restrict to numbers?
+            // TODO restrict initializers to expressions that aren't modified by the loop
+            // e.g. isConstExp(s.condition.right) but more semantic
+            if (!isNumberType(s.condition.right)) {
                 return null
             }
+
             let [toNum, toNumSup] = emitExp(s.condition.right)
             if (toNumSup.length)
                 return null
@@ -858,6 +871,8 @@ namespace pxt.py {
                     return ">>"
                 case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
                     throw Error("Unsupported operator: >>>")
+                case ts.SyntaxKind.AsteriskAsteriskToken:
+                    return "**"
                 default:
                     pxt.tickEvent("depython.todo", { op: s })
                     return "# TODO unknown op: " + s
@@ -897,25 +912,6 @@ namespace pxt.py {
             if (right === "length") {
                 // TODO confirm the type is correct!
                 return [`len(${left})`, leftSup]
-            }
-            // special casing
-            // TODO make this safer. This is syntactic matching, but we really need semantics
-            if (left === "Math") {
-                let mathFn = ""
-                if (right === "max") {
-                    mathFn = "max"
-                } else if (right === "min") {
-                    mathFn = "min"
-                } else if (right === "randomRange") {
-                    mathFn = "random.randint"
-                } else {
-                    throw Error(`Unsupported math fn: ${left}.${right}`);
-                }
-                return [mathFn, leftSup]
-            } else if (left === "console") {
-                if (right === "log") {
-                    return ["print", leftSup]
-                }
             }
 
             return [`${left}.${right}`, leftSup];

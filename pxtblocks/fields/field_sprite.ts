@@ -38,6 +38,8 @@ namespace pxtblockly {
         private editor: pxtsprite.SpriteEditor;
         private state: pxtsprite.Bitmap;
         private lightMode: boolean;
+        private undoStack: pxtsprite.CanvasState[];
+        private redoStack: pxtsprite.CanvasState[];
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -91,10 +93,14 @@ namespace pxtblockly {
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
             this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
+            this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
+
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
             this.editor.onClose(() => {
+                this.undoStack = this.editor.getUndoStack();
+                this.redoStack = this.editor.getRedoStack();
                 Blockly.DropDownDiv.hideIfOwner(this);
             });
 
@@ -108,11 +114,12 @@ namespace pxtblockly {
             goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
             goog.style.setStyle(contentDiv, "overflow", "hidden");
             goog.style.setStyle(contentDiv, "max-height", "500px");
-            goog.dom.classlist.add(contentDiv.parentElement, "sprite-editor-dropdown")
+            pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown")
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.state = this.editor.bitmap();
+                this.editor.closeEditor();
+                this.state = this.editor.bitmap().image;
                 this.redrawPreview();
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                     Blockly.Events.fire(new Blockly.Events.BlockChange(
@@ -123,7 +130,7 @@ namespace pxtblockly {
                 goog.style.setWidth(contentDiv, null);
                 goog.style.setStyle(contentDiv, "overflow", null);
                 goog.style.setStyle(contentDiv, "max-height", null);
-                (goog.dom.classlist as any).remove(contentDiv.parentElement, "sprite-editor-dropdown");
+                pxt.BrowserUtils.removeClass(contentDiv.parentElement, "sprite-editor-dropdown");
                 this.editor.removeKeyListeners();
             });
 
