@@ -70,6 +70,7 @@ namespace pxt.editor {
         debugging?: boolean;
         bannerVisible?: boolean;
         updatingEditorFile?: boolean;
+        pokeUserComponent?: string;
 
         highContrast?: boolean;
         print?: boolean;
@@ -199,9 +200,12 @@ namespace pxt.editor {
 
         openHome(): void;
         setTutorialStep(step: number): void;
+        setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
-        completeTutorial(): void;
+        completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
+        pokeUserActivity(): void;
+        stopPokeUserActivity(): void;
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
@@ -261,7 +265,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean): void;
         showLightbox(): void;
         hideLightbox(): void;
 
@@ -278,6 +282,7 @@ namespace pxt.editor {
         showExitAndSaveDialog(): void;
         showChooseHwDialog(): void;
         showExperimentsDialog(): void;
+        showRecipesDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
@@ -329,7 +334,7 @@ namespace pxt.editor {
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
         patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
-        deployCoreAsync?: (r: pxtc.CompileResult) => Promise<void>;
+        deployAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;

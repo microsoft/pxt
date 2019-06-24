@@ -55,9 +55,17 @@ namespace testNamespace {
     //% block="Output Boolean arg %arg=logic_boolean"
     export function booleanArgumentOutput(arg: boolean): boolean { return true; }
 
+    //% blockId=test_inferred_boolean_argument_output
+    //% block="Output inferred boolean"
+    export function inferredBooleanOutput() { return true; }
+
     //% blockId=test_number_argument_output
     //% block="Output Number arg %arg"
     export function numberArgumentOutput(arg: number): number { return 0; }
+
+    //% blockId=test_inferred_number_argument_output
+    //% block="Output inferred number"
+    export function inferredNumberOutput() { return 0; }
 
     //% blockId=test_string_argument_output
     //% block="Output String arg %arg"

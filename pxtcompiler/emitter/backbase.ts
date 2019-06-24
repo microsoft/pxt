@@ -103,7 +103,7 @@ namespace ts.pxtc {
             let vt = "pxt::string_inline_ascii_vt"
             let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
             if (utfLit !== strLit) {
-                if (utfLit.length > SKIP_INCR) {
+                if (strLit.length > SKIP_INCR) {
                     vt = "pxt::string_skiplist16_vt"
                     let skipList: number[] = []
                     let off = 0
@@ -113,12 +113,12 @@ namespace ts.pxtc {
                     }
                     return `
 .balign 4
-${lbl}meta: ${this.obj_header(vt)}
+${lbl}: ${this.obj_header(vt)}
         .short ${utfLit.length}, ${strLit.length}
         .word ${lbl}data
 ${lbl}data:
         .short ${skipList.map(s => s.toString()).join(", ")}
-${lbl}: .string ${asmStringLiteral(utfLit)}
+        .string ${asmStringLiteral(utfLit)}
 `
                 } else {
                     vt = "pxt::string_inline_utf8_vt"
@@ -127,9 +127,9 @@ ${lbl}: .string ${asmStringLiteral(utfLit)}
 
             return `
 .balign 4
-${lbl}meta: ${this.obj_header(vt)}
+${lbl}: ${this.obj_header(vt)}
         .short ${utfLit.length}
-${lbl}: .string ${asmStringLiteral(utfLit)}
+        .string ${asmStringLiteral(utfLit)}
 `
         }
 
@@ -138,14 +138,20 @@ ${lbl}: .string ${asmStringLiteral(utfLit)}
             return `
 .balign 4
 ${lbl}: ${this.obj_header("pxt::buffer_vt")}
-        .short ${data.length >> 1}, 0x0000
-        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+${hexLiteralAsm(data)}
 `
         }
 
         method_call(procid: ir.ProcId, topExpr: ir.Expr) {
             return ""
         }
+    }
+
+    export function hexLiteralAsm(data: string, suff = "") {
+        return `
+                .word ${data.length >> 1}${suff}
+                .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+        `
     }
 
     // helper for emit_int
@@ -417,25 +423,20 @@ ${baseLabel}_nochk:
             } else {
                 let lbl = this.mkLbl("jmpz")
 
-                if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
-                    this.emitExprInto(jmp.expr, "r1")
-                    this.write(this.t.cmp("r0", "r1"))
-                } else {
-                    this.emitExpr(jmp.expr)
+                this.emitExpr(jmp.expr)
 
-                    // TODO: remove ARM-specific code
-                    if (jmp.expr.exprKind == ir.EK.RuntimeCall &&
-                        (jmp.expr.data === "thumb::subs" || U.startsWith(jmp.expr.data, "_cmp_"))) {
-                        // no cmp required
-                    } else {
-                        this.write(this.t.cmp_zero("r0"))
-                    }
+                // TODO: remove ARM-specific code
+                if (jmp.expr.exprKind == ir.EK.RuntimeCall &&
+                    (jmp.expr.data === "thumb::subs" || U.startsWith(jmp.expr.data, "_cmp_"))) {
+                    // no cmp required
+                } else {
+                    this.write(this.t.cmp_zero("r0"))
                 }
 
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     this.write(this.t.beq(lbl)) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                 } else {
-                    // IfZero or IfJmpValEq
+                    // IfZero
                     this.write(this.t.bne(lbl))
                 }
 
@@ -467,10 +468,6 @@ ${baseLabel}_nochk:
                     }
                 }
             }
-        }
-
-        private withRef(name: string, isRef: boolean) {
-            return name + (isRef ? "Ref" : "")
         }
 
         private emitExprInto(e: ir.Expr, reg: string) {
@@ -595,7 +592,7 @@ ${baseLabel}_nochk:
                 let off = info.idx * 4 + 4
                 let xoff = "#" + off
                 if (off > 124) {
-                    this.t.emit_int(off, "r3")
+                    this.write(this.t.emit_int(off, "r3"))
                     xoff = "r3"
                 }
                 if (store)
@@ -609,7 +606,7 @@ ${baseLabel}_nochk:
                 let off = info.idx * 4 + 4
                 let xoff = "#" + off
                 if (off > 124) {
-                    this.t.emit_int(off, "r3")
+                    this.write(this.t.emit_int(off, "r3"))
                     xoff = "r3"
                 }
 
@@ -621,7 +618,7 @@ ${baseLabel}_nochk:
                     this.write(`bl _pxt_decr`)
                     this.write(`pop {r0, r1}`)
                     if (off > 124)
-                        this.t.emit_int(off, "r3")
+                        this.write(this.t.emit_int(off, "r3"))
                     this.write(`str r1, [r0, ${xoff}]`)
                     if (info.needsCheck)
                         this.write(`ldrh r2, [r0, #0]`)
@@ -1309,13 +1306,13 @@ ${baseLabel}_nochk:
             this.write(`
             .notint:
                 lsls r1, r1, #1
+                ${this.t.pushLR()}
                 push {r0, r2}
                 mov r0, r1
                 ${this.t.callCPP("pxt::toInt")}
                 mov r1, r0
                 pop {r0, r2}
-            ${op == "set" ? ".oob:" : ""}
-                ${this.t.pushLR()}
+            .doop:
                 ${this.t.callCPP(`Array_::${op}At`)}
                 ${conv}
                 ${this.t.popPC()}
@@ -1329,6 +1326,12 @@ ${baseLabel}_nochk:
                     .oob:
                         movs r0, #${isBuffer ? 1 : 0} ; 0 or undefined
                         bx lr
+                `)
+            } else {
+                this.write(`
+                    .oob:
+                        ${this.t.pushLR()}
+                        b .doop
                 `)
             }
 

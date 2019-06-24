@@ -205,6 +205,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
+    abstract hideFlyout(): void;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
@@ -213,6 +214,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
         const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelp, labelLineWidth, blocks } = treeRow;
+        const inTutorial = this.parent.state.tutorialOptions
+            && !!this.parent.state.tutorialOptions.tutorial;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
@@ -271,7 +274,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 if (!blockGroups[group] || !blockGroups[group].length) continue;
 
                 // Add the group label
-                if (group != 'other') {
+                if (group != 'other' && !inTutorial) {
                     this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpDict[group]);
                 }
 

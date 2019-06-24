@@ -36,7 +36,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     hide() {
-        Blockly.WidgetDiv.DIV.classList.remove("functioneditor");
+        pxt.BrowserUtils.removeClass(Blockly.WidgetDiv.DIV as HTMLElement, "functioneditor");
         const { functionEditorWorkspace, mainWorkspace } = this.state;
         functionEditorWorkspace.clear();
         functionEditorWorkspace.dispose();
@@ -68,7 +68,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         }
 
         // Adjust the WidgetDiv classname so that it can show up above the dimmer
-        Blockly.WidgetDiv.DIV.classList.add("functioneditor");
+        pxt.BrowserUtils.addClass(Blockly.WidgetDiv.DIV as HTMLElement, "functioneditor");
 
         // Create the function editor workspace
         functionEditorWorkspace = Blockly.inject(workspaceDiv, {

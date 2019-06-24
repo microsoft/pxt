@@ -8,7 +8,6 @@ import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
 import * as hid from './hid';
-import * as serial from './serial';
 import * as net from 'net';
 
 import U = pxt.Util;
@@ -279,7 +278,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
     const cmd = meth + " " + elts[1]
-
     const readJsonAsync = () =>
         nodeutil.readResAsync(req)
             .then(buf => JSON.parse(buf.toString("utf8")))
@@ -309,9 +307,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(d => writePkgAssetAsync(innerPath, d))
     else if (cmd == "GET pkgasset")
         return readAssetsAsync(innerPath)
-    else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
+    else if (cmd == "POST deploy" && pxt.commands.hasDeployFn())
         return readJsonAsync()
-            .then(pxt.commands.deployCoreAsync)
+            .then(pxt.commands.deployAsync)
             .then((boardCount) => {
                 return {
                     boardCount: boardCount
@@ -733,17 +731,7 @@ function sendSerialMsg(msg: string) {
 }
 
 function initSerialMonitor() {
-    serial.monitorSerial(function (info, buffer) {
-        //console.log(`data received: ${buffer.length} bytes`);
-        if (wsSerialClients.length == 0) return;
-        // send it to ws clients
-        let msg = JSON.stringify({
-            type: 'serial',
-            id: info.pnpId,
-            data: buffer.toString('utf8')
-        })
-        sendSerialMsg(msg)
-    })
+    // TODO HID
 }
 
 export interface ServeOptions {

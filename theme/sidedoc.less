@@ -34,24 +34,8 @@
 
 /* Side docs toggle button */
 #sidedocstoggle {
-  position: absolute;
-  border-top-left-radius: 100px;
-  border-bottom-left-radius: 100px;
   right: 0;
-  top: 40%;
-  bottom: 40%;
-  height: 20%;
-  z-index: @sidedocZIndex;
-  padding: 0;
-  margin: 0;
-  background: grey;
-  box-shadow: none !important;
-  transition: none;
-
-  &:hover,
-  &:focus {
-    background: #5A5A5A;
-  }
+  left: auto;
 }
 
 .sideDocs #sidedocs {
@@ -87,17 +71,6 @@
 .sideDocs #sidedocstoggle {
    right: @sideBarWidth;
    transition: right 0.5s, opacity 0.5s linear;
-}
-
-/* Show chevron icon on hover when collapsed */
-#sidedocstoggle > i.icon.hover {
-    display: none;
-}
-#root:not(.sideDocs) #sidedocstoggle.ui.button:hover > i.icon {
-    display: none !important;
-}
-#root:not(.sideDocs) #sidedocstoggle.ui.button:hover > i.icon.hover {
-    display: inherit !important;
 }
 
 .sideDocs #sidedocsbar {
@@ -162,5 +135,15 @@
     }
     .sideDocs #sidedocstoggle {
         right: @sideBarWidthSmall !important;
+    }
+}
+
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .sideDocs #sidedocs {
+        top: calc(@thinMenuHeight + 1rem);
+        padding-bottom: calc(@thinMenuHeight + @editorToolsHeight + 2rem);
+    }
+    .sideDocs.collapsedEditorTools #sidedocs, .sideDocs.hideEditorFloats #sidedocs {
+        padding-bottom: calc(@thinMenuHeight + @editorToolsCollapsedHeight + 2rem);
     }
 }

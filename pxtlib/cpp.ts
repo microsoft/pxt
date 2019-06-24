@@ -75,6 +75,21 @@ namespace pxt.cpp {
         return null;
     }
 
+    const vmKeepFunctions: pxt.Map<number> = {
+        "pxt::mkAction": 1,
+        "pxt::dumpPerfCounters": 1,
+        "pxt::deepSleep": 1,
+        "pxt::getConfig": 1,
+
+        "pxtrt::mkMap": 1,
+        "pxtrt::mapSet": 1,
+        "pxtrt::stclo": 1,
+        "pxtrt::mklocRef": 1,
+        "pxtrt::stlocRef": 1,
+        "pxtrt::ldlocRef": 1,
+        "pxtrt::panic": 1,
+    }
+
     export function nsWriter(nskw = "namespace") {
         let text = ""
         let currNs = ""
@@ -178,8 +193,9 @@ namespace pxt.cpp {
 
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
-        const isDockerMake = compileService.buildEngine == "dockermake"
+        const isDockerMake = compileService.buildEngine == "dockermake" || compileService.buildEngine == "dockercross"
         const isYotta = !isPlatformio && !isCodal && !isDockerMake
+        const isVM = compile.nativeType == pxtc.NATIVE_TYPE_VM
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal || isDockerMake)
@@ -187,6 +203,7 @@ namespace pxt.cpp {
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
+        let pointerIncPre = ""
         let abiInc = ""
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -199,6 +216,7 @@ namespace pxt.cpp {
         let enumsDTS = nsWriter("declare namespace")
         let allErrors = ""
         let knownEnums: Map<boolean> = {}
+        let vmVisitedFunctions: Map<boolean> = {}
 
 
         const enumVals: Map<string> = {
@@ -255,6 +273,8 @@ namespace pxt.cpp {
         if (compile.vtableShift)
             cpp_options["PXT_VTABLE_SHIFT"] = compile.vtableShift
 
+        if (compile.nativeType == pxtc.NATIVE_TYPE_VM)
+            cpp_options["PXT_VM"] = 1
 
         function stripComments(ln: string) {
             return ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
@@ -266,19 +286,15 @@ namespace pxt.cpp {
         let currDocComment = ""
         let currAttrs = ""
         let inDocComment = false
-        let outp = ""
 
         function handleComments(ln: string) {
-            if (inEnum) {
-                outp += ln + "\n"
+            if (inEnum)
                 return true
-            }
 
             if (/^\s*\/\*\*/.test(ln)) {
                 inDocComment = true
                 currDocComment = ln + "\n"
                 if (/\*\//.test(ln)) inDocComment = false
-                outp += "//\n"
                 return true
             }
 
@@ -287,17 +303,14 @@ namespace pxt.cpp {
                 if (/\*\//.test(ln)) {
                     inDocComment = false
                 }
-                outp += "//\n"
                 return true
             }
 
             if (/^\s*\/\/%/.test(ln)) {
                 currAttrs += ln + "\n"
-                outp += "//\n"
                 return true
             }
 
-            outp += ln + "\n"
             return false
         }
 
@@ -523,7 +536,92 @@ namespace pxt.cpp {
                 }
             }
 
-            outp = ""
+            function generateVMWrapper(fi: pxtc.FuncInfo, argTypes: string[]) {
+                if (argTypes[0] == "FiberContext*")
+                    return "::" + fi.name // no wrapper
+
+                let wrap = "_wrp_" + fi.name.replace(/:/g, "_")
+                if (vmVisitedFunctions[fi.name])
+                    return wrap
+                vmVisitedFunctions[fi.name] = true
+                /*
+                void call_getConfig(FiberContext *ctx) {
+                    int a0 = toInt(ctx->sp[0]);
+                    int a1 = toInt(ctx->r0); // last argument in r0
+                    int r = getConfig(a0, a1);
+                    ctx->r0 = fromInt(r);
+                    ctx->sp += 1;
+                }
+                */
+                pointerIncPre += `\nvoid ${wrap}(FiberContext *ctx) {\n`
+                const numArgs = argTypes.length
+                let refs: string[] = []
+                let needsStackSave = false
+
+                let allConvs = ""
+
+                for (let i = 0; i < numArgs; ++i) {
+                    const ind = fi.argsFmt[i + 1]
+                    const tp = argTypes[i]
+                    let conv =
+                        ind == "I" ? "toInt" :
+                            ind == "B" ? "numops::toBool" :
+                                ""
+                    const inp = i == numArgs - 1 ? "ctx->r0" : `ctx->sp[${numArgs - i - 2}]`
+                    let argPref = ""
+
+                    switch (tp) {
+                        case "TValue":
+                        case "TNumber":
+                            break
+                        case "Action":
+                            conv = "asRefAction"
+                            break
+                        case "String":
+                            conv = "convertToString"
+                            argPref = "ctx, "
+                            needsStackSave = true
+                            break
+                        default:
+                            if (!conv) conv = "as" + tp.replace(/\*/g, "")
+                            break
+                    }
+
+                    allConvs += `  ${tp} a${i} = (${tp}) ${conv}(${argPref}${inp});\n`
+                    refs.push("a" + i)
+                }
+
+                if (needsStackSave)
+                    pointerIncPre += "  auto prevSP = ctx->sp;\n"
+
+                pointerIncPre += allConvs
+
+                if (needsStackSave)
+                    pointerIncPre += "  if (panicCode) { ctx->sp = prevSP; return; }\n"
+
+                const call = `::${fi.name}(${refs.join(", ")})`
+
+                if (fi.argsFmt[0] == "V") {
+                    pointerIncPre += `  ${call};\n`
+                    pointerIncPre += `  ctx->r0 = NULL;\n`
+                } else if (fi.argsFmt[0] == "I") {
+                    pointerIncPre += `  ctx->r0 = fromInt(${call});\n`
+                } else if (fi.argsFmt[0] == "B") {
+                    pointerIncPre += `  ctx->r0 = fromBool(${call});\n`
+                } else {
+                    pointerIncPre += `  ctx->r0 = (TValue)${call};\n`
+                }
+
+                if (needsStackSave)
+                    pointerIncPre += "  ctx->sp = prevSP;\n"
+
+                if (numArgs > 1)
+                    pointerIncPre += `  ctx->sp += ${numArgs - 1};\n`
+                pointerIncPre += `}\n`
+
+                return wrap
+            }
+
             inEnum = false
             enumVal = 0
 
@@ -575,7 +673,7 @@ namespace pxt.cpp {
                 }
 
                 m = /^PXT_ABI\((\w+)\)/.exec(ln)
-                if (m) {
+                if (m && !isVM) {
                     pointersInc += `PXT_FNPTR(::${m[1]}),\n`
                     abiInc += `extern "C" void ${m[1]}();\n`
                     res.functions.push({
@@ -601,12 +699,13 @@ namespace pxt.cpp {
                     let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let argsFmt = [mapRunTimeType(retTp)]
+                    let argTypes: string[] = []
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         let r = parseArg(parsedAttrs, s)
                         argsFmt.push(mapRunTimeType(r.type))
+                        argTypes.push(r.type.replace(/ /g, ""))
                         return `${r.name}: ${mapType(r.type)}`
                     })
-                    let numArgs = args.length
                     let fi: pxtc.FuncInfo = {
                         name: currNs + "::" + funName,
                         argsFmt,
@@ -646,7 +745,16 @@ namespace pxt.cpp {
                     res.functions.push(fi)
                     if (isYotta)
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
-                    else
+                    else if (isVM) {
+                        if (U.startsWith(fi.name, "pxt::op_") ||
+                            vmKeepFunctions[fi.name] ||
+                            parsedAttrs.expose ||
+                            (!U.startsWith(fi.name, "pxt::") && !U.startsWith(fi.name, "pxtrt::"))) {
+                            const wrap = generateVMWrapper(fi, argTypes)
+                            const nargs = fi.argsFmt.length - 1
+                            pointersInc += `{ "${fi.name}", (OpFun)${wrap}, ${nargs} },\n`
+                        }
+                    } else
                         pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
                     return;
                 }
@@ -659,7 +767,8 @@ namespace pxt.cpp {
                         value: null
                     }
                     res.functions.push(fi)
-                    pointersInc += "PXT_FNPTR(&::" + fi.name + "),\n"
+                    if (!isVM)
+                        pointersInc += "PXT_FNPTR(&::" + fi.name + "),\n"
                     currAttrs = ""
                     return;
                 }
@@ -695,8 +804,6 @@ namespace pxt.cpp {
                     return;
                 }
             })
-
-            return outp
         }
 
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
@@ -792,7 +899,7 @@ namespace pxt.cpp {
 
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
                         pxt.debug("Parse C++: " + fullName)
-                        src = parseCpp(src, isHeader)
+                        parseCpp(src, isHeader)
                         res.extensionFiles[sourcePath + fullName] = src
 
                         if (pkg.level == 0)
@@ -816,6 +923,11 @@ namespace pxt.cpp {
 
         // merge optional settings
         U.jsonCopyFrom(optSettings, currSettings);
+        U.iterMap(optSettings, (k, v) => {
+            if (v === null) {
+                delete optSettings[k];
+            }
+        })
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {
@@ -879,7 +991,8 @@ namespace pxt.cpp {
         if (compile.uf2Family)
             pxtConfig += `#define PXT_UF2_FAMILY ${compile.uf2Family}\n`
 
-        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
+        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc +
+            pointerIncPre + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
         pxt.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)
         if (isYotta) {
@@ -911,8 +1024,8 @@ int main() {
             add("PXT_CPP", ".cpp")
             add("PXT_S", ".s")
             add("PXT_HEADERS", ".h")
-            inc += "PXT_SOURCES = $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
-            inc += "PXT_OBJS = $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
+            inc += "PXT_SOURCES := $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
+            inc += "PXT_OBJS := $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
             res.generatedFiles["/Makefile"] = makefile
             res.generatedFiles["/Makefile.inc"] = inc
 
@@ -930,6 +1043,7 @@ int main() {
 
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
+        res.skipCloudBuild = !!compileService.skipCloudBuild
         res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
@@ -1197,6 +1311,9 @@ namespace pxt.hex {
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
+        if (extInfo.skipCloudBuild)
+            return Promise.resolve({ hex: ["SKIP"] })
+
         if (pxt.webConfig && pxt.webConfig.isStatic) {
             return Util.requestAsync({
                 url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`

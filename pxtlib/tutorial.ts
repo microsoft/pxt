@@ -6,7 +6,7 @@ namespace pxt.tutorial {
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|typescript|ts|js|javascript)\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd
@@ -37,7 +37,7 @@ namespace pxt.tutorial {
 
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
-            steps: parseTutorialSteps(tutorialmd),
+            steps: steps,
             code
         };
 
@@ -53,6 +53,9 @@ namespace pxt.tutorial {
     }
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config)\s*\n([\s\S]*?)\n```/gmi;
+        const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+
         // Download tutorial markdown
         let steps = tutorialmd.split(/^##[^#].*$/gmi);
         let newAuthoring = true;
@@ -84,7 +87,21 @@ namespace pxt.tutorial {
             const contentLines = stepContent.split('\n');
             stepInfo[i].headerContentMd = contentLines[0];
             stepInfo[i].contentMd = stepContent;
-            stepInfo[i].hasHint = contentLines.length > 1;
+
+            // everything after the first ``` section OR the first image is currently treated as a "hint"
+            let hintText = stepContent.match(hintTextRegex);
+            let blockSolution;
+            if (hintText && hintText.length > 2) {
+                stepInfo[i].headerContentMd = hintText[1];
+                blockSolution = hintText[2];
+                if (blockSolution) {
+                    // remove hidden snippets from the hint
+                    blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
+                    stepInfo[i].blockSolution = blockSolution;
+                }
+            }
+
+            stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
         }
         return stepInfo;
     }
@@ -116,5 +133,41 @@ namespace pxt.tutorial {
                 pre.appendChild(document.createTextNode(line + '\n'));
             }
         }
+    }
+
+    /**
+     * This is a temporary hack to automatically patch examples and tutorials while
+     * the pxt-arcade APIs are being updated. This should be removed once that upgrade is
+     * complete.
+     *
+     * @param inputJS The snippet of js (or markdown with js snippets) to upgrade
+     */
+    export function patchArcadeSnippets(inputJS: string): string {
+        if (pxt.appTarget.id !== "arcade" && pxt.appTarget.id !== "pxt-32") return inputJS;
+
+        const declRegex = /enum\s+SpriteKind\s*{((?:[^}]|\s)+)}/gm;
+        const builtin = ["Player", "Projectile", "Enemy", "Food"]
+        const match = declRegex.exec(inputJS);
+
+        if (match) {
+            const referencedNames = match[1].split(/(?:\s|,)+/)
+                .map(n => n.trim())
+                .filter(n => /[a-zA-Z]+/.test(n))
+                .filter(n => builtin.indexOf(n) === -1);
+
+            if (referencedNames.length) {
+                return inputJS.replace(declRegex,
+`
+namespace SpriteKind {
+${referencedNames.map(rn => "    export const " + rn + " = SpriteKind.create()").join("\n")}
+}
+`)
+            }
+            else {
+                return inputJS.replace(declRegex, "");
+            }
+        }
+
+        return inputJS;
     }
 }

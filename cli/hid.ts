@@ -2,12 +2,15 @@ import HF2 = pxt.HF2
 import U = pxt.U
 import * as nodeutil from './nodeutil';
 
+const PXT_USE_HID = !!process.env["PXT_USE_HID"];
+
 function useWebUSB() {
     return !!pxt.appTarget.compile.webUSB
 }
 
 let HID: any = undefined;
 function requireHID(install?: boolean): boolean {
+    if (!PXT_USE_HID) return false;
     if (useWebUSB()) {
         // in node.js, we need "webusb" package
         if (pxt.Util.isNodeJS)
@@ -37,7 +40,7 @@ export interface HidDevice {
 }
 
 export function listAsync() {
-    if (!requireHID(true))
+    if (!isInstalled(true))
         return Promise.resolve();
     return getHF2DevicesAsync()
         .then(devices => {
@@ -47,7 +50,7 @@ export function listAsync() {
 }
 
 export function serialAsync() {
-    if (!requireHID(true))
+    if (!isInstalled(true))
         return Promise.resolve();
     return initAsync()
         .then(d => {
@@ -75,7 +78,7 @@ export function deviceInfo(h: HidDevice) {
 }
 
 function getHF2Devices(): HidDevice[] {
-    if (!requireHID(false))
+    if (!isInstalled(false))
         return [];
     let devices = HID.devices() as HidDevice[]
     for (let d of devices) {
@@ -130,7 +133,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
     }
 
 
-    if (!requireHID(true)) return Promise.resolve(undefined);
+    if (!isInstalled(true)) return Promise.resolve(undefined);
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
     h.rawMode = raw
@@ -188,7 +191,7 @@ export class HidIO implements HF2.PacketIO {
     }
 
     private connect() {
-        U.assert(requireHID(false))
+        U.assert(isInstalled(false))
         if (this.requestedPath == null) {
             let devs = getHF2Devices()
             if (devs.length == 0)

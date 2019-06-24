@@ -140,6 +140,17 @@ file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
     fs.writeFileSync(this.name, JSON.stringify(std, null, 4))
 })
 
+if (!fs.existsSync("webapp/public/blockly")) fs.mkdirSync("webapp/public/blockly");
+if (!fs.existsSync("webapp/public/blockly/msg")) fs.mkdirSync("webapp/public/blockly/msg");
+if (!fs.existsSync("webapp/public/blockly/msg/js")) fs.mkdirSync("webapp/public/blockly/msg/js");
+if (!fs.existsSync("webapp/public/blockly/msg/json")) fs.mkdirSync("webapp/public/blockly/msg/json");
+
+jake.cpR('node_modules/pxt-blockly/blocks_compressed.js', 'webapp/public/blockly/');
+jake.cpR('node_modules/pxt-blockly/blockly_compressed.js', 'webapp/public/blockly/');
+jake.cpR('node_modules/pxt-blockly/msg/js/en.js', 'webapp/public/blockly/msg/js/');
+jake.cpR('node_modules/pxt-blockly/msg/json/en.json', 'webapp/public/blockly/msg/json/');
+jake.cpR('node_modules/pxt-blockly/media', 'webapp/public/blockly/');
+
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
 compileDir("pxtpy", ["built/pxtcompiler.js"])
@@ -524,7 +535,8 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
             function: 0xf109,
             bucket: 0xf102,
             undo: 0xf118,
-            redo: 0xf111
+            redo: 0xf111,
+            rectangularselection: 0xf113
         },
         writeFiles: false,
     }, function (error, res) {
@@ -570,5 +582,4 @@ ju.catFiles("built/web/semantic.js",
 file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js', 'built/web/semantic.css'], function () {
     jake.cpR("libs/pxt-common/pxt-core.d.ts", "docs/static/playground/pxt-common/pxt-core.d.js");
     jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
-    jake.cpR("webapp/public/blockly/media/", "docs/static/playground/blockly/");
 })

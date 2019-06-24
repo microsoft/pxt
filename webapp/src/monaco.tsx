@@ -124,14 +124,16 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym || !sym.parameters) return null;
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
+                let paramInfo: monaco.languages.ParameterInformation[] =
+                    sym.parameters.map(p => ({
+                        label: `${p.name}: ${p.type}`,
+                        documentation: pxt.Util.rlf(p.description)
+                    }))
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
-                        label: sym.name,
+                        label: `${sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
                         documentation,
-                        parameters: sym.parameters.map(p => ({
-                            label: `${p.name}: ${p.type}`,
-                            documentation: pxt.Util.rlf(p.description)
-                        }))
+                        parameters: paramInfo
                     }],
                     activeSignature: 0,
                     activeParameter: r.auxResult
@@ -192,6 +194,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private editorViewZones: number[];
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
+
+    private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -796,12 +800,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
-    private hideFlyout() {
+    public hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
         if (flyout) {
             pxsim.U.clear(flyout);
             flyout.style.display = 'none';
+            flyout.removeEventListener("wheel", this.handleFlyoutScroll, true);
         }
 
         // Hide the current toolbox category
@@ -1034,10 +1039,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.breakpoints = new BreakpointCollection(breakpoints);
                 this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
             }
-            else {
-                // The simulator got restarted
-                this.sendBreakpoints();
-            }
 
             if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
             if (this.feWidget) this.feWidget.close();
@@ -1070,9 +1071,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.forceDiagnosticsUpdate();
     }
 
+    getBreakpoints() {
+        return this.breakpoints ? this.breakpoints.getActiveBreakpoints() : [];
+    }
+
     private sendBreakpoints() {
         if (this.breakpoints) {
-            simulator.driver.setBreakpoints(this.breakpoints.getActiveBreakpoints());
+            simulator.driver.setBreakpoints(this.getBreakpoints());
         }
     }
 
@@ -1604,6 +1609,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
+        monacoFlyout.addEventListener("wheel", this.handleFlyoutScroll, true);
         pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;

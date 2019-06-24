@@ -459,6 +459,71 @@
     }
 }
 
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .ui.segment.tabsegment {
+        padding-top: calc(@thinMenuHeight + 2rem) !important;
+    }
+    .projectsdialog {
+        .ui.card, .ui.cards>.card {
+            width: 15rem;
+            height: 9rem;
+        }
+        .ui.card.buttoncard {
+            .content {
+                padding: 1rem;
+            }
+            .header {
+                font-size: 12pt !important;
+            }
+            i.icon.huge {
+                font-size: 3rem;
+            }
+        }
+        .ui.card.example {
+            .ui.huge.label {
+                font-size: 1rem;
+            }
+            .ui.image, .ui.cardimage {
+                height: 6rem;
+            }
+            .content .header {
+                font-size: 1rem;
+            }
+            .ui.image~.content {
+                height: 2.4rem;
+                padding: 0.7rem;
+            }
+        }
+        .ui.card.file {
+            .content .header {
+                font-size: 1rem;
+            }
+            .ui.image {
+                display: none;
+            }
+            .content {
+                margin-left: 0;
+            }
+            .meta {
+                padding: 0.5rem;
+            }
+        }        
+        .detailview.visible {
+            .column, 
+            .imagewrapper .image        
+            {
+                height: 220px;
+            }        
+        }
+        .getting-started-segment {
+            margin-top: -3.1rem!important;
+            margin-bottom: 0rem!important;
+            height: 168px;
+        }
+    }    
+}
+
+
 /*******************************
         Projects Modal
 *******************************/

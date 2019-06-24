@@ -1,4 +1,3 @@
-
 namespace ts.pxtc.decompiler {
     export enum DecompileParamKeys {
         // Field editor should decompile literal expressions in addition to
@@ -20,7 +19,7 @@ namespace ts.pxtc.decompiler {
     /**
      * Max number of blocks before we bail out of decompilation
      */
-    const MAX_BLOCKS = 1000;
+    const MAX_BLOCKS = 1500;
 
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
@@ -39,10 +38,16 @@ namespace ts.pxtc.decompiler {
         declaredFunctions: pxt.Map<ts.FunctionDeclaration>;
         functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
+        declaredKinds?: pxt.Map<KindDeclarationInfo>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
         opts: DecompileBlocksOptions;
+    }
+
+    interface KindDeclarationInfo {
+        kindInfo: pxtc.KindInfo;
+        declaredNames: string[];
     }
 
     interface DecompileArgument {
@@ -224,7 +229,7 @@ namespace ts.pxtc.decompiler {
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function buildRenameMap(p: Program, s: SourceFile): [RenameMap, NamesSet] {
+    export function buildRenameMap(p: Program, s: SourceFile, takenNames: NamesSet = {}): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
 
@@ -233,7 +238,6 @@ namespace ts.pxtc.decompiler {
         return [new RenameMap(allRenames), names];
 
         function collectNameCollisions(): NamesSet {
-            const takenNames: NamesSet = {};
 
             checkChildren(s);
 
@@ -322,6 +326,7 @@ namespace ts.pxtc.decompiler {
             blocks: blocksInfo,
             declaredFunctions: {},
             declaredEnums: {},
+            declaredKinds: {},
             functionParamIds: {},
             attrs: attrs,
             compInfo: compInfo,
@@ -355,10 +360,23 @@ namespace ts.pxtc.decompiler {
                     });
                 });
             }
+            else if (isModuleDeclaration(topLevelNode) && !checkStatement(topLevelNode, env, false, true)) {
+                const kindName = topLevelNode.name.text;
+                const exported = getKindExports(topLevelNode);
+
+                if (env.declaredKinds[kindName]) {
+                    env.declaredKinds[kindName].declaredNames.push(...exported);
+                }
+            }
             else if (topLevelNode.kind === SK.Block) {
                 ts.forEachChild(topLevelNode, checkTopNode);
             }
         };
+
+        Object.keys(blocksInfo.kindsByName).forEach(k => {
+            const kindInfo = blocksInfo.kindsByName[k];
+            env.declaredKinds[k] = { kindInfo, declaredNames: [] };
+        });
 
         ts.forEachChild(file, checkTopNode);
 
@@ -370,6 +388,14 @@ namespace ts.pxtc.decompiler {
             env.declaredFunctions[funcName].parameters.forEach(p => {
                 env.functionParamIds[funcName][p.name.getText()] = genId() + genId();
             });
+        });
+
+        Object.keys(env.declaredKinds).forEach(kindName => {
+            const kindType = "KIND_" + kindName;
+            env.declaredKinds[kindName].declaredNames.forEach(kindMember => enumMembers.push({
+                name: kindMember,
+                type: kindType
+            }));
         });
 
         if (enumMembers.length) {
@@ -467,7 +493,6 @@ ${output}</xml>`;
         }
 
         function mkStmt(type: string): StatementNode {
-            countBlock();
             return {
                 kind: "statement",
                 type
@@ -475,7 +500,6 @@ ${output}</xml>`;
         }
 
         function mkExpr(type: string): ExpressionNode {
-            countBlock();
             return {
                 kind: "expr",
                 type
@@ -483,11 +507,6 @@ ${output}</xml>`;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
-            if (shadowType && value.kind === "expr" && (value as ExpressionNode).type !== shadowType) {
-                // Count the shadow block that will be emitted
-                countBlock();
-            }
-
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
                 shadowType = minmaxNumberType;
@@ -654,7 +673,11 @@ ${output}</xml>`;
             }
             else {
                 const node = n as ExpressionNode;
-                const tag = shadow || node.isShadow ? "shadow" : "block";
+                const isShadow = shadow || node.isShadow;
+                const tag = isShadow ? "shadow" : "block";
+                if (!isShadow) {
+                    countBlock();
+                }
 
                 write(`<${tag} type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
@@ -663,6 +686,7 @@ ${output}</xml>`;
         }
 
         function openBlockTag(type: string) {
+            countBlock();
             write(`<block type="${U.htmlEscape(type)}">`)
         }
 
@@ -764,18 +788,28 @@ ${output}</xml>`;
                 return getTextJoin(n);
             }
 
+            const leftName = npp.leftName || "A";
+            const rightName = npp.rightName || "B";
+
+            let leftValue: ValueNode;
+            let rightValue: ValueNode;
+
+            if (op === "&&" || op === "||") {
+                leftValue = getConditionalInput(leftName, n.left);
+                rightValue = getConditionalInput(rightName, n.right);
+            } else  {
+                leftValue = getValue(leftName, n.left, numberType);
+                rightValue = getValue(rightName, n.right, numberType);
+            }
+
             const result = mkExpr(npp.type);
             result.fields = [];
-            result.inputs = [];
 
             if (npp.op) {
                 result.fields.push(getField("OP", npp.op))
             }
 
-            const shadowType = (op === "&&" || op === "||") ? booleanType : numberType;
-
-            result.inputs.push(getValue(npp.leftName || "A", n.left, shadowType));
-            result.inputs.push(getValue(npp.rightName || "B", n.right, shadowType));
+            result.inputs = [leftValue, rightValue];
 
             return result;
 
@@ -931,7 +965,7 @@ ${output}</xml>`;
             switch (node.operator) {
                 case SK.ExclamationToken:
                     const r = mkExpr("logic_negate");
-                    r.inputs = [getValue("BOOL", node.operand, booleanType)]
+                    r.inputs = [getConditionalInput("BOOL", node.operand)];
                     return r;
                 case SK.PlusToken:
                     return getOutputBlock(node.operand);
@@ -962,6 +996,10 @@ ${output}</xml>`;
                     if (enumInfo && enumInfo.blockId) {
                         return getFieldBlock(enumInfo.blockId, "MEMBER", n.name.text);
                     }
+                }
+                else if (env.declaredKinds[enumName]) {
+                    const info = env.declaredKinds[enumName];
+                    return getFieldBlock(info.kindInfo.blockId, "MEMBER", n.name.text);
                 }
             }
 
@@ -1139,6 +1177,7 @@ ${output}</xml>`;
                         stmt = undefined; // don't generate blocks for empty statements
                         break;
                     case SK.EnumDeclaration:
+                    case SK.ModuleDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
                         return getNext();
                     default:
@@ -1311,7 +1350,6 @@ ${output}</xml>`;
                         return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
                     const r = mkStmt("variables_change");
-                    countBlock();
                     r.inputs = [mkValue("VALUE", negateNumericNode(n.right), numberType)];
                     r.fields = [getField("VAR", getVariableName(n.left as ts.Identifier))];
 
@@ -1324,7 +1362,7 @@ ${output}</xml>`;
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
             const r = mkStmt("device_while");
-            r.inputs = [getValue("COND", n.expression, booleanType)];
+            r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
         }
@@ -1341,7 +1379,7 @@ ${output}</xml>`;
             r.handlers = [];
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getValue("IF" + i, stmt.expression, booleanType));
+                r.inputs.push(getConditionalInput("IF" + i, (stmt as ts.IfStatement).expression));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -1350,6 +1388,66 @@ ${output}</xml>`;
             }
 
             return r;
+        }
+
+        function getConditionalInput(name: string, expr: Expression) {
+            const err = checkConditionalExpression(expr);
+            if (err) {
+                const tsExpr = getTypeScriptExpressionBlock(expr);
+                return mkValue(name, tsExpr, booleanType);
+            } else {
+                return getValue(name, expr, booleanType);
+            }
+        }
+
+        function checkConditionalExpression(expr: Expression) {
+            const unwrappedExpr = unwrapNode(expr);
+
+            switch (unwrappedExpr.kind) {
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.Identifier:
+                    return undefined;
+                case SK.BinaryExpression:
+                    return checkBooleanBinaryExpression(unwrappedExpr as BinaryExpression);
+                case SK.CallExpression:
+                    return checkBooleanCallExpression(unwrappedExpr as CallExpression);
+                case SK.PrefixUnaryExpression:
+                    if ((unwrappedExpr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
+                        return undefined;
+                    } // else fall through
+                default:
+                    return Util.lf("Conditions must evaluate to booleans or identifiers");
+            }
+
+            function checkBooleanBinaryExpression(n: BinaryExpression) {
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                    case SK.AmpersandAmpersandToken:
+                    case SK.BarBarToken:
+                        return undefined;
+                    default:
+                        return Util.lf("Binary expressions in conditionals must evaluate to booleans");
+                }
+            }
+
+            function checkBooleanCallExpression(n: CallExpression) {
+                const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
+                if (callInfo) {
+                    const api = env.blocks.apis.byQName[callInfo.qName];
+                    if (api && api.retType == "boolean") {
+                        return undefined;
+                    }
+                }
+                return Util.lf("Only functions that return booleans are allowed as conditions");
+            }
         }
 
         function getForStatement(n: ts.ForStatement): StatementNode {
@@ -1375,14 +1473,20 @@ ${output}</xml>`;
                 r.inputs = [getDraggableVariableBlock("VAR", renamed)];
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
-                    const ex = mkExpr("math_arithmetic");
-                    ex.fields = [getField("OP", "MINUS")];
-                    ex.inputs = [
-                        getValue("A", condition.right, numberType),
-                        getValue("B", 1, numberType)
-                    ];
-                    countBlock();
-                    r.inputs.push(mkValue("TO", ex, wholeNumberType));
+                    const unwrappedRightSide = unwrapNode(condition.right);
+                    if (unwrappedRightSide.kind === SK.NumericLiteral) {
+                        const decrementedValue = parseFloat((unwrappedRightSide as LiteralExpression).text) - 1;
+                        const valueField = getNumericLiteral(decrementedValue + "");
+                        r.inputs.push(mkValue("TO", valueField, wholeNumberType));
+                    } else {
+                        const ex = mkExpr("math_arithmetic");
+                        ex.fields = [getField("OP", "MINUS")];
+                        ex.inputs = [
+                            getValue("A", unwrappedRightSide, numberType),
+                            getValue("B", 1, numberType)
+                        ];
+                        r.inputs.push(mkValue("TO", ex, wholeNumberType));
+                    }
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
                     r.inputs.push(getValue("TO", condition.right, wholeNumberType));
@@ -1431,7 +1535,6 @@ ${output}</xml>`;
             ];
             return r;
         }
-
 
         function getPropertySetBlock(left: ts.PropertyAccessExpression, right: ts.Expression, tp: string) {
             return getPropertyBlock(left, right, tp) as StatementNode
@@ -1634,7 +1737,6 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
-            countBlock();
             const r = {
                 kind: asExpression ? "expr" : "statement",
                 type: attributes.blockId
@@ -1880,7 +1982,6 @@ ${output}</xml>`;
                 case SK.BinaryExpression:
                     const op = e as BinaryExpression;
                     if (op.operatorToken.kind == SK.PlusToken && (op.right as any).text == "1") {
-                        countBlock();
                         return getOutputBlock(op.left);
                     }
                 default:
@@ -1982,6 +2083,7 @@ ${output}</xml>`;
 
         function maybeEmitEmptyOnStart() {
             if (options.alwaysEmitOnStart) {
+                countBlock();
                 write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
             }
         }
@@ -2137,6 +2239,8 @@ ${output}</xml>`;
                 return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
+            case SK.ModuleDeclaration:
+                return checkNamespaceDeclaration(node as ts.NamespaceDeclaration);
             case SK.DebuggerStatement:
             case SK.EmptyStatement:
                 return undefined;
@@ -2217,6 +2321,8 @@ ${output}</xml>`;
                 if (n.operatorToken.kind !== SK.EqualsToken &&
                     n.operatorToken.kind !== SK.PlusEqualsToken) {
                     return Util.lf("Property access expressions may only be assigned to using the = and += operators");
+                } else {
+                    return checkExpression(n.left, env);
                 }
             }
             else if (n.left.kind === SK.Identifier) {
@@ -2668,6 +2774,63 @@ ${output}</xml>`;
 
             return undefined;
         }
+
+        function checkNamespaceDeclaration(n: ts.NamespaceDeclaration) {
+            if (!isModuleBlock(n.body)) {
+                return Util.lf("Namespaces cannot be nested.")
+            }
+
+            const kindInfo = env.blocks.kindsByName[n.name.text]
+            if (!kindInfo) {
+                return Util.lf("Only namespaces with 'kind' blocks can be decompiled");
+            }
+
+            const fail = Util.lf("Namespaces may only contain valid 'kind' exports");
+
+            // Each statement must be of the form `export const kind = kindNamespace.create()`
+            for (const statement of n.body.statements) {
+                // There isn't really a way to persist comments, so to be safe just bail out
+                if (isCommented(statement)) return fail;
+
+                if (isVariableStatement(statement) && statement.declarationList.declarations) {
+                    const isSingleDeclaration = statement.declarationList.declarations.length === 1;
+                    const isExport = statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword;
+                    const isConst = statement.declarationList.flags & NodeFlags.Const
+
+                    if (isSingleDeclaration && isExport && isConst) {
+                        const declaration = statement.declarationList.declarations[0];
+                        if (!declaration.initializer || !isCallExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
+                            return fail;
+                        }
+
+                        const call = declaration.initializer;
+
+                        if (call.arguments.length) {
+                            return fail;
+                        }
+
+                        // The namespace is emitted from the blocks, but it's optional when decompiling
+                        if (isPropertyAccessExpression(call.expression) && isIdentifier(call.expression.expression)) {
+                            if (call.expression.expression.text !== kindInfo.name || call.expression.name.text !== kindInfo.createFunctionName) return fail;
+                        }
+                        else if (isIdentifier(call.expression)) {
+                            if (call.expression.text !== kindInfo.createFunctionName) return fail;
+                        }
+                        else {
+                            return fail;
+                        }
+                    }
+                    else {
+                        return fail;
+                    }
+                }
+                else {
+                    return fail;
+                }
+            }
+
+            return undefined;
+        }
     }
 
     function isEmptyStringNode(node: Node) {
@@ -2854,6 +3017,14 @@ ${output}</xml>`;
                     // block combine and getters/setters
                     return checkExpression(n.expression, env)
                 }
+                else if (isIdentifier(n.expression) && env.declaredKinds[n.expression.text]) {
+                    const propName = n.name.text;
+                    const kind = env.declaredKinds[n.expression.text];
+
+                    if (kind && (kind.kindInfo.initialMembers.indexOf(propName) !== -1 || kind.declaredNames.indexOf(propName) !== -1)) {
+                        return undefined;
+                    }
+                }
             }
             return Util.lf("No call info found");
         }
@@ -3028,6 +3199,10 @@ ${output}</xml>`;
         return res;
     }
 
+    function getKindExports(n: ModuleDeclaration): string[] {
+        return (n.body as ModuleBlock).statements.map(s => ((s as VariableStatement).declarationList.declarations[0].name as Identifier).text);
+    }
+
     function isOutputExpression(expr: ts.Expression): boolean {
         switch (expr.kind) {
             case SK.BinaryExpression:
@@ -3099,5 +3274,10 @@ ${output}</xml>`;
             return `${match[1] || match[2]}[]`
         }
         return type;
+    }
+
+    function isCommented(node: ts.Node) {
+        const ranges = ts.getLeadingCommentRangesOfNode(node, node.getSourceFile());
+        return !!(ranges && ranges.length)
     }
 }

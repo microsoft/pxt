@@ -501,10 +501,12 @@ const simpleNames: Map<boolean> = {
 }
 
 function stmtTODO(v: py.Stmt) {
+    pxt.tickEvent("python.todo", { kind: v.kind })
     return B.mkStmt(B.mkText("TODO: " + v.kind))
 }
 
 function exprTODO(v: py.Expr) {
+    pxt.tickEvent("python.todo", { kind: v.kind })
     return B.mkText(" {TODO: " + v.kind + "} ")
 }
 
@@ -1842,6 +1844,7 @@ function mkArrayExpr(n: py.List | py.Tuple) {
 function expr(e: py.Expr): B.JsNode {
     let f = exprMap[e.kind]
     if (!f) {
+        pxt.tickEvent("python.todo", { kind: e.kind })
         U.oops(e.kind + " - unknown expr")
     }
     typeOf(e)
@@ -1851,6 +1854,7 @@ function expr(e: py.Expr): B.JsNode {
 function stmt(e: py.Stmt): B.JsNode {
     let f = stmtMap[e.kind]
     if (!f) {
+        pxt.tickEvent("python.todo", { kind: e.kind });
         U.oops(e.kind + " - unknown stmt")
     }
 

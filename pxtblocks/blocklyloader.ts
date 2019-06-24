@@ -543,7 +543,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                             const getOptions = fieldRow.saveOptions();
-                            el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            if (getOptions) {
+                                el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            }
                         }
                     })
                 })
@@ -554,7 +556,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                             const options = JSON.parse(saved.getAttribute(`customfield`));
-                            fieldRow.restoreOptions(options);
+                            if (options) {
+                                fieldRow.restoreOptions(options);
+                            }
                         }
                     })
                 })
@@ -589,7 +593,7 @@ namespace pxt.blocks {
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip(fn.attributes.jsDoc);
+        block.setTooltip( /^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
@@ -597,7 +601,7 @@ namespace pxt.blocks {
             const inputs = splitInputs(def);
             const imgConv = new ImageConverter()
 
-            if (fn.attributes.shim === "ENUM_GET") {
+            if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
                 if (comp.parameters.length > 1 || comp.thisParameter) {
                     console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
                     return;
@@ -622,6 +626,13 @@ namespace pxt.blocks {
                         fields.push({
                             name: "MEMBER",
                             field: new pxtblockly.FieldUserEnum(info.enumsByName[fn.attributes.enumName])
+                        });
+                        return;
+                    }
+                    else if (fn.attributes.shim === "KIND_GET") {
+                        fields.push({
+                            name: "MEMBER",
+                            field: new pxtblockly.FieldKind(info.kindsByName[fn.attributes.kindNamespace || fn.attributes.blockNamespace || fn.namespace])
                         });
                         return;
                     }
@@ -1251,12 +1262,12 @@ namespace pxt.blocks {
                     trashIcon.style.display = 'block';
                     blocklyTreeRoot.style.opacity = `${opacity}`;
                     if (distance < 50) {
-                        blocklyToolboxDiv.classList.add('blocklyToolboxDeleting');
+                        pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                     }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
-                    blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                    pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                 }
             }
             return blockDrag.call(this, e, currentDragDeltaXY);
@@ -1277,7 +1288,7 @@ namespace pxt.blocks {
             if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
-                blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
             }
         }
     }
@@ -1941,6 +1952,7 @@ namespace pxt.blocks {
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
         msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
+        msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
@@ -1981,6 +1993,9 @@ namespace pxt.blocks {
 
         // New variable dialog
         msg.NEW_VARIABLE_TITLE = lf("New variable name:");
+
+        // Rename variable dialog
+        msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
     }
 
     function initFunctions() {
@@ -2635,7 +2650,7 @@ namespace pxt.blocks {
     }
 
     function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
+        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
     }
 
     export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {

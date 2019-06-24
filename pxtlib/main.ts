@@ -1,6 +1,7 @@
 /// <reference path="../localtypings/pxtpackage.d.ts"/>
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
+/// <reference path="../localtypings/projectheader.d.ts"/>
 /// <reference path="util.ts"/>
 /// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>
@@ -209,7 +210,13 @@ namespace pxt {
         if (!pxt.appTarget.variants)
             return []
         let hws = Object.keys(pxt.appTarget.bundledpkgs).filter(pkg => /^hw---/.test(pkg))
-        return hws.map(pkg => JSON.parse(pxt.appTarget.bundledpkgs[pkg][CONFIG_NAME]))
+        return hws
+            .map(pkg => JSON.parse(pxt.appTarget.bundledpkgs[pkg][CONFIG_NAME]))
+            .filter((cfg: PackageConfig) => {
+                if (pxt.appTarget.appTheme.experimentalHw)
+                    return true
+                return !cfg.experimentalHw
+            })
     }
 
     export interface PxtOptions {
@@ -346,7 +353,7 @@ namespace pxt {
     export interface FsPkg {
         path: string; // eg "foo/bar"
         config: pxt.PackageConfig; // pxt.json
-        header: any;
+        header: pxt.workspace.Header;
         files: FsFile[]; // this includes pxt.json
         icon?: string;
         isDeleted?: boolean; // whether this project has been deleted by the user
@@ -387,7 +394,10 @@ namespace pxt {
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
-        if (trg.useUF2)
+
+        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
+            return ts.pxtc.BINARY_PXT64
+        else if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
             return ts.pxtc.BINARY_ELF

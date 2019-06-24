@@ -174,7 +174,6 @@
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
-
     .ui.fullscreen.modal {
         > .header {
             height: @mobileMenuHeight;
@@ -183,7 +182,17 @@
             height: calc(100% - @mobileMenuHeight - @mainMenuHeight);
         }
     }
-    
+}
+
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    .ui.fullscreen.modal {
+        > .header {
+            height: @thinMenuHeight;
+        }
+        .has-actions.content {
+            height: calc(100% - @thinMenuHeight - @mainMenuHeight);
+        }
+    }    
 }
 
 /*******************************
