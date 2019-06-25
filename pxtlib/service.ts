@@ -18,14 +18,17 @@ namespace ts.pxtc {
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
+    export const BINARY_PXT64 = "binary.pxt64";
 
     export const NATIVE_TYPE_THUMB = "thumb";
+    export const NATIVE_TYPE_VM = "vm";
 
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
         enumsByName: pxt.Map<EnumInfo>;
+        kindsByName: pxt.Map<KindInfo>;
     }
 
     export interface EnumInfo {
@@ -37,6 +40,15 @@ namespace ts.pxtc {
         firstValue?: number;
         initialMembers: string[];
         promptHint: string;
+    }
+
+    export interface KindInfo {
+        name: string;
+        memberName: string;
+        createFunctionName: string;
+        blockId: string;
+        promptHint: string;
+        initialMembers: string[];
     }
 
     export interface CompletionEntry {
@@ -228,6 +240,7 @@ namespace ts.pxtc {
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
         const enumsByName: pxt.Map<EnumInfo> = {};
+        const kindsByName: pxt.Map<KindInfo> = {};
 
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
@@ -350,6 +363,34 @@ namespace ts.pxtc {
                 };
             }
 
+            if (s.attributes.shim === "KIND_GET" && s.attributes.blockId) {
+                const kindNamespace = s.attributes.kindNamespace || s.attributes.blockNamespace || s.namespace;
+
+                if (kindsByName[kindNamespace]) {
+                    console.warn(`More than one block defined for kind ${kindNamespace}`);
+                    continue;
+                }
+
+                const initialMembers: string[] = [];
+                if (info.byQName[kindNamespace]) {
+                    for (const api of pxtc.Util.values(info.byQName)) {
+                        if (api.namespace === kindNamespace && api.attributes.isKind) {
+                            initialMembers.push(api.name);
+                        }
+                    }
+                }
+
+
+                kindsByName[kindNamespace] = {
+                    blockId: s.attributes.blockId,
+                    name: kindNamespace,
+                    memberName: s.attributes.kindMemberName || kindNamespace,
+                    initialMembers: initialMembers,
+                    promptHint: s.attributes.enumPromptHint || Util.lf("Create a new kind..."),
+                    createFunctionName: s.attributes.kindCreateFunction || "create"
+                };
+            }
+
             if (s.attributes.blockCombine) {
                 if (!/@set/.test(s.name)) {
                     addCombined("get", s)
@@ -409,7 +450,8 @@ namespace ts.pxtc {
             apis: info,
             blocks,
             blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
-            enumsByName
+            enumsByName,
+            kindsByName
         }
 
         function filterCategories(banned: string[]) {
@@ -466,7 +508,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = 1);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
@@ -489,7 +531,7 @@ namespace ts.pxtc {
         let cs = pxt.appTarget.compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
-        const docker = cs.buildEngine == "dockermake";
+        const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},

@@ -325,7 +325,6 @@ namespace ts.pxtc {
                     r.pyName = snakify(r.name).toUpperCase()
                     break
                 case SymbolKind.Variable:
-                case SymbolKind.Module:
                 case SymbolKind.Method:
                 case SymbolKind.Property:
                 case SymbolKind.Function:
@@ -334,6 +333,7 @@ namespace ts.pxtc {
                 case SymbolKind.Enum:
                 case SymbolKind.Class:
                 case SymbolKind.Interface:
+                case SymbolKind.Module:
                 default:
                     r.pyName = r.name
                     break

@@ -577,6 +577,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
+        const descriptions = description && description.split("\n");
 
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") {
@@ -596,7 +597,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         // featured link: featured_link
         const isForum = cardType == "forumUrl" && url;
-         const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
+        const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
@@ -608,9 +609,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {tags ? <div className="ui labels">
                         {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
                         </div>)}</div> : undefined}
-                    <p className="detail">
-                        {description}
-                    </p>
+                    {descriptions && descriptions.map((desc, index) => {
+                        return <p key={`line${index}`} className="detail">
+                                {desc}
+                            </p>
+                    })}
                     <div className="actions">
                         {actions.map(action =>
                             isLink && linkHref ?
@@ -619,7 +622,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                                     href={linkHref} target={'_blank'}
                                     icon={action.icon}
                                     text={action.label}
-                                    className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                    className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
                                     onClick={action.onClick}
                                     onKeyDown={sui.fireClickOnEnter}
                                 />

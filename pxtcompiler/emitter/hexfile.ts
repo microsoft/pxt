@@ -167,6 +167,23 @@ namespace ts.pxtc {
 
             hex = hexinfo.hex;
 
+            if (target.nativeType == pxtc.NATIVE_TYPE_VM) {
+                bytecodeStartIdx = -1
+                bytecodeStartAddr = 0
+                bytecodeStartAddrPadded = 0
+                bytecodePaddingSize = 0
+
+                jmpStartAddr = -1
+                jmpStartIdx = -1
+
+                for (let f of funs) {
+                    funcInfo[f.name] = f
+                    f.value = 0xffffff
+                }
+
+                return
+            }
+
             patchSegmentHex(hex)
 
             if (hex.length <= 2) {
@@ -684,7 +701,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
     ]
 
     export const vtLookups = 3
-    function computeHashMultiplier(nums: number[]) {
+    export function computeHashMultiplier(nums: number[]) {
         let shift = 32
         U.assert(U.unique(nums, v => "" + v).length == nums.length, "non unique")
         for (let sz = 2; ; sz = sz << 1) {
@@ -880,7 +897,7 @@ ${hex.hexPrelude()}
         let idx = 0
         for (let d of bin.ifaceMembers) {
             let lbl = bin.emitString(d)
-            asmsource += `    .word ${lbl}meta  ; ${idx++} .${d}\n`
+            asmsource += `    .word ${lbl}  ; ${idx++} .${d}\n`
         }
         asmsource += `    .word 0\n`
         asmsource += "_vtables_end:\n\n"
@@ -933,7 +950,10 @@ ${hex.hexPrelude()}
     function mkProcessorFile(target: CompileTarget) {
         let b: assembler.File
 
-        b = new assembler.File(new thumb.ThumbProcessor())
+        if (target.nativeType == NATIVE_TYPE_VM)
+            b = new assembler.VMFile(new vm.VmProcessor(target))
+        else
+            b = new assembler.File(new thumb.ThumbProcessor())
 
         b.ei.testAssembler(); // just in case
 

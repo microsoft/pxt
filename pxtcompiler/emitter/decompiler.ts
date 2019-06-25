@@ -14,6 +14,7 @@ namespace ts.pxtc.decompiler {
     }
 
     export const FILE_TOO_LARGE_CODE = 9266;
+    export const DECOMPILER_ERROR = 9267;
     const SK = ts.SyntaxKind;
 
     /**
@@ -38,10 +39,16 @@ namespace ts.pxtc.decompiler {
         declaredFunctions: pxt.Map<ts.FunctionDeclaration>;
         functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
+        declaredKinds?: pxt.Map<KindDeclarationInfo>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
         opts: DecompileBlocksOptions;
+    }
+
+    interface KindDeclarationInfo {
+        kindInfo: pxtc.KindInfo;
+        declaredNames: string[];
     }
 
     interface DecompileArgument {
@@ -320,6 +327,7 @@ namespace ts.pxtc.decompiler {
             blocks: blocksInfo,
             declaredFunctions: {},
             declaredEnums: {},
+            declaredKinds: {},
             functionParamIds: {},
             attrs: attrs,
             compInfo: compInfo,
@@ -353,10 +361,23 @@ namespace ts.pxtc.decompiler {
                     });
                 });
             }
+            else if (isModuleDeclaration(topLevelNode) && !checkStatement(topLevelNode, env, false, true)) {
+                const kindName = topLevelNode.name.text;
+                const exported = getKindExports(topLevelNode);
+
+                if (env.declaredKinds[kindName]) {
+                    env.declaredKinds[kindName].declaredNames.push(...exported);
+                }
+            }
             else if (topLevelNode.kind === SK.Block) {
                 ts.forEachChild(topLevelNode, checkTopNode);
             }
         };
+
+        Object.keys(blocksInfo.kindsByName).forEach(k => {
+            const kindInfo = blocksInfo.kindsByName[k];
+            env.declaredKinds[k] = { kindInfo, declaredNames: [] };
+        });
 
         ts.forEachChild(file, checkTopNode);
 
@@ -368,6 +389,14 @@ namespace ts.pxtc.decompiler {
             env.declaredFunctions[funcName].parameters.forEach(p => {
                 env.functionParamIds[funcName][p.name.getText()] = genId() + genId();
             });
+        });
+
+        Object.keys(env.declaredKinds).forEach(kindName => {
+            const kindType = "KIND_" + kindName;
+            env.declaredKinds[kindName].declaredNames.forEach(kindMember => enumMembers.push({
+                name: kindMember,
+                type: kindType
+            }));
         });
 
         if (enumMembers.length) {
@@ -395,7 +424,18 @@ namespace ts.pxtc.decompiler {
                 }]);
             }
             else {
-                throw e;
+                // don't throw
+                pxt.reportException(e);
+                result.success = false;
+                result.diagnostics = pxtc.patchUpDiagnostics([{
+                    file,
+                    start: file.getFullStart(),
+                    length: file.getFullWidth(),
+                    messageText: e.message,
+                    category: ts.DiagnosticCategory.Error,
+                    code: DECOMPILER_ERROR
+                }]);
+                return result;
             }
         }
 
@@ -969,6 +1009,10 @@ ${output}</xml>`;
                         return getFieldBlock(enumInfo.blockId, "MEMBER", n.name.text);
                     }
                 }
+                else if (env.declaredKinds[enumName]) {
+                    const info = env.declaredKinds[enumName];
+                    return getFieldBlock(info.kindInfo.blockId, "MEMBER", n.name.text);
+                }
             }
 
             const attributes = attrs(callInfo);
@@ -1145,6 +1189,7 @@ ${output}</xml>`;
                         stmt = undefined; // don't generate blocks for empty statements
                         break;
                     case SK.EnumDeclaration:
+                    case SK.ModuleDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
                         return getNext();
                     default:
@@ -1397,8 +1442,6 @@ ${output}</xml>`;
                     case SK.LessThanEqualsToken:
                     case SK.GreaterThanToken:
                     case SK.GreaterThanEqualsToken:
-                    // TODO: &&, ||, ! should check against non boolean l / r (e.g. not `1 || 2`)
-                    // https://github.com/Microsoft/pxt-arcade/issues/946
                     case SK.AmpersandAmpersandToken:
                     case SK.BarBarToken:
                         return undefined;
@@ -1409,10 +1452,11 @@ ${output}</xml>`;
 
             function checkBooleanCallExpression(n: CallExpression) {
                 const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
-                const type = callInfo.decl.type;
-
-                if (type && type.kind === SK.BooleanKeyword) {
-                    return undefined;
+                if (callInfo) {
+                    const api = env.blocks.apis.byQName[callInfo.qName];
+                    if (api && api.retType == "boolean") {
+                        return undefined;
+                    }
                 }
                 return Util.lf("Only functions that return booleans are allowed as conditions");
             }
@@ -1441,13 +1485,20 @@ ${output}</xml>`;
                 r.inputs = [getDraggableVariableBlock("VAR", renamed)];
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
-                    const ex = mkExpr("math_arithmetic");
-                    ex.fields = [getField("OP", "MINUS")];
-                    ex.inputs = [
-                        getValue("A", condition.right, numberType),
-                        getValue("B", 1, numberType)
-                    ];
-                    r.inputs.push(mkValue("TO", ex, wholeNumberType));
+                    const unwrappedRightSide = unwrapNode(condition.right);
+                    if (unwrappedRightSide.kind === SK.NumericLiteral) {
+                        const decrementedValue = parseFloat((unwrappedRightSide as LiteralExpression).text) - 1;
+                        const valueField = getNumericLiteral(decrementedValue + "");
+                        r.inputs.push(mkValue("TO", valueField, wholeNumberType));
+                    } else {
+                        const ex = mkExpr("math_arithmetic");
+                        ex.fields = [getField("OP", "MINUS")];
+                        ex.inputs = [
+                            getValue("A", unwrappedRightSide, numberType),
+                            getValue("B", 1, numberType)
+                        ];
+                        r.inputs.push(mkValue("TO", ex, wholeNumberType));
+                    }
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
                     r.inputs.push(getValue("TO", condition.right, wholeNumberType));
@@ -2200,6 +2251,8 @@ ${output}</xml>`;
                 return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
+            case SK.ModuleDeclaration:
+                return checkNamespaceDeclaration(node as ts.NamespaceDeclaration);
             case SK.DebuggerStatement:
             case SK.EmptyStatement:
                 return undefined;
@@ -2733,6 +2786,63 @@ ${output}</xml>`;
 
             return undefined;
         }
+
+        function checkNamespaceDeclaration(n: ts.NamespaceDeclaration) {
+            if (!isModuleBlock(n.body)) {
+                return Util.lf("Namespaces cannot be nested.")
+            }
+
+            const kindInfo = env.blocks.kindsByName[n.name.text]
+            if (!kindInfo) {
+                return Util.lf("Only namespaces with 'kind' blocks can be decompiled");
+            }
+
+            const fail = Util.lf("Namespaces may only contain valid 'kind' exports");
+
+            // Each statement must be of the form `export const kind = kindNamespace.create()`
+            for (const statement of n.body.statements) {
+                // There isn't really a way to persist comments, so to be safe just bail out
+                if (isCommented(statement)) return fail;
+
+                if (isVariableStatement(statement) && statement.declarationList.declarations) {
+                    const isSingleDeclaration = statement.declarationList.declarations.length === 1;
+                    const isExport = statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword;
+                    const isConst = statement.declarationList.flags & NodeFlags.Const
+
+                    if (isSingleDeclaration && isExport && isConst) {
+                        const declaration = statement.declarationList.declarations[0];
+                        if (!declaration.initializer || !isCallExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
+                            return fail;
+                        }
+
+                        const call = declaration.initializer;
+
+                        if (call.arguments.length) {
+                            return fail;
+                        }
+
+                        // The namespace is emitted from the blocks, but it's optional when decompiling
+                        if (isPropertyAccessExpression(call.expression) && isIdentifier(call.expression.expression)) {
+                            if (call.expression.expression.text !== kindInfo.name || call.expression.name.text !== kindInfo.createFunctionName) return fail;
+                        }
+                        else if (isIdentifier(call.expression)) {
+                            if (call.expression.text !== kindInfo.createFunctionName) return fail;
+                        }
+                        else {
+                            return fail;
+                        }
+                    }
+                    else {
+                        return fail;
+                    }
+                }
+                else {
+                    return fail;
+                }
+            }
+
+            return undefined;
+        }
     }
 
     function isEmptyStringNode(node: Node) {
@@ -2919,6 +3029,14 @@ ${output}</xml>`;
                     // block combine and getters/setters
                     return checkExpression(n.expression, env)
                 }
+                else if (isIdentifier(n.expression) && env.declaredKinds[n.expression.text]) {
+                    const propName = n.name.text;
+                    const kind = env.declaredKinds[n.expression.text];
+
+                    if (kind && (kind.kindInfo.initialMembers.indexOf(propName) !== -1 || kind.declaredNames.indexOf(propName) !== -1)) {
+                        return undefined;
+                    }
+                }
             }
             return Util.lf("No call info found");
         }
@@ -3093,6 +3211,10 @@ ${output}</xml>`;
         return res;
     }
 
+    function getKindExports(n: ModuleDeclaration): string[] {
+        return (n.body as ModuleBlock).statements.map(s => ((s as VariableStatement).declarationList.declarations[0].name as Identifier).text);
+    }
+
     function isOutputExpression(expr: ts.Expression): boolean {
         switch (expr.kind) {
             case SK.BinaryExpression:
@@ -3164,5 +3286,10 @@ ${output}</xml>`;
             return `${match[1] || match[2]}[]`
         }
         return type;
+    }
+
+    function isCommented(node: ts.Node) {
+        const ranges = ts.getLeadingCommentRangesOfNode(node, node.getSourceFile());
+        return !!(ranges && ranges.length)
     }
 }

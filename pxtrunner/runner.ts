@@ -289,7 +289,7 @@ namespace pxt.runner {
     }
 
     function compileAsync(hex: boolean, updateOptions?: (ops: pxtc.CompileOptions) => void) {
-        return getCompileOptionsAsync()
+        return getCompileOptionsAsync(hex)
             .then(opts => {
                 if (updateOptions) updateOptions(opts);
                 let resp = pxtc.compile(opts)
@@ -313,6 +313,18 @@ namespace pxt.runner {
                 }
                 return resp.outfiles[pxtc.BINARY_HEX];
             });
+    }
+
+    export function generateVMFileAsync(options: SimulateOptions): Promise<any> {
+        pxt.setHwVariant("vm")
+        return loadPackageAsync(options.id)
+            .then(() => compileAsync(true, opts => {
+                if (options.code) opts.fileSystem["main.ts"] = options.code;
+            }))
+            .then(resp => {
+                console.log(resp)
+                return resp
+            })
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
@@ -397,11 +409,11 @@ namespace pxt.runner {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
                     let url = mp[3] == "doc" ? (pxt.webConfig.isStatic ? `/docs${mp[4]}.html` : `${mp[4]}`) : `${docsUrl}?md=${mp[4]}`;
-                    window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
-                        window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
-                            type: "popoutcomplete"
+                        window.parent.postMessage(<pxsim.SimulatorOpenDocMessage>{
+                            type: "opendoc",
+                            url: BrowserUtils.urlJoin(verPrefix, url)
                         }, "*");
                 }
                 break;
@@ -446,6 +458,16 @@ namespace pxt.runner {
                         uri: res ? res.xml : undefined,
                         css: res ? res.css : undefined
                     }, "*");
+                })
+                .catch(e => {
+                    window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
+                        source: "makecode",
+                        type: "renderblocks",
+                        id: msg.id,
+                        error: e.message
+                    }, "*");
+                })
+                .finally(() => {
                     jobPromise = undefined;
                     consumeQueue();
                 })

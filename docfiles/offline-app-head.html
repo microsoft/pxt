@@ -33,6 +33,7 @@
 
         .content .welcomeheader {
             font-weight: 300;
+            font-size: 1.5rem;
         }
 
         .footer.segment {
@@ -62,6 +63,8 @@
 
         #legal-segment {
             background:white;
+            height: 18rem;
+            overflow-y: scroll;            
         }
         .welcomeheader {
             text-transform: uppercase;
@@ -177,7 +180,8 @@
             text-decoration: none;
             vertical-align: baseline;
             font-family: "Arial";
-            font-style: normal
+            font-style: normal;
+            text-transform: uppercase;
         }
 
         .c11 {
@@ -395,7 +399,12 @@
         }
 
         function agreeCheckboxChanged() {
+            $("#agree-checkbox").attr("disabled", "true");
             showDownloads();
+        }
+
+        function hideLoader() {
+            $("#loader").remove();            
         }
 
         function showAgree() {
@@ -424,6 +433,7 @@
         $(function () {
             $.getJSON("https://makecode.com/api/config/@targetid@/targetconfig")
                 .then(function (data) {
+                    hideLoader();
                     if (data && data.electronManifest && data.electronManifest.latest) {
                         electronLatestVersion = data.electronManifest.latest;
                         showAgree();
@@ -432,6 +442,7 @@
                     }
                 })
                 .catch(function () {
+                    hideLoader();
                     showNoDownloads();
                 })
         });

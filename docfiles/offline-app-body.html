@@ -1,12 +1,12 @@
 
     <div class="ui inverted vertical center aligned segment content">
-
+        <div id="loader" class="ui active loader"></div>
         <div class="ui grid topbar">
             <div class="three wide column">
-                <img class="ui small image left" src="@cardLogo@" />
+                <img class="ui tiny image left" src="@cardLogo@" />
             </div>
             <div class="ten wide column">
-                <h1 class="ui inverted welcomeheader">@targetname@ Offline App</h1>
+                <h1 class="ui inverted welcomeheader">MakeCode Offline App</h1>
             </div>
             <div class="three wide column">
                 <img class="ui small image right" src="/static/Microsoft-logo_rgb_c-white.png" />
@@ -18,13 +18,12 @@
                 Please read and accept the following terms to download the app.
             </div>
             <div id="legal-segment" class="ui left aligned segment terms hidden">
-                <div id="loader" class="ui active loader"></div>
                 <div class="c17">
                     <p class="c11">
                         <span class="c4 c1">MICROSOFT PRE-RELEASE SOFTWARE LICENSE TERMS</span>
                     </p>
                     <p class="c11">
-                        <span class="c4 c1">MICROSOFT MAKECODE SOFTWARE FOR MICRO:BIT</span>
+                        <span class="c4 c1">MICROSOFT MAKECODE SOFTWARE FOR @boardName@</span>
                     </p>
                     <p class="c7">
                         <span class="c4 c1"></span>
@@ -49,7 +48,7 @@
                         <span class="c5 c1">INSTALLATION AND USE RIGHTS. </span>
                         <span class="c3 c1">You may install and use any number of copies of the software to evaluate it
                             as you develop and test
-                            your software applications for use with @name@ hardware.</span>
+                            your software applications for use with @boardName@ hardware.</span>
                     </p>
                     <p class="c2">
                         <span class="c5 c1">2.</span>
@@ -450,7 +449,7 @@
             <div id="agree-segment" class="ui center aligned segment hidden">
                 <input id="agree-checkbox" type="checkbox" autocomplete="off" onchange="agreeCheckboxChanged(this)">
                 <label for="agree-checkbox">I agree to these Microsoft Software License Terms and to the
-                    <a href="https://privacy.microsoft.com/en-us/privacystatement">Microsoft Privacy Statement.</a>
+                    <a href="https://privacy.microsoft.com/en-us/privacystatement" target="_blank">Microsoft Privacy Statement.</a>
                 </label>
             </div>
             <div id="no-download-segment" class="ui center aligned segment hidden">

@@ -15,7 +15,7 @@ namespace pxt.docs.codeCard {
             else if (card.software && !card.hardware) color = 'teal';
         }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
-            : card.youTubeId ? `https://www.youtube.com/watch?v=${card.youTubeId}` : undefined;
+            : card.youTubeId ? `https://youtu.be/${card.youTubeId}` : undefined;
         const link = !!url;
         const div = (parent: HTMLElement, cls: string, tag = "div", text: string | number = ''): HTMLElement => {
             let d = document.createElement(tag);
@@ -106,8 +106,10 @@ namespace pxt.docs.codeCard {
                 else div(ct, 'header', 'div', name);
             }
             if (card.description) {
-                let descr = div(ct, 'ui description');
-                descr.appendChild(document.createTextNode(card.description.split('.')[0] + '.'));
+                const descr = div(ct, 'ui description');
+                const shortenedDescription = card.description.split('.')[0] + '.';
+
+                descr.appendChild(document.createTextNode(shortenedDescription));
             }
         }
 

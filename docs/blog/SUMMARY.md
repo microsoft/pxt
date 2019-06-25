@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
     * [Project Alava: Programming Webs of Microcontrollers](/blog/alava/alava)
     * [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)
     * [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
