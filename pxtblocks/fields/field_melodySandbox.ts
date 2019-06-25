@@ -203,15 +203,15 @@ namespace pxtblockly {
             //this.setTitle(melodies[0]);
             //this.setTempo(Number(melodies[1]));
             //for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
-                //let notes: string[] = melodies[i].split(" ");
-                let notes: string[] = value.split(" ");
-                for (let j = 0; j < notes.length - 1; j++) {
-                    if (notes[j] != "-") {
-                        let rowPos: number = pxtmelody.noteToRow(notes[j]);
-                        this.melody.updateMelody(rowPos, j);
-                    }
+            //let notes: string[] = melodies[i].split(" ");
+            let notes: string[] = value.split(" ");
+            for (let j = 0; j < notes.length - 1; j++) {
+                if (notes[j] != "-") {
+                    let rowPos: number = pxtmelody.noteToRow(notes[j]);
+                    this.melody.updateMelody(rowPos, j);
                 }
-           // }
+            }
+            // }
         }
 
         // The width of the preview on the block itself

@@ -60,7 +60,7 @@ namespace pxtmelody {
             let stringMelody: string = "";
             let queues: string[][] = new Array(this.numCols);
             let numMelodies = 0;
-            
+
             // create queues of notes
             for (let i = 0; i < this.numRows; i++) {
                 let noteCount = 0;
