@@ -5,11 +5,11 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as md from "./marked";
 import * as compiler from './compiler';
-import { SpriteEditor } from './spriteEditor';
 import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
+import { InputHandler } from './inputHandler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -355,6 +355,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                                     onChange={this.onChange(input.answerToken)}
                                                     input={input}
                                                     value={answers[input.answerToken] || ''}
+                                                    blocksInfo={thisBlocksInfo}
                                                     key={input.answerToken}
                                                 />
                                             </span>
@@ -372,88 +373,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 </div>
             </sui.Modal>
         )
-    }
-}
-
-/**
- * TODO(jb) Break this out into a special input class
- */
-interface InputHandlerProps {
-    input: pxt.SnippetQuestionInput;
-    onChange: (v: string) => void;
-    value: string;
-}
-
-class InputHandler extends data.Component<InputHandlerProps, {}> {
-    constructor(props:   InputHandlerProps) {
-        super(props);
-        this.numberOnChange = this.numberOnChange.bind(this);
-    }
-
-    numberOnChange = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onChange(e.target.value)
-    dropdownOnChange = (value: string) => () => this.props.onChange(value);
-
-    renderCore() {
-        const { value, input, onChange } = this.props;
-
-        switch (input.type) {
-            case 'dropdown':
-                return (
-                    <sui.DropdownMenu className='inline button' role="menuitem"
-                        onChange={onChange}
-                        text={value.length ? pxt.Util.rlf(input.options[value]) : pxt.Util.rlf(input.options[Object.keys(input.options)[0]])}
-                        icon={'dropdown'}>
-                        {Object.keys(input.options).map((optionValue) =>
-                            <sui.Item
-                                role="menuitem"
-                                value={optionValue}
-                                key={input.options[optionValue]}
-                                text={pxt.Util.rlf(input.options[optionValue])}
-                                onClick={this.dropdownOnChange(optionValue)}
-                            />)}
-                    </sui.DropdownMenu>
-                )
-            case 'spriteEditor':
-                return (
-                    <SpriteEditor
-                        input={input}
-                        onChange={onChange}
-                        value={value}
-                        blocksInfo={thisBlocksInfo}
-                    />
-                );
-            case 'number':
-
-                return (
-                    <div>
-                        <span>{input.label && input.label}</span>
-                        <input
-                            type='range'
-                            className={'slider blocklyMockSlider'}
-                            role={'slider'}
-                            max={input.max}
-                            min={input.min}
-                            value={value}
-                            onChange={this.numberOnChange}
-                            aria-valuemin={input.min}
-                            aria-valuemax={input.max}
-                            aria-valuenow={value}
-                            style={{
-                                marginLeft: 0
-                            }}
-                        />
-                    </div>
-                )
-            case 'text':
-            default:
-                return (
-                    <sui.Input
-                        label={input.label && input.label}
-                        value={value || ''}
-                        onChange={onChange}
-                    />
-                )
-        }
     }
 }
 

@@ -173,7 +173,7 @@ declare namespace pxt {
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = any; // TODO(jb) Should include custom answer types for number, enums, string, image
+    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor'; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
         question: number;

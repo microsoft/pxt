@@ -8,6 +8,7 @@ interface ISpriteEditorProps {
     onChange: (v: string) => void;
     value: string;
     blocksInfo: pxtc.BlocksInfo;
+    fullscreen?: boolean;
 }
 
 interface ISpriteEditorState {
@@ -79,18 +80,24 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
 
 
       renderCore() {
+          const { fullscreen } = this.props;
           const { open } = this.state;
 
+          const classes = sui.cx([
+              'ui',
+              fullscreen ? 'fullscreen modal sprite-editor-snippet-portal' : 'popup sprite-editor-snippet-popup',
+            ]);
+
           return (
-              <div>
+              <div className={fullscreen && 'ui fullscreen'}>
                   <sui.Button
                       title={'Edit your sprite'}
                       size={'medium'}
                       onClick={this.openSpriteEditor}
                   >Edit your sprite</sui.Button>
                   {open &&
-                      <div className='ui popup sprite-editor-snippet-popup'>
-                          <div className='sprite-editor-popup' ref={'spriteEditorPopup'}>
+                      <div className={fullscreen && classes}>
+                          <div className={classes} ref={'spriteEditorPopup'}>
                             <div
                                 className='sprite-editor-arrow blocklyDropDownArrow arrowTop'
                                 style={{
