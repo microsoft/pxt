@@ -171,16 +171,12 @@ namespace pxtblockly {
 
         // Runs when the editor is closed by clicking on the Blockly workspace
         protected onEditorClose() {
-            if (this.isPlaying) {
-                this.stopMelody();
-            }
+            this.stopMelody();
         }
 
         // when click done
         onDone() {
-            if (this.isPlaying) {
-                this.stopMelody();
-            }
+            this.stopMelody();
             Blockly.DropDownDiv.hideIfOwner(this);
         }
 
@@ -197,13 +193,8 @@ namespace pxtblockly {
         protected parseTypeScriptValue(value: string) {
             value = value.slice(1, -1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
-            //let melodies: string[] = value.split("-");
             this.createMelodyIfDoesntExist();
             this.updateFieldLabel();
-            //this.setTitle(melodies[0]);
-            //this.setTempo(Number(melodies[1]));
-            //for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
-            //let notes: string[] = melodies[i].split(" ");
             let notes: string[] = value.split(" ");
             for (let j = 0; j < notes.length - 1; j++) {
                 if (notes[j] != "-") {
@@ -370,7 +361,6 @@ namespace pxtblockly {
             } else {
                 pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "play icon");
-                this.isPlaying = false;
                 this.stopMelody();
             }
         }
@@ -395,8 +385,11 @@ namespace pxtblockly {
         }
 
         stopMelody() {
-            while (this.timeouts.length) clearTimeout(this.timeouts.shift());
-            AudioContextManager.stop();
+            if (this.isPlaying) {
+                while (this.timeouts.length) clearTimeout(this.timeouts.shift());
+                AudioContextManager.stop();
+                this.isPlaying = false;
+            }
         }
 
     }
