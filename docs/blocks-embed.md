@@ -19,7 +19,8 @@ The MakeCode approach in solving this problem is to render the **JavaScript** co
 
 Here are some sample integrations for various documentation/blogging engines.
 
-* [GitBook plugin](https://plugins.gitbook.com/plugin/pxt)
+* [React component](https://github.com/microsoft/pxt-react-extension-template/blob/master/src/components/snippet.tsx)
+* [HTML only](https://jsfiddle.net/ndyz1d57/80/)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
 
 ## Manual Implementation

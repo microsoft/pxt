@@ -38,6 +38,7 @@ Error.stackTraceLimit = 100;
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
     forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
@@ -49,6 +50,12 @@ function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     if (local) {
         forceCloudBuild = false;
         forceLocalBuild = true;
+    }
+
+    if (hwvariant) {
+        if (!/^hw---/.test(hwvariant)) hwvariant = 'hw---' + hwvariant;
+        pxt.debug(`setting hardware variant to ${hwvariant}`);
+        pxt.setHwVariant(hwvariant)
     }
 }
 
@@ -2608,7 +2615,7 @@ class Host
                 }
                 let proto = pkg.verProtocol()
                 if (proto == "file") {
-                    pxt.log(`skipping download of local pkg: ${pkg.version()}`)
+                    pxt.debug(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
                 } else if (proto == "invalid") {
                     pxt.log(`skipping invalid pkg ${pkg.id}`);
@@ -2623,7 +2630,7 @@ class Host
 
 let mainPkg = new pxt.MainPackage(new Host())
 
-export function installAsync(parsed?: commandParser.ParsedCommand) {
+export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     if (packageName) {
@@ -3841,9 +3848,11 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             U.iterMap(res.outfiles, (fn, c) => {
                 if (fn !== pxtc.BINARY_JS) {
                     mainPkg.host().writeFile(mainPkg, "built/" + fn, c);
+                    pxt.debug(`package written to ${"built/" + fn}`);
                 }
                 else {
                     mainPkg.host().writeFile(mainPkg, "built/debug/" + fn, c);
+                    pxt.debug(`package written to ${"built/debug/" + fn}`);
                 }
             });
 
@@ -3859,8 +3868,6 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                     breakpoints: res.breakpoints
                 }));
             }
-
-            pxt.log(`package built; written to ${pxt.outputName()}`);
 
             if (res.usedSymbols && compileOptions.computeUsedSymbols) {
                 const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
@@ -4499,12 +4506,17 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
-    if (parsed.flags["debug"])
+    if (parsed && parsed.flags["debug"])
         mode = BuildOption.DebugSim;
-    const clean = parsed.flags["clean"];
-    const warnDiv = !!parsed.flags["warndiv"];
-    const ignoreTests = !!parsed.flags["ignoreTests"];
+    else if (parsed && parsed.flags["deploy"])
+        mode = BuildOption.Deploy;
+    const clean = parsed && parsed.flags["clean"];
+    const warnDiv = parsed && !!parsed.flags["warndiv"];
+    const ignoreTests = parsed && !!parsed.flags["ignoreTests"];
+    const install = parsed && !!parsed.flags["install"];
+
     return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => install ? installAsync() : Promise.resolve())
         .then(() => buildCoreAsync({ mode, warnDiv, ignoreTests }))
         .then((compileOpts) => { });
 }
@@ -5447,6 +5459,16 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
+            },
+            hwvariant: {
+                description: "specify Hardware variant used for this compilation",
+                argument: "hwvariant",
+                type: "string",
+                aliases: ["hw"]
+            },
+            install: {
+                description: "install any missing package before build",
+                aliases: ["i"]
             }
         },
         onlineHelp: true
@@ -5493,10 +5515,21 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
             },
+            hwvariant: {
+                description: "specify Hardware variant used for this compilation",
+                argument: "hwvariant",
+                type: "string",
+                aliases: ["hw"]
+            },
             debug: { description: "Emit debug information with build" },
+            deploy: { description: "Deploy to device if connected" },
             warndiv: { description: "Warns about division operators" },
             ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] },
-            clean: { description: "Clean before build" }
+            clean: { description: "Clean before build" },
+            install: {
+                description: "install any missing package before build",
+                aliases: ["i"]
+            }
         }
     }, buildAsync);
 
@@ -5509,26 +5542,26 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "packages the target into static HTML pages",
         onlineHelp: true,
         flags: {
-            "route": {
+            route: {
                 description: "route appended to generated files",
                 argument: "route",
                 type: "string",
                 aliases: ["r"]
             },
-            "githubpages": {
+            githubpages: {
                 description: "Generate a web site compatible with GitHub pages",
                 aliases: ["ghpages", "gh"]
             },
-            "output": {
+            output: {
                 description: "Specifies the output folder for the generated files",
                 argument: "output",
                 aliases: ["o"]
             },
-            "minify": {
+            minify: {
                 description: "minify all generated js files",
                 aliases: ["m", "uglify"]
             },
-            "bump": {
+            bump: {
                 description: "bump version number prior to package"
             },
             cloudbuild: {
