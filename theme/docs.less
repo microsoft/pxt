@@ -63,6 +63,7 @@
         margin-right:7px
     } 
     #docs-type {
+        display:flex;
         font-family: @docsPageFont;
     }
     .ui.input input {
@@ -85,6 +86,23 @@
     background-color: white;
     color: @docsPrimaryColor;
     border-radius: 0 0 0 0;
+}
+
+#togglesidebar > i.icon {
+    transition: transform .2s ease;
+}
+
+#togglesidebar > i.icon.content {
+    transform: rotate(0deg);
+}
+
+#togglesidebar > i.icon.close {
+    transform: rotate(90deg);
+}
+
+#sticky-btndisabled,
+#sticky-btn[disabled] {
+  color: @docsPrimaryColor;
 }
 
 .divider-pipe {
@@ -119,14 +137,13 @@
     flex-flow: column;
     background-color: white;
     border: 1px solid #bdbcbc;
-    border-radius: 6px;
+    border-radius: 2px;
     overflow-y: overlay;
     overflow-wrap: break-word;
     display: flex;
     flex-flow: column;
     background-color: white;
     border: 1px solid #bdbcbc;
-    border-radius: 6px;
     overflow-y: overlay;
     overflow-wrap: break-word;
     font-family: @docsHeaderFont;
@@ -146,6 +163,9 @@
 }
 
 #docs {
+    position: relative;
+    width: 100%;
+    height: 100%;
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont;
     color: @docsTextColor;
@@ -184,6 +204,9 @@
     .ui.menu, .ui.list .list>.item .header, .ui.list>.item .header, .ui.card>.content>.header, .ui.cards>.card>.content>.header {
        font-family: @docsPageFont;
     }
+    ul {
+        padding: 0rem;
+    }
     /* Text color */
     p, ul li {
         color: @docsTextColor;
@@ -191,6 +214,17 @@
     }
     ul li {
         list-style-type: none;
+    }
+    ul li:before {
+        margin-right: .5rem;
+        content: "\25CF";
+        color: @docsLinkColor;
+    }
+    ul li.checked:before {
+        content: "\25C9";
+    }  
+    ul li.unchecked:before {
+        content: "\25CE";
     }
     p { font-family: @docsReadingText }
     /* Link color */
@@ -227,7 +261,7 @@
     .ui.hero {
         background-color: @docsHeroColor;
         background-image: data-uri('../docs/static/logo/icons/pattern2.png');
-        margin-top: -32px;
+        margin-top: -48px;
         width: 105vw;
         margin-left: -7vw;
         height: 240px;
@@ -253,6 +287,34 @@
                 text-shadow: 1px 1px @docsPrimaryColorDarker;
             }
         }
+    }
+
+    .mainbody {
+        margin-top: 2em;
+        padding-bottom: 3em;
+    }
+
+    /* Main Body Widths */
+    .ui.grid.mainbody {
+        margin-left: 1rem !important;
+        transition: width .5s;
+        transition-timing-function: ease;
+    }
+    
+    .ui.grid.mainbody.full-width, .ui.vertical.footer.full-width {
+        width: 100vw;
+        padding-right: 0rem;
+        margin-left:0px !important;
+    }
+    
+    .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
+        width: 80vw;
+        margin-left: 1rem;
+    }
+    
+    .ui.grid>.column:not(.row), .ui.grid>.row>.column {
+        padding-left: 0px;
+        padding-right: 0px;
     }
 
     /* Code segments */
@@ -285,6 +347,13 @@
     .valid i.icon {
         color: #008000;
     }
+    .ui.message {
+        border-radius: 2px;
+    }
+    .ui.message>.content:before {
+        position: absolute;
+        margin-top: 0;
+    }
     .avatar .ui.message {
         margin-left: 4em;
         margin-bottom: 1em;
@@ -314,6 +383,7 @@
         font-family: @docsPageFont;
         flex-basis: 560px;
         width: 560px;
+        margin-bottom: 2rem;
         > .image {
             background: @docsCardImageBackgroundColor;
             background-size: contain;
@@ -711,12 +781,14 @@
 
     .ui.warning.message > .content > h4 {
         display: inline;
-        margin-left: 1em;
+        margin-left: 3rem;
         font-weight: 500;
+        top: -0.5rem;
+        position: relative;
     }
 
     /* Alert Message Box */
-     .ui.negative.message {
+    .ui.negative.message {
         padding: 2em;
     }
 
@@ -729,8 +801,10 @@
 
     .ui.negative.message > .content > h4 {
         display: inline;
-        margin-left: 1em;
+        margin-left: 3rem;
         font-weight: 500;
+        top: -0.5rem;
+        position: relative;
     }
 
     /* Tip Message Box */
@@ -747,8 +821,10 @@
 
     .ui.positive.message > .content > h4 {
         display: inline;
-        margin-left: 1em;
+        margin-left: 3rem;
         font-weight: 500;
+        top: -0.5rem;
+        position: relative;
     }
 
     /* Hint Message Box */
@@ -765,8 +841,10 @@
 
     .ui.info.message > .content > h4 {
         display: inline;
-        margin-left: 1em;
+        margin-left: 3rem;
         font-weight: 500;
+        top: -0.5rem;
+        position: relative;
     }
 
     .pusher .article {
@@ -888,6 +966,36 @@
     } 
 }
 
+/* Mobile Search Button's */
+#mobile-search-icon {
+    display: none;
+}
+
+#mobile-search-close {
+    display: none;
+}
+
+#mobile-search-icon.mobile-only-close {
+    display: none;
+}
+
+#mobile-search-icon.mobile-only-open {
+    display: none;
+}
+
+#mobile-search-close.mobile-only-close {
+    display: none;
+}
+
+#mobile-search-close.mobile-only-open {
+    display: none;
+}
+
+#tocsearch2 {
+    display: none;
+}
+
+/* Footer */
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
 }
@@ -907,5 +1015,79 @@
     }
     .poweredBy a {
         display: inline-block;
+    }
+}
+
+.ui.vertical.footer {
+    background-color: #292A33;
+    margin-top: 5rem;
+    margin-top: 5rem;
+}
+
+.ui.vertical.footer .item {
+    color: white;
+    font-size:1rem !important;
+    font-weight: 500;
+}
+
+.ui.vertical.footer a.item {
+    border-right: 1px solid #ffffff30;
+    line-height: 1rem !important;
+    vertical-align: middle;
+}
+
+.docnav {
+    display: flex;
+    align-items: center;
+    height: 4rem;
+    background-color: #F5F5FA;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: -16px;
+}
+
+.docnav > a.item {
+    margin-right: 2rem;
+}
+
+.docnav .divider {
+    background-color: #D5DBED;
+    width: 1px;
+    height: 30px;
+    margin-right: 1rem;
+}
+
+@media (min-width: 320px) and (max-width: 970px) {
+    #docs .topspace {
+        position: fixed;
+        z-index: 1;
+        width: 100%;
+        background-color: @docsPrimaryColor;
+        top: 48px;
+        height: auto;
+        min-height: 48px;
+        display: block !important;
+    }
+    #breadcrumb-container {
+        font-family: 'Helvetica Neue',Arial,Helvetica,sans-serif;
+        position: fixed;
+        z-index: 1;
+        width: 100%;
+        background-color: @docsPrimaryColor;
+        top: 48px;
+        height: 48px;
+        min-height: 48px;
+        display: block !important;
+    }
+    #docs-header #docs-type {
+        width: 100%;
+        position: fixed;
+        top:48px;
+        background-color: @docsPrimaryColorDarker;
+        height: auto;
+        min-height: 48px;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        display:none;
     }
 }

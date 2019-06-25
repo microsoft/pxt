@@ -54,12 +54,12 @@ function searchSubmit(form) {
 }
 
 function setupSidebar() {
-
+    // do not use pxt.appTarget in this function
     var tocMenu = document.querySelectorAll('#docsMobile div.ui.list.menuContainer.toc > div.item');
     tocMenu.forEach(function(item) {
+        // Sets each TOC parent item an accordion behaviour to match style
         item.className = 'ui accordion item visible';
         item.setAttribute('role','tree');
-
         var icon = item.firstElementChild;
         icon.className = 'dropdown icon chevron right';
         var anchor = icon.nextElementSibling;
@@ -80,19 +80,25 @@ function setupSidebar() {
         wrapper.append(anchor);
         item.insertBefore(wrapper, menu);
     });
-    // do not use pxt.appTarget in this function
+    // Sets the SemanticUI sidebar behavior
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
         .sidebar({
             dimPage: true,
             onShow: function () {
+                // add proper responsive behaviour and animations on Show
                 togglesidebar.setAttribute("aria-expanded", "true");
                 document.querySelector('#togglesidebar > i').classList.remove('content');
                 document.querySelector('#togglesidebar > i').classList.add('close');
                 document.querySelector("#docs .ui.grid.mainbody").classList.remove('full-width');
                 document.querySelector("#docs .ui.grid.mainbody").classList.add('content-width');
+                // For mobile if user is at bottom scroll to top
+                if (window.innerWidth < 970) {
+                   document.body.scrollTop = 0;
+                }
             },
             onHidden: function () {
+                // add proper responsive behaviour and animations on Hidden
                 togglesidebar.setAttribute("aria-expanded", "false");
                 document.querySelector('#togglesidebar > i').classList.remove('close');
                 document.querySelector('#togglesidebar > i').classList.add('content');
@@ -100,11 +106,13 @@ function setupSidebar() {
                 document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width'); 
             },
             onVisible: function () {
+                // add proper responsive behavior for Desktops and cancels it for mobile
                 if (window.innerWidth > 970) { 
                      document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'none' : false;
                 }
             },
             onHide: function () {
+                // add proper responsive behavior for Desktops and cancels it for mobile
                 if (window.innerWidth > 970) { 
                     document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'block' : false;
                 }
@@ -116,7 +124,6 @@ function setupSidebar() {
         .sidebar(
             'attach events', '#togglesidebar'
         )
-        
 
     $('.ui.dropdown')
         .dropdown();
@@ -155,6 +162,7 @@ function setupSidebar() {
         }
     }
 
+    // Events for Search
     var searchIcons = document.getElementsByClassName("search link icon");
     for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
@@ -266,6 +274,7 @@ function setupBlocklyAsync() {
         })
     }
 
+    // sets menu for docs global navigation
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.docMenu && pxt.appTarget.appTheme.docMenu.length !== 0) {
         setupMenu(pxt.appTarget.appTheme.docMenu);
     }
@@ -300,7 +309,9 @@ function renderSnippets() {
     });
 }
 
-function setElementsVisibility(){
+function setElementsVisibility() {
+    // handles if certain elements (breadcrumbs, print button, 
+    // quick jump list) should be visible or not depending on content.
     var breadcrumb = document.querySelector('#breadcrumb-container');
     var printBtn = document.querySelector('#printbtn');
     var stickyColumn = document.querySelector('#sticky-column');
@@ -327,6 +338,7 @@ function setElementsVisibility(){
 }
 
 function setDocumentationMode(type) {
+    // handles if the content should have a 100% width or has a sidebar present
     if (type === 0){
         document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('content-width');
         document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('full-width');
@@ -337,6 +349,8 @@ function setDocumentationMode(type) {
 }
 
 function setupMenu(menu) {   
+    // creates the global menu based on the app.Target.appTheme.docMenu array
+    // appends new elements to header menu
     var docsMenu = document.querySelector('#docs-type');
     menu.forEach(function(item) {
         var menuItem = document.createElement('a');
@@ -347,7 +361,7 @@ function setupMenu(menu) {
         menuItem.textContent = item.name;
         docsMenu.append(menuItem);
     });
-
+    // appends new elements to the footer navigation menu
     var docnav = document.querySelector('.docnav');
     menu.forEach(function(item) {
         var menuItem = document.createElement('a');
@@ -358,7 +372,7 @@ function setupMenu(menu) {
         menuItem.textContent = item.name;
         docnav.append(menuItem);
     });
-
+    // appends new elements to the mobile global menu
     var mobileMenu = document.querySelector('#docsMobile .activities');
     menu.forEach(function(item) {
         var menuItem = document.createElement('a');
@@ -370,10 +384,10 @@ function setupMenu(menu) {
         mobileMenu.append(menuItem);
     });
 
+    // handles the click behavior of the mobile searchbox
     var mobileSearchBox = document.querySelector('#tocsearch2');
     mobileSearchBox.click = function (e) { e.stopPropagation(); }
     mobileSearchBox.onscroll = function (e) { e.stopPropagation(); }
-
     var mobileSearchBtn= document.querySelector('#mobile-search-icon');
     mobileSearchBtn.onclick = function (e) {
         e.preventDefault();
@@ -384,9 +398,11 @@ function setupMenu(menu) {
             var searchBox = document.querySelector('#tocsearch2');
             searchBox.style.visibility = 'visible';
             searchBox.style.opacity = '1';
+            document.querySelector('#sticky-btn').style.zIndex = 0;
+            document.querySelector('.sticky-list').style.display = 'none';
         }  
     }
-
+    // handles the close search button in mobile
     var closeMobileSearch= document.querySelector('#mobile-search-close');
     closeMobileSearch.onclick = function (e) {
         e.preventDefault();
@@ -397,30 +413,34 @@ function setupMenu(menu) {
             var searchBox = document.querySelector('#tocsearch2');
             searchBox.style.visibility = 'hidden';
             searchBox.style.opacity = '0';
+            document.querySelector('#sticky-btn').style.zIndex = 100;
         }
     }
 }
 
-function responsiveHideElements(){
+function responsiveHideElements() {
     // Add Responsive Adjustments depending on screen size 
-    window.addEventListener('resize', function(){
+    window.addEventListener('resize', function() {
+        // manages responsive behavior that media queries cannot
         responsiveElements();
     });
+    // run the function at loading to get proper rendering in mobile, tablet or desktop
     responsiveElements();
 }
 
 function responsiveElements() {
+    // Desktop default (loading) state
     if (window.innerWidth > 970){
-        document.querySelector('#printbtn') !== null ? document.querySelector('#printbtn').style.display = 'block' : false;
+        document.querySelector('#printbtn') !== null && document.querySelector(".ui.hero") === null ? document.querySelector('#printbtn').style.display = 'block' : false;
         document.querySelector('#tocsearch2').style.display = 'none';
         document.querySelector('button.sticky-close').style.display = 'none';
         document.querySelector('#sticky-btn').style.zIndex = 0;
         document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'block' : false;
-        document.querySelector('.article-inner').insertBefore(document.querySelector('#breadcrumb-container'), this.document.querySelector('.mainbody'));
-        
+        document.querySelector('.article-inner').insertBefore(document.querySelector('#breadcrumb-container'), this.document.querySelector('.mainbody'));  
     }
+    // Mobile default (loading) state
     if (window.innerWidth < 970){
-        document.querySelector('#printbtn') !== null ? document.querySelector('#printbtn').style.display = 'none' : false;
+        document.querySelector('#printbtn') !== null && document.querySelector(".ui.hero") !== null ? document.querySelector('#printbtn').style.display = 'none' : false;
         document.querySelector('#tocsearch2').style.display = 'block';
         document.querySelector('#mobile-search-icon').className = 'mobile-only-open';
         document.querySelector('#mobile-search-close').className = 'mobile-only-close';
@@ -430,60 +450,70 @@ function responsiveElements() {
     }
 }
 
+// Handles the behavior of the quick jump sticky list in content
 function setStickyColumn() {
-    var headings = document.querySelectorAll('.ui.text > h2');
-    if (headings.length > 2) {
-    var stickyColumn = document.querySelector('#sticky-column');
-    var linkList = document.createElement('ul');
-    var title = document.createElement('h3');
-    title.textContent = "Content";
-    title.className = 'title';
-    linkList.appendChild(title);
-    headings.forEach(function(heading){
-        var item = document.createElement('a');
-        item.textContent = heading.textContent;
-        item.onclick = function(){
-            $("html, body").animate({
-                scrollTop: heading.offsetTop
-            }, 1000);
+        // it takes only h2 headings from markdown to make the list
+        var headings = document.querySelectorAll('.ui.text > h2');
+        if (headings.length > 2) {
+        var stickyColumn = document.querySelector('#sticky-column');
+        var linkList = document.createElement('ul');
+        var title = document.createElement('h3');
+        title.textContent = "Content";
+        title.className = 'title';
+        linkList.appendChild(title);
+        headings.forEach(function(heading) {
+            var item = document.createElement('a');
+            item.textContent = heading.textContent;
+            item.onclick = function() {
+                $("html, body").animate({
+                    scrollTop: heading.offsetTop
+                }, 1000);
+                // resets default style for mobile behavior
+                if (window.innerWidth < 970) {
+                document.querySelector('#sticky-btn').style.zIndex = 100;
+                document.querySelector('.sticky-list').style.display = 'none';
+                }
+            }
+            linkList.appendChild(item);
+        });
+        var wrapper = document.createElement('div');
+        wrapper.className = 'sticky-list';
+        // mobile sticky close button
+        var closeBtn = document.createElement('button');
+        var closeBtnIcon = document.createElement('i');
+        closeBtnIcon.className = 'icon close';
+        closeBtn.appendChild(closeBtnIcon);
+        closeBtn.style.display = 'none';
+        closeBtn.className = 'sticky-close';
+        closeBtn.onclick = function () {
+            // resets default style for mobile behavior
             document.querySelector('#sticky-btn').style.zIndex = 100;
             document.querySelector('.sticky-list').style.display = 'none';
         }
-        linkList.appendChild(item);
-    });
-    var wrapper = document.createElement('div');
-    wrapper.className = 'sticky-list';
-    
-    var closeBtn = document.createElement('button');
-    var closeBtnIcon = document.createElement('i');
-    closeBtnIcon.className = 'icon close';
-    closeBtn.appendChild(closeBtnIcon);
-    closeBtn.style.display = 'none';
-    closeBtn.className = 'sticky-close';
-    closeBtn.onclick = function () {
-        document.querySelector('#sticky-btn').style.zIndex = 100;
-        document.querySelector('.sticky-list').style.display = 'none';
-    }
-    wrapper.appendChild(closeBtn);
-    wrapper.appendChild(linkList);
-    var div = document.createElement('div');
-    stickyColumn.appendChild(div);
-    document.querySelector('#root').appendChild(wrapper);
-    
-    }
+        wrapper.appendChild(closeBtn);
+        wrapper.appendChild(linkList);
+        var div = document.createElement('div');
+        stickyColumn.appendChild(div);
+        document.querySelector('#root').appendChild(wrapper);
 
-    var stickyBtn = document.querySelector('#sticky-btn');
-    stickyBtn.onclick = function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.style.zIndex = 0;
-        var stickyList = document.querySelector('.sticky-list');
-        var stickyCloseBtn = document.querySelector('button.sticky-close');
-        if (stickyList !== null && stickyCloseBtn !== null) {
-        stickyList.style.display = 'block';
-        stickyCloseBtn.style.display = 'block';
+        // click event for sticky close button (mobile)
+        var stickyBtn = document.querySelector('#sticky-btn');
+        stickyBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.style.zIndex = 0;
+            var stickyList = document.querySelector('.sticky-list');
+            var stickyCloseBtn = document.querySelector('button.sticky-close');
+            if (stickyList !== null && stickyCloseBtn !== null) {
+            stickyList.style.display = 'block';
+            stickyCloseBtn.style.display = 'block';
+            }
         }
+    } else {
+        //For mobile disable ellipsis button
+        document.querySelector('#sticky-btn').setAttribute('disabled', true);
     }
+        
 }
 
 $(document).ready(function () {
