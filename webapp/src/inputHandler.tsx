@@ -37,7 +37,7 @@ export class InputHandler extends data.Component<InputHandlerProps, {}> {
                         onChange={onChange}
                         value={value}
                         blocksInfo={blocksInfo}
-                        fullscreen={true}
+                        fullscreen={false}
                     />
                 );
             case 'number':

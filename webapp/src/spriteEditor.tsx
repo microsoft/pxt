@@ -73,40 +73,51 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
           });
       }
 
-      /** The sprite editor input should be generalized somehow. Maybe have a "button" input that can be paired with embeddable custom types */
       openSpriteEditor() {
           this.setState({ open: true }, this.renderSpriteEditor);
       }
 
+      renderEditor_() {
+        const { fullscreen } = this.props;
+        const { open } = this.state;
+
+        if (fullscreen) {
+            return (
+                <sui.Modal
+                    isOpen={open} size={'fullscreen'} basic={true} closeOnEscape={true} closeIcon={true}>
+                    <div ref={'spriteEditorPopup'} />
+                </sui.Modal>
+            )
+        }
+
+        if (open) {
+            return (
+                <div className={'ui popup sprite-editor-snippet-popup'}>
+                    <div className={'sprite-editor-popup'} ref={'spriteEditorPopup'}>
+                    <div
+                        className='sprite-editor-arrow blocklyDropDownArrow arrowTop'
+                        style={{
+                            transform: 'translate(242px, -9px) rotate(45deg)',
+                        }}
+                    />
+                    </div>
+                </div>
+            );
+        }
+
+        return null;
+      }
 
       renderCore() {
-          const { fullscreen } = this.props;
-          const { open } = this.state;
-
-          const classes = sui.cx([
-              'ui',
-              fullscreen ? 'fullscreen modal sprite-editor-snippet-portal' : 'popup sprite-editor-snippet-popup',
-            ]);
 
           return (
-              <div className={fullscreen && 'ui fullscreen'}>
+              <div>
                   <sui.Button
                       title={'Edit your sprite'}
                       size={'medium'}
                       onClick={this.openSpriteEditor}
                   >Edit your sprite</sui.Button>
-                  {open &&
-                      <div className={fullscreen && classes}>
-                          <div className={classes} ref={'spriteEditorPopup'}>
-                            <div
-                                className='sprite-editor-arrow blocklyDropDownArrow arrowTop'
-                                style={{
-                                    transform: 'translate(242px, -9px) rotate(45deg)',
-                                }}
-                            />
-                          </div>
-                      </div>
-                  }
+                  {this.renderEditor_()}
               </div >
           );
       }
