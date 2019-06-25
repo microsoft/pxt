@@ -458,6 +458,16 @@ namespace pxt.runner {
                         uri: res ? res.xml : undefined,
                         css: res ? res.css : undefined
                     }, "*");
+                })
+                .catch(e => {
+                    window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
+                        source: "makecode",
+                        type: "renderblocks",
+                        id: msg.id,
+                        error: e.message
+                    }, "*");
+                })
+                .finally(() => {
                     jobPromise = undefined;
                     consumeQueue();
                 })
