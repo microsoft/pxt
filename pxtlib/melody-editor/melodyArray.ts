@@ -2,8 +2,8 @@ namespace pxtmelody {
     export class MelodyArray {
         // check that array is 8x8 
         private tempo: number = 120;
-        private width: number = 8;
-        private height: number = 8;
+        private numCols: number = 8;
+        private numRows: number = 8;
         private melody: boolean[][];
         private title: string = "Name this tune";
 
@@ -11,9 +11,9 @@ namespace pxtmelody {
         constructor(tempo?: number) {
             if (tempo) this.tempo = tempo;
             // set all elements to false
-            this.melody = new Array(this.width);
-            for (let i = 0; i < this.width; i++) {
-                this.melody[i] = new Array(this.height).fill(false);
+            this.melody = new Array(this.numCols);
+            for (let i = 0; i < this.numCols; i++) {
+                this.melody[i] = new Array(this.numRows).fill(false);
             }
         }
 
@@ -43,11 +43,11 @@ namespace pxtmelody {
         }
 
         public getWidth(): number {
-            return this.width;
+            return this.numCols;
         }
 
         public getHeight(): number {
-            return this.height;
+            return this.numRows;
         }
 
         public updateMelody(row: number, col: number) {
@@ -57,14 +57,15 @@ namespace pxtmelody {
 
         // function to turn into string
         public getStringRepresentation(): string {
-            let stringMelody: string = this.title + "-" + this.tempo + "-"
-            let queues: string[][] = new Array(this.width);
+            let stringMelody: string = "";
+            let queues: string[][] = new Array(this.numCols);
             let numMelodies = 0;
+            
             // create queues of notes
-            for (let i = 0; i < this.height; i++) {
+            for (let i = 0; i < this.numRows; i++) {
                 let noteCount = 0;
                 queues[i] = [];
-                for (let j = 0; j < this.width; j++) {
+                for (let j = 0; j < this.numCols; j++) {
                     if (this.melody[j][i]) {
                         queues[i].push(rowToNote(j));
                         noteCount++;
@@ -76,14 +77,14 @@ namespace pxtmelody {
             }
             // create strings of melodies
             for (let j = 0; j < numMelodies; j++) {
-                for (let i = 0; i < this.width; i++) {
+                for (let i = 0; i < this.numCols; i++) {
                     if (queues[i] && queues[i].length > 0) { // if there is an element
                         stringMelody += queues[i].shift() + " ";
                     } else {
-                        stringMelody += "R "; // add rest if there is no selection for the note
+                        stringMelody += "- "; // add rest if there is no selection for the note
                     }
                 }
-                stringMelody += "-"; // this will be used to split each melody
+                stringMelody += "."; // this will be used to split each melody
             }
 
             return stringMelody;

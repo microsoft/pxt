@@ -4,7 +4,7 @@ namespace pxtblockly {
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         protected params: U;
-        private title: string = pxt.Util.lf("Name this tune");
+        private title: string = "- - - - - - - -";
         private melody: pxtmelody.MelodyArray;
         private soundingKeys: number = 0;
         private numRow: number = 8;
@@ -20,7 +20,6 @@ namespace pxtblockly {
         private editorGalleryToggle: HTMLDivElement;
         private editorButton: HTMLButtonElement;
         private galleryButton: HTMLButtonElement;
-        private melodyName: HTMLInputElement;
         private gridDiv: HTMLDivElement;
         private bottomDiv: HTMLDivElement;
         private doneButton: HTMLButtonElement;
@@ -80,7 +79,7 @@ namespace pxtblockly {
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
-            Blockly.FieldLabel.prototype.setText.call(this, this.getTitle());
+            this.updateFieldLabel();
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
@@ -101,16 +100,7 @@ namespace pxtblockly {
 
             this.editorGalleryToggle.appendChild(this.editorButton);
             this.editorGalleryToggle.appendChild(this.galleryButton);
-
-            this.melodyName = document.createElement("input");
-            pxt.BrowserUtils.addClass(this.melodyName, "ui input");
-            this.melodyName.id = "melody-name";
-            this.melodyName.maxLength = 25;
-            this.melodyName.value = this.title;
-            this.melodyName.addEventListener("input", () => this.setTitle(this.melodyName.value));
-
             this.topDiv.appendChild(this.editorGalleryToggle);
-            this.topDiv.appendChild(this.melodyName);
             div.appendChild(this.topDiv);
 
             this.gridDiv = document.createElement("div");
@@ -157,7 +147,7 @@ namespace pxtblockly {
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
-            this.tempoInput.value = this.tempo + ""; // will be updated according to slider
+            this.tempoInput.value = this.tempo + "";
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
 
@@ -207,21 +197,21 @@ namespace pxtblockly {
         protected parseTypeScriptValue(value: string) {
             value = value.slice(1, -1); // remove the boundary quotes
             value = value.trim(); // remove boundary white space
-            let melodies: string[] = value.split("-");
-
+            //let melodies: string[] = value.split("-");
             this.createMelodyIfDoesntExist();
-            this.setTitle(melodies[0]);
-            this.setTempo(Number(melodies[1]));
-
-            for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
-                let notes: string[] = melodies[i].split(" ");
+            this.updateFieldLabel();
+            //this.setTitle(melodies[0]);
+            //this.setTempo(Number(melodies[1]));
+            //for (let i = 2; i < melodies.length - 1; i++) { // first two strings are name and tempo
+                //let notes: string[] = melodies[i].split(" ");
+                let notes: string[] = value.split(" ");
                 for (let j = 0; j < notes.length - 1; j++) {
-                    if (notes[j] != "R") {
+                    if (notes[j] != "-") {
                         let rowPos: number = pxtmelody.noteToRow(notes[j]);
                         this.melody.updateMelody(rowPos, j);
                     }
                 }
-            }
+           // }
         }
 
         // The width of the preview on the block itself
@@ -243,18 +233,9 @@ namespace pxtblockly {
             return this.sourceBlock_.getColourSecondary();
         }
 
-        setTitle(melodyName: string): void {
-            if (this.title != melodyName) {
-                this.title = melodyName;
-                Blockly.FieldLabel.prototype.setText.call(this, this.title);
-                if (this.melody) {
-                    this.melody.setTitle(this.title);
-                }
-            }
-        }
-
-        getTitle(): string {
-            return this.title;
+        updateFieldLabel(): void {
+            this.title = this.melody.getStringRepresentation().substring(0, this.melody.getStringRepresentation().length - 2);
+            Blockly.FieldLabel.prototype.setText.call(this, this.title);
         }
 
         setTempo(tempo: number): void {
@@ -315,6 +296,7 @@ namespace pxtblockly {
             }
             // update melody array
             this.melody.updateMelody(row, col);
+            this.updateFieldLabel();
         }
 
         playNote(rowNumber: number, colNumber?: number): void {
