@@ -180,6 +180,11 @@ declare namespace pxt {
         parameters?: pxt.Map<string>;
     }
 
+    interface SnippetParameters {
+        outputTo?: 'error' | 'md' | 'hint';
+        goto?: SnippetGoToOptions;
+    }
+
     interface SnippetQuestionInput {
         answerToken: string;
         defaultAnswer: SnippetAnswerTypes;
@@ -190,11 +195,23 @@ declare namespace pxt {
         options?: pxt.Map<string>;
     }
 
+    interface SnippetValidateRegex {
+        token: string;
+        regex: string;
+        onMatch?: SnippetParameters;
+    }
+
+    interface SnippetValidate {
+        regex?: SnippetValidateRegex;
+    }
+
     interface SnippetQuestions {
         title: string;
         output?: string;
+        errorMessage?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];
         hint?: string;
+        validate?: SnippetValidate;
     }
 }

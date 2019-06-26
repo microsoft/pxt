@@ -361,6 +361,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                             </span>
                                         )}
                                     </div>
+                                    {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                                 </div>
                                 {currentQuestion.hint &&
                                 <div className='hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
