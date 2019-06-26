@@ -1,6 +1,6 @@
 # FAQ: Touch Develop Shut Down (June 2019)
 
-Microsoft retired the Touch Develop platform in June 2019. Looking for its replacement? See [Microsoft MakeCode Arcade](https://arcade.makecode.com) and other [MakeCode editors][https://www.makecode.com]!
+Microsoft retired the Touch Develop platform in June 2019. Looking for its replacement? See [Microsoft MakeCode Arcade](https://arcade.makecode.com) and other [MakeCode editors](https://www.makecode.com).
 
 ## More information
 
