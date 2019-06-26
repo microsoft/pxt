@@ -14,6 +14,7 @@ namespace pxtblockly {
         private oneNotePerCol: boolean = true;
         private isPlaying: boolean = false;
         private timeouts: number[] = []; // keep track of timeouts
+        private invalidString: string;
 
         // html references
         private topDiv: HTMLDivElement;
@@ -182,6 +183,9 @@ namespace pxtblockly {
 
         // This is the string that will be inserted into the user's TypeScript code
         protected getTypeScriptValue(): string {
+            if (this.invalidString) {
+                return this.invalidString;
+            }
             if (this.melody) {
                 return "\"" + this.melody.getStringRepresentation() + "\"";
             }
@@ -191,18 +195,40 @@ namespace pxtblockly {
 
         // This should parse the string returned by getTypeScriptValue() and restore the state based on that
         protected parseTypeScriptValue(value: string) {
-            value = value.slice(1, -1); // remove the boundary quotes
-            value = value.trim(); // remove boundary white space
-            this.createMelodyIfDoesntExist();
-            this.updateFieldLabel();
-            let notes: string[] = value.split(" ");
-            for (let j = 0; j < notes.length - 1; j++) {
-                if (notes[j] != "-") {
-                    let rowPos: number = pxtmelody.noteToRow(notes[j]);
-                    this.melody.updateMelody(rowPos, j);
+            let oldValue: string = value;
+            try {
+                value = value.slice(1, -1); // remove the boundary quotes
+                value = value.trim(); // remove boundary white space
+                this.createMelodyIfDoesntExist();
+                this.updateFieldLabel();
+                let notes: string[] = value.split(" ");
+
+                for (let j = 0; j < notes.length; j++) {
+                    if (!this.isValidNote(notes[j])) throw new Error("Invalid note: " + notes[j] + " Notes can be C D E F G A B C5");
+                    if (notes[j] != "-") {
+                        let rowPos: number = pxtmelody.noteToRow(notes[j]);
+                        this.melody.updateMelody(rowPos, j);
+                    }
                 }
+            } catch (e) {
+                pxt.log(e)
+                this.invalidString = oldValue;
             }
-            // }
+        }
+
+        private isValidNote(note: string): boolean {
+            switch (note) {
+                case "C":
+                case "D":
+                case "E":
+                case "F":
+                case "G":
+                case "A":
+                case "B":
+                case "C5":
+                case "-": return true;
+            }
+            return false;
         }
 
         // The width of the preview on the block itself
@@ -225,7 +251,11 @@ namespace pxtblockly {
         }
 
         updateFieldLabel(): void {
-            this.title = this.melody.getStringRepresentation().substring(0, this.melody.getStringRepresentation().length - 2);
+            if (this.invalidString) {
+                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
+                return;
+            }
+            this.title = this.melody.getStringRepresentation().trim();
             Blockly.FieldLabel.prototype.setText.call(this, this.title);
         }
 
@@ -286,6 +316,7 @@ namespace pxtblockly {
                 pxt.BrowserUtils.removeClass(document.getElementById(id), this.getColorClass(row));
             }
             // update melody array
+            this.invalidString = null;
             this.melody.updateMelody(row, col);
             this.updateFieldLabel();
         }

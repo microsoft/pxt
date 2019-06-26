@@ -1,11 +1,10 @@
 namespace pxtmelody {
     export class MelodyArray {
         // check that array is 8x8 
-        private tempo: number = 120;
+        private tempo: number;
         private numCols: number = 8;
         private numRows: number = 8;
         private melody: boolean[][];
-        private title: string = "Name this tune";
 
         // constructor
         constructor(tempo?: number) {
@@ -15,10 +14,6 @@ namespace pxtmelody {
             for (let i = 0; i < this.numCols; i++) {
                 this.melody[i] = new Array(this.numRows).fill(false);
             }
-        }
-
-        public setTitle(title: string): void {
-            this.title = title;
         }
 
         public setTempo(tempo: number): void {
@@ -76,6 +71,7 @@ namespace pxtmelody {
                 }
             }
             // create strings of melodies
+            if (numMelodies == 0) return "- - - - - - - - ";
             for (let j = 0; j < numMelodies; j++) {
                 for (let i = 0; i < this.numCols; i++) {
                     if (queues[i] && queues[i].length > 0) { // if there is an element
@@ -84,9 +80,8 @@ namespace pxtmelody {
                         stringMelody += "- "; // add rest if there is no selection for the note
                     }
                 }
-                stringMelody += "."; // this will be used to split each melody
+                //stringMelody += "."; // this will be used to split each melody
             }
-
             return stringMelody;
         }
     }
