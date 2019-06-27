@@ -1,0 +1,44 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="4" error="Namespaces may only contain valid &#39;kind&#39; exports" line0="namespace SpriteKind &#123;" line1="    export let Rocket &#61; SpriteKind.create&#40;&#41;&#59;" line2="    export let Whatever &#61; SpriteKind.create&#40;&#41;&#59;" line3="&#125;" />
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="typescript_expression">
+<field name="EXPRESSION">SpriteKind.Rocket</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="spritetype">
+<field name="MEMBER">Player</field>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="typescript_expression">
+<field name="EXPRESSION">SpriteKind.Whatever</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

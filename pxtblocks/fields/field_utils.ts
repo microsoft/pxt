@@ -1,22 +1,17 @@
-
 namespace pxtblockly {
     export namespace svg {
         export function hasClass(el: SVGElement, cls: string): boolean {
-            if (el.classList) return el.classList.contains(cls);
-            else return el.className.baseVal.indexOf(cls) > -1;
+            return pxt.BrowserUtils.containsClass(el, cls);
         }
 
         export function addClass(el: SVGElement, cls: string) {
-            if (el.classList) el.classList.add(cls);
-            else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
+            pxt.BrowserUtils.addClass(el, cls);
         }
 
         export function removeClass(el: SVGElement, cls: string) {
-            if (el.classList) el.classList.remove(cls);
-            else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
+            pxt.BrowserUtils.removeClass(el, cls);
         }
     }
-
     export function parseColour(colour: string | number): string {
         const hue = Number(colour);
         if (!isNaN(hue)) {

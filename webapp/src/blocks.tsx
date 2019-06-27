@@ -11,6 +11,7 @@ import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
+import { initializeSnippetExtensions } from './snippetBuilder';
 
 import Util = pxt.Util;
 import { DebuggerToolbox } from "./debuggerToolbox";
@@ -42,12 +43,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (blockId) map[blockId] = breakpoint.id;
         });
         this.breakpointsByBlock = map;
-        this.setBreakpointsFromBlocks();
     }
 
     setBreakpointsFromBlocks(): void {
-        let breakpoints: number[] = []
-        let map = this.breakpointsByBlock;
+        this.breakpointsSet = this.getBreakpoints();
+        simulator.driver.setBreakpoints(this.breakpointsSet);
+    }
+
+    getBreakpoints() {
+        const breakpoints: number[] = []
+        const map = this.breakpointsByBlock;
         if (map && this.editor) {
             this.editor.getAllBlocks().forEach(block => {
                 if (map[block.id] && block.isBreakpointSet()) {
@@ -55,9 +60,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             });
         }
-
-        this.breakpointsSet = breakpoints;
-        simulator.driver.setBreakpoints(breakpoints);
+        return breakpoints;
     }
 
     addBreakpointFromEvent(blockId: string) {
@@ -1122,6 +1125,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 blockXml: `<block type="pxt-on-start"></block>`
             });
         }
+
         // Inject pause until block
         const pauseUntil = snippets.getPauseUntil();
         if (pauseUntil && ns == pauseUntil.attributes.blockNamespace) {
@@ -1148,6 +1152,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             })
         }
+
+        if (pxt.appTarget.appTheme.snippetBuilder) {
+            // Push snippet extension into extraBlocks
+            initializeSnippetExtensions(ns, extraBlocks, this.editor, this.parent);
+        }
+
         return extraBlocks;
     }
 

@@ -4,28 +4,54 @@ namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
     let tracePauseMs = 0;
     export namespace U {
-        export function addClass(element: HTMLElement, classes: string) {
-            if (!element) return;
-            if (!classes || classes.length == 0) return;
-            function addSingleClass(el: HTMLElement, singleCls: string) {
-                if (el.classList) el.classList.add(singleCls);
-                else if (el.className.indexOf(singleCls) < 0) el.className += ' ' + singleCls;
+        // Keep these helpers unified with pxtlib/browserutils.ts
+        export function containsClass(el: SVGElement | HTMLElement, classes: string) {
+            return classes
+                .split(/\s+/)
+                .every(cls => containsSingleClass(el, cls));
+
+            function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    return el.classList.contains(cls);
+                } else {
+                    const classes = (el.className + "").split(/\s+/);
+                    return !(classes.indexOf(cls) < 0);
+                }
             }
-            classes.split(' ').forEach((cls) => {
-                addSingleClass(element, cls);
-            });
         }
 
-        export function removeClass(element: HTMLElement, classes: string) {
-            if (!element) return;
-            if (!classes || classes.length == 0) return;
-            function removeSingleClass(el: HTMLElement, singleCls: string) {
-                if (el.classList) el.classList.remove(singleCls);
-                else el.className = el.className.replace(singleCls, '').replace(/\s{2,}/, ' ');
+        export function addClass(el: SVGElement | HTMLElement, classes: string) {
+            classes
+                .split(/\s+/)
+                .forEach(cls => addSingleClass(el, cls));
+
+            function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    el.classList.add(cls);
+                } else {
+                    const classes = (el.className + "").split(/\s+/);
+                    if (classes.indexOf(cls) < 0) {
+                        el.className.baseVal += " " + cls;
+                    }
+                }
             }
-            classes.split(' ').forEach((cls) => {
-                removeSingleClass(element, cls);
-            });
+        }
+
+        export function removeClass(el: SVGElement | HTMLElement, classes: string) {
+            classes
+                .split(/\s+/)
+                .forEach(cls => removeSingleClass(el, cls));
+
+            function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    el.classList.remove(cls);
+                } else {
+                    el.className.baseVal = (el.className + "")
+                        .split(/\s+/)
+                        .filter(c => c != cls)
+                        .join(" ");
+                }
+            }
         }
 
         export function remove(element: Element) {
@@ -693,7 +719,7 @@ namespace pxsim {
             let entryPoint: LabelFn;
             let pxtrt = pxsim.pxtrt
             let breakpoints: Uint8Array = null
-            let breakAlways = false
+            let breakAlways = !!msg.breakOnStart;
             let globals = this.globals
             let yieldSteps = yieldMaxSteps
             // ---
@@ -1147,7 +1173,10 @@ namespace pxsim {
                 clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
-                if (timeRemaining < 0) timeRemaining = 0;
+
+                // Time reamining needs to be at least 1. Setting to 0 causes fibers
+                // to never resume after breaking
+                if (timeRemaining <= 0) timeRemaining = 1;
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, timeRemaining))
             });
             this.lastPauseTimestamp = U.now();

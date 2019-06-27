@@ -114,7 +114,15 @@
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
-        var codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+        var codeFromData = undefined;
+        try {
+            codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
+        } catch (e) {
+            /**
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  if the frame element exists when the iframe is on a different origin
+             */
+        }
         var code = codeFromData || (codeFromSrc ? codeFromSrc[1] : undefined);
 
         if (!id && !code && !debugSim) {

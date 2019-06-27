@@ -19,6 +19,7 @@ namespace pxsim {
         localizedStrings?: Map<string>;
         version?: string;
         clickTrigger?: boolean;
+        breakOnStart?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -210,6 +211,9 @@ namespace pxsim {
         svg?: string;
         width?: number;
         height?: number;
+        css?: string;
+        uri?: string;
+        error?: string;
     }
 
     export function print(delay: number = 0) {

@@ -103,13 +103,25 @@ export const buildEngines: Map<BuildEngine> = {
 
     dockermake: {
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
-        buildAsync: () => runDockerAsync(["make"]),
+        buildAsync: () => runDockerAsync(["make", "-j8"]),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchDockermakeHexInfo,
         prepBuildDirAsync: noopAsync,
         buildPath: "built/dockermake",
         moduleConfig: "package.json",
         deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
+    },
+
+    dockercross: {
+        updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
+        buildAsync: () => runDockerAsync(["make"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchDockerCrossHexInfo,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockercross",
+        moduleConfig: "package.json",
+        deployAsync: noopAsync,
         appPath: "pxtapp"
     },
 
@@ -159,6 +171,13 @@ function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
 
 function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
     let hexPath = thisBuild.buildPath + "/bld/pxt-app.hex"
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchDockerCrossHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/bld/all.tgz.b64"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
     }
@@ -319,10 +338,10 @@ function runPlatformioAsync(args: string[]) {
 function runDockerAsync(args: string[]) {
     let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
     let cs = pxt.appTarget.compileService
+    let dargs = cs.dockerArgs || ["-u", "build"]
     return nodeutil.spawnAsync({
         cmd: "docker",
-        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src", "-u", "build",
-            cs.dockerImage].concat(args),
+        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
         cwd: thisBuild.buildPath
     })
 }
@@ -547,7 +566,7 @@ function getCSharpCommand() {
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
-    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_HEX].filter(f => !!res.outfiles[f])[0];
+    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_ELF].filter(f => !!res.outfiles[f])[0];
     if (!firmwareName) { // something went wrong heres
         pxt.reportError("compile", `firmware missing from built files (${Object.keys(res.outfiles).join(', ')})`)
         return Promise.resolve();
@@ -620,8 +639,10 @@ function getBoardDrivesAsync(): Promise<string[]> {
     } else if (process.platform == "linux") {
         const rx = new RegExp(pxt.appTarget.compile.deployDrives)
         const user = process.env["USER"]
-        return readDirAsync(`/media/${user}`)
-            .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+        if (nodeutil.existsDirSync(`/media/${user}`))
+            return readDirAsync(`/media/${user}`)
+                .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+        return Promise.resolve([]);
     } else {
         return Promise.resolve([])
     }

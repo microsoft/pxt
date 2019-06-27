@@ -262,22 +262,8 @@ namespace pxsim {
         }
 
         const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
-        let metallicBuffer: AudioBuffer
         let noiseBuffer: AudioBuffer
         let squareBuffer: AudioBuffer[] = []
-
-        function getMetallicBuffer() {
-            if (!metallicBuffer) {
-                const bufferSize = 1024;
-                metallicBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
-                const output = metallicBuffer.getChannelData(0);
-
-                for (let i = 0; i < bufferSize; i++) {
-                    output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
-                }
-            }
-            return metallicBuffer
-        }
 
         function getNoiseBuffer() {
             if (!noiseBuffer) {
@@ -313,8 +299,7 @@ namespace pxsim {
         #define SW_TRIANGLE 1
         #define SW_SAWTOOTH 2
         #define SW_SINE 3 // TODO remove it? it takes space
-        #define SW_NOISE 4
-        #define SW_REAL_NOISE 5
+        #define SW_NOISE 5
         #define SW_SQUARE_10 11
         #define SW_SQUARE_50 15
         */
@@ -341,9 +326,7 @@ namespace pxsim {
             }
 
             let buffer: AudioBuffer
-            if (waveFormIdx == 4)
-                buffer = getMetallicBuffer()
-            else if (waveFormIdx == 5)
+            if (waveFormIdx == 5)
                 buffer = getNoiseBuffer()
             else if (11 <= waveFormIdx && waveFormIdx <= 15)
                 buffer = getSquareBuffer((waveFormIdx - 10) * 10)
@@ -431,6 +414,7 @@ namespace pxsim {
                 const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
                 const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
                 const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
+                const endFreq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 10)
 
                 if (!ctx || prevStop != instrStopId)
                     return Promise.delay(duration)
@@ -454,12 +438,24 @@ namespace pxsim {
                     ch.gain = ctx.createGain()
                     ch.gain.gain.value = scaleVol(startVol)
 
+                    if (endFreq != freq) {
+                        if ((ch.generator as any).frequency != undefined) {
+                            // If generator is an OscillatorNode
+                            const param = (ch.generator as any).frequency as AudioParam;
+                            param.linearRampToValueAtTime(endFreq, ctx.currentTime + ((timeOff + duration) / 1000));
+                        } else if ((ch.generator as any).playbackRate != undefined) {
+                            // If generator is an AudioBufferSourceNode
+                            const param = (ch.generator as any).playbackRate as AudioParam;
+                            param.linearRampToValueAtTime(endFreq / (context().sampleRate / 1024), ctx.currentTime + ((timeOff + duration) / 1000));
+                        }
+                    }
+
                     ch.generator.connect(ch.gain)
                     ch.gain.connect(ctx.destination);
                     ch.generator.start();
                 }
 
-                idx += 10
+                idx += 12
 
                 ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
@@ -749,7 +745,7 @@ namespace pxsim.visuals {
             style: `font-size:${size}px;`,
             transform: `translate(${cx} ${cy}) rotate(${rot}) translate(${xOff} ${yOff})`
         });
-        svg.addClass(el, "noselect");
+        pxsim.U.addClass(el, "noselect");
         el.textContent = txt;
         return el;
     }

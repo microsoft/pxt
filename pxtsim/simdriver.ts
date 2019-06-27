@@ -50,6 +50,7 @@ namespace pxsim {
         refCountingDebug?: boolean;
         version?: string;
         clickTrigger?: boolean;
+        breakOnStart?: boolean;
     }
 
     export interface HwDebugger {
@@ -64,6 +65,7 @@ namespace pxsim {
         private _currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
+        private breakpointsSet = false;
         public runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
@@ -149,7 +151,7 @@ namespace pxsim {
                     break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.autoRun)
+                    pxsim.U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.autoRun)
                         ? this.stoppedClass : this.invalidatedClass);
                     if (!this.options.autoRun) {
                         icon.style.display = '';
@@ -160,8 +162,8 @@ namespace pxsim {
                     this.scheduleFrameCleanup();
                     break;
                 default:
-                    U.removeClass(frame, this.stoppedClass);
-                    U.removeClass(frame, this.invalidatedClass);
+                    pxsim.U.removeClass(frame, this.stoppedClass);
+                    pxsim.U.removeClass(frame, this.invalidatedClass);
                     icon.style.display = 'none';
                     loader.style.display = 'none';
                     break;
@@ -438,7 +440,8 @@ namespace pxsim {
                 localizedStrings: opts.localizedStrings,
                 refCountingDebug: opts.refCountingDebug,
                 version: opts.version,
-                clickTrigger: opts.clickTrigger
+                clickTrigger: opts.clickTrigger,
+                breakOnStart: opts.breakOnStart
             }
             this.start();
         }
@@ -448,6 +451,10 @@ namespace pxsim {
             this.start();
         }
 
+        public areBreakpointsSet() {
+            return this.breakpointsSet;
+        }
+
         private start() {
             this.clearDebugger();
             this.addEventListeners();
@@ -455,6 +462,8 @@ namespace pxsim {
             this.scheduleFrameCleanup();
 
             if (!this._currentRuntime) return; // nothing to do
+
+            this.breakpointsSet = false;
 
             // first frame
             let frame = this.simFrames()[0];
@@ -577,6 +586,7 @@ namespace pxsim {
         }
 
         public setBreakpoints(breakPoints: number[]) {
+            this.breakpointsSet = true;
             this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
         }
 

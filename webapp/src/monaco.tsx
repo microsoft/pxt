@@ -1039,10 +1039,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.breakpoints = new BreakpointCollection(breakpoints);
                 this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
             }
-            else {
-                // The simulator got restarted
-                this.sendBreakpoints();
-            }
 
             if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
             if (this.feWidget) this.feWidget.close();
@@ -1075,9 +1071,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.forceDiagnosticsUpdate();
     }
 
+    getBreakpoints() {
+        return this.breakpoints ? this.breakpoints.getActiveBreakpoints() : [];
+    }
+
     private sendBreakpoints() {
         if (this.breakpoints) {
-            simulator.driver.setBreakpoints(this.breakpoints.getActiveBreakpoints());
+            simulator.driver.setBreakpoints(this.getBreakpoints());
         }
     }
 
@@ -1702,7 +1702,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelIcon.setAttribute('role', 'presentation');
             labelIcon.style.display = 'inline-block';
             labelIcon.style.color = `${pxt.toolbox.convertColor(iconColor)}`;
-            if (icon.length === 1) {
+            if (icon && icon.length === 1) {
                 labelIcon.textContent = icon;
             }
             labelDiv.appendChild(labelIcon);
@@ -1759,6 +1759,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return undefined;
         const qName = fn.qName;
         const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
+        const snippet = isPython ? fn.pySnippet : fn.snippet;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
@@ -1774,7 +1775,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         color = pxt.toolbox.convertColor(color);
 
         const methodToken = document.createElement('span');
-        methodToken.textContent = fn.snippetOnly ? fn.snippet : snippetName;
+        methodToken.textContent = fn.snippetOnly ? snippet : snippetName;
         monacoBlock.appendChild(methodToken);
 
         if (!isDisabled) {
@@ -1783,11 +1784,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
                 monacoEditor.hideFlyout();
 
-                let snip = isPython ? fn.pySnippet : fn.snippet;
-                let p = snip ? Promise.resolve(snip) : compiler.snippetAsync(qName, isPython);
-                p.done(snippet => {
+                let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(qName, isPython);
+                p.done(snip => {
                     let currPos = monacoEditor.editor.getPosition();
-                    this.insertSnippet(currPos, snippet);
+                    this.insertSnippet(currPos, snip);
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
                 });
@@ -1798,7 +1798,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
-                const snippet = isPython ? fn.pySnippet : fn.snippet;
                 if (!snippet)
                     e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
                 else
