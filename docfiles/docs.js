@@ -477,7 +477,7 @@ function setStickyColumn() {
                     scrollTop: $(heading).offset().top
                 }, 1000);
                 if (window.navigator.userAgent.indexOf('Edge') !== -1) {
-                    heading.scrollIntoView();
+                    heading.nextElementSibling.scrollIntoView(false);
                 }
                 // resets default style for mobile behavior
                 if (window.innerWidth < 970) {
