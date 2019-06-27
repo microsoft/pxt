@@ -80,23 +80,25 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                 console.log("monaco 74")
                 const items = (completions.entries || []).map((si, i) => {
                     let snippet = this.python ? si.pySnippet : si.snippet;
-                    let amend: EditAmendment = {
-                        delLeft: position.column - 1
+                    if (snippet) {
+                        let amend: EditAmendment = {
+                            delLeft: position.column - 1
+                        }
+                        let anyAmmend = (a: EditAmendment): boolean => {
+                            return a.delLeft > 0
+                        }
+                        if (anyAmmend(amend))
+                            snippet += `${amendmentMarker}${JSON.stringify(amend)}`
+                        // let range = monaco.Range.fromPositions(position)
+                        // .setStartPosition(position.lineNumber, 1)
+                        // console.log(range)
+                        // console.dir(range)
                     }
-                    let anyAmmend = (a: EditAmendment): boolean => {
-                        return a.delLeft > 0
-                    }
-                    if (anyAmmend(amend))
-                        snippet += `${amendmentMarker}${JSON.stringify(amend)}`
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
                         : (completions.isMemberCompletion ? si.name : si.qName);
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
-                    // let range = monaco.Range.fromPositions(position)
-                    // .setStartPosition(position.lineNumber, 1)
-                    // console.log(range)
-                    // console.dir(range)
                     return {
                         label,
                         kind: this.tsKindToMonacoKind(si.kind),
@@ -127,11 +129,14 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      * The editor will only resolve a completion item once.
      */
     resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        // console.log("Resolving! " + item.label)
+        // TODO(dz):
+        console.log("Resolving! " + item.label)
+        console.dir(item)
         // if (item.kind == monaco.languages.CompletionItemKind.Function) {
         //     item.range = item.range
         //         .setStartPosition(item.range.startLineNumber, 1)
         // }
+
         return item
         // TODO(dz)
         // // item.insertText = "foobaz"
