@@ -272,10 +272,16 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         this.hide();
     }
 
-    getCurrentQuestion() {
-        const { history, config } = this.state;
+    getCurrentPage() {
+        const { history } = this.state;
 
-        return config.questions[history[history.length - 1]];
+        return history[history.length - 1];
+    }
+
+    getCurrentQuestion() {
+        const { config } = this.state;
+
+        return config.questions[this.getCurrentPage()];
     }
 
     getNextQuestion() {
@@ -305,7 +311,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const currentQuestion = this.getCurrentQuestion();
         const goto = currentQuestion.goto;
 
-        if (goto) {
+        if (this.isLastQuestion()) {
+            this.confirm();
+        } else if (goto) {
             const nextQuestion = this.getNextQuestion();
 
             if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
@@ -356,6 +364,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                                     input={input}
                                                     value={answers[input.answerToken] || ''}
                                                     blocksInfo={thisBlocksInfo}
+                                                    onEnter={this.nextPage}
                                                     key={input.answerToken}
                                                 />
                                             </span>

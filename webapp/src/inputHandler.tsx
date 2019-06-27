@@ -9,16 +9,32 @@ interface InputHandlerProps {
     onChange: (v: string) => void;
     value: string;
     blocksInfo: pxtc.BlocksInfo;
+    onEnter?: () => void;
 }
 
+interface InputHandlerState {
+    isFocused?: boolean;
+}
 
-export class InputHandler extends data.Component<InputHandlerProps, {}> {
+export class InputHandler extends data.Component<InputHandlerProps, InputHandlerState> {
     constructor(props:   InputHandlerProps) {
         super(props);
-
+        this.state = {
+            isFocused: false,
+        };
     }
 
-    renderCore() {
+    componentDidMount() {
+        const inputWrapper = this.refs['inputWrapper'] as HTMLDivElement;
+
+        inputWrapper.addEventListener('keyup', (ev: KeyboardEvent) => {
+            if (ev.keyCode === 13) {
+                this.props.onEnter();
+            }
+        })
+    }
+
+    renderInput() {
         const { value, input, onChange, blocksInfo } = this.props;
 
         switch (input.type) {
@@ -46,6 +62,7 @@ export class InputHandler extends data.Component<InputHandlerProps, {}> {
                         input={input}
                         value={value}
                         onChange={onChange}
+                        autoFocus={true}
                     />
                 )
             case 'text':
@@ -55,9 +72,18 @@ export class InputHandler extends data.Component<InputHandlerProps, {}> {
                         label={input.label && input.label}
                         value={value || ''}
                         onChange={onChange}
+                        autoFocus={true}
                     />
                 )
         }
+    }
+
+    renderCore() {
+        return (
+            <div ref={'inputWrapper'}>
+                {this.renderInput()}
+            </div>
+        )
     }
 }
 
@@ -111,6 +137,7 @@ interface IRangeInputProps {
     value: string;
     onChange: (v: string) => void;
     input: pxt.SnippetQuestionInput;
+    autoFocus?: boolean;
 }
 
 class RangeInput extends data.Component<IRangeInputProps, {}> {
@@ -127,12 +154,13 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
     }
 
     renderCore() {
-        const { input, value } = this.props;
+        const { input, value, autoFocus } = this.props;
         return (
             <div>
                 <span>{input.label && input.label}</span>
                 <input
                     type='range'
+                    autoFocus={autoFocus}
                     className={'slider blocklyMockSlider'}
                     role={'slider'}
                     max={input.max}
