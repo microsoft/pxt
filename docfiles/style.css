@@ -1,3 +1,7 @@
+body, html {
+    -ms-overflow-style: none;
+}
+
 body#root {
     font-size: 1rem;  
     background-color: white;  
@@ -331,7 +335,7 @@ svg {
 #tocsearch2 {
     display: block;
     visibility: hidden;
-    background-color: #000000ad;
+    background-color: rgba(0, 0, 0, 0.8);
     width: 100vw;
     height: 100vh;
     position: fixed;
@@ -348,6 +352,12 @@ svg {
     left: 0%;
     top: 3rem;
     padding: 1rem;
+}
+
+@supports (-ms-ime-align:auto) {
+    #tocsearch2 .ui.icon.input {
+        top: 6rem;
+    }
 }
 
 #tocsearch2 .ui.icon.input i{
@@ -377,7 +387,7 @@ svg {
     right: 0rem;
     width: 100%;
     z-index: 99;
-    background-color: #000000b8;
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 button.sticky-close {
@@ -425,6 +435,8 @@ button.sticky-close {
     color: white;
     top: 3.7rem;
     display: block !important;
+    background:none;
+    border:none
 }
 
 #docs-header {
@@ -498,6 +510,7 @@ button.sticky-close {
     -webkit-transform: translate3d(70vw,0,0);
     transform: translate3d(70vw,0,0);
 }
+
 }
 
 @media (min-width: 200px) and (max-width: 400px) {
