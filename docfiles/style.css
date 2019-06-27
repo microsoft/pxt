@@ -281,6 +281,21 @@ svg {
     display: none;
 }
 
+
+@supports (-ms-ime-align:auto) {
+    #docs .mainbody {
+        margin-top:4rem;
+    }
+    #docs .topspace {
+        position: fixed;
+        top:0px;
+        width:100%;
+    }
+    #docs #printbtn i.icon.print {
+        width: 1.6em;
+    }
+}
+
 @media (min-width: 970) and (max-width: 1144){
     .ui.grid.mainbody.content-width, .ui.vertical.footer.content-width {
         width: 64vw;
