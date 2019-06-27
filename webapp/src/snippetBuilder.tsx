@@ -378,11 +378,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 }
 
 function getSnippetExtensions() {
-    return pkg
-        .allEditorPkgs()
-        .map(ep => ep.getKsPkg())
-        .map(p => !!p && p.config)
-        .filter(config => config.snippetBuilders);
+    return pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
+        .filter(file => file.name === 'pxt-snippets.json')
+        .map(file => JSON.parse(file.content)) as pxt.SnippetConfig[][];
 }
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
@@ -396,26 +394,26 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
 }
 
 export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView, blocksInfo: pxtc.BlocksInfo) {
-    const snippetExtensions = getSnippetExtensions();
+    const snippetExtensions = pxt.Util.concat(getSnippetExtensions());
+    console.log('snippetExtension');
+    console.dir(snippetExtensions);
     thisBlocksInfo = blocksInfo
 
-    snippetExtensions.forEach(config => {
-        config.snippetBuilders
-            .filter(snippet => snippet.namespace == ns)
-            .forEach(snippet => {
-                extraBlocks.push({
-                    name: `SNIPPET${name}_BUTTON`,
-                    type: "button",
-                    attributes: {
-                        blockId: `SNIPPET${name}_BUTTON`,
-                        label: snippet.label ? pxt.Util.rlf(snippet.label) : pxt.Util.lf("Editor"),
-                        weight: 101,
-                        group: snippet.group && snippet.group,
-                    },
-                    callback: () => {
-                        openSnippetDialog(snippet, editor, parent);
-                    }
-                });
+    snippetExtensions
+        .filter(snippet => snippet.namespace == ns)
+        .forEach(snippet => {
+            extraBlocks.push({
+                name: `SNIPPET${name}_BUTTON`,
+                type: "button",
+                attributes: {
+                    blockId: `SNIPPET${name}_BUTTON`,
+                    label: snippet.label ? pxt.Util.rlf(snippet.label) : pxt.Util.lf("Editor"),
+                    weight: 101,
+                    group: snippet.group && snippet.group,
+                },
+                callback: () => {
+                    openSnippetDialog(snippet, editor, parent);
+                }
             });
-    })
+        });
 }
