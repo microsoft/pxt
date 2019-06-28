@@ -353,6 +353,7 @@ namespace ts.pxtc {
         package?: boolean;
         locs?: boolean;
         docs?: boolean;
+        pxtsnippet?: pxt.SnippetConfig[]; // extract localizable strings from pxtsnippets.json files
     }
 
     export function genDocs(pkg: string, apiInfo: ApisInfo, options: GenDocsOptions = {}): pxt.Map<string> {
@@ -364,6 +365,7 @@ namespace ts.pxtc {
         const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember)
             .sort(compareSymbols);
 
+        const snippetStrings: pxt.Map<string> = {};
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
         const writeLoc = (si: SymbolInfo) => {
@@ -414,7 +416,25 @@ namespace ts.pxtc {
             });
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
+        // Localize pxtsnippets.json files
+        if (options.pxtsnippet) {
+            options.pxtsnippet.forEach(snippet => localizeSnippet(snippet, snippetStrings));
+            mapLocs(snippetStrings, "-snippet");
+        }
+
         return files;
+    }
+
+    function localizeSnippet(snippet: pxt.SnippetConfig, locs: pxt.Map<string>) {
+        const localizableQuestionProperties = ['label', 'title', 'hint', 'errorMessage']; // TODO(jb) provide this elsewhere
+        locs[snippet.label] = snippet.label;
+        snippet.questions.forEach((question: pxt.Map<any>) => {
+            localizableQuestionProperties.forEach((prop) => {
+                if (question[prop]) {
+                    locs[question[prop]] = question[prop];
+                }
+            });
+        })
     }
 
     export function hasBlock(sym: SymbolInfo): boolean {
