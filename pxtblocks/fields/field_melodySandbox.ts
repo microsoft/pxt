@@ -35,10 +35,7 @@ namespace pxtblockly {
         private static CELL_HORIZONTAL_MARGIN = 7;
         private static CELL_VERTICAL_MARGIN = 5;
         private static CELL_CORNER_RADIUS = 5;
-        private static BOTTOM_MARGIN = 9;
-        private static Y_AXIS_WIDTH = 9;
-        private static X_AXIS_HEIGHT = 10;
-        private static TAB = "        ";
+        private static BOTTOM_MARGIN = 7;
         private elt: SVGSVGElement;
         private cells: SVGRectElement[][] = [];
         private static VIEWBOX_WIDTH: number;
@@ -53,9 +50,6 @@ namespace pxtblockly {
 
         init() {
             super.init();
-            for (let i = 0; i < this.numRow; i++) {
-                this.cells.push([]);
-            }
             this.onInit();
         }
 
@@ -93,6 +87,9 @@ namespace pxtblockly {
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
+            for (let i = 0; i < this.numRow; i++) {
+                this.cells.push([]);
+            }
             this.render_();
             this.createMelodyIfDoesntExist();
             this.updateFieldLabel();
@@ -360,8 +357,8 @@ namespace pxtblockly {
         }
 
         createGridDisplay(): SVGSVGElement {
-            FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + 2 * FieldCustomMelody.BOTTOM_MARGIN;
-            FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + 2 * FieldCustomMelody.BOTTOM_MARGIN;
+            FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + FieldCustomMelody.CELL_VERTICAL_MARGIN;
+            FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
             this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
             // Create the cells of the matrix that is displayed
             for (let i = 0; i < this.numRow; i++) {
@@ -373,7 +370,7 @@ namespace pxtblockly {
         }
 
         private createCell(x: number, y: number) {
-            const tx = x * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) + FieldCustomMelody.CELL_HORIZONTAL_MARGIN + FieldCustomMelody.Y_AXIS_WIDTH;
+            const tx = x * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
             const ty = y * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) + FieldCustomMelody.CELL_VERTICAL_MARGIN;
 
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
