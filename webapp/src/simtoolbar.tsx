@@ -115,7 +115,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
-                {run && <sui.Button disabled={!runControlsEnabled} key='runbtn' className={`play-button ${(isRunning || debugging) ? "stop" : "play"}`} icon={(isRunning || debugging) ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} />}
+                {run && !targetTheme.bigRunButton && <sui.Button disabled={!runControlsEnabled} key='runbtn' className={`play-button ${(isRunning || debugging) ? "stop" : "play"}`} icon={(isRunning || debugging) ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
                 {trace && <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} />}
