@@ -674,8 +674,10 @@ export async function importGithubAsync(id: string) {
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
-        else if (e.statusCode == 404)
-            U.userError(lf("No such repository or branch."))
+        else if (e.statusCode == 404) {
+            core.errorNotification(lf("Sorry, that repository looks invalid."));
+            U.userError(lf("No such repository or branch."));
+        }
     }
     return await githubUpdateToAsync(null, repoid, sha, {})
         .then(hd => {
