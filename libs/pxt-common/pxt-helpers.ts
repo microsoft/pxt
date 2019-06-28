@@ -1,5 +1,8 @@
 type Action = () => void;
 
+/**
+ * A dictionary from string key to string values
+ */
 interface StringMap {
     [index: string]: string;
 }
