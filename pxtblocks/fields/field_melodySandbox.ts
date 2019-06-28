@@ -16,12 +16,12 @@ namespace pxtblockly {
         private timeouts: number[] = []; // keep track of timeouts
         private invalidString: string;
 
-        // html references
+        // DOM references
         private topDiv: HTMLDivElement;
         private editorGalleryToggle: HTMLDivElement;
         private editorButton: HTMLButtonElement;
         private galleryButton: HTMLButtonElement;
-        private gridDiv: HTMLDivElement;
+        private gridDiv: SVGSVGElement;
         private bottomDiv: HTMLDivElement;
         private doneButton: HTMLButtonElement;
         private playButton: HTMLButtonElement;
@@ -30,6 +30,19 @@ namespace pxtblockly {
         private tempoDiv: HTMLDivElement;
         private tempoLabel: HTMLLabelElement;
 
+        // grid elements
+        private static CELL_WIDTH = 25;
+        private static CELL_HORIZONTAL_MARGIN = 7;
+        private static CELL_VERTICAL_MARGIN = 5;
+        private static CELL_CORNER_RADIUS = 5;
+        private static BOTTOM_MARGIN = 9;
+        private static Y_AXIS_WIDTH = 9;
+        private static X_AXIS_HEIGHT = 10;
+        private static TAB = "        ";
+        private elt: SVGSVGElement;
+        private cells: SVGRectElement[][] = [];
+        private static VIEWBOX_WIDTH: number;
+        private static VIEWBOX_HEIGHT: number;
 
 
         constructor(value: string, params: U, validator?: Function) {
@@ -40,6 +53,9 @@ namespace pxtblockly {
 
         init() {
             super.init();
+            for (let i = 0; i < this.numRow; i++) {
+                this.cells.push([]);
+            }
             this.onInit();
         }
 
@@ -53,7 +69,6 @@ namespace pxtblockly {
             contentDiv.style.maxHeight = "550px";
 
             this.renderEditor(Blockly.DropDownDiv.getContentDiv() as HTMLDivElement);
-            this.createGridDisplay();
 
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
                 this.onEditorClose();
@@ -104,19 +119,7 @@ namespace pxtblockly {
             this.topDiv.appendChild(this.editorGalleryToggle);
             div.appendChild(this.topDiv);
 
-            this.gridDiv = document.createElement("div");
-            pxt.BrowserUtils.addClass(this.gridDiv, "melody-grid-div");
-            for (let i = 0; i < this.numRow; i++) {
-                let row = document.createElement("div");
-                pxt.BrowserUtils.addClass(row, "row" + i);
-                for (let j = 0; j < this.numCol; j++) {
-                    let cell = document.createElement("button");
-                    pxt.BrowserUtils.addClass(cell, "cell");
-                    cell.id = "cell-" + i + "-" + j;
-                    row.appendChild(cell);
-                }
-                this.gridDiv.appendChild(row);
-            }
+            this.gridDiv = this.createGridDisplay();
             div.appendChild(this.gridDiv);
 
             this.bottomDiv = document.createElement("div");
@@ -159,15 +162,6 @@ namespace pxtblockly {
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
             div.appendChild(this.bottomDiv);
-
-            // create event listeners at the end because the DOM needs to finish loading
-            for (let i = 0; i < this.numRow; i++) {
-                for (let j = 0; j < this.numCol; j++) {
-                    let el = "cell-" + i + "-" + j;
-                    document.getElementById(el).addEventListener("click", () => this.onNoteSelect(el));
-                }
-            }
-
         }
 
         // Runs when the editor is closed by clicking on the Blockly workspace
@@ -244,10 +238,12 @@ namespace pxtblockly {
 
         protected getDropdownBackgroundColour() {
             return this.sourceBlock_.getColour();
+            //return "#696969";
         }
 
         protected getDropdownBorderColour() {
             return this.sourceBlock_.getColourSecondary();
+            //return "#696969";
         }
 
         updateFieldLabel(): void {
@@ -290,12 +286,7 @@ namespace pxtblockly {
             return false;
         }
 
-        onNoteSelect(id: string): void {
-            // parse element id
-            let params = id.split("-"); // params[1] is row, params[2] is cell
-            let row = +params[1];
-            let col = +params[2];
-
+        onNoteSelect(row: number, col: number): void {
             // play sound if selected
             if (!this.melody.getValue(row, col)) {
                 this.playNote(row);
@@ -305,19 +296,16 @@ namespace pxtblockly {
                             // update melody array
                             this.melody.updateMelody(i, col);
                             // set color to default
-                            pxt.BrowserUtils.removeClass(document.getElementById("cell-" + i + "-" + col), this.getColorClass(i));
+                            this.cells[i][col].style.fill = this.getColor(i, col);
                         }
                     }
                 }
-                // update button/div color
-                pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(row));
-            } else {
-                // set color to default
-                pxt.BrowserUtils.removeClass(document.getElementById(id), this.getColorClass(row));
             }
             // update melody array
             this.invalidString = null;
             this.melody.updateMelody(row, col);
+            // update fill color
+            this.cells[row][col].style.fill = this.getColor(row, col);
             this.updateFieldLabel();
         }
 
@@ -371,16 +359,60 @@ namespace pxtblockly {
             return colorClass;
         }
 
-        createGridDisplay() {
-            if (this.createMelodyIfDoesntExist()) return;
+        createGridDisplay(): SVGSVGElement {
+            FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + 2 * FieldCustomMelody.BOTTOM_MARGIN;
+            FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + 2 * FieldCustomMelody.BOTTOM_MARGIN;
+            this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
+            // Create the cells of the matrix that is displayed
             for (let i = 0; i < this.numRow; i++) {
                 for (let j = 0; j < this.numCol; j++) {
-                    if (this.melody.getValue(i, j)) {
-                        let id = "cell-" + i + "-" + j;
-                        pxt.BrowserUtils.addClass(document.getElementById(id), this.getColorClass(i));
-                    }
+                    this.createCell(i, j);
                 }
             }
+            return this.elt;
+        }
+
+        private createCell(x: number, y: number) {
+            const tx = x * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) + FieldCustomMelody.CELL_HORIZONTAL_MARGIN + FieldCustomMelody.Y_AXIS_WIDTH;
+            const ty = y * (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) + FieldCustomMelody.CELL_VERTICAL_MARGIN;
+
+            const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
+            const cellRect = pxsim.svg.child(cellG, "rect", {
+                'class': `blocklyLed${this.melody.getValue(x, y) ? 'On' : 'Off'}`,
+                'cursor': 'pointer',
+                width: FieldCustomMelody.CELL_WIDTH, height: FieldCustomMelody.CELL_WIDTH,
+                fill: this.getColor(x, y),
+                stroke: "white",
+                'data-x': x,
+                'data-y': y,
+                rx: FieldCustomMelody.CELL_CORNER_RADIUS
+            }) as SVGRectElement;
+            this.cells[x][y] = cellRect;
+
+            if ((this.sourceBlock_.workspace as any).isFlyout) return;
+
+            pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
+                this.onNoteSelect(x, y);
+                ev.stopPropagation();
+                ev.preventDefault();
+            }, false));
+        }
+
+        private getColor(rowNum: number, colNum: number): string {
+            let colorString = "gainsboro";
+            if (this.melody.getValue(rowNum, colNum)) {
+                switch (rowNum) {
+                    case 0: colorString = "#A80000"; break; // red - Middle C
+                    case 1: colorString = "#D83B01"; break; // orange - Middle D
+                    case 2: colorString = "#FFB900"; break; // yellow - Middle E
+                    case 3: colorString = "#107C10"; break; // green - Middle F
+                    case 4: colorString = "#008272"; break; // teal - Middle G
+                    case 5: colorString = "#0078D7"; break; // blue - Middle A
+                    case 6: colorString = "#B4009E"; break; // violet - Middle B
+                    case 7: colorString = "#5C2D91"; break; // purple - Tenor C
+                }
+            }
+            return colorString;
         }
 
         togglePlay() {

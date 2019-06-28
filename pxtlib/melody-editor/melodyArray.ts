@@ -45,10 +45,9 @@ namespace pxtmelody {
             return this.numRows;
         }
 
-        public updateMelody(row: number, col: number) {
+        public updateMelody(row: number, col: number): void {
             this.melody[row][col] = !this.melody[row][col];
         }
-
 
         // function to turn into string
         public getStringRepresentation(): string {
