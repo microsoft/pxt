@@ -1,5 +1,8 @@
 type Action = () => void;
 
+interface StringMap {
+    [index: string]: string;
+}
 
 /**
   * Convert a string to an integer.
