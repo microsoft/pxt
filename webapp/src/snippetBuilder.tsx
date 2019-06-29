@@ -389,7 +389,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 function getSnippetExtensions() {
     return pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
         .filter(file => file.name === 'pxtsnippets.json')
-        .map(file => JSON.parse(file.content)) as pxt.SnippetConfig[][];
+        .map(file => pxt.Util.jsonTryParse(file.content)) as pxt.SnippetConfig[][];
 }
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
