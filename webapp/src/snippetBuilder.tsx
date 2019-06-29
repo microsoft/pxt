@@ -386,10 +386,12 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 }
 
-function getSnippetExtensions() {
-    return pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
+function getSnippetExtensions(): pxt.SnippetConfig[] {
+    const snippetConfigs = pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
         .filter(file => file.name === 'pxtsnippets.json')
         .map(file => pxt.Util.jsonTryParse(file.content)) as pxt.SnippetConfig[][];
+
+    return pxt.Util.concat(snippetConfigs);
 }
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
@@ -403,7 +405,7 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
 }
 
 export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView, blocksInfo: pxtc.BlocksInfo) {
-    const snippetExtensions = pxt.Util.concat(getSnippetExtensions());
+    const snippetExtensions = getSnippetExtensions();
 
     thisBlocksInfo = blocksInfo
 

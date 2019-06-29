@@ -109,14 +109,13 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
       }
 
       renderCore() {
-
           return (
               <div>
                   <sui.Button
-                      title={lf('Edit your sprite')}
-                      size={'medium'}
+                      title={lf("Edit your sprite")}
+                      size={"medium"}
                       onClick={this.openSpriteEditor}
-                  >{lf('Edit your sprite')}</sui.Button>
+                  >{lf("Edit your sprite")}</sui.Button>
                   {this.renderEditor_()}
               </div >
           );

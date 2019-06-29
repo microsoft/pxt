@@ -3888,7 +3888,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
                         docs: buildOpts.docs,
-                        pxtsnippet: pxtsnippet && pxtsnippet,
+                        pxtsnippet: pxtsnippet,
                     })
                     if (buildOpts.fileFilter) {
                         const filterRx = new RegExp(buildOpts.fileFilter, "i");
