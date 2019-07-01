@@ -8,7 +8,6 @@ interface InputHandlerProps {
     input: pxt.SnippetQuestionInput;
     onChange: (v: string) => void;
     value: string;
-    blocksInfo: pxtc.BlocksInfo;
     onEnter?: () => void;
 }
 
@@ -35,7 +34,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
     }
 
     renderInput() {
-        const { value, input, onChange, blocksInfo } = this.props;
+        const { value, input, onChange } = this.props;
 
         switch (input.type) {
             case 'dropdown':
@@ -52,7 +51,6 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                         input={input}
                         onChange={onChange}
                         value={value}
-                        blocksInfo={blocksInfo}
                         fullscreen={false}
                     />
                 );

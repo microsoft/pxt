@@ -1155,7 +1155,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (pxt.appTarget.appTheme.snippetBuilder) {
             // Push snippet extension into extraBlocks
-            initializeSnippetExtensions(ns, extraBlocks, this.editor, this.parent, this.blockInfo);
+            initializeSnippetExtensions(ns, extraBlocks, this.editor, this.parent);
         }
 
         return extraBlocks;

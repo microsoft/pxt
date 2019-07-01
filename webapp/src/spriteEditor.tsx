@@ -2,17 +2,18 @@
 import * as React from 'react';
 import * as sui from './sui';
 import * as data from './data';
+import * as compiler from './compiler';
 
 interface ISpriteEditorProps {
     input: pxt.SnippetQuestionInput;
     onChange: (v: string) => void;
     value: string;
-    blocksInfo: pxtc.BlocksInfo;
     fullscreen?: boolean;
 }
 
 interface ISpriteEditorState {
     open: boolean;
+    blocksInfo?: pxtc.BlocksInfo;
 }
 
 export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEditorState> {
@@ -22,6 +23,9 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
             open: false,
           };
 
+          compiler
+            .getBlocksAsync()
+            .then((blocksInfo) => this.setState({ blocksInfo: blocksInfo }));
           this.openSpriteEditor = this.openSpriteEditor.bind(this);
       }
 
@@ -38,7 +42,9 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
       }
 
       renderSpriteEditor() {
-          const { value, blocksInfo } = this.props;
+          const { value } = this.props;
+          const { blocksInfo } = this.state;
+
           const stateSprite = value && this.stripImageLiteralTags(value);
           const state = pxtsprite
             .imageLiteralToBitmap('', stateSprite || DEFAULT_SPRITE_STATE);

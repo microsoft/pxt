@@ -37,9 +37,6 @@ interface SnippetBuilderState {
     actions?: sui.ModalButton[];
 }
 
-let thisBlocksInfo: pxtc.BlocksInfo;
-
-
 /**
  * Snippet builder takes a static config file and builds a modal with inputs and outputs based on config settings.
  * An output type is attached to the start of your markdown allowing you to define a number of markdown output. (blocks, lang)
@@ -379,7 +376,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                                     onChange={this.onChange(input.answerToken)}
                                                     input={input}
                                                     value={answers[input.answerToken] || ''}
-                                                    blocksInfo={thisBlocksInfo}
                                                     onEnter={this.nextPage}
                                                     key={input.answerToken}
                                                 />
@@ -420,10 +416,8 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
     snippetBuilder.show();
 }
 
-export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView, blocksInfo: pxtc.BlocksInfo) {
+export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
     const snippetExtensions = getSnippetExtensions();
-
-    thisBlocksInfo = blocksInfo
 
     snippetExtensions
         .filter(snippet => snippet.namespace == ns)
