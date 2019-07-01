@@ -2889,7 +2889,7 @@ export class ProjectView
 
             const tutorialOptions: pxt.tutorial.TutorialOptions = {
                 tutorial: tutorialId,
-                tutorialName: title,
+                tutorialName: tutorialInfo.title || title,
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,

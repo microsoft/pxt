@@ -1,6 +1,7 @@
 namespace pxt.tutorial {
     export function parseTutorial(tutorialmd: string): TutorialInfo {
         const steps = parseTutorialSteps(tutorialmd);
+        const title = parseTutorialTitle(tutorialmd);
         if (!steps)
             return undefined; // error parsing steps
 
@@ -37,6 +38,7 @@ namespace pxt.tutorial {
 
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
+            title: title,
             steps: steps,
             code
         };
@@ -50,6 +52,11 @@ namespace pxt.tutorial {
                 return true;
             }
         }
+    }
+
+    function parseTutorialTitle(tutorialmd: string): string {
+        let title = tutorialmd.match(/^#[^#](.*)$/mi);
+        return title && title.length > 1 ? title[1] : null;
     }
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
