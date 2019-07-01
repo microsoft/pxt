@@ -1,6 +1,10 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 namespace pxtblockly {
+    import svg = pxt.svgUtil;
+    export const HEADER_HEIGHT = 50;
+    export const TOTAL_WIDTH = 300;
+
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         protected params: U;
@@ -18,9 +22,6 @@ namespace pxtblockly {
 
         // DOM references
         private topDiv: HTMLDivElement;
-        private editorGalleryToggle: HTMLDivElement;
-        private editorButton: HTMLButtonElement;
-        private galleryButton: HTMLButtonElement;
         private gridDiv: SVGSVGElement;
         private bottomDiv: HTMLDivElement;
         private doneButton: HTMLButtonElement;
@@ -35,12 +36,15 @@ namespace pxtblockly {
         private static CELL_HORIZONTAL_MARGIN = 7;
         private static CELL_VERTICAL_MARGIN = 5;
         private static CELL_CORNER_RADIUS = 5;
-        private static BOTTOM_MARGIN = 7;
         private elt: SVGSVGElement;
         private cells: SVGRectElement[][] = [];
         private static VIEWBOX_WIDTH: number;
         private static VIEWBOX_HEIGHT: number;
 
+        // Use toggle from sprite editor
+        private toggle: pxtsprite.Toggle;
+        private root: svg.SVG;
+        private gallery: pxtmelody.MelodyGallery;
 
         constructor(value: string, params: U, validator?: Function) {
             super(value, validator);
@@ -100,20 +104,20 @@ namespace pxtblockly {
             this.topDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
 
-            this.editorGalleryToggle = document.createElement("div");
-            this.editorGalleryToggle.id = "melody-toggle";
+            // Same toggle set up as sprite editor
+            this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
+            this.toggle = new pxtsprite.Toggle(this.root, { leftText: "Editor", rightText: "Gallery", baseColor: "#B4009E" });
+            this.toggle.onStateChange(isLeft => {
+                if (isLeft) {
+                    this.gallery.hide();
+                }
+                else {
+                    this.gallery.show();
+                }
+            });
+            this.toggle.layout();
+            this.toggle.translate((TOTAL_WIDTH-this.toggle.width())/2,0);
 
-            this.editorButton = document.createElement("button");
-            this.editorButton.innerText = "Editor";
-            pxt.BrowserUtils.addClass(this.editorButton, "ui left attached button");
-
-            this.galleryButton = document.createElement("button");
-            this.galleryButton.innerText = "Gallery";
-            pxt.BrowserUtils.addClass(this.galleryButton, "right attached ui button");
-
-            this.editorGalleryToggle.appendChild(this.editorButton);
-            this.editorGalleryToggle.appendChild(this.galleryButton);
-            this.topDiv.appendChild(this.editorGalleryToggle);
             div.appendChild(this.topDiv);
 
             this.gridDiv = this.createGridDisplay();
