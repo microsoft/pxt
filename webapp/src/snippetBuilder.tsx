@@ -178,7 +178,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     show() {
-        pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: true });
+        pxt.tickEvent('snippet.builder.show', null, { interactiveConsent: true });
         this.initializeActionButtons();
         this.setState({
             visible: true,
@@ -197,7 +197,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     cancel() {
-        pxt.tickEvent("snippetBuilder.cancel", undefined, { interactiveConsent: true });
+        const { name } = this.state.config;
+        pxt.tickEvent("snippet.builder.cancel", { snippet: name, page: this.getCurrentPage() }, { interactiveConsent: true });
+
         this.hide();
         this.cleanup();
     }
@@ -267,6 +269,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     confirm() {
+        const { name } = this.state.config;
+        pxt.tickEvent('snippet.builder.back.page', { snippet: name, page: this.getCurrentPage() }, { interactiveConsent: true });
         this.injectBlocksToWorkspace();
         Blockly.hideChaff();
         this.hide();
@@ -301,32 +305,44 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return true;
     }
 
+    updateOutput(question: pxt.SnippetQuestions) {
+        const { tsOutput } = this.state;
+
+        if (question.output && tsOutput.indexOf(question.output) === -1) {
+            this.setState({ tsOutput: `${tsOutput}\n${question.output}`}, this.generateOutputMarkdown);
+        }
+    }
+
     /**
      * Changes page by 1 if next question exists.
      * Looks for output and appends the next questions output if it exists and
      * is not already attached to the current output.
      */
     nextPage() {
-        const { history, tsOutput } = this.state;
+        const { config, history } = this.state;
         const currentQuestion = this.getCurrentQuestion();
         const goto = currentQuestion.goto;
 
         if (this.isLastQuestion()) {
             this.confirm();
         } else if (goto) {
+            // Look ahead and update markdown
             const nextQuestion = this.getNextQuestion();
+            this.updateOutput(nextQuestion);
 
-            if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
-                this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`}, this.generateOutputMarkdown);
-            }
             this.setState({ history: [...history, goto.question ]}, this.toggleActionButton)
+            pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: goto.question}, { interactiveConsent: true });
         }
     }
 
     backPage() {
-        const { history } = this.state;
+        const { history, config } = this.state;
+
         if (history.length > 1) {
-            this.setState({ history: history.slice(0, history.length - 1)}, this.toggleActionButton);
+            this.setState({ history: history.slice(0, history.length - 1)}, () => {
+                this.toggleActionButton();
+                pxt.tickEvent('snippet.builder.back.page', { snippet: config.name, page: this.getCurrentPage() }, { interactiveConsent: true });
+            });
         }
     }
 
@@ -373,7 +389,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                     {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                                 </div>
                                 {currentQuestion.hint &&
-                                <div className='hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
                             </div>
                         }
                     </div>
