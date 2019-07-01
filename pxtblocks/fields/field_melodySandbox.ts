@@ -291,22 +291,27 @@ namespace pxtblockly {
             // play sound if selected
             if (!this.melody.getValue(row, col)) {
                 this.playNote(row);
+                pxt.BrowserUtils.removeClass(this.cells[row][col], "melody-default");
+                pxt.BrowserUtils.addClass(this.cells[row][col], this.getColorClass(row));
                 if (this.oneNotePerCol) { // clear all other notes in col
                     for (let i = 0; i < this.numRow; i++) {
                         if (this.melody.getValue(i, col)) {
+                            // remove current color class
+                            pxt.BrowserUtils.removeClass(this.cells[i][col], this.getColorClass(i));
                             // update melody array
                             this.melody.updateMelody(i, col);
                             // set color to default
-                            this.cells[i][col].style.fill = this.getColor(i, col);
+                            pxt.BrowserUtils.addClass(this.cells[i][col], "melody-default");
                         }
                     }
                 }
+            } else { // when note is unselected
+                pxt.BrowserUtils.removeClass(this.cells[row][col], this.getColorClass(row));
+                pxt.BrowserUtils.addClass(this.cells[row][col], "melody-default");
             }
             // update melody array
             this.invalidString = null;
-            this.melody.updateMelody(row, col);
-            // update fill color
-            this.cells[row][col].style.fill = this.getColor(row, col);
+            this.melody.updateMelody(row, col);            
             this.updateFieldLabel();
         }
 
@@ -346,7 +351,7 @@ namespace pxtblockly {
         }
 
         getColorClass(row: number): string {
-            let colorClass = "";
+            let colorClass = "melody-default";
             switch (row) {
                 case 0: colorClass = "melody-red"; break; // Middle C
                 case 1: colorClass = "melody-orange"; break; // Middle D
@@ -382,13 +387,15 @@ namespace pxtblockly {
                 'class': `blocklyLed${this.melody.getValue(x, y) ? 'On' : 'Off'}`,
                 'cursor': 'pointer',
                 width: FieldCustomMelody.CELL_WIDTH, height: FieldCustomMelody.CELL_WIDTH,
-                fill: this.getColor(x, y),
                 stroke: "white",
                 'data-x': x,
                 'data-y': y,
                 rx: FieldCustomMelody.CELL_CORNER_RADIUS
             }) as SVGRectElement;
             this.cells[x][y] = cellRect;
+            // add appropriate class so the cell has the correct fill color
+            if (this.melody.getValue(x,y)) pxt.BrowserUtils.addClass(this.cells[x][y], this.getColorClass(x));
+            else pxt.BrowserUtils.addClass(this.cells[x][y], "melody-default");
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
@@ -397,23 +404,6 @@ namespace pxtblockly {
                 ev.stopPropagation();
                 ev.preventDefault();
             }, false));
-        }
-
-        private getColor(rowNum: number, colNum: number): string {
-            let colorString = "gainsboro";
-            if (this.melody.getValue(rowNum, colNum)) {
-                switch (rowNum) {
-                    case 0: colorString = "#A80000"; break; // red - Middle C
-                    case 1: colorString = "#D83B01"; break; // orange - Middle D
-                    case 2: colorString = "#FFB900"; break; // yellow - Middle E
-                    case 3: colorString = "#107C10"; break; // green - Middle F
-                    case 4: colorString = "#008272"; break; // teal - Middle G
-                    case 5: colorString = "#0078D7"; break; // blue - Middle A
-                    case 6: colorString = "#B4009E"; break; // violet - Middle B
-                    case 7: colorString = "#5C2D91"; break; // purple - Tenor C
-                }
-            }
-            return colorString;
         }
 
         togglePlay() {
