@@ -363,8 +363,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
-                <div className="ui equal width grid">
-                    <div className='column snippet-question'>
+                <div className="ui equal width grid stackable">
+                    <div className='ui snippet-question column'>
                         {currentQuestion &&
                             <div>
                                 <div className='ui segment raised'>
@@ -385,7 +385,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                     {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                                 </div>
                                 {currentQuestion.hint &&
-                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                <div className='ui snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
                             </div>
                         }
                     </div>
