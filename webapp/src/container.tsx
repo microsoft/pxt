@@ -584,7 +584,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             <div id="sidedocs">
                 <div id="sidedocsframe-wrapper">
                     <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
+                        sandbox={`allow-scripts allow-same-origin allow-forms ${lockedEditor ? "" : "allow-popups"}`} />
                 </div>
                 {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
                     <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={sui.fireClickOnEnter} >
