@@ -465,7 +465,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
 
-                {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
+                {!sandbox ? <a href={lockedEditor ? undefined : targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={lockedEditor ? undefined : this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
                         : <span className="name">{targetTheme.organization}</span>}
