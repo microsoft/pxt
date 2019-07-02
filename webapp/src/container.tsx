@@ -572,6 +572,8 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const { sideDocsCollapsed, docsUrl } = this.state;
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showLeftChevron = (sideDocsCollapsed || isRTL) && !(sideDocsCollapsed && isRTL); // Collapsed XOR RTL
+        const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
+
         if (!docsUrl) return null;
 
         /* tslint:disable:react-iframe-missing-sandbox */
@@ -584,11 +586,11 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
                     <iframe id="sidedocsframe" src={docsUrl} title={lf("Documentation")} aria-atomic="true" aria-live="assertive"
                         sandbox="allow-scripts allow-same-origin allow-forms allow-popups" />
                 </div>
-                <div className="ui app hide" id="sidedocsbar">
+                {!lockedEditor && <div className="ui app hide" id="sidedocsbar">
                     <a className="ui icon link" role="button" tabIndex={0} data-content={lf("Open documentation in new tab")} aria-label={lf("Open documentation in new tab")} onClick={this.popOut} onKeyDown={sui.fireClickOnEnter} >
                         <sui.Icon icon="external" />
                     </a>
-                </div>
+                </div>}
             </div>
         </div>
         /* tslint:enable:react-iframe-missing-sandbox */
