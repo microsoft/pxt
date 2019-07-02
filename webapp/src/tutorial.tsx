@@ -447,7 +447,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
-        const nether = /nether=1/i.test(window.location.href);
+        const nether = !!pxt.appTarget.appTheme.nether;
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hasPrevious = tutorialReady && currentStep != 0;

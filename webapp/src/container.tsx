@@ -399,8 +399,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const { debugging, home, header, highContrast, greenScreen, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
-        const nether = /nether=1/i.test(window.location.href);
         const targetTheme = pxt.appTarget.appTheme;
+        const nether = !!targetTheme.nether;
         const isController = pxt.shell.isControllerMode();
         const homeEnabled = !nether && !isController;
         const sandbox = pxt.shell.isSandboxMode();
