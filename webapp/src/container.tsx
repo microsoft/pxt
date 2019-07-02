@@ -428,7 +428,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
                 {!targetTheme.hideMenubarLogo &&
-                    <a href={(!nether && isController) ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={nether ? undefined : this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
+                    <a aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={nether ? undefined : this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
                         {logo || portraitLogo
                             ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                             : <span className="name">{targetTheme.boardName}</span>}
