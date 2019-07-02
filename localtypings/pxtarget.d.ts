@@ -769,6 +769,7 @@ declare namespace ts.pxtc {
 declare namespace pxt.tutorial {
     interface TutorialInfo {
         editor: string; // preferred editor or blocks by default
+        title?: string;
         steps: TutorialStepInfo[];
         code: string; // all code
     }
