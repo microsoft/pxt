@@ -6,8 +6,9 @@ namespace pxt.tutorial {
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
+        let templateCode: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd
             .replace(/((?!.)\s)+/g, "\n")
@@ -30,6 +31,9 @@ namespace pxt.tutorial {
                         if (!checkTutorialEditor(pxt.JAVASCRIPT_PROJECT_NAME))
                             return undefined;
                         break;
+                    case "template":
+                        templateCode = m2;
+                        break;
                 }
                 code += "\n { \n " + m2 + "\n } \n";
                 return "";
@@ -38,7 +42,8 @@ namespace pxt.tutorial {
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
             steps: steps,
-            code
+            code,
+            templateCode
         };
 
         function checkTutorialEditor(expected: string) {
@@ -53,7 +58,7 @@ namespace pxt.tutorial {
     }
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config)\s*\n([\s\S]*?)\n```/gmi;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
         const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
 
         // Download tutorial markdown

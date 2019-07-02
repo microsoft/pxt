@@ -1068,6 +1068,7 @@ export class ProjectView
                 simulator.setDirty();
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
+            .then(() => this.loadTutorialTemplateCodeAsync())
             .then(() => {
                 const e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 const main = pkg.getEditorPkg(pkg.mainPkg)
@@ -1185,6 +1186,39 @@ export class ProjectView
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
             });
+    }
+
+    private loadTutorialTemplateCodeAsync(): Promise<void> {
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.templateCode)
+            return Promise.resolve();
+
+        const template = header.tutorial.templateCode;
+        delete header.tutorial.templateCode;
+
+        let decompilePromise = Promise.resolve();
+
+        if (header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
+            pkg.mainEditorPkg().setFile("main.ts", template);
+        }
+        else if (header.editor === pxt.PYTHON_PROJECT_NAME) {
+            decompilePromise = compiler.decompilePythonSnippetAsync(template)
+                .then(pyCode => {
+                    if (pyCode) {
+                        pkg.mainEditorPkg().setFile("main.py", pyCode);
+                    }
+                })
+        }
+        else {
+            decompilePromise = compiler.decompileBlocksSnippetAsync(template)
+                .then(blockXML => {
+                    if (blockXML) {
+                        pkg.mainEditorPkg().setFile("main.blocks", blockXML);
+                    }
+                })
+        }
+
+        return decompilePromise.then(() => workspace.saveAsync(header));
     }
 
     removeProject() {
@@ -2897,7 +2931,8 @@ export class ProjectView
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code,
-                tutorialRecipe: !!recipe
+                tutorialRecipe: !!recipe,
+                templateCode: tutorialInfo.templateCode
             };
 
             // start a tutorial within the context of an existing program

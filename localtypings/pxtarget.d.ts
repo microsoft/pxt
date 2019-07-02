@@ -771,6 +771,7 @@ declare namespace pxt.tutorial {
         editor: string; // preferred editor or blocks by default
         steps: TutorialStepInfo[];
         code: string; // all code
+        templateCode?: string;
     }
 
     interface TutorialStepInfo {
@@ -795,6 +796,7 @@ declare namespace pxt.tutorial {
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
+        templateCode?: string;
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
