@@ -2844,7 +2844,7 @@ export class ProjectView
         const scriptId = pxt.Cloud.parseScriptId(tutorialId);
         const ghid = pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;
-        let title: string;
+        let filename: string;
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
@@ -2855,7 +2855,7 @@ export class ProjectView
         recipe = recipe && !!this.state.header;
 
         if (/^\//.test(tutorialId)) {
-            title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
             p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
                 .then(md => {
                     if (md) {
@@ -2874,7 +2874,7 @@ export class ProjectView
                 .then(files => {
                     const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
                     dependencies = pxtJson.dependencies || {};
-                    title = pxtJson.name || lf("Untitled");
+                    filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     reportId = scriptId;
                     return files["README.md"];
@@ -2899,7 +2899,7 @@ export class ProjectView
                 .then(gh => {
                     const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
                     dependencies = pxtJson.dependencies || {};
-                    title = pxtJson.name || lf("Untitled");
+                    filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     return gh.files["README.md"];
                 }).catch((e) => {
@@ -2923,7 +2923,7 @@ export class ProjectView
 
             const tutorialOptions: pxt.tutorial.TutorialOptions = {
                 tutorial: tutorialId,
-                tutorialName: title,
+                tutorialName: tutorialInfo.title || filename,
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
@@ -2944,7 +2944,7 @@ export class ProjectView
             }
 
             return this.createProjectAsync({
-                name: title,
+                name: filename,
                 tutorial: tutorialOptions,
                 preferredEditor: tutorialInfo.editor,
                 dependencies

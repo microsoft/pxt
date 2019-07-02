@@ -3888,11 +3888,14 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         if (info.pkg &&
                             info.pkg != mainPkg.config.name) delete apiInfo.byQName[infok];
                     }
+                    // Look for and read pxt snippets file
+                    const pxtsnippet = pxt.Util.jsonTryParse(mainPkg.readFile('pxtsnippets.json')) as pxt.SnippetConfig[];
                     pxt.debug(`generating api docs (${Object.keys(apiInfo.byQName).length})`);
                     const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
                         package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
-                        docs: buildOpts.docs
+                        docs: buildOpts.docs,
+                        pxtsnippet: pxtsnippet,
                     })
                     if (buildOpts.fileFilter) {
                         const filterRx = new RegExp(buildOpts.fileFilter, "i");
