@@ -1194,6 +1194,9 @@ export class ProjectView
             return Promise.resolve();
 
         const template = header.tutorial.templateCode;
+
+        // Delete from the header so that we don't overwrite the user code if the tutorial is
+        // re-opened
         delete header.tutorial.templateCode;
 
         let decompilePromise = Promise.resolve();
