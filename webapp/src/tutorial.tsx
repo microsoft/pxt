@@ -447,11 +447,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
+        const nether = /nether=1/i.test(window.location.href);
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
-        const hasFinish = currentStep == maxSteps - 1;
+        const hasFinish = !nether && currentStep == maxSteps - 1;
         const hasHint = this.hasHint();
 
         let tutorialAriaLabel = '',
