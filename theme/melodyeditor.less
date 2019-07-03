@@ -32,7 +32,7 @@
 }
 
 .melody-top-bar-div {
-    padding: 10px;
+    padding: 6px 0px 0px 0px;
     float: center;
     text-align: center;
 }
@@ -61,11 +61,50 @@
 }
 
 #melody-editor-gallery {
-    overflow-y: hidden;
-    padding: 10px 20px;
-    width: 100%;
-    height: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 10px 30px 10px 10px;
+    max-height: 395px;
     background: #4f0643;
+}
+
+.melody-gallery-button {
+    text-align: center;
+    display: inline-block;
+    padding: 0;
+    margin: 4px;
+    border-radius: 4px;
+    outline: none;
+    border: 1px solid;
+    transition: box-shadow .1s;
+    cursor: pointer;
+}
+
+.melody-editor-text {
+    display: inline-block;
+    font-family: @pageFont !important;
+    font-weight: bold;
+}
+
+.melody-gallery-button-hover {
+    box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, .2);
+}
+
+.melody-gallery-button:active {
+    box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, .2);
+}
+
+.melody-gallery-button > img {
+    width: 80%;
+    height: 80%;
+    margin-top: 5%;
+
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 #melody-tempo-div {
@@ -92,38 +131,60 @@
     background-color: inherit;
 }
 
+.melody-color-block {
+    margin: 0px 7px 0px;
+    display: inline-block;
+}
+
+.sliver {
+    display: inline-block;
+    width: 9px;
+    height: 13px;
+    margin: 0.5px;
+    border: 1px solid rgba(0, 0, 0, .2); 
+}
+
 .melody-red {
     fill: #A80000;
+    background: #A80000;
 }
 
 .melody-orange {
     fill: #D83B01;
+    background: #D83B01;
 }
 
 .melody-yellow {
     fill: #FFB900;
+    background: #FFB900;
 }
 
 .melody-green {
     fill: #107C10;
+    background: #107C10;
 }
 
 .melody-teal {
     fill: #008272;
+    background: #008272;
 }
 
 .melody-blue {
     fill: #0078D7;
+    background: #0078D7;
 }
 
 .melody-violet {
     fill: #B4009E;
+    background: #B4009E;
 }
 
 .melody-purple {
     fill: #5C2D91;
+    background: #5C2D91;
 }
 
 .melody-default {
     fill: gainsboro;
+    background: gainsboro;
 }

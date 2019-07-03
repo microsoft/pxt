@@ -1,4 +1,5 @@
 namespace pxtmelody {
+    import svg = pxt.svgUtil;
     export class MelodyGallery {
         protected contentDiv: HTMLDivElement;
         protected containerDiv: HTMLDivElement;
@@ -138,8 +139,27 @@ namespace pxtmelody {
                 parentDiv.removeAttribute('aria-activedescendant');
             });
 
+            let buttonText = document.createElement('div');
+            buttonText.innerText = src;
+            buttonText.setAttribute('class', 'melody-editor-text');
+            
+            let musicIcon = document.createElement('i');
+            pxt.BrowserUtils.addClass(musicIcon, "music icon");
+            
             button.setAttribute('data-value', value);
-
+            button.appendChild(musicIcon);
+            button.appendChild(buttonText);
+            // create color representation of melody
+            let colorBlock = document.createElement("div");
+            pxt.BrowserUtils.addClass(colorBlock, "melody-color-block");
+            let notes = value.split(" ");
+            for (let i = 0; i < notes.length; i++) {
+                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
+                let colorDiv = document.createElement("div");
+                pxt.BrowserUtils.addClass(colorDiv,"sliver " + className);
+                colorBlock.appendChild(colorDiv);
+            }
+            button.appendChild(colorBlock);
             this.contentDiv.appendChild(button);
         }
 
