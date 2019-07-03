@@ -8,7 +8,7 @@ Students can then open the MakeCode editor and complete the assignment without e
 
 Watch this video demonstration to learn more:
 
-https://youtu.be/UIcW-wQ7T0k  
+https://youtu.be/oBarPukXXXQ
 <br/>
 
 For more information, Educators can read the [documentation](https://support.office.com/en-us/article/add-makecode-activities-to-assignments-in-microsoft-teams-57365fa8-b6f1-4f3d-bbd9-19ac6eeaacbb) on how to add MakeCode projects to assignments.
