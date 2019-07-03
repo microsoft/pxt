@@ -79,7 +79,8 @@ namespace pxt.tutorial {
         tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
             let info: TutorialStepInfo = {
                 fullscreen: /@(fullscreen|unplugged)/.test(s),
-                unplugged: /@unplugged/.test(s)
+                unplugged: /@unplugged/.test(s),
+                tutorialCompleted: /@tutorialCompleted/.test(s)
             }
             stepInfo.push(info);
             return ""

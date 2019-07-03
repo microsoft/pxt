@@ -937,6 +937,9 @@ export class ProjectView
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
+
+            const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
+            if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -3614,6 +3617,9 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.webUsbPairDialogAsync) {
                 pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
+            }
+            if (res.onTutorialCompleted) {
+                pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
             }
         });
 }

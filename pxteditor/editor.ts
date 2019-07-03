@@ -341,6 +341,9 @@ namespace pxt.editor {
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
+
+        // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
+        onTutorialCompleted?: () => void;
     }
 
     export interface FieldExtensionOptions {
