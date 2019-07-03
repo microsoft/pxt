@@ -9,18 +9,6 @@
 
 /* Melody Editor */
 
-#melody-name {
-    margin: 1px;
-    text-align: left;
-    float: center;
-    width: 200px;
-}
-
-#melody-name-label {
-    background-color: white;
-    margin: 10px;
-}
-
 #melody-toggle {
     margin: 10px;
     text-align: center;
@@ -32,9 +20,9 @@
 }
 
 .melody-grid-div {
-    margin: 0px 20px;
-    float: center;
+    margin: 10px 20px 0px;
     text-align: center;
+    background-color: inherit;
 }
 
 .cell {
@@ -44,9 +32,40 @@
 }
 
 .melody-top-bar-div {
-    margin: 10px;
+    padding: 10px;
     float: center;
     text-align: center;
+}
+
+.melody-editor-div {
+    height: 100%;
+    width: 100%;
+    background-color: #4f0643;
+}
+
+.melody-content-div {
+    max-height: 550px;
+    padding: 0px;
+    overflow: hidden;
+}
+
+.melody-editor-dropdown {
+    padding: 0px !important;
+}
+
+#melody-editor-gallery-outer {
+    overflow: hidden;
+    position: absolute;
+    z-index: 1002;
+    width: 100%;
+}
+
+#melody-editor-gallery {
+    overflow-y: hidden;
+    padding: 10px 20px;
+    width: 100%;
+    height: 100%;
+    background: #4f0643;
 }
 
 #melody-tempo-div {
@@ -69,7 +88,8 @@
 }
 
 .melody-bottom-bar-div {
-    margin: 10px 20px;
+    padding: 0px 20px 10px;
+    background-color: inherit;
 }
 
 .melody-red {

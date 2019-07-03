@@ -83,7 +83,24 @@ namespace pxtmelody {
             }
             return stringMelody;
         }
+
+        // turn string into boolean array
+        public setArrayRepresentation(stringNotes: string): void {
+            stringNotes = stringNotes.trim();
+            let notes = stringNotes.split(" ");
+            for (let i = 0; i < notes.length; i++) {
+                for (let j = 0; j < this.numRows; j++) {
+                    // reset everything to false
+                    this.melody[j][i] = false;
+                }
+                if (notes[i]!="-") {
+                    this.melody[noteToRow(notes[i])][i] = true;
+                } 
+            }
+        }
+
     }
+
 
     export function rowToNote(rowNum: number): string {
         let note: string = "";
