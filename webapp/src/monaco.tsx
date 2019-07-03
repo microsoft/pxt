@@ -40,7 +40,8 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 
 // TODO(dz):
 interface EditAmendment {
-    delLeft?: number
+    delLeft: number,
+    insertText: string
 }
 const amendmentMarker = "#AMENDMENT:" // TODO(dz) pivot python vs ts
 
@@ -79,20 +80,17 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             .then(completions => {
                 console.log("monaco 74")
                 const items = (completions.entries || []).map((si, i) => {
-                    let snippet = this.python ? si.pySnippet : si.snippet;
-                    if (snippet) {
+                    let insertSnippet = this.python ? si.pySnippet : si.snippet;
+                    let resultSnippet = null
+                    if (insertSnippet) {
                         let amend: EditAmendment = {
-                            delLeft: position.column - 1
+                            delLeft: position.column - 1,
+                            insertText: insertSnippet
                         }
-                        let anyAmmend = (a: EditAmendment): boolean => {
-                            return a.delLeft > 0
-                        }
-                        if (anyAmmend(amend))
-                            snippet += `${amendmentMarker}${JSON.stringify(amend)}`
-                        // let range = monaco.Range.fromPositions(position)
-                        // .setStartPosition(position.lineNumber, 1)
-                        // console.log(range)
-                        // console.dir(range)
+                        if (amend.delLeft > 0)
+                            resultSnippet = `${amendmentMarker}${JSON.stringify(amend)}`
+                        else
+                            resultSnippet = insertSnippet
                     }
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
@@ -103,11 +101,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         label,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation,
-                        detail: this.python ? si.pySnippet : si.snippet,
+                        detail: insertSnippet,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${snippet}`,
+                        sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
-                        insertText: snippet,
+                        insertText: resultSnippet,
                         // range: range,
                         // textEdit: {
                         //     text: snippet,
@@ -152,6 +150,19 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         //         newItem.insertText = "foobarbaz"
         //         return newItem
         //     })
+
+        // TODO(dz): speculation on edit/undo
+        // player.on_walk
+        // ->
+        // def foobar_foobar
+        // player.on_walk
+        // <=
+        // def foobar_foo
+
+        // step 1:
+        // player.on_walk
+        // =>
+        // def foobar_foobar
     }
 }
 
@@ -719,18 +730,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // - ensure indent works
                 // - ensure pasting snippet in the middle of existing function works
 
-                if (e.changes.length != 1)
-                    return
-                let change = e.changes[0]
-                if (change.text.indexOf(amendmentMarker) >= 0) {
-                    // text ammendment happened
+                type EditAmendmentInstance = {
+                    range: monaco.IRange
+                } & EditAmendment
+
+                function getEditAmendment(event: monaco.editor.IModelContentChangedEvent): EditAmendmentInstance | null {
+                    if (e.changes.length != 1)
+                        return null
+                    let change = e.changes[0]
+                    let hasAmendment = change.text.indexOf(amendmentMarker) >= 0
+                    if (!hasAmendment)
+                        return null
                     let textAndAmendment = change.text.split(amendmentMarker)
                     if (textAndAmendment.length != 2) {
                         // TODO(dz):
                         console.error("Incorrect text ammendment: ")
                         console.dir(change)
+                        return null
                     }
-                    let changeText = textAndAmendment[0]
+                    let preText = textAndAmendment[0]
+                    if (preText.length) {
+                        // TODO(dz): anything to do if there's unexpected text before the amendment?
+                    }
                     let amendmentStr = textAndAmendment[1]
                     let amendment = pxt.U.jsonTryParse(amendmentStr) as EditAmendment
                     if (!amendment) {
@@ -738,17 +759,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         console.error("Incorrect text ammendment str: ")
                         console.dir(amendmentStr)
                         // TODO(dz): even if we can't parse the amendment json, still remove it from the editor
-                        return
+                        return null
                     }
                     console.log("amendment:")
                     console.dir(amendment)
+                    return Object.assign({
+                        range: change.range
+                    }, amendment)
+                }
 
+                let amendment = getEditAmendment(e)
+                if (amendment) {
                     // let model = this.editor.getModel()
                     // let amendRange = monaco.Range.lift(change.range)
-                    let amendRange = Object.assign({}, change.range)
                     // let amendRange = model.validateRange(change.range)
                     // TODO(dz):
                     // amendRange.endColumn -= amendmentMarker.length + amendmentStr.length
+                    let amendRange = Object.assign({}, amendment.range)
+                    let changeText = amendment.insertText
                     amendRange.endColumn = 9999 // TODO(dz) ?
                     let changeLines = changeText.split("\n").length - 1
                     amendRange.endLineNumber += changeLines
@@ -756,8 +784,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         amendRange.startColumn = Math.max(amendRange.startColumn - amendment.delLeft, 1)
                     }
 
+                    // this.editor.getModel().pushStackElement()
+
                     // TODO(dz): hacky? yes. better way? unknown.
                     setTimeout(() => {
+                        // plan:
+                        // undo snippet with "apply", back to just user code
+                        // push proper change
+                        // 1. thing you are jumping back to can never have the AMENDMENT
+                        // 
+
                         // this.editModelAsync(amendRange, changeText)
 
                         // TODO(dz): this listens for code editor changes
@@ -809,33 +845,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                 isAutoWhitespaceEdit: true
                             }]
                             // TODO(dz): add option to skip undo stack
-                            model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)]);
+                            model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
                             // model.applyEdits(edits)
                         });
-                    }, 0)
-
-                    // this.editor.executeEdits("", [
-                    //     {
-                    //         identifier: { major: 0, minor: 0 },
-                    //         range: amendRange,
-                    //         text: changeText,
-                    //         // TODO(dz):
-                    //         forceMoveMarkers: true,
-                    //         // isAutoWhitespaceEdit: true,
-                    //     }
-                    // ]);
-
-                    // model.pushEditOperations(this.editor.getSelections(), [{
-                    //     identifier: { major: 0, minor: 0 },
-                    //     range: amendRange,
-                    //     text: changeText,
-                    //     forceMoveMarkers: true,
-                    //     isAutoWhitespaceEdit: true
-                    // }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
+                    }, 0) // end setTimeout
                 }
-                // // TODO(dz):
-                // console.log("editor changed!")
-                // console.dir(e)
             });
         })
     }
