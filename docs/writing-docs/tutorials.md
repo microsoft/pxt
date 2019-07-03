@@ -21,7 +21,7 @@ When a tutorial is chosen in the editor, the tutorial runner converts the conten
 
 **A real example**
 
-See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and 
+See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and
 [**rock-paper-scissors.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/rock-paper-scissors.md).
 
 ### ~
@@ -124,7 +124,7 @@ a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry
 
 ## Format
 
-The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions: 
+The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions:
 
 ### Title
 
@@ -202,6 +202,20 @@ If you want to display your tutorial step in a dialog and then have it skip to t
 # Flash-a-rama
 
 ## It's time to code! @unplugged
+
+```
+
+
+### TutorialCompleted
+
+Used to signify that this step in the tutorial is the "last step" even if more steps are present in the markdown. This has no impact on how tutorial progress is displayed; it is only used by MakeCode editors that do something external when a tutorial is completed.
+
+```markdown
+# Flash-a-rama
+
+## This is the last step @tutorialCompleted
+
+## This is a bonus activity that comes after the last step
 
 ```
 

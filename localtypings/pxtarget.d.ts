@@ -778,6 +778,7 @@ declare namespace pxt.tutorial {
         fullscreen?: boolean;
         // no coding
         unplugged?: boolean;
+        tutorialCompleted?: boolean;
         hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
