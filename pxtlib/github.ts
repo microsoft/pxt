@@ -48,6 +48,14 @@ namespace pxt.github {
         head?: string;
     }
 
+    export interface FileContent {
+        encoding: string;
+        content: string;
+        size: number;
+        sha: string;
+        download_url: string;
+    }
+
     export let forceProxy = false;
 
     export function useProxy() {
@@ -61,6 +69,8 @@ namespace pxt.github {
             return false // target requests no proxy
         return true
     }
+
+    let isPrivateRepoCache: pxt.Map<boolean> = {};
 
     export interface CachedPackage {
         files: Map<string>;
@@ -135,8 +145,7 @@ namespace pxt.github {
                 return this.proxyLoadPackageAsync(repopath, tag)
                     .then(v => cacheConfig(v.files[pxt.CONFIG_NAME]))
             }
-            let url = "https://raw.githubusercontent.com/" + repopath + "/" + tag + "/" + pxt.CONFIG_NAME
-            return ghGetTextAsync(url)
+            return downloadTextAsync(repopath, tag, pxt.CONFIG_NAME)
                 .then(cfg => cacheConfig(cfg));
         }
 
@@ -180,9 +189,35 @@ namespace pxt.github {
         }
     }
 
+    function fallbackDownloadTextAsync(repopath: string, commitid: string, filepath: string) {
+        return ghRequestAsync({
+            url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid
+        }).then(resp => {
+            const f = resp.json as FileContent
+            isPrivateRepoCache[repopath] = true
+            // if they give us content, just return it
+            if (f && f.encoding == "base64" && f.content != null)
+                return atob(f.content)
+            // otherwise, go to download URL
+            return U.httpGetTextAsync(f.download_url)
+        })
+    }
+
     export function downloadTextAsync(repopath: string, commitid: string, filepath: string) {
-        return ghGetTextAsync(
-            "https://raw.githubusercontent.com/" + repopath + "/" + commitid + "/" + filepath)
+        // raw.githubusercontent.com doesn't accept ?access_toke=... and has wrong CORS settings
+        // for Authorization: header; so try anonymous access first, and otherwise fetch using API
+
+        if (isPrivateRepoCache[repopath])
+            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+
+        return U.requestAsync({
+            url: "https://raw.githubusercontent.com/" + repopath + "/" + commitid + "/" + filepath,
+            allowHttpErrors: true
+        }).then(resp => {
+            if (resp.statusCode == 200)
+                return resp.text
+            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+        })
     }
 
     // overriden by client
@@ -649,7 +684,7 @@ namespace pxt.github {
                             const release = config.releases["v" + targetVersion.major]
                                 .map(repo => pxt.github.parseRepoId(repo))
                                 .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
-                                [0];
+                            [0];
                             if (release) {
                                 // this repo is frozen to a particular tag for this target
                                 if (tags.some(t => t == release.tag)) { // tag still exists!!!
