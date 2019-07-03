@@ -1519,7 +1519,8 @@ ${lbl}: .short 0xffff
                     userError(9264, "Shorthand properties not supported.")
                     return;
                 }
-                const keyName = p.name.getText();
+                const keyName = p.name.kind == SK.StringLiteral ?
+                    (p.name as StringLiteral).text : p.name.getText();
                 const args = [
                     expr,
                     ir.numlit(getIfaceMemberId(keyName)),
