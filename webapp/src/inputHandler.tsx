@@ -156,22 +156,33 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
         return (
             <div>
                 <span>{input.label && input.label}</span>
-                <input
-                    type='range'
-                    autoFocus={autoFocus}
-                    className={'slider blocklyMockSlider'}
-                    role={'slider'}
-                    max={input.max}
-                    min={input.min}
-                    value={value}
-                    onChange={this.onChange}
-                    aria-valuemin={input.min}
-                    aria-valuemax={input.max}
-                    aria-valuenow={value}
-                    style={{
-                        marginLeft: 0
-                    }}
-                />
+                <div className='ui grid'>
+                    <div className='column snippet-slider'>
+                        <input
+                            type='range'
+                            autoFocus={autoFocus}
+                            className={'slider blocklyMockSlider'}
+                            role={'slider'}
+                            max={input.max}
+                            min={input.min}
+                            value={value}
+                            onChange={this.onChange}
+                            aria-valuemin={input.min}
+                            aria-valuemax={input.max}
+                            aria-valuenow={value}
+                            style={{
+                                marginLeft: 0
+                            }}
+                        />
+                    </div>
+                    <div className='column slider-value snippet'>
+                        <sui.Input
+                            value={value}
+                            onChange={this.props.onChange}
+                            class='snippet slider-input'
+                        />
+                    </div>
+                </div>
             </div>
         )
     }

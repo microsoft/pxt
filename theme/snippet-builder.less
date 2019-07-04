@@ -46,6 +46,22 @@ Inputs
 SLIDER
 ====================*****
 */
+.ui.grid>div.column.snippet-slider {
+    width: 80%;
+    padding-right: 0;
+    margin-right: 0;
+}
+.ui.grid>div.column.slider-value.snippet {
+    padding-left: 5px;
+}
+input.snippet.slider-input {
+    font-size: .8em;
+    max-width: 2.5em;
+    width: 2.5em;
+    float: left;
+    padding: 2px;
+    text-align: center;
+}
 input.slider.blocklyMockSlider {
     margin-top: 8px;
     height: 22px;
@@ -58,7 +74,9 @@ input.slider.blocklyMockSlider {
     margin-bottom: 20px;
     background: #547AB2;
     background: rgb(56, 92, 177);
+    float: left;
 }
+
 input.slider.blocklyMockSlider[type=range] {
     -webkit-appearance: none;
     width: 100%;
