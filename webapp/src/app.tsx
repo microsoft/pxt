@@ -1852,7 +1852,8 @@ export class ProjectView
                 if (loadBlocks) {
                     return this.createProjectAsync(opts)
                         .then(() => {
-                            return compiler.getBlocksAsync()
+                            return this.loadBlocklyAsync()
+                                .then(compiler.getBlocksAsync)
                                 .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
