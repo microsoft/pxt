@@ -359,7 +359,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const currentQuestion = this.getCurrentQuestion();
 
         return (
-            <sui.Modal isOpen={visible} className={'snippet-builder'} size="large"
+            <sui.Modal isOpen={visible} className={'snippet-builder fullscreennobg'}
                 closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >

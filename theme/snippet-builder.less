@@ -1,8 +1,5 @@
-
 .snippet-builder {
     overflow: visible;
-    min-height: 30em;
-    max-height: 30em;
     .snippet-question {
         h6 {
             font-weight: bolder;
@@ -47,7 +44,7 @@ SLIDER
 ====================*****
 */
 .ui.grid>div.column.snippet-slider {
-    width: 80%;
+    width: 14em;
     padding-right: 0;
     margin-right: 0;
 }
@@ -221,4 +218,26 @@ input.slider.blocklyMockSlider[type=range]::-ms-fill-upper {
 input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
     background: #547AB2;
     padding: 0;
+}
+
+/** Semantic UI's default fullscreen styling to bypass overrides (importants added by semantic)*/
+
+.ui.fullscreennobg.modal {
+    width: 95% !important;
+    left: 2.5% !important;
+    margin: 1em auto;
+}
+
+.ui.fullscreennobg.scrolling.modal {
+    left: 0em !important;
+}
+
+.ui.fullscreennobg.modal > .header {
+    padding-right: 2.25rem;
+}
+
+.ui.fullscreennobg.modal > .close {
+    top: 1.0535rem;
+    right: 1rem;
+    color: rgba(0, 0, 0, 0.87);
 }
