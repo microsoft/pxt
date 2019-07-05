@@ -1,5 +1,5 @@
-import {Builder, until} from 'selenium-webdriver';
-import {chrome} from 'selenium-webdriver/chrome';
+import { Builder, until } from 'selenium-webdriver';
+import { chrome } from 'selenium-webdriver/chrome';
 
 
 const WEBSITE_URL = "https://makecode.microbit.org"
