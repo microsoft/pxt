@@ -144,7 +144,7 @@ namespace pxt.tutorial {
 
         const table = tutorialmd.match(tableRegex)[0];
         table.replace(keyValueRegex, function (f, k, v) {
-            m[k.trim()] = v.trim();
+                m[k.trim()] = v.trim();
                 return "";
             });
 
