@@ -304,12 +304,12 @@ namespace pxtblockly {
             if (!this.melody.getValue(row, col)) {
                 this.playNote(row);
                 pxt.BrowserUtils.removeClass(this.cells[row][col], "melody-default");
-                pxt.BrowserUtils.addClass(this.cells[row][col], this.getColorClass(row));
+                pxt.BrowserUtils.addClass(this.cells[row][col], pxtmelody.getColorClass(row));
                 if (this.oneNotePerCol) { // clear all other notes in col
                     for (let i = 0; i < this.numRow; i++) {
                         if (this.melody.getValue(i, col)) {
                             // remove current color class
-                            pxt.BrowserUtils.removeClass(this.cells[i][col], this.getColorClass(i));
+                            pxt.BrowserUtils.removeClass(this.cells[i][col], pxtmelody.getColorClass(i));
                             // update melody array
                             this.melody.updateMelody(i, col);
                             // set color to default
@@ -318,7 +318,7 @@ namespace pxtblockly {
                     }
                 }
             } else { // when note is unselected
-                pxt.BrowserUtils.removeClass(this.cells[row][col], this.getColorClass(row));
+                pxt.BrowserUtils.removeClass(this.cells[row][col], pxtmelody.getColorClass(row));
                 pxt.BrowserUtils.addClass(this.cells[row][col], "melody-default");
             }
             // update melody array
@@ -332,14 +332,14 @@ namespace pxtblockly {
             let count: number = ++this.soundingKeys;
 
             switch (rowNumber) {
-                case 0: tone = 262; break; // Middle C
-                case 1: tone = 294; break; // Middle D
-                case 2: tone = 330; break; // Middle E
-                case 3: tone = 349; break; // Middle F
-                case 4: tone = 392; break; // Middle G
-                case 5: tone = 440; break; // Middle A
-                case 6: tone = 494; break; // Middle B
-                case 7: tone = 523; break; // Tenor C 
+                case 0: tone = 523; break; // Tenor C
+                case 1: tone = 494; break; // Middle B
+                case 2: tone = 440; break; // Middle A
+                case 3: tone = 392; break; // Middle G
+                case 4: tone = 349; break; // Middle F
+                case 5: tone = 330; break; // Middle E
+                case 6: tone = 294; break; // Middle D
+                case 7: tone = 262; break; // Middle C 
             }
 
             if (this.isPlaying) { // when melody is playing
@@ -362,21 +362,6 @@ namespace pxtblockly {
             }
         }
 
-        private getColorClass(row: number): string {
-            let colorClass = "melody-default";
-            switch (row) {
-                case 0: colorClass = "melody-red"; break; // Middle C
-                case 1: colorClass = "melody-orange"; break; // Middle D
-                case 2: colorClass = "melody-yellow"; break; // Middle E
-                case 3: colorClass = "melody-green"; break; // Middle F
-                case 4: colorClass = "melody-teal"; break; // Middle G
-                case 5: colorClass = "melody-blue"; break; // Middle A
-                case 6: colorClass = "melody-violet"; break; // Middle B
-                case 7: colorClass = "melody-purple"; break; // Tenor C
-            }
-            return colorClass;
-        }
-
         private createGridDisplay(): SVGSVGElement {
             FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + FieldCustomMelody.CELL_VERTICAL_MARGIN;
             FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
@@ -394,12 +379,12 @@ namespace pxtblockly {
             for (let i = 0; i < this.numCol; i++) {
                 for (let j = 0; j < this.numRow; j++) {
                     // update color if necessary
-                    if (this.melody.getValue(j,i) && !pxt.BrowserUtils.containsClass(this.cells[j][i], this.getColorClass(j)) ) {
-                        pxt.BrowserUtils.addClass(this.cells[j][i], this.getColorClass(j));
+                    if (this.melody.getValue(j,i) && !pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j)) ) {
+                        pxt.BrowserUtils.addClass(this.cells[j][i], pxtmelody.getColorClass(j));
                         pxt.BrowserUtils.removeClass(this.cells[j][i], "melody-default");
                         // reset to default if not selected
-                    } else if (!this.melody.getValue(j,i) && pxt.BrowserUtils.containsClass(this.cells[j][i], this.getColorClass(j))) {
-                        pxt.BrowserUtils.removeClass(this.cells[j][i], this.getColorClass(j));
+                    } else if (!this.melody.getValue(j,i) && pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j))) {
+                        pxt.BrowserUtils.removeClass(this.cells[j][i], pxtmelody.getColorClass(j));
                         pxt.BrowserUtils.addClass(this.cells[j][i], "melody-default");
                     }
 
@@ -424,7 +409,7 @@ namespace pxtblockly {
             }) as SVGRectElement;
             this.cells[x][y] = cellRect;
             // add appropriate class so the cell has the correct fill color
-            if (this.melody.getValue(x,y)) pxt.BrowserUtils.addClass(this.cells[x][y], this.getColorClass(x));
+            if (this.melody.getValue(x,y)) pxt.BrowserUtils.addClass(this.cells[x][y], pxtmelody.getColorClass(x));
             else pxt.BrowserUtils.addClass(this.cells[x][y], "melody-default");
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
@@ -477,6 +462,7 @@ namespace pxtblockly {
         }
 
         private showGallery() {
+            this.stopMelody();
             this.gallery.show((result: string) => {
                 if (result) {
                     this.melody.setArrayRepresentation(result);

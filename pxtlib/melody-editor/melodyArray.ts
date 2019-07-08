@@ -105,29 +105,29 @@ namespace pxtmelody {
     export function rowToNote(rowNum: number): string {
         let note: string = "";
         switch (rowNum) {
-            case 0: note = "C"; break;
-            case 1: note = "D"; break;
-            case 2: note = "E"; break;
-            case 3: note = "F"; break;
-            case 4: note = "G"; break;
-            case 5: note = "A"; break;
-            case 6: note = "B"; break;
-            case 7: note = "C5"; break;
+            case 0: note = "C5"; break;
+            case 1: note = "B"; break;
+            case 2: note = "A"; break;
+            case 3: note = "G"; break;
+            case 4: note = "F"; break;
+            case 5: note = "E"; break;
+            case 6: note = "D"; break;
+            case 7: note = "C"; break;
         }
         return note;
     }
 
     export function noteToRow(note: string): number {
-        let rowNum: number = 0;
+        let rowNum: number = -1;
         switch (note) {
-            case "C": rowNum = 0; break;
-            case "D": rowNum = 1; break;
-            case "E": rowNum = 2; break;
-            case "F": rowNum = 3; break;
-            case "G": rowNum = 4; break;
-            case "A": rowNum = 5; break;
-            case "B": rowNum = 6; break;
-            case "C5": rowNum = 7; break;
+            case "C5": rowNum = 0; break;
+            case "B": rowNum = 1; break;
+            case "A": rowNum = 2; break;
+            case "G": rowNum = 3; break;
+            case "F": rowNum = 4; break;
+            case "E": rowNum = 5; break;
+            case "D": rowNum = 6; break;
+            case "C": rowNum = 7; break;
         }
         return rowNum;
     }
@@ -141,8 +141,8 @@ namespace pxtmelody {
             case 3: colorClass = "melody-green"; break; // Middle F
             case 4: colorClass = "melody-teal"; break; // Middle G
             case 5: colorClass = "melody-blue"; break; // Middle A
-            case 6: colorClass = "melody-violet"; break; // Middle B
-            case 7: colorClass = "melody-purple"; break; // Tenor C
+            case 6: colorClass = "melody-purple"; break; // Middle B
+            case 7: colorClass = "melody-violet"; break; // Tenor C
         }
         return colorClass;
     }

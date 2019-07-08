@@ -67,6 +67,7 @@ namespace pxtmelody {
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
             //const totalWidth = "300px";
+            //const buttonWidth = "250px";
             const buttonWidth = "300px";
             const buttonHeight = "35px";
             //pxtmelody.SampleMelodies.forEach((item, i) => this.mkButton(item.name, item.name, item.notes, i, buttonWidth));
@@ -160,7 +161,19 @@ namespace pxtmelody {
                 colorBlock.appendChild(colorDiv);
             }
             button.appendChild(colorBlock);
+            let preview = document.createElement("button");
+            pxt.BrowserUtils.addClass(preview, "mini ui icon button melody-preview-button");
+            let playButton = document.createElement("i");
+            pxt.BrowserUtils.addClass(playButton, "play icon");
+            preview.appendChild(playButton);
+
+            // let row = document.createElement("div");
+            // pxt.BrowserUtils.addClass(row, "melody-gallery-row");
+            // row.appendChild(button);
+            // row.appendChild(preview);
+            // button.appendChild(preview);
             this.contentDiv.appendChild(button);
+            //this.contentDiv.appendChild(row);
         }
 
         protected handleSelection(value: string) {

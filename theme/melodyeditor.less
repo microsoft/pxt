@@ -71,6 +71,7 @@
 .melody-gallery-button {
     text-align: center;
     display: inline-block;
+    //width: 250px;
     padding: 0;
     margin: 4px;
     border-radius: 4px;
@@ -92,19 +93,6 @@
 
 .melody-gallery-button:active {
     box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, .2);
-}
-
-.melody-gallery-button > img {
-    width: 80%;
-    height: 80%;
-    margin-top: 5%;
-
-    image-rendering: optimizeSpeed;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: optimize-contrast;
-    image-rendering: pixelated;
-    -ms-interpolation-mode: nearest-neighbor;
 }
 
 #melody-tempo-div {
@@ -142,6 +130,15 @@
     height: 13px;
     margin: 0.5px;
     border: 1px solid rgba(0, 0, 0, .2); 
+}
+
+.melody-preview-button {
+    //display: inline-block;
+    float: right;
+}
+
+.melody-gallery-row {
+    display: inline-flex;
 }
 
 .melody-red {
