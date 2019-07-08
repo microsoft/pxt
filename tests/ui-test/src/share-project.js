@@ -1,30 +1,36 @@
+import { DomObject } from './lib/dom-object';
 
-const { By } = require('selenium-webdriver');
+import assert from "assert";
 
 
-function share() {
+class ShareProject extends DomObject {
 
-    it('Get in the fortest project', async () => {
-        await browser.findElement(By.className('ui card  link file')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('icon share alternate large icon-and-text  ')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('/html/body/div[6]/div/div/div[3]/button/span')).getText().then(b => {
-            assert.equal(b, 'Publish project');
-            browser.sleep(3000);
-        })
+    async shareProject() {
 
-        await browser.findElement(By.xpath('/html/body/div[6]/div/div/div[3]/button/span')).click();
-        await browser.sleep(3000);
-        //Get current CSS value
-        getURL = browser.findElement(By.xpath('//*[@id="projectUri"]')).getCssValue();
-        assert.notEqual(getURL, "");
-        await browser.sleep(3000);
+        await this.click('.shareproject');
 
-        await browser.findElement(By.className('ui button icon icon-and-text ui right labeled primary icon button')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('icon close remove circle ')).click();
+        let publishIconText = await this.getText('.sharedialog .actions .ui.text');
 
-    })
+        console.debug(`The name of publish project button is: "${publishIconText}"`);
+
+        assert.equal(publishIconText, 'Publish project');
+
+        let sharedProjectName = await this.getInputValue("#projectNameInput");
+
+        console.debug(`The shared project's name is: "${sharedProjectName}"`);
+
+        assert.equal(sharedProjectName, "Project1");
+
+        await this.click('.labeled.primary', '.field i.icon', '.closeIcon');
+
+        return true;
+    }
+
+    test() {
+
+        it('Share Project', async () => {
+            return await this.shareProject();
+        });
+    }
 }
-exports.share = share;
+export let shareProject = new ShareProject();
