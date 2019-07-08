@@ -887,12 +887,15 @@ p.ui.font.small {
         left: auto;
     }
 
+    #editortools #downloadArea,
     #editortools > div > div > .ui.grid > .column.left {
         display: none;
     }
 
-    #editortools > div > div > .ui.grid > .column.right {
-        width: 100%!important;
+    @media only screen and (max-width: @largestTabletScreen) {
+        #editortools > div > div > .ui.grid > .column.right {
+            width: 100%!important;
+        }
     }
 }
 
