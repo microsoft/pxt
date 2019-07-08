@@ -66,11 +66,8 @@ namespace pxtmelody {
 
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
-            //const totalWidth = "300px";
-            //const buttonWidth = "250px";
             const buttonWidth = "300px";
-            const buttonHeight = "35px";
-            //pxtmelody.SampleMelodies.forEach((item, i) => this.mkButton(item.name, item.name, item.notes, i, buttonWidth));
+            const buttonHeight = "45px";
             const samples = pxtmelody.SampleMelodies;
             for (let i = 0; i < samples.length; i++) {
                 this.mkButton(samples[i].name, samples[i].name, samples[i].notes, i, buttonWidth, buttonHeight);
@@ -116,40 +113,44 @@ namespace pxtmelody {
         }
 
         protected mkButton(src: string, alt: string, value: string, i: number, width: string, height: string) {
-            let button = document.createElement('button');
-            button.setAttribute('id', ':' + i); // For aria-activedescendant
-            button.setAttribute('role', 'menuitem');
-            button.setAttribute('class', 'melody-gallery-button melody-editor-card');
-            button.title = alt;
-            button.style.width = width;
-            button.style.height = height;
+            let row = document.createElement('div');
+            row.setAttribute('id', ':' + i); // For aria-activedescendant
+            row.setAttribute('role', 'menuitem');
+            row.setAttribute('class', 'melody-gallery-button melody-editor-card');
+            row.style.width = width;
+            row.style.height = height;
             let backgroundColor = this.itemBackgroundColor;
 
-            button.style.backgroundColor = backgroundColor;
-            button.style.borderColor = this.itemBorderColor;
+            row.style.backgroundColor = backgroundColor;
+            row.style.borderColor = this.itemBorderColor;
 
             const parentDiv = this.contentDiv;
 
-            button.addEventListener("click", () => this.handleSelection(value));
-            button.addEventListener(pxt.BrowserUtils.pointerEvents.move, () => {
-                button.setAttribute('class', 'melody-gallery-button melody-gallery-button-hover melody-editor-card');
-                parentDiv.setAttribute('aria-activedescendant', button.id);
+            row.addEventListener(pxt.BrowserUtils.pointerEvents.move, () => {
+                row.setAttribute('class', 'melody-gallery-button melody-gallery-button-hover melody-editor-card');
+                parentDiv.setAttribute('aria-activedescendant', row.id);
             });
-            button.addEventListener(pxt.BrowserUtils.pointerEvents.leave, () => {
-                button.setAttribute('class', 'melody-gallery-button melody-editor-card');
+            row.addEventListener(pxt.BrowserUtils.pointerEvents.leave, () => {
+                row.setAttribute('class', 'melody-gallery-button melody-editor-card');
                 parentDiv.removeAttribute('aria-activedescendant');
             });
+
+            let galleryItem = document.createElement('div');
+            pxt.BrowserUtils.addClass(galleryItem, "melody-gallery-row");
+
+            galleryItem.addEventListener("click", () => this.handleSelection(value));
+            
 
             let buttonText = document.createElement('div');
             buttonText.innerText = src;
             buttonText.setAttribute('class', 'melody-editor-text');
             
             let musicIcon = document.createElement('i');
-            pxt.BrowserUtils.addClass(musicIcon, "music icon");
+            pxt.BrowserUtils.addClass(musicIcon, "music icon melody-icon");
             
-            button.setAttribute('data-value', value);
-            button.appendChild(musicIcon);
-            button.appendChild(buttonText);
+            galleryItem.setAttribute('data-value', value);
+            galleryItem.title = alt;
+
             // create color representation of melody
             let colorBlock = document.createElement("div");
             pxt.BrowserUtils.addClass(colorBlock, "melody-color-block");
@@ -160,20 +161,25 @@ namespace pxtmelody {
                 pxt.BrowserUtils.addClass(colorDiv,"sliver " + className);
                 colorBlock.appendChild(colorDiv);
             }
-            button.appendChild(colorBlock);
-            let preview = document.createElement("button");
-            pxt.BrowserUtils.addClass(preview, "mini ui icon button melody-preview-button");
+            
+            galleryItem.appendChild(musicIcon);
+            galleryItem.appendChild(buttonText);
+            galleryItem.appendChild(colorBlock);
+
+            let preview = document.createElement("div");
+            preview.title = "Preview";
+            pxt.BrowserUtils.addClass(preview, "circular mini ui icon button melody-preview-button");
+            
             let playButton = document.createElement("i");
             pxt.BrowserUtils.addClass(playButton, "play icon");
+            pxt.BrowserUtils.addClass(playButton, "melody-gallery-play-icon");
+            
             preview.appendChild(playButton);
-
-            // let row = document.createElement("div");
-            // pxt.BrowserUtils.addClass(row, "melody-gallery-row");
-            // row.appendChild(button);
-            // row.appendChild(preview);
-            // button.appendChild(preview);
-            this.contentDiv.appendChild(button);
-            //this.contentDiv.appendChild(row);
+            preview.addEventListener("click", () => this.previewMelody(value));
+            
+            row.appendChild(galleryItem);
+            row.appendChild(preview);
+            this.contentDiv.appendChild(row);
         }
 
         protected handleSelection(value: string) {
@@ -182,6 +188,10 @@ namespace pxtmelody {
                 this.pending = undefined;
                 notes(value);
             }
+        }
+
+        protected previewMelody(value:string):void {
+
         }
 
     }
