@@ -173,15 +173,22 @@ declare namespace pxt {
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = any; // TODO(jb) Should include custom answer types for number, enums, string, image
-
-    interface SnippetGoToParameters {
-        [tokenType: string]: number;
-    }
+    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
-        question: number;
-        parameters?: SnippetGoToParameters;
+        question?: number;
+        validate?: SnippetValidate;
+        parameters?: SnippetParameters;
+    }
+
+    interface SnippetOutputOptions {
+        type: 'error' | 'hint';
+        output: string;
+    }
+
+    interface SnippetParameters {
+        output?: SnippetOutputOptions;
+        goto?: SnippetGoToOptions;
     }
 
     interface SnippetQuestionInput {
@@ -189,12 +196,28 @@ declare namespace pxt {
         defaultAnswer: SnippetAnswerTypes;
         type?: string;
         label?: string;
+        max?: number;
+        min?: number;
+        options?: pxt.Map<string>;
+    }
+
+    interface SnippetValidateRegex {
+        token: string;
+        regex: string;
+        match?: SnippetParameters;
+        noMatch?: SnippetParameters;
+    }
+
+    interface SnippetValidate {
+        regex?: SnippetValidateRegex;
     }
 
     interface SnippetQuestions {
         title: string;
         output?: string;
+        errorMessage?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];
+        hint?: string;
     }
 }

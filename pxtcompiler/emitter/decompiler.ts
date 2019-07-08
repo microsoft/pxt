@@ -441,6 +441,8 @@ namespace ts.pxtc.decompiler {
 
         if (n) {
             emitStatementNode(n);
+        } else if (!options.snippetMode && !stmts.length) {
+            write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
         }
 
         workspaceComments.forEach(c => {

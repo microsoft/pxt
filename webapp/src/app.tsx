@@ -937,6 +937,9 @@ export class ProjectView
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
+
+            const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
+            if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -1068,6 +1071,7 @@ export class ProjectView
                 simulator.setDirty();
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
+            .then(() => this.loadTutorialTemplateCodeAsync())
             .then(() => {
                 const e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 const main = pkg.getEditorPkg(pkg.mainPkg)
@@ -1185,6 +1189,42 @@ export class ProjectView
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
             });
+    }
+
+    private loadTutorialTemplateCodeAsync(): Promise<void> {
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.templateCode)
+            return Promise.resolve();
+
+        const template = header.tutorial.templateCode;
+
+        // Delete from the header so that we don't overwrite the user code if the tutorial is
+        // re-opened
+        delete header.tutorial.templateCode;
+
+        let decompilePromise = Promise.resolve();
+
+        if (header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
+            pkg.mainEditorPkg().setFile("main.ts", template);
+        }
+        else if (header.editor === pxt.PYTHON_PROJECT_NAME) {
+            decompilePromise = compiler.decompilePythonSnippetAsync(template)
+                .then(pyCode => {
+                    if (pyCode) {
+                        pkg.mainEditorPkg().setFile("main.py", pyCode);
+                    }
+                })
+        }
+        else {
+            decompilePromise = compiler.decompileBlocksSnippetAsync(template)
+                .then(blockXML => {
+                    if (blockXML) {
+                        pkg.mainEditorPkg().setFile("main.blocks", blockXML);
+                    }
+                })
+        }
+
+        return decompilePromise.then(() => workspace.saveAsync(header));
     }
 
     removeProject() {
@@ -1812,7 +1852,8 @@ export class ProjectView
                 if (loadBlocks) {
                     return this.createProjectAsync(opts)
                         .then(() => {
-                            return compiler.getBlocksAsync()
+                            return this.loadBlocklyAsync()
+                                .then(compiler.getBlocksAsync)
                                 .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
@@ -2810,7 +2851,7 @@ export class ProjectView
         const scriptId = pxt.Cloud.parseScriptId(tutorialId);
         const ghid = pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;
-        let title: string;
+        let filename: string;
         let autoChooseBoard: boolean = true;
         let dependencies: pxt.Map<string> = {};
         let features: string[] = undefined;
@@ -2821,7 +2862,7 @@ export class ProjectView
         recipe = recipe && !!this.state.header;
 
         if (/^\//.test(tutorialId)) {
-            title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
             p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
                 .then(md => {
                     if (md) {
@@ -2840,7 +2881,7 @@ export class ProjectView
                 .then(files => {
                     const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
                     dependencies = pxtJson.dependencies || {};
-                    title = pxtJson.name || lf("Untitled");
+                    filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     reportId = scriptId;
                     return files["README.md"];
@@ -2865,7 +2906,7 @@ export class ProjectView
                 .then(gh => {
                     const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
                     dependencies = pxtJson.dependencies || {};
-                    title = pxtJson.name || lf("Untitled");
+                    filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     return gh.files["README.md"];
                 }).catch((e) => {
@@ -2889,7 +2930,7 @@ export class ProjectView
 
             const tutorialOptions: pxt.tutorial.TutorialOptions = {
                 tutorial: tutorialId,
-                tutorialName: title,
+                tutorialName: tutorialInfo.title || filename,
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
@@ -2897,7 +2938,8 @@ export class ProjectView
                 tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code,
-                tutorialRecipe: !!recipe
+                tutorialRecipe: !!recipe,
+                templateCode: tutorialInfo.templateCode
             };
 
             // start a tutorial within the context of an existing program
@@ -2909,7 +2951,7 @@ export class ProjectView
             }
 
             return this.createProjectAsync({
-                name: title,
+                name: filename,
                 tutorial: tutorialOptions,
                 preferredEditor: tutorialInfo.editor,
                 dependencies
@@ -3614,6 +3656,9 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.webUsbPairDialogAsync) {
                 pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
+            }
+            if (res.onTutorialCompleted) {
+                pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
             }
         });
 }

@@ -909,6 +909,7 @@ export interface ModalButton {
     loading?: boolean;
     disabled?: boolean;
     approveButton?: boolean;
+    labelPosition?: "left" | "right";
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -1113,7 +1114,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                             />
                             : <ModalButtonElement
                                 key={`action_${action.label}`}
-                                {...action} />
+                                {...action} labelPosition={action.labelPosition} />
                     )}
                 </div> : undefined}
             {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
@@ -1143,7 +1144,8 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
         return <Button
             icon={action.icon}
             text={action.label}
-            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
+            labelPosition={action.labelPosition}
+            className={`approve ${action.icon ? `icon ${action.labelPosition ? action.labelPosition : 'right'} labeled` : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter} />
     }
