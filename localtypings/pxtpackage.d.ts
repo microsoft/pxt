@@ -178,7 +178,7 @@ declare namespace pxt {
     interface SnippetGoToOptions {
         question?: number;
         validate?: SnippetValidate;
-        parameters?: SnippetParameters;
+        parameters?: SnippetParameters[]; // Answer token with corresponding question
     }
 
     interface SnippetOutputOptions {
@@ -187,8 +187,9 @@ declare namespace pxt {
     }
 
     interface SnippetParameters {
-        output?: SnippetOutputOptions;
-        goto?: SnippetGoToOptions;
+        token?: string;
+        answer?: string;
+        question: number;
     }
 
     interface SnippetQuestionInput {

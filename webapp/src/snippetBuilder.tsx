@@ -286,12 +286,36 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return config.questions[this.getCurrentPage()];
     }
 
+    getNextQuestionNumber() {
+        const { answers, defaults } = this.state;
+        const currentQuestion = this.getCurrentQuestion();
+
+        if (currentQuestion.goto) {
+            const { parameters } = currentQuestion.goto;
+
+            if (parameters) {
+                for (const parameter of parameters) {
+                    const { answer, token } = parameter;
+                    if (answer === answers[token] || answer === defaults[token]) {
+                        return parameter.question;
+                    }
+                }
+            }
+
+            return currentQuestion.goto.question;
+        }
+
+        return null;
+    }
+
     getNextQuestion() {
         const { config } = this.state;
-        const currentQuestion = this.getCurrentQuestion();
-        if (currentQuestion.goto) {
-            return config.questions[currentQuestion.goto.question];
+        const nextQuestionNumber = this.getNextQuestionNumber();
+
+        if (nextQuestionNumber) {
+            return config.questions[nextQuestionNumber];
         }
+
         return null;
     }
 
@@ -327,9 +351,10 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             // Look ahead and update markdown
             const nextQuestion = this.getNextQuestion();
             this.updateOutput(nextQuestion);
+            const followingQuestion = this.getNextQuestionNumber();
 
-            this.setState({ history: [...history, goto.question ]}, this.toggleActionButton)
-            pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: goto.question}, { interactiveConsent: true });
+            this.setState({ history: [...history, followingQuestion]}, this.toggleActionButton)
+            pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: followingQuestion }, { interactiveConsent: true });
         }
     }
 
@@ -351,7 +376,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 [answerToken]: v,
             }
         }), this.generateOutputMarkdown);
-        }
+    }
 
     renderCore() {
         const { visible, answers, config, mdOutput, actions, defaults } = this.state;
