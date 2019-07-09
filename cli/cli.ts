@@ -3562,7 +3562,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boole
                         // decompile to python
                         let ts1 = opts.fileSystem["main.ts"]
                         let program = pxtc.getTSProgram(opts);
-                        const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
+                        const decompiled = pxt.py.decompileToPython(program, "main.ts");
                         let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
                         if (!pySuccess) {
                             console.log("ts2py error")
