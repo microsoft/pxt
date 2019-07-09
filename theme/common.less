@@ -907,6 +907,23 @@ p.ui.font.small {
     }
 }
 
+#root.headless.transparentEditorTools {
+    #editortools {
+        left: auto;
+    }
+
+    #editortools #downloadArea,
+    #editortools > div > div > .ui.grid > .column.left {
+        display: none;
+    }
+
+    @media only screen and (max-width: @largestTabletScreen) {
+        #editortools > div > div > .ui.grid > .column.right {
+            width: 100%!important;
+        }
+    }
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -1095,6 +1112,12 @@ p.ui.font.small {
     }
     .hideEditorFloats #editortools {
         height: @editorToolsCollapsedHeight;
+    }
+    .hideEditorFloats #editortools > div > div > .ui.grid {
+        margin: auto;
+    }
+    .hideEditorFloats #editorToolbarArea {
+        padding-top: 0;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
         bottom: @editorToolsCollapsedHeight;
