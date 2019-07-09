@@ -51,12 +51,14 @@ namespace pxtmelody {
             this.containerDiv.style.display = "block";
             this.buildDom();
             this.visible = true;
-            this.contentDiv.setAttribute("class", "shown");
+            pxt.BrowserUtils.removeClass(this.contentDiv, "hidden-above");
+            pxt.BrowserUtils.addClass(this.contentDiv, "shown");
         }
 
         hide() {
             this.visible = false;
-            this.contentDiv.setAttribute("class", "hidden-above");
+            pxt.BrowserUtils.removeClass(this.contentDiv, "shown");
+            pxt.BrowserUtils.addClass(this.contentDiv, "hidden-above");
             this.value = null;
             this.stopMelody();
         }
@@ -119,7 +121,7 @@ namespace pxtmelody {
             let row = document.createElement('div');
             row.setAttribute('id', ':' + i); // For aria-activedescendant
             row.setAttribute('role', 'menuitem');
-            row.setAttribute('class', 'melody-gallery-button melody-editor-card');
+            pxt.BrowserUtils.addClass(row, "melody-gallery-button melody-editor-card");
             row.style.width = width;
             row.style.height = height;
             let backgroundColor = this.itemBackgroundColor;
@@ -130,11 +132,11 @@ namespace pxtmelody {
             const parentDiv = this.contentDiv;
 
             row.addEventListener(pxt.BrowserUtils.pointerEvents.move, () => {
-                row.setAttribute('class', 'melody-gallery-button melody-gallery-button-hover melody-editor-card');
+                pxt.BrowserUtils.addClass(row, "melody-gallery-button-hover");
                 parentDiv.setAttribute('aria-activedescendant', row.id);
             });
             row.addEventListener(pxt.BrowserUtils.pointerEvents.leave, () => {
-                row.setAttribute('class', 'melody-gallery-button melody-editor-card');
+                pxt.BrowserUtils.removeClass(row, "melody-gallery-button-hover");
                 parentDiv.removeAttribute('aria-activedescendant');
             });
 
@@ -146,7 +148,7 @@ namespace pxtmelody {
 
             let buttonText = document.createElement('div');
             buttonText.innerText = sample.name;
-            buttonText.setAttribute('class', 'melody-editor-text');
+            pxt.BrowserUtils.addClass(buttonText, "melody-editor-text");
 
             let musicIcon = document.createElement('i');
             pxt.BrowserUtils.addClass(musicIcon, "music icon melody-icon");
