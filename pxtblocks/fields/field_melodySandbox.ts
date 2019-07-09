@@ -256,12 +256,10 @@ namespace pxtblockly {
 
         protected getDropdownBackgroundColour() {
             return this.sourceBlock_.getColour();
-            //return "#696969";
         }
 
         protected getDropdownBorderColour() {
             //return this.sourceBlock_.getColourSecondary();
-            //return "#696969";
             return "#4f0643";
         }
 
@@ -370,8 +368,10 @@ namespace pxtblockly {
 
         private createGridDisplay(): SVGSVGElement {
             FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + FieldCustomMelody.CELL_VERTICAL_MARGIN;
+            if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 30;
             FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
             this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
+
             // Create the cells of the matrix that is displayed
             for (let i = 0; i < this.numRow; i++) {
                 for (let j = 0; j < this.numCol; j++) {
