@@ -882,21 +882,6 @@ p.ui.font.small {
     i.green.icon {
         color: rgba(0,0,0,.6)!important;
     }
-
-    #editortools {
-        left: auto;
-    }
-
-    #editortools #downloadArea,
-    #editortools > div > div > .ui.grid > .column.left {
-        display: none;
-    }
-
-    @media only screen and (max-width: @largestTabletScreen) {
-        #editortools > div > div > .ui.grid > .column.right {
-            width: 100%!important;
-        }
-    }
 }
 
 #root.headless.collapsedEditorTools {
@@ -919,6 +904,23 @@ p.ui.font.small {
     #filelist {
         left: 0;
         z-index: 40;
+    }
+}
+
+#root.headless.transparentEditorTools {
+    #editortools {
+        left: auto;
+    }
+
+    #editortools #downloadArea,
+    #editortools > div > div > .ui.grid > .column.left {
+        display: none;
+    }
+
+    @media only screen and (max-width: @largestTabletScreen) {
+        #editortools > div > div > .ui.grid > .column.right {
+            width: 100%!important;
+        }
     }
 }
 
