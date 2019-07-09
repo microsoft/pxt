@@ -63,11 +63,11 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
             Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
-            
+
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
             pxt.BrowserUtils.addClass(contentDiv, "melody-content-div");
             pxt.BrowserUtils.addClass(contentDiv.parentElement, "melody-editor-dropdown");
-            
+
             this.gallery = new pxtmelody.MelodyGallery();
             this.renderEditor(contentDiv);
 
@@ -121,7 +121,7 @@ namespace pxtblockly {
                 }
             });
             this.toggle.layout();
-            this.toggle.translate((TOTAL_WIDTH-this.toggle.width())/2,0);
+            this.toggle.translate((TOTAL_WIDTH - this.toggle.width()) / 2, 0);
 
             div.appendChild(this.topDiv);
             div.appendChild(this.gallery.getElement());
@@ -179,11 +179,17 @@ namespace pxtblockly {
         // Runs when the editor is closed by clicking on the Blockly workspace
         protected onEditorClose() {
             this.stopMelody();
+            if (this.gallery) {
+                this.gallery.stopMelody();
+            }
         }
 
         // when click done
         private onDone() {
             this.stopMelody();
+            if (this.gallery) {
+                this.gallery.stopMelody();
+            }
             Blockly.DropDownDiv.hideIfOwner(this);
         }
 
@@ -323,7 +329,7 @@ namespace pxtblockly {
             }
             // update melody array
             this.invalidString = null;
-            this.melody.updateMelody(row, col);            
+            this.melody.updateMelody(row, col);
             this.updateFieldLabel();
         }
 
@@ -379,11 +385,11 @@ namespace pxtblockly {
             for (let i = 0; i < this.numCol; i++) {
                 for (let j = 0; j < this.numRow; j++) {
                     // update color if necessary
-                    if (this.melody.getValue(j,i) && !pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j)) ) {
+                    if (this.melody.getValue(j, i) && !pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j))) {
                         pxt.BrowserUtils.addClass(this.cells[j][i], pxtmelody.getColorClass(j));
                         pxt.BrowserUtils.removeClass(this.cells[j][i], "melody-default");
                         // reset to default if not selected
-                    } else if (!this.melody.getValue(j,i) && pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j))) {
+                    } else if (!this.melody.getValue(j, i) && pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j))) {
                         pxt.BrowserUtils.removeClass(this.cells[j][i], pxtmelody.getColorClass(j));
                         pxt.BrowserUtils.addClass(this.cells[j][i], "melody-default");
                     }
@@ -409,7 +415,7 @@ namespace pxtblockly {
             }) as SVGRectElement;
             this.cells[x][y] = cellRect;
             // add appropriate class so the cell has the correct fill color
-            if (this.melody.getValue(x,y)) pxt.BrowserUtils.addClass(this.cells[x][y], pxtmelody.getColorClass(x));
+            if (this.melody.getValue(x, y)) pxt.BrowserUtils.addClass(this.cells[x][y], pxtmelody.getColorClass(x));
             else pxt.BrowserUtils.addClass(this.cells[x][y], "melody-default");
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
