@@ -1,9 +1,14 @@
 .snippet-builder {
     overflow: visible;
+    min-height: 95%;
     .snippet-question {
         h6 {
             font-weight: bolder;
         }
+    }
+
+    .ui.segment.raised {
+        overflow: scroll;
     }
 
     div.snippet.hint.ui.segment {
@@ -32,6 +37,11 @@
                 }
             }
         }
+    }
+    div.actions {
+        bottom: 0;
+        position: absolute;
+        width: 100%;
     }
 }
 
@@ -240,4 +250,13 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
     top: 1.0535rem;
     right: 1rem;
     color: rgba(0, 0, 0, 0.87);
+}
+
+/** Position picker input type */
+.position-picker.container {
+    width: 320px;
+    height: 240px;
+    max-width: 320px;
+    max-height: 240px;
+    background-color: black;
 }

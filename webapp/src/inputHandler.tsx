@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as data from './data';
 import { SpriteEditor } from './spriteEditor';
 import * as sui from './sui';
-
+import { PositionPicker } from './positionPicker';
 
 interface InputHandlerProps {
     input: pxt.SnippetQuestionInput;
@@ -63,6 +63,10 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                         autoFocus={true}
                     />
                 )
+            case 'positionPicker':
+                return (
+                    <PositionPicker />
+                )
             case 'text':
             default:
                 return (
@@ -112,17 +116,17 @@ class DropdownInput extends data.Component<IDropdownInputProps, {}> {
 
         return (
             <sui.DropdownMenu className='inline button' role="menuitem"
-            text={value.length ? pxt.Util.rlf(input.options[value]) : pxt.Util.rlf(input.options[Object.keys(input.options)[0]])}
-            icon={'dropdown'}>
-            {Object.keys(input.options).map((optionValue) =>
-                <sui.Item
-                    role="menuitem"
-                    value={optionValue}
-                    key={input.options[optionValue]}
-                    text={pxt.Util.rlf(input.options[optionValue])}
-                    onClick={this.onChange(optionValue)}
-                />)}
-        </sui.DropdownMenu>
+                text={value.length ? pxt.Util.rlf(input.options[value]) : pxt.Util.rlf(input.options[Object.keys(input.options)[0]])}
+                icon={'dropdown'}>
+                {Object.keys(input.options).map((optionValue) =>
+                    <sui.Item
+                        role="menuitem"
+                        value={optionValue}
+                        key={input.options[optionValue]}
+                        text={pxt.Util.rlf(input.options[optionValue])}
+                        onClick={this.onChange(optionValue)}
+                    />)}
+            </sui.DropdownMenu>
         )
     }
 }
@@ -153,11 +157,12 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
 
     renderCore() {
         const { input, value, autoFocus } = this.props;
+
         return (
             <div>
                 <span>{input.label && input.label}</span>
                 <div className='ui grid'>
-                    <div className='column snippet-slider'>
+                    <div className='left floated column snippet-slider'>
                         <input
                             type='range'
                             autoFocus={autoFocus}

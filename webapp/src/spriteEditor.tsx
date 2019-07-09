@@ -11,12 +11,9 @@ interface ISpriteEditorProps {
     fullscreen?: boolean;
 }
 
-interface ISpriteEditorState {
-    open: boolean;
-}
-
-export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEditorState> {
+export class SpriteEditor extends data.Component<ISpriteEditorProps, {}> {
     private blocksInfo: pxtc.BlocksInfo;
+    private spriteEditor: pxtsprite.SpriteEditor;
 
     constructor(props: ISpriteEditorProps) {
         super(props);
@@ -39,41 +36,50 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         return imageLiteral;
     }
 
+    updateSpriteState() {
+        const newSpriteState = pxtsprite
+            .bitmapToImageLiteral(this.spriteEditor.bitmap().image, pxt.editor.FileType.Text);
+
+        this.props.onChange(newSpriteState);
+    }
+
+    componentWillUnmount() {
+        this.updateSpriteState();
+    }
+
     renderSpriteEditor() {
         const { blocksInfo, props } = this;
         const { value } = props;
 
         const stateSprite = value && this.stripImageLiteralTags(value);
         const state = pxtsprite
-        .imageLiteralToBitmap('', stateSprite || DEFAULT_SPRITE_STATE);
+            .imageLiteralToBitmap('', stateSprite || DEFAULT_SPRITE_STATE);
 
         const contentDiv = this.refs['spriteEditorContainer'] as HTMLDivElement;
 
-        let spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false);
-        spriteEditor.render(contentDiv);
-        spriteEditor.rePaint();
-        spriteEditor.setActiveColor(1, true);
-        spriteEditor.setSizePresets([
+        this.spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false);
+        this.spriteEditor.render(contentDiv);
+        this.spriteEditor.rePaint();
+        this.spriteEditor.setActiveColor(1, true);
+        this.spriteEditor.setSizePresets([
             [8, 8],
             [16, 16],
             [32, 32],
             [10, 8]
         ]);
 
-        contentDiv.style.height = (spriteEditor.outerHeight() + 3) + "px";
-        contentDiv.style.width = (spriteEditor.outerWidth() + 3) + "px";
+        contentDiv.style.height = (this.spriteEditor.outerHeight() + 3) + "px";
+        contentDiv.style.width = (this.spriteEditor.outerWidth() + 3) + "px";
         contentDiv.style.overflow = "hidden";
         contentDiv.className = 'sprite-editor-dropdown-bg sprite-editor-dropdown';
-        spriteEditor.addKeyListeners();
-        spriteEditor.onClose(() => {
-            const newSpriteState = pxtsprite
-            .bitmapToImageLiteral(spriteEditor.bitmap().image, pxt.editor.FileType.Text);
-            this.setState({
-                open: false,
-            });
-            spriteEditor.removeKeyListeners();
-            this.props.onChange(newSpriteState);
-            spriteEditor = undefined;
+        this.spriteEditor.addKeyListeners();
+        this.spriteEditor.onClose(() => {
+            this.updateSpriteState();
+            this.spriteEditor.removeKeyListeners();
+
+            // Dangerously set for now
+            contentDiv.innerHTML = '';
+            this.renderSpriteEditor();
         });
     }
 

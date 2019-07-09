@@ -164,7 +164,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         let md = `\`\`\`${config.outputType}\n`;
         md += this.replaceTokens(tsOutput);
         md += `\n\`\`\``;
-
+        // Removeswhitespace
+        // TODO(jb) md.replace(/\s/g, '_');
         this.setState({ mdOutput: md });
     }, 300, false);
 
@@ -344,23 +345,23 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     onChange = (answerToken: string) => (v: string) => {
-            this.setState((prevState: SnippetBuilderState) => ({
-                answers: {
-                    ...prevState.answers,
-                    [answerToken]: v,
-                }
-            }), this.generateOutputMarkdown);
+        this.setState((prevState: SnippetBuilderState) => ({
+            answers: {
+                ...prevState.answers,
+                [answerToken]: v,
+            }
+        }), this.generateOutputMarkdown);
         }
 
     renderCore() {
-        const { visible, answers, config, mdOutput, actions } = this.state;
+        const { visible, answers, config, mdOutput, actions, defaults } = this.state;
         const { parent } = this.props;
 
         const currentQuestion = this.getCurrentQuestion();
 
         return (
             <sui.Modal isOpen={visible} className={'snippet-builder fullscreennobg'}
-                closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
+                closeOnEscape={true} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
                 <div className="ui equal width grid">
@@ -375,7 +376,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                                 <InputHandler
                                                     onChange={this.onChange(input.answerToken)}
                                                     input={input}
-                                                    value={answers[input.answerToken] || ''}
+                                                    value={answers[input.answerToken] || defaults[input.answerToken]}
                                                     onEnter={this.nextPage}
                                                     key={input.answerToken}
                                                 />
