@@ -4,11 +4,20 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [{
-    "name": "Launch via NPM",
-    "runtimeExecutable": "npm",
-    "runtimeArgs": [
-      "test"
+    "type": "node",
+    "request": "launch",
+    "name": "Mocha Tests",
+    "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+    "args": [
+      "${workspaceFolder}/src/index.js",
+      "--require",
+      "@babel/register",
+      "--require",
+      "@babel/polyfill",
+      "--colors",
+      "--no-timeouts"
     ],
-    "port": 9229
-  }]
+    "internalConsoleOptions": "openOnSessionStart"
+  }
+  ]
 }
