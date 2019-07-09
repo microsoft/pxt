@@ -20,6 +20,6 @@
     "@babel/preset-env": "^7.4.5",
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/register": "^7.4.4",
-    "mocha": "6.0.2"
+    "mocha": "^6.1.4"
   }
 }
