@@ -792,7 +792,7 @@ namespace pxt.py {
             if (s.initializer) {
                 let [initExp, initSup] = emitExp(s.initializer)
                 if (initSup.length) {
-                    return throwError(s, 3007, "TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`")
+                    return throwError(s, 3007, `TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
                 }
                 initPart = ` = ${initExp}`
             }
