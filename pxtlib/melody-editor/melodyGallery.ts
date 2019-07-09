@@ -1,4 +1,3 @@
-/// <reference path="../../pxtblocks/fields/field_utils.ts" />
 namespace pxtmelody {
     export class MelodyGallery {
         protected contentDiv: HTMLDivElement;
@@ -211,11 +210,11 @@ namespace pxtmelody {
 
             // start note
             this.timeouts.push(setTimeout(() => {
-                pxtblockly.AudioContextManager.tone(tone);
+                pxt.AudioContextManager.tone(tone);
             }, colNumber * this.getDuration(tempo)));
             // stop note
             this.timeouts.push(setTimeout(() => {
-                pxtblockly.AudioContextManager.stop();
+                pxt.AudioContextManager.stop();
             }, (colNumber + 1) * this.getDuration(tempo)));
 
         }
@@ -257,7 +256,7 @@ namespace pxtmelody {
 
         public stopMelody() {
             while (this.timeouts.length) clearTimeout(this.timeouts.shift());
-            pxtblockly.AudioContextManager.stop();
+            pxt.AudioContextManager.stop();
         }
 
         private resetPlayIcons(): void {

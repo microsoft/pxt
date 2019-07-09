@@ -351,19 +351,19 @@ namespace pxtblockly {
             if (this.isPlaying) { // when melody is playing
                 // start note
                 this.timeouts.push(setTimeout(() => {
-                    AudioContextManager.tone(tone);
+                    pxt.AudioContextManager.tone(tone);
                 }, colNumber * this.getDuration()));
                 // stop note
                 this.timeouts.push(setTimeout(() => {
-                    AudioContextManager.stop();
+                    pxt.AudioContextManager.stop();
                 }, (colNumber + 1) * this.getDuration()));
             } else { // when a single note is selected
                 // start note
-                AudioContextManager.tone(tone);
+                pxt.AudioContextManager.tone(tone);
                 // stop note
                 this.timeouts.push(setTimeout(() => {
                     if (this.soundingKeys == count)
-                        AudioContextManager.stop();
+                        pxt.AudioContextManager.stop();
                 }, this.getDuration()));
             }
         }
@@ -462,7 +462,7 @@ namespace pxtblockly {
         private stopMelody() {
             if (this.isPlaying) {
                 while (this.timeouts.length) clearTimeout(this.timeouts.shift());
-                AudioContextManager.stop();
+                pxt.AudioContextManager.stop();
                 this.isPlaying = false;
             }
         }
