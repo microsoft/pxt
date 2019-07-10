@@ -261,7 +261,7 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
     background-color: black;
     position: relative;
     overflow: hidden;
-    border: 4px #ccc groove;
+    outline: 4px #ccc groove;
 }
 
 .position-picker.cross-x, .position-picker.cross-y {
@@ -275,13 +275,24 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
     width: 100%;
     height: 2px;
     z-index: 10;
+    top: 50%;
 }
 
 .position-picker.cross-y {
     width: 2px;
     height: 100%;
+    left: 50%;
 }
 
 .position-picker.label {
     color: white;
+}
+
+.position-picker.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2em;
+    background-color: rgb(236, 59, 89);
+    position: absolute;
+    z-index: 9;
 }
