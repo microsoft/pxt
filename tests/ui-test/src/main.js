@@ -1,6 +1,7 @@
 import { website } from "./lib/website";
 import { newProjectPage } from './new-project'
 import { shareProject } from "./share-project";
+import { toggleButton } from "./toggle-button";
 
 describe('Micro:bit Test', function () {
     before(async () => {
@@ -12,4 +13,5 @@ describe('Micro:bit Test', function () {
 
     newProjectPage.test();
     shareProject.test();
+    toggleButton.test();
 })

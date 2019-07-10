@@ -1,20 +1,34 @@
 
-const { By } = require('selenium-webdriver');
+import { DomObject } from './lib/dom-object';
 
-function toggle() {
+import assert from "assert";
 
-    it('Toggle to JavaScript', async () => {
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[2]/div/div[2]/span')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="filelist"]/div[4]/div')).getText().then(b => {
-            console.assert(b, 'explorer');
-        })
-    })
+class ToggleButton extends DomObject {
 
-    it('Toggle to Blcok', async () => {
-        await browser.findElement(By.className('ui item link  blocks-menuitem ')).click();
-        await browser.sleep(3000);
-    })
+    async toggleDisplayForm() {
+
+        console.debug("Start testToggleDisplayForm()");
+
+        await this.click('[title="Convert code to JavaScript"]');
+        assert.in
+        await driver.sleep(2000);
+        let explorerToolbar = await this.getText('[aria-label="File explorer toolbar"]');
+        assert.equal(explorerToolbar, 'Explorer');
+        console.debug(`The ${explorerToolbar} toolbar appears after toggling to JavaScript option`);
+
+        await this.click('[title="Convert code to Blocks"]');
+
+    }
+
+    test() {
+        it('Toggle to Blocks or JavaScript', async () => {
+
+            return await this.toggleDisplayForm();
+
+        });
+    }
 }
 
-exports.toggle = toggle;
+export let toggleButton = new ToggleButton();
+
+
