@@ -3,12 +3,10 @@ namespace pxt.py.rx {
     const nonASCIIwhitespace = /[\u1680\u2000-\u200a\u202f\u205f\u3000\ufeff]/;
 
     export function isIdentifierStart(code: number) {
-        // \u0041-\u005a\u005f\u0061-\u007a
         return ts.pxtc.isIdentifierStart(code, ts.pxtc.ScriptTarget.ES5);
     }
 
     export function isIdentifierChar(code: number) {
-        // \u0030-\u0039\u0041-\u005a\u005f\u0061-\u007a
         return ts.pxtc.isIdentifierPart(code, ts.pxtc.ScriptTarget.ES5);
     }
 
