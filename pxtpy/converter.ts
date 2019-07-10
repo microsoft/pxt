@@ -586,8 +586,13 @@ namespace pxt.py {
 
         let ct = t.classType
 
-        if (!ct && t.primType == "@array")
-            ct = lookupApi("Array")
+        if (!ct) {
+            if (t.primType == "@array") {
+                ct = lookupApi("Array")
+            } else if (t.primType == "string") {
+                ct = lookupApi("String")
+            }
+        }
 
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
