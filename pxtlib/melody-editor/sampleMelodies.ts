@@ -3,14 +3,14 @@ namespace pxtmelody {
         name: string;
         notes: string;
         tempo: number;
-    
+
         constructor(name: string, notes: string, tempo: number) {
             this.name = name;
             this.notes = notes;
             this.tempo = tempo;
         }
     }
-    
+
     export const SampleMelodies = [
         new MelodyInfo("Scale", "C5 B A G F E D C", 120),
         new MelodyInfo("Reverse Scale", "C D E F G A B C5", 120),
@@ -23,5 +23,5 @@ namespace pxtmelody {
         new MelodyInfo("Melody 9", "E D G F B A C5 B", 120),
         new MelodyInfo("Melody 10", "C5 G B A F A C5 B", 120)
     ]
-       
+
 }

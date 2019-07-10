@@ -93,9 +93,9 @@ namespace pxtmelody {
                     // reset everything to false
                     this.melody[j][i] = false;
                 }
-                if (notes[i]!="-") {
+                if (notes[i] != "-") {
                     this.melody[noteToRow(notes[i])][i] = true;
-                } 
+                }
             }
         }
 
