@@ -96,6 +96,7 @@ namespace pxt.py {
         delete r.pyRetType
         delete r.pySymbolType
         delete r.moduleTypeMarker
+        delete r.declared
         if (r.parameters)
             r.parameters = r.parameters.map(p => {
                 p = U.flatClone(p)
@@ -391,7 +392,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9520; 9550-9599 reserved for parser
+    // next free error 9521; 9550-9599 reserved for parser
     function error(astNode: py.AST, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -924,10 +925,20 @@ namespace pxt.py {
             const topLev = isTopLevel()
 
             setupScope(n)
+            const existing = lookupSymbol(getFullName(n));
             const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
 
-            if (shouldInlineFunction(sym) && !inline)
-                return B.mkText("")
+            if (!inline) {
+                if (existing && existing.declared === currIteration) {
+                    error(n, 9520, "Duplicate function declaration");
+                }
+
+                sym.declared = currIteration;
+
+                if (shouldInlineFunction(sym)) {
+                    return B.mkText("")
+                }
+            }
 
             if (isMethod) sym.isInstance = true
             ctx.currFun = n
@@ -1327,7 +1338,7 @@ namespace pxt.py {
                 fd.isGetSet = true
                 fdBack.isGetSet = true
                 return B.mkGroup(res)
-            } else 
+            } else
             */
             if (currIteration == 0) {
                 return B.mkText("/* skip for now */")
@@ -1733,7 +1744,7 @@ namespace pxt.py {
                     syntaxInfo.auxResult = i
                     let arg = orderedArgs[i]
                     if (!arg) {
-                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // if we can't parse this next argument, but the cursor is beyond the
                         // previous arguments, assume it's here
                         break
                     }
