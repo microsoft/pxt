@@ -930,7 +930,7 @@ namespace pxt.py {
 
             if (!inline) {
                 if (existing && existing.declared === currIteration) {
-                    error(n, 9520, "Duplicate function declaration");
+                    error(n, 9520, lf("Duplicate function declaration"));
                 }
 
                 sym.declared = currIteration;
