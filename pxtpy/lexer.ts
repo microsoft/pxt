@@ -539,6 +539,8 @@ namespace pxt.py {
                     let s = String.fromCharCode(i)
                     if (specialParse.hasOwnProperty(s)) {
                         asciiParse[i] = specialParse[s]
+                    } else if (i == 0x3b) {
+                        asciiParse[i] = () => addToken(TokenType.NewLine, "");
                     } else if (allOps.hasOwnProperty(s)) {
                         let canBeLengthened = false
                         let op = allOps[s]
