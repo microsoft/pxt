@@ -192,15 +192,34 @@ declare namespace pxt {
         question: number;
     }
 
-    interface SnippetQuestionInput {
+    interface SnippetInputAnswerSingular {
         answerToken: string;
         defaultAnswer: SnippetAnswerTypes;
-        type?: string;
-        label?: string;
+    }
+
+    interface SnippetInputAnswerPlural {
+        answerTokens: string[];
+        defaultAnswers: SnippetAnswerTypes[];
+    }
+
+    interface SnippetInputOtherType {
+        type: string | 'text' | 'spriteEditor'
+    }
+
+    interface SnippetInputNumberType {
+        type: 'number' | 'positionPicker';
         max?: number;
         min?: number;
-        options?: pxt.Map<string>;
     }
+
+    interface SnippetInputDropdownType {
+        type: "dropdown";
+        options: pxt.Map<string>;
+    }
+
+    type SnippetQuestionInput = { label?: string; }
+        & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType)
 
     interface SnippetValidateRegex {
         token: string;

@@ -3,10 +3,13 @@ import * as data from './data';
 import { SpriteEditor } from './spriteEditor';
 import * as sui from './sui';
 import { PositionPicker } from './positionPicker';
+import * as Snippet from './snippetBuilder'
+
+type MultiOnChange = (answerToken: string) => (v: string) => void;
 
 interface InputHandlerProps {
     input: pxt.SnippetQuestionInput;
-    onChange: (v: string) => void;
+    onChange: ((v: string) => void) | MultiOnChange;
     value: string;
     onEnter?: () => void;
 }
@@ -46,14 +49,16 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                     />
                 )
             case 'spriteEditor':
-                return (
-                    <SpriteEditor
-                        input={input}
-                        onChange={onChange}
-                        value={value}
-                        fullscreen={false}
-                    />
-                );
+                if (Snippet.isSnippetInputAnswerTypeOther(input)) {
+                    return (
+                        <SpriteEditor
+                            input={input}
+                            onChange={onChange}
+                            value={value}
+                            fullscreen={false}
+                        />
+                    );
+                }
             case 'number':
                 return (
                     <RangeInput
@@ -64,20 +69,31 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                     />
                 )
             case 'positionPicker':
-                return (
-                    <PositionPicker />
-                )
+                if (!Snippet.isSnippetInputAnswerSingular(input)) {
+                    return (
+                        <PositionPicker
+                            defaultX={parseInt(input.defaultAnswers[0])}
+                            defaultY={parseInt(input.defaultAnswers[1])}
+                            input={input}
+                            onChange={onChange as MultiOnChange}
+                        />
+                    )
+                }
             case 'text':
             default:
-                return (
-                    <sui.Input
-                        label={input.label && input.label}
-                        value={value || ''}
-                        onChange={onChange}
-                        autoFocus={true}
-                    />
-                )
+                if (Snippet.isSnippetInputAnswerTypeOther(input)) {
+                    return (
+                        <sui.Input
+                            label={input.label && input.label}
+                            value={value || ''}
+                            onChange={onChange}
+                            autoFocus={true}
+                        />
+                    )
+                }
         }
+
+        return null;
     }
 
     renderCore() {
@@ -113,21 +129,25 @@ class DropdownInput extends data.Component<IDropdownInputProps, {}> {
 
     renderCore() {
         const { value, input } = this.props;
+        if (Snippet.isSnippetInputAnswerTypeDropdown(input)) {
 
-        return (
-            <sui.DropdownMenu className='inline button' role="menuitem"
-                text={value.length ? pxt.Util.rlf(input.options[value]) : pxt.Util.rlf(input.options[Object.keys(input.options)[0]])}
-                icon={'dropdown'}>
-                {Object.keys(input.options).map((optionValue) =>
-                    <sui.Item
-                        role="menuitem"
-                        value={optionValue}
-                        key={input.options[optionValue]}
-                        text={pxt.Util.rlf(input.options[optionValue])}
-                        onClick={this.onChange(optionValue)}
-                    />)}
-            </sui.DropdownMenu>
-        )
+            return (
+                <sui.DropdownMenu className='inline button' role="menuitem"
+                    text={value.length ? pxt.Util.rlf(input.options[value]) : pxt.Util.rlf(input.options[Object.keys(input.options)[0]])}
+                    icon={'dropdown'}>
+                    {Object.keys(input.options).map((optionValue) =>
+                        <sui.Item
+                            role="menuitem"
+                            value={optionValue}
+                            key={input.options[optionValue]}
+                            text={pxt.Util.rlf(input.options[optionValue])}
+                            onClick={this.onChange(optionValue)}
+                        />)}
+                    </sui.DropdownMenu>
+            )
+        }
+
+        return null;
     }
 }
 
@@ -157,38 +177,41 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
 
     renderCore() {
         const { input, value, autoFocus } = this.props;
-
-        return (
-            <div>
-                <span>{input.label && input.label}</span>
-                <div className='ui grid'>
-                    <div className='left floated column snippet-slider'>
-                        <input
-                            type='range'
-                            autoFocus={autoFocus}
-                            className={'slider blocklyMockSlider'}
-                            role={'slider'}
-                            max={input.max}
-                            min={input.min}
-                            value={value}
-                            onChange={this.onChange}
-                            aria-valuemin={input.min}
-                            aria-valuemax={input.max}
-                            aria-valuenow={value}
-                            style={{
-                                marginLeft: 0
-                            }}
-                        />
-                    </div>
-                    <div className='column slider-value snippet'>
-                        <sui.Input
-                            value={value}
-                            onChange={this.props.onChange}
-                            class='snippet slider-input'
-                        />
+        if (Snippet.isSnippetInputAnswerTypeNumber(input)) {
+            return (
+                <div>
+                    <span>{input.label && input.label}</span>
+                    <div className='ui grid'>
+                        <div className='left floated column snippet-slider'>
+                            <input
+                                type='range'
+                                autoFocus={autoFocus}
+                                className={'slider blocklyMockSlider'}
+                                role={'slider'}
+                                max={input.max}
+                                min={input.min}
+                                value={value}
+                                onChange={this.onChange}
+                                aria-valuemin={input.min}
+                                aria-valuemax={input.max}
+                                aria-valuenow={value}
+                                style={{
+                                    marginLeft: 0
+                                }}
+                            />
+                        </div>
+                        <div className='column slider-value snippet'>
+                            <sui.Input
+                                value={value}
+                                onChange={this.props.onChange}
+                                class='snippet slider-input'
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-        )
+            )
+        }
+
+        return null;
     }
 }
