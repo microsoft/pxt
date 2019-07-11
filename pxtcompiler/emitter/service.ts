@@ -114,6 +114,45 @@ namespace ts.pxtc {
         return r
     }
 
+    export function emitType(s: ts.TypeNode): string {
+        switch (s.kind) {
+            case ts.SyntaxKind.StringKeyword:
+                return "str"
+            case ts.SyntaxKind.NumberKeyword:
+                // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
+                return "number"
+            case ts.SyntaxKind.BooleanKeyword:
+                return "bool"
+            case ts.SyntaxKind.VoidKeyword:
+                return "None"
+            case ts.SyntaxKind.FunctionType:
+                return emitFuncType(s as ts.FunctionTypeNode)
+            case ts.SyntaxKind.ArrayType: {
+                let t = s as ts.ArrayTypeNode
+                let elType = emitType(t.elementType)
+                return `List[${elType}]`
+            }
+            case ts.SyntaxKind.TypeReference: {
+                let t = s as ts.TypeReferenceNode
+                let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
+                return `${nm}`
+            }
+            default:
+                pxt.tickEvent("depython.todo", { kind: s.kind })
+                return `(TODO: Unknown TypeNode kind: ${s.kind})`
+        }
+        // // TODO translate type
+        // return s.getText()
+    }
+
+    function emitFuncType(s: ts.FunctionTypeNode): string {
+        let returnType = emitType(s.type)
+        let params = s.parameters
+            .map(p => p.type) // python type syntax doesn't allow names
+            .map(emitType)
+        return `(${params.join(", ")}) -> ${returnType}`
+    }
+
     function getSymbolKind(node: Node) {
         switch (node.kind) {
             case SK.MethodDeclaration:
@@ -306,6 +345,7 @@ namespace ts.pxtc {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
+                        pyTypeString: emitType(p.type),
                         initializer:
                             p.initializer ? p.initializer.getText() :
                                 getExplicitDefault(attributes, n) ||
