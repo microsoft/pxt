@@ -1,7 +1,7 @@
 {
   "name": "pxt-ui-test",
   "version": "1.0.0",
-  "description": "fortest",
+  "description": "Selenium ui test for Micro:bit",
   "main": "Main.js",
   "scripts": {
     "test": "node_modules/.bin/mocha ./src/index.js --require @babel/register --require @babel/polyfill --timeout 100000"
