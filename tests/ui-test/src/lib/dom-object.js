@@ -29,6 +29,16 @@ export class DomObject {
         return criteria;
     }
 
+    async switchToWindow(value) {
+        let handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[value]);
+        if (value == 0) {
+            driver.close();
+        } else {
+            return driver.switchTo().window(handles[value]);
+        }
+    }
+
     async getText(criteria) {
         let element = await driver.findElement(this.findBy(criteria));
         return await element.getText();
@@ -42,8 +52,8 @@ export class DomObject {
     async sendKeys(criteria, keys) {
 
         let element = await driver.findElement(this.findBy(criteria));
-        await element.sendKeys(keys);
-        return true;
+        return await element.sendKeys(keys);
+
     }
 
 
