@@ -1,7 +1,10 @@
 import { By } from 'selenium-webdriver';
 import util from 'util';
 import fs from 'fs';
+import dateformat from 'dateformat';
+
 const writeFile = util.promisify(fs.writeFile);
+const screenshotsFolder = './screenshots';
 
 export class DomObject {
 
@@ -24,7 +27,7 @@ export class DomObject {
         return true;
     }
 
-   async waitforElementLocated(criteria){
+    async waitforElementLocated(criteria) {
         let findBy = this.findBy(criteria);
 
         let element = await driver.wait(until.elementLocated(findBy));
@@ -39,7 +42,6 @@ export class DomObject {
     }
 
     async getText(criteria) {
-
         let element = await this.waitforElementLocated(this.findBy(criteria));
         return await element.getText();
     }
@@ -57,18 +59,24 @@ export class DomObject {
     }
 
     async takeScreenshot(name) {
-        let element = await driver.takeScreenshot().then(
-            function (image, err) {
-                writeFile(`./screenshot/${name}.png`, image, 'base64', function (err) {
-                    console.log(err);
-                });
+        if (!fs.existsSync(screenshotsFolder)) {
+            fs.mkdirSync(screenshotsFolder);
+        }
+
+        let base64String = await driver.takeScreenshot();
+        let fileName = name + "-" + dateformat(new Date(), "yyyymmddHHMMssl");
+
+        fs.writeFile(`${screenshotsFolder}/${fileName}.png`, base64String, 'base64', function (err) {
+            if (!err) {
+                console.error(err);
             }
-        );
+        });
+
         return true;
     }
 
-    async getAttribute(criteria) {
-        let element = await driver.findElement(this.findBy(criteria));
-        return element.getAttribute('title');
+    async getAttribute(criteria, attributeName) {
+        let element = await this.waitforElementLocated(this.findBy(criteria));
+        return element.getAttribute(attributeName);
     }
 }
