@@ -10,12 +10,10 @@ export class DomObject {
             if (criteria) {
                 console.debug(`Try to click the element by criteria: ${criteria}`);
 
-                let findBy = await this.findBy(criteria);
+                let findBy = this.findBy(criteria);
 
                 //wait until the element can be located
-                await driver.wait(until.elementLocated(findBy));
-
-                let element = await driver.wait(until.elementLocated(findBy));
+                let element = await this.waitforElementLocated(findBy);
 
                 //Sleep for 2 seconds to make sure the element's state is stable for interactions
                 await driver.sleep(2000);
@@ -26,6 +24,13 @@ export class DomObject {
         return true;
     }
 
+   async waitforElementLocated(criteria){
+        let findBy = this.findBy(criteria);
+
+        let element = await driver.wait(until.elementLocated(findBy));
+        return element;
+    }
+
     findBy(criteria) {
         if (typeof criteria === 'string') {
             return By.css(criteria);
@@ -34,7 +39,8 @@ export class DomObject {
     }
 
     async getText(criteria) {
-        let element = await driver.findElement(this.findBy(criteria));
+
+        let element = await this.waitforElementLocated(this.findBy(criteria));
         return await element.getText();
     }
 
@@ -42,14 +48,12 @@ export class DomObject {
 
         let element = await driver.findElement(this.findBy(criteria));
         await element.sendKeys(keys);
-        await driver.sleep(1000);
         return true;
     }
 
 
     async click(...findBys) {
-        let i = await this.actionForAll('click', findBys);
-        return i;
+        return await this.actionForAll('click', findBys);
     }
 
     async takeScreenshot(name) {

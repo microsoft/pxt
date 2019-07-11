@@ -12,7 +12,7 @@ class Website {
 
     async open(path = "") {
         var fullPath = this.getUrl(path);
-        console.log(`Open url ${fullPath}`);
+        console.info(`Open url ${fullPath}`);
 
         await driver.get(fullPath);
 

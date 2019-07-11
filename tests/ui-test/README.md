@@ -5,8 +5,8 @@ This is the selenium UI test for Micro:bit.
 ## Download and Build
 
 1. Clone the PXT git repository
-2. Install Chrome browser in local machine.
-3. Download ChromeDriver from https://sites.google.com/a/chromium.org/chromedriver/downloads. The downloaded file is a zip file. Extract it and place the executable in a folder in your PATH.
+2. Install Chrome browser if you don't have it on your computer.
+3. Download ChromeDriver from https://sites.google.com/a/chromium.org/chromedriver/downloads. The downloaded file is a zip file. Extract it and place the executable in a folder in your PATH. Please note that there are multiple versions of ChromeDriver in download list. You need to make sure your ChromeDriver's version matches your Chrome version.
 4. Open folder tests/ui-test
 5. Install required node.js modules for the selenium test
 

@@ -4,7 +4,7 @@ import assert from 'assert';
 
 class NewProjectPage extends DomObject {
 
-    async getCodeSource() {
+    async testCreateNewProject() {
 
         console.debug("Start testGetCodeSource()");
 
@@ -16,8 +16,7 @@ class NewProjectPage extends DomObject {
         await this.sendKeys('input#projectNameInput', 'Project1');
 
         await this.click('.button.positive');
-        await driver.sleep(2000);
-
+        
         let text = await this.getText("[aria-label='My Projects'] .carouselitem:nth-child(2) .header");
         console.debug(`The header text in the first DIV of 'My Projects' is "${text}"`);
 
@@ -30,7 +29,7 @@ class NewProjectPage extends DomObject {
 
     test() {
         it('Get the code source', async () => {
-            return await this.getCodeSource();
+            return await this.testCreateNewProject();
         });
     }
 }
