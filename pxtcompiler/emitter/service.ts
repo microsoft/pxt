@@ -115,6 +115,7 @@ namespace ts.pxtc {
     }
 
     export function emitType(s: ts.TypeNode): string {
+        if (!s || !s.kind) return null;
         switch (s.kind) {
             case ts.SyntaxKind.StringKeyword:
                 return "str"
@@ -150,6 +151,8 @@ namespace ts.pxtc {
         let params = s.parameters
             .map(p => p.type) // python type syntax doesn't allow names
             .map(emitType)
+
+        // "Real" python expects this to be "Callable[[arg1, arg2], ret]", we're intentionally changing to "(arg1, arg2) -> ret"
         return `(${params.join(", ")}) -> ${returnType}`
     }
 
