@@ -296,7 +296,7 @@ namespace pxt.py {
             return [`@namespace`, `class ${name}:`].concat(stmts);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
-            let typeStr = emitType(s.type)
+            let typeStr = pxtc.emitType(s.type)
             let name = getName(s.name)
             return [`${name} = ${typeStr}`]
         }
@@ -729,48 +729,11 @@ namespace pxt.py {
 
             return out
         }
-        function emitFuncType(s: ts.FunctionTypeNode): string {
-            let returnType = emitType(s.type)
-            let params = s.parameters
-                .map(p => p.type) // python type syntax doesn't allow names
-                .map(emitType)
-            return `Callable[[${params.join(", ")}], ${returnType}]`
-        }
-        function emitType(s: ts.TypeNode): string {
-            switch (s.kind) {
-                case ts.SyntaxKind.StringKeyword:
-                    return "str"
-                case ts.SyntaxKind.NumberKeyword:
-                    // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
-                    return "number"
-                case ts.SyntaxKind.BooleanKeyword:
-                    return "bool"
-                case ts.SyntaxKind.VoidKeyword:
-                    return "None"
-                case ts.SyntaxKind.FunctionType:
-                    return emitFuncType(s as ts.FunctionTypeNode)
-                case ts.SyntaxKind.ArrayType: {
-                    let t = s as ts.ArrayTypeNode
-                    let elType = emitType(t.elementType)
-                    return `List[${elType}]`
-                }
-                case ts.SyntaxKind.TypeReference: {
-                    let t = s as ts.TypeReferenceNode
-                    let nm = getName(t.typeName)
-                    return `${nm}`
-                }
-                default:
-                    pxt.tickEvent("depython.todo", { kind: s.kind })
-                    return `(TODO: Unknown TypeNode kind: ${s.kind})`
-            }
-            // // TODO translate type
-            // return s.getText()
-        }
         function emitParamDecl(s: ParameterDeclarationExtended, inclTypesIfAvail = true): string {
             let nm = s.altName || getName(s.name)
             let typePart = ""
             if (s.type && inclTypesIfAvail) {
-                let typ = emitType(s.type)
+                let typ = pxtc.emitType(s.type)
                 typePart = `: ${typ}`
             }
             let initPart = ""
@@ -796,7 +759,7 @@ namespace pxt.py {
                 out = out.concat(expSup)
                 let declStmt: string;
                 if (s.type) {
-                    let translatedType = emitType(s.type)
+                    let translatedType = pxtc.emitType(s.type)
                     declStmt = `${varNm}: ${translatedType} = ${exp}`
                 } else {
                     declStmt = `${varNm} = ${exp}`

@@ -622,6 +622,7 @@ declare namespace ts.pxtc {
         name: string;
         description: string;
         type: string;
+        pyTypeString?: string;
         initializer?: string;
         default?: string;
         properties?: PropertyDesc[];
