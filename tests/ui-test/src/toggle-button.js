@@ -10,7 +10,7 @@ class ToggleButton extends DomObject {
         console.debug("Start testToggleDisplayForm()");
 
         await this.click('[title="Convert code to JavaScript"]');
-        assert.in
+
         await driver.sleep(2000);
         let explorerToolbar = await this.getText('[aria-label="File explorer toolbar"]');
         assert.equal(explorerToolbar, 'Explorer');
