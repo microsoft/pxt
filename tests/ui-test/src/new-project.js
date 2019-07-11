@@ -28,7 +28,7 @@ class NewProjectPage extends DomObject {
     }
 
     test() {
-        it('Get the code source', async () => {
+        it('Creae a new project and open it', async () => {
             return await this.testCreateNewProject();
         });
     }
