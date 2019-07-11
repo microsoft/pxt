@@ -39,6 +39,11 @@ export class DomObject {
         }
     }
 
+    async switchToIframe(criteria) {
+        let element = await driver.findElement(this.findBy(criteria));
+        return await driver.switchTo().frame(element);
+    }
+
     async getText(criteria) {
         let element = await driver.findElement(this.findBy(criteria));
         return await element.getText();
