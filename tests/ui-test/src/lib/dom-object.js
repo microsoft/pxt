@@ -1,4 +1,7 @@
 import { By } from 'selenium-webdriver';
+import util from 'util';
+import fs from 'fs';
+const writeFile = util.promisify(fs.writeFile);
 
 export class DomObject {
 
@@ -27,7 +30,7 @@ export class DomObject {
         if (typeof criteria === 'string') {
             return By.css(criteria);
         }
-        return criteria
+        return criteria;
     }
 
     async getText(criteria) {
@@ -47,5 +50,21 @@ export class DomObject {
     async click(...findBys) {
         let i = await this.actionForAll('click', findBys);
         return i;
+    }
+
+    async takeScreenshot(name) {
+        let element = await driver.takeScreenshot().then(
+            function (image, err) {
+                writeFile(`./screenshot/${name}.png`, image, 'base64', function (err) {
+                    console.log(err);
+                });
+            }
+        );
+        return true;
+    }
+
+    async getAttribute(criteria) {
+        let element = await driver.findElement(this.findBy(criteria));
+        return element.getAttribute('title');
     }
 }

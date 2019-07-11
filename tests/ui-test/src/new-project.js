@@ -1,6 +1,6 @@
 import { DomObject } from './lib/dom-object';
-import { By } from 'selenium-webdriver';
-import assert from "assert";
+import assert from 'assert';
+
 
 class NewProjectPage extends DomObject {
 
@@ -8,13 +8,13 @@ class NewProjectPage extends DomObject {
 
         console.debug("Start testGetCodeSource()");
 
-        await this.click('.newprojectcard', '.openproject');
-        await this.click(By.className('icon close remove circle '));
+        await this.click('.newprojectcard', '.openproject', '.closeIcon');
+        //await this.takeScreenshot('editorPage1');
+        assert.equal(await this.getAttribute('.openproject'), 'Home');
 
-        console.debug(`Input`);
         await this.click('.openproject');
-
         await this.sendKeys('input#projectNameInput', 'Project1');
+
 
         await this.click('.button.positive');
         await driver.sleep(2000);
@@ -25,8 +25,6 @@ class NewProjectPage extends DomObject {
         assert.equal(text, "Project1");
 
         await this.click('.content .header');
-        console.log("We find it!")
-
 
         return true;
     }

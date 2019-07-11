@@ -31,9 +31,7 @@ class Website {
         console.info("Close webstie...");
         driver.quit();
     }
-
 }
-
 
 global.driver = new Builder()
     .forBrowser('chrome')

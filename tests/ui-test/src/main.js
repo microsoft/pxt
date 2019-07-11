@@ -13,4 +13,4 @@ describe('Micro:bit Test', function () {
     });
 
     newProjectPage.test();
-})
+});
