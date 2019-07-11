@@ -161,7 +161,12 @@ namespace pxtblockly {
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
-            this.tempoInput.value = this.tempo + "";
+            // sync value from tempo field on block with tempo in field editor
+            if (this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0] instanceof Blockly.FieldSlider) {
+                this.tempoInput.value = this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0].text_;
+            } else {
+                this.tempoInput.value = this.tempo + "";
+            }
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
 
@@ -278,7 +283,7 @@ namespace pxtblockly {
                 this.tempoInput.value = this.tempo + "";
                 return
             }
-            // update tempo and duration values and display to reflect new tempo
+            // update tempo and display to reflect new tempo
             if (this.tempo != tempo) {
                 this.tempo = tempo;
                 if (this.melody) {
@@ -286,6 +291,11 @@ namespace pxtblockly {
                 }
                 if (this.tempoInput) {
                     this.tempoInput.value = this.tempo + "";
+                }
+                // update tempo on block if not a variable
+                if (this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0] instanceof Blockly.FieldSlider) {
+                    this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0].text_ = this.tempoInput.value;
+                    this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0].textElement_.innerHTML = this.tempoInput.value;
                 }
             }
         }
