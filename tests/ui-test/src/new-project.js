@@ -9,12 +9,11 @@ class NewProjectPage extends DomObject {
         console.debug("Start testGetCodeSource()");
 
         await this.click('.newprojectcard', '.openproject', '.closeIcon');
-        //await this.takeScreenshot('editorPage1');
+        await this.takeScreenshot('editorPage1');
         assert.equal(await this.getAttribute('.openproject'), 'Home');
 
         await this.click('.openproject');
         await this.sendKeys('input#projectNameInput', 'Project1');
-
 
         await this.click('.button.positive');
         await driver.sleep(2000);
