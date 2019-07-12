@@ -11,12 +11,19 @@ interface ISpriteEditorProps {
     fullscreen?: boolean;
 }
 
-export class SpriteEditor extends data.Component<ISpriteEditorProps, {}> {
+interface ISpriteEditorState {
+    firstRender: boolean;
+}
+
+export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEditorState> {
     private blocksInfo: pxtc.BlocksInfo;
     private spriteEditor: pxtsprite.SpriteEditor;
 
     constructor(props: ISpriteEditorProps) {
         super(props);
+        this.state = {
+            firstRender: true,
+        };
 
         // Fetches blocksInfo for sprite editor
         compiler
@@ -60,7 +67,9 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, {}> {
         this.spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false);
         this.spriteEditor.render(contentDiv);
         this.spriteEditor.rePaint();
-        this.spriteEditor.setActiveColor(1, true);
+        if (this.state.firstRender) {
+            this.spriteEditor.setActiveColor(1, true);
+        }
         this.spriteEditor.setSizePresets([
             [8, 8],
             [16, 16],
@@ -76,7 +85,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, {}> {
         this.spriteEditor.onClose(() => {
             this.updateSpriteState();
             this.spriteEditor.removeKeyListeners();
-
+            this.setState({ firstRender: false })
             // Dangerously set for now
             contentDiv.innerHTML = '';
             this.renderSpriteEditor();

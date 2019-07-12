@@ -307,7 +307,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             if (parameters) {
                 for (const parameter of parameters) {
                     const { answer, token } = parameter;
-                    if (answer === answers[token] || answer === defaults[token]) {
+                    if (answer === answers[token] || (!answers[token] && answer === defaults[token])) {
                         return parameter.question;
                     }
                 }

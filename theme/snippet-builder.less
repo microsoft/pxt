@@ -254,14 +254,17 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
 
 /** Position picker input type */
 .position-picker.container {
-    width: 320px;
-    height: 240px;
+    width: 311px;
+    height: 231px;
+    margin: 8px;
     max-width: 320px;
     max-height: 240px;
-    background-color: black;
+    background-color: #fff;
     position: relative;
     overflow: hidden;
-    outline: 4px #ccc groove;
+    outline: none;
+    left: 12px;
+    top: 12px;
 }
 
 .position-picker.cross-x, .position-picker.cross-y {
@@ -273,19 +276,19 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
 
 .position-picker.cross-x {
     width: 100%;
-    height: 2px;
+    height: 1px;
     z-index: 10;
-    top: 50%;
+    background-color: #000;
 }
 
 .position-picker.cross-y {
-    width: 2px;
+    width: 1px;
     height: 100%;
-    left: 50%;
+    background-color: #000;
 }
 
 .position-picker.label {
-    color: white;
+    color: #000;
 }
 
 .position-picker.dot {
@@ -295,4 +298,139 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
     background-color: rgb(236, 59, 89);
     position: absolute;
     z-index: 9;
+}
+
+/** Simulator Display */
+.simulator-display {
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    width: 368px;
+    height: 432.938px;
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    canvas {
+        height: 246px;
+         width: 328px;
+         left: 12px;
+         top: 12px;
+         clip-path: polygon(0px 5.33333px, 5.33333px 0px, 338.667px 0px, 344px 5.33333px, 344px 256.667px, 338.667px 262px, 5.33333px 262px, 0px 256.667px);
+         image-rendering: optimizeSpeed;
+         image-rendering: -moz-crisp-edges;
+         image-rendering: -webkit-optimize-contrast;
+         image-rendering: optimize-contrast;
+         image-rendering: pixelated;
+         -ms-interpolation-mode: nearest-neighbor;
+    }
+
+    div.screen-back {
+        background: #fcf7e4;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        margin-left: auto;
+        margin-right: auto;
+        left: 0;
+        right: 0;
+        border-radius: 12px;
+        outline: auto 6px -webkit-focus-ring-color;
+        outline-offset: -2px;
+    }
+
+    .sprite {
+        fill:yellow;
+        stroke:#ccc;
+        stroke-width: 3px;
+    }
+    
+    #screen {
+        align-content: center;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    
+    .has-focus {
+        border: 5px solid #96266c !important;
+    }
+    
+    #paint-surface {
+        position: absolute;
+    }
+    
+    #paint-surface.borders {
+        /* filter: drop-shadow(0px 0px 10px #6B4F76) */
+        border-right: 0.5rem inset #2f99a1;
+        border-left: 0.5rem outset #2f99a1;
+        border-top: 0.5rem outset #f290c1;
+        border-bottom: 0.5rem inset #f290c1;
+    }
+    
+    #paint-surface-container {
+        text-align: center;
+        /* messes up safari overflow-y: hidden; */
+        width: 100%;
+    }
+    
+    #debug-stats {
+        position: absolute;
+        bottom: 1.5%;
+        left: 5%;
+        color: #3c3cff;
+        font-size: 11px;
+        -webkit-user-select: none; /* Safari 3.1+ */
+        -moz-user-select: none; /* Firefox 2+ */
+        -ms-user-select: none; /* IE 10+ */
+         user-select: none; /* Standard syntax */
+    }
+    
+    #controls {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+    }
+    
+    #controls * {
+        pointer-events: none;
+    }
+    
+    #controls.no-focus {
+        opacity: 0.5;
+        -moz-filter: grayscale();
+        -webkit-filter: grayscale();
+        filter: grayscale();
+    }
+    
+    .no-select {
+        -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none;   /* Chrome/Safari/Opera */
+        -khtml-user-select: none;    /* Konqueror */
+        -moz-user-select: none;      /* Firefox */
+        -ms-user-select: none;       /* Internet Explorer/Edge */
+        user-select: none;           /* Non-prefixed version, currently
+                                        not supported by any browser */
+    }
+    
+    .stats {
+        margin-top: 8px;
+    }
+    
+    .blur .info {
+        opacity: 0.2;
+    }
+    
+    .controller-button-overlay {
+        fill: black;
+        fill-opacity: 0;
+        cursor: pointer;
+    }
+    
+    .controller-button-overlay:hover {
+        fill-opacity: 0.125;
+    }
+    
+    .controller-button-overlay.pressed {
+        fill-opacity: 0.25;
+    }
+    
 }
