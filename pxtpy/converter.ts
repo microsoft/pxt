@@ -1681,6 +1681,11 @@ namespace pxt.py {
                 }
             }
 
+            if (isCallTo(n, "str")) {
+                // Our standard method of toString in TypeScript is to concatenate with the empty string
+                return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
+            }
+
             if (!fun)
                 error(n, 9508, U.lf("can't find called function"))
 
