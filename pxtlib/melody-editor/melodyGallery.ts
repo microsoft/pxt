@@ -63,6 +63,11 @@ namespace pxtmelody {
             this.stopMelody();
         }
 
+        clearDomReferences() {
+            this.contentDiv = null;
+            this.containerDiv = null;
+        }
+
         layout(left: number, top: number, height: number) {
             this.containerDiv.style.left = left + "px";
             this.containerDiv.style.top = top + "px";

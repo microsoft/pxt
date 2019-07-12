@@ -38,7 +38,7 @@ namespace pxtblockly {
         private static CELL_VERTICAL_MARGIN = 5;
         private static CELL_CORNER_RADIUS = 5;
         private elt: SVGSVGElement;
-        private cells: SVGRectElement[][] = [];
+        private cells: SVGRectElement[][];
         private static VIEWBOX_WIDTH: number;
         private static VIEWBOX_HEIGHT: number;
 
@@ -96,9 +96,6 @@ namespace pxtblockly {
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
-            for (let i = 0; i < this.numRow; i++) {
-                this.cells.push([]);
-            }
             this.render_();
             this.createMelodyIfDoesntExist();
             this.updateFieldLabel();
@@ -182,12 +179,31 @@ namespace pxtblockly {
             if (this.gallery) {
                 this.gallery.stopMelody();
             }
+            this.clearDomReferences();
         }
 
         // when click done
         private onDone() {
             Blockly.DropDownDiv.hideIfOwner(this);
             this.onEditorClose();
+        }
+
+        private clearDomReferences() {
+            this.topDiv = null;
+            this.editorDiv = null;
+            this.gridDiv = null;
+            this.bottomDiv = null;
+            this.doneButton = null;
+            this.playButton = null;
+            this.playIcon = null;
+            this.tempoInput = null;
+            this.tempoDiv = null;
+            this.tempoLabel = null;
+            this.elt = null;
+            this.cells = null;
+            this.toggle = null;
+            this.root = null;
+            this.gallery.clearDomReferences();
         }
 
         // This is the string that will be inserted into the user's TypeScript code
@@ -371,6 +387,10 @@ namespace pxtblockly {
             this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
 
             // Create the cells of the matrix that is displayed
+            this.cells = []; // initialize array that holds rect svg elements
+            for (let i = 0; i < this.numRow; i++) {
+                this.cells.push([]);
+            }
             for (let i = 0; i < this.numRow; i++) {
                 for (let j = 0; j < this.numCol; j++) {
                     this.createCell(i, j);
