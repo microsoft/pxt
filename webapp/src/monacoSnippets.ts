@@ -510,6 +510,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "text_parseInt",
                     snippetName: "parseInt",
                     snippet: `parseInt("5")`,
+                    pySnippetName: "int",
+                    pySnippet: `int("5")`,
                     attributes: {
                         blockId: 'string_parseint',
                         jsDoc: lf("Converts a number written as text into a number")

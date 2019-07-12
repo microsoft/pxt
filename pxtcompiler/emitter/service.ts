@@ -29,6 +29,7 @@ namespace ts.pxtc {
             "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
             "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
             ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
+            "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
         }
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
