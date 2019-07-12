@@ -38,7 +38,7 @@ namespace pxtblockly {
         private static CELL_VERTICAL_MARGIN = 5;
         private static CELL_CORNER_RADIUS = 5;
         private elt: SVGSVGElement;
-        private cells: SVGRectElement[][] = [];
+        private cells: SVGRectElement[][];
         private static VIEWBOX_WIDTH: number;
         private static VIEWBOX_HEIGHT: number;
 
@@ -96,9 +96,6 @@ namespace pxtblockly {
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
-            for (let i = 0; i < this.numRow; i++) {
-                this.cells.push([]);
-            }
             this.render_();
             this.createMelodyIfDoesntExist();
             this.updateFieldLabel();
@@ -111,7 +108,7 @@ namespace pxtblockly {
 
             // Same toggle set up as sprite editor
             this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
-            this.toggle = new pxtsprite.Toggle(this.root, { leftText: "Editor", rightText: "Gallery", baseColor: "#B4009E" });
+            this.toggle = new pxtsprite.Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: "#B4009E" });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
                     this.hideGallery();
@@ -187,15 +184,31 @@ namespace pxtblockly {
             if (this.gallery) {
                 this.gallery.stopMelody();
             }
+            this.clearDomReferences();
         }
 
         // when click done
         private onDone() {
-            this.stopMelody();
-            if (this.gallery) {
-                this.gallery.stopMelody();
-            }
             Blockly.DropDownDiv.hideIfOwner(this);
+            this.onEditorClose();
+        }
+
+        private clearDomReferences() {
+            this.topDiv = null;
+            this.editorDiv = null;
+            this.gridDiv = null;
+            this.bottomDiv = null;
+            this.doneButton = null;
+            this.playButton = null;
+            this.playIcon = null;
+            this.tempoInput = null;
+            this.tempoDiv = null;
+            this.tempoLabel = null;
+            this.elt = null;
+            this.cells = null;
+            this.toggle = null;
+            this.root = null;
+            this.gallery.clearDomReferences();
         }
 
         // This is the string that will be inserted into the user's TypeScript code
@@ -314,11 +327,12 @@ namespace pxtblockly {
         }
 
         private onNoteSelect(row: number, col: number): void {
+            let selectedNote = this.cells[row][col];
             // play sound if selected
             if (!this.melody.getValue(row, col)) {
                 this.playNote(row);
-                pxt.BrowserUtils.removeClass(this.cells[row][col], "melody-default");
-                pxt.BrowserUtils.addClass(this.cells[row][col], pxtmelody.getColorClass(row));
+                pxt.BrowserUtils.removeClass(selectedNote, "melody-default");
+                pxt.BrowserUtils.addClass(selectedNote, pxtmelody.getColorClass(row));
                 if (this.oneNotePerCol) { // clear all other notes in col
                     for (let i = 0; i < this.numRow; i++) {
                         if (this.melody.getValue(i, col)) {
@@ -332,8 +346,8 @@ namespace pxtblockly {
                     }
                 }
             } else { // when note is unselected
-                pxt.BrowserUtils.removeClass(this.cells[row][col], pxtmelody.getColorClass(row));
-                pxt.BrowserUtils.addClass(this.cells[row][col], "melody-default");
+                pxt.BrowserUtils.removeClass(selectedNote, pxtmelody.getColorClass(row));
+                pxt.BrowserUtils.addClass(selectedNote, "melody-default");
             }
             // update melody array
             this.invalidString = null;
@@ -383,6 +397,10 @@ namespace pxtblockly {
             this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
 
             // Create the cells of the matrix that is displayed
+            this.cells = []; // initialize array that holds rect svg elements
+            for (let i = 0; i < this.numRow; i++) {
+                this.cells.push([]);
+            }
             for (let i = 0; i < this.numRow; i++) {
                 for (let j = 0; j < this.numCol; j++) {
                     this.createCell(i, j);
@@ -394,14 +412,15 @@ namespace pxtblockly {
         private updateGridDisplay() {
             for (let i = 0; i < this.numCol; i++) {
                 for (let j = 0; j < this.numRow; j++) {
+                    let cell = this.cells[j][i];
                     // update color if necessary
-                    if (this.melody.getValue(j, i) && !pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j))) {
-                        pxt.BrowserUtils.addClass(this.cells[j][i], pxtmelody.getColorClass(j));
-                        pxt.BrowserUtils.removeClass(this.cells[j][i], "melody-default");
+                    if (this.melody.getValue(j, i) && !pxt.BrowserUtils.containsClass(cell, pxtmelody.getColorClass(j))) {
+                        pxt.BrowserUtils.addClass(cell, pxtmelody.getColorClass(j));
+                        pxt.BrowserUtils.removeClass(cell, "melody-default");
                         // reset to default if not selected
-                    } else if (!this.melody.getValue(j, i) && pxt.BrowserUtils.containsClass(this.cells[j][i], pxtmelody.getColorClass(j))) {
-                        pxt.BrowserUtils.removeClass(this.cells[j][i], pxtmelody.getColorClass(j));
-                        pxt.BrowserUtils.addClass(this.cells[j][i], "melody-default");
+                    } else if (!this.melody.getValue(j, i) && pxt.BrowserUtils.containsClass(cell, pxtmelody.getColorClass(j))) {
+                        pxt.BrowserUtils.removeClass(cell, pxtmelody.getColorClass(j));
+                        pxt.BrowserUtils.addClass(cell, "melody-default");
                     }
 
                 }
@@ -417,8 +436,8 @@ namespace pxtblockly {
             const cellRect = pxsim.svg.child(cellG, "rect", {
                 'class': `blocklyLed${this.melody.getValue(x, y) ? 'On' : 'Off'}`,
                 'cursor': 'pointer',
-                width: FieldCustomMelody.CELL_WIDTH, height: FieldCustomMelody.CELL_WIDTH,
-                stroke: "white",
+                'width': FieldCustomMelody.CELL_WIDTH, height: FieldCustomMelody.CELL_WIDTH,
+                'stroke': 'white',
                 'data-x': x,
                 'data-y': y,
                 rx: FieldCustomMelody.CELL_CORNER_RADIUS
@@ -481,7 +500,7 @@ namespace pxtblockly {
             this.stopMelody();
             this.gallery.show((result: string) => {
                 if (result) {
-                    this.melody.setArrayRepresentation(result);
+                    this.melody.parseNotes(result);
                     this.gallery.hide();
                     this.toggle.toggle();
                     this.updateFieldLabel();
