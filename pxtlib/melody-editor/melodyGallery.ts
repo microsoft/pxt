@@ -266,7 +266,15 @@ namespace pxtmelody {
             for (let i = 0; i < notes.length; i++) {
                 let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
                 let colorDiv = document.createElement("div");
-                pxt.BrowserUtils.addClass(colorDiv, "sliver " + className);
+                // create rounded effect on edge divs and fill in color
+                if (i == 0) {
+                    pxt.BrowserUtils.addClass(colorDiv, "left-edge sliver " + className);
+                } else if (i == notes.length - 1) {
+                    pxt.BrowserUtils.addClass(colorDiv, "right-edge sliver " + className);
+                } else {
+                    pxt.BrowserUtils.addClass(colorDiv, "sliver " + className);
+                }
+
                 colorBlock.appendChild(colorDiv);
             }
             return colorBlock;
