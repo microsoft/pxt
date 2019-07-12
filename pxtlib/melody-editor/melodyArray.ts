@@ -85,7 +85,9 @@ namespace pxtmelody {
         }
 
         // turn string into boolean array
-        public setArrayRepresentation(stringNotes: string): void {
+        public parseNotes(stringNotes: string): void {
+            // A melody is represented as a string of notes separated by spaces, with dashes representing rests
+            // ex: a scale is represented as "C5 B A G F E D C"
             stringNotes = stringNotes.trim();
             let notes = stringNotes.split(" ");
             for (let i = 0; i < notes.length; i++) {
