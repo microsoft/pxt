@@ -434,18 +434,17 @@ namespace pxtblockly {
 
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
             const cellRect = pxsim.svg.child(cellG, "rect", {
-                'class': `blocklyLed${this.melody.getValue(x, y) ? 'On' : 'Off'}`,
                 'cursor': 'pointer',
                 'width': FieldCustomMelody.CELL_WIDTH, height: FieldCustomMelody.CELL_WIDTH,
                 'stroke': 'white',
                 'data-x': x,
                 'data-y': y,
-                rx: FieldCustomMelody.CELL_CORNER_RADIUS
+                'rx': FieldCustomMelody.CELL_CORNER_RADIUS
             }) as SVGRectElement;
-            this.cells[x][y] = cellRect;
+
             // add appropriate class so the cell has the correct fill color
-            if (this.melody.getValue(x, y)) pxt.BrowserUtils.addClass(this.cells[x][y], pxtmelody.getColorClass(x));
-            else pxt.BrowserUtils.addClass(this.cells[x][y], "melody-default");
+            if (this.melody.getValue(x, y)) pxt.BrowserUtils.addClass(cellRect, pxtmelody.getColorClass(x));
+            else pxt.BrowserUtils.addClass(cellRect, "melody-default");
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
@@ -454,6 +453,8 @@ namespace pxtblockly {
                 ev.stopPropagation();
                 ev.preventDefault();
             }, false));
+
+            this.cells[x][y] = cellRect;
         }
 
         private togglePlay() {
