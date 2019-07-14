@@ -449,7 +449,7 @@ switch (step) {
                         isSet = true
                 }
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
-                write(`if (${frameRef}.fn === 13) {`)
+                write(`if (${frameRef}.fn === 13 || ${frameRef}.fn === undefined) {`)
                 let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
                 if (isSet) {
                     write(`  ${fld} = ${frameRef}.arg1;`)
