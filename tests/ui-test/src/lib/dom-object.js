@@ -30,24 +30,23 @@ export class DomObject {
     }
 
     async switchToWindow() {
-        let oldWindowName = "";
-        let newWindowName = "";
-        await driver.getAllWindowHandles().then(function (handles) {
-            oldWindowName = handles[0];
-            newWindowName = handles[1];
-            driver.switchTo().window(newWindowName);
-        });
-        await driver.sleep(2000);
+        let handles = await driver.getAllWindowHandles();
+        await driver.switchTo().window(handles[1]);
         await driver.close();
-        await driver.switchTo().window(oldWindowName);
+        await driver.switchTo().window(handles[0]);
 
         return true;
     }
 
+
     async switchToIframe(iframe) {
         let frame = await driver.switchTo().frame(iframe);
-        await driver.sleep(3000);
+        await driver.sleep(5000);
         return frame;
+    }
+
+    async switchToDefaultFrame() {
+        return driver.switchTo().defaultContent();
     }
 
     async getText(criteria) {
