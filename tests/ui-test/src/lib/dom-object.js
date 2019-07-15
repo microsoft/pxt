@@ -29,19 +29,25 @@ export class DomObject {
         return criteria;
     }
 
-    async switchToWindow(value) {
-        let handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[value]);
-        if (value == 0) {
-            driver.close();
-        } else {
-            return driver.switchTo().window(handles[value]);
-        }
+    async switchToWindow() {
+        let oldWindowName = "";
+        let newWindowName = "";
+        await driver.getAllWindowHandles().then(function (handles) {
+            oldWindowName = handles[0];
+            newWindowName = handles[1];
+            driver.switchTo().window(newWindowName);
+        });
+        await driver.sleep(2000);
+        await driver.close();
+        await driver.switchTo().window(oldWindowName);
+
+        return true;
     }
 
-    async switchToIframe(criteria) {
-        let element = await driver.findElement(this.findBy(criteria));
-        return await driver.switchTo().frame(element);
+    async switchToIframe(iframe) {
+        let frame = await driver.switchTo().frame(iframe);
+        await driver.sleep(3000);
+        return frame;
     }
 
     async getText(criteria) {
