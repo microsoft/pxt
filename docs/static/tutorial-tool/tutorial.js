@@ -1,4 +1,3 @@
-/// <reference path="./node_modules/monaco-editor/monaco.d.ts" />
 var STORAGE_KEY = "SAVED_TUTORIAL";
 var ENDPOINT_KEY = "SAVED_ENDPOINT";
 var existing = localStorage.getItem(STORAGE_KEY);

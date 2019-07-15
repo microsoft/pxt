@@ -1,4 +1,3 @@
-/// <reference path="../../../node_modules/monaco-editor/monaco.d.ts" />
 
 const STORAGE_KEY = "SAVED_TUTORIAL";
 const ENDPOINT_KEY = "SAVED_ENDPOINT";
