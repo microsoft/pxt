@@ -8,19 +8,11 @@ class GetHelpList extends DomObject {
 
         await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Support"]');
 
-        await this.switchToWindow(1);
-
-        let homeHead = await this.getText('.ellipsis.heading');
-
-        console.debug(`The home head of the first feature in Help is: ${homeHead}`);
-
-        assert.equal(homeHead, 'Support');
-
-        await this.switchToWindow(0);
+        await this.switchToWindow();
 
         await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Reference"]');
 
-        await this.switchToIframe('#sidedocsframe');
+        await this.switchToIframe('sidedocsframe');
 
         let sidedocstoggle = await this.getText('#reference');
 
@@ -30,15 +22,7 @@ class GetHelpList extends DomObject {
 
         await this.click('[aria-label="Open documentation in new tab"]');
 
-        await this.switchToWindow(1);
-
-        let docsHead = await this.getText('#reference');
-
-        console.debug(`This is the current page head: ${docsHead}`);
-
-        assert.equal(docsHead, 'Reference');
-
-        await this.switchToWindow(0);
+        await this.switchToWindow();
 
 
     }
