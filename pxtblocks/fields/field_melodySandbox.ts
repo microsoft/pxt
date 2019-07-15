@@ -158,12 +158,9 @@ namespace pxtblockly {
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
-            // sync value from tempo field on block with tempo in field editor
-            if (this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0] instanceof Blockly.FieldSlider) {
-                this.tempoInput.value = this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0].text_;
-            } else {
-                this.tempoInput.value = this.tempo + "";
-            }
+
+            this.syncTempoField();
+
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
 
@@ -306,9 +303,44 @@ namespace pxtblockly {
                     this.tempoInput.value = this.tempo + "";
                 }
                 // update tempo on block if not a variable
-                if (this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0] instanceof Blockly.FieldSlider) {
-                    this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0].text_ = this.tempoInput.value;
-                    this.sourceBlock_.parentBlock_.childBlocks_[1].inputList[0].fieldRow[0].textElement_.innerHTML = this.tempoInput.value;
+                const s = this.sourceBlock_;
+                if (s.parentBlock_) {
+                    const p = s.parentBlock_;
+                    for (const input of p.inputList) {
+                        if (input.name === "tempo") {
+                            const tempoBlock = input.connection.targetBlock();
+                            if (tempoBlock) {
+                                if (tempoBlock.type === "math_number_minmax") {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "SLIDER")
+                                }
+                                else {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // sync value from tempo field on block with tempo in field editor
+        private syncTempoField(): void {
+            const s = this.sourceBlock_;
+            if (s.parentBlock_) {
+                const p = s.parentBlock_;
+                for (const input of p.inputList) {
+                    if (input.name === "tempo") {
+                        const tempoBlock = input.connection.targetBlock();
+                        if (tempoBlock) {
+                            if (tempoBlock.getFieldValue("SLIDER")) {
+                                this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
+                            } else {
+                                this.tempoInput.value = this.tempo + "";
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }
