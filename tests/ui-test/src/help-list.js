@@ -14,17 +14,61 @@ class GetHelpList extends DomObject {
 
         await this.switchToIframe('sidedocsframe');
 
-        let sidedocstoggle = await this.getText('#reference');
+        let referenceTitle = await this.getText('#reference');
 
-        console.debug(`The side docs toggle text is: ${sidedocstoggle}`);
+        console.debug(`The side docs toggle text is: ${referenceTitle}`);
 
-        assert.equal(sidedocstoggle, 'Reference');
+        assert.equal(referenceTitle, 'Reference');
 
-        await this.click('[aria-label="Open documentation in new tab"]');
+        await this.switchToDefaultFrame();
+
+        await this.click('#sidedocsbar');
+
+        await driver.sleep(2000);//Currently, this static waiting cannot ignore, will find the reason soon.
 
         await this.switchToWindow();
 
+        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Blocks"]');
 
+        await this.switchToIframe('sidedocsframe');
+
+        let blocksTitle = await this.getText('#blocks-language');
+
+        console.debug(`The side docs toggle text is: ${blocksTitle}`);
+
+        assert.equal(blocksTitle, 'Blocks language');
+
+        await this.switchToDefaultFrame();
+
+        await this.click('#sidedocstoggle');
+
+        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="JavaScript"]');
+
+        await this.switchToIframe('sidedocsframe');
+
+        let javascriptTitle = await this.getText('#javascript');
+
+        console.debug(`The side docs toggle text is: ${javascriptTitle}`);
+
+        assert.equal(javascriptTitle, 'JavaScript');
+
+        await this.switchToDefaultFrame();
+
+        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Hardware"]');
+
+        await this.switchToIframe('sidedocsframe');
+
+        await this.click('#sidedocs-back-button');
+
+        let goBackResult = await this.getText('.ui.text h1');
+
+        assert.notEqual(goBackResult, 'Device');
+
+        await this.switchToDefaultFrame();
+
+        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Buy"]');
+
+        await this.switchToWindow();
     }
 
     test() {
