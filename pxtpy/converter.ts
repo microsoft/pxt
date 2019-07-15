@@ -1305,7 +1305,6 @@ namespace pxt.py {
         let pref = ""
         let isConstCall = value ? isCallTo(value, "const") : false
         let nm = getName(target) || ""
-        let isUpperCase = nm && !/[a-z]/.test(nm)
         if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
@@ -1354,7 +1353,7 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
-        if (isConstCall || isUpperCase) {
+        if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
             if (!/^static /.test(pref) && !/const/.test(pref))
