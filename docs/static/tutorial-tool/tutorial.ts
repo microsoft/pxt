@@ -177,6 +177,8 @@ function createHeader(md: string) {
     return header;
 }
 
+
+// All of the following code in the pxt.tutorial namespace was duplicated from pxtlib/tutorial.ts
 namespace pxt.tutorial {
     export function parseTutorial(tutorialmd: string): any {
         const steps = parseTutorialSteps(tutorialmd);

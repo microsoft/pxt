@@ -1,3 +1,6 @@
+/**
+ * Any changes in this file need to be ported over to /docs/static/tutorial-tool/tutorial.ts
+ */
 namespace pxt.tutorial {
     export function parseTutorial(tutorialmd: string): TutorialInfo {
         const steps = parseTutorialSteps(tutorialmd);
