@@ -55,7 +55,7 @@
     "lzma": "2.3.2",
     "marked": "0.3.19",
     "rimraf": "2.5.4",
-    "request": "2.88.1",
+    "request": "2.88.0",
     "pngjs": "3.4.0",
     "browserify": "16.2.0",
     "uglify-js": "3.3.21",
