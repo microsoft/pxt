@@ -1350,19 +1350,20 @@ namespace pxt.py {
             let tupNames = tup.elts
                 .map(e => e as py.Name)
                 .map(convertName)
-            function convertName(n: py.Name) {
-                // TODO resuse with Name expr
-                markInfoNode(n, "identifierCompletion")
-                typeOf(n)
-                let v = lookupName(n)
-                return possibleDef(n, /*excludeLet*/true)
-            }
             targs.push(B.mkCommaSep(tupNames))
             targs.push(B.mkText("]"))
             let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
             return res
         }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+
+        function convertName(n: py.Name) {
+            // TODO resuse with Name expr
+            markInfoNode(n, "identifierCompletion")
+            typeOf(n)
+            let v = lookupName(n)
+            return possibleDef(n, /*excludeLet*/true)
+        }
     }
 
     function possibleDef(n: py.Name, excludeLet: boolean = false) {
