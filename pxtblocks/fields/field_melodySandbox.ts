@@ -97,7 +97,24 @@ namespace pxtblockly {
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
-            this.updateFieldLabel();
+
+            if (this.invalidString) {
+                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
+            } else {
+                if (this.fieldGroup_) {
+                    // Field has already been initialized once.
+                } else {
+                    // Build the DOM.
+                    this.fieldGroup_ = Blockly.utils.createSvgElement('g', { transform: 'translate(0 96)' }, null);
+                    //this.fieldGroup_ = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 20"/>`);
+                }
+                // if (!this.visible_) {
+                //     (this.fieldGroup_ as any).style.display = 'none';
+                // }
+    
+                (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
+                this.updateFieldLabel();
+            }
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
@@ -228,7 +245,7 @@ namespace pxtblockly {
                 let notes: string[] = value.split(" ");
 
                 for (let j = 0; j < notes.length; j++) {
-                    if (!this.isValidNote(notes[j])) throw new Error("Invalid note: " + notes[j] + " Notes can be C D E F G A B C5");
+                    if (!this.isValidNote(notes[j])) throw new Error("Invalid note '" + notes[j] + "'. Notes can be C D E F G A B C5");
                     if (notes[j] != "-") {
                         let rowPos: number = pxtmelody.noteToRow(notes[j]);
                         this.melody.updateMelody(rowPos, j);
@@ -275,13 +292,54 @@ namespace pxtblockly {
             return "#4f0643";
         }
 
+        // private updateFieldLabel(): void {
+        //     if (this.invalidString) {
+        //         Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
+        //         return;
+        //     }
+        //     this.title = this.melody.getStringRepresentation().trim();
+        //     Blockly.FieldLabel.prototype.setText.call(this, this.title);
+        // }
+
         private updateFieldLabel(): void {
-            if (this.invalidString) {
-                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
-                return;
+            //Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
+            if (!this.fieldGroup_) return;
+            pxsim.U.clear(this.fieldGroup_);
+
+            let musicIcon = document.createElement('i');
+            pxt.BrowserUtils.addClass(musicIcon, "music icon");
+            this.fieldGroup_.appendChild(musicIcon);
+            //(this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(musicIcon);
+
+            const width = 10;
+            const height = 20;
+            const x = 1;
+            const y = 5;
+            const spacing = 2;
+
+            // const tx = (width + spacing)*this.numCol;
+            // const ty = y;
+
+            // const cellG = pxsim.svg.child(this.fieldGroup_, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
+
+            let notes = this.melody.getStringRepresentation().trim().split(" ");
+            for (let i = 0; i < notes.length; i++) {
+                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
+                const bg = new svg.Rect()
+                    .at((width + spacing)*i + x, y)
+                    .size(width, height)
+                    .stroke("white", 0.7)
+                    .corners(3,2);
+
+                pxt.BrowserUtils.addClass(bg.el, className);
+
+                this.fieldGroup_.appendChild(bg.el);
+                //cellG.appendChild(bg.el);
             }
-            this.title = this.melody.getStringRepresentation().trim();
-            Blockly.FieldLabel.prototype.setText.call(this, this.title);
+            //this.fieldGroup_.setAttribute('width','96px');
+            this.updateWidth();
+            //this.forceRerender();
+            //Blockly.FieldLabel.prototype.setText.call(this, this.fieldGroup_);
         }
 
         private setTempo(tempo: number): void {
