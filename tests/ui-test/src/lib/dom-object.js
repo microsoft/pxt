@@ -1,4 +1,6 @@
 import { By } from 'selenium-webdriver';
+import fs from 'fs';
+import util from 'util';
 
 export class DomObject {
 
@@ -27,6 +29,16 @@ export class DomObject {
             return By.css(criteria);
         }
         return criteria;
+    }
+
+    async catchScreenShot(name) {
+        let writeFile = util.promisify(fs.writeFile);
+        await driver.takeScreenshot().then(function (image) {
+            writeFile('./screenshot/' + name + '.PNG', image, 'base64', function (err) {
+                console.log(err);
+            });
+        }
+        );
     }
 
     async switchToWindow() {
