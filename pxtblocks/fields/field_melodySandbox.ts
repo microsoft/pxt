@@ -425,7 +425,8 @@ namespace pxtblockly {
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
             const cellRect = pxsim.svg.child(cellG, "rect", {
                 'cursor': 'pointer',
-                'width': FieldCustomMelody.CELL_WIDTH, height: FieldCustomMelody.CELL_WIDTH,
+                'width': FieldCustomMelody.CELL_WIDTH,
+                'height': FieldCustomMelody.CELL_WIDTH,
                 'stroke': 'white',
                 'data-x': x,
                 'data-y': y,
