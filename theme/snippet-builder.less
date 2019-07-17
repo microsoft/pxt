@@ -253,6 +253,16 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
 }
 
 /** Position picker input type */
+input.position-picker.preview-input {
+    font-size: .8em;
+    max-width: 2.5em;
+    width: 2.5em;
+    float: left;
+    padding: 2px;
+    text-align: center;
+    padding: 0;
+}
+
 .position-picker.container {
     width: 311px;
     height: 231px;
@@ -295,9 +305,10 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
     width: 8px;
     height: 8px;
     border-radius: 2em;
-    background-color: rgb(236, 59, 89);
+    background-color: rgb(0, 0, 0);
     position: absolute;
     z-index: 9;
+    pointer-events: none;
 }
 
 /** Simulator Display */

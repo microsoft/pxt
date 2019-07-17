@@ -21,13 +21,16 @@ interface PositionPickerState {
 }
 
 export class PositionPicker extends data.Component <PositionPickerProps, PositionPickerState> {
+    private grid: JSX.Element[];
     constructor(props: PositionPickerProps) {
         super(props);
         this.state = {
             x: this.props.defaultX || 80,
             y: this.props.defaultY || 120,
-            dotVisible: false,
+            dotVisible: false
         };
+
+        this.grid = this.buildGrid();
 
         this.onMouseMove = this.onMouseMove.bind(this);
         this.setDot = this.setDot.bind(this);
@@ -46,9 +49,13 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     }
 
     getPosition() {
-        const { x, y } = this.state;
+        const { finalX, finalY } = this.state;
 
-        return { x: Math.round(x / 2), y: Math.round(y / 2) - 4 };
+        return { x: this.scalePoint(finalX), y: this.scalePoint(finalY) };
+    }
+
+    scalePoint(point: number) {
+        return !isNaN(point) ? Math.round(point / 2) : 0;
     }
 
     onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -58,18 +65,18 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     }
 
     setDot(e: React.MouseEvent<HTMLDivElement>) {
-        const { input } = this.props;
+        const { input, onChange } = this.props;
         const { x, y } = this.state;
 
         this.setState({
             dotVisible: true,
-            finalX: x,
-            finalY: y,
+            finalX: this.scalePoint(x),
+            finalY: this.scalePoint(y),
         }, () => {
             if (!Snippet.isSnippetInputAnswerSingular(input)) {
-                const { x, y } = this.getPosition();
-                this.onChange(true)(x.toString());
-                this.onChange(false)(y.toString());
+                const { finalX, finalY } = this.state;
+                onChange(input.answerTokens[0])(finalX.toString());
+                onChange(input.answerTokens[1])(finalY.toString());
             }
         });
     }
@@ -78,14 +85,27 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const { input, onChange } = this.props;
 
         if (!Snippet.isSnippetInputAnswerSingular(input)) {
-            onChange(input.answerTokens[x ? 0 : 1])(v);
+            const pos = this.state;
+
+            this.setState({
+                x: x ? parseInt(v) : pos.x,
+                y: !x ? parseInt(v) : pos.y,
+            }, () => {
+                onChange(input.answerTokens[0])(this.state.x.toString());
+                onChange(input.answerTokens[1])(this.state.y.toString());
+                this.setState({
+                    dotVisible: true,
+                    finalX: this.state.x,
+                    finalY: this.state.y
+                });
+            });
         }
     }
 
-    drawGrid() {
+    buildGrid() {
         let gridDivs: JSX.Element[] = [];
         for (let i = 1; i < 11; ++i) {
-            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * 32}px` }} key={`grid-line-y-${i}`} />)
+            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * 32}px` }} key={`grid-line-y-${i}`} />);
             gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * 24}px` }} key={`grid-line-x-${i}`} />);
         }
 
@@ -93,24 +113,40 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     }
 
     public renderCore() {
-        const { input } = this.props;
-        const { x, y, dotVisible, finalX, finalY } = this.state;
+        const { dotVisible, finalX, finalY, x, y } = this.state;
 
         return (
-            <SimulatorDisplay>
-                <div
-                    ref={'positionPickerContainer'}
-                    className='position-picker container'
-                    onMouseMove={this.onMouseMove}
-                    onClick={this.setDot}
-                >
-                    {this.drawGrid().map((grid) => grid)}
-                    <div className='position-picker cross-x' />
-                    <div className='position-picker cross-y' />
-                    {dotVisible && <div className='position-picker dot' style={{ top: `${finalY - 5}px`, left: `${finalX - 5}px` }} />}
-                    <div className='position-picker label'>x={Math.round(y / 2)}, y={Math.round(x / 2)}</div>
+            <div>
+                <div className='ui grid'>
+                    <div className='column'>
+                        <sui.Input
+                            class={'position-picker preview-input'}
+                            value={(finalX ? finalX : this.scalePoint(x)).toString()}
+                            onChange={this.onChange(true)}
+                        />
+                    </div>
+                    <div className='column'>
+                        <sui.Input
+                            class={'position-picker preview-input'}
+                            value={(finalY ? finalY : this.scalePoint(y)).toString()}
+                            onChange={this.onChange(false)}
+                        />
+                    </div>
                 </div>
-            </SimulatorDisplay>
+                <SimulatorDisplay>
+                    <div
+                        ref={'positionPickerContainer'}
+                        className='position-picker container'
+                        onMouseMove={this.onMouseMove}
+                        onClick={this.setDot}
+                    >
+                        {this.grid.map((grid) => grid)}
+                        <div className='position-picker cross-x' />
+                        <div className='position-picker cross-y' />
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${(finalY * 2) - 13}px`, left: `${(finalX * 2) - 13}px` }} />}
+                    </div>
+                </SimulatorDisplay>
+            </div>
         )
     }
 }
