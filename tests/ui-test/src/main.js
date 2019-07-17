@@ -3,6 +3,7 @@ import { newProjectPage } from './new-project'
 import { shareProject } from "./share-project";
 import { toggleButton } from "./toggle-button";
 import { getHelpList } from "./help-list";
+import { getMoreList } from "./more-list";
 
 describe('Micro:bit Test', function () {
     before(async () => {
@@ -16,4 +17,5 @@ describe('Micro:bit Test', function () {
     shareProject.test();
     toggleButton.test();
     getHelpList.test();
+    getMoreList.test();
 })
