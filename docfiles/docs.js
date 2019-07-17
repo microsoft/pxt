@@ -189,9 +189,24 @@ function setupSemantic() {
         }).appendTo(outer);
     });
 
-    $('#printbtn').on("click", function () {
-        window.print();
-    })
+    $('#printbtn').dropdown({
+        action: function(text, value) {
+        
+            switch (value) {
+                case 'color': 
+                document.querySelector('body').classList.add("print-color");                      
+                    break;
+                case 'bw':
+                document.querySelector('body').classList.remove("print-color");
+                    break;
+                default:
+                    console.log('print');
+           } 
+           
+           window.print();
+           $('#printbtn').dropdown("hide");
+        }
+      });
 
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
