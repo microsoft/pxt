@@ -20,7 +20,7 @@ namespace pxtmelody {
             this.contentDiv = document.createElement("div");
             this.contentDiv.setAttribute("id", "melody-editor-gallery");
 
-            this.itemBackgroundColor = "gainsboro";
+            this.itemBackgroundColor = "#DCDCDC";
             this.itemBorderColor = "white";
 
             this.initStyles();
@@ -204,7 +204,6 @@ namespace pxtmelody {
             this.timeouts.push(setTimeout(() => {
                 pxt.AudioContextManager.stop();
             }, (colNumber + 1) * this.getDuration(tempo)));
-
         }
 
         // ms to hold note
@@ -219,7 +218,6 @@ namespace pxtmelody {
             for (let i = 0; i < notes.length; i++) {
                 this.playNote(notes[i], i, sample.tempo);
             }
-
         }
 
         private togglePlay(sample: pxtmelody.MelodyInfo, i: number) {
@@ -294,6 +292,5 @@ namespace pxtmelody {
             preview.addEventListener("click", () => this.togglePlay(sample, i));
             return preview;
         }
-
     }
 }

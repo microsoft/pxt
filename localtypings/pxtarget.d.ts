@@ -622,6 +622,7 @@ declare namespace ts.pxtc {
         name: string;
         description: string;
         type: string;
+        pyTypeString?: string;
         initializer?: string;
         default?: string;
         properties?: PropertyDesc[];
@@ -776,6 +777,11 @@ declare namespace pxt.tutorial {
         templateCode?: string;
     }
 
+    interface TutorialMetadata {
+        v: number; // version of tutorial markdown syntax
+        title?: string;
+    }
+
     interface TutorialStepInfo {
         fullscreen?: boolean;
         // no coding
@@ -784,7 +790,7 @@ declare namespace pxt.tutorial {
         hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
-        blockSolution?: string;
+        hintContentMd?: string;
     }
 
     interface TutorialOptions {
