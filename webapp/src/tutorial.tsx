@@ -159,7 +159,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
-        const tutorialHint = step.blockSolution;
+        const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
 
         if (!step.unplugged) {

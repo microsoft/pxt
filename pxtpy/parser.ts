@@ -668,7 +668,7 @@ namespace pxt.py {
             return finish(augAssign)
         }
 
-        if (peekToken().type == TokenType.NewLine) {
+        if (op == "Semicolon" || peekToken().type == TokenType.NewLine) {
             let exprStmt = mkAST("ExprStmt") as ExprStmt
             exprStmt.value = expr
             return finish(exprStmt)

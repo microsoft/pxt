@@ -80,13 +80,13 @@ export function ts2pyAsync(f: string): Promise<string> {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
             // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = (pxt as any).py.decompileToPythonHelper(program, "main.ts");
+            const decompiled = (pxt as any).py.decompileToPython(program, "main.ts");
 
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];
             }
             else {
-                return Promise.reject(new Error("Could not conver ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
+                return Promise.reject(new Error("Could not convert ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
             }
         })
 }
