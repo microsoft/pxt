@@ -24,11 +24,6 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         this.state = {
             firstRender: true,
         };
-
-        // Fetches blocksInfo for sprite editor
-        compiler
-            .getBlocksAsync()
-            .then((blocksInfo) => this.blocksInfo = blocksInfo);
     }
 
     stripImageLiteralTags(imageLiteral: string) {
@@ -88,12 +83,19 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
             this.setState({ firstRender: false })
             // Dangerously set for now
             contentDiv.innerHTML = '';
+            this.spriteEditor = undefined;
             this.renderSpriteEditor();
         });
     }
 
     componentDidMount() {
-        this.renderSpriteEditor();
+        // Fetches blocksInfo for sprite editor
+        compiler
+            .getBlocksAsync()
+            .then((blocksInfo) => {
+                this.blocksInfo = blocksInfo;
+                this.renderSpriteEditor();
+            });
     }
 
     renderCore() {

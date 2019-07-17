@@ -4,6 +4,8 @@ import * as Snippet from './snippetBuilder';
 import * as sui from './sui';
 import { SimulatorDisplay } from './simulatorDisplay';
 
+const SCALE_MULTIPLIER = 1.9437;
+
 interface PositionPickerProps {
     valueMap?: pxt.Map<number>;
     defaultX?: number;
@@ -42,8 +44,8 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const width = pickerContainer.clientWidth;
         const height = pickerContainer.clientHeight;
 
-        x = Math.round(Math.max(0, Math.min(width, x + 4)));
-        y = Math.round(Math.max(0, Math.min(height, y + 4)));
+        x = Math.round(Math.max(0, Math.min(width, x + 1)));
+        y = Math.round(Math.max(0, Math.min(height, y + 1)));
 
         this.setState({ x, y });
     }
@@ -55,7 +57,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     }
 
     scalePoint(point: number) {
-        return !isNaN(point) ? Math.round(point / 2) : 0;
+        return !isNaN(point) ? Math.round(point / SCALE_MULTIPLIER) : 0;
     }
 
     onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -143,7 +145,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         {this.grid.map((grid) => grid)}
                         <div className='position-picker cross-x' />
                         <div className='position-picker cross-y' />
-                        {dotVisible && <div className='position-picker dot' style={{ top: `${(finalY * 2) - 13}px`, left: `${(finalX * 2) - 13}px` }} />}
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${(finalY * SCALE_MULTIPLIER)}px`, left: `${(finalX * SCALE_MULTIPLIER)}px` }} />}
                     </div>
                 </SimulatorDisplay>
             </div>
