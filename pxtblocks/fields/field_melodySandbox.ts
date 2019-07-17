@@ -76,7 +76,6 @@ namespace pxtblockly {
                 // revert all style attributes for dropdown div
                 pxt.BrowserUtils.removeClass(contentDiv, "melody-content-div");
                 pxt.BrowserUtils.removeClass(contentDiv.parentElement, "melody-editor-dropdown");
-
             });
         }
 
@@ -415,7 +414,6 @@ namespace pxtblockly {
 
                 }
             }
-
         }
 
         private createCell(x: number, y: number) {
