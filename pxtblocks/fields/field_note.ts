@@ -639,11 +639,11 @@ namespace pxtblockly {
                 currentSelectedKey = this;
                 script.style.backgroundColor = selectedKeyColor;
                 Blockly.FieldTextInput.htmlInput_.value = thisField.getText();
-                AudioContextManager.tone(freq);
+                pxt.AudioContextManager.tone(freq);
                 setTimeout(function () {
                     // compare current sound counter with listener sound counter (avoid async problems)
                     if (soundingKeys == cnt)
-                        AudioContextManager.stop();
+                        pxt.AudioContextManager.stop();
                 }, 300);
                 (FieldNote as any).superClass_.dispose.call(this);
             }
