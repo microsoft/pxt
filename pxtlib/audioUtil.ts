@@ -63,7 +63,5 @@ namespace pxt.AudioContextManager {
             _vco = undefined;
             return;
         }
-
     }
-
 }

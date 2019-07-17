@@ -108,8 +108,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
 class SignatureHelper implements monaco.languages.SignatureHelpProvider {
     signatureHelpTriggerCharacters: string[] = ["(", ","];
 
-    constructor(public editor: Editor, public python: boolean) {
+    protected isPython: boolean = false;
 
+    constructor(public editor: Editor, public python: boolean) {
+        this.isPython = python;
     }
 
     /**
@@ -126,12 +128,12 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 let paramInfo: monaco.languages.ParameterInformation[] =
                     sym.parameters.map(p => ({
-                        label: `${p.name}: ${p.type}`,
+                        label: `${p.name}: ${this.isPython ? p.pyTypeString : p.type}`,
                         documentation: pxt.Util.rlf(p.description)
                     }))
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
-                        label: `${sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
+                        label: `${this.isPython && sym.pyName ? sym.pyName : sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
                         documentation,
                         parameters: paramInfo
                     }],

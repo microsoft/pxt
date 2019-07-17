@@ -500,6 +500,7 @@ export class ProjectView
     }
 
     private convertTypeScriptToPythonAsync() {
+        const snap = this.editor.snapshotState();
         let p = this.saveTypeScriptAsync(false)
             .then(() => compiler.pyDecompileAsync("main.ts"))
             .then(cres => {
@@ -508,6 +509,7 @@ export class ProjectView
                     return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                 } else {
                     // TODO python
+                    this.editor.setDiagnostics(this.editorFile, snap);
                     return Promise.resolve();
                 }
             })

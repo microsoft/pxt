@@ -1,21 +1,16 @@
 namespace pxt.py {
     export function decompileToPython(program: ts.Program, filename: string): pxtc.CompileResult {
-        try {
-            let res = decompileToPythonHelper(program, filename)
-            return res
-        } catch (e) {
-            pxt.reportException(e);
-            // TODO better reporting
-            let res = emptyResult()
-            res.success = false
-            return res
-        }
-    }
-    export function decompileToPythonHelper(program: ts.Program, filename: string): pxtc.CompileResult {
         let result = emptyResult()
-        let output = tsToPy(program, filename)
-        let outFilename = filename.replace(/(\.py)?\.\w*$/i, '') + '.py'
-        result.outfiles[outFilename] = output;
+        try {
+            let output = tsToPy(program, filename)
+            let outFilename = filename.replace(/(\.py)?\.\w*$/i, '') + '.py'
+            result.outfiles[outFilename] = output;
+        } catch (e) {
+            if (e.pyDiagnostic) result.diagnostics = [e.pyDiagnostic];
+            else pxt.reportException(e);
+
+            result.success = false;
+        }
         return result
     }
     function emptyResult(): pxtc.CompileResult {
@@ -26,6 +21,23 @@ namespace pxt.py {
             success: true,
             times: {}
         }
+    }
+
+    function throwError(node: ts.Node, code: number, messageText: string): never {
+        const diag: pxtc.KsDiagnostic = {
+            fileName: node.getSourceFile().fileName,
+            start: node.getStart(),
+            length: node.getEnd() - node.getStart(),
+            line: undefined,
+            column: undefined,
+            code,
+            category: pxtc.DiagnosticCategory.Error,
+            messageText,
+        };
+
+        const err = new Error(messageText);
+        (err as any).pyDiagnostic = diag;
+        throw err;
     }
 
     ///
@@ -59,10 +71,9 @@ namespace pxt.py {
         let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
         let allSymbols = pxtc.getApiInfo(prog)
         let symbols = pxt.U.mapMap(allSymbols.byQName,
-            // filter out symbols from the .ts corrisponding to this file
+            // filter out symbols from the .ts corresponding to this file
             (k, v) => v.fileName == filename ? undefined : v)
-
-        // ts->py 
+        // ts->py
         return emitFile(file)
         ///
         /// ENVIRONMENT
@@ -123,8 +134,9 @@ namespace pxt.py {
             let pyName = tryGetPyName(name)
             if (pyName)
                 return pyName
-            if (!ts.isIdentifier(name))
-                throw Error("Unsupported advanced name format: " + name.getText())
+            if (!ts.isIdentifier(name)) {
+                return throwError(name, 3001, "Unsupported advanced name format: " + name.getText());
+            }
             let outName = name.text;
             let hasSrc = name.getSourceFile()
             if (renameMap && hasSrc) {
@@ -283,7 +295,7 @@ namespace pxt.py {
             } else if (ts.isModuleDeclaration(s)) {
                 return emitModuleDeclaration(s);
             } else {
-                throw Error(`Not implemented: statement kind ${s.kind}`);
+                return throwError(s, 3002, `Not implemented: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
             }
         }
         function emitModuleDeclaration(s: ts.ModuleDeclaration): string[] {
@@ -296,7 +308,7 @@ namespace pxt.py {
             return [`@namespace`, `class ${name}:`].concat(stmts);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
-            let typeStr = emitType(s.type)
+            let typeStr = pxtc.emitType(s.type)
             let name = getName(s.name)
             return [`${name} = ${typeStr}`]
         }
@@ -412,13 +424,15 @@ namespace pxt.py {
             return body
         }
         function emitForOfStmt(s: ts.ForOfStatement): string[] {
-            if (!ts.isVariableDeclarationList(s.initializer))
-                throw Error("Unsupported expression in for..of initializer: " + s.initializer.getText()) // TOOD
+            if (!ts.isVariableDeclarationList(s.initializer)) {
+                return throwError(s, 3003, "Unsupported expression in for..of initializer: " + s.initializer.getText());
+            }
 
             let names = s.initializer.declarations
                 .map(d => getName(d.name))
-            if (names.length !== 1)
-                throw Error("Unsupported multiple declerations in for..of: " + s.initializer.getText()) // TODO
+            if (names.length !== 1) {
+                return throwError(s, 3004, "Unsupported multiple declerations in for..of: " + s.initializer.getText()); // TODO
+            }
             let name = names[0]
 
             let [exp, expSup] = emitExp(s.expression)
@@ -580,13 +594,14 @@ namespace pxt.py {
             let noInit = !s.members
                 .every(m => !!m.initializer)
 
-            if (!allInit && !noInit)
-                throw Error("Unsupported enum decleration: has mixture of explicit and implicit initialization") // TODO
+            if (!allInit && !noInit) {
+                return throwError(s, 3005, "Unsupported enum decleration: has mixture of explicit and implicit initialization");
+            }
 
             if (allInit) {
                 let memAndSup = s.members
                     .map(m => [m, emitExp(m.initializer)] as [ts.EnumMember, ExpRes])
-                throw Error("Unsupported: explicit enum initialization") // TODO
+                return throwError(s, 3006, "Unsupported: explicit enum initialization"); // TODO
             }
 
             let val = 0
@@ -729,55 +744,19 @@ namespace pxt.py {
 
             return out
         }
-        function emitFuncType(s: ts.FunctionTypeNode): string {
-            let returnType = emitType(s.type)
-            let params = s.parameters
-                .map(p => p.type) // python type syntax doesn't allow names
-                .map(emitType)
-            return `Callable[[${params.join(", ")}], ${returnType}]`
-        }
-        function emitType(s: ts.TypeNode): string {
-            switch (s.kind) {
-                case ts.SyntaxKind.StringKeyword:
-                    return "str"
-                case ts.SyntaxKind.NumberKeyword:
-                    // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
-                    return "number"
-                case ts.SyntaxKind.BooleanKeyword:
-                    return "bool"
-                case ts.SyntaxKind.VoidKeyword:
-                    return "None"
-                case ts.SyntaxKind.FunctionType:
-                    return emitFuncType(s as ts.FunctionTypeNode)
-                case ts.SyntaxKind.ArrayType: {
-                    let t = s as ts.ArrayTypeNode
-                    let elType = emitType(t.elementType)
-                    return `List[${elType}]`
-                }
-                case ts.SyntaxKind.TypeReference: {
-                    let t = s as ts.TypeReferenceNode
-                    let nm = getName(t.typeName)
-                    return `${nm}`
-                }
-                default:
-                    pxt.tickEvent("depython.todo", { kind: s.kind })
-                    return `(TODO: Unknown TypeNode kind: ${s.kind})`
-            }
-            // // TODO translate type
-            // return s.getText()
-        }
         function emitParamDecl(s: ParameterDeclarationExtended, inclTypesIfAvail = true): string {
             let nm = s.altName || getName(s.name)
             let typePart = ""
             if (s.type && inclTypesIfAvail) {
-                let typ = emitType(s.type)
+                let typ = pxtc.emitType(s.type)
                 typePart = `: ${typ}`
             }
             let initPart = ""
             if (s.initializer) {
                 let [initExp, initSup] = emitExp(s.initializer)
-                if (initSup.length)
-                    throw new Error(`TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
+                if (initSup.length) {
+                    return throwError(s, 3007, `TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
+                }
                 initPart = ` = ${initExp}`
             }
             return `${nm}${typePart}${initPart}`
@@ -796,7 +775,7 @@ namespace pxt.py {
                 out = out.concat(expSup)
                 let declStmt: string;
                 if (s.type) {
-                    let translatedType = emitType(s.type)
+                    let translatedType = pxtc.emitType(s.type)
                     declStmt = `${varNm}: ${translatedType} = ${exp}`
                 } else {
                     declStmt = `${varNm} = ${exp}`
@@ -816,7 +795,7 @@ namespace pxt.py {
         function asExpRes(str: string): ExpRes {
             return [str, []]
         }
-        function emitOp(s: ts.BinaryOperator | ts.PrefixUnaryOperator | ts.PostfixUnaryOperator): string {
+        function emitOp(s: ts.BinaryOperator | ts.PrefixUnaryOperator | ts.PostfixUnaryOperator, node: ts.Node): string {
             switch (s) {
                 case ts.SyntaxKind.BarBarToken:
                     return "or"
@@ -860,7 +839,7 @@ namespace pxt.py {
                 case ts.SyntaxKind.MinusMinusToken:
                     // TODO handle "--" & "++" generally. Seperate prefix and postfix cases.
                     // This is tricky because it needs to return the value and the mutate after.
-                    throw Error("Unsupported ++ and -- in an expression (not a statement or for loop)")
+                    return throwError(node, 3008, "Unsupported ++ and -- in an expression (not a statement or for loop)");
                 case ts.SyntaxKind.AmpersandToken:
                     return "&"
                 case ts.SyntaxKind.CaretToken:
@@ -870,7 +849,7 @@ namespace pxt.py {
                 case ts.SyntaxKind.GreaterThanGreaterThanToken:
                     return ">>"
                 case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
-                    throw Error("Unsupported operator: >>>")
+                    return throwError(node, 3009, "Unsupported operator: >>>");
                 case ts.SyntaxKind.AsteriskAsteriskToken:
                     return "**"
                 default:
@@ -891,7 +870,7 @@ namespace pxt.py {
             if (isStrConcat && !isLStr)
                 left = wrap(left)
 
-            let op = emitOp(s.operatorToken.kind)
+            let op = emitOp(s.operatorToken.kind, s)
 
             let [right, rightSup] = emitExp(s.right)
             if (isStrConcat && !isRStr)
@@ -1047,7 +1026,7 @@ namespace pxt.py {
                 calleeParameters = calleeTypeNode.parameters
                 if (calleeParameters.length < s.arguments.length) {
                     pxt.tickEvent("depython.todo", { kind: s.kind })
-                    throw Error("TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText())
+                    return throwError(s, 3010, "TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText());
                 }
             }
 
@@ -1123,7 +1102,7 @@ namespace pxt.py {
             }
         }
         function emitPreUnaryExp(s: ts.PrefixUnaryExpression): ExpRes {
-            let op = emitOp(s.operator);
+            let op = emitOp(s.operator, s);
             let [exp, expSup] = emitExp(s.operand)
             // TODO handle order-of-operations ? parenthesis?
             let space = getUnaryOpSpacing(s.operator)
@@ -1131,7 +1110,7 @@ namespace pxt.py {
             return [res, expSup]
         }
         function emitPostUnaryExp(s: ts.PostfixUnaryExpression): ExpRes {
-            let op = emitOp(s.operator);
+            let op = emitOp(s.operator, s);
             let [exp, expSup] = emitExp(s.operand)
             // TODO handle order-of-operations ? parenthesis?
             let space = getUnaryOpSpacing(s.operator)
@@ -1172,7 +1151,7 @@ namespace pxt.py {
             return [exp, sup]
         }
         function emitIdentifierExp(s: ts.Identifier): ExpRes {
-            // TODO disallow keywords and built-ins? 
+            // TODO disallow keywords and built-ins?
             // TODO why isn't undefined showing up as a keyword?
             // let id = s.text;
             if (s.text == "undefined")
