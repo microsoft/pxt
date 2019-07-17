@@ -275,6 +275,16 @@ namespace pxt.py {
         return ctx.currFun || ctx.currClass || ctx.currModule
     }
 
+    function topScope(): py.ScopeDef {
+        let current = currentScope();
+
+        while (current && current.parent) {
+            current = current.parent;
+        }
+
+        return current;
+    }
+
     function isTopLevel() {
         return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
     }
@@ -623,14 +633,16 @@ namespace pxt.py {
 
     function lookupVar(n: string) {
         let s = currentScope()
-        while (s) {
-            let v = U.lookup(s.vars, n)
-            if (v) return v
-            // go to parent, excluding class scopes
-            do {
-                s = s.parent
-            } while (s && s.kind == "ClassDef")
-        }
+        let v = U.lookup(s.vars, n)
+        if (v) return v
+        // while (s) {
+        //     let v = U.lookup(s.vars, n)
+        //     if (v) return v
+        //     // go to parent, excluding class scopes
+        //     do {
+        //         s = s.parent
+        //     } while (s && s.kind == "ClassDef")
+        // }
         //if (autoImport && lookupGlobalSymbol(n)) {
         //    return addImport(currentScope(), n, ctx.currModule)
         //}
@@ -928,6 +940,7 @@ namespace pxt.py {
             const isMethod = !!ctx.currClass && !ctx.currFun
 
             const topLev = isTopLevel()
+            const nested = !!ctx.currFun;
 
             setupScope(n)
             const existing = lookupSymbol(getFullName(n));
@@ -988,7 +1001,7 @@ namespace pxt.py {
                 }
             } else {
                 U.assert(!prefix)
-                if (n.name[0] == "_" || topLev || inline)
+                if (n.name[0] == "_" || topLev || inline || nested)
                     nodes.push(B.mkText("function "), quote(funname))
                 else
                     nodes.push(B.mkText("export function "), quote(funname))
@@ -1012,7 +1025,14 @@ namespace pxt.py {
                 }
             }
 
-            nodes.push(B.mkBlock(body))
+            const hoisted: B.JsNode[] = [];
+            for (const varName of Object.keys(n.vars)) {
+                if (n.vars[varName].shouldHoist) {
+                    hoisted.push(declareVariable(n.vars[varName]));
+                }
+            }
+
+            nodes.push(B.mkBlock(hoisted.concat(body)))
 
             let ret = B.mkGroup(nodes)
 
@@ -1277,10 +1297,50 @@ namespace pxt.py {
         AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
         AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
         AsyncWith: (n: py.AsyncWith) => stmtTODO(n),
-        Global: (n: py.Global) =>
-            B.mkStmt(B.mkText("TODO: global: "), B.mkGroup(n.names.map(B.mkText))),
-        Nonlocal: (n: py.Nonlocal) =>
-            B.mkStmt(B.mkText("TODO: nonlocal: "), B.mkGroup(n.names.map(B.mkText))),
+        Global: (n: py.Global) => {
+            const globalScope = topScope();
+            const current = currentScope();
+
+            for (const name of n.names) {
+                // if (U.lookup(current.vars, name)) {
+                //     error(n, 99999999, U.lf("Variable referenced before global statement"));
+                // }
+
+                const existing = U.lookup(globalScope.vars, name);
+
+                if (!existing) {
+                    defvar(name, { shouldHoist: true }, globalScope);
+                }
+                else {
+                    existing.shouldHoist = true;
+                }
+
+                defvar(name, { modifier: VarModifier.Global });
+            }
+            return B.mkStmt(B.mkText(""));
+        },
+        Nonlocal: (n: py.Nonlocal) => {
+            const globalScope = topScope();
+            const current = currentScope();
+
+            for (const name of n.names) {
+                // if (U.lookup(current.vars, name)) {
+                //     error(n, 99999999, U.lf("Variable referenced before nonlocal statement"));
+                // }
+
+                const declaringScope = findNonlocalDeclaration(name, current);
+
+                if (!declaringScope || declaringScope === globalScope) {
+                    error(n, 99999999, U.lf("No binding found for nonlocal variable"));
+                }
+                else {
+                    declaringScope.vars[name].shouldHoist = true;
+                }
+
+                defvar(name, { modifier: VarModifier.NonLocal });
+            }
+            return B.mkStmt(B.mkText(""));
+        }
     }
 
     function convertAssign(n: py.AnnAssign | py.Assign): B.JsNode {
@@ -1387,9 +1447,11 @@ namespace pxt.py {
 
     function possibleDef(n: py.Name, excludeLet: boolean = false) {
         let id = n.id
+        let curr = lookupSymbol(id)
+        let local = currentScope().vars[id];
+
         if (n.isdef === undefined) {
-            let curr = lookupSymbol(id)
-            if (!curr) {
+            if (!curr || (curr.kind === SK.Variable && curr !== local)) {
                 if (ctx.currClass && !ctx.currFun) {
                     n.isdef = false // field
                     curr = defvar(id, {})
@@ -1402,6 +1464,9 @@ namespace pxt.py {
             }
             n.symbolInfo = curr
             unify(n, n.tsType, curr.pyRetType)
+        }
+        else if (curr.shouldHoist && n.isdef) {
+            n.isdef = false;
         }
 
         if (n.isdef && !excludeLet) {
@@ -1945,6 +2010,30 @@ namespace pxt.py {
         return false
     }
 
+    function declareVariable(s: SymbolInfo) {
+        const name = quote(s.name);
+        const type = t2s(symbolType(s));
+
+        return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
+    }
+
+    function findNonlocalDeclaration(name: string, scope: py.ScopeDef): py.ScopeDef {
+        if (!scope) return null;
+
+        const symbolInfo = scope.vars && scope.vars[name];
+
+        if (symbolInfo && (symbolInfo.modifier == undefined || symbolInfo.modifier === VarModifier.Local)) {
+            return scope;
+        }
+        else if (symbolInfo && symbolInfo.modifier === VarModifier.Global) {
+            // TODO: This case should error
+            return scope;
+        }
+        else {
+            return findNonlocalDeclaration(name, scope.parent);
+        }
+    }
+
     // TODO look at scopes of let
 
     function toTS(mod: py.Module): B.JsNode[] {
@@ -1953,7 +2042,15 @@ namespace pxt.py {
             return null
         resetCtx(mod)
         if (!mod.vars) mod.vars = {}
-        let res = mod.body.map(stmt)
+
+        const hoisted: B.JsNode[] = [];
+        for (const varName of Object.keys(mod.vars)) {
+            if (mod.vars[varName].shouldHoist) {
+                hoisted.push(declareVariable(mod.vars[varName]));
+            }
+        }
+
+        let res = hoisted.concat(mod.body.map(stmt))
         if (res.every(isEmpty)) return null
         else if (mod.name == "main") return res
         return [

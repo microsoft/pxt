@@ -2,6 +2,12 @@
 /// <reference path='../built/pxtcompiler.d.ts' />
 
 namespace pxt.py {
+    export enum VarModifier {
+        Local,
+        NonLocal,
+        Global
+    }
+
     export interface ParameterDesc extends pxtc.ParameterDesc {
         pyType?: Type;
     }
@@ -38,6 +44,8 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
+        modifier?: VarModifier;
+        shouldHoist?: boolean;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
