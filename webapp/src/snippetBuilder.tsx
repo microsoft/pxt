@@ -70,7 +70,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      */
     buildDefaults() {
         const { config } = this.state;
-        const defaults: DefaultAnswersMap = {};
+        const defaults: AnswersMap = {};
 
         for (const question of config.questions) {
             const { inputs } = question;
@@ -90,7 +90,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             }
         }
 
-        this.setState({ defaults }, this.generateOutputMarkdown);
+        this.setState({ answers: defaults, defaults }, this.generateOutputMarkdown);
     }
 
     toggleActionButton() {
@@ -424,7 +424,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                                 <InputHandler
                                                     onChange={isSnippetInputAnswerSingular(input) ? this.onChange(input.answerToken) : this.onChange}
                                                     input={input}
-                                                    value={isSnippetInputAnswerSingular(input) ? (answers[input.answerToken] || defaults[input.answerToken]) : answers[input.answerTokens[0]]}
+                                                    value={isSnippetInputAnswerSingular(input) ? answers[input.answerToken] : answers[input.answerTokens[0]]}
                                                     onEnter={this.nextPage}
                                                     key={isSnippetInputAnswerSingular(input) ? input.answerToken : input.answerTokens[0]}
                                                 />
