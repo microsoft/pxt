@@ -1,188 +1,102 @@
-const { By } = require('selenium-webdriver');
-const util = require('util')
-const fs = require('fs')
-const writeFile = util.promisify(fs.writeFile)
+import { DomObject } from './lib/dom-object';
+import assert from 'assert';
 
-function moreList() {
+class GetMoreList extends DomObject {
 
-    it('Should switch to Project Settings', async () => {
-        await browser.findElement(By.className('ui dropdown icon item icon more-dropdown-menuitem')).click();
-        await browser.sleep(5000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[1]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.id("fileNameInput")).getAttribute('value').then(b => {
-            assert.equal(b, 'fortest')
-        })
-        //Update project name
-        await browser.findElement(By.id("fileNameInput")).sendKeys("Micro:bit");
-        await browser.sleep(5000);
-        await browser.findElement(By.className('ui button  green ')).click();
-        await browser.sleep(5000);
+    async moreList() {
+        for (var i = 1; i < 4; i++) {
 
-    })
+            await this.click('[title="More..."]', '[title="Project Settings"]');
 
-    it('Should switch to Extensions', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[2]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui button back-button large')).click();
-        await browser.sleep(3000);
-    })
+            if (i == 1) {
+                await this.click('[title="Go back"]');
+            }
+            if (i == 2) {
+                let projectName = await this.getInputValue('#fileNameInput');
 
+                console.debug(`This is the name of the new project at the time:${projectName}`);
 
-    it('Should switch to delete project and cancel delete', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[4]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui button icon icon-and-text approve icon right labeled cancel  ')).click();
-        await browser.sleep(3000);
-        await browser.getCurrentUrl().then(url => {
-            assert.equal(url, "https://makecode.microbit.org/beta#editor");
+                assert.equal(projectName, 'Project1');
+
+                await this.sendKeys('#fileNameInput', 'Fortest');
+
+                await this.click('.ui.button.green');
+            }
+            if (i == 3) {
+                await this.click('.field .ui.button:nth-child(2)');
+            }
+        }
+        await this.click('[title="More..."]', '[title="Extensions"]');
+        let extensionHeader = await this.getText('.ui.card.link:nth-child(1) .header');
+
+        console.debug(`This is the first extension name:${extensionHeader}`);
+
+        assert.equal(extensionHeader, 'bluetooth');
+
+        await this.click('.header-close [title="Go back"]', '[title="More..."]', '[title="Delete Project"]');
+
+        let deleteTitle = await this.getText('.dimmed .header-title');
+
+        console.debug(`This is the alert of delete project:${deleteTitle}`);
+
+        assert.equal(deleteTitle, "Would you like to delete 'Project1Fortest'?");
+
+        await this.click('button.cancel', '[title="More..."]', '[title="Report Abuse..."]');
+
+        await this.sendKeys('[placeholder="Enter project URL here..."]', 'http://fortest.com');
+
+        await this.click('button.cancel', '[title="More..."]', '[title="Language"]');
+
+        let languageHeader = await this.getText('.header-title');
+
+        console.debug(`This is the header-title of language:${languageHeader}`);
+
+        assert.equal(languageHeader, 'Select Language');
+
+        await this.click('.closeIcon', '[title="More..."]', '[title="More..."] .ui:nth-child(8)');
+
+        await this.catchScreenShot('HighContrast');
+
+        await this.click('[title="More..."]', '[title="Green Screen On"]');
+
+        let headerTitle = await this.getText('.header-title');
+
+        console.debug(`This is the header-title of choosing a screen background:${headerTitle}`);
+
+        assert.equal(headerTitle, 'Choose a camera');
+
+        let cameraName = await this.getText('.ui.card.link .header');
+
+        console.debug(`This is the camera name:${cameraName}`);
+
+        assert.equal(cameraName, 'Green background');
+
+        await this.click('.massive');
+
+        await this.catchScreenShot('GreenBackground');
+
+        await this.click('[title="More..."]', '[title="Reset"]');
+
+        let resetMessage = await this.getText('.dimmed .content p');
+
+        console.log(resetMessage);
+
+        await this.click('button.cancel', '[title="More..."]', '[title="Pair device"]');
+
+        let pairDeviceTitle = await this.getText('.downloaddialog .header-title');
+
+        console.log(pairDeviceTitle);
+
+        await this.click('.closeIcon', '[title="More..."]', '[title="About..."]');
+
+        await this.click('.positive');
+    }
+
+    test() {
+        it('Get More.. List', async () => {
+            return await this.moreList();
         });
-
-    })
-
-    it('Should switch to delete project and delete current project', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[4]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui button icon icon-and-text approve icon right labeled red  ')).click();
-        await browser.sleep(5000);
-        await browser.getCurrentUrl().then(url => {
-            assert.equal(url, "https://makecode.microbit.org/beta#");
-        });
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui card link buttoncard newprojectcard')).click();
-        await browser.sleep(10000);
-    })
-
-    it('Should switch to Report Abuse...', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[5]')).click();
-        await browser.sleep(3000);
-
-        await browser.findElement(By.xpath('/html/body/div[12]/div/div/div[3]/button[2]')).click();
-    })
-
-    it('Should switch to language', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[7]')).click();
-        await browser.sleep(5000);
-        await browser.findElement(By.xpath('//div[@class="ui card  link card-selected"][25]')).click();
-        await browser.sleep(10000);
-
-    })
-
-    it('Should switch to open high contrast', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[8]')).click();
-        browser.takeScreenshot().then(
-            function (image, err) {
-                writeFile('./screenshot/openHighContrast.png', image, 'base64', function (err) {
-                    console.log(err);
-                });
-            }
-        );
-        await browser.sleep(3000);
-
-    })
-
-    it('Should switch to close high contrast', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[8]')).click();
-        browser.takeScreenshot().then(
-            function (image, err) {
-                writeFile('./screenshot/closeHighContrast.png', image, 'base64', function (err) {
-                    console.log(err);
-                });
-            }
-        );
-        await browser.sleep(3000);
-    })
-
-    it('Should switch to open green screen', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[9]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('icon green tint massive ')).click();
-        await browser.sleep(3000);
-        browser.takeScreenshot().then(
-            function (image, err) {
-                writeFile('./screenshot/openGreenScreen.png', image, 'base64', function (err) {
-                    console.log(err);
-                });
-            }
-        );
-        await browser.sleep(3000);
-    })
-
-    it('Should switch to close green screen', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[9]')).click();
-        await browser.sleep(3000);
-        browser.takeScreenshot().then(
-            function (image, err) {
-                writeFile('./screenshot/closeGreenScreen.png', image, 'base64', function (err) {
-                    console.log(err);
-                });
-            }
-        );
-        await browser.sleep(3000);
-    })
-
-    it('Should switch to reset and cancel reset', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[10]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui button icon icon-and-text approve icon right labeled cancel  ')).click();
-        await browser.sleep(3000);
-        await browser.getCurrentUrl().then(url => {
-            assert.equal(url, "https://makecode.microbit.org/beta#editor");
-        });
-        await browser.sleep(3000);
-    })
-
-    it('Should switch to reset and confirm reset', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[10]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui button icon icon-and-text approve icon right labeled red  ')).click();
-        await browser.sleep(3000);
-        await browser.getCurrentUrl().then(url => {
-            assert.equal(url, "https://makecode.microbit.org/beta#reload");
-        });
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui card link buttoncard newprojectcard')).click();
-        await browser.sleep(10000);
-    })
-
-    it('Check About info', async () => {
-        await browser.findElement(By.xpath('//div[contains(@class,"more-dropdown-menuitem")]')).click();
-        await browser.sleep(3000);
-        await browser.findElement(By.xpath('//*[@id="mainmenu"]/div[3]/div[2]/div/div[18]')).click();
-        await browser.sleep(3000);
-        browser.takeScreenshot().then(
-            function (image, err) {
-                writeFile('./screenshot/aboutInfo.png', image, 'base64', function (err) {
-                    console.log(err);
-                });
-            }
-        );
-        await browser.sleep(3000);
-        await browser.findElement(By.className('ui button icon icon-and-text approve icon right labeled positive  ')).click();
-        await browser.sleep(3000);
-    })
+    }
 }
 
-exports.moreList = moreList;
+export let getMoreList = new GetMoreList();
