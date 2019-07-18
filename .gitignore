@@ -31,3 +31,5 @@ tests/ui-test/package-lock.json
 tests/ui-test/debug.log
 tests/ui-test/chromedriver.exe
 tests/ui-test/screenshot/**
+tests/ui-test/screenshots/GreenBackground.png
+tests/ui-test/screenshots/HighContrast.png

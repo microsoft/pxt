@@ -12,6 +12,7 @@ class GetMoreList extends DomObject {
                 await this.click('[title="Go back"]');
             }
             if (i == 2) {
+
                 let projectName = await this.getAttribute('#fileNameInput', "value");
 
                 console.debug(`This is the name of the new project at the time:${projectName}`);
@@ -23,6 +24,7 @@ class GetMoreList extends DomObject {
                 await this.click('.ui.button.green');
             }
             if (i == 3) {
+
                 await this.click('.field .ui.button:nth-child(2)');
             }
         }
