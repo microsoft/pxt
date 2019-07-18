@@ -2647,7 +2647,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
                 .then(cfg => mainPkg.loadAsync()
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
-                        return addDepAsync(cfg.name, ver)
+                        return addDepAsync(cfg.name, ver, false)
                             .then(() => addDepsAsync())
                             .then(() => mainPkg.installAllAsync())
                     }))
@@ -2663,10 +2663,16 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
             })
     }
 
-    function addDepAsync(name: string, ver: string) {
+    function addDepAsync(name: string, ver: string, hw: boolean) {
         console.log(U.lf("adding {0}: {1}", name, ver))
         return mainPkg.loadAsync()
             .then(() => {
+                if (hw) {
+                    // remove other hw variants
+                    Object.keys(mainPkg.config.dependencies)
+                        .filter(k => /^hw---/.test(k))
+                        .forEach(k => delete mainPkg.config.dependencies[k]);
+                }
                 mainPkg.config.dependencies[name] = ver;
                 mainPkg.saveConfig()
                 mainPkg = new pxt.MainPackage(new Host())
@@ -2674,7 +2680,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     }
 
     function addDepsAsync() {
-        return hwvariant ? addDepAsync(hwvariant, "*") : Promise.resolve();
+        return hwvariant ? addDepAsync(hwvariant, "*", true) : Promise.resolve();
     }
 }
 
