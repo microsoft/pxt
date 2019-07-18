@@ -368,10 +368,6 @@ print only stuff
 }
 
 @media only print {
-
-    #root {
-        position: relative;
-    }
     
     .pusher .article {
         left: 0;
