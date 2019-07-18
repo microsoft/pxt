@@ -4,7 +4,8 @@ import * as Snippet from './snippetBuilder';
 import * as sui from './sui';
 import { SimulatorDisplay } from './simulatorDisplay';
 
-const SCALE_MULTIPLIER = 1.9437;
+const X_SCALE = 1.94375;
+const Y_SCALE = 1.925
 
 interface PositionPickerProps {
     valueMap?: pxt.Map<number>;
@@ -53,11 +54,14 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     getPosition() {
         const { finalX, finalY } = this.state;
 
-        return { x: this.scalePoint(finalX), y: this.scalePoint(finalY) };
+        return { x: this.scalePoint(finalX, true), y: this.scalePoint(finalY) };
     }
 
-    scalePoint(point: number) {
-        return !isNaN(point) ? Math.round(point / SCALE_MULTIPLIER) : 0;
+    scalePoint(point: number, x?: true) {
+        if (!isNaN(point)) {
+            return Math.round(point / (x ? X_SCALE : Y_SCALE))
+        }
+        return 0;
     }
 
     onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -72,7 +76,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
 
         this.setState({
             dotVisible: true,
-            finalX: this.scalePoint(x),
+            finalX: this.scalePoint(x, true),
             finalY: this.scalePoint(y),
         }, () => {
             if (!Snippet.isSnippetInputAnswerSingular(input)) {
@@ -106,16 +110,20 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
 
     buildGrid() {
         let gridDivs: JSX.Element[] = [];
-        for (let i = 1; i < 11; ++i) {
-            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * 32}px` }} key={`grid-line-y-${i}`} />);
-            gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * 24}px` }} key={`grid-line-x-${i}`} />);
+        for (let i = 0; i < 16; ++i) {
+            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * 20}px` }} key={`grid-line-y-${i}`} />);
+        }
+
+        for (let i = 0; i < 12; ++i) {
+            gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * 20}px` }} key={`grid-line-x-${i}`} />);
         }
 
         return gridDivs;
     }
 
     public renderCore() {
-        const { dotVisible, finalX, finalY, x, y } = this.state;
+        const { dotVisible, finalX, finalY } = this.state;
+        const { defaultX, defaultY } = this.props;
 
         return (
             <div>
@@ -123,14 +131,14 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                     <div className='column'>
                         <sui.Input
                             class={'position-picker preview-input'}
-                            value={(finalX ? finalX : this.scalePoint(x)).toString()}
+                            value={(finalX ? finalX : defaultX).toString()}
                             onChange={this.onChange(true)}
                         />
                     </div>
                     <div className='column'>
                         <sui.Input
                             class={'position-picker preview-input'}
-                            value={(finalY ? finalY : this.scalePoint(y)).toString()}
+                            value={(finalY ? finalY : defaultY).toString()}
                             onChange={this.onChange(false)}
                         />
                     </div>
@@ -145,7 +153,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         {this.grid.map((grid) => grid)}
                         <div className='position-picker cross-x' />
                         <div className='position-picker cross-y' />
-                        {dotVisible && <div className='position-picker dot' style={{ top: `${(finalY * SCALE_MULTIPLIER)}px`, left: `${(finalX * SCALE_MULTIPLIER)}px` }} />}
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${(finalY * Y_SCALE)}px`, left: `${(finalX * X_SCALE)}px` }} />}
                     </div>
                 </SimulatorDisplay>
             </div>
