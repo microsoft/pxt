@@ -12,7 +12,7 @@ class GetMoreList extends DomObject {
                 await this.click('[title="Go back"]');
             }
             if (i == 2) {
-                let projectName = await this.getInputValue('#fileNameInput');
+                let projectName = await this.getAttribute('#fileNameInput', "value");
 
                 console.debug(`This is the name of the new project at the time:${projectName}`);
 
@@ -27,6 +27,7 @@ class GetMoreList extends DomObject {
             }
         }
         await this.click('[title="More..."]', '[title="Extensions"]');
+
         let extensionHeader = await this.getText('.ui.card.link:nth-child(1) .header');
 
         console.debug(`This is the first extension name:${extensionHeader}`);
@@ -35,17 +36,13 @@ class GetMoreList extends DomObject {
 
         await this.click('.header-close [title="Go back"]', '[title="More..."]', '[title="Delete Project"]');
 
-        let deleteTitle = await this.getText('.dimmed .header-title');
+        let deleteTitle = await this.getText('.header-title');
 
         console.debug(`This is the alert of delete project:${deleteTitle}`);
 
         assert.equal(deleteTitle, "Would you like to delete 'Project1Fortest'?");
 
-        await this.click('button.cancel', '[title="More..."]', '[title="Report Abuse..."]');
-
-        await this.sendKeys('[placeholder="Enter project URL here..."]', 'http://fortest.com');
-
-        await this.click('button.cancel', '[title="More..."]', '[title="Language"]');
+        await this.click('button.cancel', '[title="More..."]', '[title="Report Abuse..."]', 'button.cancel', '[title="More..."]', '[title="Language"]');
 
         let languageHeader = await this.getText('.header-title');
 
@@ -83,13 +80,11 @@ class GetMoreList extends DomObject {
 
         await this.click('button.cancel', '[title="More..."]', '[title="Pair device"]');
 
-        let pairDeviceTitle = await this.getText('.downloaddialog .header-title');
+        let pairDeviceTitle = await this.getText('.header-title');
 
         console.log(pairDeviceTitle);
 
-        await this.click('.closeIcon', '[title="More..."]', '[title="About..."]');
-
-        await this.click('.positive');
+        await this.click('.closeIcon', '[title="More..."]', '[title="About..."]', '.positive');
     }
 
     test() {
