@@ -198,9 +198,9 @@ function setupSemantic() {
 }
 
 function setupBlocklyAsync() {
-    let promise = Promise.resolve();
+    var promise = Promise.resolve();
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-        let opts = {};
+        var opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
         }).then(function () {
@@ -217,7 +217,7 @@ function setupBlocklyAsync() {
     if (pxt.appTarget.versions &&
         pxt.semver.strcmp(pxt.appTarget.versions.pxt, "3.9.0") < 0 &&
         pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-        let opts = {};
+        var opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
         }).then(function () {
@@ -261,7 +261,7 @@ function renderSnippets() {
 }
 
 function getCookieLang() {    
-    const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
+    const cookiePropRegex = new RegExp(pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)+ "=(.*?)(?:;|$)")
     const cookieValue = cookiePropRegex.exec(document.cookie);
     return cookieValue && cookieValue[1] || null;
 }
@@ -271,22 +271,22 @@ function setCookieLang(langId) {
         return;
     }
     if (langId !== getCookieLang()) {
-        pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
+        pxt.tickEvent("menu.lang.setcookielang." + langId);
         const expiration = new Date();
         expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
-        document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
+        document.cookie = pxt.Util.pxtLangCookieId + "=" + langId + ";expires=" + expiration.toUTCString();
     }
 }
 
 function languageOption(code) {
-    let locale = pxt.Util.allLanguages[code];
+    var locale = pxt.Util.allLanguages[code];
 
     var headerEl = document.createElement('div');
     headerEl.className = 'header';
     headerEl.textContent = locale.localizedName;
 
     var descriptionEl = document.createElement('div');
-    descriptionEl.classList.add('description', 'tall');
+    descriptionEl.className = 'description tall';
     descriptionEl.textContent = locale.englishName;
 
     var contentEl = document.createElement('div');
@@ -295,7 +295,7 @@ function languageOption(code) {
     contentEl.appendChild(descriptionEl);
 
     var cardEl = document.createElement('div');
-    cardEl.classList.add('ui','card','link','card-selected','langoption');
+    cardEl.className = 'ui card link card-selected langoption';
     cardEl.dataset.lang = code;
     cardEl.setAttribute('role', 'link');
     cardEl.setAttribute('aria-label', locale.englishName);
@@ -307,14 +307,14 @@ function languageOption(code) {
 
 function setupLangPicker() {
 
-    let availableLocales = pxt.appTarget.appTheme.availableLocales;
-    let locales;
-    let initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
+    var availableLocales = pxt.appTarget.appTheme.availableLocales;
+    var locales;
+    var initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
     if (pxt.appTarget.appTheme && availableLocales && pxt.appTarget.appTheme.selectLanguage) {
 
-        let localesContainer = document.querySelector("#availablelocales");
-        locales = availableLocales.map(e => languageOption(e));
-        locales.forEach(card => localesContainer.appendChild(card));
+        var localesContainer = document.querySelector("#availablelocales");
+        locales = availableLocales.map(function(e) { return languageOption(e) });
+        locales.forEach(function(card) { localesContainer.appendChild(card) });
    
         document.querySelector("#langpicker").onclick = function() { 
             $('.ui.modal').modal('show'); 
@@ -324,22 +324,22 @@ function setupLangPicker() {
             $('.ui.modal').modal('hide'); 
         };
 
-        let langOptions = document.querySelectorAll(".langoption");
+        var langOptions = document.querySelectorAll(".langoption");
 
         for(var x=0; x<langOptions.length; x++) {
             langOptions[x].addEventListener("click", function(e) {
-                let langId = e.currentTarget.dataset.lang;
+                var langId = e.currentTarget.dataset.lang;
                 if (!pxt.Util.allLanguages[langId]) {
                     return;
                 }
                 setCookieLang(langId);
                 if (langId !== initialLang) {
-                    pxt.tickEvent(`menu.lang.changelang.${langId}`);
+                    pxt.tickEvent("menu.lang.changelang." + langId);
                     // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
                     // In docs we currently don't have access to pxt.winrt
                     location.reload(); 
                 } else {
-                    pxt.tickEvent(`menu.lang.samelang.${langId}`);
+                    pxt.tickEvent("menu.lang.samelang." + langId);
                     $('.ui.modal').modal('hide');
                 }
             });
