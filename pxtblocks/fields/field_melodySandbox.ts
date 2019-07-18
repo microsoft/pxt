@@ -216,7 +216,6 @@ namespace pxtblockly {
                 return "\"" + this.melody.getStringRepresentation() + "\"";
             }
             return "";
-
         }
 
         // This should parse the string returned by getTypeScriptValue() and restore the state based on that
@@ -453,10 +452,8 @@ namespace pxtblockly {
                         pxt.BrowserUtils.removeClass(cell, pxtmelody.getColorClass(j));
                         pxt.BrowserUtils.addClass(cell, "melody-default");
                     }
-
                 }
             }
-
         }
 
         private createCell(x: number, y: number) {
