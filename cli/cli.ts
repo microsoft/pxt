@@ -2669,7 +2669,6 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
             .then(() => {
                 mainPkg.config.dependencies[name] = ver;
                 mainPkg.saveConfig()
-                console.log(JSON.stringify(mainPkg.config))
                 mainPkg = new pxt.MainPackage(new Host())
             })
     }
