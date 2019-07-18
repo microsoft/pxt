@@ -9,10 +9,10 @@ import * as chai from "chai";
 import { TestHost } from "../common/testHost";
 import * as util from "../common/testUtils";
 
-// uses the same test cases as the blocks decompiler tests
 const casesDir = path.join(process.cwd(), "tests", "pyconverter-test", "cases");
-
 const baselineDir = path.join(process.cwd(), "tests", "pyconverter-test", "baselines");
+// uses the same test APIs as the blocks decompiler tests
+const testBlocksDir = path.relative(process.cwd(), path.join("tests", "pyconverter-test", "testlib"));
 
 function initGlobals() {
     let g = global as any
@@ -69,7 +69,7 @@ function pyconverterTestAsync(filename: string) {
             baselineExists = false
         }
 
-        return util.py2tsAsync(filename)
+        return util.py2tsAsync(filename, testBlocksDir)
             .then(decompiled => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.ts"));
 
