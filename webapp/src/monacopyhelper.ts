@@ -12,7 +12,7 @@ function getIndent(s: string): number {
 }
 
 function setIndent(i: number, s: string): string {
-    return new Array(i+1).join(' ') + s.trim();
+    return new Array(i + 1).join(' ') + s.trim();
 }
 
 function getLine(source: string, model: monaco.editor.IReadOnlyModel, lineNumber: number): string {
@@ -34,7 +34,7 @@ export function provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOn
     const s =  model.getOffsetAt({ lineNumber: range.startLineNumber, column: range.startColumn });
     const e =  model.getOffsetAt({ lineNumber: range.endLineNumber, column: range.endColumn });
     const lines = source.slice(s, e).split('\n');
-    const codeLines = lines.map((s, i) => !!s ? i : -1).filter(i => i >=0);
+    const codeLines = lines.map((s, i) => !!s ? i : -1).filter(i => i >= 0);
 
     let prev;
     if (partial) {
