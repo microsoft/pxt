@@ -175,9 +175,9 @@ function cleanup() {
     removeBySubstring(casesDir, ".baseline")
 }
 
-function runProcAsync(cmd: string): Promise<string> {
+function runProcAsync(cmd: string, stdin?: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        exec(cmd, (err, stdout, stderr) => {
+        let e = exec(cmd, (err, stdout, stderr) => {
             let trace = ""
             if (stdout)
                 trace += stdout
@@ -185,10 +185,19 @@ function runProcAsync(cmd: string): Promise<string> {
                 trace += stderr
             resolve(trace)
         })
+        if (stdin) {
+            e.stdin.write(stdin);
+            e.stdin.end();
+        }
     });
 }
 function runPyAsync(pyFile: string): Promise<string> {
     let pyBody = fs.readFileSync(pyFile, "utf8")
+    // swap "(args) -> ret" syntax for "Callable[[args] -> ret]"
+    pyBody = pyBody.replace(/: \((.*?)\) -> ([\w]+)/gi, function (f, m1, m2) {
+        return ": Callable[[" + m1 + "], " + m2 + "]";
+    })
+
     const prelude = `
 from typing import *
 number = Any
@@ -199,7 +208,7 @@ class Enum:
     let pyStr = `${prelude}\n${pyBody}`
     let escapedStr = `<<"EOF"\n${pyStr}\nEOF`
     let cmd = `python3 ${escapedStr}`
-    return runProcAsync(cmd)
+    return runProcAsync("python3", pyStr)
 }
 function runNodeJsAsync(nodeArgs: string): Promise<string> {
     // Note: another option would be to use eval() but

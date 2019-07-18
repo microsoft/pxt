@@ -577,6 +577,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
+        const descriptions = description && description.split("\n");
 
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") {
@@ -608,9 +609,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {tags ? <div className="ui labels">
                         {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
                         </div>)}</div> : undefined}
-                    <p className="detail">
-                        {description}
-                    </p>
+                    {descriptions && descriptions.map((desc, index) => {
+                        return <p key={`line${index}`} className="detail">
+                                {desc}
+                            </p>
+                    })}
                     <div className="actions">
                         {actions.map(action =>
                             isLink && linkHref ?

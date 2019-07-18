@@ -96,6 +96,7 @@ namespace pxt.py {
         delete r.pyRetType
         delete r.pySymbolType
         delete r.moduleTypeMarker
+        delete r.declared
         if (r.parameters)
             r.parameters = r.parameters.map(p => {
                 p = U.flatClone(p)
@@ -391,7 +392,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9520; 9550-9599 reserved for parser
+    // next free error 9521; 9550-9599 reserved for parser
     function error(astNode: py.AST, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -586,8 +587,13 @@ namespace pxt.py {
 
         let ct = t.classType
 
-        if (!ct && t.primType == "@array")
-            ct = lookupApi("Array")
+        if (!ct) {
+            if (t.primType == "@array") {
+                ct = lookupApi("Array")
+            } else if (t.primType == "string") {
+                ct = lookupApi("String")
+            }
+        }
 
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
@@ -924,10 +930,20 @@ namespace pxt.py {
             const topLev = isTopLevel()
 
             setupScope(n)
+            const existing = lookupSymbol(getFullName(n));
             const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
 
-            if (shouldInlineFunction(sym) && !inline)
-                return B.mkText("")
+            if (!inline) {
+                if (existing && existing.declared === currIteration) {
+                    error(n, 9520, lf("Duplicate function declaration"));
+                }
+
+                sym.declared = currIteration;
+
+                if (shouldInlineFunction(sym)) {
+                    return B.mkText("")
+                }
+            }
 
             if (isMethod) sym.isInstance = true
             ctx.currFun = n
@@ -1289,7 +1305,6 @@ namespace pxt.py {
         let pref = ""
         let isConstCall = value ? isCallTo(value, "const") : false
         let nm = getName(target) || ""
-        let isUpperCase = nm && !/[a-z]/.test(nm)
         if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
@@ -1327,7 +1342,7 @@ namespace pxt.py {
                 fd.isGetSet = true
                 fdBack.isGetSet = true
                 return B.mkGroup(res)
-            } else 
+            } else
             */
             if (currIteration == 0) {
                 return B.mkText("/* skip for now */")
@@ -1338,7 +1353,7 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
-        if (isConstCall || isUpperCase) {
+        if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
             if (!/^static /.test(pref) && !/const/.test(pref))
@@ -1354,19 +1369,20 @@ namespace pxt.py {
             let tupNames = tup.elts
                 .map(e => e as py.Name)
                 .map(convertName)
-            function convertName(n: py.Name) {
-                // TODO resuse with Name expr
-                markInfoNode(n, "identifierCompletion")
-                typeOf(n)
-                let v = lookupName(n)
-                return possibleDef(n, /*excludeLet*/true)
-            }
             targs.push(B.mkCommaSep(tupNames))
             targs.push(B.mkText("]"))
             let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
             return res
         }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+
+        function convertName(n: py.Name) {
+            // TODO resuse with Name expr
+            markInfoNode(n, "identifierCompletion")
+            typeOf(n)
+            let v = lookupName(n)
+            return possibleDef(n, /*excludeLet*/true)
+        }
     }
 
     function possibleDef(n: py.Name, excludeLet: boolean = false) {
@@ -1670,6 +1686,11 @@ namespace pxt.py {
                 }
             }
 
+            if (isCallTo(n, "str")) {
+                // Our standard method of toString in TypeScript is to concatenate with the empty string
+                return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
+            }
+
             if (!fun)
                 error(n, 9508, U.lf("can't find called function"))
 
@@ -1733,7 +1754,7 @@ namespace pxt.py {
                     syntaxInfo.auxResult = i
                     let arg = orderedArgs[i]
                     if (!arg) {
-                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // if we can't parse this next argument, but the cursor is beyond the
                         // previous arguments, assume it's here
                         break
                     }

@@ -20,6 +20,8 @@ The MakeCode approach to solving this issue is to render the **JavaScript** code
 
 Here is an integration sample:
 
+* [React component](https://github.com/microsoft/pxt-react-extension-template/blob/master/src/components/snippet.tsx)
+* [HTML only](https://jsfiddle.net/ndyz1d57/80/)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
 
 ## Custom rendering
@@ -85,6 +87,7 @@ export interface RenderBlocksResponseMessage extends SimulatorMessage {
     uri?: string;
     width?: number;
     height?: number;
+    error?: string;
 }
 ```
 

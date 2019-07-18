@@ -159,7 +159,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
-        const tutorialHint = step.blockSolution;
+        const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
 
         if (!step.unplugged) {
@@ -447,11 +447,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
+        const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
-        const hasFinish = currentStep == maxSteps - 1;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1;
         const hasHint = this.hasHint();
 
         let tutorialAriaLabel = '',

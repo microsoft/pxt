@@ -14,6 +14,8 @@ namespace pxt.py {
         pyAST?: AST;
         isProtected?: boolean;
         moduleTypeMarker?: {};
+
+        declared?: number; // A reference to the current iteration; used for detecting duplicate functions
     }
 
     export interface TypeOptions {
@@ -408,7 +410,7 @@ namespace pxt.py {
     }
     export interface Constant extends Expr {
         kind: "Constant";
-        value: any; // ??? 
+        value: any; // ???
     }
 
     // the following expression can appear in assignment context

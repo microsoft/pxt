@@ -339,9 +339,16 @@ function runDockerAsync(args: string[]) {
     let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
     let cs = pxt.appTarget.compileService
     let dargs = cs.dockerArgs || ["-u", "build"]
+    let mountArg = fullpath + ":/src"
+
+    // this speeds up docker build a lot on macOS,
+    // see https://docs.docker.com/docker-for-mac/osxfs-caching/
+    if (process.platform == "darwin")
+        mountArg += ":delegated"
+
     return nodeutil.spawnAsync({
         cmd: "docker",
-        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
+        args: ["run", "--rm", "-v", mountArg, "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
         cwd: thisBuild.buildPath
     })
 }
@@ -566,7 +573,7 @@ function getCSharpCommand() {
 }
 
 function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
-    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_HEX].filter(f => !!res.outfiles[f])[0];
+    const firmwareName = [pxtc.BINARY_UF2, pxtc.BINARY_HEX, pxtc.BINARY_ELF].filter(f => !!res.outfiles[f])[0];
     if (!firmwareName) { // something went wrong heres
         pxt.reportError("compile", `firmware missing from built files (${Object.keys(res.outfiles).join(', ')})`)
         return Promise.resolve();
@@ -639,8 +646,10 @@ function getBoardDrivesAsync(): Promise<string[]> {
     } else if (process.platform == "linux") {
         const rx = new RegExp(pxt.appTarget.compile.deployDrives)
         const user = process.env["USER"]
-        return readDirAsync(`/media/${user}`)
-            .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+        if (nodeutil.existsDirSync(`/media/${user}`))
+            return readDirAsync(`/media/${user}`)
+                .then(lst => lst.filter(s => rx.test(s)).map(s => `/media/${user}/${s}/`))
+        return Promise.resolve([]);
     } else {
         return Promise.resolve([])
     }
