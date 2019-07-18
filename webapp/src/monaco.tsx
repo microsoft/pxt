@@ -685,8 +685,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // check existing content
         if (position.lineNumber < model.getLineCount() && lc) { // non-empty line
-            let whitespace = /\s*/.exec(lc);
-            insertText = (inline ? "" : "\n" + whitespace) + insertText;
+            insertText = (inline ? "" : "\n") + insertText;
         }
 
         // update cursor
@@ -1770,7 +1769,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return undefined;
         const qName = fn.qName;
         const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
-        let snippet = isPython ? fn.pySnippet : fn.snippet;
+        const snippet = isPython ? fn.pySnippet : fn.snippet;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
