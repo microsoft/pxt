@@ -2631,6 +2631,7 @@ class Host
 let mainPkg = new pxt.MainPackage(new Host())
 
 export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log("installing dependencies...");
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     if (packageName) {
@@ -2643,21 +2644,35 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
                 .then(cfg => mainPkg.loadAsync()
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
-                        console.log(U.lf("Adding: {0}: {1}", cfg.name, ver))
-                        mainPkg.config.dependencies[cfg.name] = ver
-                        mainPkg.saveConfig()
-                        mainPkg = new pxt.MainPackage(new Host())
-                        return mainPkg.installAllAsync()
+                        return addDepAsync(cfg.name, ver)
+                            .then(() => addDepsAsync())
+                            .then(() => mainPkg.installAllAsync())
                     }))
             );
     } else {
-        return mainPkg.installAllAsync()
+        return addDepsAsync()
+            .then(() => mainPkg.installAllAsync())
             .then(() => {
                 let tscfg = "tsconfig.json"
                 if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
                     nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
                 }
             })
+    }
+
+    function addDepAsync(name: string, ver: string) {
+        console.log(U.lf("adding {0}: {1}", name, ver))
+        return mainPkg.loadAsync()
+            .then(() => {
+                mainPkg.config.dependencies[name] = ver;
+                mainPkg.saveConfig()
+                console.log(JSON.stringify(mainPkg.config))
+                mainPkg = new pxt.MainPackage(new Host())
+            })
+    }
+
+    function addDepsAsync() {
+        return pxt.hwVariant ? addDepAsync("hw---" + pxt.hwVariant, "*") : Promise.resolve();
     }
 }
 
@@ -4507,7 +4522,6 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
-    parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
     if (parsed && parsed.flags["debug"])
         mode = BuildOption.DebugSim;
@@ -4520,8 +4534,10 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
 
     return (clean ? cleanAsync() : Promise.resolve())
         .then(() => install ? installAsync() : Promise.resolve())
-        .then(() => buildCoreAsync({ mode, warnDiv, ignoreTests }))
-        .then((compileOpts) => { });
+        .then(() => {
+            parseBuildInfo(parsed);
+            return buildCoreAsync({ mode, warnDiv, ignoreTests })
+        }).then((compileOpts) => { });
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
