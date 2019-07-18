@@ -2634,6 +2634,9 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     pxt.log("installing dependencies...");
     ensurePkgDir();
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    if (hwvariant && !/^hw---/.test(hwvariant))
+        hwvariant = 'hw---' + hwvariant;
     if (packageName) {
         let parsed = pxt.github.parseRepoId(packageName)
         return loadGithubTokenAsync()
@@ -2672,7 +2675,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
     }
 
     function addDepsAsync() {
-        return pxt.hwVariant ? addDepAsync("hw---" + pxt.hwVariant, "*") : Promise.resolve();
+        return hwvariant ? addDepAsync(hwvariant, "*") : Promise.resolve();
     }
 }
 
@@ -4533,7 +4536,7 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
     const install = parsed && !!parsed.flags["install"];
 
     return (clean ? cleanAsync() : Promise.resolve())
-        .then(() => install ? installAsync() : Promise.resolve())
+        .then(() => install ? installAsync(parsed) : Promise.resolve())
         .then(() => {
             parseBuildInfo(parsed);
             return buildCoreAsync({ mode, warnDiv, ignoreTests })
@@ -5495,8 +5498,23 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("console", "monitor console messages", consoleAsync, null, true);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
-    simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
+
+    p.defineCommand({
+        name: "install",
+        help: "install dependencies",
+        argString: "[package1] [package2] ...",
+        aliases: ["i"],
+        onlineHelp: true,
+        flags: {
+            hwvariant: {
+                description: "specify hardware variant",
+                argument: "hwvariant",
+                type: "string",
+                aliases: ["hw"]
+            }
+        }
+    }, installAsync);
 
     p.defineCommand({
         name: "bump",
