@@ -45,7 +45,7 @@
    Links
 --------------------*/
 
-@linkColor           : #4183c4;
+@linkColor           : #3977b4;
 @linkHoverUnderline  : underline;
 
 /*-------------------
