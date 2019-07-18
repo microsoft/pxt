@@ -1273,7 +1273,7 @@ namespace pxt.py {
             n.value.kind == "Str" ?
                 docComment((n.value as py.Str).s) :
                 B.mkStmt(expr(n.value)),
-        Pass: (n: py.Pass) => B.mkStmt(B.mkText(";")),
+        Pass: (n: py.Pass) => B.mkStmt(B.mkText("")),
         Break: (n: py.Break) => B.mkStmt(B.mkText("break")),
         Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
 

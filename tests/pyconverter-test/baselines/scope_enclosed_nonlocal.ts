@@ -1,6 +1,7 @@
 function topfun() {
-    let a = 0
+    let a: number;
     function subfun() {
+
         a = 2
     }
 
