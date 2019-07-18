@@ -1,13 +1,13 @@
 import { By } from 'selenium-webdriver';
 import fs from 'fs';
 import util from 'util';
-
+const screenshotsFolder = './screenshots';
 export class DomObject {
 
     async actionForAll(actionName, findBys) {
         for (let criteria of findBys) {
             if (criteria) {
-                console.debug(`Try to click the element by criteria: ${criteria}`);
+                // console.debug(`Try to click the element by criteria: ${criteria}`);
 
 
                 let findBy = await this.findBy(criteria);
@@ -32,10 +32,17 @@ export class DomObject {
     }
 
     async catchScreenShot(name) {
+        if (!fs.existsSync(screenshotsFolder)) {
+            fs.mkdirSync(screenshotsFolder);
+        }
+
         let writeFile = util.promisify(fs.writeFile);
+
         await driver.takeScreenshot().then(function (image) {
-            writeFile('./screenshot/' + name + '.PNG', image, 'base64', function (err) {
-                console.log(err);
+            writeFile(`${screenshotsFolder}/${name}.png`, image, 'base64', function (err) {
+                if (err) {
+                    console.error(err);
+                }
             });
         }
         );
@@ -66,9 +73,9 @@ export class DomObject {
         return await element.getText();
     }
 
-    async getInputValue(criteria) {
+    async getAttribute(criteria, attributeName) {
         let element = await driver.findElement(this.findBy(criteria));
-        return await element.getAttribute("value");
+        return await element.getAttribute(attributeName);
     }
 
     async sendKeys(criteria, keys) {
@@ -77,7 +84,6 @@ export class DomObject {
         return await element.sendKeys(keys);
 
     }
-
 
     async click(...findBys) {
         let i = await this.actionForAll('click', findBys);
