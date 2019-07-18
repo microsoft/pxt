@@ -186,7 +186,9 @@ namespace pxtblockly {
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
-            this.tempoInput.value = this.tempo + "";
+
+            this.syncTempoField();
+
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
 
@@ -243,7 +245,6 @@ namespace pxtblockly {
                 return "\"" + this.melody.getStringRepresentation() + "\"";
             }
             return "";
-
         }
 
         // This should parse the string returned by getTypeScriptValue() and restore the state based on that
@@ -332,7 +333,7 @@ namespace pxtblockly {
                 this.tempoInput.value = this.tempo + "";
                 return
             }
-            // update tempo and duration values and display to reflect new tempo
+            // update tempo and display to reflect new tempo
             if (this.tempo != tempo) {
                 this.tempo = tempo;
                 if (this.melody) {
@@ -340,6 +341,46 @@ namespace pxtblockly {
                 }
                 if (this.tempoInput) {
                     this.tempoInput.value = this.tempo + "";
+                }
+                // update tempo on block if not a variable
+                const s = this.sourceBlock_;
+                if (s.parentBlock_) {
+                    const p = s.parentBlock_;
+                    for (const input of p.inputList) {
+                        if (input.name === "tempo") {
+                            const tempoBlock = input.connection.targetBlock();
+                            if (tempoBlock) {
+                                if (tempoBlock.type === "math_number_minmax") {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "SLIDER")
+                                }
+                                else {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // sync value from tempo field on block with tempo in field editor
+        private syncTempoField(): void {
+            const s = this.sourceBlock_;
+            if (s.parentBlock_) {
+                const p = s.parentBlock_;
+                for (const input of p.inputList) {
+                    if (input.name === "tempo") {
+                        const tempoBlock = input.connection.targetBlock();
+                        if (tempoBlock) {
+                            if (tempoBlock.getFieldValue("SLIDER")) {
+                                this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
+                            } else {
+                                this.tempoInput.value = this.tempo + "";
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -453,10 +494,8 @@ namespace pxtblockly {
                         pxt.BrowserUtils.removeClass(cell, pxtmelody.getColorClass(j));
                         pxt.BrowserUtils.addClass(cell, "melody-default");
                     }
-
                 }
             }
-
         }
 
         private createCell(x: number, y: number) {
