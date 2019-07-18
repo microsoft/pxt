@@ -15,7 +15,7 @@ class ShareProject extends DomObject {
 
         assert.equal(publishIconText, 'Publish project');
 
-        let sharedProjectName = await this.getInputValue("#projectNameInput");
+        let sharedProjectName = await this.getAttribute("#projectNameInput", "value");
 
         console.debug(`The shared project's name is: "${sharedProjectName}"`);
 
