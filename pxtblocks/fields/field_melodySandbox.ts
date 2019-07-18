@@ -42,6 +42,13 @@ namespace pxtblockly {
         private static VIEWBOX_WIDTH: number;
         private static VIEWBOX_HEIGHT: number;
 
+        // preview field elements
+        private static COLOR_BLOCK_WIDTH = 10;
+        private static COLOR_BLOCK_HEIGHT = 20;
+        private static COLOR_BLOCK_X = 1;
+        private static COLOR_BLOCK_Y = 5;
+        private static COLOR_BLOCK_SPACING = 2;
+
         // Use toggle from sprite editor
         private toggle: pxtsprite.Toggle;
         private root: svg.SVG;
@@ -101,20 +108,25 @@ namespace pxtblockly {
             if (this.invalidString) {
                 Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
             } else {
-                if (this.fieldGroup_) {
-                    // Field has already been initialized once.
-                } else {
+                if (!this.fieldGroup_) {
                     // Build the DOM.
-                    this.fieldGroup_ = Blockly.utils.createSvgElement('g', { transform: 'translate(0 96)' }, null);
-                    //this.fieldGroup_ = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 20"/>`);
+                    this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
                 }
-                // if (!this.visible_) {
-                //     (this.fieldGroup_ as any).style.display = 'none';
-                // }
+                if (!this.visible_) {
+                    (this.fieldGroup_ as any).style.display = 'none';
+                }
     
                 (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
                 this.updateFieldLabel();
             }
+        }
+
+        render_() {
+            super.render_();
+            if (!this.invalidString) {
+                this.size_.width = (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numCol;
+            }
+            this.sourceBlock_.setColour("#ffffff");
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
@@ -284,7 +296,7 @@ namespace pxtblockly {
         }
 
         protected getDropdownBackgroundColour() {
-            return this.sourceBlock_.getColour();
+            return this.sourceBlock_.parentBlock_.getColour();
         }
 
         protected getDropdownBorderColour() {
@@ -292,54 +304,26 @@ namespace pxtblockly {
             return "#4f0643";
         }
 
-        // private updateFieldLabel(): void {
-        //     if (this.invalidString) {
-        //         Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
-        //         return;
-        //     }
-        //     this.title = this.melody.getStringRepresentation().trim();
-        //     Blockly.FieldLabel.prototype.setText.call(this, this.title);
-        // }
-
         private updateFieldLabel(): void {
-            //Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
 
-            let musicIcon = document.createElement('i');
-            pxt.BrowserUtils.addClass(musicIcon, "music icon");
-            this.fieldGroup_.appendChild(musicIcon);
-            //(this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(musicIcon);
-
-            const width = 10;
-            const height = 20;
-            const x = 1;
-            const y = 5;
-            const spacing = 2;
-
-            // const tx = (width + spacing)*this.numCol;
-            // const ty = y;
-
-            // const cellG = pxsim.svg.child(this.fieldGroup_, "g", { transform: `translate(${ty} ${tx})` }) as SVGGElement;
+            // let musicIcon = pxtsprite.mkText("\f001");
+            // this.fieldGroup_.appendChild(musicIcon.el);
 
             let notes = this.melody.getStringRepresentation().trim().split(" ");
+
             for (let i = 0; i < notes.length; i++) {
                 let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
-                const bg = new svg.Rect()
-                    .at((width + spacing)*i + x, y)
-                    .size(width, height)
-                    .stroke("white", 0.7)
+                const cb = new svg.Rect()
+                    .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING)*i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
+                    .size(FieldCustomMelody.COLOR_BLOCK_WIDTH, FieldCustomMelody.COLOR_BLOCK_HEIGHT)
+                    .stroke("#898989", 1)
                     .corners(3,2);
 
-                pxt.BrowserUtils.addClass(bg.el, className);
-
-                this.fieldGroup_.appendChild(bg.el);
-                //cellG.appendChild(bg.el);
+                pxt.BrowserUtils.addClass(cb.el, className);
+                this.fieldGroup_.appendChild(cb.el);
             }
-            //this.fieldGroup_.setAttribute('width','96px');
-            this.updateWidth();
-            //this.forceRerender();
-            //Blockly.FieldLabel.prototype.setText.call(this, this.fieldGroup_);
         }
 
         private setTempo(tempo: number): void {
