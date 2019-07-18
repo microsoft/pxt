@@ -21,7 +21,7 @@ When a tutorial is chosen in the editor, the tutorial runner converts the conten
 
 **A real example**
 
-See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and 
+See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and
 [**rock-paper-scissors.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/rock-paper-scissors.md).
 
 ### ~
@@ -124,7 +124,7 @@ a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry
 
 ## Format
 
-The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions: 
+The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions:
 
 ### Title
 
@@ -166,13 +166,40 @@ The text in the heading is shown only when the tutorial is viewed as a help page
 
 The editor automatically parses the markdown and populates the user interface from each step section.
 
-In each step, just the first paragraph is displayed to the user in the tutorial caption. The complete text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button. If you include code snippets, images or videos, they are shown in the hint view also.
+### Metadata
+
+Tutorial metadata can be optionally specified in a table at the top of the document. The table is a key-value pairing of fields. The currrent fields are:
+
+* **v**: version, for the tutorial syntax. When unspecified, default is V1. Used in tutorial hint parsing.
+
+```markdown
+| v             | 2               |
+| field_name    | field_value     |
+```
+
+### Hints
+
+#### Default Syntax
+
+In each step, any text before the first code snippet or image is automatically displayed to the user in the tutorial caption. The remaining text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button.
+
+#### V2 Syntax
+
+If version 2 is specified in the tutorial metadata, the tutorial will only show hints that are explicitly defined with the hint tag, as follows: `<!-- HINT TEXT HERE -->`. One hint can be specified per step, and if no hint is specified all text (including blocks) will be displayed in the tutorial caption.
+
+````markdown
+<!-- Try clicking on the 'Basic' drawer to find the blocks you need! Your code should look like this:
+
+```blocks
+basic.showString("Micro!")
+``` -->
+````
 
 ### ~ hint
 
 **Simple, short descriptions**
 
-During an interaction, the first paragraph of the step description is shown in the caption. If the paragraph length goes beyond the display length of caption, a scroll bar appears in order to view the rest of the paragraph. It's best to keep the paragraph short enough to so all of it appears in the caption without requiring the user to scroll to see it all. If your instructions need more text, you can just create an additional step to split up the activity.
+During an interaction, the step description (all text before the first code block or image) is shown in the caption. If the paragraph length goes beyond the display length of caption, a "More" button appears in order to view the rest of the paragraph. It's best to keep the paragraph short enough to so all of it appears in the caption without requiring the user to click to see it all. If your instructions need more text, you can just create an additional step to split up the activity.
 
 ### ~
 
@@ -202,6 +229,20 @@ If you want to display your tutorial step in a dialog and then have it skip to t
 # Flash-a-rama
 
 ## It's time to code! @unplugged
+
+```
+
+
+### TutorialCompleted
+
+Used to signify that this step in the tutorial is the "last step" even if more steps are present in the markdown. This has no impact on how tutorial progress is displayed; it is only used by MakeCode editors that do something external when a tutorial is completed.
+
+```markdown
+# Flash-a-rama
+
+## This is the last step @tutorialCompleted
+
+## This is a bonus activity that comes after the last step
 
 ```
 

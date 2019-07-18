@@ -534,27 +534,7 @@ namespace ts.pxtc {
     }
 
     export function checkType(t: Type): Type {
-        let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
-            TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
-            TypeFlags.Never | TypeFlags.TypeParameter | TypeFlags.Any
-        if ((t.flags & ok) == 0) {
-            if (isArrayType(t)) return t;
-            if (isClassType(t)) return t;
-            if (isInterfaceType(t)) return t;
-            if (isFunctionType(t)) return t;
-            if (t.flags & TypeFlags.TypeParameter) return t;
-            if (isUnionOfLiterals(t)) return t;
-
-            let g = genericRoot(t)
-            if (g) {
-                checkType(g);
-                (t as TypeReference).typeArguments.forEach(checkType)
-                return t
-            }
-
-            userError(9201, lf("unsupported type: {0} 0x{1}", checker.typeToString(t), t.flags.toString(16)), true)
-        }
+        // we currently don't enforce any restrictions on type system
         return t
     }
 
@@ -659,155 +639,8 @@ namespace ts.pxtc {
             }
     }
 
-    let checkSubtypes = false
-
     function typeCheckSubtoSup(sub: Node | Type, sup: Node | Type) {
-        if (!checkSubtypes)
-            return
-
-        // get the direct types
-        let supTypeLoc = (sup as any).kind ? checker.getTypeAtLocation(sup as Node) : sup as Type;
-        let subTypeLoc = (sub as any).kind ? checker.getTypeAtLocation(sub as Node) : sub as Type;
-
-        // get the contextual types, if possible
-        let supType = isExpression(sup as Node) ? checker.getContextualType(<Expression>(sup as Node)) : supTypeLoc
-        if (!supType)
-            supType = supTypeLoc
-        let subType = isExpression(sub as Node) ? checker.getContextualType(<Expression>(sub as Node)) : subTypeLoc
-        if (!subType)
-            subType = subTypeLoc
-
-        if (!supType || !subType)
-            return;
-
-        // src may get its type from trg via context, in which case
-        // we want to use the direct type of src
-        if (supType == subType && subType != subTypeLoc)
-            subType = subTypeLoc
-
-        occursCheck = []
-        let [ok, message] = checkSubtype(subType, supType)
-        if (!ok) {
-            userError(9263, lf(message))
-        }
-    }
-
-    let occursCheck: string[] = []
-    let cachedSubtypeQueries: pxt.Map<[boolean, string]> = {}
-    function insertSubtype(key: string, val: [boolean, string]) {
-        cachedSubtypeQueries[key] = val
-        occursCheck.pop()
-        return val
-    }
-
-    // this function works assuming that the program has passed the
-    // TypeScript type checker. We are going to simply rule out some
-    // cases that pass the TS checker. We only compare type
-    // pairs that the TS checker compared.
-
-    // we are checking that subType is a subtype of supType, so that
-    // an assignment of the form trg <- src is safe, where supType is the
-    // type of trg and subType is the type of src
-    function checkSubtype(subType: Type, superType: Type): [boolean, string] {
-
-        function checkMembers() {
-            let superProps = checker.getPropertiesOfType(superType)
-            let subProps = checker.getPropertiesOfType(subType)
-            let [ret, msg] = [true, ""]
-            superProps.forEach(superProp => {
-                let superPropDecl = <PropertyDeclaration>superProp.valueDeclaration
-                let find = subProps.filter(sp => sp.name == superProp.name)
-                if (find.length == 1) {
-                    let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
-                    // TODO: record the property on which we have a mismatch
-                    let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
-                    if (ret && !retSub) [ret, msg] = [retSub, msgSub]
-                } else if (find.length == 0) {
-                    if (!(superProp.flags & SymbolFlags.Optional)) {
-                        // we have a cast to an interface with more properties (unsound)
-                        [ret, msg] = [false, "Property " + superProp.name + " not present in " + subType.getSymbol().name]
-                    } else {
-                        // we will reach this case for something like
-                        // let x: Foo = { a:42 }
-                        // where x has some optional properties, in addition to "a"
-                    }
-                }
-            })
-            return insertSubtype(key, [ret, msg])
-        }
-
-        let subId = (subType as any).id
-        let superId = (superType as any).id
-        let key = subId + "," + superId
-
-        if (cachedSubtypeQueries[key])
-            return cachedSubtypeQueries[key];
-
-        // check to see if query already on the stack
-        if (occursCheck.indexOf(key) != -1)
-            return [true, ""]
-        occursCheck.push(key)
-
-        // we don't allow Any!
-        if (superType.flags & TypeFlags.Any)
-            return insertSubtype(key, [false, "Unsupported type: any."])
-
-        // outlaw all things that can't be cast to class/interface
-        if (isStructureType(superType) && !castableToStructureType(subType)) {
-            return insertSubtype(key, [false, "Cast to class/interface not supported."])
-        }
-
-        if (isClassType(superType) && !isGenericType(superType)) {
-            if (isClassType(subType) && !isGenericType(subType)) {
-                let superDecl = <ClassDeclaration>superType.symbol.valueDeclaration
-                let subDecl = <ClassDeclaration>subType.symbol.valueDeclaration
-                // only allow upcast (sub -> ... -> sup) in inheritance chain
-                if (!inheritsFrom(subDecl, superDecl)) {
-                    if (inheritsFrom(superDecl, subDecl))
-                        return insertSubtype(key, [false, "Downcasts not supported."])
-                    else
-                        return insertSubtype(key, [false, "Classes " + subDecl.name.getText() + " and " + superDecl.name.getText() + " are not related by inheritance."])
-                }
-                // need to also check subtyping on members
-                return checkMembers();
-            } else {
-                if (!(subType.flags & (TypeFlags.Undefined | TypeFlags.Null))) {
-                    return insertSubtype(key, [false, "Cast to class not supported."])
-                }
-            }
-        } else if (isFunctionType(superType)) {
-            // implement standard function subtyping (no bivariance)
-            let superFun = isFunctionType(superType)
-            if (isFunctionType(subType)) {
-                let subFun = isFunctionType(subType)
-                U.assert(superFun.parameters.length >= subFun.parameters.length, "sup should have at least params of sub")
-                let [ret, msg] = [true, ""]
-                for (let i = 0; i < subFun.parameters.length; i++) {
-                    let superParamType = checker.getTypeAtLocation(superFun.parameters[i].valueDeclaration)
-                    let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
-                    // Check parameter types (contra-variant)
-                    let [retSub, msgSub] = checkSubtype(superParamType, subParamType)
-                    if (ret && !retSub) [ret, msg] = [retSub, msgSub]
-                }
-                // check return type (co-variant)
-                let superRetType = superFun.getReturnType()
-                let subRetType = superFun.getReturnType()
-                let [retSub, msgSub] = checkSubtype(subRetType, superRetType)
-                if (ret && !retSub) [ret, msg] = [retSub, msgSub]
-                return insertSubtype(key, [ret, msg])
-            }
-        } else if (isInterfaceType(superType)) {
-            if (isStructureType(subType)) {
-                return checkMembers();
-            }
-        } else if (isArrayType(superType)) {
-            if (isArrayType(subType)) {
-                let superElemType = arrayElementType(superType)
-                let subElemType = arrayElementType(subType)
-                return checkSubtype(subElemType, superElemType)
-            }
-        }
-        return insertSubtype(key, [true, ""])
+        // we leave this function for now, in case we want to enforce some checks in future
     }
 
     function isGenericFunction(fun: FunctionLikeDeclaration) {
@@ -907,7 +740,6 @@ namespace ts.pxtc {
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
 
-        cachedSubtypeQueries = {}
         lastNodeId = 0
         currNodeWave++
 
@@ -1687,7 +1519,8 @@ ${lbl}: .short 0xffff
                     userError(9264, "Shorthand properties not supported.")
                     return;
                 }
-                const keyName = p.name.getText();
+                const keyName = p.name.kind == SK.StringLiteral ?
+                    (p.name as StringLiteral).text : p.name.getText();
                 const args = [
                     expr,
                     ir.numlit(getIfaceMemberId(keyName)),

@@ -468,7 +468,7 @@ namespace pxsim {
             let i = map.findIdx(key);
             if (i < 0) {
                 decr(map);
-                return 0;
+                return undefined;
             }
             let r = incr(map.data[i].val);
             decr(map)

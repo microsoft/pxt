@@ -1,13 +1,18 @@
+/**
+ * Any changes in this file need to be ported over to /docs/static/tutorial-tool/tutorial.ts
+ */
 namespace pxt.tutorial {
     export function parseTutorial(tutorialmd: string): TutorialInfo {
         const steps = parseTutorialSteps(tutorialmd);
+        const title = parseTutorialTitle(tutorialmd);
         if (!steps)
             return undefined; // error parsing steps
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
+        let templateCode: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd
             .replace(/((?!.)\s)+/g, "\n")
@@ -30,6 +35,9 @@ namespace pxt.tutorial {
                         if (!checkTutorialEditor(pxt.JAVASCRIPT_PROJECT_NAME))
                             return undefined;
                         break;
+                    case "template":
+                        templateCode = m2;
+                        break;
                 }
                 code += "\n { \n " + m2 + "\n } \n";
                 return "";
@@ -37,8 +45,10 @@ namespace pxt.tutorial {
 
         return <pxt.tutorial.TutorialInfo>{
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
+            title: title,
             steps: steps,
-            code
+            code,
+            templateCode
         };
 
         function checkTutorialEditor(expected: string) {
@@ -52,9 +62,14 @@ namespace pxt.tutorial {
         }
     }
 
+    function parseTutorialTitle(tutorialmd: string): string {
+        let title = tutorialmd.match(/^#[^#](.*)$/mi);
+        return title && title.length > 1 ? title[1] : null;
+    }
+
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config)\s*\n([\s\S]*?)\n```/gmi;
-        const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+        const metadata = parseTutorialMetadata(tutorialmd);
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
 
         // Download tutorial markdown
         let steps = tutorialmd.split(/^##[^#].*$/gmi);
@@ -72,7 +87,8 @@ namespace pxt.tutorial {
         tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
             let info: TutorialStepInfo = {
                 fullscreen: /@(fullscreen|unplugged)/.test(s),
-                unplugged: /@unplugged/.test(s)
+                unplugged: /@unplugged/.test(s),
+                tutorialCompleted: /@tutorialCompleted/.test(s)
             }
             stepInfo.push(info);
             return ""
@@ -85,25 +101,58 @@ namespace pxt.tutorial {
         for (let i = 0; i < steps.length; i++) {
             const stepContent = steps[i].trim();
             const contentLines = stepContent.split('\n');
-            stepInfo[i].headerContentMd = contentLines[0];
-            stepInfo[i].contentMd = stepContent;
+            const info = stepInfo[i];
 
-            // everything after the first ``` section OR the first image is currently treated as a "hint"
-            let hintText = stepContent.match(hintTextRegex);
-            let blockSolution;
-            if (hintText && hintText.length > 2) {
-                stepInfo[i].headerContentMd = hintText[1];
-                blockSolution = hintText[2];
-                if (blockSolution) {
-                    // remove hidden snippets from the hint
-                    blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
-                    stepInfo[i].blockSolution = blockSolution;
+            info.headerContentMd = contentLines[0];
+            info.contentMd = stepContent;
+
+            let hintContentMd;
+            if (metadata && metadata.v == 2) {
+                // v2: hint is explicitly defined in HTML comment form: <!-- HINT TEXT -->
+                const hintTextRegex = /<!--([\s\S]*?)-->/i;
+                info.headerContentMd = stepContent.replace(hintTextRegex, function (f, m) {
+                    hintContentMd = m;
+                    return "";
+                });
+            } else {
+                // v1: everything after the first ``` section OR the first image is treated as a "hint"
+                const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+                let hintText = stepContent.match(hintTextRegex);
+                if (hintText && hintText.length > 2) {
+                    info.headerContentMd = hintText[1];
+                    hintContentMd = hintText[2];
                 }
             }
 
-            stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
+            // remove hidden snippets from the hint
+            if (hintContentMd) {
+                hintContentMd = hintContentMd.replace(hiddenSnippetRegex, '');
+                info.hintContentMd = hintContentMd;
+            }
+
+            info.hasHint = hintContentMd && hintContentMd.length > 1;
         }
         return stepInfo;
+    }
+
+    /*
+        Parses metadata table at the beginning of tutorial markown. Expects a series of
+        key-value pairs, in "| key | value |\n" format.
+    */
+    function parseTutorialMetadata(tutorialmd: string): TutorialMetadata {
+        let m: any = {};
+
+        const tableRegex = /(?:\|[\s\S]+?\|[\s\S]+?\|\n)*/i;
+        const keyValueRegex = /\|([\s\S]+?)\|([\s\S]+?)\|\n/gi;
+
+        const table = tutorialmd.match(tableRegex)[0];
+        table.replace(keyValueRegex, function (f, k, v) {
+                m[k.trim()] = v.trim();
+                return "";
+            });
+
+        const metadata = m as TutorialMetadata;
+        return metadata && metadata.v ? metadata :  null;
     }
 
     export function highlight(pre: HTMLPreElement): void {

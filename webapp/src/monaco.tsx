@@ -108,8 +108,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
 class SignatureHelper implements monaco.languages.SignatureHelpProvider {
     signatureHelpTriggerCharacters: string[] = ["(", ","];
 
-    constructor(public editor: Editor, public python: boolean) {
+    protected isPython: boolean = false;
 
+    constructor(public editor: Editor, public python: boolean) {
+        this.isPython = python;
     }
 
     /**
@@ -126,12 +128,12 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 let paramInfo: monaco.languages.ParameterInformation[] =
                     sym.parameters.map(p => ({
-                        label: `${p.name}: ${p.type}`,
+                        label: `${p.name}: ${this.isPython ? p.pyTypeString : p.type}`,
                         documentation: pxt.Util.rlf(p.description)
                     }))
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
-                        label: `${sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
+                        label: `${this.isPython && sym.pyName ? sym.pyName : sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
                         documentation,
                         parameters: paramInfo
                     }],
@@ -1702,7 +1704,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelIcon.setAttribute('role', 'presentation');
             labelIcon.style.display = 'inline-block';
             labelIcon.style.color = `${pxt.toolbox.convertColor(iconColor)}`;
-            if (icon.length === 1) {
+            if (icon && icon.length === 1) {
                 labelIcon.textContent = icon;
             }
             labelDiv.appendChild(labelIcon);
@@ -1759,6 +1761,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return undefined;
         const qName = fn.qName;
         const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
+        const snippet = isPython ? fn.pySnippet : fn.snippet;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
@@ -1774,7 +1777,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         color = pxt.toolbox.convertColor(color);
 
         const methodToken = document.createElement('span');
-        methodToken.textContent = fn.snippetOnly ? fn.snippet : snippetName;
+        methodToken.textContent = fn.snippetOnly ? snippet : snippetName;
         monacoBlock.appendChild(methodToken);
 
         if (!isDisabled) {
@@ -1783,11 +1786,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
                 monacoEditor.hideFlyout();
 
-                let snip = isPython ? fn.pySnippet : fn.snippet;
-                let p = snip ? Promise.resolve(snip) : compiler.snippetAsync(qName, isPython);
-                p.done(snippet => {
+                let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(qName, isPython);
+                p.done(snip => {
                     let currPos = monacoEditor.editor.getPosition();
-                    this.insertSnippet(currPos, snippet);
+                    this.insertSnippet(currPos, snip);
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
                 });
@@ -1798,7 +1800,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
-                const snippet = isPython ? fn.pySnippet : fn.snippet;
                 if (!snippet)
                     e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
                 else

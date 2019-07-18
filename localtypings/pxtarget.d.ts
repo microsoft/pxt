@@ -294,6 +294,7 @@ declare namespace pxt {
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
         saveInMenu?: boolean; // move save icon under gearwheel menu
+        lockedEditor?: boolean; // remove default home navigation links from the editor
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
         appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
@@ -621,6 +622,7 @@ declare namespace ts.pxtc {
         name: string;
         description: string;
         type: string;
+        pyTypeString?: string;
         initializer?: string;
         default?: string;
         properties?: PropertyDesc[];
@@ -769,18 +771,26 @@ declare namespace ts.pxtc {
 declare namespace pxt.tutorial {
     interface TutorialInfo {
         editor: string; // preferred editor or blocks by default
+        title?: string;
         steps: TutorialStepInfo[];
         code: string; // all code
+        templateCode?: string;
+    }
+
+    interface TutorialMetadata {
+        v: number; // version of tutorial markdown syntax
+        title?: string;
     }
 
     interface TutorialStepInfo {
         fullscreen?: boolean;
         // no coding
         unplugged?: boolean;
+        tutorialCompleted?: boolean;
         hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
-        blockSolution?: string;
+        hintContentMd?: string;
     }
 
     interface TutorialOptions {
@@ -795,6 +805,7 @@ declare namespace pxt.tutorial {
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
+        templateCode?: string;
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

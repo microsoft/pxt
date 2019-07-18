@@ -42,6 +42,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 (!filters.namespaces || filters.namespaces["variables"] !== pxt.editor.FilterState.Disabled)) {
                 return true;
             } else if (ns === "functions" && (!filters.blocks ||
+                filters.blocks["function_definition"] ||
                 filters.blocks["procedures_defnoreturn"] ||
                 filters.blocks["procedures_callnoreturn"]) &&
                 (!filters.namespaces || filters.namespaces["functions"] !== pxt.editor.FilterState.Disabled)) {

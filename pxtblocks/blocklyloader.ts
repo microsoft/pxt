@@ -2241,6 +2241,7 @@ namespace pxt.blocks {
             workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
                 let promptAndCheckWithAlert = (defaultName: string) => {
                     Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
+                        pxt.tickEvent('blocks.makeafunction');
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
                         // Beyond this, all names are legal.
                         if (newFunc) {
