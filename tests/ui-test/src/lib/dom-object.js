@@ -1,9 +1,7 @@
 import { By } from 'selenium-webdriver';
-import util from 'util';
 import fs from 'fs';
 import dateformat from 'dateformat';
 
-const writeFile = util.promisify(fs.writeFile);
 const screenshotsFolder = './screenshots';
 
 export class DomObject {
