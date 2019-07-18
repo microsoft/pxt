@@ -2630,15 +2630,16 @@ class Host
 
 let mainPkg = new pxt.MainPackage(new Host())
 
-export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    pxt.log("installing dependencies...");
-    ensurePkgDir();
-    const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
-    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
-    if (hwvariant && !/^hw---/.test(hwvariant))
-        hwvariant = 'hw---' + hwvariant;
-    if (packageName) {
-        let parsed = pxt.github.parseRepoId(packageName)
+function installPackageNameAsync(packageName: string): Promise<void> {
+    if (!packageName) return Promise.resolve();
+
+    // builtin?
+    if (pxt.appTarget.bundledpkgs[packageName])
+        return addDepAsync(packageName, "*", false);
+
+    // github?
+    let parsed = pxt.github.parseRepoId(packageName)
+    if (parsed && parsed.fullName)
         return loadGithubTokenAsync()
             .then(() => pxt.packagesConfigAsync())
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
@@ -2647,41 +2648,55 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
                 .then(cfg => mainPkg.loadAsync(true)
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
-                        return addDepAsync(cfg.name, ver, false)
-                            .then(() => addDepsAsync())
-                            .then(() => mainPkg.installAllAsync())
-                    }))
-            );
-    } else {
-        return addDepsAsync()
-            .then(() => mainPkg.installAllAsync())
-            .then(() => {
-                let tscfg = "tsconfig.json"
-                if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                    nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
-                }
-            })
-    }
+                        return addDepAsync(cfg.name, ver, false);
+                    })));
+    // shared url?
+    let sharedId = pxt.Cloud.parseScriptId(packageName);
+    if (sharedId)
+        return addDepAsync(sharedId, packageName, false);
 
-    function addDepAsync(name: string, ver: string, hw: boolean) {
-        console.log(U.lf("adding {0}: {1}", name, ver))
-        return mainPkg.loadAsync(true)
-            .then(() => {
-                if (hw) {
-                    // remove other hw variants
-                    Object.keys(mainPkg.config.dependencies)
-                        .filter(k => /^hw---/.test(k))
-                        .forEach(k => delete mainPkg.config.dependencies[k]);
-                }
-                mainPkg.config.dependencies[name] = ver;
-                mainPkg.saveConfig()
-                mainPkg = new pxt.MainPackage(new Host())
-            })
-    }
+    // don't know
+    U.userError(lf(`unknown package ${packageName}`))
+    return Promise.resolve();
+}
+
+export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log("installing dependencies...");
+    ensurePkgDir();
+    const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    if (hwvariant && !/^hw---/.test(hwvariant))
+        hwvariant = 'hw---' + hwvariant;
+
+    return installPackageNameAsync(packageName)
+        .then(() => addDepsAsync())
+        .then(() => mainPkg.installAllAsync())
+        .then(() => {
+            let tscfg = "tsconfig.json"
+            if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
+                nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
+            }
+        });
 
     function addDepsAsync() {
         return hwvariant ? addDepAsync(hwvariant, "*", true) : Promise.resolve();
     }
+}
+
+function addDepAsync(name: string, ver: string, hw: boolean) {
+    console.log(U.lf("adding {0}: {1}", name, ver))
+    return mainPkg.loadAsync(true)
+        .then(() => {
+            if (hw) {
+                // remove other hw variants
+                Object.keys(mainPkg.config.dependencies)
+                    .filter(k => /^hw---/.test(k))
+                    .forEach(k => delete mainPkg.config.dependencies[k]);
+            }
+            mainPkg.config.dependencies[name] = ver;
+            mainPkg.saveConfig()
+            mainPkg = new pxt.MainPackage(new Host())
+        })
 }
 
 function addFile(name: string, cont: string) {
@@ -5508,7 +5523,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "install",
         help: "install dependencies",
-        argString: "[package1] [package2] ...",
+        argString: "[package]",
         aliases: ["i"],
         onlineHelp: true,
         flags: {
