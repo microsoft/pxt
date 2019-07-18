@@ -2644,7 +2644,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
-                .then(cfg => mainPkg.loadAsync()
+                .then(cfg => mainPkg.loadAsync(true)
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
                         return addDepAsync(cfg.name, ver, false)
@@ -2665,7 +2665,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
 
     function addDepAsync(name: string, ver: string, hw: boolean) {
         console.log(U.lf("adding {0}: {1}", name, ver))
-        return mainPkg.loadAsync()
+        return mainPkg.loadAsync(true)
             .then(() => {
                 if (hw) {
                     // remove other hw variants
