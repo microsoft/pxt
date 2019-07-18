@@ -6,7 +6,7 @@ class NewProjectPage extends DomObject {
 
     async testCreateNewProject() {
 
-        console.debug("Start testGetCodeSource()");
+        console.debug("Start testCreateNewProject()");
 
         //Create a new project
         await this.click('.newprojectcard', '.openproject');
