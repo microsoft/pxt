@@ -11,6 +11,7 @@ namespace ts.pxtc {
         None = 0,
         IsRootFunction = 0x0001,
         IsBogusFunction = 0x0002,
+        IsGlobalIdentifier = 0x0004,
     }
     export class PxtNode {
         typeCache: Type = null;
@@ -21,6 +22,8 @@ namespace ts.pxtc {
         proc: ir.Procedure = null;
         flags = PxtNodeFlags.None;
         commentAttrs: CommentAttrs = null;
+        exprInfo: BinaryExpressionInfo = null;
+        valueOverride: ir.Expr = null;
         constructor(public wave: number, public id: number) { }
     }
 
@@ -867,6 +870,9 @@ namespace ts.pxtc {
             annotate(program, entryPoint, target);
         }
 
+        // 12k for decent arcade game
+        // res.times["numnodes"] = lastNodeId
+
         return {
             diagnostics: diagnostics.getDiagnostics(),
             emittedFiles: undefined,
@@ -1496,7 +1502,7 @@ ${lbl}: .short 0xffff
                 numconcat++
                 return rtcallMask("String_::concat", [irToNode(a, true), asString(b)], null)
             }
-            let expr = (asString(node.head) as any).valueOverride
+            let expr = pxtInfo(asString(node.head)).valueOverride
             for (let span of node.templateSpans) {
                 expr = concat(expr, span.expression)
                 expr = concat(expr, span.literal)
@@ -2733,11 +2739,12 @@ ${lbl}: .short 0xffff
         }
 
         function irToNode(expr: ir.Expr, isRef = false): Expression {
-            return {
+            let r: any = {
                 kind: SK.NullKeyword,
                 isRefOverride: isRef,
-                valueOverride: expr
-            } as any
+            }
+            pxtInfo(r).valueOverride = expr
+            return r
         }
 
         function emitIncrement(trg: Expression, meth: string, isPost: boolean, one: Expression = null) {
@@ -2983,7 +2990,7 @@ ${lbl}: .short 0xffff
 
         function isNumberLike(e: Expression) {
             if (e.kind == SK.NullKeyword) {
-                let vo: ir.Expr = (e as any).valueOverride
+                let vo: ir.Expr = pxtInfo(e).valueOverride
                 if (vo !== undefined) {
                     if (vo.exprKind == EK.NumberLiteral) {
                         if (opts.target.isNative)
@@ -3245,7 +3252,10 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
                 if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
-                    (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
+                    pxtInfo(node).exprInfo = {
+                        leftType: checker.typeToString(lt),
+                        rightType: checker.typeToString(rt)
+                    }
                 }
             }
 
@@ -3914,7 +3924,7 @@ ${lbl}: .short 0xffff
         function emitExprCore(node: Node): ir.Expr {
             switch (node.kind) {
                 case SK.NullKeyword:
-                    let v = (node as any).valueOverride;
+                    let v = pxtInfo(node).valueOverride;
                     if (v) return v
                     return emitLit(null);
                 case SK.TrueKeyword:

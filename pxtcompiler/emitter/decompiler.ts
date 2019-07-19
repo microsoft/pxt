@@ -833,7 +833,7 @@ ${output}</xml>`;
             if (n.kind === SK.BinaryExpression) {
                 const b = n as ts.BinaryExpression;
                 if (b.operatorToken.getText() === "+" || b.operatorToken.kind == SK.PlusEqualsToken) {
-                    const info: BinaryExpressionInfo = (n as any).exprInfo;
+                    const info: BinaryExpressionInfo = pxtInfo(n).exprInfo;
                     return !!info;
                 }
             }
@@ -3100,7 +3100,7 @@ ${output}</xml>`;
     }
 
     function isDeclaredElsewhere(node: ts.Identifier) {
-        return (node as any).identifierInfo && (node as any).identifierInfo.isGlobal;
+        return !! (pxtInfo(node).flags & PxtNodeFlags.IsGlobalIdentifier)
     }
 
     function hasStatementInput(info: CallInfo, attributes: CommentAttrs): boolean {
