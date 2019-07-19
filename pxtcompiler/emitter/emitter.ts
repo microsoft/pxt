@@ -747,6 +747,7 @@ namespace ts.pxtc {
         target = opts.target
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
+        let startTime = U.cpuUs();
         let classInfos: pxt.Map<ClassInfo> = {}
         let usedDecls: pxt.Map<Node> = {}
         let usedWorkList: Declaration[] = []
@@ -846,7 +847,9 @@ namespace ts.pxtc {
         layOutGlobals()
         pruneMethodsAndRecompute()
         emitVTables()
-
+        let pass0 = U.cpuUs()
+        res.times["pass0"] = pass0 - startTime
+      
         if (diagnostics.getModificationCount() == 0) {
             reset();
             bin.finalPass = true
@@ -864,11 +867,16 @@ namespace ts.pxtc {
             }
             res.configData.sort((a, b) => a.key - b.key)
 
+            let pass1 = U.cpuUs()
+            res.times["pass1"] = pass1 - pass0
             catchErrors(rootFunction, finalEmit)
+            res.times["passFinal"] = U.cpuUs() - pass1
         }
 
         if (opts.ast) {
+            let pre = U.cpuUs()
             annotate(program, entryPoint, target);
+            res.times["passAnnotate"] = U.cpuUs() - pre
         }
 
         // 12k for decent arcade game

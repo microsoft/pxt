@@ -2822,6 +2822,9 @@ export function timeAsync() {
         mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
             .then(opts => pxtc.compile(opts))
             .then(res => {
+                U.iterMap(res.times, (k, v) => {
+                    res.times[k] = Math.round(v / 1000)
+                })
                 if (!min) {
                     min = res.times
                 } else {

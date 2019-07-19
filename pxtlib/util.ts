@@ -798,6 +798,9 @@ namespace ts.pxtc.Util {
         return Math.round(now() / 1000)
     }
 
+    // node.js overrides this to use process.cpuUsage()
+    export let cpuUs = () => Date.now() * 1000;
+
     export function getMime(filename: string) {
         let m = /\.([a-zA-Z0-9]+)$/.exec(filename)
         if (m)

@@ -267,6 +267,10 @@ function init() {
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;
+    Util.cpuUs = () => {
+        const p = process.cpuUsage()
+        return p.system + p.user
+    }
     Util.getRandomBuf = buf => {
         let tmp = crypto.randomBytes(buf.length)
         for (let i = 0; i < buf.length; ++i)
