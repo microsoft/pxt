@@ -3,7 +3,6 @@
 
 namespace pxt.py {
     export enum VarModifier {
-        Local,
         NonLocal,
         Global
     }
@@ -45,7 +44,8 @@ namespace pxt.py {
         isParam?: boolean;
         isImport?: SymbolInfo;
         modifier?: VarModifier;
-        shouldHoist?: boolean;
+        firstRefPos?: number;
+        firstAssignPos?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html

@@ -1025,12 +1025,7 @@ namespace pxt.py {
                 }
             }
 
-            const hoisted: B.JsNode[] = [];
-            for (const varName of Object.keys(n.vars)) {
-                if (n.vars[varName].shouldHoist) {
-                    hoisted.push(declareVariable(n.vars[varName]));
-                }
-            }
+            const hoisted: B.JsNode[] = collectHoistedDeclarations(n);
 
             nodes.push(B.mkBlock(hoisted.concat(body)))
 
@@ -1309,10 +1304,7 @@ namespace pxt.py {
                 const existing = U.lookup(globalScope.vars, name);
 
                 if (!existing) {
-                    defvar(name, { shouldHoist: true }, globalScope);
-                }
-                else {
-                    existing.shouldHoist = true;
+                    defvar(name, { }, globalScope);
                 }
 
                 defvar(name, { modifier: VarModifier.Global });
@@ -1330,11 +1322,9 @@ namespace pxt.py {
 
                 const declaringScope = findNonlocalDeclaration(name, current);
 
-                if (!declaringScope || declaringScope === globalScope) {
+                // Python nonlocal variables cannot refer to globals
+                if (!declaringScope || declaringScope === globalScope || declaringScope.vars[name].modifier === VarModifier.Global) {
                     error(n, 99999999, U.lf("No binding found for nonlocal variable"));
-                }
-                else {
-                    declaringScope.vars[name].shouldHoist = true;
                 }
 
                 defvar(name, { modifier: VarModifier.NonLocal });
@@ -1434,6 +1424,16 @@ namespace pxt.py {
             let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
             return res
         }
+        if (target.kind === "Name") {
+            const sym = currentScope().vars[nm];
+
+            // Mark the assignment only if the variable is declared in this scope
+            if (sym && sym.kind === SK.Variable && sym.modifier === undefined) {
+                if (sym.firstAssignPos === undefined || sym.firstAssignPos > target.startPos) {
+                    sym.firstAssignPos = target.startPos
+                }
+            }
+        }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
 
         function convertName(n: py.Name) {
@@ -1465,9 +1465,14 @@ namespace pxt.py {
             n.symbolInfo = curr
             unify(n, n.tsType, curr.pyRetType)
         }
-        else if (curr.shouldHoist && n.isdef) {
+        else if (curr.firstRefPos < n.startPos && n.isdef) {
             n.isdef = false;
         }
+        else if (curr.firstAssignPos < n.startPos && n.isdef) {
+            n.isdef = false;
+        }
+
+        markUsage(curr, n);
 
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
@@ -1936,6 +1941,8 @@ namespace pxt.py {
                 return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
 
+            markUsage(v, n);
+
             if (n.ctx.indexOf("Load") >= 0) {
                 return quote(v ? v.qName : getName(n))
             } else
@@ -1964,6 +1971,29 @@ namespace pxt.py {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
         return v
+    }
+
+    function markUsage(s: SymbolInfo, location: py.AST) {
+        if (s) {
+            if (s.modifier === VarModifier.Global) {
+                const declaringScope = topScope();
+
+                if (declaringScope && declaringScope.vars[s.name]) {
+                    s = declaringScope.vars[s.name];
+                }
+            }
+            else if (s.modifier === VarModifier.NonLocal) {
+                const declaringScope = findNonlocalDeclaration(s.name, currentScope());
+
+                if (declaringScope) {
+                    s = declaringScope.vars[s.name];
+                }
+            }
+
+            if (s.firstRefPos === undefined || s.firstRefPos > location.startPos) {
+                s.firstRefPos = location.startPos;
+            }
+        }
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
@@ -2022,16 +2052,25 @@ namespace pxt.py {
 
         const symbolInfo = scope.vars && scope.vars[name];
 
-        if (symbolInfo && (symbolInfo.modifier == undefined || symbolInfo.modifier === VarModifier.Local)) {
-            return scope;
-        }
-        else if (symbolInfo && symbolInfo.modifier === VarModifier.Global) {
-            // TODO: This case should error
+        if (symbolInfo && symbolInfo.modifier != VarModifier.NonLocal) {
             return scope;
         }
         else {
             return findNonlocalDeclaration(name, scope.parent);
         }
+    }
+
+    function collectHoistedDeclarations(scope: py.ScopeDef) {
+        const hoisted: B.JsNode[] = [];
+        let current: SymbolInfo;
+        for (const varName of Object.keys(scope.vars)) {
+            current = scope.vars[varName];
+
+            if (current.kind === SK.Variable && current.modifier === undefined && current.firstRefPos < current.firstAssignPos) {
+                hoisted.push(declareVariable(current));
+            }
+        }
+        return hoisted;
     }
 
     // TODO look at scopes of let
@@ -2043,13 +2082,7 @@ namespace pxt.py {
         resetCtx(mod)
         if (!mod.vars) mod.vars = {}
 
-        const hoisted: B.JsNode[] = [];
-        for (const varName of Object.keys(mod.vars)) {
-            if (mod.vars[varName].shouldHoist) {
-                hoisted.push(declareVariable(mod.vars[varName]));
-            }
-        }
-
+        const hoisted = collectHoistedDeclarations(mod);
         let res = hoisted.concat(mod.body.map(stmt))
         if (res.every(isEmpty)) return null
         else if (mod.name == "main") return res
