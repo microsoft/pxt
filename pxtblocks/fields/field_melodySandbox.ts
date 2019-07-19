@@ -115,7 +115,7 @@ namespace pxtblockly {
                 if (!this.visible_) {
                     (this.fieldGroup_ as any).style.display = 'none';
                 }
-    
+
                 (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
                 this.updateFieldLabel();
             }
@@ -317,10 +317,10 @@ namespace pxtblockly {
             for (let i = 0; i < notes.length; i++) {
                 let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
                 const cb = new svg.Rect()
-                    .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING)*i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
+                    .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
                     .size(FieldCustomMelody.COLOR_BLOCK_WIDTH, FieldCustomMelody.COLOR_BLOCK_HEIGHT)
                     .stroke("#898989", 1)
-                    .corners(3,2);
+                    .corners(3, 2);
 
                 pxt.BrowserUtils.addClass(cb.el, className);
                 this.fieldGroup_.appendChild(cb.el);
