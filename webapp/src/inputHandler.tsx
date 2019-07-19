@@ -22,7 +22,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
     constructor(props:   InputHandlerProps) {
         super(props);
         this.state = {
-            isFocused: false,
+            isFocused: false
         };
     }
 
@@ -88,6 +88,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                             value={value || ''}
                             onChange={onChange}
                             autoFocus={true}
+                            selectOnMount={true}
                         />
                     )
                 }
@@ -161,6 +162,7 @@ interface IRangeInputProps {
     input: pxt.SnippetQuestionInput;
     autoFocus?: boolean;
 }
+
 
 class RangeInput extends data.Component<IRangeInputProps, {}> {
     constructor(props: IRangeInputProps) {

@@ -380,7 +380,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         }
     }
 
-    handleModalKeyDown(e: React.KeyboardEvent<any>) {
+    handleModalKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
         // Move to next page if enter or right arrow key pressed
         if (e.keyCode === 13 || e.keyCode === 39) {
             this.nextPage();

@@ -521,7 +521,8 @@ export interface InputProps {
     id?: string;
     ariaLabel?: string;
     autoFocus?: boolean;
-    autoComplete?: boolean
+    autoComplete?: boolean;
+    selectOnMount?: boolean;
 }
 
 export class Input extends data.Component<InputProps, { value: string }> {
@@ -534,6 +535,14 @@ export class Input extends data.Component<InputProps, { value: string }> {
         this.copy = this.copy.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleChange = this.handleChange.bind(this);
+    }
+
+    componentDidMount() {
+        const { selectOnMount, autoFocus } = this.props;
+        if (selectOnMount && autoFocus) {
+            const input = this.refs['inputField'] as HTMLInputElement;
+            input.select();
+        }
     }
 
     componentWillReceiveProps(newProps: InputProps) {
@@ -593,6 +602,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
+                        ref='inputField'
                         autoFocus={p.autoFocus}
                         id={p.id}
                         className={p.class || ""}
