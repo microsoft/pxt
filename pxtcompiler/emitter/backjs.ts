@@ -65,8 +65,6 @@ namespace ts.pxtc {
 
     export function jsEmit(bin: Binary) {
         let jssource = "'use strict';\n"
-        if (!bin.target.jsRefCounting)
-            jssource += "pxsim.noRefCounting();\n"
         jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
