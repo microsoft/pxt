@@ -9,6 +9,7 @@ import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as snippets from "./monacoSnippets"
+import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
@@ -170,6 +171,22 @@ class HoverProvider implements monaco.languages.HoverProvider {
                 }
                 return res
             });
+    }
+}
+
+class FormattingProvider implements monaco.languages.DocumentRangeFormattingEditProvider {
+    protected isPython: boolean = false;
+
+    constructor(public editor: Editor, public python: boolean) {
+        this.isPython = python;
+    }
+
+    provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOnlyModel, range: monaco.Range, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken): monaco.Thenable<monaco.editor.ISingleEditOperation[]> {
+        return Promise.resolve().then(p => {
+            return this.isPython
+                ? pyhelper.provideDocumentRangeFormattingEdits(model, range, options, token)
+                : null;
+        });
     }
 }
 
@@ -657,6 +674,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
+            monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
 
             this.editorViewZones = [];
 
