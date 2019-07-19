@@ -26,8 +26,9 @@ interface TargetInfo {
 }
 
 interface TargetEndpoint {
-    name: string,
+    name: string;
     url: string;
+    config?: string;
 }
 
 const targets: TargetInfo[] = [
@@ -37,7 +38,8 @@ const targets: TargetInfo[] = [
         endpoints: [
             {
                 name: "nether",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1"
+                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1",
+                config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"builder\": \"*\",\n        \"nether\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
             },
             {
                 name: "beta",
@@ -451,7 +453,7 @@ function loadIframe(selected: string) {
             if (!selected || selected === `${target.name}-${endpoint.name}`) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = `${target.name}-${endpoint.name}`;
-                selectedConfig = target.config;
+                selectedConfig = endpoint.config || target.config;
                 selectedId = target.id;
                 return;
             }
