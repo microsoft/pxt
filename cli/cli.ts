@@ -2817,21 +2817,17 @@ export function augmnetDocsAsync(parsed: commandParser.ParsedCommand) {
 
 export function timeAsync() {
     ensurePkgDir();
-    let min: Map<number> = null;
+    let min: Map<number[]> = {};
     let loop = () =>
         mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
             .then(opts => pxtc.compile(opts))
             .then(res => {
                 U.iterMap(res.times, (k, v) => {
-                    res.times[k] = Math.round(v / 1000)
+                    v = Math.round(v / 1000)
+                    res.times[k] = v
+                    if (!min[k]) min[k] = []
+                    min[k].push(v)
                 })
-                if (!min) {
-                    min = res.times
-                } else {
-                    U.iterMap(min, (k, v) => {
-                        min[k] = Math.min(v, res.times[k])
-                    })
-                }
                 console.log(res.times)
             })
     return loop()
@@ -2857,7 +2853,12 @@ export function timeAsync() {
         .then(loop)
         .then(loop)
         .then(loop)
-        .then(() => console.log("MIN", min))
+        .then(() => {
+            U.iterMap(min, (k, v) => {
+                v.sort((a, b) => a - b)
+            })
+            console.log(min)
+        })
 }
 
 export function exportCppAsync(parsed: commandParser.ParsedCommand) {
