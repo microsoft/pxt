@@ -381,10 +381,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
-                <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
+                {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="monacoDebuggerToolbox"></div>
-                </div>
+                </div>}
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
         )
