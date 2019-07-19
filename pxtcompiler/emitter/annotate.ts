@@ -60,9 +60,9 @@ namespace ts.pxtc {
 
             if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
                 if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
-                    pxtInfo(node).exprInfo = { 
-                        leftType: checker.typeToString(lt), 
-                        rightType: checker.typeToString(rt) 
+                    pxtInfo(node).exprInfo = {
+                        leftType: checker.typeToString(lt),
+                        rightType: checker.typeToString(rt)
                     }
                 }
             }
