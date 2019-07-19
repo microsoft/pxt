@@ -688,7 +688,7 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
         jsx: <div className="ui form">
             <div className="ui field">
                 <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", exts.join(lf(" or ")))}</label>
-                <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
+                <input type="file" tabIndex={0} autoFocus aria-labelledby="selectFileToOpenLabel" className="ui blue fluid"></input>
             </div>
             <div className="ui secondary segment">
                 {lf("You can import files by dragging and dropping them anywhere in the editor!")}
