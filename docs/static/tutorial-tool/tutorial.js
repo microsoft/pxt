@@ -13,7 +13,8 @@ var targets = [
         endpoints: [
             {
                 name: "nether",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1"
+                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1",
+                config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"builder\": \"*\",\n        \"nether\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
             },
             {
                 name: "beta",
@@ -141,6 +142,7 @@ function createHeader(md) {
     };
     return header;
 }
+// All of the following code in the pxt.tutorial namespace was duplicated from pxtlib/tutorial.ts
 var pxt;
 (function (pxt) {
     var tutorial;
@@ -398,7 +400,7 @@ function loadIframe(selected) {
             if (!selected || selected === target.name + "-" + endpoint.name) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = target.name + "-" + endpoint.name;
-                selectedConfig = target.config;
+                selectedConfig = endpoint.config || target.config;
                 selectedId = target.id;
                 return;
             }
