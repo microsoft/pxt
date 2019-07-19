@@ -99,7 +99,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.label || card.labelIcon ?
                     <label role={card.onLabelClicked ? 'button' : undefined} onClick={card.onLabelClicked}
                         className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}
-                        title={`${ariaLabel} ${card.onLabelClicked ? "button" : "label"}`}
+                        aria-label={`${ariaLabel} ${card.onLabelClicked ? "button" : "label"}`}
                     >
                         {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}
                     </label> : undefined}
