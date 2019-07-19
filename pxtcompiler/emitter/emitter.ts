@@ -849,7 +849,7 @@ namespace ts.pxtc {
         emitVTables()
         let pass0 = U.cpuUs()
         res.times["pass0"] = pass0 - startTime
-      
+
         if (diagnostics.getModificationCount() == 0) {
             reset();
             bin.finalPass = true
@@ -1941,7 +1941,6 @@ ${lbl}: .short 0xffff
                 }
             }
             let attrs = parseComments(decl)
-            let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
 
             if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
@@ -3256,10 +3255,12 @@ ${lbl}: .short 0xffff
                 return handleAssignment(node);
             }
 
-            let lt = typeOf(node.left)
-            let rt = typeOf(node.right)
+            let lt: Type = null
+            let rt: Type = null
 
             if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
+                lt = typeOf(node.left)
+                rt = typeOf(node.right)
                 if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
                     pxtInfo(node).exprInfo = {
                         leftType: checker.typeToString(lt),
