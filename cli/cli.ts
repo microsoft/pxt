@@ -2818,9 +2818,12 @@ export function augmnetDocsAsync(parsed: commandParser.ParsedCommand) {
 export function timeAsync() {
     ensurePkgDir();
     let min: Map<number[]> = {};
+    const opts = mainPkg.getTargetOptions()
+    // opts.isNative = true
+    let copts: pxtc.CompileOptions
     let loop = () =>
-        mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
-            .then(opts => pxtc.compile(opts))
+        Promise.resolve()
+            .then(() => pxtc.compile(copts))
             .then(res => {
                 U.iterMap(res.times, (k, v) => {
                     v = Math.round(v / 1000)
@@ -2830,7 +2833,11 @@ export function timeAsync() {
                 })
                 console.log(res.times)
             })
-    return loop()
+    return mainPkg.getCompileOptionsAsync(opts)
+        .then(r => {
+            copts = r
+        })
+        .then(loop)
         .then(loop)
         .then(loop)
         .then(loop)
