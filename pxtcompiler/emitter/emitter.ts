@@ -14,16 +14,17 @@ namespace ts.pxtc {
         IsGlobalIdentifier = 0x0004,
     }
     export class PxtNode {
+        flags = PxtNodeFlags.None;
         typeCache: Type = null;
         symbolCache: Symbol = null;
         functionInfo: FunctionAddInfo = null;
         variableInfo: VariableAddInfo = null;
         callInfo: CallInfo = null;
         proc: ir.Procedure = null;
-        flags = PxtNodeFlags.None;
         commentAttrs: CommentAttrs = null;
         exprInfo: BinaryExpressionInfo = null;
         valueOverride: ir.Expr = null;
+        declCache: Declaration = undefined;
         constructor(public wave: number, public id: number) { }
     }
 
@@ -1702,6 +1703,9 @@ ${lbl}: .short 0xffff
 
         function getDecl(node: Node): Declaration {
             if (!node) return null
+            const pinfo = pxtInfo(node)
+            if (pinfo.declCache !== undefined)
+                return pinfo.declCache
             let sym = checker.getSymbolAtLocation(node)
             let decl: Declaration
             if (sym) {
@@ -1727,6 +1731,7 @@ ${lbl}: .short 0xffff
                 pxtInfo(decl).flags |= PxtNodeFlags.IsBogusFunction
             }
 
+            pinfo.declCache = decl || null
             return decl
         }
         function isRefCountedExpr(e: Expression) {
