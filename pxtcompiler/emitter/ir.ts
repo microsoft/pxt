@@ -452,22 +452,22 @@ namespace ts.pxtc.ir {
 
     export class Procedure extends Node {
         numArgs = 0;
-        info: FunctionAddInfo;
-        seqNo: number;
+        info: FunctionAddInfo = null;
+        seqNo: number = -1;
         isRoot = false;
         locals: Cell[] = [];
         captured: Cell[] = [];
         args: Cell[] = [];
-        parent: Procedure;
-        debugInfo: ProcDebugInfo;
-        fillDebugInfo: (th: assembler.File) => void;
-        classInfo: ClassInfo;
-        perfCounterName: string;
+        parent: Procedure = null;
+        debugInfo: ProcDebugInfo = null;
+        fillDebugInfo: (th: assembler.File) => void = null;
+        classInfo: ClassInfo = null;
+        perfCounterName: string = null;
         perfCounterNo = 0;
 
         body: Stmt[] = [];
         lblNo = 0;
-        action: ts.FunctionLikeDeclaration;
+        action: ts.FunctionLikeDeclaration = null;
 
         reset() {
             this.body = []

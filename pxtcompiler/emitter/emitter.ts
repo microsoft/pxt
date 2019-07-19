@@ -20,6 +20,7 @@ namespace ts.pxtc {
         callInfo: CallInfo = null;
         proc: ir.Procedure = null;
         flags = PxtNodeFlags.None;
+        commentAttrs: CommentAttrs = null;
         constructor(public wave: number, public id: number) { }
     }
 
@@ -455,19 +456,15 @@ namespace ts.pxtc {
         return parseCommentString(cmts)
     }
 
-    interface NodeWithAttrs extends Node {
-        pxtCommentAttrs: CommentAttrs;
-    }
-
-    export function parseComments(node0: Node): CommentAttrs {
-        if (!node0 || pxtInfo(node0).flags & PxtNodeFlags.IsBogusFunction) return parseCommentString("")
-        let node = node0 as NodeWithAttrs
-        let cached = node.pxtCommentAttrs
-        if (cached)
-            return cached
+    export function parseComments(node: Node): CommentAttrs {
+        const pinfo = node ? pxtInfo(node) : null
+        if (!pinfo || pinfo.flags & PxtNodeFlags.IsBogusFunction)
+            return parseCommentString("")
+        if (pinfo.commentAttrs)
+            return pinfo.commentAttrs
         let res = parseCommentString(getComments(node))
         res._name = getName(node)
-        node.pxtCommentAttrs = res
+        pinfo.commentAttrs = res
         return res
     }
 
