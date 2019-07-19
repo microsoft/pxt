@@ -415,7 +415,9 @@ div.simframe > iframe {
 }
 
 /* Collapse/expand button for simulator, sidedocs */
-#togglesim, #sidedocstoggle {
+#computertogglesim,
+#mobiletogglesim,
+#sidedocstoggle {
     position: absolute;
     border-top-left-radius: 100px;
     border-bottom-left-radius: 100px;
@@ -436,13 +438,15 @@ div.simframe > iframe {
 }
 
 // Factor in 4rem height of top bar
-#togglesim {
+#mobiletogglesim,
+#computertogglesim {
     left: -21px;
     top: calc(~'40% - 2.4rem');
     height: calc(~'20% + 0.8rem');
 }
 
-.collapsedEditorTools #togglesim {
+.collapsedEditorTools #computertogglesim,
+.collapsedEditorTools #mobiletogglesim {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-top-right-radius: 100px;
@@ -1117,7 +1121,8 @@ p.ui.font.small {
         display: flex !important;
     }
     /* Simulator Toggle Button */
-    #togglesim, .collapsedEditorTools #togglesim {
+    #mobiletogglesim,
+    .collapsedEditorTools #mobiletogglesim {
         border-top-right-radius: 100px;
         border-top-left-radius: 100px;
         border-bottom-right-radius: 0;
@@ -1128,7 +1133,7 @@ p.ui.font.small {
         height: auto;
         bottom: 10rem;
     }
-    .collapsedEditorTools #togglesim {
+    .collapsedEditorTools #mobiletogglesim {
         bottom: 4.7rem;
     }
     /* Hide floating editors */
@@ -1215,7 +1220,7 @@ p.ui.font.small {
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
     }
-    .collapsedEditorTools #togglesim {
+    .collapsedEditorTools #mobiletogglesim {
         bottom: 3.4rem;
     }
 }

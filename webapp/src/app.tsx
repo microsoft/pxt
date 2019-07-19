@@ -3119,8 +3119,9 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
+
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
