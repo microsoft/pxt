@@ -13,6 +13,7 @@ interface ISpriteEditorProps {
 
 interface ISpriteEditorState {
     firstRender: boolean;
+    spriteEditorActiveColor: number;
 }
 
 export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEditorState> {
@@ -23,6 +24,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         super(props);
         this.state = {
             firstRender: true,
+            spriteEditorActiveColor: 3,
         };
     }
 
@@ -50,6 +52,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
     }
 
     renderSpriteEditor() {
+        const { spriteEditorActiveColor } = this.state;
         const { blocksInfo, props } = this;
         const { value } = props;
 
@@ -62,9 +65,9 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         this.spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false);
         this.spriteEditor.render(contentDiv);
         this.spriteEditor.rePaint();
-        if (this.state.firstRender) {
-            this.spriteEditor.setActiveColor(1, true);
-        }
+        // this.spriteEditor.setActiveColor(spriteEditorActiveColor, true);
+        this.spriteEditor.color = spriteEditorActiveColor;
+        this.spriteEditor.setSidebarColor(spriteEditorActiveColor);
         this.spriteEditor.setSizePresets([
             [8, 8],
             [16, 16],
@@ -80,7 +83,12 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         this.spriteEditor.onClose(() => {
             this.updateSpriteState();
             this.spriteEditor.removeKeyListeners();
-            this.setState({ firstRender: false })
+
+            this.setState({
+                firstRender: false,
+                spriteEditorActiveColor: this.spriteEditor.color,
+            });
+
             // Dangerously set for now
             contentDiv.innerHTML = '';
             this.spriteEditor = undefined;

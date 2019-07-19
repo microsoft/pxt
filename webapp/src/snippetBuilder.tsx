@@ -28,7 +28,7 @@ interface AnswersMap {
 
 interface SnippetBuilderState {
     visible?: boolean;
-    tsOutput?: string;
+    tsOutput?: string[];
     mdOutput?: string;
     answers?: AnswersMap;
     history: number[];
@@ -52,7 +52,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             history: [0], // Index to track current question
             defaults: {},
             config: props.config,
-            tsOutput: props.config.initialOutput
+            tsOutput: [props.config.initialOutput]
         };
 
         this.cleanup = this.cleanup.bind(this);
@@ -150,9 +150,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      * Loops over each token previously added to defaults and replaces with the answer value if one
      * exists. Otherwise it replaces the token with the provided default value.
      */
-    replaceTokens(tsOutput: string) {
+    replaceTokens(tsOutput: string[]) {
         const { answers, defaults } = this.state;
-        let tokenizedOutput = tsOutput;
+        let tokenizedOutput = tsOutput.join('\n');
         const tokens = Object.keys(defaults);
 
         // Replaces output tokens with answer if available or default value
@@ -165,6 +165,43 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
+     * Takes in ts output and highlights the currently edited block 
+     */
+    highlightEditedBlocks(tsOutput: string[]) {
+        const highlightString = '// @highlight';
+        // Clears ts output of all current highlights
+        const cleanTsOutput = tsOutput.filter((output: string) => output !== highlightString);
+
+        const inputs = this.getCurrentQuestion().inputs;
+        // Get answer tokens being edited by inputs in this question
+        const editedAnswerTokens = inputs
+            .reduce((tokens: string[], input: pxt.SnippetQuestionInput) => {
+                if (isSnippetInputAnswerSingular(input)) {
+                    // Return singular answerToken
+                    return pxt.Util.concat([tokens, [input.answerToken]]);
+                }
+                else {
+                    // Return multiple answer tokens
+                    return pxt.Util.concat([tokens, input.answerTokens]);
+                }
+            }, []);
+
+        // Finds all blocks containing a currently editable answer token and adds a highlight line
+        const highlightedOutput = cleanTsOutput
+            .reduce((newOutput: string[], currentLine: string) => {
+                for (const answerToken of editedAnswerTokens) {
+                    if (currentLine.indexOf(answerToken) !== -1) {
+                        return pxt.Util.concat([newOutput, [highlightString, currentLine]]);
+                    }
+                }
+
+                return pxt.Util.concat([newOutput, [currentLine]]);
+
+            }, [])
+        return highlightedOutput;
+    }
+
+    /**
      * 
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
@@ -173,7 +210,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const { config, tsOutput } = this.state;
         // Attaches starting and ending line based on output type
         let md = `\`\`\`${config.outputType}\n`;
-        md += this.replaceTokens(tsOutput);
+        md += this.replaceTokens(this.highlightEditedBlocks(tsOutput));
         md += `\n\`\`\``;
         // Removeswhitespace
         // TODO(jb) md.replace(/\s/g, '_');
@@ -199,7 +236,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         this.setState({
             answers: {},
             history: [0],
-            tsOutput: this.props.config.initialOutput,
+            tsOutput: [this.props.config.initialOutput],
         });
 
         Blockly.hideChaff();
@@ -342,7 +379,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const { tsOutput } = this.state;
 
         if (question.output && tsOutput.indexOf(question.output) === -1) {
-            this.setState({ tsOutput: `${tsOutput}\n${question.output}`}, this.generateOutputMarkdown);
+            const newOutput = pxt.Util.concat([tsOutput, [question.output]]);
+            this.setState({ tsOutput: newOutput }, this.generateOutputMarkdown);
         }
     }
 
@@ -364,8 +402,10 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             this.updateOutput(nextQuestion);
             const nextQuestionNumber = this.getNextQuestionNumber();
 
-            this.setState({ history: [...history, nextQuestionNumber]}, this.toggleActionButton)
+            this.setState({ history: [...history, nextQuestionNumber] }, this.toggleActionButton)
             pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: nextQuestionNumber }, { interactiveConsent: true });
+            // Force generates output markdown for updated highlighting
+            this.generateOutputMarkdown();
         }
     }
 
@@ -376,6 +416,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             this.setState({ history: history.slice(0, history.length - 1)}, () => {
                 this.toggleActionButton();
                 pxt.tickEvent('snippet.builder.back.page', { snippet: config.name, page: this.getCurrentPage() }, { interactiveConsent: true });
+
+                // Force generates output markdown for updated highlighting
+                this.generateOutputMarkdown();
             });
         }
     }
