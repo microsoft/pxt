@@ -375,6 +375,7 @@ namespace pxtblockly {
                         if (tempoBlock) {
                             if (tempoBlock.getFieldValue("SLIDER")) {
                                 this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
+                                this.tempo = +this.tempoInput.value;
                             } else {
                                 this.tempoInput.value = this.tempo + "";
                             }
