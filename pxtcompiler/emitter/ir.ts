@@ -428,10 +428,6 @@ namespace ts.pxtc.ir {
         isThis?: boolean;
     }
 
-    export interface ProcQuery {
-        action: ts.FunctionLikeDeclaration;
-    }
-
     function noRefCount(e: ir.Expr): boolean {
         switch (e.exprKind) {
             case ir.EK.Sequence:
@@ -487,10 +483,6 @@ namespace ts.pxtc.ir {
 
         label() {
             return getFunctionLabel(this.action)
-        }
-
-        matches(id: ProcQuery) {
-            return (this.action == id.action)
         }
 
         toString(): string {

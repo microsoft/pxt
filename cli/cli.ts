@@ -2845,6 +2845,15 @@ export function timeAsync() {
         .then(loop)
         .then(loop)
         .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
         .then(() => console.log("MIN", min))
 }
 

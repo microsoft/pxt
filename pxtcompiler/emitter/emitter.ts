@@ -7,12 +7,19 @@ namespace ts {
     }
 }
 namespace ts.pxtc {
+    export const enum PxtNodeFlags {
+        None = 0,
+        IsRootFunction = 0x0001,
+        IsBogusFunction = 0x0002,
+    }
     export class PxtNode {
         typeCache: Type = null;
         symbolCache: Symbol = null;
         functionInfo: FunctionAddInfo = null;
         variableInfo: VariableAddInfo = null;
         callInfo: CallInfo = null;
+        proc: ir.Procedure = null;
+        flags = PxtNodeFlags.None;
         constructor(public wave: number, public id: number) { }
     }
 
@@ -453,7 +460,7 @@ namespace ts.pxtc {
     }
 
     export function parseComments(node0: Node): CommentAttrs {
-        if (!node0 || (node0 as any).isBogusFunction) return parseCommentString("")
+        if (!node0 || pxtInfo(node0).flags & PxtNodeFlags.IsBogusFunction) return parseCommentString("")
         let node = node0 as NodeWithAttrs
         let cached = node.pxtCommentAttrs
         if (cached)
@@ -826,9 +833,9 @@ namespace ts.pxtc {
             parent: src,
             pos: 0,
             end: 0,
-            isRootFunction: true,
-            isBogusFunction: true
         }
+        const pinfo = pxtInfo(rootFunction)
+        pinfo.flags |= PxtNodeFlags.IsRootFunction | PxtNodeFlags.IsBogusFunction
 
         markUsed(rootFunction);
         usedWorkList = [];
@@ -1712,9 +1719,9 @@ ${lbl}: .short 0xffff
                 decl = {
                     kind: SK.PropertySignature,
                     symbol: { isBogusSymbol: true, name: namedNode.name.getText() },
-                    isBogusFunction: true,
                     name: namedNode.name,
                 } as any
+                pxtInfo(decl).flags |= PxtNodeFlags.IsBogusFunction
             }
 
             return decl
@@ -2103,10 +2110,8 @@ ${lbl}: .short 0xffff
             return ir.op(EK.ProcCall, args, data)
         }
 
-        // TODO
         function lookupProc(decl: ts.Declaration) {
-            let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration }
-            return bin.procs.filter(p => p.matches(id))[0]
+            return pxtInfo(decl).proc
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
@@ -2434,7 +2439,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitFuncCore(node: FunctionLikeDeclaration) {
-            let info = getFunctionInfo(node)
+            const info = getFunctionInfo(node)
             let lit: ir.Expr = null
 
             let isExpression = node.kind == SK.ArrowFunction || node.kind == SK.FunctionExpression
@@ -2480,18 +2485,19 @@ ${lbl}: .short 0xffff
 
             assert(!!lit == isExpression, "!!lit == isExpression")
 
-            let id: ir.ProcQuery = { action: node }
-            let existing = bin.procs.filter(p => p.matches(id))[0]
+            let existing = lookupProc(node)
 
             if (existing) {
                 proc = existing
                 proc.reset()
             } else {
                 assert(!bin.finalPass, "!bin.finalPass")
+                const pinfo = pxtInfo(node)
                 proc = new ir.Procedure();
-                proc.isRoot = !!(node as any).isRootFunction
+                proc.isRoot = !!(pinfo.flags & PxtNodeFlags.IsRootFunction)
                 proc.action = node;
                 proc.info = info;
+                pinfo.proc = proc;
                 bin.addProc(proc);
             }
 
