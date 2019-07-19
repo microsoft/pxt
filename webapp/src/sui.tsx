@@ -649,9 +649,10 @@ export class Checkbox extends data.Component<CheckBoxProps, {}> {
 
     renderCore() {
         const p = this.props;
-        return <Field label={p.label}>
+        return <Field label={p.label} ariaLabel={p.label}>
             <div className={"ui toggle checkbox"}>
                 <input type="checkbox" checked={p.checked} aria-checked={p.checked}
+                    aria-label="c"
                     onChange={this.handleChange} />
                 {p.inputLabel ? <label>{p.inputLabel}</label> : undefined}
             </div>
