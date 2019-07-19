@@ -143,8 +143,7 @@ namespace ts.pxtc {
                 args: args,
                 isExpression: hasRet
             };
-
-            (node as any).callInfo = callInfo;
+            pxtInfo(node).callInfo = callInfo;
         }
 
         function getDecl(node: Node): Declaration {
@@ -178,8 +177,9 @@ namespace ts.pxtc {
 
         function typeOf(node: Node) {
             let r: Type;
-            if ((node as any).typeOverride)
-                return (node as any).typeOverride as Type
+            const info = pxtInfo(node)
+            if (info.typeCache)
+                return info.typeCache
             if (isExpression(node))
                 r = checker.getContextualType(<Expression>node)
             if (!r) {

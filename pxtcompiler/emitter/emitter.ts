@@ -1,7 +1,21 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
+namespace ts {
+    export interface Node {
+        pxt: pxtc.PxtNode;
+    }
+}
 namespace ts.pxtc {
+    export class PxtNode {
+        typeCache: Type = null;
+        symbolCache: Symbol = null;
+        functionInfo: FunctionAddInfo = null;
+        variableInfo: VariableAddInfo = null;
+        callInfo: CallInfo = null;
+        constructor(public wave: number, public id: number) { }
+    }
+
     enum HasLiteralType {
         Enum,
         Number,
@@ -86,11 +100,6 @@ namespace ts.pxtc {
 
     export const numReservedGlobals = 1;
 
-    interface NodeWithId extends Node {
-        pxtNodeId: number;
-        pxtNodeWave: number;
-    }
-
     export interface FieldWithAddInfo extends NamedDeclaration {
     }
 
@@ -100,13 +109,16 @@ namespace ts.pxtc {
 
     let lastNodeId = 0
     let currNodeWave = 1
-    export function getNodeId(n: Node) {
-        let nn = n as NodeWithId
-        if (nn.pxtNodeWave !== currNodeWave) {
-            nn.pxtNodeId = ++lastNodeId
-            nn.pxtNodeWave = currNodeWave
+
+    export function pxtInfo(n: Node) {
+        if (!n.pxt || n.pxt.wave != currNodeWave) {
+            n.pxt = new PxtNode(currNodeWave, ++lastNodeId)
         }
-        return nn.pxtNodeId
+        return n.pxt
+    }
+
+    export function getNodeId(n: Node) {
+        return pxtInfo(n).id
     }
 
     export function stringKind(n: Node) {
@@ -549,8 +561,9 @@ namespace ts.pxtc {
 
     function typeOf(node: Node) {
         let r: Type;
-        if ((node as any).typeOverride)
-            return (node as any).typeOverride as Type
+        const info = pxtInfo(node)
+        if (info.typeCache)
+            return info.typeCache
         if (isExpression(node))
             r = checker.getContextualType(<Expression>node)
         if (!r) {
@@ -563,10 +576,8 @@ namespace ts.pxtc {
         }
         if (!r)
             return r
-        if (isStringLiteral(node))
-            return r; // skip checkType() - type is any for literal fragments
         // save for future use; this cuts around 10% of emit() time
-        (node as any).typeOverride = r
+        info.typeCache = r
         return checkType(r)
     }
 
@@ -731,8 +742,7 @@ namespace ts.pxtc {
         let classInfos: pxt.Map<ClassInfo> = {}
         let usedDecls: pxt.Map<Node> = {}
         let usedWorkList: Declaration[] = []
-        let variableStatus: pxt.Map<VariableAddInfo> = {};
-        let functionInfo: pxt.Map<FunctionAddInfo> = {};
+        let functionInfos: FunctionAddInfo[] = [];
         let irCachesToClear: NodeWithCache[] = []
         let ifaceMembers: pxt.Map<number> = {}
         let explicitlyUsedIfaceMembers: pxt.Map<number> = {}
@@ -951,22 +961,23 @@ namespace ts.pxtc {
         }
 
         function getFunctionInfo(f: EmittableAsCall) {
-            let key = nodeKey(f)
-            let info = functionInfo[key]
-            if (!info)
-                functionInfo[key] = info = {
+            const info = pxtInfo(f)
+            if (!info.functionInfo) {
+                info.functionInfo = {
                     decl: f,
                     capturedVars: []
                 }
-            return info
+                functionInfos.push(info.functionInfo)
+            }
+            return info.functionInfo
         }
 
         function getVarInfo(v: Declaration) {
-            let key = getNodeId(v) + ""
-            let info = variableStatus[key]
-            if (!info)
-                variableStatus[key] = info = {}
-            return info;
+            const info = pxtInfo(v)
+            if (!info.variableInfo) {
+                info.variableInfo = {}
+            }
+            return info.variableInfo
         }
 
         function recordUse(v: VarOrParam, written = false) {
@@ -1225,10 +1236,10 @@ namespace ts.pxtc {
 
         function pruneMethodsAndRecompute() {
             // reset the virtual info
-            for (let fi in functionInfo) {
-                functionInfo[fi].virtualParent = undefined
-                functionInfo[fi].virtualIndex = undefined
-                functionInfo[fi].virtualInstances = undefined
+            for (let fi of functionInfos) {
+                fi.virtualParent = undefined
+                fi.virtualIndex = undefined
+                fi.virtualInstances = undefined
             }
             // remove methods that are not used
             for (let ci in classInfos) {
@@ -2092,6 +2103,7 @@ ${lbl}: .short 0xffff
             return ir.op(EK.ProcCall, args, data)
         }
 
+        // TODO
         function lookupProc(decl: ts.Declaration) {
             let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration }
             return bin.procs.filter(p => p.matches(id))[0]
@@ -2364,7 +2376,7 @@ ${lbl}: .short 0xffff
                 args: [node.template],
                 isExpression: true
             };
-            (node as any).callInfo = callInfo;
+            pxtInfo(node).callInfo = callInfo;
 
             function handleHexLike(pp: (s: string) => string) {
                 if (node.template.kind != SK.NoSubstitutionTemplateLiteral)

@@ -288,7 +288,7 @@ namespace pxt.runner {
             return null;
 
         let call = estmt.expression as ts.CallExpression;
-        let info = (<any>call).callInfo as pxtc.CallInfo;
+        let info = pxtc.pxtInfo(call).callInfo;
 
         return info;
     }
