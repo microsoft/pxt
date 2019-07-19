@@ -22,8 +22,6 @@ namespace ts.pxtc {
         "numops::ands": "_numops_ands",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
-        "pxt::incr": "_pxt_incr",
-        "pxt::decr": "_pxt_decr",
     }
 
     // snippets for ARM Thumb assembly

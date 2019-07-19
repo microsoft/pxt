@@ -1548,7 +1548,6 @@ ${lbl}: .short 0xffff
                     ir.numlit(getIfaceMemberId(keyName)),
                     emitExpr(p.initializer)
                 ];
-                // internal decr on all args
                 proc.emitExpr(ir.rtcall("pxtrt::mapSet", args))
             })
             return expr
@@ -3379,7 +3378,6 @@ ${lbl}: .short 0xffff
                 inner = emitExpr(expr)
             if (isStackMachine())
                 return inner
-            // in all cases decr is internal, so no mask
             return ir.rtcall("numops::toBoolDecr", [inner])
         }
         function emitIfStatement(node: IfStatement) {

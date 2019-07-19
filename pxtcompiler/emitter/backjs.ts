@@ -101,7 +101,6 @@ namespace ts.pxtc {
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
-        let refCounting = !!bin.target.jsRefCounting
 
         writeRaw(`
 var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
@@ -129,8 +128,7 @@ switch (step) {
         if (proc.args.length) {
             write(`if (s.lambdaArgs) {`)
             proc.args.forEach((l, i) => {
-                // TODO incr needed?
-                write(`  ${locref(l)} = ${refCounting ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
+                write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
             write(`}`)
@@ -299,7 +297,6 @@ switch (step) {
                     let info = e.data as FieldAccessInfo
                     let shimName = info.shimName
                     if (shimName) {
-                        assert(!refCounting)
                         emitExpr(e.args[0])
                         write(`r0 = r0${shimName};`)
                         return
@@ -406,7 +403,7 @@ switch (step) {
 
             let procid = topExpr.data as ir.ProcId
             let proc = procid.proc
-            let frameRef = `s.tmp_${frameIdx}`
+            const frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
             write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
 
