@@ -549,14 +549,6 @@ ${baseLabel}_nochk:
                     // this is there because we need different addresses for breakpoints
                     this.write(this.t.nop())
                     break;
-                case ir.EK.Incr:
-                    this.emitExpr(e.args[0])
-                    this.emitCallRaw("pxt::incr")
-                    break;
-                case ir.EK.Decr:
-                    this.emitExpr(e.args[0])
-                    this.emitCallRaw("pxt::decr")
-                    break;
                 case ir.EK.FieldAccess:
                     this.emitExpr(e.args[0])
                     return this.emitFieldAccess(e)

@@ -295,16 +295,6 @@ switch (step) {
                 case EK.Nop:
                     write("// nop")
                     break
-                case EK.Incr:
-                    emitExpr(e.args[0])
-                    if (refCounting)
-                        write(`pxtrt.incr(r0);`)
-                    break;
-                case EK.Decr:
-                    emitExpr(e.args[0])
-                    if (refCounting)
-                        write(`pxtrt.decr(r0);`)
-                    break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     let shimName = info.shimName

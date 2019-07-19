@@ -1527,7 +1527,7 @@ ${lbl}: .short 0xffff
         function emitArrayBindingPattern(node: BindingPattern) { }
         function emitArrayLiteral(node: ArrayLiteralExpression) {
             let eltT = arrayElementType(typeOf(node))
-            let coll = ir.sharedNoIncr(ir.rtcall("Array_::mk", []))
+            let coll = ir.shared(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
                 let mask = isRefCountedExpr(elt) ? 2 : 0
                 proc.emitExpr(ir.rtcall("Array_::push", [coll, emitExpr(elt)], mask))
@@ -2469,14 +2469,13 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
-                lit = ir.sharedNoIncr(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), emitFunLitCore(node, true)]))
+                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 info.usedAsValue = true
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
                         userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
                     let v = loc.loadCore()
-                    v = ir.op(EK.Incr, [v])
                     proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
@@ -2597,10 +2596,9 @@ ${lbl}: .short 0xffff
             let hasRet = funcHasReturn(proc.action)
             if (hasRet) {
                 let v = captureJmpValue()
-                proc.emitClrs(lbl, v);
                 proc.emitJmp(lbl, v, ir.JmpMode.Always)
             } else {
-                proc.emitClrs(lbl, null);
+                // TODO emit 'return undefined'
             }
             if (hasRet || isStackMachine())
                 proc.emitLbl(lbl)
@@ -2621,8 +2619,8 @@ ${lbl}: .short 0xffff
 
         function sharedDef(e: ir.Expr) {
             let v = ir.shared(e)
-            // make sure we save it, but also don't leak ref-count
-            proc.emitExpr(ir.op(EK.Decr, [v]))
+            // make sure we save it
+            proc.emitExpr(v);
             return v
         }
 
@@ -3148,7 +3146,7 @@ ${lbl}: .short 0xffff
             let isString = isStringType(typeOf(node.left));
             let lbl = proc.mkLabel("lazy")
 
-            left = ir.sharedNoIncr(left)
+            left = ir.shared(left)
             let cond = ir.rtcall("numops::toBool", [left])
             let lblSkip = proc.mkLabel("lazySkip")
             let mode: ir.JmpMode =
@@ -3160,7 +3158,6 @@ ${lbl}: .short 0xffff
             proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
             proc.emitLbl(lblSkip)
             proc.emitExpr(rtcallMaskDirect("langsupp::ignore", [left]))
-            // proc.emitExpr(ir.op(EK.Decr, [left])) - this gets optimized away
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
@@ -3444,14 +3441,6 @@ ${lbl}: .short 0xffff
 
         function emitIgnored(node: Expression) {
             let v = emitExpr(node);
-            let a = typeOf(node)
-            if (!(a.flags & TypeFlags.Void)) {
-                if (v.exprKind == EK.SharedRef && v.data != "noincr") {
-                    // skip decr - SharedRef would have introduced an implicit INCR
-                } else {
-                    v = ir.op(EK.Decr, [v])
-                }
-            }
             return v
         }
 
@@ -3619,7 +3608,7 @@ ${lbl}: .short 0xffff
             let l = getLabels(node)
             let defaultLabel: ir.Stmt
 
-            let expr = ir.sharedNoIncr(emitExpr(node.expression))
+            let expr = ir.shared(emitExpr(node.expression))
 
             let lbls = node.caseBlock.clauses.map(cl => {
                 let lbl = proc.mkLabel("switch")
@@ -3644,10 +3633,6 @@ ${lbl}: .short 0xffff
                 }
                 return lbl
             })
-
-            // this is default case only - none of the switch_eq() succeded,
-            // so there is an outstanding reference to expr
-            proc.emitExpr(ir.op(EK.Decr, [expr]))
 
             if (defaultLabel)
                 proc.emitJmp(defaultLabel, expr)
@@ -3714,7 +3699,6 @@ ${lbl}: .short 0xffff
             let loc = isGlobalVar(node) ?
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
-                proc.emitClrIfRef(loc) // we might be in a loop
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
             }
 
