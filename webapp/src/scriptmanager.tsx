@@ -344,7 +344,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     </h2>
                 </div> : undefined}
                 {hasHeaders && view == 'grid' ?
-                    <div role="grid" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
+                    <div role="button" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <div className="sort-by">
                             <div role="menu" className="ui compact buttons">
                                 <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
