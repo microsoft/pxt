@@ -1121,7 +1121,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
-                aria-label="Close"
+                aria-label={lf("Close")}
             ><Icon icon="close remove circle" /> </div> : undefined}
         </ReactModal>
     }

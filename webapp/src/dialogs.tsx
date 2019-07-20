@@ -627,7 +627,7 @@ export function showImportGithubDialogAsync() {
             hideAgree: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
-                <div className="ui relaxed divided list">
+                <div className="ui relaxed divided list" role="menu">
 
                     <div key={"create new"} className="item">
                         <i className="large plus circle middle aligned icon"></i>
