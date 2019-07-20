@@ -280,9 +280,10 @@ namespace pxt.docs {
         `
         params['accMenu'] = accMenuHtml;
 
+        const printButtonTitleText = lf("Print this page")
         // Add print button
         const printBtnHtml = `
-            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${lf("Print this page")}">
+            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${printButtonTitleText}" aria-label="${printButtonTitleText}">
                 <i class="icon print"></i>
             </button>
         `
