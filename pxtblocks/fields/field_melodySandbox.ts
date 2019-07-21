@@ -45,9 +45,10 @@ namespace pxtblockly {
         // preview field elements
         private static COLOR_BLOCK_WIDTH = 10;
         private static COLOR_BLOCK_HEIGHT = 20;
-        private static COLOR_BLOCK_X = 1;
+        private static COLOR_BLOCK_X = 20;
         private static COLOR_BLOCK_Y = 5;
         private static COLOR_BLOCK_SPACING = 2;
+        private static MUSIC_ICON_WIDTH = 20;
 
         // Use toggle from sprite editor
         private toggle: pxtsprite.Toggle;
@@ -124,7 +125,7 @@ namespace pxtblockly {
         render_() {
             super.render_();
             if (!this.invalidString) {
-                this.size_.width = (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numCol;
+                this.size_.width = FieldCustomMelody.MUSIC_ICON_WIDTH + (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numCol;
             }
             this.sourceBlock_.setColour("#ffffff");
         }
@@ -309,8 +310,10 @@ namespace pxtblockly {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
 
-            // let musicIcon = pxtsprite.mkText("\f001");
-            // this.fieldGroup_.appendChild(musicIcon.el);
+            let musicIcon = pxtsprite.mkText("\uf001")
+                .appendClass("melody-editor-field-icon")
+                .at(6, 15);
+            this.fieldGroup_.appendChild(musicIcon.el);
 
             let notes = this.melody.getStringRepresentation().trim().split(" ");
 
