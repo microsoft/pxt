@@ -4,6 +4,7 @@ import { shareProject } from "./share-project";
 import { toggleButton } from "./toggle-button";
 import { getHelpList } from "./help-list";
 import { getMoreList } from "./more-list";
+import { menuBar } from "./menubar";
 
 describe('Micro:bit Test', function () {
     before(async () => {
@@ -18,4 +19,5 @@ describe('Micro:bit Test', function () {
     toggleButton.test();
     getHelpList.test();
     getMoreList.test();
+    menuBar.test();
 })
