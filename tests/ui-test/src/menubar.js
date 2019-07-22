@@ -4,7 +4,9 @@ import assert from 'assert';
 class ViewMenuBar extends DomObject {
 
     async menuBar() {
-        await this.click('[role="treeitem"]:nth-child(12) .blocklyTreeRow', '.collapse-button:nth-child(1)', '#downloadArea .download-button');
+        await this.click('[role="treeitem"]:nth-child(11) .blocklyTreeRow', '.collapse-button:nth-child(1)');
+
+        await this.click('#downloadArea .download-button');
 
         let downloadTitle = await this.getText('.header-title');
 
@@ -12,7 +14,7 @@ class ViewMenuBar extends DomObject {
 
         assert.equal(downloadTitle, 'Download to your micro:bit');
 
-        await this.click('closeIcon');
+        await this.click('.closeIcon');
 
         let beforeName = await this.getAttribute('input#fileNameInput2', 'value');
 
