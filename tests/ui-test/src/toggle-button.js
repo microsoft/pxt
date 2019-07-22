@@ -11,8 +11,6 @@ class ToggleButton extends DomObject {
 
         await this.click('[title="Convert code to JavaScript"]');
 
-        await driver.sleep(2000);
-
         let explorerToolbar = await this.getText('[aria-label="File explorer toolbar"]');
 
         assert.equal(explorerToolbar, 'Explorer');
