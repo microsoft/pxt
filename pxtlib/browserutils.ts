@@ -123,7 +123,7 @@ namespace pxt.BrowserUtils {
         return typeof window != "undefined" && !!(window as any).ipcRenderer;
     }
     export function isElectron() {
-        return isPxtElectron() || isIpcRenderer();
+        return isPxtElectron();
     }
 
     export function isLocalHost(): boolean {
