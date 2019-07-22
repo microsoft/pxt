@@ -1,11 +1,19 @@
+import { DomObject } from './lib/dom-object';
+import assert from "assert";
+const actions = driver.actions();
 
-const { By } = require('selenium-webdriver');
+class SearchBox extends DomObject {
 
-function search() {
-    it('The search box function', async () => {
-        await browser.findElement(By.id('blocklySearchInputField')).sendKeys('search');
-        await browser.sleep(2000);
+    async searchBox() {
+        await this.sendKeys('#blocklySearchInputField', 'Basic');
 
-    })
+    }
+
+    test() {
+        it('Get various blocks', async () => {
+            return await this.searchBox();
+        })
+    }
 }
-exports.search = search;
+
+export let searchBox = new SearchBox();
