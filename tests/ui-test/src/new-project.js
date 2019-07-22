@@ -14,7 +14,6 @@ class NewProjectPage extends DomObject {
         await this.sendKeys('input#projectNameInput', 'Project1');
 
         await this.click('.button.positive');
-        await driver.sleep(2000);
 
         let text = await this.getText("[aria-label='My Projects'] .carouselitem:nth-child(2) .header");
 
@@ -23,8 +22,6 @@ class NewProjectPage extends DomObject {
         assert.equal(text, "Project1");
 
         await this.click("[aria-label='My Projects'] .carouselitem:nth-child(2)");
-
-        return true;
     }
 
     test() {
