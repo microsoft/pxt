@@ -74,19 +74,21 @@ class GetMoreList extends DomObject {
 
         await this.catchScreenShot('GreenBackground');
 
-        await this.click('[title="More..."]', '[title="Reset"]');
-
-        let resetMessage = await this.getText('.dimmed .content p');
-
-        console.log(resetMessage);
-
-        await this.click('button.cancel', '[title="More..."]', '[title="Pair device"]');
+        await this.click('[title="More..."]', '[title="Pair device"]');
 
         let pairDeviceTitle = await this.getText('.header-title');
 
         console.log(pairDeviceTitle);
 
         await this.click('.closeIcon', '[title="More..."]', '[title="About..."]', '.positive');
+
+        await this.click('[title="More..."]', '[title="Reset"]');
+
+        let resetMessage = await this.getText('.dimmed .content p');
+
+        console.log(resetMessage);
+
+        await this.click('.actions .red', '.newprojectcard');
     }
 
     test() {

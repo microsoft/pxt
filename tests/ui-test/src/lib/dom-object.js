@@ -9,11 +9,8 @@ export class DomObject {
             if (criteria) {
                 // console.debug(`Try to click the element by criteria: ${criteria}`);
 
-
-                let findBy = await this.findBy(criteria);
-
                 //wait until the element can be located
-                let element = await driver.wait(until.elementLocated(findBy));
+                let element = await driver.wait(until.elementLocated(this.findBy(criteria)));
 
                 //Sleep for 2 seconds to make sure the element's state is stable for interactions
                 await driver.sleep(2000);
@@ -59,28 +56,29 @@ export class DomObject {
 
 
     async switchToIframe(iframe) {
-        let frame = await driver.switchTo().frame(iframe);
+        let newIframe = await driver.switchTo().frame(iframe);
         await driver.sleep(5000);
-        return frame;
+        return newIframe;
+
     }
 
     async switchToDefaultFrame() {
-        return driver.switchTo().defaultContent();
+        return await driver.switchTo().defaultContent();
     }
 
     async getText(criteria) {
-        let element = await driver.findElement(this.findBy(criteria));
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         return await element.getText();
     }
 
     async getAttribute(criteria, attributeName) {
-        let element = await driver.findElement(this.findBy(criteria));
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         return await element.getAttribute(attributeName);
     }
 
     async sendKeys(criteria, keys) {
 
-        let element = await driver.findElement(this.findBy(criteria));
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         return await element.sendKeys(keys);
 
     }
