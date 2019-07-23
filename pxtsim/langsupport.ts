@@ -164,7 +164,12 @@ namespace pxsim {
 
         export function runAction(a: RefAction, args: any[]) {
             let cb = getResume();
-            cb(new FnWrapper(<any>a, null, args))
+            if (a instanceof RefAction) {
+                cb(new FnWrapper(a.func, a.fields, args))
+            } else {
+                // no-closure case
+                cb(new FnWrapper(<any>a, null, args))
+            }
         }
 
         export function dumpPerfCounters() {
