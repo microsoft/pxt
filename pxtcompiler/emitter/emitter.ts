@@ -471,7 +471,7 @@ namespace ts.pxtc {
         if (!isObjectType(t)) {
             return false;
         }
-        return (t.objectFlags & ObjectFlags.Reference) && t.symbol.name == "Array"
+        return (t.objectFlags & ObjectFlags.Reference) && t.symbol && t.symbol.name == "Array"
     }
 
     function isInterfaceType(t: Type) {
@@ -489,7 +489,7 @@ namespace ts.pxtc {
             return false;
         }
         // check if we like the class?
-        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol.flags & SymbolFlags.Class))
+        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol && (t.symbol.flags & SymbolFlags.Class)))
     }
 
     function isObjectLiteral(t: Type) {
@@ -510,10 +510,10 @@ namespace ts.pxtc {
         return isClassType(t)
     }
 
-    function arrayElementType(t: Type): Type {
+    function arrayElementType(t: Type, idx = -1): Type {
         if (isArrayType(t))
             return checkType((<TypeReference>t).typeArguments[0])
-        return null;
+        return checker.getIndexTypeOfType(t, IndexKind.Number);
     }
 
     function isFunctionType(t: Type) {
@@ -1038,11 +1038,8 @@ namespace ts.pxtc {
             }
         }
 
-        function typeCheckVar(decl: Declaration) {
-            if (!decl) {
-                userError(9203, lf("variable has unknown type"))
-            }
-            if (typeOf(decl).flags & TypeFlags.Void) {
+        function typeCheckVar(tp: Type) {
+            if (tp.flags & TypeFlags.Void) {
                 userError(9203, lf("void-typed variables not supported"))
             }
         }
@@ -1050,9 +1047,9 @@ namespace ts.pxtc {
         function lookupCell(decl: Declaration): ir.Cell {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
-                typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
+                    typeCheckVar(typeOf(decl))
                     ex = new ir.Cell(null, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
@@ -1062,8 +1059,9 @@ namespace ts.pxtc {
                 if (!res) {
                     if (bin.finalPass)
                         userError(9204, lf("cannot locate identifer"))
-                    else
+                    else {
                         res = proc.mkLocal(decl, getVarInfo(decl))
+                    }
                 }
                 return res
             }
@@ -3664,18 +3662,17 @@ ${lbl}: .short 0xffff
             }
             return false
         }
-        function emitVariableDeclaration(node: VarOrParam): ir.Cell {
-            if (node.name.kind === SK.ObjectBindingPattern) {
-                if (!node.initializer) {
-                    (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVariableDeclaration(e))
-                    return null;
-                }
-                else {
-                    userError(9259, "Object destructuring with initializers is not supported")
-                }
+
+        function emitVarOrParam(node: VarOrParam, bindingExpr: ir.Expr, bindingType: Type): ir.Cell {
+            if (node.name.kind === SK.ObjectBindingPattern || node.name.kind == SK.ArrayBindingPattern) {
+                const expr = ir.shared(emitExpr(node.initializer))
+                    || emitLocalLoad(node as VariableDeclaration)
+                const srcTp = node.initializer ? typeOf(node.initializer) : typeOf(node);
+                (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVarOrParam(e, expr, srcTp));
+                return null;
             }
 
-            typeCheckVar(node)
+
             if (!isUsed(node)) {
                 return null;
             }
@@ -3687,12 +3684,12 @@ ${lbl}: .short 0xffff
                 proc.emitClrIfRef(loc) // we might be in a loop
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
             }
+            typeCheckVar(typeOf(node))
 
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
-                let rhs = bindingElementAccessExpression(node as BindingElement)
-                typeCheckSubtoSup(rhs[1], node)
-                proc.emitExpr(loc.storeByRef(rhs[0]))
+                let [expr, tp] = bindingElementAccessExpression(node as BindingElement, bindingExpr, bindingType)
+                proc.emitExpr(loc.storeByRef(expr))
                 proc.stackEmpty();
             }
             else if (node.initializer) {
@@ -3725,26 +3722,34 @@ ${lbl}: .short 0xffff
             return loc;
         }
 
-        function bindingElementAccessExpression(bindingElement: BindingElement): [ir.Expr, Type] {
+        function emitVariableDeclaration(node: VarOrParam): ir.Cell {
+            return emitVarOrParam(node, null, null)
+        }
+
+        function bindingElementAccessExpression(bindingElement: BindingElement, parentAccess: ir.Expr, parentType: Type): [ir.Expr, Type] {
             const target = bindingElement.parent.parent;
 
-            let parentAccess: ir.Expr;
-            let parentType: Type;
-
             if (target.kind === SK.BindingElement) {
-                const parent = bindingElementAccessExpression(target as BindingElement);
+                const parent = bindingElementAccessExpression(target as BindingElement,
+                    parentAccess, parentType);
                 parentAccess = parent[0];
                 parentType = parent[1];
             }
-            else {
-                parentType = typeOf(target);
-            }
 
-            const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
 
-            if (isPossiblyGenericClassType(parentType)) {
+            if (bindingElement.parent.kind == SK.ArrayBindingPattern) {
+                const idx = (bindingElement.parent as ArrayBindingPattern).elements.indexOf(bindingElement)
+                //if (!isArrayType(parentType))
+                //    throw unhandled(bindingElement, lf("bad array access"), 9247)
+                const myType = arrayElementType(parentType, idx)
+                return [
+                    rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
+                    myType
+                ]
+            } else if (isPossiblyGenericClassType(parentType)) {
                 const info = getClassInfo(parentType)
-                parentAccess = parentAccess || emitLocalLoad(target as VariableDeclaration);
+
+                const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
 
                 const myType = checker.getTypeOfSymbolAtLocation(checker.getPropertyOfType(parentType, propertyName.text), bindingElement);
                 return [
