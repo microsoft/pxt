@@ -3681,10 +3681,12 @@ ${lbl}: .short 0xffff
 
         function emitVarOrParam(node: VarOrParam, bindingExpr: ir.Expr, bindingType: Type): ir.Cell {
             if (node.name.kind === SK.ObjectBindingPattern || node.name.kind == SK.ArrayBindingPattern) {
-                const expr = ir.shared(emitExpr(node.initializer))
-                    || emitLocalLoad(node as VariableDeclaration)
-                const srcTp = node.initializer ? typeOf(node.initializer) : typeOf(node);
-                (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVarOrParam(e, expr, srcTp));
+                if (!bindingExpr) {
+                    bindingExpr = node.initializer ? ir.shared(emitExpr(node.initializer)) :
+                        emitLocalLoad(node as VariableDeclaration)
+                    bindingType = node.initializer ? typeOf(node.initializer) : typeOf(node);
+                }
+                (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVarOrParam(e, bindingExpr, bindingType));
                 proc.stackEmpty(); // stack empty only after all assigned
                 return null;
             }
@@ -3741,6 +3743,21 @@ ${lbl}: .short 0xffff
             return emitVarOrParam(node, null, null)
         }
 
+        function emitFieldAccess(node: Node, objRef: ir.Expr, objType: Type, fieldName: string): [ir.Expr, Type] {
+            const fieldSym = checker.getPropertyOfType(objType, fieldName);
+            U.assert(!!fieldSym, "field sym")
+            const myType = checker.getTypeOfSymbolAtLocation(fieldSym, node);
+            let res: ir.Expr
+            if (isPossiblyGenericClassType(objType)) {
+                const info = getClassInfo(objType)
+                res = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
+            } else {
+                res = mkMethodCall(null, null, getIfaceMemberId(fieldName, true), [objRef]);
+                (res.data as ir.ProcId).mapMethod = "pxtrt::mapGet"
+            }
+            return [res, myType]
+        }
+
         function bindingElementAccessExpression(bindingElement: BindingElement, parentAccess: ir.Expr, parentType: Type): [ir.Expr, Type] {
             const target = bindingElement.parent.parent;
 
@@ -3761,18 +3778,9 @@ ${lbl}: .short 0xffff
                     rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
                     myType
                 ]
-            } else if (isPossiblyGenericClassType(parentType)) {
-                const info = getClassInfo(parentType)
-
-                const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
-
-                const myType = checker.getTypeOfSymbolAtLocation(checker.getPropertyOfType(parentType, propertyName.text), bindingElement);
-                return [
-                    ir.op(EK.FieldAccess, [parentAccess], fieldIndexCore(info, getFieldInfo(info, propertyName.text))),
-                    myType
-                ];
             } else {
-                throw unhandled(bindingElement, lf("bad field access"), 9247)
+                const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
+                return emitFieldAccess(bindingElement, parentAccess, parentType, propertyName.text)
             }
         }
 
