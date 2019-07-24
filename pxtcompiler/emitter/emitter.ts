@@ -354,18 +354,34 @@ namespace ts.pxtc {
         return "objectFlags" in t;
     }
 
+    function isVar(d: Declaration): boolean {
+        if (!d)
+            return false
+        if (d.kind == SK.VariableDeclaration)
+            return true
+        if (d.kind == SK.BindingElement)
+            return isVar(d.parent.parent as any)
+        return false
+    }
+
     function isGlobalVar(d: Declaration) {
         if (!d) return false
-        return (d.kind == SK.VariableDeclaration && !getEnclosingFunction(d)) ||
+        return (isVar(d) && !getEnclosingFunction(d)) ||
             (d.kind == SK.PropertyDeclaration && isStatic(d))
     }
 
     function isLocalVar(d: Declaration) {
-        return d.kind == SK.VariableDeclaration && !isGlobalVar(d);
+        return isVar(d) && !isGlobalVar(d);
     }
 
-    function isParameter(d: Declaration) {
-        return d.kind == SK.Parameter
+    function isParameter(d: Declaration): boolean {
+        if (!d)
+            return false
+        if (d.kind == SK.Parameter)
+            return true
+        if (d.kind == SK.BindingElement)
+            return isParameter(d.parent.parent as any)
+        return false
     }
 
     function isTopLevelFunctionDecl(decl: Declaration) {
@@ -902,6 +918,9 @@ namespace ts.pxtc {
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
+            // if we hit this, and are in debugger, we probably want to look at the node
+            debugger
+
             // If we have info then we may as well present that instead
             if (info) {
                 return userError(code, info)
@@ -1433,7 +1452,7 @@ ${lbl}: .short 0xffff
 
         function emitIdentifier(node: Identifier): ir.Expr {
             let decl = getDecl(node)
-            if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter || decl.kind === SK.BindingElement)) {
+            if (decl && (isVar(decl) || isParameter(decl))) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
@@ -1615,7 +1634,7 @@ ${lbl}: .short 0xffff
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
-            } else if (decl.kind == SK.VariableDeclaration) {
+            } else if (isVar(decl)) {
                 return emitLocalLoad(decl as VariableDeclaration)
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
@@ -2819,7 +2838,7 @@ ${lbl}: .short 0xffff
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
             if (trg.kind == SK.Identifier || isGlobal) {
-                if (decl && (isGlobal || decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
+                if (decl && (isGlobal || isVar(decl) || isParameter(decl))) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
                     proc.emitExpr(l.storeByRef(emitExpr(src)))
@@ -2842,15 +2861,37 @@ ${lbl}: .short 0xffff
                 }
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
+            } else if (trg.kind == SK.ArrayLiteralExpression) {
+                // special-case [a,b,c]=[1,2,3], or more commonly [a,b]=[b,a]
+                if (src.kind == SK.ArrayLiteralExpression) {
+                    // typechecker enforces that these two have the same length
+                    const tmps = (src as ArrayLiteralExpression).elements.map(e => {
+                        const ee = ir.shared(emitExpr(e))
+                        proc.emitExpr(ee)
+                        return ee
+                    });
+                    (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
+                        emitStore(e, irToNode(tmps[idx]))
+                    })
+                } else {
+                    // unfortunately, this uses completely different syntax tree nodes to the patters in const/let...
+                    const bindingExpr = ir.shared(emitExpr(src));
+                    (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
+                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, emitLit(idx)])))
+                    })
+                }
             } else {
                 unhandled(trg, lf("bad assignment target"), 9249)
             }
         }
 
         function handleAssignment(node: BinaryExpression) {
-            let cleanup = prepForAssignment(node.left, node.right)
+            let src = node.right
+            if (node.parent.kind == SK.ExpressionStatement)
+                src = null
+            let cleanup = prepForAssignment(node.left, src)
             emitStore(node.left, node.right, true)
-            let res = emitExpr(node.right)
+            let res = src ? emitExpr(src) : emitLit(undefined)
             cleanup()
             return res
         }
