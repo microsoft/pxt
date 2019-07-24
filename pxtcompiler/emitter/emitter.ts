@@ -3685,6 +3685,7 @@ ${lbl}: .short 0xffff
                     || emitLocalLoad(node as VariableDeclaration)
                 const srcTp = node.initializer ? typeOf(node.initializer) : typeOf(node);
                 (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVarOrParam(e, expr, srcTp));
+                proc.stackEmpty(); // stack empty only after all assigned
                 return null;
             }
 
@@ -3705,7 +3706,6 @@ ${lbl}: .short 0xffff
                 emitBrk(node)
                 let [expr, tp] = bindingElementAccessExpression(node as BindingElement, bindingExpr, bindingType)
                 proc.emitExpr(loc.storeByRef(expr))
-                proc.stackEmpty();
             }
             else if (node.initializer) {
                 emitBrk(node)
