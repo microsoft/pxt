@@ -39,7 +39,6 @@ namespace pxsim {
         destroy() {
             let data = this.data
             for (let i = 0; i < data.length; ++i) {
-                decr(data[i]);
                 data[i] = 0;
             }
             this.data = [];
@@ -113,7 +112,6 @@ namespace pxsim {
 
         export function push(c: RefCollection, x: any) {
             pxtrt.nullCheck(c)
-            incr(x);
             c.push(x);
         }
 
@@ -127,7 +125,6 @@ namespace pxsim {
         export function getAt(c: RefCollection, x: number) {
             pxtrt.nullCheck(c)
             let tmp = c.getAt(x);
-            incr(tmp);
             return tmp;
         }
 
@@ -141,17 +138,11 @@ namespace pxsim {
 
         export function insertAt(c: RefCollection, x: number, y: number) {
             pxtrt.nullCheck(c)
-            incr(y);
             c.insertAt(x, y);
         }
 
         export function setAt(c: RefCollection, x: number, y: any) {
             pxtrt.nullCheck(c)
-            if (c.isValidIndex(x)) {
-                //if there is an existing element handle refcount
-                decr(c.getAt(x));
-            }
-            incr(y);
             c.setAt(x, y);
         }
 
@@ -249,7 +240,6 @@ namespace pxsim {
         export function eq(x: number, y: number) { return pxtrt.nullFix(x) == pxtrt.nullFix(y); }
         export function eqDecr(x: number, y: number) {
             if (pxtrt.nullFix(x) == pxtrt.nullFix(y)) {
-                decr(y);
                 return true;
             } else {
                 return false
@@ -260,7 +250,7 @@ namespace pxsim {
         export function div(x: number, y: number) { return Math.floor(x / y) | 0; }
         export function mod(x: number, y: number) { return x % y; }
         export function bnot(x: number) { return ~x; }
-        export function toString(x: number) { return initString(x + ""); }
+        export function toString(x: number) { return (x + ""); }
     }
 
     export namespace thumb {
@@ -318,7 +308,7 @@ namespace pxsim {
         }
 
         export function fromCharCode(code: number) {
-            return initString(String.fromCharCode(code));
+            return (String.fromCharCode(code));
         }
 
         export function toNumber(s: string) {
@@ -328,12 +318,12 @@ namespace pxsim {
         // TODO check edge-conditions
 
         export function concat(a: string, b: string) {
-            return initString(a + b);
+            return (a + b);
         }
 
         export function substring(s: string, i: number, j: number) {
             pxtrt.nullCheck(s)
-            return initString(s.slice(i, i + j));
+            return (s.slice(i, i + j));
         }
 
         export function equals(s1: string, s2: string) {
@@ -348,7 +338,6 @@ namespace pxsim {
 
         export function compareDecr(s1: string, s2: string) {
             if (s1 == s2) {
-                decr(s2)
                 return 0;
             }
             if (s1 < s2) return -1;
@@ -360,7 +349,7 @@ namespace pxsim {
         }
 
         export function substr(s: string, start: number, length?: number) {
-            return initString(s.substr(start, length));
+            return (s.substr(start, length));
         }
 
         function inRange(s: string, i: number) {
@@ -369,7 +358,7 @@ namespace pxsim {
         }
 
         export function charAt(s: string, i: number) {
-            return initString(s.charAt(i));
+            return (s.charAt(i));
         }
 
         export function charCodeAt(s: string, i: number) {
