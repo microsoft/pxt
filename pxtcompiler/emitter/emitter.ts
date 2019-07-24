@@ -12,6 +12,7 @@ namespace ts.pxtc {
         IsRootFunction = 0x0001,
         IsBogusFunction = 0x0002,
         IsGlobalIdentifier = 0x0004,
+        IsUsed = 0x0008,
     }
     export class PxtNode {
         flags = PxtNodeFlags.None;
@@ -745,7 +746,6 @@ namespace ts.pxtc {
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();
         let classInfos: pxt.Map<ClassInfo> = {}
-        let usedDecls: pxt.Map<Node> = {}
         let usedWorkList: Declaration[] = []
         let functionInfos: FunctionAddInfo[] = [];
         let irCachesToClear: NodeWithCache[] = []
@@ -1684,7 +1684,11 @@ ${lbl}: .short 0xffff
         }
 
         function isUsed(decl: Declaration) {
-            return !isOnDemandDecl(decl) || usedDecls.hasOwnProperty(nodeKey(decl))
+            if (isOnDemandDecl(decl)) {
+                return !!(pxtInfo(decl).flags & PxtNodeFlags.IsUsed)
+            } else {
+                return true
+            }
         }
 
         function markFunctionUsed(decl: EmittableAsCall) {
@@ -1699,7 +1703,7 @@ ${lbl}: .short 0xffff
                 res.usedSymbols[getFullName(checker, decl.symbol)] = null
 
             if (decl && !isUsed(decl)) {
-                usedDecls[nodeKey(decl)] = decl
+                pxtInfo(decl).flags |= PxtNodeFlags.IsUsed
                 usedWorkList.push(decl)
             }
         }
