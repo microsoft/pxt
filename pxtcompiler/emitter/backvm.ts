@@ -477,10 +477,6 @@ _start_${name}:
                 case EK.Nop:
                     write("; nop")
                     break
-                case EK.Incr:
-                case EK.Decr:
-                    U.oops()
-                    break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     emitExpr(e.args[0])
