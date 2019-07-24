@@ -3812,8 +3812,6 @@ ${lbl}: .short 0xffff
 
             if (bindingElement.parent.kind == SK.ArrayBindingPattern) {
                 const idx = (bindingElement.parent as ArrayBindingPattern).elements.indexOf(bindingElement)
-                //if (!isArrayType(parentType))
-                //    throw unhandled(bindingElement, lf("bad array access"), 9247)
                 const myType = arrayElementType(parentType, idx)
                 return [
                     rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
