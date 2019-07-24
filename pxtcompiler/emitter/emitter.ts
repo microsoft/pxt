@@ -1563,7 +1563,7 @@ ${lbl}: .short 0xffff
             }
             if (node.initializer) {
                 let info = getClassInfo(typeOf(node.parent))
-                if (bin.finalPass && !info.ctor)
+                if (bin.finalPass && info.isUsed && !info.ctor)
                     userError(9209, lf("class field initializers currently require an explicit constructor"))
             }
             // do nothing
