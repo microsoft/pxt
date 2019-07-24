@@ -3812,6 +3812,8 @@ ${lbl}: .short 0xffff
 
             if (bindingElement.parent.kind == SK.ArrayBindingPattern) {
                 const idx = (bindingElement.parent as ArrayBindingPattern).elements.indexOf(bindingElement)
+                if (bindingElement.dotDotDotToken)
+                    userError(9203, lf("spread operator not supported yet"))
                 const myType = arrayElementType(parentType, idx)
                 return [
                     rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
