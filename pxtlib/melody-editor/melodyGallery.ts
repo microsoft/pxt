@@ -19,8 +19,8 @@ namespace pxtmelody {
             this.containerDiv.setAttribute("id", "melody-editor-gallery-outer");
             this.contentDiv = document.createElement("div");
             this.contentDiv.setAttribute("id", "melody-editor-gallery");
-            //this.contentDiv.setAttribute("max-height", pxt.BrowserUtils.isChrome()? "350px": "395px");
-            this.contentDiv.style.maxHeight = pxt.BrowserUtils.isChrome()? "350px": "390px";
+            this.contentDiv.style.maxHeight = pxt.BrowserUtils.isChrome() ? "350px" : "390px";
+
             this.itemBackgroundColor = "#DCDCDC";
             this.itemBorderColor = "white";
 
@@ -77,7 +77,7 @@ namespace pxtmelody {
 
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
-            const buttonWidth = pxt.BrowserUtils.isChrome()?"270px":"300px";
+            const buttonWidth = pxt.BrowserUtils.isChrome() ? "265px" : "300px";
             const buttonHeight = "45px";
             const samples = pxtmelody.SampleMelodies;
             for (let i = 0; i < samples.length; i++) {
@@ -152,8 +152,7 @@ namespace pxtmelody {
             clickableArea.setAttribute('data-value', sample.notes);
             clickableArea.title = sample.name;
             pxt.BrowserUtils.addClass(clickableArea, "melody-gallery-row");
-            clickableArea.style.width = pxt.BrowserUtils.isChrome()? "215px": "245px";
-            //clickableArea.setAttribute("width", pxt.BrowserUtils.isChrome()? "215px": "245px");
+            clickableArea.style.width = pxt.BrowserUtils.isChrome() ? "210px" : "245px";
 
             let melodyName = document.createElement('div');
             melodyName.innerText = sample.name;

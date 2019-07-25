@@ -151,14 +151,13 @@ namespace pxtblockly {
 
             this.editorDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
-            this.editorDiv.setAttribute("min-height", pxt.BrowserUtils.isChrome() ? "350px" : "390px");
 
             this.gridDiv = this.createGridDisplay();
             this.editorDiv.appendChild(this.gridDiv);
 
             this.bottomDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
-            //this.bottomDiv.setAttribute("width",pxt.BrowserUtils.isChrome()? "300px":"390px");
+            this.bottomDiv.setAttribute("width", pxt.BrowserUtils.isChrome() ? "300px" : "330px");
 
             this.doneButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
@@ -288,7 +287,6 @@ namespace pxtblockly {
         }
 
         protected getDropdownBorderColour() {
-            //return this.sourceBlock_.getColourSecondary();
             return "#4f0643";
         }
 
