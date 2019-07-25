@@ -44,8 +44,11 @@ namespace pxt.py {
         isParam?: boolean;
         isImport?: SymbolInfo;
         modifier?: VarModifier;
+
+        /* usage information */
         firstRefPos?: number;
         firstAssignPos?: number;
+        firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -160,6 +163,7 @@ namespace pxt.py {
     export interface ScopeDef extends Stmt {
         vars?: Map<SymbolInfo>;
         parent?: ScopeDef;
+        blockDepth?: number;
     }
 
     export interface FunctionDef extends Symbol, ScopeDef {

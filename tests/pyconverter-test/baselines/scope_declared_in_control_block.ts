@@ -1,4 +1,4 @@
-let a = 0
+let a: number;
 if (true) {
     a = 2
 } else {

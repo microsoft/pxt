@@ -6,6 +6,7 @@ namespace pxt.py {
         currModule: py.Module;
         currClass: py.ClassDef;
         currFun: py.FunctionDef;
+        blockDepth: number;
     }
 
     // global state
@@ -402,7 +403,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9521; 9550-9599 reserved for parser
+    // next free error 9525; 9550-9599 reserved for parser
     function error(astNode: py.AST, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -696,7 +697,8 @@ namespace pxt.py {
         ctx = {
             currClass: null,
             currFun: null,
-            currModule: m
+            currModule: m,
+            blockDepth: 0
         }
         lastFile = m.tsFilename.replace(/\.ts$/, ".py")
     }
@@ -881,7 +883,10 @@ namespace pxt.py {
     }
 
     function stmts(ss: py.Stmt[]) {
-        return B.mkBlock(ss.map(stmt))
+        ctx.blockDepth++;
+        const res = B.mkBlock(ss.map(stmt));
+        ctx.blockDepth--;
+        return res;
     }
 
     function exprs0(ee: py.Expr[]) {
@@ -893,6 +898,7 @@ namespace pxt.py {
         if (!n.vars) {
             n.vars = {}
             n.parent = currentScope()
+            n.blockDepth = ctx.blockDepth;
         }
     }
 
@@ -1297,17 +1303,17 @@ namespace pxt.py {
             const current = currentScope();
 
             for (const name of n.names) {
-                // if (U.lookup(current.vars, name)) {
-                //     error(n, 99999999, U.lf("Variable referenced before global statement"));
-                // }
-
                 const existing = U.lookup(globalScope.vars, name);
 
                 if (!existing) {
-                    defvar(name, { }, globalScope);
+                    error(n, 9521, U.lf("No binding found for global variable"));
                 }
 
-                defvar(name, { modifier: VarModifier.Global });
+                const sym = defvar(name, { modifier: VarModifier.Global });
+
+                if (sym.firstRefPos < n.startPos) {
+                    error(n, 9522, U.lf("Variable referenced before global declaration"))
+                }
             }
             return B.mkStmt(B.mkText(""));
         },
@@ -1316,18 +1322,18 @@ namespace pxt.py {
             const current = currentScope();
 
             for (const name of n.names) {
-                // if (U.lookup(current.vars, name)) {
-                //     error(n, 99999999, U.lf("Variable referenced before nonlocal statement"));
-                // }
-
                 const declaringScope = findNonlocalDeclaration(name, current);
 
                 // Python nonlocal variables cannot refer to globals
                 if (!declaringScope || declaringScope === globalScope || declaringScope.vars[name].modifier === VarModifier.Global) {
-                    error(n, 99999999, U.lf("No binding found for nonlocal variable"));
+                    error(n, 9523, U.lf("No binding found for nonlocal variable"));
                 }
 
-                defvar(name, { modifier: VarModifier.NonLocal });
+                const sym = defvar(name, { modifier: VarModifier.NonLocal });
+
+                if (sym.firstRefPos < n.startPos) {
+                    error(n, 9524, U.lf("Variable referenced before nonlocal declaration"))
+                }
             }
             return B.mkStmt(B.mkText(""));
         }
@@ -1431,6 +1437,7 @@ namespace pxt.py {
             if (sym && sym.kind === SK.Variable && sym.modifier === undefined) {
                 if (sym.firstAssignPos === undefined || sym.firstAssignPos > target.startPos) {
                     sym.firstAssignPos = target.startPos
+                    sym.firstAssignDepth = ctx.blockDepth;
                 }
             }
         }
@@ -1465,10 +1472,8 @@ namespace pxt.py {
             n.symbolInfo = curr
             unify(n, n.tsType, curr.pyRetType)
         }
-        else if (curr.firstRefPos < n.startPos && n.isdef) {
-            n.isdef = false;
-        }
-        else if (curr.firstAssignPos < n.startPos && n.isdef) {
+
+        if (n.isdef && shouldHoist(curr, currentScope())) {
             n.isdef = false;
         }
 
@@ -2066,11 +2071,15 @@ namespace pxt.py {
         for (const varName of Object.keys(scope.vars)) {
             current = scope.vars[varName];
 
-            if (current.kind === SK.Variable && current.modifier === undefined && current.firstRefPos < current.firstAssignPos) {
+            if (shouldHoist(current, scope)) {
                 hoisted.push(declareVariable(current));
             }
         }
         return hoisted;
+    }
+
+    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef) {
+        return sym.kind === SK.Variable && sym.modifier === undefined && (sym.firstRefPos < sym.firstAssignPos || sym.firstAssignDepth > scope.blockDepth);
     }
 
     // TODO look at scopes of let
@@ -2157,6 +2166,7 @@ namespace pxt.py {
                 modules.push({
                     kind: "Module",
                     body: res.stmts,
+                    blockDepth: 0,
                     name: modname,
                     source: src,
                     tsFilename: sn.replace(/\.py$/, ".ts")
