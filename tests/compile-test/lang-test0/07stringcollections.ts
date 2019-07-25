@@ -14,7 +14,7 @@ function testStringCollection(): void {
 }
 
 function testUnionIndexer(): void {
-    type SmallNumber = 0 | 1 | 2;
+    type SmallNumber = (0 | 1) | (1 | 2) | 2;
     const arr: string[] = ["foo", "bar", "baz"];
 
     let index: SmallNumber = 0;
