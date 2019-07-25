@@ -418,15 +418,6 @@ namespace ts.pxtc.thumb {
                 singleReg(ln) == lnNext.numArgs[0] && lnNext.numArgs[1] == 0) {
                 // RULE: push {rX}; ldr rX, [sp, #0] -> push {rX}
                 lnNext.update("")
-            } else if (lnop == "bl" && lnNext.getOp() == "push" &&
-                /^_pxt_(incr|decr)$/.test(ln.words[1]) && singleReg(lnNext) == 0) {
-                ln.update("bl " + ln.words[1] + "_pushR0")
-                lnNext.update("@dummystack 1")
-            } else if (lnop == "ldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
-                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 32
-                && lnNext2 && lnNext2.getOp() != "push") {
-                ln.update("bl " + lnNext.words[1] + "_" + ln.numArgs[1])
-                lnNext.update("")
             } else if (lnNext2 && lnop == "push" && singleReg(ln) >= 0 && preservesReg(lnNext, singleReg(ln)) &&
                 lnNext2.getOp() == "pop" && singleReg(ln) == singleReg(lnNext2)) {
                 // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
