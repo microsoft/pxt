@@ -38,6 +38,12 @@ export const testAppTarget: pxt.TargetBundle = {
     corepkg: undefined
 }
 
+export interface PyConverterResult {
+    python: string;
+    ts: string;
+    diagnostics: pxtc.KsDiagnostic[];
+}
+
 export function compareBaselines(a: string, b: string): boolean {
     // Ignore whitespace
     a = a.replace(/\s/g, "");
@@ -91,7 +97,7 @@ export function ts2pyAsync(f: string): Promise<string> {
         })
 }
 
-export function py2tsAsync(f: string, dependency = "bare"): Promise<string> {
+export function py2tsAsync(f: string, dependency = "bare", allowErrors = false): Promise<PyConverterResult> {
     const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
     return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, dependency, true)
         .then(opts => {
@@ -108,8 +114,12 @@ export function py2tsAsync(f: string, dependency = "bare"): Promise<string> {
 
             let success = diagnostics.length == 0
 
-            if (success) {
-                return opts.fileSystem["main.ts"];
+            if (success || allowErrors) {
+                return {
+                    python: input,
+                    ts: opts.fileSystem["main.ts"],
+                    diagnostics
+                };
             }
             else {
                 let partialOutput = generated["main.ts"]

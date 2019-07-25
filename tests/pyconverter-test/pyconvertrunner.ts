@@ -11,8 +11,14 @@ import * as util from "../common/testUtils";
 
 const casesDir = path.join(process.cwd(), "tests", "pyconverter-test", "cases");
 const baselineDir = path.join(process.cwd(), "tests", "pyconverter-test", "baselines");
+const errorsDir = path.join(process.cwd(), "tests", "pyconverter-test", "errors");
 // uses the same test APIs as the blocks decompiler tests
 const testBlocksDir = path.relative(process.cwd(), path.join("tests", "pyconverter-test", "testlib"));
+
+interface PyErrorCase {
+    code: number;
+    line: number;
+}
 
 function initGlobals() {
     let g = global as any
@@ -49,6 +55,16 @@ describe("pyconverter", () => {
             return pyconverterTestAsync(filename);
         });
     });
+
+    describe("errors", () => {
+        let errorFiles = util.getFilesByExt(errorsDir, ".py");
+
+        errorFiles.forEach(filename => {
+            it("should error " + path.basename(filename), () => {
+                return pyerrorTest(filename);
+            });
+        });
+    })
 });
 
 function fail(msg: string) {
@@ -70,8 +86,9 @@ function pyconverterTestAsync(filename: string) {
         }
 
         return util.py2tsAsync(filename, testBlocksDir)
-            .then(decompiled => {
+            .then(res => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.ts"));
+                const decompiled = res.ts;
 
                 if (!baselineExists) {
                     fs.writeFileSync(outFile, decompiled)
@@ -91,4 +108,45 @@ function pyconverterTestAsync(filename: string) {
             })
             .then(() => resolve(), reject);
     });
+}
+
+function pyerrorTest(filename: string) {
+    return util.py2tsAsync(filename, testBlocksDir, true)
+        .then(result => {
+            const expected = getErrorCases(result.python);
+            const failing = expected.filter(errorCase => {
+                for (const d of result.diagnostics) {
+                    if (d.code === errorCase.code && d.line === errorCase.line) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            if (failing.length) {
+                fail("Missing errors: " + failing.map(i => JSON.stringify(i, null, 4)).join(", "));
+            }
+            else if (expected.length !== result.diagnostics.length) {
+                fail("More errors than expected");
+            }
+        });
+}
+
+function getErrorCases(fileText: string) {
+    const lines = fileText.split(/\n/);
+    const res: PyErrorCase[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        const match = /#\s*(\d\d\d\d)/.exec(lines[i]);
+
+        if (match) {
+            res.push({
+                code: parseInt(match[1]),
+                line: i
+            });
+        }
+    }
+
+    return res;
 }
