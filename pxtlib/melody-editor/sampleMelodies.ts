@@ -13,7 +13,7 @@ namespace pxtmelody {
 
     export const SampleMelodies = [
         new MelodyInfo(lf("Scale"), "C5 B A G F E D C", 120),
-        new MelodyInfo(lf("Reverse Scale"), "C D E F G A B C5", 120),
+        new MelodyInfo(lf("Reverse"), "C D E F G A B C5", 120),
         new MelodyInfo(lf("Mystery"), "E B C5 A B G A F", 120),
         new MelodyInfo(lf("Gilroy"), "A F E F D G E F", 120),
         new MelodyInfo(lf("Falling"), "C5 A B G A F G E", 120),

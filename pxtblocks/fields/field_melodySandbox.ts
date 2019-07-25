@@ -8,7 +8,6 @@ namespace pxtblockly {
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         protected params: U;
-        private title: string = "- - - - - - - -";
         private melody: pxtmelody.MelodyArray;
         private soundingKeys: number = 0;
         private numRow: number = 8;
@@ -29,8 +28,6 @@ namespace pxtblockly {
         private playButton: HTMLButtonElement;
         private playIcon: HTMLElement;
         private tempoInput: HTMLInputElement;
-        private tempoDiv: HTMLDivElement;
-        private tempoLabel: HTMLLabelElement;
 
         // grid elements
         private static CELL_WIDTH = 25;
@@ -154,21 +151,21 @@ namespace pxtblockly {
 
             this.editorDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
+            this.editorDiv.setAttribute("min-height", pxt.BrowserUtils.isChrome() ? "350px" : "390px");
 
             this.gridDiv = this.createGridDisplay();
             this.editorDiv.appendChild(this.gridDiv);
 
             this.bottomDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
+            //this.bottomDiv.setAttribute("width",pxt.BrowserUtils.isChrome()? "300px":"390px");
 
             this.doneButton = document.createElement("button");
-            this.doneButton.id = "melody-done-button";
-            pxt.BrowserUtils.addClass(this.doneButton, "ui button");
-            this.doneButton.innerText = "Done";
+            pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
+            this.doneButton.innerText = lf("Done");
             this.doneButton.addEventListener("click", () => this.onDone());
 
             this.playButton = document.createElement("button");
-            pxt.BrowserUtils.addClass(this.playButton, "ui icon button");
             this.playButton.id = "melody-play-button";
             this.playButton.addEventListener("click", () => this.togglePlay());
 
@@ -177,26 +174,17 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
 
-            this.tempoDiv = document.createElement("div");
-            this.tempoDiv.id = "melody-tempo-div";
-
-            this.tempoLabel = document.createElement("label");
-            this.tempoLabel.id = "melody-tempo-label";
-            this.tempoLabel.innerText = "Tempo";
-
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
+            this.tempoInput.title = lf("tempo");
 
             this.syncTempoField();
 
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
 
-            this.tempoDiv.appendChild(this.tempoLabel);
-            this.tempoDiv.appendChild(this.tempoInput);
-
-            this.bottomDiv.appendChild(this.tempoDiv);
+            this.bottomDiv.appendChild(this.tempoInput);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
             this.editorDiv.appendChild(this.bottomDiv);
@@ -228,8 +216,6 @@ namespace pxtblockly {
             this.playButton = null;
             this.playIcon = null;
             this.tempoInput = null;
-            this.tempoDiv = null;
-            this.tempoLabel = null;
             this.elt = null;
             this.cells = null;
             this.toggle = null;
