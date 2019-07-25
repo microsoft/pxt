@@ -355,18 +355,34 @@ namespace ts.pxtc {
         return "objectFlags" in t;
     }
 
+    function isVar(d: Declaration): boolean {
+        if (!d)
+            return false
+        if (d.kind == SK.VariableDeclaration)
+            return true
+        if (d.kind == SK.BindingElement)
+            return isVar(d.parent.parent as any)
+        return false
+    }
+
     function isGlobalVar(d: Declaration) {
         if (!d) return false
-        return (d.kind == SK.VariableDeclaration && !getEnclosingFunction(d)) ||
+        return (isVar(d) && !getEnclosingFunction(d)) ||
             (d.kind == SK.PropertyDeclaration && isStatic(d))
     }
 
     function isLocalVar(d: Declaration) {
-        return d.kind == SK.VariableDeclaration && !isGlobalVar(d);
+        return isVar(d) && !isGlobalVar(d);
     }
 
-    function isParameter(d: Declaration) {
-        return d.kind == SK.Parameter
+    function isParameter(d: Declaration): boolean {
+        if (!d)
+            return false
+        if (d.kind == SK.Parameter)
+            return true
+        if (d.kind == SK.BindingElement)
+            return isParameter(d.parent.parent as any)
+        return false
     }
 
     function isTopLevelFunctionDecl(decl: Declaration) {
@@ -488,7 +504,7 @@ namespace ts.pxtc {
         if (!isObjectType(t)) {
             return false;
         }
-        return (t.objectFlags & ObjectFlags.Reference) && t.symbol.name == "Array"
+        return (t.objectFlags & ObjectFlags.Reference) && t.symbol && t.symbol.name == "Array"
     }
 
     function isInterfaceType(t: Type) {
@@ -506,7 +522,7 @@ namespace ts.pxtc {
             return false;
         }
         // check if we like the class?
-        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol.flags & SymbolFlags.Class))
+        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol && (t.symbol.flags & SymbolFlags.Class)))
     }
 
     function isObjectLiteral(t: Type) {
@@ -527,10 +543,10 @@ namespace ts.pxtc {
         return isClassType(t)
     }
 
-    function arrayElementType(t: Type): Type {
+    function arrayElementType(t: Type, idx = -1): Type {
         if (isArrayType(t))
             return checkType((<TypeReference>t).typeArguments[0])
-        return null;
+        return checker.getIndexTypeOfType(t, IndexKind.Number);
     }
 
     function isFunctionType(t: Type) {
@@ -902,6 +918,9 @@ namespace ts.pxtc {
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
+            // if we hit this, and are in debugger, we probably want to look at the node
+            debugger
+
             // If we have info then we may as well present that instead
             if (info) {
                 return userError(code, info)
@@ -1064,11 +1083,8 @@ namespace ts.pxtc {
             }
         }
 
-        function typeCheckVar(decl: Declaration) {
-            if (!decl) {
-                userError(9203, lf("variable has unknown type"))
-            }
-            if (typeOf(decl).flags & TypeFlags.Void) {
+        function typeCheckVar(tp: Type) {
+            if (tp.flags & TypeFlags.Void) {
                 userError(9203, lf("void-typed variables not supported"))
             }
         }
@@ -1076,9 +1092,9 @@ namespace ts.pxtc {
         function lookupCell(decl: Declaration): ir.Cell {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
-                typeCheckVar(decl)
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
+                    typeCheckVar(typeOf(decl))
                     ex = new ir.Cell(null, decl, getVarInfo(decl))
                     bin.globals.push(ex)
                 }
@@ -1088,8 +1104,9 @@ namespace ts.pxtc {
                 if (!res) {
                     if (bin.finalPass)
                         userError(9204, lf("cannot locate identifer"))
-                    else
+                    else {
                         res = proc.mkLocal(decl, getVarInfo(decl))
+                    }
                 }
                 return res
             }
@@ -1435,7 +1452,7 @@ ${lbl}: .short 0xffff
 
         function emitIdentifier(node: Identifier): ir.Expr {
             let decl = getDecl(node)
-            if (decl && (decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter || decl.kind === SK.BindingElement)) {
+            if (decl && (isVar(decl) || isParameter(decl))) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
@@ -1617,7 +1634,7 @@ ${lbl}: .short 0xffff
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
-            } else if (decl.kind == SK.VariableDeclaration) {
+            } else if (isVar(decl)) {
                 return emitLocalLoad(decl as VariableDeclaration)
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
@@ -2825,7 +2842,7 @@ ${lbl}: .short 0xffff
             let decl = getDecl(trg)
             let isGlobal = isGlobalVar(decl)
             if (trg.kind == SK.Identifier || isGlobal) {
-                if (decl && (isGlobal || decl.kind == SK.VariableDeclaration || decl.kind == SK.Parameter)) {
+                if (decl && (isGlobal || isVar(decl) || isParameter(decl))) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
                     proc.emitExpr(l.storeByRef(emitExpr(src)))
@@ -2848,15 +2865,37 @@ ${lbl}: .short 0xffff
                 }
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
+            } else if (trg.kind == SK.ArrayLiteralExpression) {
+                // special-case [a,b,c]=[1,2,3], or more commonly [a,b]=[b,a]
+                if (src.kind == SK.ArrayLiteralExpression) {
+                    // typechecker enforces that these two have the same length
+                    const tmps = (src as ArrayLiteralExpression).elements.map(e => {
+                        const ee = ir.shared(emitExpr(e))
+                        proc.emitExpr(ee)
+                        return ee
+                    });
+                    (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
+                        emitStore(e, irToNode(tmps[idx]))
+                    })
+                } else {
+                    // unfortunately, this uses completely different syntax tree nodes to the patters in const/let...
+                    const bindingExpr = ir.shared(emitExpr(src));
+                    (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
+                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, emitLit(idx)])))
+                    })
+                }
             } else {
                 unhandled(trg, lf("bad assignment target"), 9249)
             }
         }
 
         function handleAssignment(node: BinaryExpression) {
-            let cleanup = prepForAssignment(node.left, node.right)
+            let src = node.right
+            if (node.parent.kind == SK.ExpressionStatement)
+                src = null
+            let cleanup = prepForAssignment(node.left, src)
             emitStore(node.left, node.right, true)
-            let res = emitExpr(node.right)
+            let res = src ? emitExpr(src) : emitLit(undefined)
             cleanup()
             return res
         }
@@ -3684,18 +3723,20 @@ ${lbl}: .short 0xffff
             }
             return false
         }
-        function emitVariableDeclaration(node: VarOrParam): ir.Cell {
-            if (node.name.kind === SK.ObjectBindingPattern) {
-                if (!node.initializer) {
-                    (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVariableDeclaration(e))
-                    return null;
+
+        function emitVarOrParam(node: VarOrParam, bindingExpr: ir.Expr, bindingType: Type): ir.Cell {
+            if (node.name.kind === SK.ObjectBindingPattern || node.name.kind == SK.ArrayBindingPattern) {
+                if (!bindingExpr) {
+                    bindingExpr = node.initializer ? ir.shared(emitExpr(node.initializer)) :
+                        emitLocalLoad(node as VariableDeclaration)
+                    bindingType = node.initializer ? typeOf(node.initializer) : typeOf(node);
                 }
-                else {
-                    userError(9259, "Object destructuring with initializers is not supported")
-                }
+                (node.name as ObjectBindingPattern).elements.forEach((e: BindingElement) => emitVarOrParam(e, bindingExpr, bindingType));
+                proc.stackEmpty(); // stack empty only after all assigned
+                return null;
             }
 
-            typeCheckVar(node)
+
             if (!isUsed(node)) {
                 return null;
             }
@@ -3706,13 +3747,12 @@ ${lbl}: .short 0xffff
             if (loc.isByRefLocal()) {
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
             }
+            typeCheckVar(typeOf(node))
 
             if (node.kind === SK.BindingElement) {
                 emitBrk(node)
-                let rhs = bindingElementAccessExpression(node as BindingElement)
-                typeCheckSubtoSup(rhs[1], node)
-                proc.emitExpr(loc.storeByRef(rhs[0]))
-                proc.stackEmpty();
+                let [expr, tp] = bindingElementAccessExpression(node as BindingElement, bindingExpr, bindingType)
+                proc.emitExpr(loc.storeByRef(expr))
             }
             else if (node.initializer) {
                 emitBrk(node)
@@ -3744,34 +3784,48 @@ ${lbl}: .short 0xffff
             return loc;
         }
 
-        function bindingElementAccessExpression(bindingElement: BindingElement): [ir.Expr, Type] {
+        function emitVariableDeclaration(node: VarOrParam): ir.Cell {
+            return emitVarOrParam(node, null, null)
+        }
+
+        function emitFieldAccess(node: Node, objRef: ir.Expr, objType: Type, fieldName: string): [ir.Expr, Type] {
+            const fieldSym = checker.getPropertyOfType(objType, fieldName);
+            U.assert(!!fieldSym, "field sym")
+            const myType = checker.getTypeOfSymbolAtLocation(fieldSym, node);
+            let res: ir.Expr
+            if (isPossiblyGenericClassType(objType)) {
+                const info = getClassInfo(objType)
+                res = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
+            } else {
+                res = mkMethodCall(null, null, getIfaceMemberId(fieldName, true), [objRef]);
+                (res.data as ir.ProcId).mapMethod = "pxtrt::mapGet"
+            }
+            return [res, myType]
+        }
+
+        function bindingElementAccessExpression(bindingElement: BindingElement, parentAccess: ir.Expr, parentType: Type): [ir.Expr, Type] {
             const target = bindingElement.parent.parent;
 
-            let parentAccess: ir.Expr;
-            let parentType: Type;
-
             if (target.kind === SK.BindingElement) {
-                const parent = bindingElementAccessExpression(target as BindingElement);
+                const parent = bindingElementAccessExpression(target as BindingElement,
+                    parentAccess, parentType);
                 parentAccess = parent[0];
                 parentType = parent[1];
             }
-            else {
-                parentType = typeOf(target);
-            }
 
-            const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
 
-            if (isPossiblyGenericClassType(parentType)) {
-                const info = getClassInfo(parentType)
-                parentAccess = parentAccess || emitLocalLoad(target as VariableDeclaration);
-
-                const myType = checker.getTypeOfSymbolAtLocation(checker.getPropertyOfType(parentType, propertyName.text), bindingElement);
+            if (bindingElement.parent.kind == SK.ArrayBindingPattern) {
+                const idx = (bindingElement.parent as ArrayBindingPattern).elements.indexOf(bindingElement)
+                if (bindingElement.dotDotDotToken)
+                    userError(9203, lf("spread operator not supported yet"))
+                const myType = arrayElementType(parentType, idx)
                 return [
-                    ir.op(EK.FieldAccess, [parentAccess], fieldIndexCore(info, getFieldInfo(info, propertyName.text))),
+                    rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
                     myType
-                ];
+                ]
             } else {
-                throw unhandled(bindingElement, lf("bad field access"), 9247)
+                const propertyName = (bindingElement.propertyName || bindingElement.name) as Identifier;
+                return emitFieldAccess(bindingElement, parentAccess, parentType, propertyName.text)
             }
         }
 
