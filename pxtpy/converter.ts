@@ -329,7 +329,7 @@ namespace pxt.py {
     function getFullName(n: py.AST): string {
         let s = n as py.ScopeDef
         let pref = ""
-        if (s.parent) {
+        if (s.parent && s.parent.kind !== "FunctionDef" && s.parent.kind !== "AsyncFunctionDef") {
             pref = getFullName(s.parent)
             if (!pref) pref = ""
             else pref += "."
