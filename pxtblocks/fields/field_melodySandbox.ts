@@ -157,7 +157,6 @@ namespace pxtblockly {
 
             this.bottomDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
-            this.bottomDiv.setAttribute("width", pxt.BrowserUtils.isChrome() ? "300px" : "330px");
 
             this.doneButton = document.createElement("button");
             pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
@@ -452,7 +451,7 @@ namespace pxtblockly {
 
         private createGridDisplay(): SVGSVGElement {
             FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + FieldCustomMelody.CELL_VERTICAL_MARGIN;
-            if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 30;
+            if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
             FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
             this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
 
