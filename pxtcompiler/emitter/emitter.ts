@@ -4187,7 +4187,11 @@ ${lbl}: .short 0xffff
         return false
     }
 
-    function isNumberLikeType(type: Type) {
-        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
+    function isNumberLikeType(type: Type): boolean {
+        if (type.flags & TypeFlags.Union) {
+            return (type as UnionType).types.every(t => isNumberLikeType(t));
+        } else {
+            return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike));
+        }
     }
 }
