@@ -405,6 +405,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const homeEnabled = !lockedEditor && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const hasActivities = tutorialOptions && tutorialOptions.tutorialActivityInfo && tutorialOptions.tutorialActivityInfo.length > 1;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
         const isRunning = simState == pxt.editor.SimState.Running;
@@ -438,7 +439,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {(!lockedEditor && targetTheme.betaUrl) && <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a>}
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
-                {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
+                {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} />}
+                {inTutorial && hasActivities && <tutorial.TutorialActivityDropdown
+                    parent={this.props.parent}
+                    currentActivity={tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity}
+                    activityInfo={tutorialOptions.tutorialActivityInfo} />}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
@@ -454,7 +459,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     <div className="ui item toggle"></div>
                 </div>
             </div> : undefined}
-            {inTutorial ? <tutorial.TutorialMenuItem parent={this.props.parent} /> : undefined}
+            {inTutorial && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}

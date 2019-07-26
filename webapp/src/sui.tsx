@@ -68,8 +68,8 @@ export interface DropdownProps extends UiProps {
     tabIndex?: number;
     value?: string;
     title?: string;
+    id?: string;
     onChange?: (v: string) => void;
-
 }
 
 export interface DropdownState {
@@ -331,6 +331,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         ])
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
+                id={this.props.id}
                 className={classes}
                 onMouseDown={this.handleMouseDown}
                 onClick={this.handleClick}
@@ -1265,6 +1266,43 @@ export class Tooltip extends React.Component<TooltipProps, {}> {
             <ReactTooltip id={id} className={`pxt-tooltip ${className || ''}`} effect='solid' {...rest}>
                 {content}
             </ReactTooltip>
+        </div>
+    }
+}
+
+///////////////////////////////////////////////////////////
+////////////             SVG Loader           /////////////
+///////////////////////////////////////////////////////////
+
+
+export interface ProgressCircleProps {
+    progress: number; // progress in int from 1 - steps
+    steps: number; // max number of steps
+    stroke: number;
+}
+
+export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
+    protected radius: number = 100 / (2 * Math.PI); // 100 steps in circle
+    protected view: number;
+    constructor (props: ProgressCircleProps) {
+        super(props);
+        this.view = this.radius * 2 + this.props.stroke;
+    }
+
+    getPathStyle() {
+        return { strokeWidth: this.props.stroke }
+    }
+
+    render() {
+        let props = this.props;
+        let r = this.radius;
+
+        return <div className="progresscircle">
+            <svg viewBox={`0 0 ${this.view} ${this.view}`}>
+                <path style={this.getPathStyle()}
+                    strokeDasharray={`${Math.round(100 * props.progress / props.steps)}, 100`}
+                    d={`M${this.view / 2} ${props.stroke / 2} a ${r} ${r} 0 0 1 0 ${r * 2} a ${r} ${r} 0 0 1 0 -${r * 2}`} />
+            </svg>
         </div>
     }
 }
