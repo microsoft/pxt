@@ -66,6 +66,7 @@ namespace pxt.editor {
         fullscreen?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
+        editorPosition?: { lineNumber: number; column: number; }; // ensure that this line is visible when loading the editor
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
@@ -191,8 +192,9 @@ namespace pxt.editor {
         updateHeaderNameAsync(name: string): Promise<void>;
         compile(): void;
 
-        setFile(fn: IFile): void;
-        setSideFile(fn: IFile): void;
+        setFile(fn: IFile, line?: number): void;
+        setSideFile(fn: IFile, line?: number): void;
+        navigateToError(diag: pxtc.KsDiagnostic): void;
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;

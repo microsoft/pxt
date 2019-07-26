@@ -76,11 +76,18 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             .done()
     }
 
+    private navigateToError(diag: pxtc.KsDiagnostic) {
+        this.props.parent.navigateToError(diag);
+    }
+
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
-            let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            const navigateToErrorHandler = () => {
+                this.navigateToError(meta.diagnostics && meta.diagnostics[0]);
+            };
             return (
                 <FileTreeItem key={file.getName()} file={file}
                     onItemClick={this.setFile}
@@ -92,7 +99,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     {file.name} {meta.isSaved ? "" : "*"}
                     {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
-                    {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
+                    {!meta.numErrors ? null : <a className='ui label red button' title={lf("Show first error")} onClick={navigateToErrorHandler}>{meta.numErrors}</a>}
                 </FileTreeItem>);
         })
     }
@@ -108,7 +115,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
         let version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
-        if (version && version.length > 20) version = version.substring(0, 7);
+        if (version && version.length > 20) version = version.substring(0, 7);    
         return [<PackgeTreeItem key={"hd-" + p.getPkgId()}
             pkg={p} isActive={expandedPkg == p.getPkgId()} onItemClick={this.togglePkg}
             hasDelete={del} onItemRemove={this.removePkg}
