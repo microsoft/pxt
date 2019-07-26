@@ -773,6 +773,7 @@ declare namespace pxt.tutorial {
         editor: string; // preferred editor or blocks by default
         title?: string;
         steps: TutorialStepInfo[];
+        activities: TutorialActivityInfo[];
         code: string; // all code
         templateCode?: string;
     }
@@ -791,6 +792,12 @@ declare namespace pxt.tutorial {
         contentMd?: string;
         headerContentMd?: string;
         hintContentMd?: string;
+        activity?: number;
+    }
+
+    interface TutorialActivityInfo {
+        name: string,
+        step: number
     }
 
     interface TutorialOptions {
@@ -798,6 +805,7 @@ declare namespace pxt.tutorial {
         tutorialName?: string; // tutorial title
         tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialActivityInfo?: pxt.tutorial.TutorialActivityInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
         tutorialHintCounter?: number // count for number of times hint has been shown

@@ -116,7 +116,7 @@ export class ProjectView
     private runToken: pxt.Util.CancellationToken;
 
     // component ID strings
-    private static readonly tutorialCardId = "tutorialcard";
+    static readonly tutorialCardId = "tutorialcard";
 
     constructor(props: IAppProps) {
         super(props);
@@ -2938,6 +2938,7 @@ export class ProjectView
                 tutorialReady: true,
                 tutorialHintCounter: 0,
                 tutorialStepInfo: tutorialInfo.steps,
+                tutorialActivityInfo: tutorialInfo.activities,
                 tutorialMd: md,
                 tutorialCode: tutorialInfo.code,
                 tutorialRecipe: !!recipe,

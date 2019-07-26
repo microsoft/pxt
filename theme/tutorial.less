@@ -388,6 +388,43 @@ span.highlight-line {
     }
 }
 
+/*******************************
+      Tutorial Activity UI
+*******************************/
+#tutorialsteps .step-label {
+    margin: 0 1em;
+}
+
+#tutorialsteps .button.prevbutton,
+#tutorialsteps .button.nextbutton {
+    line-height: 1.4em;
+}
+
+#tutorialsteps .button.nextbutton .text {
+    margin-right: 0.5em;
+}
+
+#tutorialdropdown > .text {
+    margin: 0.5em;
+}
+
+/*******************************
+        Progress Circle
+*******************************/
+.progresscircle {
+    position: absolute;
+    width: 2.4em;
+    height: 2.4em;
+    margin-top: -0.4em;
+    margin-left: -0.2em;
+}
+
+.progresscircle path {
+    stroke: @white;
+    fill: none;
+    stroke-linecap: round;
+}
+
 
 /*******************************
         Media Adjustments
@@ -468,6 +505,10 @@ span.highlight-line {
 @media only screen and (max-width: @largestTabletScreen) {
     .avatar-container .tooltip {
         left: 5rem;
+    }
+
+    #tutorialdropdown {
+        width: auto;
     }
 }
 
