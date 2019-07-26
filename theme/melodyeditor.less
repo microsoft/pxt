@@ -44,7 +44,7 @@
 
 .melody-content-div {
     max-height: 550px;
-    max-width: 342px;
+    width: 300px;
     padding: 0px;
     overflow: hidden;
 }
@@ -64,8 +64,8 @@
     overflow-y: scroll;
     overflow-x: hidden;
     padding: 10px 35px 10px 10px;
-    max-height: 395px;
     background: #4f0643;
+    max-height: 350px;
 }
 
 .melody-gallery-button {
@@ -85,12 +85,41 @@
     float: left;
 }
 
+.melody-confirm-button {
+    float: right;
+    margin: 0px !important;
+    height: 28px;
+    width: 70px;
+    color: white;
+    background-color: #e30fc0;
+    border: none;
+    border-radius: 2px;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+    font-family: @pageFont !important;
+}
+
+.melody-confirm-button:hover {
+    background-color: #9e0986;
+    border: 1px solid #e30fc0;
+}
+
+.melody-confirm-button:focus {
+    outline: none !important;
+}
+
 .melody-editor-text {
     margin: 0px 3px;
     float: left;
     font-family: @pageFont !important;
     font-weight: bold;
     font-size: 17px;
+}
+
+.melody-editor-field-icon {
+    fill: white;
+    font-family: "Icons";
+    font-size: 19px;
 }
 
 .melody-icon {
@@ -106,28 +135,45 @@
     box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, .2);
 }
 
-#melody-tempo-div {
-    display: inline-grid;
-    vertical-align: top;
-}
-
-#melody-tempo-label {
-    color: white;
-}
-
 #melody-tempo-input {
+    float: left;
     width: 50px;
-    margin: 1px;
+    height: 28px;
+    border-radius: 2px;
+    border: none;
+    padding-left: 5px;
+}
+
+#melody-tempo-input:focus {
+    outline: none !important;
 }
 
 #melody-play-button {
-    width: 140px;
-    margin: 3px;
+    height: 28px;
+    width: 120px;
+    display: inline-block;
+    color: white;
+    background-color: #7f8c8d;
+    border: none;
+    border-radius: 2px;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+}
+
+#melody-play-button:hover {
+    background-color: #525a5b;
+    border: 1px solid #7f8c8d;
+}
+
+#melody-play-button:focus {
+    outline: none !important;
 }
 
 .melody-bottom-bar-div {
-    padding: 0px 20px 10px;
+    margin: 7px 3px 0px;
+    padding: 0px 20px 20px;
     background-color: inherit;
+    text-align: center;
 }
 
 .melody-color-block {
@@ -159,7 +205,6 @@
 }
 
 .melody-gallery-row {
-    width: 245px;
     float: left;
 }
 
