@@ -176,11 +176,9 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
             this.tempoInput.title = lf("tempo");
-
-            this.syncTempoField();
-
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
+            this.syncTempoField(true);
 
             this.bottomDiv.appendChild(this.tempoInput);
             this.bottomDiv.appendChild(this.playButton);
@@ -328,30 +326,12 @@ namespace pxtblockly {
                 if (this.tempoInput) {
                     this.tempoInput.value = this.tempo + "";
                 }
-                // update tempo on block if not a variable
-                const s = this.sourceBlock_;
-                if (s.parentBlock_) {
-                    const p = s.parentBlock_;
-                    for (const input of p.inputList) {
-                        if (input.name === "tempo") {
-                            const tempoBlock = input.connection.targetBlock();
-                            if (tempoBlock) {
-                                if (tempoBlock.type === "math_number_minmax") {
-                                    tempoBlock.setFieldValue(this.tempoInput.value, "SLIDER")
-                                }
-                                else {
-                                    tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
+                this.syncTempoField(false);
             }
         }
 
         // sync value from tempo field on block with tempo in field editor
-        private syncTempoField(): void {
+        private syncTempoField(blockToEditor: boolean): void {
             const s = this.sourceBlock_;
             if (s.parentBlock_) {
                 const p = s.parentBlock_;
@@ -359,11 +339,20 @@ namespace pxtblockly {
                     if (input.name === "tempo") {
                         const tempoBlock = input.connection.targetBlock();
                         if (tempoBlock) {
-                            if (tempoBlock.getFieldValue("SLIDER")) {
-                                this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
-                                this.tempo = +this.tempoInput.value;
-                            } else {
-                                this.tempoInput.value = this.tempo + "";
+                            if (blockToEditor)
+                                if (tempoBlock.getFieldValue("SLIDER")) {
+                                    this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
+                                    this.tempo = +this.tempoInput.value;
+                                } else {
+                                    this.tempoInput.value = this.tempo + "";
+                                }
+                            else { // Editor to block
+                                if (tempoBlock.type === "math_number_minmax") {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "SLIDER")
+                                }
+                                else {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
+                                }
                             }
                         }
                         break;
