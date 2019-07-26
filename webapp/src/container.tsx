@@ -440,7 +440,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial && <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} />}
-                {inTutorial && hasActivities && <tutorial.TutorialActivityDropdown parent={this.props.parent} currentActivity={tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity} activityInfo={tutorialOptions.tutorialActivityInfo} />}
+                {inTutorial && hasActivities && <tutorial.TutorialActivityDropdown
+                    parent={this.props.parent}
+                    currentActivity={tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity}
+                    activityInfo={tutorialOptions.tutorialActivityInfo} />}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
