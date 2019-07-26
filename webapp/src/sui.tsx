@@ -1301,7 +1301,7 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
             <svg viewBox={`0 0 ${this.view} ${this.view}`}>
                 <path style={this.getPathStyle()}
                     strokeDasharray={`${Math.round(100 * props.progress / props.steps)}, 100`}
-                    d={`M${this.view/2} ${props.stroke/2} a ${r} ${r} 0 0 1 0 ${r * 2} a ${r} ${r} 0 0 1 0 -${r * 2}`} />
+                    d={`M${this.view / 2} ${props.stroke / 2} a ${r} ${r} 0 0 1 0 ${r * 2} a ${r} ${r} 0 0 1 0 -${r * 2}`} />
             </svg>
         </div>
     }
