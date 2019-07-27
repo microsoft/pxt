@@ -14,6 +14,7 @@ interface ISpriteEditorProps {
 interface ISpriteEditorState {
     firstRender: boolean;
     spriteEditorActiveColor: number;
+    scale?: number;
 }
 
 export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEditorState> {
@@ -26,9 +27,49 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
             firstRender: true,
             spriteEditorActiveColor: 3,
         };
+
+        this.setScale = this.setScale.bind(this);
     }
 
-    stripImageLiteralTags(imageLiteral: string) {
+    protected setScale() {
+        // 1023 - full size value
+        const height = window.innerHeight;
+        // 2100 - full size value
+        const width = window.innerWidth;
+
+        let scale = height > width ? width / 2100 : height / 1003;
+
+        // Minimum resize threshold
+        if (scale < .81) {
+            scale = .81;
+        }
+        // Maximum resize threshhold
+        else if (scale > 1.02) {
+            scale = 1.02;
+        }
+
+        this.setState({ scale });
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.setScale);
+        this.updateSpriteState();
+    }
+
+    componentDidMount() {
+        // Run once to set initial scale
+        this.setScale();
+        window.addEventListener('resize', this.setScale);
+        // Fetches blocksInfo for sprite editor
+        compiler
+            .getBlocksAsync()
+            .then((blocksInfo) => {
+                this.blocksInfo = blocksInfo;
+                this.renderSpriteEditor();
+            });
+    }
+
+    protected stripImageLiteralTags(imageLiteral: string) {
         const imgTag = `img\``;
         const endQuote = `\``;
         if (imageLiteral.includes(imgTag)) {
@@ -40,19 +81,15 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         return imageLiteral;
     }
 
-    updateSpriteState() {
+    protected updateSpriteState() {
         const newSpriteState = pxtsprite
             .bitmapToImageLiteral(this.spriteEditor.bitmap().image, pxt.editor.FileType.Text);
 
         this.props.onChange(newSpriteState);
     }
 
-    componentWillUnmount() {
-        this.updateSpriteState();
-    }
-
-    renderSpriteEditor() {
-        const { spriteEditorActiveColor } = this.state;
+    protected renderSpriteEditor() {
+        const { spriteEditorActiveColor, scale } = this.state;
         const { blocksInfo, props } = this;
         const { value } = props;
 
@@ -62,7 +99,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
 
         const contentDiv = this.refs['spriteEditorContainer'] as HTMLDivElement;
 
-        this.spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false);
+        this.spriteEditor = new pxtsprite.SpriteEditor(state, blocksInfo, false, scale);
         this.spriteEditor.render(contentDiv);
         this.spriteEditor.rePaint();
         // this.spriteEditor.setActiveColor(spriteEditorActiveColor, true);
@@ -96,23 +133,20 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         });
     }
 
-    componentDidMount() {
-        // Fetches blocksInfo for sprite editor
-        compiler
-            .getBlocksAsync()
-            .then((blocksInfo) => {
-                this.blocksInfo = blocksInfo;
-                this.renderSpriteEditor();
-            });
-    }
-
-    renderCore() {
-
-    return (
-        <div className='snippet-sprite-editor'>
-            <div className={'sprite-editor-snippet-container'} ref={'spriteEditorContainer'} />
-        </div>
-    );
+    public renderCore() {
+        const { scale } = this.state;
+        return (
+            <div className='snippet-sprite-editor'>
+                <div
+                    className={'sprite-editor-snippet-container'}
+                    ref={'spriteEditorContainer'}
+                    style={{
+                        transformOrigin: `0 0`,
+                        transform: `scale(${scale})`,
+                    }}
+                />
+            </div>
+        );
     }
   }
 

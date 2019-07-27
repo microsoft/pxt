@@ -31,7 +31,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         this.state = {
             x: this.props.defaultX || 80,
             y: this.props.defaultY || 60,
-            dotVisible: false
+            dotVisible: false,
         };
 
         this.grid = this.buildGrid();
@@ -41,10 +41,13 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         this.setScale = this.setScale.bind(this);
     }
 
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.setScale);
+    }
+
     componentDidMount() {
         // Run once on component mount
         this.setScale();
-
         window.addEventListener('resize', this.setScale);
     }
 

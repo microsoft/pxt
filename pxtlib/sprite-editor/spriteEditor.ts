@@ -74,7 +74,7 @@ namespace pxtsprite {
 
         private closeHandler: () => void;
 
-        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
+        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false, public scale?: number) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -87,7 +87,7 @@ namespace pxtsprite {
             this.group = this.root.group();
             this.createDefs();
 
-            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
+            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode, this.scale);
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
@@ -147,6 +147,9 @@ namespace pxtsprite {
             this.bottomBar = new ReporterBar(this.group, this, REPORTER_BAR_HEIGHT);
 
             this.updateUndoRedo();
+
+            // Sets canvas scale
+            this.scale = scale;
         }
 
         setSidebarColor(color: number) {
