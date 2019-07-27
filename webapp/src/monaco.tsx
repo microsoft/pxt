@@ -1050,7 +1050,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
-        this.editor.setScrollPosition(pos as monaco.editor.INewScrollPosition)
+        this.editor.setScrollPosition({
+            scrollTop: this.editor.getTopForLineNumber(pos.lineNumber)
+        });
     }
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
