@@ -753,7 +753,7 @@ export class ProjectView
         if (!this.state.active
             || this.state.updatingEditorFile
             || this.state.currFile == this.editorFile && !editorOverride) {
-            if (this.state.editorPosition) {
+            if (this.state.editorPosition && this.editorFile == this.state.editorPosition.file) {
                 this.editor.setViewState(this.state.editorPosition)
                 this.setState({ editorPosition: undefined });
             }
@@ -788,9 +788,10 @@ export class ProjectView
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
 
-                if (this.state.editorPosition)
+                if (this.state.editorPosition) {
                     this.editor.setViewState(this.state.editorPosition);
-                else {
+                    this.setState({ editorPosition: undefined })
+                } else {
                     let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
                     if (e)
                         this.editor.setViewState(e.pos)
@@ -804,7 +805,7 @@ export class ProjectView
 
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
             })
-            .finally(() => this.setStateAsync({ updatingEditorFile: false, editorPosition: undefined }))
+            .finally(() => this.setStateAsync({ updatingEditorFile: false }))
             .then(() => {
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
@@ -854,7 +855,7 @@ export class ProjectView
             embedSimView: false
         };
         if (line !== undefined)
-            state.editorPosition = { lineNumber: line, column: 1 };
+            state.editorPosition = { lineNumber: line, column: 1, file: fn };
         this.setState(state)
         //this.fireResize();
     }
