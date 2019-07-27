@@ -4,8 +4,8 @@ import * as Snippet from './snippetBuilder';
 import * as sui from './sui';
 import { SimulatorDisplay } from './simulatorDisplay';
 
-const X_SCALE = 1.94375;
-const Y_SCALE = 1.925
+const PICKER_WIDTH  = 295;
+const PICKER_HEIGHT = 213;
 
 interface PositionPickerProps {
     valueMap?: pxt.Map<number>;
@@ -21,6 +21,7 @@ interface PositionPickerState {
     finalX?: number;
     finalY?: number;
     dotVisible: boolean;
+    scale?: number;
 }
 
 export class PositionPicker extends data.Component <PositionPickerProps, PositionPickerState> {
@@ -29,18 +30,48 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         super(props);
         this.state = {
             x: this.props.defaultX || 80,
-            y: this.props.defaultY || 120,
+            y: this.props.defaultY || 60,
             dotVisible: false
         };
 
         this.grid = this.buildGrid();
-
         this.onMouseMove = this.onMouseMove.bind(this);
         this.setDot = this.setDot.bind(this);
         this.onChange = this.onChange.bind(this);
+        this.setScale = this.setScale.bind(this);
     }
 
-    setPosition(x: number, y: number) {
+    componentDidMount() {
+        // Run once on component mount
+        this.setScale();
+
+        window.addEventListener('resize', this.setScale);
+    }
+
+    /**
+     * Sets the number to scale the position picker and simulator display
+     */
+    protected setScale() {
+        // 1023 - full size value
+        const height = window.innerHeight;
+        // 2100 - full size value
+        const width = window.innerWidth;
+
+        let scale = height > width ? width / 2100 : height / 1003;
+
+        // Minimum resize threshold
+        if (scale < .81) {
+            scale = .81;
+        }
+        // Maximum resize threshhold
+        else if (scale > 1.02) {
+            scale = 1.02;
+        }
+
+        this.setState({ scale })
+    }
+
+    protected setPosition(x: number, y: number) {
         const pickerContainer = this.refs['positionPickerContainer'] as HTMLDivElement;
         const width = pickerContainer.clientWidth;
         const height = pickerContainer.clientHeight;
@@ -51,70 +82,114 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         this.setState({ x, y });
     }
 
-    getPosition() {
-        const { finalX, finalY } = this.state;
+    protected getScale(scaleDivisor: number, scaleMultiplier: number) {
+        const { scale } = this.state;
+        const currentWidth = scaleMultiplier * scale;
 
-        return { x: this.scalePoint(finalX, true), y: this.scalePoint(finalY) };
+        return currentWidth / scaleDivisor;
     }
 
-    scalePoint(point: number, x?: true) {
+    protected getXScale() {
+        return this.getScale(160, PICKER_WIDTH); // 160 is the width of the simulator
+    }
+
+    protected getYScale() {
+        return this.getScale(120, PICKER_HEIGHT); // 120 is the height of the simulator
+    }
+
+    protected scalePoint(point: number, x?: true) {
+        const xScale = this.getXScale();
+        const yScale = this.getYScale();
+
         if (!isNaN(point)) {
-            return Math.round(point / (x ? X_SCALE : Y_SCALE))
+            return Math.round(point / ((x ? xScale : yScale)))
         }
         return 0;
     }
 
-    onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    protected unScalePoint(point: number, x?: true) {
+        const xScale = this.getXScale();
+        const yScale = this.getYScale();
+
+        if (!isNaN(point)) {
+            return Math.round(point * (x ? xScale : yScale));
+        }
+
+        return 0;
+    }
+
+    protected getScaledPoints() {
+        const { x, y } = this.state;
+        return {
+            x: this.scalePoint(x),
+            y: this.scalePoint(y),
+        };
+    }
+
+    protected scalePixel(numberToScale: number) {
+        const { scale } = this.state;
+
+        return `${numberToScale * scale}px`;
+    }
+
+    protected onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
         if (e.nativeEvent.offsetX && e.nativeEvent.offsetY) {
             this.setPosition(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
         }
     }
 
-    setDot(e: React.MouseEvent<HTMLDivElement>) {
+    protected setDot(e: React.MouseEvent<HTMLDivElement>) {
         const { input, onChange } = this.props;
-        const { x, y } = this.state;
+        const mouseX = e.nativeEvent.offsetX;
+        const mouseY = e.nativeEvent.offsetY;
 
         this.setState({
             dotVisible: true,
-            finalX: this.scalePoint(x, true),
-            finalY: this.scalePoint(y),
+            x: mouseX,
+            y: mouseY,
         }, () => {
             if (!Snippet.isSnippetInputAnswerSingular(input)) {
-                const { finalX, finalY } = this.state;
-                onChange(input.answerTokens[0])(finalX.toString());
-                onChange(input.answerTokens[1])(finalY.toString());
+                const pos = this.getScaledPoints();
+
+                onChange(input.answerTokens[0])(pos.x.toString());
+                onChange(input.answerTokens[1])(pos.y.toString());
             }
         });
     }
 
-    onChange = (x: boolean) => (v: string) => {
+    protected onChange = (x: boolean) => (v: string) => {
         const { input, onChange } = this.props;
 
         if (!Snippet.isSnippetInputAnswerSingular(input)) {
             const pos = this.state;
+            let newValue = parseInt(v);
+            if (isNaN(newValue) || newValue < 0) {
+                // Return if change is not valid
+                return;
+            }
 
             this.setState({
-                x: x ? parseInt(v) : pos.x,
-                y: !x ? parseInt(v) : pos.y,
+                x: x ? this.unScalePoint(newValue) : pos.x,
+                y: !x ? this.unScalePoint(newValue) : pos.y,
             }, () => {
-                onChange(input.answerTokens[0])(this.state.x.toString());
-                onChange(input.answerTokens[1])(this.state.y.toString());
+                const pos = this.getScaledPoints();
+                if (x) onChange(input.answerTokens[0])(pos.x.toString());
+                if (!x) onChange(input.answerTokens[1])(pos.y.toString());
+
                 this.setState({
                     dotVisible: true,
-                    finalX: this.state.x,
-                    finalY: this.state.y
                 });
             });
         }
     }
 
-    buildGrid() {
+    protected buildGrid() {
         let gridDivs: JSX.Element[] = [];
-        for (let i = 0; i < 16; ++i) {
+        for (let i = 1; i < 16; ++i) {
             gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * 20}px` }} key={`grid-line-y-${i}`} />);
         }
 
-        for (let i = 0; i < 12; ++i) {
+        for (let i = 1; i < 12; ++i) {
             gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * 20}px` }} key={`grid-line-x-${i}`} />);
         }
 
@@ -122,8 +197,8 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     }
 
     public renderCore() {
-        const { dotVisible, finalX, finalY } = this.state;
-        const { defaultX, defaultY } = this.props;
+        const { dotVisible, x, y, scale } = this.state;
+        const pos = this.getScaledPoints();
 
         return (
             <div>
@@ -131,29 +206,38 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                     <div className='column'>
                         <sui.Input
                             class={'position-picker preview-input'}
-                            value={(finalX ? finalX : defaultX).toString()}
+                            value={(pos.x).toString()}
                             onChange={this.onChange(true)}
                         />
                     </div>
                     <div className='column'>
                         <sui.Input
                             class={'position-picker preview-input'}
-                            value={(finalY ? finalY : defaultY).toString()}
+                            value={(pos.y).toString()}
                             onChange={this.onChange(false)}
                         />
                     </div>
                 </div>
-                <SimulatorDisplay>
+                <SimulatorDisplay scale={scale}>
                     <div
                         ref={'positionPickerContainer'}
                         className='position-picker container'
-                        onMouseMove={this.onMouseMove}
                         onClick={this.setDot}
+                        style={{
+                            left: this.scalePixel(28),
+                            top: this.scalePixel(28),
+                            width: this.scalePixel(PICKER_WIDTH),
+                            height: this.scalePixel(PICKER_HEIGHT),
+                            margin: `8px`,
+                            maxWidth: this.scalePixel(PICKER_WIDTH),
+                            maxHeight: this.scalePixel(PICKER_HEIGHT),
+                        }}
+                        role='grid'
                     >
                         {this.grid.map((grid) => grid)}
                         <div className='position-picker cross-x' />
                         <div className='position-picker cross-y' />
-                        {dotVisible && <div className='position-picker dot' style={{ top: `${(finalY * Y_SCALE)}px`, left: `${(finalX * X_SCALE)}px` }} />}
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${(y)}px` , left: `${(x)}px` }} />}
                     </div>
                 </SimulatorDisplay>
             </div>

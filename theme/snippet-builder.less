@@ -1,6 +1,7 @@
 .snippet-builder {
-    overflow: visible;
-    min-height: 95%;
+    max-height: 95%;
+    height: 95%;
+    padding-bottom: 77px;
     .snippet-question {
         h6 {
             font-weight: bolder;
@@ -8,13 +9,10 @@
     }
 
     .ui.segment.raised {
-        overflow: visible;
-    }
-
-    div.snippet.hint.ui.segment {
-        border: none;
-        box-shadow: none;
-    }    
+        overflow: scroll;
+        min-width: fit-content;
+        min-height: fit-content;
+    } 
 
     .snippet-error {
         color: red;
@@ -23,25 +21,43 @@
 
     .content {
         overflow: scroll;
-        padding-bottom: 100px; /** Extends past size of actions bar so that data does not get moved off of screen */
-        .snippet.output-section.column {
-            padding-top: 0;
-            .snippet-markdown-content {
-                div.ui.raised.segment {
-                    height: 25em;
-                    min-height: 25em;
-                    max-height: 25em;
-                    overflow: scroll;
-                    border: none;
-                    box-shadow: none;
-                    padding-top: 0;
+        max-height: 100%;
+        .ui.equal.width.grid {
+            .snippet.output-section.column {
+                padding-top: 0;
+                z-index: 0;            
+                .snippet-markdown-content {
+                    div.ui.raised.segment {
+                        height: 25em;
+                        min-height: 25em;
+                        max-height: 25em;
+                        border: none;
+                        box-shadow: none;
+                        padding-top: 0;
+                    }
                 }
             }
+            .column.snippet-question {
+                z-index: 1;
+                padding-bottom: 77px;
+                .ui.segment.raised {
+                    max-width: max-content;
+                }
+                div.snippet.hint.ui.segment {
+                    border: none;
+                    box-shadow: none;
+                    max-width: 32em;
+                }
+            }
+        }
+        .input-wrapper {
+            height: 100%;
+            padding-bottom: 10px;
         }
     }
     div.actions {
         bottom: 0;
-        position: absolute;
+        position: absolute;   
         width: 100%;
         z-index: 1002;
     }
@@ -233,25 +249,69 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
 }
 
 /** Semantic UI's default fullscreen styling to bypass overrides (importants added by semantic)*/
+// .ui.snippet-builder.modal.large {
+//     width: 60% !important;
+//     left: 20% !important;
+//     margin: 1em auto;
+// }
 
-.ui.fullscreennobg.modal {
-    width: 95% !important;
-    left: 2.5% !important;
-    margin: 1em auto;
+// .ui.snippet-builder.modal.large {
+//     left: 0em !important;
+// }
+
+// .ui.snippet-builder.modal.large > .header {
+//     padding-right: 2.25rem;
+// }
+
+// .ui.snippet-builder.modal.large > .close {
+//     top: 1.0535rem;
+//     right: 1rem;
+//     color: rgba(0, 0, 0, 0.87);
+// }
+
+@media only screen and (max-width: 1700px) {
+    .ui.fullscreennobg.modal {
+        width: 95% !important;
+        left: 2.5% !important;
+        min-width: max-content;
+        margin: 1em auto;
+    }
+    
+    .ui.fullscreennobg.scrolling.modal {
+        left: 0em !important;
+    }
+    
+    .ui.fullscreennobg.modal > .header {
+        padding-right: 2.25rem;
+    }
+    
+    .ui.fullscreennobg.modal > .close {
+        top: 1.0535rem;
+        right: 1rem;
+        color: rgba(0, 0, 0, 0.87);
+    }   
 }
-
-.ui.fullscreennobg.scrolling.modal {
-    left: 0em !important;
-}
-
-.ui.fullscreennobg.modal > .header {
-    padding-right: 2.25rem;
-}
-
-.ui.fullscreennobg.modal > .close {
-    top: 1.0535rem;
-    right: 1rem;
-    color: rgba(0, 0, 0, 0.87);
+@media only screen and (min-width: 1700px) {
+    .ui.fullscreennobg.modal {
+        width: 60% !important;
+        left: 20% !important;
+        margin: 1em auto;
+        max-height: 95%;
+    }
+    
+    .ui.fullscreennobg.scrolling.modal {
+        left: 0em !important;
+    }
+    
+    .ui.fullscreennobg.modal > .header {
+        padding-right: 2.25rem;
+    }
+    
+    .ui.fullscreennobg.modal > .close {
+        top: 1.0535rem;
+        right: 1rem;
+        color: rgba(0, 0, 0, 0.87);
+    }   
 }
 
 /** Position picker input type */
@@ -263,20 +323,6 @@ input.position-picker.preview-input {
     padding: 2px;
     text-align: center;
     padding: 0;
-}
-
-.position-picker.container {
-    width: 312px;
-    height: 230px;
-    margin: 8px;
-    max-width: 320px;
-    max-height: 240px;
-    background-color: #fff;
-    position: relative;
-    overflow: hidden;
-    outline: none;
-    left: 12px;
-    top: 12px;
 }
 
 .position-picker.cross-x, .position-picker.cross-y {
@@ -313,20 +359,17 @@ input.position-picker.preview-input {
     pointer-events: none;
 }
 
-/** Simulator Display */
+.position-picker.container {
+    background-color: #fff;
+    position: relative;
+    overflow: hidden;
+    outline: none;
+}
+
 .simulator-display {
     position: relative;
     -webkit-overflow-scrolling: touch;
-    width: 368px;
-    height: 432.938px;
-    overflow: hidden;
-    -webkit-overflow-scrolling: touch;
     canvas {
-        height: 246px;
-         width: 328px;
-         left: 12px;
-         top: 12px;
-         clip-path: polygon(0px 5.33333px, 5.33333px 0px, 338.667px 0px, 344px 5.33333px, 344px 256.667px, 338.667px 262px, 5.33333px 262px, 0px 256.667px);
          image-rendering: optimizeSpeed;
          image-rendering: -moz-crisp-edges;
          image-rendering: -webkit-optimize-contrast;
@@ -359,7 +402,7 @@ input.position-picker.preview-input {
         align-content: center;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        height: fit-content;
     }
     
     .has-focus {
@@ -376,6 +419,8 @@ input.position-picker.preview-input {
         border-left: 0.5rem outset #2f99a1;
         border-top: 0.5rem outset #f290c1;
         border-bottom: 0.5rem inset #f290c1;
+        width: calc(344px / 1.2);
+        height: calc(260px / 1.2);
     }
     
     #paint-surface-container {
@@ -446,4 +491,4 @@ input.position-picker.preview-input {
         fill-opacity: 0.25;
     }
     
-}
+} 

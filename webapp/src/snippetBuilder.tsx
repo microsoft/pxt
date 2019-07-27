@@ -9,7 +9,7 @@ import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
-import { InputHandler } from './inputHandler';
+import { InputHandler } from './snippetInputHandler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -164,15 +164,31 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return tokenizedOutput;
     }
 
+    tsVariables(tsOutput: string) {
+        let variables = [];
+        for (const line of tsOutput) {
+            if (line.match(/let * =/)) {
+
+            }
+        }
+    }
+
+    /**
+     * 
+     * @param tsOutput 
+     * takes in an array of typescript, validates it, and returns typescript that can be compiled
+     */
+    sanitizeTsOutput(tsOutput: string[]) {
+
+    }
+
     /**
      * Takes in ts output and highlights the currently edited block 
      */
     highlightEditedBlocks(tsOutput: string[]) {
         const highlightString = '// @highlight';
-        // Clears ts output of all current highlights
-        const cleanTsOutput = tsOutput.filter((output: string) => output !== highlightString);
-
         const inputs = this.getCurrentQuestion().inputs;
+
         // Get answer tokens being edited by inputs in this question
         const editedAnswerTokens = inputs
             .reduce((tokens: string[], input: pxt.SnippetQuestionInput) => {
@@ -187,7 +203,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             }, []);
 
         // Finds all blocks containing a currently editable answer token and adds a highlight line
-        const highlightedOutput = cleanTsOutput
+        const highlightedOutput = tsOutput
             .reduce((newOutput: string[], currentLine: string) => {
                 for (const answerToken of editedAnswerTokens) {
                     if (currentLine.indexOf(answerToken) !== -1) {
@@ -198,6 +214,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 return pxt.Util.concat([newOutput, [currentLine]]);
 
             }, [])
+
         return highlightedOutput;
     }
 
@@ -208,6 +225,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      */
     generateOutputMarkdown = pxt.Util.debounce(() => {
         const { config, tsOutput } = this.state;
+
         // Attaches starting and ending line based on output type
         let md = `\`\`\`${config.outputType}\n`;
         md += this.replaceTokens(this.highlightEditedBlocks(tsOutput));
@@ -456,31 +474,29 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 onKeyDown={this.handleModalKeyDown}
             >
                 <div className="ui equal width grid">
-                    <div className='column snippet-question'>
-                        {currentQuestion &&
-                            <div>
-                                <div className='ui segment raised'>
-                                    <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
-                                    <div className='ui equal width grid'>
-                                        {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput, i: number) =>
-                                            <span className='column' key={`span-${i}`}>
-                                                <InputHandler
-                                                    onChange={isSnippetInputAnswerSingular(input) ? this.onChange(input.answerToken) : this.onChange}
-                                                    input={input}
-                                                    value={isSnippetInputAnswerSingular(input) ? answers[input.answerToken] : answers[input.answerTokens[0]]}
-                                                    onEnter={this.nextPage}
-                                                    key={isSnippetInputAnswerSingular(input) ? input.answerToken : input.answerTokens[0]}
-                                                />
-                                            </span>
-                                        )}
-                                    </div>
-                                    {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
+                    {currentQuestion &&
+                        <div className='column snippet-question'>
+                            <div className='ui segment raised'>
+                                <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
+                                <div className='ui equal width grid'>
+                                    {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput, i: number) =>
+                                        <span className='column' key={`span-${i}`}>
+                                            <InputHandler
+                                                onChange={isSnippetInputAnswerSingular(input) ? this.onChange(input.answerToken) : this.onChange}
+                                                input={input}
+                                                value={isSnippetInputAnswerSingular(input) ? answers[input.answerToken] : answers[input.answerTokens[0]]}
+                                                onEnter={this.nextPage}
+                                                key={isSnippetInputAnswerSingular(input) ? input.answerToken : input.answerTokens[0]}
+                                            />
+                                        </span>
+                                    )}
                                 </div>
-                                {currentQuestion.hint &&
-                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                             </div>
-                        }
-                    </div>
+                            {currentQuestion.hint &&
+                            <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                        </div>
+                    }
                     <div className='snippet output-section column'>
                         {mdOutput && <md.MarkedContent className='snippet-markdown-content' markdown={mdOutput} parent={parent} />}
                     </div>

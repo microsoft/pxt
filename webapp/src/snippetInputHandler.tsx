@@ -26,15 +26,8 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
         };
     }
 
-    componentDidMount() {
-        const inputWrapper = this.refs['inputWrapper'] as HTMLDivElement;
-
-        inputWrapper.addEventListener('keyup', (ev: KeyboardEvent) => {
-            if (ev.keyCode === 13) {
-                this.props.onEnter();
-            }
-        })
-    }
+    // Strip all non alphanumeric characters other than _
+    textOnChange = (v: string) => this.props.onChange(v.replace(/[^a-zA-Z0-9_]/g, '_'));
 
     renderInput() {
         const { value, input, onChange } = this.props;
@@ -86,7 +79,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                         <sui.Input
                             label={input.label && input.label}
                             value={value || ''}
-                            onChange={onChange}
+                            onChange={this.textOnChange}
                             autoFocus={true}
                             selectOnMount={true}
                         />
@@ -98,11 +91,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
     }
 
     renderCore() {
-        return (
-            <div ref={'inputWrapper'}>
-                {this.renderInput()}
-            </div>
-        )
+        return this.renderInput()
     }
 }
 
