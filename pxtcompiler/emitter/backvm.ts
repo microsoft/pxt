@@ -534,6 +534,12 @@ _start_${name}:
 
         function emitRtCall(topExpr: ir.Expr) {
             let name: string = topExpr.data
+
+            if (name == "pxt::beginTry") {
+                write(`try ${topExpr.args[0].data}`)
+                return
+            }
+
             name = U.lookup(vmCallMap, name) || name
 
             clearStack()
