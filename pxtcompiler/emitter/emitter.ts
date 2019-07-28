@@ -3710,7 +3710,9 @@ ${lbl}: .short 0xffff
             emitBrk(node)
 
             const lcatch = proc.mkLabel("catch")
+            lcatch.lblName = "_catch_" + getNodeId(node)
             const lfinally = proc.mkLabel("finally")
+            lfinally.lblName = "_finally_" + getNodeId(node)
 
             if (node.finallyBlock)
                 proc.emitExpr(beginTry(lfinally))
