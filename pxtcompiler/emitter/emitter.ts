@@ -830,7 +830,7 @@ namespace ts.pxtc {
             });
         }
 
-        let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
+        let mainSrcFile = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
 
         let rootFunction = <any>{
             kind: SK.FunctionDeclaration,
@@ -844,7 +844,7 @@ namespace ts.pxtc {
                 kind: SK.Block,
                 statements: allStmts
             },
-            parent: src,
+            parent: mainSrcFile,
             pos: 0,
             end: 0,
         }
@@ -3697,8 +3697,54 @@ ${lbl}: .short 0xffff
             emit(node.statement)
             proc.emitLblDirect(l.brk)
         }
-        function emitThrowStatement(node: ThrowStatement) { }
-        function emitTryStatement(node: TryStatement) { }
+
+        function emitThrowStatement(node: ThrowStatement) {
+            emitBrk(node)
+            proc.emitExpr(rtcallMaskDirect("pxt::throwValue", [emitExpr(node.expression)]))
+        }
+
+        function emitTryStatement(node: TryStatement) {
+            const beginTry = (lbl: ir.Stmt) =>
+                rtcallMaskDirect("pxt::beginTry", [ir.ptrlit(lbl.lblName, lbl as any)])
+
+            emitBrk(node)
+
+            const lcatch = proc.mkLabel("catch")
+            const lfinally = proc.mkLabel("finally")
+
+            if (node.finallyBlock)
+                proc.emitExpr(beginTry(lfinally))
+            if (node.catchClause)
+                proc.emitExpr(beginTry(lcatch))
+
+            proc.stackEmpty()
+            emitBlock(node.tryBlock)
+            proc.stackEmpty()
+
+            if (node.catchClause) {
+                const skip = proc.mkLabel("catchend")
+                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                proc.emitJmp(skip)
+
+                proc.emitLbl(lcatch)
+                const decl = node.catchClause.variableDeclaration
+                if (decl) {
+                    emitVariableDeclaration(decl)
+                    const loc = lookupCell(decl)
+                    proc.emitExpr(loc.storeByRef(rtcallMaskDirect("pxt::getThrownValue", [])))
+                }
+                emitBlock(node.catchClause.block)
+                proc.emitLbl(skip)
+            }
+
+            if (node.finallyBlock) {
+                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                proc.emitLbl(lfinally)
+                emitBlock(node.finallyBlock)
+                proc.emitExpr(rtcallMaskDirect("pxt::endFinally", []))
+            }
+        }
+
         function emitCatchClause(node: CatchClause) { }
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
@@ -3952,6 +3998,10 @@ ${lbl}: .short 0xffff
                 case SK.TypeAliasDeclaration:
                     // skip
                     return
+                case SyntaxKind.TryStatement:
+                    return emitTryStatement(<TryStatement>node);
+                case SyntaxKind.ThrowStatement:
+                    return emitThrowStatement(<ThrowStatement>node);
                 case SK.DebuggerStatement:
                     return emitDebuggerStatement(node);
                 case SK.GetAccessor:
@@ -4082,10 +4132,6 @@ ${lbl}: .short 0xffff
                 case SyntaxKind.CaseClause:
                 case SyntaxKind.DefaultClause:
                     return emitCaseOrDefaultClause(<CaseOrDefaultClause>node);
-                case SyntaxKind.ThrowStatement:
-                    return emitThrowStatement(<ThrowStatement>node);
-                case SyntaxKind.TryStatement:
-                    return emitTryStatement(<TryStatement>node);
                 case SyntaxKind.CatchClause:
                     return emitCatchClause(<CatchClause>node);
                 case SyntaxKind.ClassExpression:

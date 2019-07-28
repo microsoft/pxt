@@ -264,7 +264,11 @@ switch (step) {
                     else if (typeof e.data == "number") return e.data + ""
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
-                    return e.jsInfo;
+                    if (e.ptrlabel()) {
+                        return e.ptrlabel().lblId + "";
+                    } else {
+                        return e.jsInfo;
+                    }
                 case EK.SharedRef:
                     let arg = e.args[0]
                     U.assert(!!arg.currUses) // not first use

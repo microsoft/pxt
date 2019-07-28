@@ -188,7 +188,62 @@ namespace pxsim {
         lambdaArgs?: any[];
         caps?: any[];
         lastBrkId?: number;
+
+        tryFrame?: TryFrame;
+        thrownValue?: any;
+        hasThrownValue?: boolean;
         // ... plus locals etc, added dynamically
+    }
+
+    export interface TryFrame {
+        parent?: TryFrame;
+        handlerPC: number;
+        handlerFrame: StackFrame;
+    }
+
+    export class BreakLoopException { }
+
+    export namespace pxtcore {
+        export function beginTry(lbl: number) {
+            runtime.currFrame.tryFrame = {
+                parent: runtime.currTryFrame(),
+                handlerPC: lbl,
+                handlerFrame: runtime.currFrame
+            }
+        }
+
+        export function endTry() {
+            const s = runtime.currFrame
+            s.tryFrame = s.tryFrame.parent
+        }
+
+        export function throwValue(v: any) {
+            let tf = runtime.currTryFrame()
+            if (!tf)
+                U.userError("unhandled exception: " + v)
+            const s = tf.handlerFrame
+            runtime.currFrame = s
+            s.pc = tf.handlerPC
+            s.tryFrame = tf.parent
+            s.thrownValue = v
+            s.hasThrownValue = true
+            throw new BreakLoopException()
+        }
+
+        export function getThrownValue() {
+            const s = runtime.currFrame
+            U.assert(s.hasThrownValue)
+            s.hasThrownValue = false
+            return s.thrownValue
+        }
+
+        export function endFinally() {
+            const s = runtime.currFrame
+            if (s.hasThrownValue) {
+                s.hasThrownValue = false
+                throwValue(s.thrownValue)
+            }
+        }
     }
 
     interface LR {
@@ -530,6 +585,13 @@ namespace pxsim {
                     this.setupTop(resolve)
                     pxtcore.runAction(a, [arg0, arg1, arg2])
                 }))
+        }
+
+        currTryFrame() {
+            for (let p = this.currFrame; p; p = p.parent)
+                if (p.tryFrame)
+                    return p.tryFrame
+            return null
         }
 
         // communication
@@ -895,6 +957,11 @@ namespace pxsim {
                     }
                     __this.perfStopRuntime()
                 } catch (e) {
+                    if (e instanceof BreakLoopException) {
+                        p = __this.currFrame
+                        U.nextTick(() => loop(p))
+                        return
+                    }
                     __this.perfStopRuntime()
                     if (__this.errorHandler)
                         __this.errorHandler(e)
@@ -1181,7 +1248,5 @@ namespace pxsim {
         value = 0;
         constructor(public name: string) { }
     }
-
-
 
 }

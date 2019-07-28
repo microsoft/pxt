@@ -76,6 +76,12 @@ namespace ts.pxtc.ir {
             return copy
         }
 
+        ptrlabel() {
+            if (this.jsInfo as any instanceof Stmt)
+                return this.jsInfo as any as Stmt
+            return null
+        }
+
         isExpr() { return true }
 
         isPure() {
@@ -620,6 +626,13 @@ namespace ts.pxtc.ir {
                         U.assert(e.args[0].totalUses > 0, "e.args[0].totalUses > 0")
                         e.args[0].totalUses++;
                         return e;
+                    case EK.PointerLiteral:
+                        const pl = e.ptrlabel()
+                        if (pl) {
+                            if (!pl.lblNumUses) pl.lblNumUses = 0
+                            pl.lblNumUses++
+                        }
+                        break
                 }
                 iterargs(e, cntuses)
                 return e
