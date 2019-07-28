@@ -96,6 +96,7 @@ namespace exceptions {
     }
 
     export function run() {
+        msg("test exn")
         glb1 = x = 0
         callingThrowVal(1)
         assert(glb1 == 10 && x == 10)
@@ -112,6 +113,7 @@ namespace exceptions {
         glb1 = x = 0
         nested()
         assert(glb1 == 11)
+        msg("test exn done")
     }
 }
 
