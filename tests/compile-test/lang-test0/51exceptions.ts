@@ -38,6 +38,23 @@ namespace exceptions {
         }
     }
 
+    function lambda(k:number) {
+        function inner() {
+            try {
+                throwVal(k)
+                glb1++
+            } catch (e) {
+                assert(e == "hel" + k)
+                glb1 += 10
+                if (k >= 10)
+                    throw e
+            } finally {
+                x += glb1
+            }
+        }
+        inner()
+    }
+
     function callingThrowVal(k: number) {
         try {
             pause(1)
@@ -68,9 +85,18 @@ namespace exceptions {
         }
     }
 
+    function test3(fn:(k:number)=>void) {
+        glb1 = x = 0
+        fn(1)
+        assert(glb1 == 10 && x == 10)
+        fn(0)
+        assert(glb1 == 11 && x == 21)
+        fn(3)
+        assert(glb1 == 21 && x == 42)
+    }
+
     export function run() {
         glb1 = x = 0
-
         callingThrowVal(1)
         assert(glb1 == 10 && x == 10)
         callingThrowVal(0)
@@ -78,21 +104,10 @@ namespace exceptions {
         callingThrowVal(3)
         assert(glb1 == 21 && x == 42)
 
-        glb1 = x = 0
-        immediate(1)
-        assert(glb1 == 10 && x == 10)
-        immediate(0)
-        assert(glb1 == 11 && x == 21)
-        immediate(3)
-        assert(glb1 == 21 && x == 42)
-
-        glb1 = x = 0
-        higherorder(1)
-        assert(glb1 == 10 && x == 10)
-        higherorder(0)
-        assert(glb1 == 11 && x == 21)
-        higherorder(3)
-        assert(glb1 == 21 && x == 42)
+        test3(callingThrowVal)
+        test3(immediate)
+        test3(higherorder)
+        test3(lambda)
 
         glb1 = x = 0
         nested()
