@@ -653,6 +653,7 @@ export class Checkbox extends data.Component<CheckBoxProps, {}> {
         return <Field label={p.label}>
             <div className={"ui toggle checkbox"}>
                 <input type="checkbox" checked={p.checked} aria-checked={p.checked}
+                    aria-label={p.label || p.inputLabel}
                     onChange={this.handleChange} />
                 {p.inputLabel ? <label>{p.inputLabel}</label> : undefined}
             </div>
@@ -1061,7 +1062,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         const closeIconName = closeIcon === true ? 'close' : closeIcon as string;
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: description ? this.id + 'description' : this.id + 'desc'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
         }
         const customStyles = {
             content: {
@@ -1121,6 +1122,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
+                aria-label={lf("Close")}
             ><Icon icon="close remove circle" /> </div> : undefined}
         </ReactModal>
     }
