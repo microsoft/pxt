@@ -146,18 +146,11 @@ function createProject(md: string) {
 }
 
 function createHeader(md: string) {
-    const tutorialInfo = pxt.tutorial.parseTutorial(md);
     const tutorialOptions = {
         tutorial: "test",
-        tutorialName: tutorialInfo.title || "filename",
-        tutorialStep: 0,
-        tutorialReady: true,
-        tutorialHintCounter: 0,
-        tutorialStepInfo: tutorialInfo.steps,
+        tutorialName: "filename",
         tutorialMd: md,
-        tutorialCode: tutorialInfo.code,
         tutorialRecipe: false,
-        templateCode: tutorialInfo.templateCode
     };
 
     const header = {
@@ -178,161 +171,6 @@ function createHeader(md: string) {
 
     return header;
 }
-
-
-// All of the following code in the pxt.tutorial namespace was duplicated from pxtlib/tutorial.ts
-namespace pxt.tutorial {
-    export function parseTutorial(tutorialmd: string): any {
-        const steps = parseTutorialSteps(tutorialmd);
-        const title = parseTutorialTitle(tutorialmd);
-        if (!steps)
-            return undefined; // error parsing steps
-
-        // collect code and infer editor
-        let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
-        let code = '';
-        let templateCode: string;
-        // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-        tutorialmd
-            .replace(/((?!.)\s)+/g, "\n")
-            .replace(regex, function (m0, m1, m2) {
-                switch (m1) {
-                    case "block":
-                    case "blocks":
-                    case "filterblocks":
-                        if (!checkTutorialEditor("blocksprj"))
-                            return undefined;
-                        break;
-                    case "spy":
-                        if (!checkTutorialEditor("pyprj"))
-                            return undefined;
-                        break;
-                    case "typescript":
-                    case "ts":
-                    case "javascript":
-                    case "js":
-                        if (!checkTutorialEditor("tsprj"))
-                            return undefined;
-                        break;
-                    case "template":
-                        templateCode = m2;
-                        break;
-                }
-                code += "\n { \n " + m2 + "\n } \n";
-                return "";
-            });
-
-        return {
-            editor: "",
-            title: title,
-            steps: steps,
-            code,
-            templateCode
-        };
-
-        function checkTutorialEditor(expected: string) {
-            if (editor && editor != expected) {
-                console.debug(`tutorial ambiguous: contains snippets of different types`);
-                return false;
-            } else {
-                editor = expected;
-                return true;
-            }
-        }
-    }
-
-    function parseTutorialTitle(tutorialmd: string): string {
-        let title = tutorialmd.match(/^#[^#](.*)$/mi);
-        return title && title.length > 1 ? title[1] : null;
-    }
-
-    function parseTutorialSteps(tutorialmd: string): any[] {
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
-        const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
-
-        // Download tutorial markdown
-        let steps = tutorialmd.split(/^##[^#].*$/gmi);
-        let newAuthoring = true;
-        if (steps.length <= 1) {
-            // try again, using old logic.
-            steps = tutorialmd.split(/^###[^#].*$/gmi);
-            newAuthoring = false;
-        }
-        if (steps[0].indexOf("# Not found") == 0) {
-            console.debug(`tutorial not found`);
-            return undefined;
-        }
-        let stepInfo: any[] = [];
-        tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
-            let info: any = {
-                fullscreen: /@(fullscreen|unplugged)/.test(s),
-                unplugged: /@unplugged/.test(s),
-                tutorialCompleted: /@tutorialCompleted/.test(s)
-            }
-            stepInfo.push(info);
-            return ""
-        });
-
-        if (steps.length < 1)
-            return undefined; // Promise.resolve();
-        steps = steps.slice(1, steps.length); // Remove tutorial title
-
-        for (let i = 0; i < steps.length; i++) {
-            const stepContent = steps[i].trim();
-            const contentLines = stepContent.split('\n');
-            stepInfo[i].headerContentMd = contentLines[0];
-            stepInfo[i].contentMd = stepContent;
-
-            // everything after the first ``` section OR the first image is currently treated as a "hint"
-            let hintText = stepContent.match(hintTextRegex);
-            let blockSolution;
-            if (hintText && hintText.length > 2) {
-                stepInfo[i].headerContentMd = hintText[1];
-                blockSolution = hintText[2];
-                if (blockSolution) {
-                    // remove hidden snippets from the hint
-                    blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
-                    stepInfo[i].blockSolution = blockSolution;
-                }
-            }
-
-            stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
-        }
-        return stepInfo;
-    }
-
-    export function highlight(pre: HTMLPreElement): void {
-        let text = pre.textContent;
-        if (!/@highlight/.test(text)) // shortcut, nothing to do
-            return;
-
-        // collapse image python/js literales
-        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `""" """`);
-        text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
-
-        // render lines
-        pre.textContent = ""; // clear up and rebuild
-        const lines = text.split('\n');
-        for (let i = 0; i < lines.length; ++i) {
-            let line = lines[i];
-            if (/@highlight/.test(line)) {
-                // highlight next line
-                line = lines[++i];
-                if (line !== undefined) {
-                    const span = document.createElement("span");
-                    span.className = "highlight-line";
-                    span.textContent = line;
-                    pre.appendChild(span);
-                }
-            } else {
-                pre.appendChild(document.createTextNode(line + '\n'));
-            }
-        }
-    }
-
-}
-
 
 const pendingMsgs: {[index: string]: any} = {};
 

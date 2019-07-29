@@ -112,18 +112,11 @@ function createProject(md) {
     };
 }
 function createHeader(md) {
-    var tutorialInfo = pxt.tutorial.parseTutorial(md);
     var tutorialOptions = {
         tutorial: "test",
-        tutorialName: tutorialInfo.title || "filename",
-        tutorialStep: 0,
-        tutorialReady: true,
-        tutorialHintCounter: 0,
-        tutorialStepInfo: tutorialInfo.steps,
+        tutorialName: "filename",
         tutorialMd: md,
-        tutorialCode: tutorialInfo.code,
-        tutorialRecipe: false,
-        templateCode: tutorialInfo.templateCode
+        tutorialRecipe: false
     };
     var header = {
         blobCurrent: false,
@@ -142,152 +135,6 @@ function createHeader(md) {
     };
     return header;
 }
-// All of the following code in the pxt.tutorial namespace was duplicated from pxtlib/tutorial.ts
-var pxt;
-(function (pxt) {
-    var tutorial;
-    (function (tutorial) {
-        function parseTutorial(tutorialmd) {
-            var steps = parseTutorialSteps(tutorialmd);
-            var title = parseTutorialTitle(tutorialmd);
-            if (!steps)
-                return undefined; // error parsing steps
-            // collect code and infer editor
-            var editor = undefined;
-            var regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
-            var code = '';
-            var templateCode;
-            // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-            tutorialmd
-                .replace(/((?!.)\s)+/g, "\n")
-                .replace(regex, function (m0, m1, m2) {
-                switch (m1) {
-                    case "block":
-                    case "blocks":
-                    case "filterblocks":
-                        if (!checkTutorialEditor("blocksprj"))
-                            return undefined;
-                        break;
-                    case "spy":
-                        if (!checkTutorialEditor("pyprj"))
-                            return undefined;
-                        break;
-                    case "typescript":
-                    case "ts":
-                    case "javascript":
-                    case "js":
-                        if (!checkTutorialEditor("tsprj"))
-                            return undefined;
-                        break;
-                    case "template":
-                        templateCode = m2;
-                        break;
-                }
-                code += "\n { \n " + m2 + "\n } \n";
-                return "";
-            });
-            return {
-                editor: "",
-                title: title,
-                steps: steps,
-                code: code,
-                templateCode: templateCode
-            };
-            function checkTutorialEditor(expected) {
-                if (editor && editor != expected) {
-                    console.debug("tutorial ambiguous: contains snippets of different types");
-                    return false;
-                }
-                else {
-                    editor = expected;
-                    return true;
-                }
-            }
-        }
-        tutorial.parseTutorial = parseTutorial;
-        function parseTutorialTitle(tutorialmd) {
-            var title = tutorialmd.match(/^#[^#](.*)$/mi);
-            return title && title.length > 1 ? title[1] : null;
-        }
-        function parseTutorialSteps(tutorialmd) {
-            var hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
-            var hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
-            // Download tutorial markdown
-            var steps = tutorialmd.split(/^##[^#].*$/gmi);
-            var newAuthoring = true;
-            if (steps.length <= 1) {
-                // try again, using old logic.
-                steps = tutorialmd.split(/^###[^#].*$/gmi);
-                newAuthoring = false;
-            }
-            if (steps[0].indexOf("# Not found") == 0) {
-                console.debug("tutorial not found");
-                return undefined;
-            }
-            var stepInfo = [];
-            tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, function (f, s) {
-                var info = {
-                    fullscreen: /@(fullscreen|unplugged)/.test(s),
-                    unplugged: /@unplugged/.test(s),
-                    tutorialCompleted: /@tutorialCompleted/.test(s)
-                };
-                stepInfo.push(info);
-                return "";
-            });
-            if (steps.length < 1)
-                return undefined; // Promise.resolve();
-            steps = steps.slice(1, steps.length); // Remove tutorial title
-            for (var i = 0; i < steps.length; i++) {
-                var stepContent = steps[i].trim();
-                var contentLines = stepContent.split('\n');
-                stepInfo[i].headerContentMd = contentLines[0];
-                stepInfo[i].contentMd = stepContent;
-                // everything after the first ``` section OR the first image is currently treated as a "hint"
-                var hintText = stepContent.match(hintTextRegex);
-                var blockSolution = void 0;
-                if (hintText && hintText.length > 2) {
-                    stepInfo[i].headerContentMd = hintText[1];
-                    blockSolution = hintText[2];
-                    if (blockSolution) {
-                        // remove hidden snippets from the hint
-                        blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
-                        stepInfo[i].blockSolution = blockSolution;
-                    }
-                }
-                stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
-            }
-            return stepInfo;
-        }
-        function highlight(pre) {
-            var text = pre.textContent;
-            if (!/@highlight/.test(text)) // shortcut, nothing to do
-                return;
-            // collapse image python/js literales
-            text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, "\"\"\" \"\"\"");
-            text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
-            // render lines
-            pre.textContent = ""; // clear up and rebuild
-            var lines = text.split('\n');
-            for (var i = 0; i < lines.length; ++i) {
-                var line = lines[i];
-                if (/@highlight/.test(line)) {
-                    // highlight next line
-                    line = lines[++i];
-                    if (line !== undefined) {
-                        var span = document.createElement("span");
-                        span.className = "highlight-line";
-                        span.textContent = line;
-                        pre.appendChild(span);
-                    }
-                }
-                else {
-                    pre.appendChild(document.createTextNode(line + '\n'));
-                }
-            }
-        }
-        tutorial.highlight = highlight;
-    })(tutorial = pxt.tutorial || (pxt.tutorial = {}));
-})(pxt || (pxt = {}));
 var pendingMsgs = {};
 function sendMessage(action, proj) {
     console.log('send ' + action);
