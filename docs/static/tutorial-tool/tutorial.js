@@ -13,8 +13,7 @@ var targets = [
         endpoints: [
             {
                 name: "nether",
-                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1",
-                config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"builder\": \"*\",\n        \"nether\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
+                url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1"
             },
             {
                 name: "beta",
@@ -24,8 +23,7 @@ var targets = [
                 name: "released",
                 url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
+        ]
     }, {
         name: "Arcade",
         id: "arcade",
@@ -38,8 +36,7 @@ var targets = [
                 name: "released",
                 url: "https://arcade.makecode.com?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"device\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
+        ]
     }, {
         name: "Adafruit",
         id: "adafruit",
@@ -52,8 +49,7 @@ var targets = [
                 name: "released",
                 url: "https://makecode.adafruit.com?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"circuit-playground\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"tsprj\"\n}"
+        ]
     }, {
         name: "Micro:bit",
         id: "microbit",
@@ -66,8 +62,7 @@ var targets = [
                 name: "released",
                 url: "https://makecode.microbit.org?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"radio\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
+        ]
     }, {
         name: "LEGO EV3",
         id: "ev3",
@@ -80,12 +75,10 @@ var targets = [
                 name: "released",
                 url: "https://makecode.mindstorms.com?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"ev3\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
+        ]
     }
 ];
 var selectedEndpoint;
-var selectedConfig;
 var selectedId;
 editor.onDidChangeModelContent(debounce(function () {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
@@ -96,56 +89,19 @@ loadIframe(localStorage.getItem(ENDPOINT_KEY));
 initDropdown();
 document.getElementById("run-button").addEventListener("click", function () {
     var md = editor.getValue();
-    var proj = createProject(md);
-    sendMessage("importproject", proj);
+    sendMessage("importtutorial", md);
 });
 window.addEventListener("message", receiveMessage, false);
-function createProject(md) {
-    return {
-        "text": {
-            "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"pxt-on-start\" id=\",{,HjW]u:lVGcDRS_Cu|\" x=\"-247\" y=\"113\"></block>\n</xml>",
-            "main.ts": "\n",
-            "README.md": " ",
-            "pxt.json": selectedConfig
-        },
-        "header": createHeader(md)
-    };
-}
-function createHeader(md) {
-    var tutorialOptions = {
-        tutorial: "test",
-        tutorialName: "filename",
-        tutorialMd: md,
-        tutorialRecipe: false
-    };
-    var header = {
-        blobCurrent: false,
-        editor: "blocksprj",
-        githubCurrent: false,
-        id: "2159df60-887b-4097-47d5-d0a45bb1ab01",
-        meta: {},
-        modificationTime: 1562968671,
-        name: "test-project",
-        path: "test-project",
-        pubCurrent: false,
-        pubId: "",
-        recentUse: 1562968671,
-        target: selectedId,
-        tutorial: tutorialOptions
-    };
-    return header;
-}
 var pendingMsgs = {};
-function sendMessage(action, proj) {
+function sendMessage(action, md) {
     console.log('send ' + action);
     var msg = {
         type: "pxteditor",
         id: Math.random().toString(),
         action: action
     };
-    if (action == 'importproject') {
-        var prj = JSON.parse(JSON.stringify(proj));
-        msg.project = prj;
+    if (action == 'importtutorial') {
+        msg.markdown = md;
         msg.response = true;
     }
     else if (action == 'renderblocks') {
@@ -206,21 +162,6 @@ function debounce(func, wait, immediate) {
         return timeout;
     };
 }
-function fixURL(url) {
-    if (url.indexOf("http") === -1) {
-        url = "https://" + url;
-    }
-    if (url.indexOf("#") !== -1) {
-        url = url.split("#")[0];
-    }
-    if (url.indexOf("?") === -1) {
-        url += "?";
-    }
-    if (url.indexOf("controller=1") === -1) {
-        url += "controller=1";
-    }
-    return url;
-}
 function initDropdown() {
     var s = document.getElementById("endpoint-select");
     for (var _i = 0, targets_1 = targets; _i < targets_1.length; _i++) {
@@ -238,7 +179,7 @@ function initDropdown() {
     });
 }
 function loadIframe(selected) {
-    if (selectedConfig && selected === selectedEndpoint)
+    if (selected === selectedEndpoint)
         return;
     for (var _i = 0, targets_2 = targets; _i < targets_2.length; _i++) {
         var target = targets_2[_i];
@@ -247,7 +188,6 @@ function loadIframe(selected) {
             if (!selected || selected === target.name + "-" + endpoint.name) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = target.name + "-" + endpoint.name;
-                selectedConfig = endpoint.config || target.config;
                 selectedId = target.id;
                 return;
             }

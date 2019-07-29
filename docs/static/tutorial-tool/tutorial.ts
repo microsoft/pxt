@@ -22,13 +22,11 @@ interface TargetInfo {
     name: string;
     id: string;
     endpoints: TargetEndpoint[];
-    config: string;
 }
 
 interface TargetEndpoint {
     name: string;
     url: string;
-    config?: string;
 }
 
 const targets: TargetInfo[] = [
@@ -39,7 +37,6 @@ const targets: TargetInfo[] = [
             {
                 name: "nether",
                 url: "https://minecraft.makecode.com/beta?ipc=1&inGame=1&nether=1&controller=1",
-                config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"builder\": \"*\",\n        \"nether\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
             },
             {
                 name: "beta",
@@ -50,7 +47,6 @@ const targets: TargetInfo[] = [
                 url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
             }
         ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
     }, {
         name: "Arcade",
         id: "arcade",
@@ -64,7 +60,6 @@ const targets: TargetInfo[] = [
                 url: "https://arcade.makecode.com?controller=1"
             }
         ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"device\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
     }, {
         name: "Adafruit",
         id: "adafruit",
@@ -78,7 +73,6 @@ const targets: TargetInfo[] = [
                 url: "https://makecode.adafruit.com?controller=1"
             }
         ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"circuit-playground\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"tsprj\"\n}"
     }, {
         name: "Micro:bit",
         id: "microbit",
@@ -92,7 +86,6 @@ const targets: TargetInfo[] = [
                 url: "https://makecode.microbit.org?controller=1"
             }
         ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"radio\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
     }, {
         name: "LEGO EV3",
         id: "ev3",
@@ -106,12 +99,10 @@ const targets: TargetInfo[] = [
                 url: "https://makecode.mindstorms.com?controller=1"
             }
         ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"ev3\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
     }
 ];
 
 let selectedEndpoint: string;
-let selectedConfig: string;
 let selectedId: string;
 
 editor.onDidChangeModelContent(debounce(() => {
@@ -126,55 +117,15 @@ initDropdown();
 
 document.getElementById("run-button").addEventListener("click", () => {
     const md = editor.getValue();
-    const proj = createProject(md);
 
-    sendMessage("importproject", proj);
+    sendMessage("importtutorial", md);
 })
 
 window.addEventListener("message", receiveMessage, false);
 
-function createProject(md: string) {
-    return {
-        "text": {
-            "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"pxt-on-start\" id=\",{,HjW]u:lVGcDRS_Cu|\" x=\"-247\" y=\"113\"></block>\n</xml>",
-            "main.ts": "\n",
-            "README.md": " ",
-            "pxt.json": selectedConfig
-          },
-        "header": createHeader(md)
-    }
-}
-
-function createHeader(md: string) {
-    const tutorialOptions = {
-        tutorial: "test",
-        tutorialName: "filename",
-        tutorialMd: md,
-        tutorialRecipe: false,
-    };
-
-    const header = {
-        blobCurrent: false,
-        editor: "blocksprj",
-        githubCurrent: false,
-        id: "2159df60-887b-4097-47d5-d0a45bb1ab01",
-        meta: {},
-        modificationTime: 1562968671,
-        name: "test-project",
-        path: "test-project",
-        pubCurrent: false,
-        pubId: "",
-        recentUse: 1562968671,
-        target: selectedId,
-        tutorial: tutorialOptions
-    };
-
-    return header;
-}
-
 const pendingMsgs: {[index: string]: any} = {};
 
-function sendMessage(action: string, proj?: any) {
+function sendMessage(action: string, md?: string) {
     console.log('send ' + action)
 
     const msg: any = {
@@ -182,9 +133,8 @@ function sendMessage(action: string, proj?: any) {
         id: Math.random().toString(),
         action: action
     };
-    if(action == 'importproject') {
-        const prj = JSON.parse(JSON.stringify(proj));
-        msg.project = prj;
+    if(action == 'importtutorial') {
+        msg.markdown = md;
         msg.response = true;
     } else if (action == 'renderblocks') {
         msg.response = true;
@@ -245,27 +195,6 @@ function debounce(func: (...args: any[]) => any, wait: number, immediate?: boole
     };
 }
 
-
-function fixURL(url: string) {
-    if (url.indexOf("http") === -1) {
-        url = "https://" + url;
-    }
-
-    if (url.indexOf("#") !== -1) {
-        url = url.split("#")[0];
-    }
-
-    if (url.indexOf("?") === -1) {
-        url += "?"
-    }
-
-    if (url.indexOf("controller=1") === -1) {
-        url += "controller=1";
-    }
-
-    return url;
-}
-
 function initDropdown() {
     const s = document.getElementById("endpoint-select");
 
@@ -284,14 +213,13 @@ function initDropdown() {
 }
 
 function loadIframe(selected: string) {
-    if (selectedConfig && selected === selectedEndpoint) return;
+    if (selected === selectedEndpoint) return;
 
     for (const target of targets) {
         for (const endpoint of target.endpoints) {
             if (!selected || selected === `${target.name}-${endpoint.name}`) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = `${target.name}-${endpoint.name}`;
-                selectedConfig = endpoint.config || target.config;
                 selectedId = target.id;
                 return;
             }
