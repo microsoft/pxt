@@ -1673,8 +1673,19 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+        let sitemap = theme.homeUrl && `
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${buildUrlXML(theme.homeUrl, 1.0)}
+${buildUrlXML("docs", 0.7)}
+`;
+
+        if (sitemap && nodeutil.fileExistsSync("docs/beta-ref.json")) {
+            sitemap += buildUrlXML("beta", .4)
+        }
+        const docsRoot = nodeutil.targetDir;
+
         if (targetConfig && targetConfig.galleries) {
-            const docsRoot = nodeutil.targetDir;
             let gcards: pxt.CodeCard[] = [];
             let tocmd: string =
                 `# Projects
@@ -1685,6 +1696,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 const gurl = `/${targetConfig.galleries[k].replace(/^\//, '')}`;
+                if (sitemap) sitemap += buildUrlXML(gurl, 0.6);
                 tocmd +=
                     `* [${k}](${gurl})
 `;
@@ -1700,6 +1712,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                         if (card.largeImageUrl && !gcard.largeImageUrl)
                             gcard.largeImageUrl = card.largeImageUrl;
                         const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
+                        if (sitemap) sitemap += buildUrlXML(url, 0.4);
                         tocmd += `  * [${card.name || card.title}](${url})
 `;
                         if (card.tags)
@@ -1721,6 +1734,15 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
 
 `, { encoding: "utf8" });
         }
+
+        if (sitemap) {
+            nodeutil.writeFileSync(
+                path.join(docsRoot, "docs/sitemap.xml"),
+                sitemap + `
+</urlset>`,
+                { encoding: "utf8" }
+            );
+        }
     }
     // extract strings from editor
     ["editor", "fieldeditors", "cmds"]
@@ -1735,6 +1757,24 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     nodeutil.mkdirP("built");
     nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
     nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
+
+    function buildUrlXML(loc: string, priority: number) {
+        const isAbsoluteUrl = /^(?:[a-z]+:)?\/\//i;
+
+        if (!isAbsoluteUrl.test(loc)) {
+            loc = path.normalize(loc);
+            if (loc.charAt(0) === "/") {
+                loc = loc.substr(1)
+            }
+            loc = `${theme.homeUrl}${loc}`;
+        }
+
+        return `
+    <url>
+        <loc>${encodeURI(loc)}</loc>
+        <priority>${priority}</priority>
+    </url>`;
+    }
 }
 
 function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {

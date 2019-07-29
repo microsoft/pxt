@@ -1,1 +1,2 @@
-# robots.txt for PXT sites; nothing here yet
+User-Agent: *
+Disallow: /app/
