@@ -66,10 +66,10 @@ namespace pxt.editor {
         fullscreen?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
-        editorPosition?: { 
-            lineNumber: number; 
-            column: number; 
-            file: IFile; 
+        editorPosition?: {
+            lineNumber: number;
+            column: number;
+            file: IFile;
         }; // ensure that this line is visible when loading the editor
         tracing?: boolean;
         debugging?: boolean;
