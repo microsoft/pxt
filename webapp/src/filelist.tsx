@@ -86,7 +86,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         return pkg.sortedFiles().map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             const navigateToErrorHandler = () => {
-                this.navigateToError(meta.diagnostics && meta.diagnostics[0]);
+                this.navigateToError(meta && meta.diagnostics && meta.diagnostics[0]);
             };
             return (
                 <FileTreeItem key={file.getName()} file={file}
