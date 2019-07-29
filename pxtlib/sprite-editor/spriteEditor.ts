@@ -74,7 +74,7 @@ namespace pxtsprite {
 
         private closeHandler: () => void;
 
-        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false, public scale?: number) {
+        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false, public scale = 1) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -94,6 +94,7 @@ namespace pxtsprite {
                 if (!this.altDown) {
                     this.setCell(col, row, this.color, false);
                 }
+
                 this.bottomBar.updateCursor(col, row);
             });
 
