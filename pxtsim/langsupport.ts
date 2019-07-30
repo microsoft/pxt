@@ -189,7 +189,7 @@ namespace pxsim {
             }
             const addnum = (n: number) => addfmtr("" + Math.round(n), 6)
             const addstats = (numstops: number, us: number) => {
-                addnum(us)
+                addfmtr(Math.round(us) + "", 8)
                 r += " /"
                 addnum(numstops)
                 r += " ="
@@ -213,6 +213,9 @@ namespace pxsim {
 
                 addstats(numstops - pi.stops, us - pi.us)
 
+                r += " ~"
+                addnum(parseInt(fields[3]))
+
                 pi.stops = numstops
                 pi.us = us
 
@@ -228,7 +231,9 @@ namespace pxsim {
                 return
             let csv = "calls,us,name\n"
             for (let p of runtime.perfCounters) {
-                csv += `${p.numstops},${p.value},${p.name}\n`
+                p.lastFew.sort()
+                const median = p.lastFew[p.lastFew.length >> 1]
+                csv += `${p.numstops},${p.value},${p.name},${median}\n`
             }
             processPerfCounters(csv)
             // console.log(csv)

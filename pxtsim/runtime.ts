@@ -1176,9 +1176,20 @@ namespace pxsim {
                 return
             const c = this.perfCounters[n]
             if (!c.start) U.userError("stopPerf")
-            c.value += this.perfNow() - c.start;
+            const curr = this.perfNow() - c.start;
             c.start = 0;
+            // skip outliers
+            // if (c.numstops > 30 && curr > 1.2 * c.value / c.numstops)
+            //    return
+            c.value += curr;
             c.numstops++;
+
+            let p = c.lastFewPtr++
+            if (p >= c.lastFew.length) {
+                p = 0
+                c.lastFewPtr = 1
+            }
+            c.lastFew[p] = curr
         }
 
         startIdle() {
@@ -1265,6 +1276,8 @@ namespace pxsim {
         start = 0;
         numstops = 0;
         value = 0;
+        lastFew = new Uint32Array(32);
+        lastFewPtr = 0;
         constructor(public name: string) { }
     }
 
