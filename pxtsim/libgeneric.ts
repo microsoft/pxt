@@ -218,18 +218,50 @@ namespace pxsim {
         export function atanh(x: number) { return Math.atanh(x) }
         export function atan2(y: number, x: number) { return Math.atan2(y, x) }
         export function trunc(x: number) { return x > 0 ? Math.floor(x) : Math.ceil(x); }
-        export function random(): number { return Math.random(); }
-        export function randomRange(min: number, max: number): number {
-            if (min == max) return min;
-            if (min > max) {
-                let t = min;
-                min = max;
-                max = t;
+
+        // based on C++ code, based in turn on https://www.schneier.com/paper-pseudorandom-sequence.html
+        let random_value = -1
+        function getRandom(max: number) {
+            if (random_value == -1) {
+                random_value = (Math.random() * 0x7fffffff) | 0
             }
-            if (Math.floor(min) == min && Math.floor(max) == max)
-                return min + Math.floor(Math.random() * (max - min + 1));
-            else
-                return min + Math.random() * (max - min);
+
+            let result = 0
+
+            do {
+                let m = max
+                result = 0;
+
+                do {
+                    let r = random_value;
+
+                    r = (((((r >>> 31) ^ (r >>> 6) ^ (r >>> 4) ^ (r >>> 2) ^ (r >>> 1) ^ r) & 1) << 31) |
+                        (r >>> 1)) >>> 0;
+
+                    random_value = r;
+
+                    result = ((result << 1) | (r & 0x00000001));
+                } while (m >>= 1);
+            } while (result > max);
+
+            return result
+        }
+
+        const UINT_MAX = 0xffffffff
+        export function random(): number {
+            return getRandom(UINT_MAX) / (UINT_MAX + 1) + getRandom(0xffffff) / (UINT_MAX * 0xffffff);
+        }
+
+        export function randomRange(min: number, max: number): number {
+            if (min > max)
+                [min, max] = [max, min];
+            if (max == min)
+                return min;
+            if ((min | 0) == min && (max | 0) == max) {
+                return min + getRandom(max - min);
+            } else {
+                return min + random() * (max - min);
+            }
         }
     }
 
