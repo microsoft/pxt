@@ -124,7 +124,7 @@ namespace ts.pxtc {
             jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
         })
 
-        jssource += `\nreturn ${bin.procs[0].label()}\n})\n` 
+        jssource += `\nreturn ${bin.procs[0].label()}\n})\n`
 
         bin.writeFile(BINARY_JS, jssource)
     }
@@ -289,6 +289,25 @@ switch (step) {
             }
         }
 
+        function canEmitInto(e: ir.Expr) {
+            switch (e.exprKind) {
+                case EK.NumberLiteral:
+                case EK.PointerLiteral:
+                case EK.SharedRef:
+                case EK.CellRef:
+                    return true
+                default:
+                    return false
+            }
+        }
+
+        function emitExprPossiblyInto(e: ir.Expr): string {
+            if (canEmitInto(e))
+                return emitExprInto(e)
+            emitExpr(e)
+            return "r0"
+        }
+
         function emitExprInto(e: ir.Expr): string {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
@@ -333,13 +352,12 @@ switch (step) {
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     let shimName = info.shimName
+                    let obj = emitExprPossiblyInto(e.args[0])
                     if (shimName) {
-                        emitExpr(e.args[0])
-                        write(`r0 = r0${shimName};`)
+                        write(`r0 = ${obj}${shimName};`)
                         return
                     }
-                    emitExpr(e.args[0]);
-                    write(`r0 = r0.fields["${info.name}"];`)
+                    write(`r0 = ${obj}.fields["${info.name}"];`)
                     return
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
@@ -382,10 +400,12 @@ switch (step) {
             if (arg.totalUses == 1)
                 return emitExpr(arg)
             else {
-                emitExpr(arg)
-                let idx = exprStack.length
+                const idx = exprStack.length
                 exprStack.push(arg)
-                write(`s.tmp_${idx} = r0;`)
+                let val = emitExprPossiblyInto(arg)
+                if (val != "r0")
+                    val = "r0 = " + val
+                write(`s.tmp_${idx} = ${val};`)
             }
         }
 
@@ -448,7 +468,6 @@ switch (step) {
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
-                emitExpr(a)
                 let arg = `arg${i}`
                 if (isLambda) {
                     if (i == 0)
@@ -456,7 +475,7 @@ switch (step) {
                     else
                         arg = `arg${i - 1}`
                 }
-                write(`${frameRef}.${arg} = r0;`)
+                write(`${frameRef}.${arg} = ${emitExprPossiblyInto(a)};`)
             })
 
             write(`s.pc = ${lblId};`)
@@ -517,8 +536,8 @@ switch (step) {
             switch (trg.exprKind) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
-                    emitExpr(src)
-                    write(`${locref(cell)} = ${bitSizeConverter(cell.bitSize)}(r0);`)
+                    let src2 = emitExprPossiblyInto(src)
+                    write(`${locref(cell)} = ${bitSizeConverter(cell.bitSize)}(${src2});`)
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
