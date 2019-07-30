@@ -172,6 +172,57 @@ namespace pxsim {
             }
         }
 
+        interface PerfCntInfo {
+            stops: number;
+            us: number;
+        }
+        let counters: any = {}
+
+        // TODO move this somewhere else, so it can be invoked also on data coming from hardware
+        function processPerfCounters(msg: string) {
+            let r = ""
+            const addfmtr = (s: string, len: number) => {
+                r += s.length >= len ? s : ("              " + s).slice(-len)
+            }
+            const addfmtl = (s: string, len: number) => {
+                r += s.length >= len ? s : (s + "                         ").slice(0, len)
+            }
+            const addnum = (n: number) => addfmtr("" + Math.round(n), 6)
+            const addstats = (numstops: number, us: number) => {
+                addnum(us)
+                r += " /"
+                addnum(numstops)
+                r += " ="
+                addnum(us / numstops)
+            }
+            for (let line of msg.split(/\n/)) {
+                if (!line) continue
+                if (!/^\d/.test(line)) continue
+                const fields = line.split(/,/)
+                let pi: PerfCntInfo = counters[fields[2]]
+                if (!pi)
+                    counters[fields[2]] = pi = { stops: 0, us: 0 }
+
+                addfmtl(fields[2], 25)
+
+                const numstops = parseInt(fields[0])
+                const us = parseInt(fields[1])
+                addstats(numstops, us)
+
+                r += " |"
+
+                addstats(numstops - pi.stops, us - pi.us)
+
+                pi.stops = numstops
+                pi.us = us
+
+                r += "\n"
+            }
+
+            console.log(r)
+        }
+
+
         export function dumpPerfCounters() {
             if (!runtime || !runtime.perfCounters)
                 return
@@ -179,7 +230,8 @@ namespace pxsim {
             for (let p of runtime.perfCounters) {
                 csv += `${p.numstops},${p.value},${p.name}\n`
             }
-            console.log(csv)
+            processPerfCounters(csv)
+            // console.log(csv)
         }
     }
 
