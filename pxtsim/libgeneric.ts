@@ -219,11 +219,15 @@ namespace pxsim {
         export function atan2(y: number, x: number) { return Math.atan2(y, x) }
         export function trunc(x: number) { return x > 0 ? Math.floor(x) : Math.ceil(x); }
 
-        // based on C++ code, based in turn on https://www.schneier.com/paper-pseudorandom-sequence.html
-        let random_value = -1
+        // based on C++ code, based in turn on https://www.schneier.com/paper-pseudorandom-sequence.html        
         function getRandom(max: number) {
+            let random_value = runtime.random_value
             if (random_value == -1) {
-                random_value = (Math.random() * 0x7fffffff) | 0
+                const explicitSeed = getConfig(getConfigKey("RANDOM_SEED"))
+                if (explicitSeed != null)
+                    random_value = explicitSeed
+                else
+                    random_value = (Math.random() * 0x7fffffff) | 0
             }
 
             let result = 0
@@ -243,6 +247,8 @@ namespace pxsim {
                     result = ((result << 1) | (r & 0x00000001));
                 } while (m >>= 1);
             } while (result > max);
+
+            runtime.random_value = random_value
 
             return result
         }
