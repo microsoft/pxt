@@ -1469,7 +1469,7 @@ export class ProjectView
 
     importTutorialAsync(md: string) {
         try {
-            const [options, editor] = getTutorialOptions(md, "untitled", "untitled", "", false);
+            const { options, editor } = getTutorialOptions(md, "untitled", "untitled", "", false);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
 
             return this.createProjectAsync({
@@ -2944,7 +2944,7 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            const [options, editor] = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+            const { options, editor } = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 
             // start a tutorial within the context of an existing program
             if (recipe) {
@@ -3909,7 +3909,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 
-function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): [pxt.tutorial.TutorialOptions, string] {
+function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string} {
     // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
     md = pxt.tutorial.patchArcadeSnippets(md);
 
@@ -3932,5 +3932,5 @@ function getTutorialOptions(md: string, tutorialId: string, filename: string, re
         templateCode: tutorialInfo.templateCode
     };
 
-    return [tutorialOptions, tutorialInfo.editor];
+    return { options: tutorialOptions, editor: tutorialInfo.editor };
 }
