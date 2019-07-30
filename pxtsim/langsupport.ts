@@ -175,6 +175,7 @@ namespace pxsim {
         interface PerfCntInfo {
             stops: number;
             us: number;
+            meds: number[];
         }
         let counters: any = {}
 
@@ -201,7 +202,7 @@ namespace pxsim {
                 const fields = line.split(/,/)
                 let pi: PerfCntInfo = counters[fields[2]]
                 if (!pi)
-                    counters[fields[2]] = pi = { stops: 0, us: 0 }
+                    counters[fields[2]] = pi = { stops: 0, us: 0, meds: [] }
 
                 addfmtl(fields[2], 25)
 
@@ -214,7 +215,18 @@ namespace pxsim {
                 addstats(numstops - pi.stops, us - pi.us)
 
                 r += " ~"
-                addnum(parseInt(fields[3]))
+                const med = parseInt(fields[3])
+                addnum(med)
+
+                if (pi.meds.length > 10)
+                    pi.meds.shift()
+                pi.meds.push(med)
+                const mm = pi.meds.slice()
+                mm.sort((a, b) => a - b)
+                const ubermed = mm[mm.length >> 1]
+
+                r += " ~~"
+                addnum(ubermed)
 
                 pi.stops = numstops
                 pi.us = us
