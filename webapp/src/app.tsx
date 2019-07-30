@@ -1462,8 +1462,27 @@ export class ProjectView
                 pubCurrent: false
             }
         }
+
         return workspace.installAsync(h, project.text)
             .then(hd => this.loadHeaderAsync(hd, editorState));
+    }
+
+    importTutorialAsync(md: string) {
+        try {
+            const { options, editor } = getTutorialOptions(md, "untitled", "untitled", "", false);
+            const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+
+            return this.createProjectAsync({
+                name: "untitled",
+                tutorial: options,
+                preferredEditor: editor,
+                dependencies
+            });
+        }
+        catch (e) {
+            Util.userError("Could not import tutorial");
+            return Promise.reject(e);
+        }
     }
 
     initDragAndDrop() {
@@ -2925,40 +2944,20 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
-            md = pxt.tutorial.patchArcadeSnippets(md);
-
-            const tutorialInfo = pxt.tutorial.parseTutorial(md);
-            if (!tutorialInfo)
-                throw new Error(lf("Invalid tutorial format"));
-
-            const tutorialOptions: pxt.tutorial.TutorialOptions = {
-                tutorial: tutorialId,
-                tutorialName: tutorialInfo.title || filename,
-                tutorialReportId: reportId,
-                tutorialStep: 0,
-                tutorialReady: true,
-                tutorialHintCounter: 0,
-                tutorialStepInfo: tutorialInfo.steps,
-                tutorialActivityInfo: tutorialInfo.activities,
-                tutorialMd: md,
-                tutorialCode: tutorialInfo.code,
-                tutorialRecipe: !!recipe,
-                templateCode: tutorialInfo.templateCode
-            };
+            const { options, editor } = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 
             // start a tutorial within the context of an existing program
             if (recipe) {
                 const header = pkg.mainEditorPkg().header;
-                header.tutorial = tutorialOptions;
+                header.tutorial = options;
                 header.tutorialCompleted = undefined;
                 return this.loadHeaderAsync(header);
             }
 
             return this.createProjectAsync({
                 name: filename,
-                tutorial: tutorialOptions,
-                preferredEditor: tutorialInfo.editor,
+                tutorial: options,
+                preferredEditor: editor,
                 dependencies
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
@@ -3908,3 +3907,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, false);
 })
+
+
+function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string} {
+    // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
+    md = pxt.tutorial.patchArcadeSnippets(md);
+
+    const tutorialInfo = pxt.tutorial.parseTutorial(md);
+    if (!tutorialInfo)
+        throw new Error(lf("Invalid tutorial format"));
+
+    const tutorialOptions: pxt.tutorial.TutorialOptions = {
+        tutorial: tutorialId,
+        tutorialName: tutorialInfo.title || filename,
+        tutorialReportId: reportId,
+        tutorialStep: 0,
+        tutorialReady: true,
+        tutorialHintCounter: 0,
+        tutorialStepInfo: tutorialInfo.steps,
+        tutorialActivityInfo: tutorialInfo.activities,
+        tutorialMd: md,
+        tutorialCode: tutorialInfo.code,
+        tutorialRecipe: !!recipe,
+        templateCode: tutorialInfo.templateCode
+    };
+
+    return { options: tutorialOptions, editor: tutorialInfo.editor };
+}
