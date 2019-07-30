@@ -205,13 +205,13 @@ export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
 
         return <div id="tutorialsteps" className={`ui item ${this.props.className}`}>
             <div className="ui item" role="menubar">
-                <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} disabled={!hasPrev} className={`prevbutton left attached ${!hasPrev ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.handlePrevClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} disabled={!hasPrev} className={`prevbutton left attached ${!hasPrev ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.handlePrevClick} onKeyDown={sui.fireClickOnEnter} />
                 <span className="step-label" key={'tutorialStep' + currentStep}>
                     <sui.ProgressCircle progress={currentStep} steps={tutorialStepInfo.length} stroke={4.5} />
                     <span className={`ui circular label blue selected ${!tutorialReady ? 'disabled' : ''}`}
                         aria-label={lf("You are currently at tutorial step {0}.")}>{tutorialStep + 1}</span>
                 </span>
-                <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron orange large`} disabled={!hasNext} rightIcon className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.handleNextClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} disabled={!hasNext} rightIcon className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.handleNextClick} onKeyDown={sui.fireClickOnEnter} />
             </div>
         </div>;
     }
