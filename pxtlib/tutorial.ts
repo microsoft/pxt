@@ -1,6 +1,9 @@
 namespace pxt.tutorial {
+    const _h2Regex = /^##[^#](.*)$([\s\S]*?)(?=^##[^#]|$(?![\r\n]))/gmi;
+    const _h3Regex = /^###[^#](.*)$([\s\S]*?)(?=^###[^#]|$(?![\r\n]))/gmi;
+
     export function parseTutorial(tutorialmd: string): TutorialInfo {
-        const [steps, activities] = parseTutorialSteps(tutorialmd);
+        const {steps, activities} = parseTutorialMarkdown(tutorialmd);
         const title = parseTutorialTitle(tutorialmd);
         if (!steps)
             return undefined; // error parsing steps
@@ -65,101 +68,100 @@ namespace pxt.tutorial {
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialSteps(tutorialmd: string): [TutorialStepInfo[], TutorialActivityInfo[]] {
+    function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         const metadata = parseTutorialMetadata(tutorialmd);
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        if (metadata && metadata.v == 2) {
+            // v2: "## ACTIVITY", "### STEP" syntax
+            return parseTutorialActivities(tutorialmd, metadata.v);
+        } else {
+            // v1: "## STEP" syntax
+            let steps = parseTutorialSteps(tutorialmd);
 
-        // Download tutorial markdown
-        let activityInfo: TutorialActivityInfo[] = [];
+            // old: "### STEP" syntax (no activity header guaranteed)
+            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, null, _h3Regex);
+
+            return {steps: steps, activities: null};
+        }
+    }
+
+    function parseTutorialActivities(markdown: string, version?: number):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         let stepInfo: TutorialStepInfo[] = [];
-        let activities = tutorialmd.split(/(?=^#[^#].*$)/gmi);
+        let activityInfo: TutorialActivityInfo[] = [];
 
-        for (let i = 0; i < activities.length; i++) {
-            let activity = activities[i];
-            if (!activity) continue;
+        markdown.replace(_h2Regex, function(match, name, activity) {
+            let i = activityInfo.length;
+            activityInfo.push({
+                name: name || lf("Activity ") + i,
+                step: stepInfo.length
+            })
 
-            let name;
-            activity = activity.replace(/^#[^#](.*)$/mi, function (f, s) {
-                name = s;
-                return ""
+            let steps = parseTutorialSteps(activity, version);
+            steps = steps.map(step => {
+                step.activity = i;
+                return step;
+            })
+            stepInfo = stepInfo.concat(steps);
+
+            return "";
+        })
+
+        return {steps: stepInfo, activities: activityInfo};
+    }
+
+    function parseTutorialSteps(markdown: string, version?: number, forceRegex?: RegExp): TutorialStepInfo[] {
+        // use regex override if present
+        let stepRegex = forceRegex || (version && version == 2 ? _h3Regex : _h2Regex);
+
+        let stepInfo: TutorialStepInfo[] = [];
+        markdown.replace(stepRegex, function (match, flags, step) {
+            step = step.trim();
+            let {header, hint} = parseTutorialHint(step, version);
+            let info: TutorialStepInfo = {
+                fullscreen: /@(fullscreen|unplugged)/.test(flags),
+                unplugged: /@unplugged/.test(flags),
+                tutorialCompleted: /@tutorialCompleted/.test(flags),
+                contentMd: step,
+                headerContentMd: header,
+                hintContentMd: hint,
+                hasHint: hint && hint.length > 0
+            }
+            stepInfo.push(info);
+            return "";
+        });
+
+        if (markdown.indexOf("# Not found") == 0) {
+            pxt.debug(`tutorial not found`);
+            return undefined;
+        }
+
+        return stepInfo;
+    }
+
+    function parseTutorialHint(step: string, version?: number): {header: string, hint: string} {
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        let header = step, hint;
+        if (version && version == 2) {
+            // v2: hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
+            const hintTextRegex = /#+ ~ tutorialhint([\s\S]*)/i;
+            header = step.replace(hintTextRegex, function (f, m) {
+                hint = m;
+                return "";
             });
-
-            let steps = activity.split(/(?=^##[^#].*$)/gmi);
-
-            let newAuthoring = true;
-            if (steps.length <= 1) {
-                // try again, using old logic.
-                steps = activity.split(/^###[^#].*$/gmi);
-                newAuthoring = false;
-            }
-            if (steps[0].indexOf("# Not found") == 0) {
-                pxt.debug(`tutorial not found`);
-                return undefined;
-            }
-
-            if (steps && steps.length > 0) {
-                activityInfo.push({
-                    name: name || lf("Activity ") + activityInfo.length,
-                    step: stepInfo.length
-                })
-            }
-
-            for (let j = 0; j < steps.length; j++) {
-                let step = steps[j];
-                let flags;
-                step = step.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, function (f, s) {
-                    flags = s;
-                    return "";
-                }).trim();
-
-                if (!step) continue;
-
-                let info: TutorialStepInfo = {
-                    fullscreen: /@(fullscreen|unplugged)/.test(flags),
-                    unplugged: /@unplugged/.test(flags),
-                    tutorialCompleted: /@tutorialCompleted/.test(flags),
-                    contentMd: step.trim(),
-                    activity: i
-                }
-
-                stepInfo.push(info);
+        } else {
+            // v1: everything after the first ``` section OR the first image is treated as a "hint"
+            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+            let hintText = step.match(hintTextRegex);
+            if (hintText && hintText.length > 2) {
+                header = hintText[1];
+                hint = hintText[2];
             }
         }
 
-        for (let i = 0; i < stepInfo.length; i++) {
-            const info = stepInfo[i];
-            const stepContent = info.contentMd;
-            const contentLines = stepContent.split('\n');
-
-            info.headerContentMd = contentLines[0];
-
-            let hintContentMd;
-            if (metadata && metadata.v == 2) {
-                // v2: hint is explicitly defined in HTML comment form: <!-- HINT TEXT -->
-                const hintTextRegex = /<!--([\s\S]*?)-->/i;
-                info.headerContentMd = stepContent.replace(hintTextRegex, function (f, m) {
-                    hintContentMd = m;
-                    return "";
-                });
-            } else {
-                // v1: everything after the first ``` section OR the first image is treated as a "hint"
-                const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
-                let hintText = stepContent.match(hintTextRegex);
-                if (hintText && hintText.length > 2) {
-                    info.headerContentMd = hintText[1];
-                    hintContentMd = hintText[2];
-                }
-            }
-
-            // remove hidden snippets from the hint
-            if (hintContentMd) {
-                hintContentMd = hintContentMd.replace(hiddenSnippetRegex, '');
-                info.hintContentMd = hintContentMd;
-            }
-
-            info.hasHint = hintContentMd && hintContentMd.length > 1;
+        // remove hidden snippets from the hint
+        if (hint) {
+            hint = hint.replace(hiddenSnippetRegex, '');
         }
-        return [stepInfo, activityInfo];
+        return {header: header, hint: hint};
     }
 
     /*
