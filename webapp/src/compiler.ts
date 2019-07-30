@@ -78,14 +78,16 @@ export interface CompileOptions {
 }
 
 export let emptyProgram =
-    `'use strict';
-__this.setupPerfCounters([]);
-entryPoint = function (s) {
+    `(function (ectx) {
+'use strict';
+ectx.runtime.setupPerfCounters([]);
+ectx.setupDebugger(1)
+return function (s) {
     // START
-    __this.kill()
-    return leave(s, s.r0)
+    ectx.runtime.kill()
+    return ectx.leave(s, s.r0)
 }
-setupDebugger(1)
+})
 `
 
 export function emptyCompileResult(): pxtc.CompileResult {

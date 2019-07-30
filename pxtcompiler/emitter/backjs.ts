@@ -63,8 +63,40 @@ namespace ts.pxtc {
         return s
     }
 
+    const evalIfaceFields = [
+        "runtime",
+        "oops",
+        "doNothing",
+        "pxsim",
+        "globals",
+        "maybeYield",
+        "setupDebugger",
+        "isBreakFrame",
+        "breakpoint",
+        "trace",
+        "actionCall",
+        "leave",
+        "checkResumeConsumed",
+        "setupResume",
+        "setupLambda",
+        "checkSubtype",
+        "failedCast",
+        "buildResume",
+    ]
+
     export function jsEmit(bin: Binary) {
-        let jssource = "'use strict';\n"
+        let jssource = "(function (ectx) {\n'use strict';\n"
+
+        for (let n of evalIfaceFields) {
+            jssource += `const ${n} = ectx.${n};\n`
+        }
+
+        jssource += `const __this = runtime;\n`
+        jssource += `const pxtrt = pxsim.pxtrt;\n`
+
+        jssource += `let yieldSteps = 1;\n`
+        jssource += `ectx.setupYield(function() { yieldSteps = 100; })\n`
+
         jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
@@ -75,7 +107,7 @@ namespace ts.pxtc {
         jssource += "pxsim.setConfigData(" +
             JSON.stringify(cfg, null, 1) + ", " +
             JSON.stringify(cfgKey, null, 1) + ");\n"
-        jssource += "pxsim.pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
+        jssource += "pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
 
         const perfCounters = bin.setPerfCounters(["SysScreen"])
         jssource += "__this.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
@@ -87,10 +119,13 @@ namespace ts.pxtc {
             jssource += vtableToJs(info)
         })
         if (bin.res.breakpoints)
-            jssource += `\nsetupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
+            jssource += `\nconst breakpoints = setupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
         U.iterMap(bin.hexlits, (k, v) => {
             jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
         })
+
+        jssource += `\nreturn ${bin.procs[0].label()}\n})\n` 
+
         bin.writeFile(BINARY_JS, jssource)
     }
 
@@ -101,8 +136,8 @@ namespace ts.pxtc {
         let EK = ir.EK;
 
         writeRaw(`
-var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
-var r0 = s.r0, step = s.pc;
+const ${proc.label()} = function (s) {
+let r0 = s.r0, step = s.pc;
 s.pc = -1;
 `)
         if (proc.perfCounterNo) {
@@ -216,7 +251,7 @@ switch (step) {
                 if (s.breakpointInfo.isDebuggerStmt)
                     write(brkCall)
                 else
-                    write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                    write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
             }
             writeRaw(`  case ${lbl}:`)
         }
@@ -468,12 +503,12 @@ switch (step) {
         function bitSizeConverter(b: BitSize) {
             switch (b) {
                 case BitSize.None: return ""
-                case BitSize.Int8: return "pxsim.pxtrt.toInt8"
-                case BitSize.Int16: return "pxsim.pxtrt.toInt16"
-                case BitSize.Int32: return "pxsim.pxtrt.toInt32"
-                case BitSize.UInt8: return "pxsim.pxtrt.toUInt8"
-                case BitSize.UInt16: return "pxsim.pxtrt.toUInt16"
-                case BitSize.UInt32: return "pxsim.pxtrt.toUInt32"
+                case BitSize.Int8: return "pxtrt.toInt8"
+                case BitSize.Int16: return "pxtrt.toInt16"
+                case BitSize.Int32: return "pxtrt.toInt32"
+                case BitSize.UInt8: return "pxtrt.toUInt8"
+                case BitSize.UInt16: return "pxtrt.toUInt16"
+                case BitSize.UInt32: return "pxtrt.toUInt32"
                 default: throw oops()
             }
         }

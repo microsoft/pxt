@@ -746,34 +746,45 @@ namespace pxsim {
             this.id = msg.id
             this.refCountingDebug = !!msg.refCountingDebug;
 
-            let yieldMaxSteps = 100
-
-            // These variables are used by the generated code as well
-            // ---
-            let entryPoint: LabelFn;
-            let pxtrt = pxsim.pxtrt
             let breakpoints: Uint8Array = null
-            let breakAlways = !!msg.breakOnStart;
-            let globals = this.globals
-            let yieldSteps = yieldMaxSteps
-            // ---
-
             let currResume: ResumeFn;
             let dbgHeap: Map<any>;
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
             let userGlobals: string[];
-            let __this = this
+            let __this = this // ex
+
+            // this is passed to generated code
+            const evalIface = {
+                runtime: this, // __this
+                oops,
+                doNothing,
+                pxsim,
+                globals: this.globals,
+                setupYield,
+                maybeYield,
+                setupDebugger,
+                isBreakFrame,
+                breakpoint,
+                trace,
+                actionCall,
+                leave: _leave,
+                checkResumeConsumed,
+                setupResume,
+                setupLambda,
+                checkSubtype,
+                failedCast,
+                buildResume,
+            }
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
             }
 
-            // referenced from eval()ed code
             function doNothing(s: StackFrame) {
                 s.pc = -1;
-                return leave(s, s.parent.retval)
+                return _leave(s, s.parent.retval)
             }
 
             function flushLoopLock() {
@@ -783,13 +794,21 @@ namespace pxsim {
                 }
             }
 
+            // Date.now() - 100ns on Chrome mac, 60ns on Safari iPhone XS
+            // yield-- - 7ns on Chrome
+
+            let yieldReset = () => {}
+            function setupYield(reset: () => void) {
+                yieldReset = reset
+            }
+
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 // If code is running on a breakpoint, it's because we are evaluating getters;
                 // no need to yield in that case.
                 if (__this.pausedOnBreakpoint) return false;
 
                 __this.cleanScheduledExpired()
-                yieldSteps = yieldMaxSteps;
+                yieldReset();
                 let now = Date.now()
                 if (now - lastYield >= 20) {
                     lastYield = now
@@ -815,8 +834,9 @@ namespace pxsim {
             function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
                 breakpoints = new Uint8Array(numBreakpoints)
                 // start running and let user put a breakpoint on start
-                // breakAlways = true
+                // breakpoints[0] = 1
                 userGlobals = userCodeGlobals;
+                return breakpoints
             }
 
             function isBreakFrame(s: StackFrame) {
@@ -839,7 +859,7 @@ namespace pxsim {
                 const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
                 Runtime.postMessage(msg)
-                breakAlways = false;
+                breakpoints[0] = 0;
                 breakFrame = null;
                 __this.pauseScheduled();
                 dbgResume = (m: DebuggerMessage) => {
@@ -851,21 +871,21 @@ namespace pxsim {
                     runtime = __this;
                     U.assert(s.pc == retPC);
 
-                    breakAlways = false
+                    breakpoints[0] = 0
                     breakFrame = null
 
                     switch (m.subtype) {
                         case "resume":
                             break;
                         case "stepover":
-                            breakAlways = true;
+                            breakpoints[0] = 1;
                             breakFrame = s;
                             break;
                         case "stepinto":
-                            breakAlways = true;
+                            breakpoints[0] = 1;
                             break;
                         case "stepout":
-                            breakAlways = true;
+                            breakpoints[0] = 1;
                             breakFrame = s.parent || s;
                             break;
                     }
@@ -909,7 +929,7 @@ namespace pxsim {
                         tracePauseMs = trc.interval;
                         break;
                     case "pause":
-                        breakAlways = true
+                        breakpoints[0] = 1
                         breakFrame = null
                         break
                     case "resume":
@@ -985,8 +1005,6 @@ namespace pxsim {
                 s.pc = 0
                 return s;
             }
-
-            const leave = _leave
 
             function setupTop(cb: ResumeFn) {
                 let s = setupTopCore(cb)
@@ -1092,7 +1110,7 @@ namespace pxsim {
             }
 
             // tslint:disable-next-line
-            eval(msg.code)
+            const entryPoint = eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
