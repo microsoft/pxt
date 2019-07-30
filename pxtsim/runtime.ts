@@ -546,6 +546,7 @@ namespace pxsim {
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
+        random_value = -1;
 
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
