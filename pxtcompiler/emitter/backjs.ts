@@ -25,6 +25,10 @@ namespace ts.pxtc {
         "numops::neq": "!=",
     }
 
+    let exprStack: ir.Expr[] = []
+    let maxStack = 0
+    let localsCache: pxt.Map<boolean> = {}
+
     export function isBuiltinSimOp(name: string) {
         return !!U.lookup(jsOpMap, name.replace(/\./g, "::"))
     }
@@ -134,6 +138,8 @@ namespace ts.pxtc {
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
+        maxStack = 0
+        localsCache = {}
 
         writeRaw(`
 const ${proc.label()} = function (s) {
@@ -175,8 +181,6 @@ switch (step) {
         const jumpToNextInstructionMarker = -1
 
 
-        let exprStack: ir.Expr[] = []
-
         let lblIdx = 0
         let asyncContinuations: number[] = []
         let prev: ir.Stmt
@@ -200,10 +204,7 @@ switch (step) {
                     emitExpr(s.expr)
                     break;
                 case ir.SK.StackEmpty:
-                    for (let e of exprStack) {
-                        if (e.totalUses !== e.currUses) oops();
-                    }
-                    exprStack = [];
+                    stackEmpty();
                     break;
                 case ir.SK.Jmp:
                     emitJmp(s);
@@ -219,6 +220,8 @@ switch (step) {
             }
         }
 
+        stackEmpty();
+
         if (proc.perfCounterNo) {
             writeRaw(`__this.stopPerfCounter(${proc.perfCounterNo});\n`)
         }
@@ -233,6 +236,17 @@ switch (step) {
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
+
+        // pre-create stack frame for this procedure with all the fields we need, so the
+        // Hidden Class in the JIT is initalized optimally
+        writeRaw(`const ${proc.label()}_mk = function(s) { return {\n    parent: s, fn: ${proc.label()},`)
+        for (let i = 0; i < maxStack; ++i)
+            writeRaw(`  tmp_${i}: undefined,`)
+        // this includes parameters
+        for (let l of Object.keys(localsCache))
+            writeRaw(`  ${l}: undefined,`)
+        writeRaw(`} };`)
+
         return resText
 
         function emitBreakpoint(s: ir.Stmt) {
@@ -261,7 +275,9 @@ switch (step) {
                 return "globals." + cell.uniqueName()
             else if (cell.iscap)
                 return `s.caps[${cell.index}]`
-            return "s." + cell.uniqueName()
+            const un = cell.uniqueName()
+            localsCache[un] = true
+            return "s." + un
         }
 
         function emitJmp(jmp: ir.Stmt) {
@@ -462,7 +478,10 @@ switch (step) {
             let proc = procid.proc
             const frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
-            write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
+            if (proc)
+                write(`${frameRef} = ${proc.label()}_mk(s);`)
+            else
+                write(`${frameRef} = { fn: null, parent: s };`)
 
             let isLambda = procid.virtualIndex == -1
 
@@ -549,5 +568,14 @@ switch (step) {
                 default: oops();
             }
         }
+    }
+
+    function stackEmpty() {
+        for (let e of exprStack) {
+            if (e.totalUses !== e.currUses)
+                oops();
+        }
+        maxStack = Math.max(exprStack.length, maxStack);
+        exprStack = [];
     }
 }
