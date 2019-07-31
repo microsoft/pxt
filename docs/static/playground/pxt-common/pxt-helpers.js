@@ -246,6 +246,21 @@ namespace helpers {
         return s.substr(start, end - start);
     }
 
+    export function toLowerCase(s: string) {
+        // also note this doesn't handle unicode, but neither does JS (there's toLocaleLowerCase())
+        let r = ""
+        let prev = 0
+        for (let i = 0; i < s.length; i++) {
+            const c = s.charCodeAt(i)
+            if (65 <= c && c <= 90) {
+                r += s.slice(prev, i) + String.fromCharCode(c + 32)
+                prev = i + 1
+            }
+        }
+        r += s.slice(prev)
+        return r
+    }
+
     export function stringSplit(S: string, separator?: string, limit?: number): string[] {
         // https://www.ecma-international.org/ecma-262/6.0/#sec-string.prototype.split
         const A: string[] = [];
