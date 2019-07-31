@@ -70,21 +70,21 @@ namespace pxt.tutorial {
 
     function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         const metadata = parseTutorialMetadata(tutorialmd);
-        if (metadata && metadata.v == 2) {
-            // v2: "## ACTIVITY", "### STEP" syntax
-            return parseTutorialActivities(tutorialmd, metadata.v);
+        if (metadata && metadata.activities) {
+            // tutorial with "## ACTIVITY", "### STEP" syntax
+            return parseTutorialActivities(tutorialmd, metadata);
         } else {
-            // v1: "## STEP" syntax
+            // tutorial with "## STEP" syntax
             let steps = parseTutorialSteps(tutorialmd);
 
             // old: "### STEP" syntax (no activity header guaranteed)
-            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, null, _h3Regex);
+            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, _h3Regex);
 
             return {steps: steps, activities: null};
         }
     }
 
-    function parseTutorialActivities(markdown: string, version?: number):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         let stepInfo: TutorialStepInfo[] = [];
         let activityInfo: TutorialActivityInfo[] = [];
 
@@ -95,7 +95,7 @@ namespace pxt.tutorial {
                 step: stepInfo.length
             })
 
-            let steps = parseTutorialSteps(activity, version);
+            let steps = parseTutorialSteps(activity, _h3Regex, metadata);
             steps = steps.map(step => {
                 step.activity = i;
                 return step;
@@ -108,14 +108,14 @@ namespace pxt.tutorial {
         return {steps: stepInfo, activities: activityInfo};
     }
 
-    function parseTutorialSteps(markdown: string, version?: number, forceRegex?: RegExp): TutorialStepInfo[] {
+    function parseTutorialSteps(markdown: string, regex?: RegExp, metadata?: TutorialMetadata): TutorialStepInfo[] {
         // use regex override if present
-        let stepRegex = forceRegex || (version && version == 2 ? _h3Regex : _h2Regex);
+        let stepRegex = regex || _h2Regex;
 
         let stepInfo: TutorialStepInfo[] = [];
         markdown.replace(stepRegex, function (match, flags, step) {
             step = step.trim();
-            let {header, hint} = parseTutorialHint(step, version);
+            let {header, hint} = parseTutorialHint(step, metadata && metadata.explicitHints);
             let info: TutorialStepInfo = {
                 fullscreen: /@(fullscreen|unplugged)/.test(flags),
                 unplugged: /@unplugged/.test(flags),
@@ -137,18 +137,18 @@ namespace pxt.tutorial {
         return stepInfo;
     }
 
-    function parseTutorialHint(step: string, version?: number): {header: string, hint: string} {
+    function parseTutorialHint(step: string, explicitHints?: boolean): {header: string, hint: string} {
         const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
         let header = step, hint;
-        if (version && version == 2) {
-            // v2: hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
+        if (explicitHints) {
+            // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
             const hintTextRegex = /#+ ~ tutorialhint([\s\S]*)/i;
             header = step.replace(hintTextRegex, function (f, m) {
                 hint = m;
                 return "";
             });
         } else {
-            // v1: everything after the first ``` section OR the first image is treated as a "hint"
+            // everything after the first ``` section OR the first image is treated as a "hint"
             const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
@@ -165,23 +165,19 @@ namespace pxt.tutorial {
     }
 
     /*
-        Parses metadata table at the beginning of tutorial markown. Expects a series of
-        key-value pairs, in "| key | value |\n" format.
+        Parses metadata at the beginning of tutorial markown. Metadata is a key-value
+        pair in the format: `### @KEY VALUE`
     */
     function parseTutorialMetadata(tutorialmd: string): TutorialMetadata {
-        let m: any = {};
+        const metadataRegex = /### @(\S+) ([ \S]+)/gi;
+        const m: any = {};
 
-        const tableRegex = /(?:\|[\s\S]+?\|[\s\S]+?\|\n)*/i;
-        const keyValueRegex = /\|([\s\S]+?)\|([\s\S]+?)\|\n/gi;
+        tutorialmd.replace(metadataRegex, function (f, k, v) {
+            m[k] = v;
+            return "";
+        });
 
-        const table = tutorialmd.match(tableRegex)[0];
-        table.replace(keyValueRegex, function (f, k, v) {
-                m[k.trim()] = v.trim();
-                return "";
-            });
-
-        const metadata = m as TutorialMetadata;
-        return metadata && metadata.v ? metadata :  null;
+        return m as TutorialMetadata;
     }
 
     export function highlight(pre: HTMLPreElement): void {

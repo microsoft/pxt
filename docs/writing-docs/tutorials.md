@@ -128,13 +128,14 @@ The tutorial markdown has a format that the guides the tutorial runner in making
 
 ### Metadata
 
-Tutorial metadata can be optionally specified in a table at the top of the document. The table is a key-value pairing of fields. The currrent fields are:
+Tutorial metadata can be optionally specified at the top of the document. Metadata is defined as key-value pairs, in the form: ``### @KEY VALUE``. The currrent properties are:
 
-* **v**: version, for the tutorial syntax. When unspecified, default is V1. Used in tutorial parsing.
+* **activities**: Indicates a three-level tutorial, with activities and steps. Default is false.
+* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. Default is false.
 
 ```markdown
-| v             | 2               |
-| field_name    | field_value     |
+### @activities true
+### @explicitHints true
 ```
 
 ### Title
@@ -145,9 +146,9 @@ The title is on the first line and uses a _level 1_ heading, like:
 # Light blaster
 ```
 
-### Activities (V2)
+### Activities
 
-Tutorials with version **2** specified in the metadata table have multiple _activities_, each consisting of several steps. An activity begins with a _level 2_ heading (``##``) followed by the activity name, which will be displayed in a dropdown next to The activity can have any number of steps, but no activity-specific text.
+Tutorials with **activities** enabled in the metadata have multiple _activities_, each consisting of several steps. An activity begins with a _level 2_ heading (``##``) followed by the activity name, which will be displayed in a dropdown next to The activity can have any number of steps, but no activity-specific text.
 
 ```markdown
 ## Activity 1
@@ -174,8 +175,8 @@ A tutorial follows a sequence of simple steps. The runner builds an interaction 
 #### Default Syntax
 By default, a step begins with a _level 2_ heading (``##``), followed by the step name.
 
-#### V2 Syntax
-If the tutorial has version **2** in the metadata, steps begin with a _level 3_ heading (``###``), followed by the name.
+#### Activity Syntax
+If the tutorial has **activities** enabled in the metadata, steps begin with a _level 3_ heading (``###``), followed by the name.
 
 #### Step format
 The step can have any name, but it's common to use the _Step 1, Step 2,...Step n_ sequence for each heading.
@@ -210,9 +211,9 @@ The editor automatically parses the markdown and populates the user interface fr
 
 In each step, any text before the first code snippet or image is automatically displayed to the user in the tutorial caption. The remaining text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button.
 
-#### V2 Syntax
+#### Explicit Syntax
 
-If version 2 is specified in the tutorial metadata, the tutorial will only show hints that are explicitly defined with the hint tag, as follows: `#### ~ tutorialhint`. The hint automatically terminates at the next heading. One hint can be specified per step, and if no hint is specified all text (including blocks) will be displayed in the tutorial caption.
+If the **explicitHints** flag is specified in the tutorial metadata, the tutorial will only show hints that are explicitly defined with the hint tag, as follows: `#### ~ tutorialhint`. The hint automatically terminates at the next heading. One hint can be specified per step, and if no hint is specified all text (including blocks) will be displayed in the tutorial caption.
 
 ````markdown
 #### ~ tutorialhint
