@@ -518,6 +518,8 @@ function ${id}(s) {
                 write(`${frameRef}.${arg} = ${emitExprPossiblyInto(a)};`)
             })
 
+            let callIt = `s.pc = ${lblId}; return ${frameRef};`
+
             if (procid.ifaceIndex != null) {
                 U.assert(proc == null)
                 let isSet = false
@@ -538,9 +540,11 @@ function ${id}(s) {
                 } else {
                     write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
                 }
+                write(`else { ${callIt} }`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
+                callIt = ""
             } else if (procid.virtualIndex == -1) {
                 // lambda call
                 U.assert(proc == null)
@@ -553,10 +557,8 @@ function ${id}(s) {
             } else {
                 U.assert(proc != null)
             }
-
-            const callIt = `s.pc = ${lblId}; return ${frameRef};`
-            if (proc) write(callIt)
-            else write(`if (${frameRef}.fn) { ${callIt} }`)
+            
+            if (callIt) write(callIt)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
 
