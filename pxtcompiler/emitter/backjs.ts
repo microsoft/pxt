@@ -411,15 +411,15 @@ function ${id}(s) {
             }
         }
 
-        function checkSubtype(info: ClassInfo) {
-            return `checkSubtype(r0, ${info.classNo}, ${info.lastSubtypeNo})`
+        function checkSubtype(info: ClassInfo, r0 = "r0") {
+            return `checkSubtype(${r0}, ${info.classNo}, ${info.lastSubtypeNo})`
         }
 
-        function emitInstanceOf(info: ClassInfo, tp: string) {
+        function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
             if (tp == "bool")
                 write(`r0 = ${checkSubtype(info)};`)
             else if (tp == "validate" || tp == "validateDecr") {
-                write(`if (!${checkSubtype(info)}) failedCast(r0);`)
+                write(`if (!${checkSubtype(info, r0)}) failedCast(${r0});`)
             } else {
                 U.oops()
             }
@@ -558,7 +558,7 @@ function ${id}(s) {
             } else if (procid.virtualIndex != null) {
                 U.assert(proc == null)
                 assert(procid.virtualIndex >= 0)
-                // TODO need subtype check here
+                emitInstanceOf(procid.classInfo, "validate", frameRef + ".arg0")
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             } else {
                 U.assert(proc != null)
