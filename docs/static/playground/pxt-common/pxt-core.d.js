@@ -301,8 +301,6 @@ declare interface String {
      */
     //% helper=stringToLowerCase
     //% help=text/to-lower-case
-    //% blockId="string_to_lower_case" blockNamespace="text"
-    //% block="split %this=text|to lower case"
     toLowerCase(): string;
 
     [index: number]: string;
