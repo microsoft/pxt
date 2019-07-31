@@ -302,10 +302,6 @@ ${baseLabel}_nochk:
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
 
-            //console.log(proc.toString())
-            this.proc.resolve()
-            //console.log("OPT", proc.toString())
-
             for (let i = 0; i < this.proc.body.length; ++i) {
                 let s = this.proc.body[i]
                 // console.log("STMT", s.toString())

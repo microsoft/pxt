@@ -162,10 +162,6 @@ switch (step) {
   case 0:
 `)
 
-        //console.log(proc.toString())
-        proc.resolve()
-        //console.log("OPT", proc.toString())
-
         proc.locals.forEach(l => {
             write(`${locref(l)} = undefined;`)
         })
@@ -188,19 +184,9 @@ switch (step) {
 
         let lblIdx = 0
         let asyncContinuations: number[] = []
-        let prev: ir.Stmt
         for (let s of proc.body) {
-            // mark Jump-to-next-instruction
-            if (prev && prev.lbl == s &&
-                prev.stmtKind == ir.SK.Jmp &&
-                s.stmtKind == ir.SK.Label &&
-                prev.jmpMode == ir.JmpMode.Always &&
-                s.lblNumUses == 1) {
-                s.lblNumUses = jumpToNextInstructionMarker
-            }
-            if (s.stmtKind == ir.SK.Label)
+            if (s.stmtKind == ir.SK.Label && s.lblNumUses > 0)
                 s.lblId = ++lblIdx;
-            prev = s
         }
 
         for (let s of proc.body) {
@@ -298,7 +284,7 @@ function ${id}(s) {
         }
 
         function emitJmp(jmp: ir.Stmt) {
-            if (jmp.lbl.lblNumUses == jumpToNextInstructionMarker) {
+            if (jmp.lbl.lblNumUses == ir.lblNumUsesJmpNext) {
                 assert(jmp.jmpMode == ir.JmpMode.Always)
                 if (jmp.expr)
                     emitExpr(jmp.expr)
@@ -443,7 +429,7 @@ function ${id}(s) {
         }
 
         function emitRtCall(topExpr: ir.Expr) {
-            let info = ir.flattenArgs(topExpr)
+            let info = ir.flattenArgs(topExpr.args)
 
             info.precomp.forEach(emitExpr)
 
@@ -485,17 +471,21 @@ function ${id}(s) {
         }
 
         function emitProcCall(topExpr: ir.Expr) {
-            let frameExpr = ir.rtcall("<frame>", [])
+            const procid = topExpr.data as ir.ProcId
+            const proc = procid.proc
+
+            if (proc && proc.inlineBody)
+                return emitExpr(proc.inlineSelf(topExpr.args))
+
+            const frameExpr = ir.rtcall("<frame>", [])
             frameExpr.totalUses = 1
             frameExpr.currUses = 0
-            let frameIdx = exprStack.length
+            const frameIdx = exprStack.length
             exprStack.push(frameExpr)
-
-            let procid = topExpr.data as ir.ProcId
-            let proc = procid.proc
             const frameRef = `s.tmp_${frameIdx}`
-            let lblId = ++lblIdx
-            let isLambda = procid.virtualIndex == -1
+
+            const lblId = ++lblIdx
+            const isLambda = procid.virtualIndex == -1
 
             if (proc)
                 write(`${frameRef} = ${proc.label()}_mk(s);`)

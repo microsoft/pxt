@@ -1080,6 +1080,9 @@ namespace ts.pxtc {
             bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null, program.getSourceFiles());
 
+            for (let proc of bin.procs)
+                proc.resolve()
+
             if (opts.target.isNative) {
                 if (opts.extinfo.yotta)
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
@@ -2625,15 +2628,13 @@ ${lbl}: .short 0xffff
             proc.stackEmpty();
 
             let lbl = proc.mkLabel("final")
-            let hasRet = funcHasReturn(proc.action)
-            if (hasRet) {
-                let v = captureJmpValue()
-                proc.emitJmp(lbl, v, ir.JmpMode.Always)
+            if (funcHasReturn(proc.action)) {
+                // the jmp will take R0 with it as the return value
+                proc.emitJmp(lbl)
             } else {
-                // TODO emit 'return undefined'
+                proc.emitJmp(lbl, emitLit(undefined))
             }
-            if (hasRet || isStackMachine())
-                proc.emitLbl(lbl)
+            proc.emitLbl(lbl)
 
             // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")

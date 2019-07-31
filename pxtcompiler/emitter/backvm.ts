@@ -274,10 +274,6 @@ _start_${name}:
 
         const immMax = (1 << 23) - 1
 
-        //console.log(proc.toString())
-        proc.resolve()
-        // console.log("OPT", proc.toString())
-
         emitAll()
         resText = ""
         for (let t of alltmps) t.currUses = 0
