@@ -521,6 +521,22 @@ namespace pxsim {
         constructor(public fn: Function, public timeRemaining: number) { }
     }
 
+    export function mkVTable(src: VTable): VTable {
+        return {
+            name: src.name,
+            numFields: src.numFields,
+            classNo: src.classNo,
+            methods: src.methods,
+            iface: src.iface,
+            toStringMethod: src.toStringMethod
+          };
+    }
+
+    let mapVTable: VTable = null
+    export function mkMapVTable() {
+        if (!mapVTable) mapVTable = mkVTable({ name: "_Map", numFields: 0, classNo: 0, methods: null })
+        return mapVTable
+    }
 
     export class Runtime {
         public board: BaseBoard;
@@ -777,6 +793,7 @@ namespace pxsim {
                 checkSubtype,
                 failedCast,
                 buildResume,
+                mkVTable,
             }
 
             function oops(msg: string) {

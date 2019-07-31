@@ -39,7 +39,7 @@ namespace ts.pxtc {
     }
 
     function vtableToJs(info: ClassInfo) {
-        let s = `const ${info.id}_VT = {\n` +
+        let s = `const ${info.id}_VT = mkVTable({\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
@@ -59,7 +59,7 @@ namespace ts.pxtc {
         s += "  },\n"
         if (info.toStringMethod)
             s += "  toStringMethod: " + info.toStringMethod.label() + ",\n"
-        s += "};\n"
+        s += "});\n"
         return s
     }
 
@@ -82,6 +82,7 @@ namespace ts.pxtc {
         "checkSubtype",
         "failedCast",
         "buildResume",
+        "mkVTable"
     ]
 
     interface EmitCtx {
@@ -545,7 +546,7 @@ function ${id}(s) {
                     write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
                     write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
                 } else {
-                    write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)    
+                    write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
                 }
                 if (procid.mapMethod) {
                     write(`}`)
@@ -557,11 +558,15 @@ function ${id}(s) {
             } else if (procid.virtualIndex != null) {
                 U.assert(proc == null)
                 assert(procid.virtualIndex >= 0)
+                // TODO need subtype check here
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             } else {
                 U.assert(proc != null)
             }
-            write(`if (${frameRef}.fn) { s.pc = ${lblId}; return ${frameRef} }`)
+
+            const callIt = `s.pc = ${lblId}; return ${frameRef};`
+            if (proc) write(callIt)
+            else write(`if (${frameRef}.fn) { ${callIt} }`)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
 
