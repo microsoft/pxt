@@ -25,6 +25,44 @@ namespace ts.pxtc {
         "numops::neq": "!=",
     }
 
+    const shortNsCalls: pxt.Map<string> = {
+        "pxsim.Boolean_": "",
+        "pxsim.pxtcore": "",
+        "pxsim.String_": "",
+        "pxsim.ImageMethods": "",
+        "pxsim.Array_": "",
+        "pxsim.pxtrt": "",
+        "pxsim.numops": "",
+    }
+
+    const shortCalls: pxt.Map<string> = {
+        "pxsim.Array_.getAt": "",
+        "pxsim.Array_.length": "",
+        "pxsim.Array_.mk": "",
+        "pxsim.Array_.push": "",
+        "pxsim.Boolean_.bang": "",
+        "pxsim.String_.concat": "",
+        "pxsim.String_.stringConv": "",
+        "pxsim.numops.toBool": "",
+        "pxsim.numops.toBoolDecr": "",
+        "pxsim.pxtcore.mkAction": "",
+        "pxsim.pxtcore.mkClassInstance": "",
+        "pxsim.pxtrt.ldlocRef": "",
+        "pxsim.pxtrt.mapGet": "",
+        "pxsim.pxtrt.stclo": "",
+        "pxsim.pxtrt.stlocRef": "",
+    }
+
+    function shortCallsPrefix(m: pxt.Map<string>) {
+        let r = ""
+        for (let k of Object.keys(m)) {
+            const kk = k.replace(/\./g, "_")
+            m[k] = kk
+            r += `const ${kk} = ${k};\n`
+        }
+        return r
+    }
+
     export function isBuiltinSimOp(name: string) {
         return !!U.lookup(jsOpMap, name.replace(/\./g, "::"))
     }
@@ -33,9 +71,16 @@ namespace ts.pxtc {
         shimName = shimName.replace(/::/g, ".")
         if (shimName.slice(0, 4) == "pxt.")
             shimName = "pxtcore." + shimName.slice(4)
-        if (target.shortPointers)
-            shimName = shimName.replace(/^thumb\./, "avr.")
-        return "pxsim." + shimName
+        const r = "pxsim." + shimName
+        if (shortCalls.hasOwnProperty(r))
+            return shortCalls[r]
+        const idx = r.lastIndexOf(".")
+        if (idx > 0) {
+            const pref = r.slice(0, idx)
+            if (shortNsCalls.hasOwnProperty(pref))
+                return shortNsCalls[pref] + r.slice(idx)
+        }
+        return r
     }
 
     function vtableToJs(info: ClassInfo) {
@@ -119,6 +164,9 @@ namespace ts.pxtc {
 
         const perfCounters = bin.setPerfCounters(["SysScreen"])
         jssource += "__this.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
+
+        jssource += shortCallsPrefix(shortCalls)
+        jssource += shortCallsPrefix(shortNsCalls)
 
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(ctx, bin, p) + "\n"
@@ -444,6 +492,9 @@ function ${id}(s) {
 
             let name: string = topExpr.data
             let args = info.flattened.map(emitExprInto)
+
+            if (name == "langsupp::ignore")
+                return
 
             let text = ""
             if (name[0] == ".")
