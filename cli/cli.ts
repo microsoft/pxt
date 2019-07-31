@@ -1673,19 +1673,9 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-        let sitemap = theme.homeUrl && `
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${buildUrlXML(theme.homeUrl, 1.0)}
-${buildUrlXML("docs", 0.7)}
-`;
-
-        if (sitemap && nodeutil.fileExistsSync("docs/beta-ref.json")) {
-            sitemap += buildUrlXML("beta", .4)
-        }
-        const docsRoot = nodeutil.targetDir;
 
         if (targetConfig && targetConfig.galleries) {
+            const docsRoot = nodeutil.targetDir;
             let gcards: pxt.CodeCard[] = [];
             let tocmd: string =
                 `# Projects
@@ -1696,7 +1686,6 @@ ${buildUrlXML("docs", 0.7)}
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 const gurl = `/${targetConfig.galleries[k].replace(/^\//, '')}`;
-                if (sitemap) sitemap += buildUrlXML(gurl, 0.6);
                 tocmd +=
                     `* [${k}](${gurl})
 `;
@@ -1712,7 +1701,6 @@ ${buildUrlXML("docs", 0.7)}
                         if (card.largeImageUrl && !gcard.largeImageUrl)
                             gcard.largeImageUrl = card.largeImageUrl;
                         const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
-                        if (sitemap) sitemap += buildUrlXML(url, 0.4);
                         tocmd += `  * [${card.name || card.title}](${url})
 `;
                         if (card.tags)
@@ -1734,15 +1722,6 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
 
 `, { encoding: "utf8" });
         }
-
-        if (sitemap) {
-            nodeutil.writeFileSync(
-                path.join(docsRoot, "docs/sitemap.xml"),
-                sitemap + `
-</urlset>`,
-                { encoding: "utf8" }
-            );
-        }
     }
     // extract strings from editor
     ["editor", "fieldeditors", "cmds"]
@@ -1757,23 +1736,75 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     nodeutil.mkdirP("built");
     nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
     nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
+}
 
-    function buildUrlXML(loc: string, priority: number) {
+function saveSitemapXML(cfg: pxt.TargetBundle) {
+    const homeUrl = cfg.appTheme && cfg.appTheme.homeUrl;
+    if (!homeUrl) return;
+    const docsRoot = nodeutil.targetDir;
+
+    const urlToPriority: {
+        [url: string]: number
+    } = {};
+    addUrl("/", 1.0);
+    addUrl("docs", 0.9);
+
+    if (nodeutil.fileExistsSync("docs/beta-ref.json")) {
+        addUrl("beta", 0.6);
+    }
+
+    // walk summaries and add all internal links to sitemap
+    nodeutil.allFiles("docs", 5)
+        .filter(f => /SUMMARY\.md$/.test(f))
+        .forEach(summaryFile => {
+            const summaryPath = path
+                .join(path.dirname(summaryFile), 'SUMMARY')
+                .replace(/^docs[\/\\]/, '');
+            const summaryMD = nodeutil.resolveMd(docsRoot, summaryPath);
+            const toc = pxt.docs.buildTOC(summaryMD);
+            if (toc) {
+                toc.forEach(entry => addTOCMenuEntry(entry, 0.7))
+            };
+        });
+    nodeutil.writeFileSync(
+        path.join(docsRoot, "docs/sitemap.xml"),
+`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${Object.keys(urlToPriority)
+    .reduce((acc, loc) => {
+        return `${acc}
+    <url>
+        <loc>${encodeURI(homeUrl + loc)}</loc>
+        <priority>${urlToPriority[loc]}</priority>
+    </url>`
+    }, "")}
+</urlset>`,
+        { encoding: "utf8" }
+    );
+
+    function addUrl(url: string, priority: number) {
         const isAbsoluteUrl = /^(?:[a-z]+:)?\/\//i;
 
-        if (!isAbsoluteUrl.test(loc)) {
-            loc = path.normalize(loc);
-            if (loc.charAt(0) === "/") {
-                loc = loc.substr(1)
-            }
-            loc = `${theme.homeUrl}${loc}`;
+        // ignore absolute urls, as sitemap should only contain internal links
+        if (!url || isAbsoluteUrl.test(url)) {
+            return;
         }
 
-        return `
-    <url>
-        <loc>${encodeURI(loc)}</loc>
-        <priority>${priority}</priority>
-    </url>`;
+        if (url.charAt(0) === "/") {
+            url = url.substr(1)
+        }
+
+        const currentPriority = urlToPriority[url];
+        if (!currentPriority || currentPriority < priority) {
+            urlToPriority[url] = priority;
+        }
+    }
+
+    function addTOCMenuEntry(entry: pxt.TOCMenuEntry, priority: number) {
+        addUrl(entry.path, priority);
+        if (entry.subitems) {
+            entry.subitems.forEach(subEntry => addTOCMenuEntry(subEntry, Math.max(priority - 0.1, 0.1)));
+        }
+
     }
 }
 
@@ -2104,6 +2135,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 targetCrowdinBranch: targetCrowdinBranch()
             }
             saveThemeJson(cfg, options.localDir, options.packaged)
+            saveSitemapXML(cfg);
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = JSON.stringify(cfg, null, 2)
