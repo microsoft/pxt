@@ -246,8 +246,9 @@ namespace helpers {
         return s.substr(start, end - start);
     }
 
-    export function toLowerCase(s: string) {
-        // also note this doesn't handle unicode, but neither does JS (there's toLocaleLowerCase())
+    // TODO move to PXT
+    // also note this doesn't handle unicode, but neither does JS (there's toLocaleLowerCase())
+    export function stringToLowerCase(s: string): string {
         let r = ""
         let prev = 0
         for (let i = 0; i < s.length; i++) {

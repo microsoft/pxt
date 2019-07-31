@@ -296,6 +296,15 @@ declare interface String {
     //% block="split %this=text|at %separator"
     split(separator?: string, limit?: number): string[];
 
+    /**
+     * Converts the string to lower case characters.
+     */
+    //% helper=stringToLowerCase
+    //% help=text/to-lower-case
+    //% blockId="string_to_lower_case" blockNamespace="text"
+    //% block="split %this=text|to lower case"
+    toLowerCase(): string;
+
     [index: number]: string;
 }
 
