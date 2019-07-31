@@ -25,10 +25,6 @@ namespace ts.pxtc {
         "numops::neq": "!=",
     }
 
-    let exprStack: ir.Expr[] = []
-    let maxStack = 0
-    let localsCache: pxt.Map<boolean> = {}
-
     export function isBuiltinSimOp(name: string) {
         return !!U.lookup(jsOpMap, name.replace(/\./g, "::"))
     }
@@ -78,7 +74,7 @@ namespace ts.pxtc {
         "isBreakFrame",
         "breakpoint",
         "trace",
-        "actionCall",
+        "checkStack",
         "leave",
         "checkResumeConsumed",
         "setupResume",
@@ -88,8 +84,15 @@ namespace ts.pxtc {
         "buildResume",
     ]
 
+    interface EmitCtx {
+        framectors: pxt.Map<string>;
+    }
+
     export function jsEmit(bin: Binary) {
         let jssource = "(function (ectx) {\n'use strict';\n"
+        const ctx: EmitCtx = {
+            framectors: {}
+        }
 
         for (let n of evalIfaceFields) {
             jssource += `const ${n} = ectx.${n};\n`
@@ -117,8 +120,9 @@ namespace ts.pxtc {
         jssource += "__this.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
 
         bin.procs.forEach(p => {
-            jssource += "\n" + irToJS(bin, p) + "\n"
+            jssource += "\n" + irToJS(ctx, bin, p) + "\n"
         })
+        jssource += U.values(ctx.framectors).join("\n") + "\n"
         bin.usedClassInfos.forEach(info => {
             jssource += vtableToJs(info)
         })
@@ -133,13 +137,14 @@ namespace ts.pxtc {
         bin.writeFile(BINARY_JS, jssource)
     }
 
-    function irToJS(bin: Binary, proc: ir.Procedure): string {
+    function irToJS(ctx: EmitCtx, bin: Binary, proc: ir.Procedure): string {
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
-        maxStack = 0
-        localsCache = {}
+        let exprStack: ir.Expr[] = []
+        let maxStack = 0
+        let localsCache: pxt.Map<boolean> = {}
 
         writeRaw(`
 const ${proc.label()} = function (s) {
@@ -179,7 +184,6 @@ switch (step) {
         }
 
         const jumpToNextInstructionMarker = -1
-
 
         let lblIdx = 0
         let asyncContinuations: number[] = []
@@ -237,17 +241,29 @@ switch (step) {
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
 
-        // pre-create stack frame for this procedure with all the fields we need, so the
-        // Hidden Class in the JIT is initalized optimally
-        writeRaw(`const ${proc.label()}_mk = function(s) { return {\n    parent: s, fn: ${proc.label()},`)
-        for (let i = 0; i < maxStack; ++i)
-            writeRaw(`  tmp_${i}: undefined,`)
-        // this includes parameters
-        for (let l of Object.keys(localsCache))
-            writeRaw(`  ${l}: undefined,`)
-        writeRaw(`} };`)
+        writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
 
         return resText
+
+        // pre-create stack frame for this procedure with all the fields we need, so the
+        // Hidden Class in the JIT is initalized optimally
+        function fnctor(id: string, procname: string, numTmps: number, locals: string[]) {
+            let r = ""
+            r += `
+const ${id} = function(s) {
+    checkStack(s.depth);
+    return {
+        parent: s, fn: ${procname}, depth: s.depth + 1, 
+        pc: 0, retval: undefined, r0: undefined, overwrittenPC: false, lambdaArgs: null,
+`
+            for (let i = 0; i < numTmps; ++i)
+                r += `  tmp_${i}: undefined,\n`
+            // this includes parameters
+            for (let l of locals)
+                r += `  ${l}: undefined,\n`
+            r += `} }\n`
+            return r
+        }
 
         function emitBreakpoint(s: ir.Stmt) {
             let id = s.breakpointInfo.id
@@ -478,12 +494,26 @@ switch (step) {
             let proc = procid.proc
             const frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
+            let isLambda = procid.virtualIndex == -1
+
             if (proc)
                 write(`${frameRef} = ${proc.label()}_mk(s);`)
-            else
-                write(`${frameRef} = { fn: null, parent: s };`)
-
-            let isLambda = procid.virtualIndex == -1
+            else {
+                let id = "generic"
+                if (procid.ifaceIndex != null)
+                    id = "if_" + bin.ifaceMembers[procid.ifaceIndex]
+                else if (isLambda)
+                    id = "lambda"
+                else if (procid.virtualIndex != null)
+                    id = procid.classInfo.id + "_v" + procid.virtualIndex
+                else U.oops();
+                id += "_" + topExpr.args.length + "_mk"
+                if (!ctx.framectors[id]) {
+                    const locals = U.range(topExpr.args.length).map(i => "arg" + i)
+                    ctx.framectors[id] = fnctor(id, "null", 5, locals)
+                }
+                write(`${frameRef} = ${id}(s);`)
+            }
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
@@ -499,6 +529,7 @@ switch (step) {
 
             write(`s.pc = ${lblId};`)
             if (procid.ifaceIndex != null) {
+                U.assert(proc == null)
                 let isSet = false
                 if (procid.mapMethod) {
                     write(`if (${frameRef}.arg0.vtable === 42) {`)
@@ -525,13 +556,17 @@ switch (step) {
                 }
             } else if (procid.virtualIndex == -1) {
                 // lambda call
+                U.assert(proc == null)
                 write(`setupLambda(${frameRef}, ${frameRef}.argL);`)
             } else if (procid.virtualIndex != null) {
+                U.assert(proc == null)
                 assert(procid.virtualIndex >= 0)
                 write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
+            } else {
+                U.assert(proc != null)
             }
-            write(`return actionCall(${frameRef})`)
+            write(`return ${frameRef}`)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
 
@@ -568,14 +603,15 @@ switch (step) {
                 default: oops();
             }
         }
+
+        function stackEmpty() {
+            for (let e of exprStack) {
+                if (e.totalUses !== e.currUses)
+                    oops();
+            }
+            maxStack = Math.max(exprStack.length, maxStack);
+            exprStack = [];
+        }
     }
 
-    function stackEmpty() {
-        for (let e of exprStack) {
-            if (e.totalUses !== e.currUses)
-                oops();
-        }
-        maxStack = Math.max(exprStack.length, maxStack);
-        exprStack = [];
-    }
 }

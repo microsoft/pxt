@@ -769,7 +769,7 @@ namespace pxsim {
                 isBreakFrame,
                 breakpoint,
                 trace,
-                actionCall,
+                checkStack,
                 leave: _leave,
                 checkResumeConsumed,
                 setupResume,
@@ -798,7 +798,7 @@ namespace pxsim {
             // Date.now() - 100ns on Chrome mac, 60ns on Safari iPhone XS
             // yield-- - 7ns on Chrome
 
-            let yieldReset = () => {}
+            let yieldReset = () => { }
             function setupYield(reset: () => void) {
                 yieldReset = reset
             }
@@ -998,12 +998,15 @@ namespace pxsim {
                 }
             }
 
+            function checkStack(d: number) {
+                if (d > 100)
+                    U.userError("Stack overflow")
+            }
+
             function actionCall(s: StackFrame): StackFrame {
                 s.depth = s.parent.depth + 1
-                if (s.depth > 1000) {
-                    U.userError("Stack overflow")
-                }
-                s.pc = 0
+                checkStack(s.depth)
+                s.pc = 0;
                 return s;
             }
 

@@ -2133,7 +2133,7 @@ ${lbl}: .short 0xffff
 
         function mkMethodCall(ci: ClassInfo, vidx: number, ifaceIdx: number, args: ir.Expr[]) {
             let data: ir.ProcId = {
-                proc: proc,
+                proc: null,
                 virtualIndex: vidx,
                 ifaceIndex: ifaceIdx,
                 classInfo: ci
