@@ -166,24 +166,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return tokenizedOutput;
     }
 
-    tsVariables(tsOutput: string) {
-        let variables = [];
-        for (const line of tsOutput) {
-            if (line.match(/let * =/)) {
-
-            }
-        }
-    }
-
-    /**
-     * 
-     * @param tsOutput 
-     * takes in an array of typescript, validates it, and returns typescript that can be compiled
-     */
-    sanitizeTsOutput(tsOutput: string[]) {
-
-    }
-
     /**
      * Takes in ts output and highlights the currently edited block 
      */
