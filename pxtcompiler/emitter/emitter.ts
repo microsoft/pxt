@@ -701,14 +701,25 @@ namespace ts.pxtc {
         return !!(node && (node as NamedDeclaration).name);
     }
 
+    function parentPrefix(node: Node): string {
+        if (!node)
+            return ""
+        switch (node.kind) {
+            case SK.ModuleBlock:
+                return parentPrefix(node.parent)
+            case SK.ClassDeclaration:
+            case SK.ModuleDeclaration:
+                return parentPrefix(node.parent) + (node as ModuleDeclaration).name.text + "."
+            default:
+                return ""
+        }
+    }
+
     export function getDeclName(node: Declaration) {
         let text = isNamedDeclaration(node) ? (<Identifier>node.name).text : null
-        if (!text && node.kind == SK.Constructor)
-            text = "constructor"
-        if (node && node.parent && node.parent.kind == SK.ClassDeclaration)
-            text = (<ClassDeclaration>node.parent).name.text + "." + text
-        text = text || "inline"
-        return text;
+        if (!text)
+            text = node.kind == SK.Constructor ? "constructor" : "inline"
+        return parentPrefix(node.parent) + text;
     }
 
     function safeName(node: Declaration) {
