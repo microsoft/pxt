@@ -152,7 +152,9 @@ interface IRangeInputProps {
     autoFocus?: boolean;
 }
 
-
+/**
+ * TODO: Slider is not full width on Mozilla only
+ */
 class RangeInput extends data.Component<IRangeInputProps, {}> {
     constructor(props: IRangeInputProps) {
         super(props);

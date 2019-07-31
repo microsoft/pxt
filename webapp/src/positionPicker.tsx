@@ -4,7 +4,7 @@ import * as Snippet from './snippetBuilder';
 import * as sui from './sui';
 import { SimulatorDisplay } from './simulatorDisplay';
 
-const PICKER_WIDTH  = 295;
+const PICKER_WIDTH  = 296;
 const PICKER_HEIGHT = 213;
 
 interface PositionPickerProps {
@@ -18,24 +18,27 @@ interface PositionPickerProps {
 interface PositionPickerState {
     x: number;
     y: number;
-    finalX?: number;
-    finalY?: number;
     dotVisible: boolean;
     scale?: number;
 }
 
+
+/**
+ * TODO
+ * 1. Slight issues with keeping the value written in the textbox and the one picked with a mouse in line when switching back and forth
+ * 2. Dot slides on resize, recalculate the dots top and left based on new scale
+ */
 export class PositionPicker extends data.Component <PositionPickerProps, PositionPickerState> {
     private grid: JSX.Element[];
     constructor(props: PositionPickerProps) {
         super(props);
         this.state = {
-            x: this.props.defaultX || 80,
-            y: this.props.defaultY || 60,
+            x: this.unScalePoint(this.props.defaultX || 80, true),
+            y: this.unScalePoint(this.props.defaultY || 60),
             dotVisible: false,
         };
 
         this.grid = this.buildGrid();
-        this.onMouseMove = this.onMouseMove.bind(this);
         this.setDot = this.setDot.bind(this);
         this.onChange = this.onChange.bind(this);
         this.setScale = this.setScale.bind(this);
@@ -61,7 +64,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const width = window.innerWidth;
 
         let scale = height > width ? width / 2100 : height / 1003;
-
         // Minimum resize threshold
         if (scale < .81) {
             scale = .81;
@@ -71,18 +73,9 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             scale = 1.02;
         }
 
-        this.setState({ scale })
-    }
-
-    protected setPosition(x: number, y: number) {
-        const pickerContainer = this.refs['positionPickerContainer'] as HTMLDivElement;
-        const width = pickerContainer.clientWidth;
-        const height = pickerContainer.clientHeight;
-
-        x = Math.round(Math.max(0, Math.min(width, x + 1)));
-        y = Math.round(Math.max(0, Math.min(height, y + 1)));
-
-        this.setState({ x, y });
+        this.setState({
+            scale
+        });
     }
 
     protected getScale(scaleDivisor: number, scaleMultiplier: number) {
@@ -105,7 +98,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const yScale = this.getYScale();
 
         if (!isNaN(point)) {
-            return Math.round(point / ((x ? xScale : yScale)))
+            return Math.round(point / (x ? xScale : yScale));
         }
         return 0;
     }
@@ -115,30 +108,40 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const yScale = this.getYScale();
 
         if (!isNaN(point)) {
-            return Math.round(point * (x ? xScale : yScale));
+
+            return Math.round(point * (x ? xScale : yScale));;
         }
 
         return 0;
     }
 
+    protected setDotPosition() {
+        const { x, y } = this.getScaledPoints();
+
+        return {
+            x: this.unScalePoint(x, true),
+            y: this.unScalePoint(y),
+        };
+    }
+
+    protected getDotPosition() {
+
+    }
+
     protected getScaledPoints() {
         const { x, y } = this.state;
+        console.log('Scale =>', this.state.scale);
+
         return {
-            x: this.scalePoint(x),
+            x: this.scalePoint(x, true),
             y: this.scalePoint(y),
-        };
+        };;
     }
 
     protected scalePixel(numberToScale: number) {
         const { scale } = this.state;
 
-        return `${numberToScale * scale}px`;
-    }
-
-    protected onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-        if (e.nativeEvent.offsetX && e.nativeEvent.offsetY) {
-            this.setPosition(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-        }
+        return `${(numberToScale * scale)}px`;
     }
 
     protected setDot(e: React.MouseEvent<HTMLDivElement>) {
@@ -148,8 +151,8 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
 
         this.setState({
             dotVisible: true,
-            x: mouseX,
-            y: mouseY,
+            x: Math.round(mouseX),
+            y: Math.round(mouseY),
         }, () => {
             if (!Snippet.isSnippetInputAnswerSingular(input)) {
                 const pos = this.getScaledPoints();
@@ -172,7 +175,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             }
 
             this.setState({
-                x: x ? this.unScalePoint(newValue) : pos.x,
+                x: x ? this.unScalePoint(newValue, true) : pos.x,
                 y: !x ? this.unScalePoint(newValue) : pos.y,
             }, () => {
                 const pos = this.getScaledPoints();
@@ -187,13 +190,18 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
     }
 
     protected buildGrid() {
+        const { scale } = this.state;
+        const lineSpacing = (20 * scale);
+        const currentWidth = 160 * scale;
+        const currentHeight = 120 * scale;
         let gridDivs: JSX.Element[] = [];
-        for (let i = 1; i < 16; ++i) {
-            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * 20}px` }} key={`grid-line-y-${i}`} />);
+
+        for (let i = 1; i <= (currentHeight / lineSpacing); ++i) {
+            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * lineSpacing}px` }} key={`grid-line-y-${i}`} />);
         }
 
-        for (let i = 1; i < 12; ++i) {
-            gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * 20}px` }} key={`grid-line-x-${i}`} />);
+        for (let i = 1; i <= currentWidth / lineSpacing; ++i) {
+            gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * lineSpacing}px` }} key={`grid-line-x-${i}`} />);
         }
 
         return gridDivs;
@@ -238,8 +246,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         role='grid'
                     >
                         {this.grid.map((grid) => grid)}
-                        <div className='position-picker cross-x' />
-                        <div className='position-picker cross-y' />
                         {dotVisible && <div className='position-picker dot' style={{ top: `${(y)}px` , left: `${(x)}px` }} />}
                     </div>
                 </SimulatorDisplay>

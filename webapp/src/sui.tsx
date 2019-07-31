@@ -950,6 +950,7 @@ export interface ModalProps extends ReactModal.Props {
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
     modalDidOpen?: (ref: HTMLElement) => void;
+    overlayClassName?: string;
 }
 
 interface ModalState {
@@ -1048,7 +1049,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             onClose, closeIcon, children, onKeyDown,
             header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
-            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
+            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
         const showBack = isFullscreen && !!closeIcon;
@@ -1084,7 +1085,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             shouldCloseOnEsc={shouldCloseOnEsc || closeOnEscape}
             shouldCloseOnOverlayClick={shouldCloseOnOverlayClick || (closeOnDocumentClick || closeOnDimmerClick)}
             portalClassName={portalClassName}
-            overlayClassName={`ui page modals dimmer transition ${isOpen ? 'visible active' : ''}`}
+            overlayClassName={`ui page modals dimmer transition ${overlayClassName} ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
             aria={aria} {...rest}>

@@ -42,6 +42,8 @@ interface SnippetBuilderState {
  * An output type is attached to the start of your markdown allowing you to define a number of markdown output. (blocks, lang)
  * An initial output is set and outputs defined at each questions are appended to the initial output.
  * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
+ * TODO:
+ * 1. Richer questions for different sprite paths
  */
 export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetBuilderState> {
     constructor(props: SnippetBuilderProps) {
@@ -468,7 +470,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const currentQuestion = this.getCurrentQuestion();
 
         return (
-            <sui.Modal isOpen={visible} className={'snippet-builder fullscreennobg'}
+            <sui.Modal isOpen={visible} className={'snippet-builder fullscreennobg'} overlayClassName={'snippet-builder-modal-overlay'}
                 closeOnEscape={true} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
                 onKeyDown={this.handleModalKeyDown}
@@ -515,7 +517,8 @@ function getSnippetExtensions(): pxt.SnippetConfig[] {
 }
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
-    const wrapper = document.body.appendChild(document.createElement('div'));
+    const overlay = document.createElement('div');
+    const wrapper = document.body.appendChild(overlay);
     const props = { parent:   parent, mainWorkspace: editor, config };
     const snippetBuilder = ReactDOM.render(
         React.createElement(SnippetBuilder, props),

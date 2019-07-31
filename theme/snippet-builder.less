@@ -249,25 +249,9 @@ input.slider.blocklyMockSlider[type=range]:focus::-ms-fill-upper {
 }
 
 /** Semantic UI's default fullscreen styling to bypass overrides (importants added by semantic)*/
-// .ui.snippet-builder.modal.large {
-//     width: 60% !important;
-//     left: 20% !important;
-//     margin: 1em auto;
-// }
-
-// .ui.snippet-builder.modal.large {
-//     left: 0em !important;
-// }
-
-// .ui.snippet-builder.modal.large > .header {
-//     padding-right: 2.25rem;
-// }
-
-// .ui.snippet-builder.modal.large > .close {
-//     top: 1.0535rem;
-//     right: 1rem;
-//     color: rgba(0, 0, 0, 0.87);
-// }
+.snippet-builder-modal-overlay.ReactModal__Overlay {
+    overflow-x: scroll;
+}
 
 @media only screen and (max-width: 1700px) {
     .ui.fullscreennobg.modal {
