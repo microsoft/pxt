@@ -50,11 +50,11 @@ namespace ts.pxtc {
         s += "  ],\n"
         s += "  iface: {\n"
         for (let m of info.itable) {
-            s += `    "${m.name}": ${m.proc ? m.proc.label() : "13"},\n`
+            s += `    "${m.name}": ${m.proc ? m.proc.label() : "null"},\n`
             if (m.setProc)
                 s += `    "set/${m.name}": ${m.setProc.label()},\n`
             else if (!m.proc)
-                s += `    "set/${m.name}": 13,\n`
+                s += `    "set/${m.name}": null,\n`
         }
         s += "  },\n"
         if (info.toStringMethod)
@@ -527,30 +527,26 @@ function ${id}(s) {
                 write(`${frameRef}.${arg} = ${emitExprPossiblyInto(a)};`)
             })
 
-            write(`s.pc = ${lblId};`)
             if (procid.ifaceIndex != null) {
                 U.assert(proc == null)
                 let isSet = false
                 if (procid.mapMethod) {
-                    write(`if (${frameRef}.arg0.vtable === 42) {`)
+                    write(`if (!${frameRef}.arg0.vtable.iface) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
                     args.splice(1, 0, procid.ifaceIndex.toString())
                     write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
-                    write(`  ${frameRef}.fn = doNothing;`)
                     write(`} else {`)
                     if (/Set/.test(procid.mapMethod))
                         isSet = true
                 }
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
-                write(`if (${frameRef}.fn === 13 || ${frameRef}.fn === undefined) {`)
                 let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
                 if (isSet) {
-                    write(`  ${fld} = ${frameRef}.arg1;`)
+                    write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
+                    write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
                 } else {
-                    write(`  s.retval = ${fld};`)
+                    write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)    
                 }
-                write(`  ${frameRef}.fn = doNothing;`)
-                write(`}`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
@@ -561,12 +557,11 @@ function ${id}(s) {
             } else if (procid.virtualIndex != null) {
                 U.assert(proc == null)
                 assert(procid.virtualIndex >= 0)
-                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             } else {
                 U.assert(proc != null)
             }
-            write(`return ${frameRef}`)
+            write(`if (${frameRef}.fn) { s.pc = ${lblId}; return ${frameRef} }`)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
 

@@ -270,7 +270,7 @@ namespace pxsim {
     }
 
     export class RefMap extends RefObject {
-        vtable = 42;
+        vtable = {};
         data: MapEntry[] = [];
 
         findIdx(key: string) {
