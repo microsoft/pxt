@@ -180,8 +180,6 @@ switch (step) {
             emitInstanceOf(proc.classInfo, "validate")
         }
 
-        const jumpToNextInstructionMarker = -1
-
         let lblIdx = 0
         let asyncContinuations: number[] = []
         for (let s of proc.body) {
@@ -189,6 +187,7 @@ switch (step) {
                 s.lblId = ++lblIdx;
         }
 
+        let idx = 0
         for (let s of proc.body) {
             switch (s.stmtKind) {
                 case ir.SK.Expr:
@@ -198,7 +197,16 @@ switch (step) {
                     stackEmpty();
                     break;
                 case ir.SK.Jmp:
-                    emitJmp(s);
+                    let isJmpNext = false
+                    for (let ii = idx + 1; ii < proc.body.length; ++ii) {
+                        if (proc.body[ii].stmtKind != ir.SK.Label)
+                            break
+                        if (s.lbl == proc.body[ii]) {
+                            isJmpNext = true
+                            break
+                        }
+                    }
+                    emitJmp(s, isJmpNext);
                     break;
                 case ir.SK.Label:
                     if (s.lblNumUses > 0)
@@ -209,6 +217,7 @@ switch (step) {
                     break;
                 default: oops();
             }
+            idx++
         }
 
         stackEmpty();
@@ -283,8 +292,8 @@ function ${id}(s) {
             return "s." + un
         }
 
-        function emitJmp(jmp: ir.Stmt) {
-            if (jmp.lbl.lblNumUses == ir.lblNumUsesJmpNext) {
+        function emitJmp(jmp: ir.Stmt, isJmpNext: boolean) {
+            if (jmp.lbl.lblNumUses == ir.lblNumUsesJmpNext || isJmpNext) {
                 assert(jmp.jmpMode == ir.JmpMode.Always)
                 if (jmp.expr)
                     emitExpr(jmp.expr)
@@ -557,7 +566,7 @@ function ${id}(s) {
             } else {
                 U.assert(proc != null)
             }
-            
+
             if (callIt) write(callIt)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
