@@ -39,7 +39,7 @@ namespace ts.pxtc {
     }
 
     function vtableToJs(info: ClassInfo) {
-        let s = `var ${info.id}_VT = {\n` +
+        let s = `const ${info.id}_VT = {\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
@@ -129,7 +129,7 @@ namespace ts.pxtc {
         if (bin.res.breakpoints)
             jssource += `\nconst breakpoints = setupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
         U.iterMap(bin.hexlits, (k, v) => {
-            jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
+            jssource += `const ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
         })
 
         jssource += `\nreturn ${bin.procs[0].label()}\n})\n`
@@ -147,7 +147,7 @@ namespace ts.pxtc {
         let localsCache: pxt.Map<boolean> = {}
 
         writeRaw(`
-const ${proc.label()} = function (s) {
+function ${proc.label()}(s) {
 let r0 = s.r0, step = s.pc;
 s.pc = -1;
 `)
@@ -250,7 +250,7 @@ switch (step) {
         function fnctor(id: string, procname: string, numTmps: number, locals: string[]) {
             let r = ""
             r += `
-const ${id} = function(s) {
+function ${id}(s) {
     checkStack(s.depth);
     return {
         parent: s, fn: ${procname}, depth: s.depth + 1, 
