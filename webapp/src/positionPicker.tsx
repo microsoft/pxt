@@ -130,7 +130,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
 
     protected getScaledPoints() {
         const { x, y } = this.state;
-        console.log('Scale =>', this.state.scale);
 
         return {
             x: this.scalePoint(x, true),
