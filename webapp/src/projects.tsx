@@ -425,7 +425,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     <div ref="detailView" className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
                         {cards.filter((scr, index) => index == selectedIndex).length > 0 ?
                             <div className="close">
-                                <sui.Icon tabIndex={0} icon="remove circle" onClick={this.closeDetail} />
+                                <sui.Icon tabIndex={0} aria-hidden={false} icon="remove circle" onClick={this.closeDetail} />
                             </div> : undefined}
                         {cards.filter((scr, index) => index == selectedIndex).map(scr =>
                             <ProjectsDetail parent={this.props.parent}

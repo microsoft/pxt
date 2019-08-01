@@ -1,9 +1,6 @@
-/**
- * Any changes in this file need to be ported over to /docs/static/tutorial-tool/tutorial.ts
- */
 namespace pxt.tutorial {
     export function parseTutorial(tutorialmd: string): TutorialInfo {
-        const steps = parseTutorialSteps(tutorialmd);
+        const [steps, activities] = parseTutorialSteps(tutorialmd);
         const title = parseTutorialTitle(tutorialmd);
         if (!steps)
             return undefined; // error parsing steps
@@ -47,6 +44,7 @@ namespace pxt.tutorial {
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
             title: title,
             steps: steps,
+            activities: activities,
             code,
             templateCode
         };
@@ -67,44 +65,73 @@ namespace pxt.tutorial {
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
+    function parseTutorialSteps(tutorialmd: string): [TutorialStepInfo[], TutorialActivityInfo[]] {
         const metadata = parseTutorialMetadata(tutorialmd);
         const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
 
         // Download tutorial markdown
-        let steps = tutorialmd.split(/^##[^#].*$/gmi);
-        let newAuthoring = true;
-        if (steps.length <= 1) {
-            // try again, using old logic.
-            steps = tutorialmd.split(/^###[^#].*$/gmi);
-            newAuthoring = false;
-        }
-        if (steps[0].indexOf("# Not found") == 0) {
-            pxt.debug(`tutorial not found`);
-            return undefined;
-        }
+        let activityInfo: TutorialActivityInfo[] = [];
         let stepInfo: TutorialStepInfo[] = [];
-        tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
-            let info: TutorialStepInfo = {
-                fullscreen: /@(fullscreen|unplugged)/.test(s),
-                unplugged: /@unplugged/.test(s),
-                tutorialCompleted: /@tutorialCompleted/.test(s)
+        let activities = tutorialmd.split(/(?=^#[^#].*$)/gmi);
+
+        for (let i = 0; i < activities.length; i++) {
+            let activity = activities[i];
+            if (!activity) continue;
+
+            let name;
+            activity = activity.replace(/^#[^#](.*)$/mi, function (f, s) {
+                name = s;
+                return ""
+            });
+
+            let steps = activity.split(/(?=^##[^#].*$)/gmi);
+
+            let newAuthoring = true;
+            if (steps.length <= 1) {
+                // try again, using old logic.
+                steps = activity.split(/^###[^#].*$/gmi);
+                newAuthoring = false;
             }
-            stepInfo.push(info);
-            return ""
-        });
+            if (steps[0].indexOf("# Not found") == 0) {
+                pxt.debug(`tutorial not found`);
+                return undefined;
+            }
 
-        if (steps.length < 1)
-            return undefined; // Promise.resolve();
-        steps = steps.slice(1, steps.length); // Remove tutorial title
+            if (steps && steps.length > 0) {
+                activityInfo.push({
+                    name: name || lf("Activity ") + activityInfo.length,
+                    step: stepInfo.length
+                })
+            }
 
-        for (let i = 0; i < steps.length; i++) {
-            const stepContent = steps[i].trim();
-            const contentLines = stepContent.split('\n');
+            for (let j = 0; j < steps.length; j++) {
+                let step = steps[j];
+                let flags;
+                step = step.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, function (f, s) {
+                    flags = s;
+                    return "";
+                }).trim();
+
+                if (!step) continue;
+
+                let info: TutorialStepInfo = {
+                    fullscreen: /@(fullscreen|unplugged)/.test(flags),
+                    unplugged: /@unplugged/.test(flags),
+                    tutorialCompleted: /@tutorialCompleted/.test(flags),
+                    contentMd: step.trim(),
+                    activity: i
+                }
+
+                stepInfo.push(info);
+            }
+        }
+
+        for (let i = 0; i < stepInfo.length; i++) {
             const info = stepInfo[i];
+            const stepContent = info.contentMd;
+            const contentLines = stepContent.split('\n');
 
             info.headerContentMd = contentLines[0];
-            info.contentMd = stepContent;
 
             let hintContentMd;
             if (metadata && metadata.v == 2) {
@@ -132,7 +159,7 @@ namespace pxt.tutorial {
 
             info.hasHint = hintContentMd && hintContentMd.length > 1;
         }
-        return stepInfo;
+        return [stepInfo, activityInfo];
     }
 
     /*

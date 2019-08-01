@@ -116,7 +116,7 @@ export class ProjectView
     private runToken: pxt.Util.CancellationToken;
 
     // component ID strings
-    private static readonly tutorialCardId = "tutorialcard";
+    static readonly tutorialCardId = "tutorialcard";
 
     constructor(props: IAppProps) {
         super(props);
@@ -1483,8 +1483,27 @@ export class ProjectView
                 pubCurrent: false
             }
         }
+
         return workspace.installAsync(h, project.text)
             .then(hd => this.loadHeaderAsync(hd, editorState));
+    }
+
+    importTutorialAsync(md: string) {
+        try {
+            const { options, editor } = getTutorialOptions(md, "untitled", "untitled", "", false);
+            const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+
+            return this.createProjectAsync({
+                name: "untitled",
+                tutorial: options,
+                preferredEditor: editor,
+                dependencies
+            });
+        }
+        catch (e) {
+            Util.userError("Could not import tutorial");
+            return Promise.reject(e);
+        }
     }
 
     initDragAndDrop() {
@@ -2345,7 +2364,9 @@ export class ProjectView
                 /* tslint:disable:react-iframe-missing-sandbox */
                 <div className="ui container">
                     <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'paddingBottom': '40%', 'overflow': 'hidden' }}>
-                        <iframe frameBorder="0"
+                        <iframe
+                            frameBorder="0"
+                            aria-label={lf("Print preview")}
                             sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
                             style={{ 'position': 'absolute', 'top': 0, 'left': 0, 'width': '100%', 'height': '100%' }}
                             src={url} />
@@ -2944,39 +2965,20 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
-            md = pxt.tutorial.patchArcadeSnippets(md);
-
-            const tutorialInfo = pxt.tutorial.parseTutorial(md);
-            if (!tutorialInfo)
-                throw new Error(lf("Invalid tutorial format"));
-
-            const tutorialOptions: pxt.tutorial.TutorialOptions = {
-                tutorial: tutorialId,
-                tutorialName: tutorialInfo.title || filename,
-                tutorialReportId: reportId,
-                tutorialStep: 0,
-                tutorialReady: true,
-                tutorialHintCounter: 0,
-                tutorialStepInfo: tutorialInfo.steps,
-                tutorialMd: md,
-                tutorialCode: tutorialInfo.code,
-                tutorialRecipe: !!recipe,
-                templateCode: tutorialInfo.templateCode
-            };
+            const { options, editor } = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 
             // start a tutorial within the context of an existing program
             if (recipe) {
                 const header = pkg.mainEditorPkg().header;
-                header.tutorial = tutorialOptions;
+                header.tutorial = options;
                 header.tutorialCompleted = undefined;
                 return this.loadHeaderAsync(header);
             }
 
             return this.createProjectAsync({
                 name: filename,
-                tutorial: tutorialOptions,
-                preferredEditor: tutorialInfo.editor,
+                tutorial: options,
+                preferredEditor: editor,
                 dependencies
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
@@ -3206,7 +3208,7 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const showCollapseButton = !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
@@ -3286,8 +3288,8 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
@@ -3926,3 +3928,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, false);
 })
+
+
+function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string} {
+    // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
+    md = pxt.tutorial.patchArcadeSnippets(md);
+
+    const tutorialInfo = pxt.tutorial.parseTutorial(md);
+    if (!tutorialInfo)
+        throw new Error(lf("Invalid tutorial format"));
+
+    const tutorialOptions: pxt.tutorial.TutorialOptions = {
+        tutorial: tutorialId,
+        tutorialName: tutorialInfo.title || filename,
+        tutorialReportId: reportId,
+        tutorialStep: 0,
+        tutorialReady: true,
+        tutorialHintCounter: 0,
+        tutorialStepInfo: tutorialInfo.steps,
+        tutorialActivityInfo: tutorialInfo.activities,
+        tutorialMd: md,
+        tutorialCode: tutorialInfo.code,
+        tutorialRecipe: !!recipe,
+        templateCode: tutorialInfo.templateCode
+    };
+
+    return { options: tutorialOptions, editor: tutorialInfo.editor };
+}

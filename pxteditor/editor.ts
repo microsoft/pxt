@@ -175,6 +175,7 @@ namespace pxt.editor {
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
+        importTutorialAsync(markdown: string): Promise<void>;
         overrideTypescriptFile(text: string): void;
         overrideBlocksFile(text: string): void;
 
