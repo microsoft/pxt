@@ -1273,6 +1273,9 @@ ${baseLabel}_nochk:
             let theOneReg = ""
             let procid = topExpr.data as ir.ProcId
 
+            if (procid.proc && procid.proc.inlineBody)
+                return this.emitExpr(procid.proc.inlineSelf(topExpr.args))
+
             let isLambda = procid.virtualIndex == -1
 
             let seenUpdate = false
