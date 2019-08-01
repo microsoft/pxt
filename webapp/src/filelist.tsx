@@ -94,7 +94,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
-                    onErrorClicked={this.navigateToError}
+                    onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
                     hasDelete={deleteFiles && /\.blocks$/i.test(file.getName())}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
