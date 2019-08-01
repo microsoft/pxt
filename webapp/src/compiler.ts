@@ -332,8 +332,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
             return workerOpAsync("apiSearch", {
                 search: searchFor,
-                blocks: blocksOptions(),
-                runtime: pxt.appTarget.runtime
+                blocks: blocksOptions()
             });
         });
 }
