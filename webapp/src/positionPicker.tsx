@@ -33,7 +33,6 @@ interface PositionPickerState {
  * 2. Dot slides on resize, recalculate the dots top and left based on new scale
  */
 export class PositionPicker extends data.Component <PositionPickerProps, PositionPickerState> {
-    private grid: JSX.Element[];
     constructor(props: PositionPickerProps) {
         super(props);
         this.state = {
@@ -42,7 +41,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             dotVisible: false,
         };
 
-        this.grid = this.buildGrid();
         this.setDot = this.setDot.bind(this);
         this.onChange = this.onChange.bind(this);
         this.setScale = this.setScale.bind(this);
