@@ -30,6 +30,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
         this.togglePkg = this.togglePkg.bind(this);
+        this.navigateToError = this.navigateToError.bind(this);
     }
 
     componentWillReceiveProps(nextProps: ISettingsProps) {
@@ -76,8 +77,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             .done()
     }
 
-    private navigateToError(diag: pxtc.KsDiagnostic) {
-        this.props.parent.navigateToError(diag);
+    private navigateToError(meta: pkg.FileMeta) {
+        const diag = meta && meta.diagnostics && meta.diagnostics[0];
+        if (diag)
+            this.props.parent.navigateToError(diag);
     }
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
@@ -85,13 +88,13 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const deleteFiles = pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
-            const navigateToErrorHandler = () => {
-                this.navigateToError(meta && meta.diagnostics && meta.diagnostics[0]);
-            };
             return (
-                <FileTreeItem key={file.getName()} file={file}
+                <FileTreeItem key={file.getName()}
+                    file={file}
+                    meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
+                    onErrorClicked={this.navigateToError}
                     isActive={currentFile == file}
                     hasDelete={deleteFiles && /\.blocks$/i.test(file.getName())}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
@@ -99,7 +102,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     {file.name} {meta.isSaved ? "" : "*"}
                     {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
-                    {!meta.numErrors ? null : <a className='ui label red button' title={lf("Show first error")} onClick={navigateToErrorHandler}>{meta.numErrors}</a>}
                 </FileTreeItem>);
         })
     }
@@ -269,8 +271,10 @@ namespace custom {
 
 interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
     file: pkg.File;
+    meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onErrorClick: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
 }
@@ -280,12 +284,18 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleErrorClick = this.handleErrorClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
         this.props.onItemClick(this.props.file);
+        e.stopPropagation();
+    }
+
+    handleErrorClick(e: React.MouseEvent<HTMLElement>) {
+        this.props.onErrorClick(this.props.meta);
         e.stopPropagation();
     }
 
@@ -299,7 +309,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -311,6 +321,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             {...rest}>
             {this.props.children}
 
+            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
