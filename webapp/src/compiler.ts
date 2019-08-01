@@ -385,7 +385,8 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
         : getApisInfoAsync().then(info => {
-            cachedBlocks = pxtc.getBlocksInfo(info);
+            const bannedCategories = pkg.mainEditorPkg().resolveBannedCategories();
+            cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
             return cachedBlocks;
         });
 }
