@@ -588,6 +588,9 @@ _start_${name}:
             let calledProcId = topExpr.data as ir.ProcId
             let calledProc = calledProcId.proc
 
+            if (calledProc && calledProc.inlineBody)
+                return emitExpr(calledProc.inlineSelf(topExpr.args))
+
             let numPush = 0
             const args = topExpr.args.slice()
             const lambdaArg = calledProcId.virtualIndex == -1 ? args.shift() : null
