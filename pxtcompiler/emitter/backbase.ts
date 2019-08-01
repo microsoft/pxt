@@ -45,6 +45,10 @@ namespace ts.pxtc {
     //   - registers for runtime calls (r0, r1,r2,r3)
     //   - r5 is for captured locals in lambda
     //   - r6 for global{}
+    //   - r4 and r7 are used as temporary
+    //   - C code assumes the following are calee saved: r4-r7, r8-r11
+    //   - r12 is intra-procedure scratch and can be treated like r0-r3
+    //   - r13 is sp, r14 is lr, r15 is pc
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
@@ -92,10 +96,7 @@ namespace ts.pxtc {
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
 
         obj_header(vt: string) {
-            if (target.gc)
-                return `.word ${vt}`
-            else
-                return `.short ${pxt.REFCNT_FLASH}, ${vt}>>${target.vtableShift}`
+            return `.word ${vt}`
         }
 
         string_literal(lbl: string, strLit: string) {
@@ -507,11 +508,8 @@ ${baseLabel}_nochk:
                             this.write(this.t.emit_int(cell.index, reg))
                             off = reg
                         }
-                        if (target.gc) {
-                            this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
-                            this.write(this.t.load_reg_src_off(reg, "r7", off, false, false, inf))
-                        } else
-                            this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
+                        this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
+                        this.write(this.t.load_reg_src_off(reg, "r7", off, false, false, inf))
                     } else {
                         let [src, imm, idx] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off(reg, src, imm, idx))
@@ -549,14 +547,6 @@ ${baseLabel}_nochk:
                     // this is there because we need different addresses for breakpoints
                     this.write(this.t.nop())
                     break;
-                case ir.EK.Incr:
-                    this.emitExpr(e.args[0])
-                    this.emitCallRaw("pxt::incr")
-                    break;
-                case ir.EK.Decr:
-                    this.emitExpr(e.args[0])
-                    this.emitCallRaw("pxt::decr")
-                    break;
                 case ir.EK.FieldAccess:
                     this.emitExpr(e.args[0])
                     return this.emitFieldAccess(e)
@@ -588,63 +578,17 @@ ${baseLabel}_nochk:
                 lbl += "_chk"
             }
 
-            if (target.gc) {
-                let off = info.idx * 4 + 4
-                let xoff = "#" + off
-                if (off > 124) {
-                    this.write(this.t.emit_int(off, "r3"))
-                    xoff = "r3"
-                }
-                if (store)
-                    this.write(`str r1, [r0, ${xoff}]`)
-                else
-                    this.write(`ldr r0, [r0, ${xoff}]`)
-                return
+            let off = info.idx * 4 + 4
+            let xoff = "#" + off
+            if (off > 124) {
+                this.write(this.t.emit_int(off, "r3"))
+                xoff = "r3"
             }
-
-            this.emitLabelledHelper(lbl, () => {
-                let off = info.idx * 4 + 4
-                let xoff = "#" + off
-                if (off > 124) {
-                    this.write(this.t.emit_int(off, "r3"))
-                    xoff = "r3"
-                }
-
-                this.write(`mov r7, lr`)
-
-                if (store) {
-                    this.write(`push {r0, r1}`)
-                    this.write(`ldr r0, [r0, ${xoff}]`)
-                    this.write(`bl _pxt_decr`)
-                    this.write(`pop {r0, r1}`)
-                    if (off > 124)
-                        this.write(this.t.emit_int(off, "r3"))
-                    this.write(`str r1, [r0, ${xoff}]`)
-                    if (info.needsCheck)
-                        this.write(`ldrh r2, [r0, #0]`)
-                } else {
-                    this.write(`ldr r4, [r0, ${xoff}]`)
-                }
-
-
-                if (info.needsCheck) {
-                    // already decremented, but need to check for refcnt=0
-                    this.write(`cmp r2, #1`)
-                    this.write(`bne .notzero`)
-                    this.write(`bl pxt::deleteRefObject`)
-                    this.write(`.notzero:`)
-                } else {
-                    // need to decrement
-                    this.write(`bl _pxt_decr`)
-                }
-
-                if (!store) {
-                    this.write(`mov r0, r4`)
-                    this.write(`bl _pxt_incr`)
-                }
-
-                this.write(`bx r7`)
-            })
+            if (store)
+                this.write(`str r1, [r0, ${xoff}]`)
+            else
+                this.write(`ldr r0, [r0, ${xoff}]`)
+            return
         }
 
         private emitClassCall(procid: ir.ProcId) {
@@ -727,15 +671,8 @@ ${baseLabel}_nochk:
                     mov r4, lr
                 `)
 
-                if (getset && !target.gc) {
-                    this.write("movs r3, #0")
-                    this.write("str r3, [sp, #0] ; clear so it won't get decr()ed outside")
-                }
-
                 if (getset == "set") {
                     this.write("ldr r2, [sp, #4] ; ld-val")
-                    if (!target.gc)
-                        this.write("str r3, [sp, #4] ; clear so it won't get decr()ed outside")
                 }
 
                 this.write(this.t.callCPP(getset == "set" ? "pxtrt::mapSet" : "pxtrt::mapGet"))
@@ -750,50 +687,22 @@ ${baseLabel}_nochk:
 
             this.write(".field:")
             if (getset == "set") {
-                if (target.gc) {
-                    this.write(`
+                this.write(`
                         ldr r3, [sp, #4] ; ld-val
                         str r3, [r0, r2] ; store field
                         bx lr
                     `)
-                } else {
-                    this.write(`
-                        ldr r7, [r0, r2] ; load field
-                        ldr r3, [sp, #4] ; ld-val
-                        str r7, [sp, #4] ; save previous value - it will get decr()ed outside
-                        str r3, [r0, r2] ; store field
-                        bx lr
-                    `)
-                }
             } else if (getset == "get") {
-                if (target.gc) {
-                    this.write(`
+                this.write(`
                         ldr r0, [r0, r2] ; load field
                         bx lr
                     `)
-                } else {
-                    this.write(`
-                        mov r4, lr
-                        ldr r0, [r0, r2] ; load field
-                        bl _pxt_incr
-                        bx r4
-                    `)
-                }
+
             } else {
-                if (target.gc) {
-                    this.write(`
+                this.write(`
                         ldr r0, [r0, r2] ; load field
                     `)
-                } else {
-                    this.write(`
-                        mov r4, lr
-                        ldr r7, [r0, r2] ; load field
-                        bl _pxt_decr
-                        mov r0, r7
-                        bl _pxt_incr
-                        mov lr, r4
-                    `)
-                }
+
             }
 
             if (!getset) {
@@ -855,23 +764,6 @@ ${baseLabel}_nochk:
             this.write(`beq .fail`) // null
 
             this.write(`ldr r3, [r0, #0]`)
-
-            if (!target.gc) {
-                this.write(`lsls ${r2}, r3, #30`)
-                this.write(`beq .fail`) // C++ class - TODO remove
-                if (decr) {
-                    this.write(`lsls ${r2}, r3, #31`)
-                    this.write(`beq .inflash`)
-                    this.write(`uxth ${r2}, r3`)
-                    this.write(`subs ${r2}, #2`)
-                    this.write(`blt .fail`) // ref-cnt underflow!
-                    this.write(`strh ${r2}, [r0, #0]`)
-                    this.write(`.inflash:`)
-                }
-                this.write(`lsrs r3, r3, #16`)
-                this.write(`lsls r3, r3, #${target.vtableShift}`)
-            }
-
             this.write("; vtable in R3")
         }
 
@@ -922,61 +814,27 @@ ${baseLabel}_nochk:
                     console.log(allArgs.map(a => a.toString()))
                     U.oops(`wrong uses: ${r.currUses} ${r.totalUses}`)
                 }
-            }
-
-            for (let r of nonRefs) {
                 r.currUses = 1
             }
-
-            if (target.gc || refs.length == 0) {
-                // no helper in that case
-                for (let r of refs) {
-                    r.currUses = 1
-                }
-                this.clearStack()
-                return
-            }
-
-            const s0 = this.exprStack.length
-            const decr = this.redirectOutput(() => {
-                this.write(this.t.mov("r7", "r0"))
-                this.write(this.t.mov("r4", "lr"))
-                let k = 0
-                while (refs.length > 0) {
-                    this.clearStack(true)
-                    let s0 = this.exprStack[0]
-                    let idx = refs.indexOf(s0)
-                    if (idx >= 0) {
-                        this.exprStack.shift()
-                        refs.splice(idx, 1)
-                        this.write(this.t.pop_fixed(["r0"]))
-                        this.write(this.t.inline_decr(k++))
-                    } else {
-                        break
-                    }
-                }
-                while (refs.length > 0) {
-                    let r = refs.shift()
-                    r.currUses = 1
-                    this.write(this.loadFromExprStack("r0", r))
-                    this.write(this.t.inline_decr(k++))
-                }
-                this.clearStack()
-                this.write(this.t.mov("r0", "r7"))
-                this.write(this.t.helper_ret())
-            })
-            const numPops = s0 - this.exprStack.length
-
-            this.emitHelper(`@dummystack ${numPops}\n` + decr, "clr" + numArgs)
-            this.write(`@dummystack ${-numPops}`)
+            this.clearStack()
         }
 
         private builtInClassNo(typeNo: pxt.BuiltInType): ClassInfo {
             return { id: "builtin" + typeNo, classNo: typeNo, lastSubtypeNo: typeNo } as any
         }
 
+        private emitBeginTry(topExpr: ir.Expr) {
+            // this.write(`adr r0, ${topExpr.args[0].data}`)
+            this.emitExprInto(topExpr.args[0], "r0")
+            this.write(`bl _pxt_save_exception_state`)
+        }
+
         private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
             let name: string = topExpr.data
+
+            if (name == "pxt::beginTry") {
+                return this.emitBeginTry(topExpr)
+            }
 
             let maskInfo = topExpr.mask || { refMask: 0 }
             let convs = maskInfo.conversions || []
@@ -1157,12 +1015,9 @@ ${baseLabel}_nochk:
         private alignExprStack(numargs: number) {
             let interAlign = this.stackAlignmentNeeded(numargs)
             if (interAlign) {
-                if (!target.gc)
-                    this.write(this.t.push_locals(interAlign))
                 for (let i = 0; i < interAlign; ++i) {
                     // r5 should be safe to push on gc stack
-                    if (target.gc)
-                        this.write(`push {r5} ; align`)
+                    this.write(`push {r5} ; align`)
                     this.pushDummy()
                 }
             }
@@ -1191,35 +1046,16 @@ ${baseLabel}_nochk:
                         hasAlign = true
                         this.write("push {lr} ; align")
                     }
-                    if (target.gc) {
-                        this.write(`
+                    this.write(`
                             push {r0, r2, lr}
                             mov r0, r1
                         `)
-                    } else {
-                        this.write(`
-                            mov r7, r1
-                            push {r0, r2, lr}
-                            bl _pxt_incr
-                            ldr r0, [sp, #4]
-                            bl _pxt_incr
-                            mov r0, r7
-                        `)
-                    }
+
                 } else {
-                    if (target.gc) {
-                        this.write(`
+                    this.write(`
                             push {r0, lr}
                             mov r0, r1
                         `)
-                    } else {
-                        this.write(`
-                            mov r7, r1
-                            push {r0, lr}
-                            bl _pxt_incr
-                            mov r0, r7
-                        `)
-                    }
                 }
 
                 this.write(`
@@ -1230,18 +1066,8 @@ ${baseLabel}_nochk:
                     bl .dowork
                 `)
 
-                if (!target.gc) {
-                    this.write("mov r7, r0")
-                    for (let i = 0; i < numargs; ++i) {
-                        this.write("pop {r0}")
-                        this.write("bl _pxt_decr")
-                    }
-                    if (hasAlign)
-                        this.write(this.t.pop_locals(1))
-                    this.write("mov r0, r7")
-                } else {
-                    this.write(this.t.pop_locals(numargs + (hasAlign ? 1 : 0)))
-                }
+
+                this.write(this.t.pop_locals(numargs + (hasAlign ? 1 : 0)))
 
                 this.write("pop {pc}")
 
@@ -1345,41 +1171,75 @@ ${baseLabel}_nochk:
         }
 
         private emitLambdaTrampoline() {
-            let gcNo = target.gc ? ";" : ""
-            let rfNo = !target.gc ? ";" : ""
             let r3 = target.stackAlign ? "r3," : ""
             this.write(`
             .section code
             _pxt_lambda_trampoline:
                 push {${r3} r4, r5, r6, r7, lr}
+                mov r4, r8
+                mov r5, r9
+                mov r6, r10
+                mov r7, r11
+                push {r4, r5, r6, r7} ; save high registers
                 mov r4, r1
                 mov r5, r2
                 mov r6, r3
-                mov r7, r0`)
+                mov r7, r0
+                `)
             // TODO should inline this?
             this.emitInstanceOf(this.builtInClassNo(pxt.BuiltInType.RefAction), "validate")
             this.write(`
-                ${rfNo}mov r0, sp
+                mov r0, sp
                 push {r4, r5, r6, r7} ; push args and the lambda
-                ${rfNo}mov r1, sp
-                ${rfNo}bl pxt::pushThreadContext
-                ${gcNo}bl pxtrt::getGlobalsPtr
+                mov r1, sp
+                bl pxt::pushThreadContext
                 mov r6, r0          ; save ctx or globals
                 mov r5, r7          ; save lambda for closure
-                ${gcNo}mov r0, r7
-                ${gcNo}bl _pxt_incr        ; make sure lambda stays alive
                 ldr r0, [r5, #8]    ; ld fnptr
                 movs r4, #3         ; 3 args
                 blx r0              ; execute the actual lambda
                 mov r7, r0          ; save result
                 @dummystack 4
                 add sp, #4*4        ; remove arguments and lambda
-                ${gcNo}mov r0, r5   ; decrement lambda
-                ${gcNo}bl _pxt_decr
-                ${rfNo}mov r0, r6   ; or pop the thread context
-                ${rfNo}bl pxt::popThreadContext
+                mov r0, r6   ; or pop the thread context
+                bl pxt::popThreadContext
                 mov r0, r7 ; restore result
+                pop {r4, r5, r6, r7} ; restore high registers
+                mov r8, r4
+                mov r9, r5
+                mov r10, r6
+                mov r11, r7
                 pop {${r3} r4, r5, r6, r7, pc}`)
+
+            this.write(`
+            .section code
+            ; r0 - try frame
+            ; r1 - handler PC
+            _pxt_save_exception_state:
+                push {r0, lr}
+                ${this.t.callCPP("pxt::beginTry")}
+                pop {r1, r4}
+                str r1, [r0, #1*4] ; PC
+                mov r1, sp
+                str r1, [r0, #2*4] ; SP
+                str r5, [r0, #3*4] ; lambda ptr
+                bx r4
+                `)
+
+            this.write(`
+            .section code
+            ; r0 - try frame
+            ; r1 - thread context
+            _pxt_restore_exception_state:
+                mov r6, r1
+                ldr r1, [r0, #2*4] ; SP
+                mov sp, r1
+                ldr r5, [r0, #3*4] ; lambda ptr
+                ldr r1, [r0, #1*4] ; PC
+                movs r0, #1
+                orrs r1, r0
+                bx r1
+                `)
 
             this.write(`
             .section code
@@ -1397,26 +1257,16 @@ ${baseLabel}_nochk:
                 cmp r7, #0
                 beq .fail
                 push {r0, lr}
-                ${gcNo}bl _pxt_incr
                 movs r4, #1
                 blx r7
-                ${rfNo}str r0, [sp, #0]
-                ${gcNo}mov r7, r0
-                ${gcNo}pop {r0}
-                ${gcNo}bl _pxt_decr
-                ${gcNo}mov r0, r7
-                ${gcNo}push {r7}
+                str r0, [sp, #0]
                 b .numops
 
             .fail: ; not an object or no toString
                 push {r0, lr}
             .numops:
                 ${this.t.callCPP("numops::toString")}
-                ${rfNo}pop {r1}
-                ${gcNo}mov r7, r0
-                ${gcNo}pop {r0}
-                ${gcNo}bl _pxt_decr
-                ${gcNo}mov r0, r7
+                pop {r1}
                 pop {pc}
             `)
         }
@@ -1596,22 +1446,15 @@ ${baseLabel}_nochk:
                 this.write(`str r1, [sp, #4*${i}]`)
             }
 
-            let gcNo = target.gc ? ";" : ""
-
             this.write(`
                 str r5, [sp, #4*${numargs}]
                 mov r1, lr
                 str r1, [sp, #4*${numargs + 1}]
                 mov r5, r0
                 ldr r7, [r5, #8]
-                ${gcNo}ldr r0, [sp, #4*${numargs}]
-                ${gcNo}bl _pxt_incr
                 blx r7
-                ${gcNo}mov r7, r0
                 ldr r4, [sp, #4*${numargs + 1}]
                 ldr r5, [sp, #4*${numargs}]
-                ${gcNo}mov r0, r5
-                ${gcNo}bl _pxt_decr
             `)
 
             // move arguments back where they were
@@ -1622,7 +1465,6 @@ ${baseLabel}_nochk:
 
             this.write(`
                 add sp, #8
-                ${gcNo}mov r0, r7
                 bx r4
             `)
 
@@ -1642,12 +1484,8 @@ ${baseLabel}_nochk:
                             off = "r1"
                         }
 
-                        if (target.gc) {
-                            this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
-                            this.write(this.t.load_reg_src_off("r0", "r7", off, false, true, inf))
-                        } else {
-                            this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
-                        }
+                        this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
+                        this.write(this.t.load_reg_src_off("r0", "r7", off, false, true, inf))
                     } else {
                         let [reg, imm, off] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off("r0", reg, imm, off, true))
@@ -1731,26 +1569,10 @@ ${baseLabel}_nochk:
 
             this.write(`bl ${this.proc.label()}_nochk`)
 
-            if (target.gc) {
-                let stackSize = numargs + (needsAlign ? 1 : 0)
-                this.write(`@dummystack ${stackSize}`)
-                this.write(`add sp, #4*${stackSize}`)
-                this.write(`pop {pc}`)
-            } else {
-                this.emitLabelledHelper(`clr_and_ret_${numargs}`, () => {
-                    this.write(`@dummystack ${numpush}`)
-                    this.write(`mov r7, r0`)
-                    for (let i = numargs; i > 0; i--) {
-                        this.write(`pop {r0}`)
-                        this.write(`bl _pxt_decr`)
-                    }
-                    this.write(`mov r0, r7`)
-                    if (needsAlign)
-                        this.write(`pop {r1, pc}`)
-                    else
-                        this.write(`pop {pc}`)
-                })
-            }
+            let stackSize = numargs + (needsAlign ? 1 : 0)
+            this.write(`@dummystack ${stackSize}`)
+            this.write(`add sp, #4*${stackSize}`)
+            this.write(`pop {pc}`)
         }
 
         private emitCallRaw(name: string) {

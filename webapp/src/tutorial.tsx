@@ -10,6 +10,7 @@ import * as md from "./marked";
 import * as compiler from "./compiler";
 import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
+import { ProjectView } from "./app";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -46,8 +47,35 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
         });
 }
 
-export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
+export class TutorialMenu extends data.Component<ISettingsProps, {}> {
+    protected hasActivities: boolean;
     constructor(props: ISettingsProps) {
+        super(props);
+        let tutorialOptions = this.props.parent.state.tutorialOptions;
+        this.hasActivities = tutorialOptions && tutorialOptions.tutorialActivityInfo && tutorialOptions.tutorialActivityInfo.length > 1;
+    }
+
+    renderCore () {
+        let tutorialOptions = this.props.parent.state.tutorialOptions;
+        if (this.hasActivities) {
+            return <TutorialStepCircle parent={this.props.parent} />;
+        } else if (tutorialOptions.tutorialStepInfo.length < 8) {
+            return <TutorialMenuItem parent={this.props.parent} />;
+        } else {
+            return <div className="menu">
+                <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
+                <TutorialStepCircle parent={this.props.parent} className="mobile only" />
+            </div>
+        }
+    }
+}
+
+interface ITutorialMenuProps extends ISettingsProps {
+    className?: string;
+}
+
+export class TutorialMenuItem extends data.Component<ITutorialMenuProps, {}> {
+    constructor(props: ITutorialMenuProps) {
         super(props);
 
         this.openTutorialStep = this.openTutorialStep.bind(this);
@@ -74,7 +102,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
             return "mobile hide";
         }
 
-        return <div className="ui item">
+        return <div className={`ui item ${this.props.className}`}>
             <div className="ui item tutorial-menuitem" role="menubar">
                 {tutorialStepInfo.map((step, index) =>
                     (index == currentStep) ?
@@ -114,6 +142,78 @@ export class TutorialMenuItemLink extends data.Component<TutorialMenuItemLinkPro
         return <a className={className} role="menuitem" aria-label={ariaLabel} tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
             {this.props.children}
         </a>;
+    }
+}
+
+interface ITutorialActivityDropdownProps extends ISettingsProps {
+    currentActivity: number;
+    activityInfo: pxt.tutorial.TutorialActivityInfo[];
+}
+
+export class TutorialActivityDropdown extends data.Component<ITutorialActivityDropdownProps, {}> {
+    constructor(props: ITutorialActivityDropdownProps) {
+        super(props);
+        this.handleActivitySelect = this.handleActivitySelect.bind(this);
+    }
+
+    handleActivitySelect = (value: number) => () => {
+        pxt.tickEvent(`tutorial.step`, { tutorial: this.props.parent.state.tutorialOptions.tutorial, step: value }, { interactiveConsent: true });
+        this.props.parent.setTutorialStep(value);
+    }
+
+    renderCore() {
+        let activity = this.props.activityInfo[this.props.currentActivity];
+        return <sui.DropdownMenu id="tutorialdropdown" role="menuitem" icon="angle down" rightIcon text={activity.name} title={lf("Select tutorial activity")} className={`item`}>
+            {this.props.activityInfo.map((activity, index) =>
+                <sui.Item role="menuitem" value={activity.step.toString()} key={index} text={activity.name} onClick={this.handleActivitySelect(activity.step)} />
+            )}
+        </sui.DropdownMenu>
+    }
+}
+
+export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
+    constructor(props: ITutorialMenuProps) {
+        super(props);
+
+        this.openTutorialStep = this.openTutorialStep.bind(this);
+    }
+
+    handleNextClick = () => {
+        let options = this.props.parent.state.tutorialOptions;
+        this.openTutorialStep( options.tutorialStep + 1);
+    }
+
+    handlePrevClick = () => {
+        let options = this.props.parent.state.tutorialOptions;
+        this.openTutorialStep( options.tutorialStep - 1);
+    }
+
+    openTutorialStep(step: number) {
+        let options = this.props.parent.state.tutorialOptions;
+        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
+        this.props.parent.setTutorialStep(step);
+    }
+
+    renderCore() {
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.props.parent.state.tutorialOptions;
+        const currentStep = tutorialStep;
+        const hasPrev = tutorialReady && currentStep != 0;
+        const hasNext = tutorialReady && currentStep != tutorialStepInfo.length - 1;
+        const isRtl = false;
+
+        if (!tutorialReady) return <div />;
+
+        return <div id="tutorialsteps" className={`ui item ${this.props.className}`}>
+            <div className="ui item" role="menubar">
+                <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron large`} disabled={!hasPrev} className={`prevbutton left attached ${!hasPrev ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.handlePrevClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="step-label" key={'tutorialStep' + currentStep}>
+                    <sui.ProgressCircle progress={currentStep} steps={tutorialStepInfo.length} stroke={4.5} />
+                    <span className={`ui circular label blue selected ${!tutorialReady ? 'disabled' : ''}`}
+                        aria-label={lf("You are currently at tutorial step {0}.")}>{tutorialStep + 1}</span>
+                </span>
+                <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron large`} disabled={!hasNext} rightIcon className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.handleNextClick} onKeyDown={sui.fireClickOnEnter} />
+            </div>
+        </div>;
     }
 }
 
@@ -159,7 +259,7 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         if (!tutorialReady) return <div />;
 
         const step = tutorialStepInfo[tutorialStep];
-        const tutorialHint = step.blockSolution;
+        const tutorialHint = step.hintContentMd;
         const fullText = step.contentMd;
 
         if (!step.unplugged) {
@@ -447,11 +547,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
+        const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hasPrevious = tutorialReady && currentStep != 0;
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
-        const hasFinish = currentStep == maxSteps - 1;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1;
         const hasHint = this.hasHint();
 
         let tutorialAriaLabel = '',

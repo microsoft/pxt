@@ -43,6 +43,7 @@ namespace pxt.editor {
         | "closeflyout"
         | "newproject"
         | "importproject"
+        | "importtutorial"
         | "proxytosim" // EditorMessageSimulatorMessageProxyRequest
         | "undo"
         | "redo"
@@ -163,6 +164,12 @@ namespace pxt.editor {
         // (optional) filtering argument
         filters?: pxt.editor.ProjectFilters;
         searchBar?: boolean;
+    }
+
+    export interface EditorMessageImportTutorialRequest extends EditorMessageRequest {
+        action: "importtutorial";
+        // markdown to load
+        markdown: string;
     }
 
     export interface EditorMessageRenderBlocksRequest extends EditorMessageRequest {
@@ -329,6 +336,11 @@ namespace pxt.editor {
                                             filters: load.filters,
                                             searchBar: load.searchBar
                                         }));
+                                }
+                                case "importtutorial": {
+                                    const load = data as EditorMessageImportTutorialRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.importTutorialAsync(load.markdown));
                                 }
                                 case "proxytosim": {
                                     const simmsg = data as EditorMessageSimulatorMessageProxyRequest;

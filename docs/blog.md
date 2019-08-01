@@ -1,5 +1,14 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Assignments in Teams](/blog/teams/teams-assignments)
+ 
+July 2nd, 2019 by [Jaqster](https://github.com/jaqster)
+
+We’re excited to announce a new Teams feature for Educators who are teaching with MakeCode.
+You can now create MakeCode programming assignments for your students by attaching a MakeCode project.
+Students can then open the MakeCode editor and complete the assignment without ever leaving Teams!
+**[Continue reading this blog post](/blog/teams/teams-assignments)**
+
 ## [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
  
 June 15th, 2019 by [Jaqster](https://github.com/jaqster)

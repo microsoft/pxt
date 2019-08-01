@@ -477,10 +477,6 @@ _start_${name}:
                 case EK.Nop:
                     write("; nop")
                     break
-                case EK.Incr:
-                case EK.Decr:
-                    U.oops()
-                    break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     emitExpr(e.args[0])
@@ -538,6 +534,12 @@ _start_${name}:
 
         function emitRtCall(topExpr: ir.Expr) {
             let name: string = topExpr.data
+
+            if (name == "pxt::beginTry") {
+                write(`try ${topExpr.args[0].data}`)
+                return
+            }
+
             name = U.lookup(vmCallMap, name) || name
 
             clearStack()

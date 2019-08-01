@@ -45,10 +45,9 @@ namespace pxtmelody {
             return this.numRows;
         }
 
-        public updateMelody(row: number, col: number) {
+        public updateMelody(row: number, col: number): void {
             this.melody[row][col] = !this.melody[row][col];
         }
-
 
         // function to turn into string
         public getStringRepresentation(): string {
@@ -84,35 +83,68 @@ namespace pxtmelody {
             }
             return stringMelody;
         }
+
+        // turn string into boolean array
+        public parseNotes(stringNotes: string): void {
+            // A melody is represented as a string of notes separated by spaces, with dashes representing rests
+            // ex: a scale is represented as "C5 B A G F E D C"
+            stringNotes = stringNotes.trim();
+            let notes = stringNotes.split(" ");
+            for (let i = 0; i < notes.length; i++) {
+                for (let j = 0; j < this.numRows; j++) {
+                    // reset everything to false
+                    this.melody[j][i] = false;
+                }
+                if (notes[i] != "-") {
+                    this.melody[noteToRow(notes[i])][i] = true;
+                }
+            }
+        }
     }
+
 
     export function rowToNote(rowNum: number): string {
         let note: string = "";
         switch (rowNum) {
-            case 0: note = "C"; break;
-            case 1: note = "D"; break;
-            case 2: note = "E"; break;
-            case 3: note = "F"; break;
-            case 4: note = "G"; break;
-            case 5: note = "A"; break;
-            case 6: note = "B"; break;
-            case 7: note = "C5"; break;
+            case 0: note = "C5"; break;
+            case 1: note = "B"; break;
+            case 2: note = "A"; break;
+            case 3: note = "G"; break;
+            case 4: note = "F"; break;
+            case 5: note = "E"; break;
+            case 6: note = "D"; break;
+            case 7: note = "C"; break;
         }
         return note;
     }
 
     export function noteToRow(note: string): number {
-        let rowNum: number = 0;
+        let rowNum: number = -1;
         switch (note) {
-            case "C": rowNum = 0; break;
-            case "D": rowNum = 1; break;
-            case "E": rowNum = 2; break;
-            case "F": rowNum = 3; break;
-            case "G": rowNum = 4; break;
-            case "A": rowNum = 5; break;
-            case "B": rowNum = 6; break;
-            case "C5": rowNum = 7; break;
+            case "C5": rowNum = 0; break;
+            case "B": rowNum = 1; break;
+            case "A": rowNum = 2; break;
+            case "G": rowNum = 3; break;
+            case "F": rowNum = 4; break;
+            case "E": rowNum = 5; break;
+            case "D": rowNum = 6; break;
+            case "C": rowNum = 7; break;
         }
         return rowNum;
+    }
+
+    export function getColorClass(row: number): string {
+        let colorClass = "melody-default";
+        switch (row) {
+            case 0: colorClass = "melody-red"; break; // Middle C
+            case 1: colorClass = "melody-orange"; break; // Middle D
+            case 2: colorClass = "melody-yellow"; break; // Middle E
+            case 3: colorClass = "melody-green"; break; // Middle F
+            case 4: colorClass = "melody-teal"; break; // Middle G
+            case 5: colorClass = "melody-blue"; break; // Middle A
+            case 6: colorClass = "melody-purple"; break; // Middle B
+            case 7: colorClass = "melody-violet"; break; // Tenor C
+        }
+        return colorClass;
     }
 }

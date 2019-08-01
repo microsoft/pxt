@@ -65,7 +65,7 @@ namespace pxt.blocks {
     }
 
     export function getBlocksWithType(parent: Document | Element, type: string) {
-        return getChildrenWithAttr(parent, "block", "type", type);
+        return getChildrenWithAttr(parent, "block", "type", type).concat(getChildrenWithAttr(parent, "shadow", "type", type));
     }
 
     export function getChildrenWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {

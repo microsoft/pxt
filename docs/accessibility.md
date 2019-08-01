@@ -26,7 +26,7 @@ To close a dialog, navigate to the close button (shown as an **X** at the top ri
 These keyboard shortcuts are used in the [JavaScript editor](#javascript-editor):
 
 * By default, pressing ``Tab`` in the editor will insert the tab character.
-* Toggle this behavior by pressing ``Control+M`` on **Windows** or ``⌘+M`` on **Mac**.
+* Toggle this behavior by pressing ``Control+M`` on **Windows** or ``Control+Shift+M`` on **Mac**.
 * In order to jump to the toolbox from the editor. Press ``Control+Alt+T`` on **Windows** or ``⌘+Alt+T`` on **Mac**.
 
 ### Drop-down menu

@@ -22,8 +22,6 @@ namespace ts.pxtc {
         "numops::ands": "_numops_ands",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
-        "pxt::incr": "_pxt_incr",
-        "pxt::decr": "_pxt_decr",
     }
 
     // snippets for ARM Thumb assembly
@@ -198,10 +196,7 @@ ${lbl}:`
         }
 
         load_vtable(trg: string, src: string) {
-            if (target.gc)
-                return `ldr ${trg}, [${src}, #0]`
-            else
-                return `ldrh ${trg}, [${src}, #2]\n    lsls ${trg}, ${trg}, #${target.vtableShift}`
+            return `ldr ${trg}, [${src}, #0]`
         }
 
         lambda_init() {
@@ -215,14 +210,10 @@ ${lbl}:`
         }
 
         saveThreadStack() {
-            if (target.gc)
-                return "mov r7, sp\n    str r7, [r6, #4]\n"
-            else
-                return ""
+            return "mov r7, sp\n    str r7, [r6, #4]\n"
         }
 
         restoreThreadStack() {
-            // TODO only for debug build!
             if (target.gc && target.switches.gcDebug)
                 return "movs r7, #0\n    str r7, [r6, #4]\n"
             else
@@ -252,8 +243,7 @@ ${lbl}:`
 
             const boxedOp = (op: string) => {
                 let r = ".boxed:\n"
-                if (target.gc)
-                    r += `
+                r += `
                     ${this.pushLR()}
                     push {r0, r1}
                     ${this.saveThreadStack()}
@@ -261,19 +251,6 @@ ${lbl}:`
                     ${this.restoreThreadStack()}
                     add sp, #8
                     ${this.popPC()}
-                `
-                else
-                    r += `
-                    push {r4, lr}
-                    push {r0, r1}
-                    ${op}
-                    movs r4, r0
-                    pop {r0}
-                    bl _pxt_decr
-                    pop {r0}
-                    bl _pxt_decr
-                    movs r0, r4
-                    pop {r4, pc}
                 `
                 return r
             }
@@ -368,24 +345,6 @@ _pxt_${op}_${off}:
                     }
                 }
 
-            }
-
-            let ops = ["incr", "decr"]
-            if (target.gc) ops = []
-
-            for (let op of ops) {
-                r += ".section code\n"
-                withLDR(op)
-                r += `_pxt_${op}:\n${inlineIncrDecr(op)}`
-
-                r += ".section code\n"
-                withLDR(op + "_pushR0", true)
-                r += `
-_pxt_${op}_pushR0:
-    push {r0}
-    @dummystack -1
-    ${inlineIncrDecr(op)}
-`
             }
 
             /*

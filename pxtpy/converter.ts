@@ -6,6 +6,7 @@ namespace pxt.py {
         currModule: py.Module;
         currClass: py.ClassDef;
         currFun: py.FunctionDef;
+        blockDepth: number;
     }
 
     // global state
@@ -96,6 +97,7 @@ namespace pxt.py {
         delete r.pyRetType
         delete r.pySymbolType
         delete r.moduleTypeMarker
+        delete r.declared
         if (r.parameters)
             r.parameters = r.parameters.map(p => {
                 p = U.flatClone(p)
@@ -274,6 +276,16 @@ namespace pxt.py {
         return ctx.currFun || ctx.currClass || ctx.currModule
     }
 
+    function topScope(): py.ScopeDef {
+        let current = currentScope();
+
+        while (current && current.parent) {
+            current = current.parent;
+        }
+
+        return current;
+    }
+
     function isTopLevel() {
         return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
     }
@@ -317,7 +329,7 @@ namespace pxt.py {
     function getFullName(n: py.AST): string {
         let s = n as py.ScopeDef
         let pref = ""
-        if (s.parent) {
+        if (s.parent && s.parent.kind !== "FunctionDef" && s.parent.kind !== "AsyncFunctionDef") {
             pref = getFullName(s.parent)
             if (!pref) pref = ""
             else pref += "."
@@ -391,7 +403,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9520; 9550-9599 reserved for parser
+    // next free error 9525; 9550-9599 reserved for parser
     function error(astNode: py.AST, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -586,8 +598,13 @@ namespace pxt.py {
 
         let ct = t.classType
 
-        if (!ct && t.primType == "@array")
-            ct = lookupApi("Array")
+        if (!ct) {
+            if (t.primType == "@array") {
+                ct = lookupApi("Array")
+            } else if (t.primType == "string") {
+                ct = lookupApi("String")
+            }
+        }
 
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
@@ -617,14 +634,16 @@ namespace pxt.py {
 
     function lookupVar(n: string) {
         let s = currentScope()
-        while (s) {
-            let v = U.lookup(s.vars, n)
-            if (v) return v
-            // go to parent, excluding class scopes
-            do {
-                s = s.parent
-            } while (s && s.kind == "ClassDef")
-        }
+        let v = U.lookup(s.vars, n)
+        if (v) return v
+        // while (s) {
+        //     let v = U.lookup(s.vars, n)
+        //     if (v) return v
+        //     // go to parent, excluding class scopes
+        //     do {
+        //         s = s.parent
+        //     } while (s && s.kind == "ClassDef")
+        // }
         //if (autoImport && lookupGlobalSymbol(n)) {
         //    return addImport(currentScope(), n, ctx.currModule)
         //}
@@ -678,7 +697,8 @@ namespace pxt.py {
         ctx = {
             currClass: null,
             currFun: null,
-            currModule: m
+            currModule: m,
+            blockDepth: 0
         }
         lastFile = m.tsFilename.replace(/\.ts$/, ".py")
     }
@@ -863,7 +883,10 @@ namespace pxt.py {
     }
 
     function stmts(ss: py.Stmt[]) {
-        return B.mkBlock(ss.map(stmt))
+        ctx.blockDepth++;
+        const res = B.mkBlock(ss.map(stmt));
+        ctx.blockDepth--;
+        return res;
     }
 
     function exprs0(ee: py.Expr[]) {
@@ -875,6 +898,7 @@ namespace pxt.py {
         if (!n.vars) {
             n.vars = {}
             n.parent = currentScope()
+            n.blockDepth = ctx.blockDepth;
         }
     }
 
@@ -922,12 +946,23 @@ namespace pxt.py {
             const isMethod = !!ctx.currClass && !ctx.currFun
 
             const topLev = isTopLevel()
+            const nested = !!ctx.currFun;
 
             setupScope(n)
+            const existing = lookupSymbol(getFullName(n));
             const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
 
-            if (shouldInlineFunction(sym) && !inline)
-                return B.mkText("")
+            if (!inline) {
+                if (existing && existing.declared === currIteration) {
+                    error(n, 9520, lf("Duplicate function declaration"));
+                }
+
+                sym.declared = currIteration;
+
+                if (shouldInlineFunction(sym)) {
+                    return B.mkText("")
+                }
+            }
 
             if (isMethod) sym.isInstance = true
             ctx.currFun = n
@@ -972,7 +1007,7 @@ namespace pxt.py {
                 }
             } else {
                 U.assert(!prefix)
-                if (n.name[0] == "_" || topLev || inline)
+                if (n.name[0] == "_" || topLev || inline || nested)
                     nodes.push(B.mkText("function "), quote(funname))
                 else
                     nodes.push(B.mkText("export function "), quote(funname))
@@ -996,7 +1031,9 @@ namespace pxt.py {
                 }
             }
 
-            nodes.push(B.mkBlock(body))
+            const hoisted: B.JsNode[] = collectHoistedDeclarations(n);
+
+            nodes.push(B.mkBlock(hoisted.concat(body)))
 
             let ret = B.mkGroup(nodes)
 
@@ -1237,7 +1274,7 @@ namespace pxt.py {
             n.value.kind == "Str" ?
                 docComment((n.value as py.Str).s) :
                 B.mkStmt(expr(n.value)),
-        Pass: (n: py.Pass) => B.mkStmt(B.mkText(";")),
+        Pass: (n: py.Pass) => B.mkStmt(B.mkText("")),
         Break: (n: py.Break) => B.mkStmt(B.mkText("break")),
         Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
 
@@ -1261,10 +1298,45 @@ namespace pxt.py {
         AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
         AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
         AsyncWith: (n: py.AsyncWith) => stmtTODO(n),
-        Global: (n: py.Global) =>
-            B.mkStmt(B.mkText("TODO: global: "), B.mkGroup(n.names.map(B.mkText))),
-        Nonlocal: (n: py.Nonlocal) =>
-            B.mkStmt(B.mkText("TODO: nonlocal: "), B.mkGroup(n.names.map(B.mkText))),
+        Global: (n: py.Global) => {
+            const globalScope = topScope();
+            const current = currentScope();
+
+            for (const name of n.names) {
+                const existing = U.lookup(globalScope.vars, name);
+
+                if (!existing) {
+                    error(n, 9521, U.lf("No binding found for global variable"));
+                }
+
+                const sym = defvar(name, { modifier: VarModifier.Global });
+
+                if (sym.firstRefPos < n.startPos) {
+                    error(n, 9522, U.lf("Variable referenced before global declaration"))
+                }
+            }
+            return B.mkStmt(B.mkText(""));
+        },
+        Nonlocal: (n: py.Nonlocal) => {
+            const globalScope = topScope();
+            const current = currentScope();
+
+            for (const name of n.names) {
+                const declaringScope = findNonlocalDeclaration(name, current);
+
+                // Python nonlocal variables cannot refer to globals
+                if (!declaringScope || declaringScope === globalScope || declaringScope.vars[name].modifier === VarModifier.Global) {
+                    error(n, 9523, U.lf("No binding found for nonlocal variable"));
+                }
+
+                const sym = defvar(name, { modifier: VarModifier.NonLocal });
+
+                if (sym.firstRefPos < n.startPos) {
+                    error(n, 9524, U.lf("Variable referenced before nonlocal declaration"))
+                }
+            }
+            return B.mkStmt(B.mkText(""));
+        }
     }
 
     function convertAssign(n: py.AnnAssign | py.Assign): B.JsNode {
@@ -1289,7 +1361,6 @@ namespace pxt.py {
         let pref = ""
         let isConstCall = value ? isCallTo(value, "const") : false
         let nm = getName(target) || ""
-        let isUpperCase = nm && !/[a-z]/.test(nm)
         if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
             pref = "export "
         if (nm && ctx.currClass && !ctx.currFun) {
@@ -1327,7 +1398,7 @@ namespace pxt.py {
                 fd.isGetSet = true
                 fdBack.isGetSet = true
                 return B.mkGroup(res)
-            } else 
+            } else
             */
             if (currIteration == 0) {
                 return B.mkText("/* skip for now */")
@@ -1338,7 +1409,7 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
-        if (isConstCall || isUpperCase) {
+        if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
             if (!/^static /.test(pref) && !/const/.test(pref))
@@ -1354,26 +1425,40 @@ namespace pxt.py {
             let tupNames = tup.elts
                 .map(e => e as py.Name)
                 .map(convertName)
-            function convertName(n: py.Name) {
-                // TODO resuse with Name expr
-                markInfoNode(n, "identifierCompletion")
-                typeOf(n)
-                let v = lookupName(n)
-                return possibleDef(n, /*excludeLet*/true)
-            }
             targs.push(B.mkCommaSep(tupNames))
             targs.push(B.mkText("]"))
             let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
             return res
         }
+        if (target.kind === "Name") {
+            const sym = currentScope().vars[nm];
+
+            // Mark the assignment only if the variable is declared in this scope
+            if (sym && sym.kind === SK.Variable && sym.modifier === undefined) {
+                if (sym.firstAssignPos === undefined || sym.firstAssignPos > target.startPos) {
+                    sym.firstAssignPos = target.startPos
+                    sym.firstAssignDepth = ctx.blockDepth;
+                }
+            }
+        }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
+
+        function convertName(n: py.Name) {
+            // TODO resuse with Name expr
+            markInfoNode(n, "identifierCompletion")
+            typeOf(n)
+            let v = lookupName(n)
+            return possibleDef(n, /*excludeLet*/true)
+        }
     }
 
     function possibleDef(n: py.Name, excludeLet: boolean = false) {
         let id = n.id
+        let curr = lookupSymbol(id)
+        let local = currentScope().vars[id];
+
         if (n.isdef === undefined) {
-            let curr = lookupSymbol(id)
-            if (!curr) {
+            if (!curr || (curr.kind === SK.Variable && curr !== local)) {
                 if (ctx.currClass && !ctx.currFun) {
                     n.isdef = false // field
                     curr = defvar(id, {})
@@ -1387,6 +1472,12 @@ namespace pxt.py {
             n.symbolInfo = curr
             unify(n, n.tsType, curr.pyRetType)
         }
+
+        if (n.isdef && shouldHoist(curr, currentScope())) {
+            n.isdef = false;
+        }
+
+        markUsage(curr, n);
 
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
@@ -1670,6 +1761,11 @@ namespace pxt.py {
                 }
             }
 
+            if (isCallTo(n, "str")) {
+                // Our standard method of toString in TypeScript is to concatenate with the empty string
+                return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
+            }
+
             if (!fun)
                 error(n, 9508, U.lf("can't find called function"))
 
@@ -1733,7 +1829,7 @@ namespace pxt.py {
                     syntaxInfo.auxResult = i
                     let arg = orderedArgs[i]
                     if (!arg) {
-                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // if we can't parse this next argument, but the cursor is beyond the
                         // previous arguments, assume it's here
                         break
                     }
@@ -1850,6 +1946,8 @@ namespace pxt.py {
                 return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
 
+            markUsage(v, n);
+
             if (n.ctx.indexOf("Load") >= 0) {
                 return quote(v ? v.qName : getName(n))
             } else
@@ -1878,6 +1976,29 @@ namespace pxt.py {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
         return v
+    }
+
+    function markUsage(s: SymbolInfo, location: py.AST) {
+        if (s) {
+            if (s.modifier === VarModifier.Global) {
+                const declaringScope = topScope();
+
+                if (declaringScope && declaringScope.vars[s.name]) {
+                    s = declaringScope.vars[s.name];
+                }
+            }
+            else if (s.modifier === VarModifier.NonLocal) {
+                const declaringScope = findNonlocalDeclaration(s.name, currentScope());
+
+                if (declaringScope) {
+                    s = declaringScope.vars[s.name];
+                }
+            }
+
+            if (s.firstRefPos === undefined || s.firstRefPos > location.startPos) {
+                s.firstRefPos = location.startPos;
+            }
+        }
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
@@ -1924,6 +2045,43 @@ namespace pxt.py {
         return false
     }
 
+    function declareVariable(s: SymbolInfo) {
+        const name = quote(s.name);
+        const type = t2s(symbolType(s));
+
+        return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
+    }
+
+    function findNonlocalDeclaration(name: string, scope: py.ScopeDef): py.ScopeDef {
+        if (!scope) return null;
+
+        const symbolInfo = scope.vars && scope.vars[name];
+
+        if (symbolInfo && symbolInfo.modifier != VarModifier.NonLocal) {
+            return scope;
+        }
+        else {
+            return findNonlocalDeclaration(name, scope.parent);
+        }
+    }
+
+    function collectHoistedDeclarations(scope: py.ScopeDef) {
+        const hoisted: B.JsNode[] = [];
+        let current: SymbolInfo;
+        for (const varName of Object.keys(scope.vars)) {
+            current = scope.vars[varName];
+
+            if (shouldHoist(current, scope)) {
+                hoisted.push(declareVariable(current));
+            }
+        }
+        return hoisted;
+    }
+
+    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef) {
+        return sym.kind === SK.Variable && sym.modifier === undefined && (sym.firstRefPos < sym.firstAssignPos || sym.firstAssignDepth > scope.blockDepth);
+    }
+
     // TODO look at scopes of let
 
     function toTS(mod: py.Module): B.JsNode[] {
@@ -1932,7 +2090,9 @@ namespace pxt.py {
             return null
         resetCtx(mod)
         if (!mod.vars) mod.vars = {}
-        let res = mod.body.map(stmt)
+
+        const hoisted = collectHoistedDeclarations(mod);
+        let res = hoisted.concat(mod.body.map(stmt))
         if (res.every(isEmpty)) return null
         else if (mod.name == "main") return res
         return [
@@ -2006,6 +2166,7 @@ namespace pxt.py {
                 modules.push({
                     kind: "Module",
                     body: res.stmts,
+                    blockDepth: 0,
                     name: modname,
                     source: src,
                     tsFilename: sn.replace(/\.py$/, ".ts")

@@ -116,7 +116,7 @@ export class ProjectView
     private runToken: pxt.Util.CancellationToken;
 
     // component ID strings
-    private static readonly tutorialCardId = "tutorialcard";
+    static readonly tutorialCardId = "tutorialcard";
 
     constructor(props: IAppProps) {
         super(props);
@@ -500,6 +500,7 @@ export class ProjectView
     }
 
     private convertTypeScriptToPythonAsync() {
+        const snap = this.editor.snapshotState();
         let p = this.saveTypeScriptAsync(false)
             .then(() => compiler.pyDecompileAsync("main.ts"))
             .then(cres => {
@@ -508,6 +509,7 @@ export class ProjectView
                     return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                 } else {
                     // TODO python
+                    this.editor.setDiagnostics(this.editorFile, snap);
                     return Promise.resolve();
                 }
             })
@@ -750,8 +752,13 @@ export class ProjectView
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
         if (!this.state.active
             || this.state.updatingEditorFile
-            || this.state.currFile == this.editorFile && !editorOverride)
+            || this.state.currFile == this.editorFile && !editorOverride) {
+            if (this.state.editorPosition && this.editorFile == this.state.editorPosition.file) {
+                this.editor.setViewState(this.state.editorPosition)
+                this.setState({ editorPosition: undefined });
+            }
             return undefined;
+        }
 
         let simRunning = false;
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
@@ -781,9 +788,14 @@ export class ProjectView
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
 
-                let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
-                if (e)
-                    this.editor.setViewState(e.pos)
+                if (this.state.editorPosition) {
+                    this.editor.setViewState(this.state.editorPosition);
+                    this.setState({ editorPosition: undefined })
+                } else {
+                    let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+                    if (e)
+                        this.editor.setViewState(e.pos)
+                }
 
                 container.SideDocs.notify({
                     type: "fileloaded",
@@ -808,7 +820,7 @@ export class ProjectView
      * which will decompile if necessary.
      * @param fn
      */
-    setFile(fn: pkg.File) {
+    setFile(fn: pkg.File, line?: number) {
         if (!fn) return;
 
         if (fn.name === "main.ts") {
@@ -837,15 +849,18 @@ export class ProjectView
             }
         }
 
-        this.setState({
+        const state: IAppState = {
             currFile: fn,
             showBlocks: false,
             embedSimView: false
-        })
+        };
+        if (line !== undefined)
+            state.editorPosition = { lineNumber: line, column: 1, file: fn };
+        this.setState(state)
         //this.fireResize();
     }
 
-    setSideFile(fn: pkg.File) {
+    setSideFile(fn: pkg.File, line?: number) {
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
         if (fileName != currFile && pxt.editor.isBlocks(fn)) {
@@ -857,8 +872,17 @@ export class ProjectView
                 this.textEditor.giveFocusOnLoading = false
             }
 
-            this.setFile(fn)
+            this.setFile(fn, line)
         }
+    }
+
+    navigateToError(diag: pxtc.KsDiagnostic) {
+        if (!diag) return;
+        // find file
+        let f = pkg.mainEditorPkg().lookupFile("this/" + diag.fileName);
+        if (!f) return;
+
+        this.setSideFile(f, diag.line + 1);
     }
 
     removeFile(fn: pkg.File, skipConfirm = false) {
@@ -937,6 +961,9 @@ export class ProjectView
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
+
+            const isCompleted = tutorialOptions.tutorialStepInfo[step].tutorialCompleted;
+            if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -1068,6 +1095,7 @@ export class ProjectView
                 simulator.setDirty();
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
+            .then(() => this.loadTutorialTemplateCodeAsync())
             .then(() => {
                 const e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 const main = pkg.getEditorPkg(pkg.mainPkg)
@@ -1185,6 +1213,42 @@ export class ProjectView
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
             });
+    }
+
+    private loadTutorialTemplateCodeAsync(): Promise<void> {
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.templateCode)
+            return Promise.resolve();
+
+        const template = header.tutorial.templateCode;
+
+        // Delete from the header so that we don't overwrite the user code if the tutorial is
+        // re-opened
+        delete header.tutorial.templateCode;
+
+        let decompilePromise = Promise.resolve();
+
+        if (header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
+            pkg.mainEditorPkg().setFile("main.ts", template);
+        }
+        else if (header.editor === pxt.PYTHON_PROJECT_NAME) {
+            decompilePromise = compiler.decompilePythonSnippetAsync(template)
+                .then(pyCode => {
+                    if (pyCode) {
+                        pkg.mainEditorPkg().setFile("main.py", pyCode);
+                    }
+                })
+        }
+        else {
+            decompilePromise = compiler.decompileBlocksSnippetAsync(template)
+                .then(blockXML => {
+                    if (blockXML) {
+                        pkg.mainEditorPkg().setFile("main.blocks", blockXML);
+                    }
+                })
+        }
+
+        return decompilePromise.then(() => workspace.saveAsync(header));
     }
 
     removeProject() {
@@ -1420,8 +1484,27 @@ export class ProjectView
                 pubCurrent: false
             }
         }
+
         return workspace.installAsync(h, project.text)
             .then(hd => this.loadHeaderAsync(hd, editorState));
+    }
+
+    importTutorialAsync(md: string) {
+        try {
+            const { options, editor } = getTutorialOptions(md, "untitled", "untitled", "", false);
+            const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+
+            return this.createProjectAsync({
+                name: "untitled",
+                tutorial: options,
+                preferredEditor: editor,
+                dependencies
+            });
+        }
+        catch (e) {
+            Util.userError("Could not import tutorial");
+            return Promise.reject(e);
+        }
     }
 
     initDragAndDrop() {
@@ -1812,7 +1895,8 @@ export class ProjectView
                 if (loadBlocks) {
                     return this.createProjectAsync(opts)
                         .then(() => {
-                            return compiler.getBlocksAsync()
+                            return this.loadBlocklyAsync()
+                                .then(compiler.getBlocksAsync)
                                 .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
                                 .then(resp => {
                                     pxt.debug(`example decompilation: ${resp.success}`)
@@ -2281,7 +2365,9 @@ export class ProjectView
                 /* tslint:disable:react-iframe-missing-sandbox */
                 <div className="ui container">
                     <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'paddingBottom': '40%', 'overflow': 'hidden' }}>
-                        <iframe frameBorder="0"
+                        <iframe
+                            frameBorder="0"
+                            aria-label={lf("Print preview")}
                             sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
                             style={{ 'position': 'absolute', 'top': 0, 'left': 0, 'width': '100%', 'height': '100%' }}
                             src={url} />
@@ -2880,38 +2966,20 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
-            md = pxt.tutorial.patchArcadeSnippets(md);
-
-            const tutorialInfo = pxt.tutorial.parseTutorial(md);
-            if (!tutorialInfo)
-                throw new Error(lf("Invalid tutorial format"));
-
-            const tutorialOptions: pxt.tutorial.TutorialOptions = {
-                tutorial: tutorialId,
-                tutorialName: tutorialInfo.title || filename,
-                tutorialReportId: reportId,
-                tutorialStep: 0,
-                tutorialReady: true,
-                tutorialHintCounter: 0,
-                tutorialStepInfo: tutorialInfo.steps,
-                tutorialMd: md,
-                tutorialCode: tutorialInfo.code,
-                tutorialRecipe: !!recipe
-            };
+            const { options, editor } = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 
             // start a tutorial within the context of an existing program
             if (recipe) {
                 const header = pkg.mainEditorPkg().header;
-                header.tutorial = tutorialOptions;
+                header.tutorial = options;
                 header.tutorialCompleted = undefined;
                 return this.loadHeaderAsync(header);
             }
 
             return this.createProjectAsync({
                 name: filename,
-                tutorial: tutorialOptions,
-                preferredEditor: tutorialInfo.editor,
+                tutorial: options,
+                preferredEditor: editor,
                 dependencies
             });
         }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
@@ -3141,7 +3209,7 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const showCollapseButton = !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
@@ -3221,8 +3289,8 @@ export class ProjectView
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
-                    {showCollapseButton && <sui.Button id='togglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {showCollapseButton && <sui.Button id='togglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
+                    {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
@@ -3615,6 +3683,9 @@ function initExtensionsAsync(): Promise<void> {
             if (res.webUsbPairDialogAsync) {
                 pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
             }
+            if (res.onTutorialCompleted) {
+                pxt.commands.onTutorialCompleted = res.onTutorialCompleted;
+            }
         });
 }
 
@@ -3703,7 +3774,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             const useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
             const locstatic = /staticlang=1/i.test(window.location.href);
-            const live = !(locstatic || pxt.BrowserUtils.isElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
+            const live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
             const force = !!mlang && !!mlang[2];
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
@@ -3858,3 +3929,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, false);
 })
+
+
+function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string} {
+    // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
+    md = pxt.tutorial.patchArcadeSnippets(md);
+
+    const tutorialInfo = pxt.tutorial.parseTutorial(md);
+    if (!tutorialInfo)
+        throw new Error(lf("Invalid tutorial format"));
+
+    const tutorialOptions: pxt.tutorial.TutorialOptions = {
+        tutorial: tutorialId,
+        tutorialName: tutorialInfo.title || filename,
+        tutorialReportId: reportId,
+        tutorialStep: 0,
+        tutorialReady: true,
+        tutorialHintCounter: 0,
+        tutorialStepInfo: tutorialInfo.steps,
+        tutorialActivityInfo: tutorialInfo.activities,
+        tutorialMd: md,
+        tutorialCode: tutorialInfo.code,
+        tutorialRecipe: !!recipe,
+        templateCode: tutorialInfo.templateCode
+    };
+
+    return { options: tutorialOptions, editor: tutorialInfo.editor };
+}

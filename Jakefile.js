@@ -77,7 +77,7 @@ function runKarma(that, flags) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
+task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testpy', 'testlang', 'karma'])
 
 task('clean', function () {
     ["built", "temp"].forEach(d => {
@@ -97,6 +97,7 @@ setupTest('testlang', 'compile-test', 'compilerunner.js')
 setupTest('testerr', 'errors-test', 'errorrunner.js')
 setupTest('testfmt', 'format-test', 'formatrunner.js')
 setupTest('testpydecompiler', 'pydecompile-test', 'pydecompilerunner.js')
+setupTest('testpy', 'pyconverter-test', 'pyconvertrunner.js')
 setupTest('testtraces', 'runtime-trace-tests', 'tracerunner.js')
 
 

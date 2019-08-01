@@ -2,6 +2,11 @@
 /// <reference path='../built/pxtcompiler.d.ts' />
 
 namespace pxt.py {
+    export enum VarModifier {
+        NonLocal,
+        Global
+    }
+
     export interface ParameterDesc extends pxtc.ParameterDesc {
         pyType?: Type;
     }
@@ -14,6 +19,8 @@ namespace pxt.py {
         pyAST?: AST;
         isProtected?: boolean;
         moduleTypeMarker?: {};
+
+        declared?: number; // A reference to the current iteration; used for detecting duplicate functions
     }
 
     export interface TypeOptions {
@@ -36,6 +43,12 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
+        modifier?: VarModifier;
+
+        /* usage information */
+        firstRefPos?: number;
+        firstAssignPos?: number;
+        firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -150,6 +163,7 @@ namespace pxt.py {
     export interface ScopeDef extends Stmt {
         vars?: Map<SymbolInfo>;
         parent?: ScopeDef;
+        blockDepth?: number;
     }
 
     export interface FunctionDef extends Symbol, ScopeDef {
@@ -408,7 +422,7 @@ namespace pxt.py {
     }
     export interface Constant extends Expr {
         kind: "Constant";
-        value: any; // ??? 
+        value: any; // ???
     }
 
     // the following expression can appear in assignment context

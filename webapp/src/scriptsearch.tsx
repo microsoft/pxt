@@ -445,6 +445,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addLocal}
                                     label={lf("Local")}
+                                    title={lf("Local GitHub extension")}
+                                    labelClass="blue right ribbon"
                                     role="link"
                                 />
                             )}

@@ -112,7 +112,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         let saveInput = [];
         if (view != View.Mobile) {
-            saveInput.push(<label htmlFor={id} id={id} className="accessible-hidden" key="label">{lf("Type a name for your project")}</label>);
+            saveInput.push(<label htmlFor={id} className="accessible-hidden" key="label">{lf("Type a name for your project")}</label>);
             saveInput.push(<EditorToolbarSaveInput id={id} view={this.getViewString(view)} key="input"
                             type="text"
                             aria-labelledby={id}
@@ -278,6 +278,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         <div className="column">
                                             {showUndoRedo && <div className="ui icon large buttons">{this.getUndoRedo(tablet)}</div>}
                                             {showZoomControls && <div className="ui icon large buttons">{this.getZoomControl(tablet)}</div>}
+                                            {targetTheme.bigRunButton &&
+                                                <div className="big-play-button-wrapper">
+                                                    <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='tablet' />
+                                                </div>}
                                         </div>
                                     </div>}
                                 <div className="row" style={showUndoRedo || showZoomControls ? { paddingTop: 0 } : {}}>

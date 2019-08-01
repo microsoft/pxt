@@ -107,14 +107,14 @@ Message boxes bring special attention to an idea or to something that the user m
 
 ### ~tip
 
-#### Tip Title 
+#### Tip Title
 [content]
 
 ### ~
 ```
 ### ~tip
 
-#### Tip Title 
+#### Tip Title
 [content]
 
 ### ~
@@ -297,6 +297,15 @@ The **ghost** "language" causes addtional blocks to appear in the Toolbox during
     let x = 0;
     ```
 
+
+### template
+
+The **template** "language" is used to specify the initial code that appears in the workspace at the start of a tutorial. If there is no **template** block present in the tutorial, the default "new project" code will be used.
+
+    ```template
+    let x = 0;
+    ```
+
 ### codecard
 
 To render one or more code cards as JSON into cards, use **codecard**.
@@ -316,7 +325,7 @@ To render one or more code cards as JSON into cards, use **codecard**.
 Append `-ignore` to any of the above to ignore a snippet in automated testing:
 
     ```typescript-ignore
-    // You can include illegal TS in here, e.g. to showcase concepts/psuedocode 
+    // You can include illegal TS in here, e.g. to showcase concepts/psuedocode
     for (initialization; check; update) {
         ...
     }

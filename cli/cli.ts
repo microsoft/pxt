@@ -2630,35 +2630,73 @@ class Host
 
 let mainPkg = new pxt.MainPackage(new Host())
 
-export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    ensurePkgDir();
-    const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
-    if (packageName) {
-        let parsed = pxt.github.parseRepoId(packageName)
+function installPackageNameAsync(packageName: string): Promise<void> {
+    if (!packageName) return Promise.resolve();
+
+    // builtin?
+    if (pxt.appTarget.bundledpkgs[packageName])
+        return addDepAsync(packageName, "*", false);
+
+    // github?
+    let parsed = pxt.github.parseRepoId(packageName)
+    if (parsed && parsed.fullName)
         return loadGithubTokenAsync()
             .then(() => pxt.packagesConfigAsync())
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
-                .then(cfg => mainPkg.loadAsync()
+                .then(cfg => mainPkg.loadAsync(true)
                     .then(() => {
                         let ver = pxt.github.stringifyRepo(parsed)
-                        console.log(U.lf("Adding: {0}: {1}", cfg.name, ver))
-                        mainPkg.config.dependencies[cfg.name] = ver
-                        mainPkg.saveConfig()
-                        mainPkg = new pxt.MainPackage(new Host())
-                        return mainPkg.installAllAsync()
-                    }))
-            );
-    } else {
-        return mainPkg.installAllAsync()
-            .then(() => {
-                let tscfg = "tsconfig.json"
-                if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                    nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
-                }
-            })
+                        return addDepAsync(cfg.name, ver, false);
+                    })));
+    // shared url?
+    let sharedId = pxt.Cloud.parseScriptId(packageName);
+    if (sharedId)
+        return addDepAsync(sharedId, packageName, false);
+
+    // don't know
+    U.userError(lf(`unknown package ${packageName}`))
+    return Promise.resolve();
+}
+
+export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log("installing dependencies...");
+    ensurePkgDir();
+    const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
+    let hwvariant = parsed && parsed.flags["hwvariant"] as string;
+    if (hwvariant && !/^hw---/.test(hwvariant))
+        hwvariant = 'hw---' + hwvariant;
+
+    return installPackageNameAsync(packageName)
+        .then(() => addDepsAsync())
+        .then(() => mainPkg.installAllAsync())
+        .then(() => {
+            let tscfg = "tsconfig.json"
+            if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
+                nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
+            }
+        });
+
+    function addDepsAsync() {
+        return hwvariant ? addDepAsync(hwvariant, "*", true) : Promise.resolve();
     }
+}
+
+function addDepAsync(name: string, ver: string, hw: boolean) {
+    console.log(U.lf("adding {0}: {1}", name, ver))
+    return mainPkg.loadAsync(true)
+        .then(() => {
+            if (hw) {
+                // remove other hw variants
+                Object.keys(mainPkg.config.dependencies)
+                    .filter(k => /^hw---/.test(k))
+                    .forEach(k => delete mainPkg.config.dependencies[k]);
+            }
+            mainPkg.config.dependencies[name] = ver;
+            mainPkg.saveConfig()
+            mainPkg = new pxt.MainPackage(new Host())
+        })
 }
 
 function addFile(name: string, cont: string) {
@@ -2817,21 +2855,31 @@ export function augmnetDocsAsync(parsed: commandParser.ParsedCommand) {
 
 export function timeAsync() {
     ensurePkgDir();
-    let min: Map<number> = null;
+    let min: Map<number[]> = {};
+    let t0 = 0, t1 = 0
     let loop = () =>
-        mainPkg.getCompileOptionsAsync(mainPkg.getTargetOptions())
-            .then(opts => pxtc.compile(opts))
+        Promise.resolve()
+            .then(() => {
+                t0 = U.cpuUs()
+                const opts = mainPkg.getTargetOptions()
+                // opts.isNative = true
+                return mainPkg.getCompileOptionsAsync(opts)
+            })
+            .then(copts => {
+                t1 = U.cpuUs()
+                return pxtc.compile(copts)
+            })
             .then(res => {
-                if (!min) {
-                    min = res.times
-                } else {
-                    U.iterMap(min, (k, v) => {
-                        min[k] = Math.min(v, res.times[k])
-                    })
-                }
+                res.times["options"] = t1 - t0
+                U.iterMap(res.times, (k, v) => {
+                    v = Math.round(v / 1000)
+                    res.times[k] = v
+                    if (!min[k]) min[k] = []
+                    min[k].push(v)
+                })
                 console.log(res.times)
             })
-    return loop()
+    return Promise.resolve()
         .then(loop)
         .then(loop)
         .then(loop)
@@ -2845,7 +2893,22 @@ export function timeAsync() {
         .then(loop)
         .then(loop)
         .then(loop)
-        .then(() => console.log("MIN", min))
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(loop)
+        .then(() => {
+            U.iterMap(min, (k, v) => {
+                v.sort((a, b) => a - b)
+            })
+            console.log(min)
+        })
 }
 
 export function exportCppAsync(parsed: commandParser.ParsedCommand) {
@@ -3562,7 +3625,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boole
                         // decompile to python
                         let ts1 = opts.fileSystem["main.ts"]
                         let program = pxtc.getTSProgram(opts);
-                        const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
+                        const decompiled = pxt.py.decompileToPython(program, "main.ts");
                         let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
                         if (!pySuccess) {
                             console.log("ts2py error")
@@ -4507,7 +4570,6 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
-    parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
     if (parsed && parsed.flags["debug"])
         mode = BuildOption.DebugSim;
@@ -4519,9 +4581,11 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
     const install = parsed && !!parsed.flags["install"];
 
     return (clean ? cleanAsync() : Promise.resolve())
-        .then(() => install ? installAsync() : Promise.resolve())
-        .then(() => buildCoreAsync({ mode, warnDiv, ignoreTests }))
-        .then((compileOpts) => { });
+        .then(() => install ? installAsync(parsed) : Promise.resolve())
+        .then(() => {
+            parseBuildInfo(parsed);
+            return buildCoreAsync({ mode, warnDiv, ignoreTests })
+        }).then((compileOpts) => { });
 }
 
 export function gendocsAsync(parsed: commandParser.ParsedCommand) {
@@ -5479,8 +5543,23 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("console", "monitor console messages", consoleAsync, null, true);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
-    simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
+
+    p.defineCommand({
+        name: "install",
+        help: "install dependencies",
+        argString: "[package]",
+        aliases: ["i"],
+        onlineHelp: true,
+        flags: {
+            hwvariant: {
+                description: "specify hardware variant",
+                argument: "hwvariant",
+                type: "string",
+                aliases: ["hw"]
+            }
+        }
+    }, installAsync);
 
     p.defineCommand({
         name: "bump",

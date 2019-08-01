@@ -65,8 +65,6 @@ namespace ts.pxtc {
 
     export function jsEmit(bin: Binary) {
         let jssource = "'use strict';\n"
-        if (!bin.target.jsRefCounting)
-            jssource += "pxsim.noRefCounting();\n"
         jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
@@ -101,7 +99,6 @@ namespace ts.pxtc {
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
-        let refCounting = !!bin.target.jsRefCounting
 
         writeRaw(`
 var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
@@ -129,8 +126,7 @@ switch (step) {
         if (proc.args.length) {
             write(`if (s.lambdaArgs) {`)
             proc.args.forEach((l, i) => {
-                // TODO incr needed?
-                write(`  ${locref(l)} = ${refCounting ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
+                write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
             write(`}`)
@@ -268,7 +264,11 @@ switch (step) {
                     else if (typeof e.data == "number") return e.data + ""
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
-                    return e.jsInfo;
+                    if (e.ptrlabel()) {
+                        return e.ptrlabel().lblId + "";
+                    } else {
+                        return e.jsInfo;
+                    }
                 case EK.SharedRef:
                     let arg = e.args[0]
                     U.assert(!!arg.currUses) // not first use
@@ -295,21 +295,10 @@ switch (step) {
                 case EK.Nop:
                     write("// nop")
                     break
-                case EK.Incr:
-                    emitExpr(e.args[0])
-                    if (refCounting)
-                        write(`pxtrt.incr(r0);`)
-                    break;
-                case EK.Decr:
-                    emitExpr(e.args[0])
-                    if (refCounting)
-                        write(`pxtrt.decr(r0);`)
-                    break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     let shimName = info.shimName
                     if (shimName) {
-                        assert(!refCounting)
                         emitExpr(e.args[0])
                         write(`r0 = r0${shimName};`)
                         return
@@ -416,7 +405,7 @@ switch (step) {
 
             let procid = topExpr.data as ir.ProcId
             let proc = procid.proc
-            let frameRef = `s.tmp_${frameIdx}`
+            const frameRef = `s.tmp_${frameIdx}`
             let lblId = ++lblIdx
             write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
 
@@ -449,7 +438,7 @@ switch (step) {
                         isSet = true
                 }
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
-                write(`if (${frameRef}.fn === 13) {`)
+                write(`if (${frameRef}.fn === 13 || ${frameRef}.fn === undefined) {`)
                 let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
                 if (isSet) {
                     write(`  ${fld} = ${frameRef}.arg1;`)
