@@ -96,7 +96,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onItemRemove={this.removeFile}
                     onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && !/pxt.json$/.test(file.getName())}
+                    hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name} {meta.isSaved ? "" : "*"}
