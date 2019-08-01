@@ -69,6 +69,25 @@ Message boxes bring special attention to an idea or to something that the user m
 ### ~
 ```
 
+### tutorialhint
+
+Tutorial hints accept but do not require a closing ``#### ~`` tag. They terminate automatically on the next heading with an equal or lesser level.
+
+#### ~tutorialhint
+
+##### Hint Title
+[content]
+
+#### ~
+
+```
+#### ~hint
+
+##### Hint Title
+[content]
+```
+
+
 ### reminder
 
 ### ~reminder
