@@ -241,7 +241,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
+    return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
 export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
@@ -385,7 +385,7 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
         : getApisInfoAsync().then(info => {
-            const bannedCategories = pkg.mainEditorPkg().resolveBannedCategories();
+            const bannedCategories = pkg.mainPkg.resolveBannedCategories();
             cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
             return cachedBlocks;
         });
@@ -640,7 +640,7 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {
-    const bannedCategories = pkg.mainEditorPkg().resolveBannedCategories();
+    const bannedCategories = pkg.mainPkg.resolveBannedCategories();
     if (bannedCategories)
         return {  bannedCategories };
     return undefined;

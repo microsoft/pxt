@@ -198,7 +198,6 @@ export class EditorPackage {
     }
 
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
-        this._resolvedBannedCategories = undefined;
         let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
@@ -365,39 +364,6 @@ export class EditorPackage {
     lookupFile(name: string) {
         if (name.indexOf("pxt_modules/") === 0) name = name.slice(12);
         return this.filterFiles(f => f.getName() == name)[0]
-    }
-
-    // undefined == uncached
-    // null == cached but no hit
-    // array == means something go found...
-    private _resolvedBannedCategories: string[];
-    resolveBannedCategories(): string[] {
-        if (this._resolvedBannedCategories !== undefined)
-            return this._resolvedBannedCategories; // cache hit
-
-        let bannedCategories: string[] = [];
-        if (pxt.appTarget && pxt.appTarget.runtime
-            && pxt.appTarget.runtime.bannedCategories
-            && pxt.appTarget.runtime.bannedCategories.length) {
-            bannedCategories = pxt.appTarget.runtime.bannedCategories.slice();
-            // scan for unbanned categories
-            this.pkgAndDeps()
-                .map(pk => pk.getKsPkg())
-                .filter(pk => !!pk)
-                .map(pk => pxt.Util.jsonTryParse(pk.readFile(pxt.CONFIG_NAME)) as pxt.PackageConfig)
-                .filter(config => config && config.requiredCategories)
-                .forEach(config => config.requiredCategories.forEach(rc => {
-                    const i = bannedCategories.indexOf(rc);
-                    if (i > -1)
-                        bannedCategories.splice(i, 1);
-                }));
-            this._resolvedBannedCategories = bannedCategories;
-        }
-
-        this._resolvedBannedCategories = bannedCategories;
-        if (!this._resolvedBannedCategories.length)
-            this._resolvedBannedCategories = null;
-        return this._resolvedBannedCategories;
     }
 }
 

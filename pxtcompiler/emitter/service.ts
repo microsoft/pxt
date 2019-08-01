@@ -938,8 +938,7 @@ namespace ts.pxtc.service {
             return compile(v.options)
         },
         decompile: v => {
-            const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
-            return decompile(v.options, v.fileName, false, bannedCategories);
+            return decompile(v.options, v.fileName, false);
         },
         pydecompile: v => {
             let program = getTSProgram(v.options);

@@ -714,6 +714,7 @@ declare namespace ts.pxtc {
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
+        bannedCategories?: string[];
 
         syntaxInfo?: SyntaxInfo;
 
