@@ -333,8 +333,8 @@ namespace pxtsprite {
         protected clientEventToCell(ev: MouseEvent) {
             const coord = clientCoord(ev);
             const bounds = this.paintLayer.getBoundingClientRect();
-            const left = (bounds.left) + (window.scrollX !== null ? (window.scrollX) : (window.pageXOffset));
-            const top = (bounds.top) + (window.scrollY !== null ? (window.scrollY) : (window.pageYOffset));
+            const left = bounds.left + (window.scrollX !== null ? window.scrollX : window.pageXOffset);
+            const top = bounds.top + (window.scrollY !== null ? window.scrollY : window.pageYOffset);
 
             this.mouseCol = Math.floor((((coord.clientX) - left) / this.cellWidth) / this.scale);
             this.mouseRow = Math.floor((((coord.clientY) - top) / this.cellHeight) / this.scale);

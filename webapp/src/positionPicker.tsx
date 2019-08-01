@@ -6,6 +6,10 @@ import { SimulatorDisplay } from './simulatorDisplay';
 
 const PICKER_WIDTH  = 296;
 const PICKER_HEIGHT = 213;
+const FULLSIZE_BROWSER_WIDTH = 2100;
+const FULLSIZE_BROWSER_HEIGHT = 1003;
+const SIMULATOR_HEIGHT = 120;
+const SIMULATOR_WIDTH = 160;
 
 interface PositionPickerProps {
     valueMap?: pxt.Map<number>;
@@ -58,13 +62,13 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
      * Sets the number to scale the position picker and simulator display
      */
     protected setScale() {
-        // 1023 - full size value
+        // 1023 - constant (FULLSIZE_BROWSER_HEIGHT)
         const height = window.innerHeight;
-        // 2100 - full size value
+        // 2100 - constant (FULLSIZE_BROWSER_WIDTH)
         const width = window.innerWidth;
 
-        let scale = height > width ? width / 2100 : height / 1003;
-        // Minimum resize threshold .81
+        let scale = height > width ? (width / FULLSIZE_BROWSER_WIDTH) : (height / FULLSIZE_BROWSER_HEIGHT);
+        // Minimum resize threshold .71
         if (scale < .71) {
             scale = .71;
         }
@@ -73,11 +77,10 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             scale = 1.02;
         }
 
-        this.setState({
-            scale
-        });
+        this.setState({ scale });
     }
 
+    /** Returns proper scale for calculating position */
     protected getScale(scaleDivisor: number, scaleMultiplier: number) {
         const { scale } = this.state;
         const currentWidth = scaleMultiplier * scale;
@@ -85,22 +88,31 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         return currentWidth / scaleDivisor;
     }
 
+    /** Calls getScale with picker width and simulator width */
     protected getXScale() {
-        return this.getScale(160, PICKER_WIDTH); // 160 is the width of the simulator
+        return this.getScale(SIMULATOR_WIDTH, PICKER_WIDTH);
     }
 
+    /** Calls getScale with picker height and simulator height */
     protected getYScale() {
-        return this.getScale(120, PICKER_HEIGHT); // 120 is the height of the simulator
+        return this.getScale(SIMULATOR_HEIGHT, PICKER_HEIGHT);
     }
 
-    protected scalePoint(point: number, x?: true) {
-        const xScale = this.getXScale();
-        const yScale = this.getYScale();
+    protected scalePoint(point: number, scale: number) {
 
         if (!isNaN(point)) {
-            return Math.round(point / (x ? xScale : yScale));
+            return Math.round(point / scale);
         }
+
         return 0;
+    }
+
+    protected scalePointX(point: number) {
+        return this.scalePoint(point, this.getXScale());
+    }
+
+    protected scalePointY(point: number) {
+        return this.scalePoint(point, this.getYScale())
     }
 
     protected unScalePoint(point: number, x?: true) {
@@ -109,7 +121,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
 
         if (!isNaN(point)) {
 
-            return Math.round(point * (x ? xScale : yScale));;
+            return Math.round(point * (x ? xScale : yScale));
         }
 
         return 0;
@@ -128,9 +140,9 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const { x, y } = this.state;
 
         return {
-            x: this.scalePoint(x, true),
-            y: this.scalePoint(y),
-        };;
+            x: this.scalePointX(x),
+            y: this.scalePointY(y),
+        };
     }
 
     protected scalePixel(numberToScale: number) {
@@ -184,24 +196,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         }
     }
 
-    protected buildGrid() {
-        const { scale } = this.state;
-        const lineSpacing = (20 * scale);
-        const currentWidth = 160 * scale;
-        const currentHeight = 120 * scale;
-        let gridDivs: JSX.Element[] = [];
-
-        for (let i = 1; i <= (currentHeight / lineSpacing); ++i) {
-            gridDivs.push(<div className='position-picker cross-y' style={{ left: `${i * lineSpacing}px` }} key={`grid-line-y-${i}`} />);
-        }
-
-        for (let i = 1; i <= currentWidth / lineSpacing; ++i) {
-            gridDivs.push(<div className='position-picker cross-x' style={{ top: `${i * lineSpacing}px` }} key={`grid-line-x-${i}`} />);
-        }
-
-        return gridDivs;
-    }
-
     public renderCore() {
         const { dotVisible, x, y, scale } = this.state;
         const pos = this.getScaledPoints();
@@ -240,7 +234,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         }}
                         role='grid'
                     >
-                        {this.grid.map((grid) => grid)}
                         {dotVisible && <div className='position-picker dot' style={{ top: `${this.unScalePoint(pos.y)}px` , left: `${this.unScalePoint(pos.x)}px` }} />}
                     </div>
                 </SimulatorDisplay>

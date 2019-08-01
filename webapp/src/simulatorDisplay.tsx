@@ -13,10 +13,6 @@ export class SimulatorDisplay extends data.Component<SimulatorDisplayProps, {}> 
         return `${num * scale}${!noPx && 'px'}`;
     }
 
-    protected scaleNumbersInStyleString(styleString: string) {
-
-    }
-
     renderCore() {
         const { children, scale } = this.props;
 

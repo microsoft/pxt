@@ -203,7 +203,7 @@ declare namespace pxt {
     }
 
     interface SnippetInputOtherType {
-        type: string | 'text' | 'spriteEditor'
+        type: string;
     }
 
     interface SnippetInputNumberType {
