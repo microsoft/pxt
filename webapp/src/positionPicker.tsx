@@ -71,8 +71,8 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             scale = .71;
         }
         // Maximum resize threshhold
-        else if (scale > 1.02) {
-            scale = 1.02;
+        else if (scale > 1.01) {
+            scale = 1.01;
         }
 
         this.setState({ scale });
