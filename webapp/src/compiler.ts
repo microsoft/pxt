@@ -640,8 +640,8 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {
-    if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
-        return { bannedCategories: pxt.appTarget.runtime.bannedCategories };
-    }
+    const bannedCategories = pkg.mainEditorPkg().resolveBannedCategories();
+    if (bannedCategories)
+        return {  bannedCategories };
     return undefined;
 }
