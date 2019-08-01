@@ -96,11 +96,10 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onItemRemove={this.removeFile}
                     onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && /\.blocks$/i.test(file.getName())}
+                    hasDelete={deleteFiles && file.getName() != pxt.CONFIG_NAME}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                 </FileTreeItem>);
         })

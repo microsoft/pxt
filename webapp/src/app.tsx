@@ -877,11 +877,12 @@ export class ProjectView
     }
 
     navigateToError(diag: pxtc.KsDiagnostic) {
+        if (!diag) return;
         // find file
         let f = pkg.mainEditorPkg().lookupFile("this/" + diag.fileName);
         if (!f) return;
 
-        this.setSideFile(f, diag.line);
+        this.setSideFile(f, diag.line + 1);
     }
 
     removeFile(fn: pkg.File, skipConfirm = false) {
