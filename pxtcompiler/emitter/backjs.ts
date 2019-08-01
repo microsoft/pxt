@@ -297,7 +297,7 @@ switch (step) {
 function ${id}(s) {
     checkStack(s.depth);
     return {
-        parent: s, fn: ${procname}, depth: s.depth + 1, 
+        parent: s, fn: ${procname}, depth: s.depth + 1,
         pc: 0, retval: undefined, r0: undefined, overwrittenPC: false, lambdaArgs: null,
 `
             for (let i = 0; i < numTmps; ++i)
