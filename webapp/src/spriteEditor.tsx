@@ -128,6 +128,12 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
         this.spriteEditor.onClose(this.cleanupSpriteEditor);
     }
 
+    protected removeChildrenInNode(node: HTMLDivElement) {
+        while (node.hasChildNodes()) {
+            node.removeChild(node.lastChild);
+        }
+    }
+
     protected cleanupSpriteEditor = pxt.Util.debounce(() => {
         // Sprite editor container
         const contentDiv = this.refs['spriteEditorContainer'] as HTMLDivElement;
@@ -140,7 +146,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
             spriteEditorActiveColor: this.spriteEditor.color,
         });
 
-        contentDiv.innerHTML = '';
+        this.removeChildrenInNode(contentDiv);
         this.spriteEditor = undefined;
         this.renderSpriteEditor();
     }, 500)
@@ -153,6 +159,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
                 <div
                     className={'sprite-editor-snippet-container'}
                     ref={'spriteEditorContainer'}
+                    id={'snippetBuilderSpriteEditorContainer'}
                     style={{
                         transformOrigin: `0 0`,
                         transform: `scale(${scale})`,

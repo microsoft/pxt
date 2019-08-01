@@ -64,9 +64,9 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         const width = window.innerWidth;
 
         let scale = height > width ? width / 2100 : height / 1003;
-        // Minimum resize threshold
-        if (scale < .81) {
-            scale = .81;
+        // Minimum resize threshold .81
+        if (scale < .71) {
+            scale = .71;
         }
         // Maximum resize threshhold
         else if (scale > 1.02) {
@@ -122,10 +122,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             x: this.unScalePoint(x, true),
             y: this.unScalePoint(y),
         };
-    }
-
-    protected getDotPosition() {
-
     }
 
     protected getScaledPoints() {
@@ -245,7 +241,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         role='grid'
                     >
                         {this.grid.map((grid) => grid)}
-                        {dotVisible && <div className='position-picker dot' style={{ top: `${(y)}px` , left: `${(x)}px` }} />}
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${this.unScalePoint(pos.y)}px` , left: `${this.unScalePoint(pos.x)}px` }} />}
                     </div>
                 </SimulatorDisplay>
             </div>
