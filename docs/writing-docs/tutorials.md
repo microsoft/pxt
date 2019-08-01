@@ -126,6 +126,18 @@ a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry
 
 The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions:
 
+### Metadata
+
+Tutorial metadata can be optionally specified at the top of the document. Metadata is defined as key-value pairs, in the form: ``### @KEY VALUE``. The currrent properties are:
+
+* **activities**: Indicates a three-level tutorial, with activities and steps. Default is false.
+* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. Default is false.
+
+```markdown
+### @activities true
+### @explicitHints true
+```
+
 ### Title
 
 The title is on the first line and uses a _level 1_ heading, like:
@@ -134,9 +146,40 @@ The title is on the first line and uses a _level 1_ heading, like:
 # Light blaster
 ```
 
+### Activities
+
+Tutorials with **activities** enabled in the metadata have multiple _activities_, each consisting of several steps. An activity begins with a _level 2_ heading (``##``) followed by the activity name, which will be displayed in a dropdown next to The activity can have any number of steps, but no activity-specific text.
+
+```markdown
+## Activity 1
+
+### Step 1
+
+Instructions for step 1 of activity 1 here...
+
+### Step 2
+
+Instructions for step 2 of activity 1 here...
+
+## Activity 2
+
+### Step 1
+
+Instructions for step 1 of activity 2 here...
+```
+
 ### Steps
 
-A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. A step begins with a _level 2_ heading (``##``) and can have any text. It's common, though, to use the _Step 1, Step 2,...Step n_ sequence for each heading. Something like:
+A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. 
+
+#### Default Syntax
+By default, a step begins with a _level 2_ heading (``##``), followed by the step name.
+
+#### Activity Syntax
+If the tutorial has **activities** enabled in the metadata, steps begin with a _level 3_ heading (``###``), followed by the name.
+
+#### Step format
+The step can have any name, but it's common to use the _Step 1, Step 2,...Step n_ sequence for each heading.
 
 ```markdown
 ## Step 1
@@ -146,10 +189,6 @@ Instructions for step 1 here...
 ## Step 2
 
 Instructions for step 2 here...
-
-## Step 3
-
-Instructions for step 3 here...
 ```
 
 The text in the heading is shown only when the tutorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``##``. These are valid headings:
@@ -166,33 +205,23 @@ The text in the heading is shown only when the tutorial is viewed as a help page
 
 The editor automatically parses the markdown and populates the user interface from each step section.
 
-### Metadata
-
-Tutorial metadata can be optionally specified in a table at the top of the document. The table is a key-value pairing of fields. The currrent fields are:
-
-* **v**: version, for the tutorial syntax. When unspecified, default is V1. Used in tutorial hint parsing.
-
-```markdown
-| v             | 2               |
-| field_name    | field_value     |
-```
-
 ### Hints
 
 #### Default Syntax
 
 In each step, any text before the first code snippet or image is automatically displayed to the user in the tutorial caption. The remaining text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button.
 
-#### V2 Syntax
+#### Explicit Syntax
 
-If version 2 is specified in the tutorial metadata, the tutorial will only show hints that are explicitly defined with the hint tag, as follows: `<!-- HINT TEXT HERE -->`. One hint can be specified per step, and if no hint is specified all text (including blocks) will be displayed in the tutorial caption.
+If the **explicitHints** flag is specified in the tutorial metadata, the tutorial will only show hints that are explicitly defined with the hint tag, as follows: `#### ~ tutorialhint`. The hint automatically terminates at the next heading. One hint can be specified per step, and if no hint is specified all text (including blocks) will be displayed in the tutorial caption.
 
 ````markdown
-<!-- Try clicking on the 'Basic' drawer to find the blocks you need! Your code should look like this:
+#### ~ tutorialhint
+Try clicking on the 'Basic' drawer to find the blocks you need! Your code should look like this:
 
 ```blocks
 basic.showString("Micro!")
-``` -->
+```
 ````
 
 ### ~ hint
