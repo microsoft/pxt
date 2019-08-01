@@ -224,13 +224,13 @@ namespace ts.pxtc {
         return res
     }
 
-    export function decompile(opts: CompileOptions, fileName: string, includeGreyBlockMessages = false, bannedCategories?: string[]) {
+    export function decompile(opts: CompileOptions, fileName: string, includeGreyBlockMessages = false) {
         let program = getTSProgram(opts);
 
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         const apis = getApiInfo(program, opts.jres);
-        const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
+        const blocksInfo = pxtc.getBlocksInfo(apis, opts.bannedCategories);
         const decompileOpts: decompiler.DecompileBlocksOptions = {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
