@@ -2893,7 +2893,7 @@ ${lbl}: .short 0xffff
                     // unfortunately, this uses completely different syntax tree nodes to the patters in const/let...
                     const bindingExpr = ir.shared(emitExpr(src));
                     (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
-                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, emitLit(idx)])))
+                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, ir.numlit(idx)])))
                     })
                 }
             } else {
@@ -3880,7 +3880,7 @@ ${lbl}: .short 0xffff
                     userError(9203, lf("spread operator not supported yet"))
                 const myType = arrayElementType(parentType, idx)
                 return [
-                    rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
+                    rtcallMaskDirect("Array_::getAt", [parentAccess, ir.numlit(idx)]),
                     myType
                 ]
             } else {
