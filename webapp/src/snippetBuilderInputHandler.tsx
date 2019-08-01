@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as data from './data';
-import { SpriteEditor } from './spriteEditor';
+import { SpriteEditor } from './snippetBuilderSpriteEditor';
 import * as sui from './sui';
-import { PositionPicker } from './positionPicker';
+import { PositionPicker } from './snippetBuilderPositionPicker';
 import * as Snippet from './snippetBuilder'
 
 type MultiOnChange = (answerToken: string) => (v: string) => void;

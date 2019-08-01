@@ -13,6 +13,11 @@ export class SimulatorDisplay extends data.Component<SimulatorDisplayProps, {}> 
         return `${num * scale}${!noPx && 'px'}`;
     }
 
+    /**
+     * Each svg is transform scaled based on a passed down scale prop.
+     * Eeach relevant top and left attribute is scaled using the same scale.
+     * Width and height pixels are scaled if not transformed by the initial scale.
+     */
     renderCore() {
         const { children, scale } = this.props;
 
@@ -55,6 +60,7 @@ export class SimulatorDisplay extends data.Component<SimulatorDisplayProps, {}> 
                                 width: 312,
                                 left: this.scalePixel(28),
                                 top: this.scalePixel(20),
+                                // Pre-computed polygon from simulator display css
                                 clipPath: `polygon(0px 5.33333px, 5.33333px 0px, 338.667px/1.2) 0px, 344px 5.33333px, 344px 256.667px, 338.667px 262px, 5.33333px 262px, 0px 256.667px)`,
                             }}
                         />

@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as data from './data';
 import * as Snippet from './snippetBuilder';
 import * as sui from './sui';
-import { SimulatorDisplay } from './simulatorDisplay';
+import { SimulatorDisplay } from './snippetBuilderSimulatorDisplay';
 
 const PICKER_WIDTH  = 296;
 const PICKER_HEIGHT = 213;
@@ -29,15 +29,15 @@ interface PositionPickerState {
 
 /**
  * TODO
- * 1. Slight issues with keeping the value written in the textbox and the one picked with a mouse in line when switching back and forth
+ * 1. Slight issues with keeping the value written in the textbox and the one picked with a mouse in sync when switching back and forth
  * 2. Dot slides on resize, recalculate the dots top and left based on new scale
  */
 export class PositionPicker extends data.Component <PositionPickerProps, PositionPickerState> {
     constructor(props: PositionPickerProps) {
         super(props);
         this.state = {
-            x: this.unScalePoint(this.props.defaultX || 80, true),
-            y: this.unScalePoint(this.props.defaultY || 60),
+            x: this.unScalePointX(this.props.defaultX || 80),
+            y: this.unScalePointY(this.props.defaultY || 60),
             dotVisible: false,
         };
 
@@ -60,9 +60,9 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
      * Sets the number to scale the position picker and simulator display
      */
     protected setScale() {
-        // 1023 - constant (FULLSIZE_BROWSER_HEIGHT)
+        // scale = 1 height is 1023 - constant (FULLSIZE_BROWSER_HEIGHT)
         const height = window.innerHeight;
-        // 2100 - constant (FULLSIZE_BROWSER_WIDTH)
+        // scale = 1 height is 2100 - constant (FULLSIZE_BROWSER_WIDTH)
         const width = window.innerWidth;
 
         let scale = height > width ? (width / FULLSIZE_BROWSER_WIDTH) : (height / FULLSIZE_BROWSER_HEIGHT);
@@ -113,24 +113,29 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         return this.scalePoint(point, this.getYScale())
     }
 
-    protected unScalePoint(point: number, x?: true) {
-        const xScale = this.getXScale();
-        const yScale = this.getYScale();
-
+    protected unScalePoint(point: number, scale: number) {
         if (!isNaN(point)) {
 
-            return Math.round(point * (x ? xScale : yScale));
+            return Math.round(point * scale);
         }
 
         return 0;
+    }
+
+    protected unScalePointX(point: number) {
+        return this.unScalePoint(point, this.getXScale());
+    }
+
+    protected unScalePointY(point: number) {
+        return this.unScalePoint(point, this.getYScale());
     }
 
     protected setDotPosition() {
         const { x, y } = this.getScaledPoints();
 
         return {
-            x: this.unScalePoint(x, true),
-            y: this.unScalePoint(y),
+            x: this.unScalePointX(x),
+            y: this.unScalePointY(y),
         };
     }
 
@@ -180,8 +185,8 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
             }
 
             this.setState({
-                x: x ? this.unScalePoint(newValue, true) : pos.x,
-                y: !x ? this.unScalePoint(newValue) : pos.y,
+                x: x ? this.unScalePointX(newValue) : pos.x,
+                y: !x ? this.unScalePointY(newValue) : pos.y,
             }, () => {
                 const pos = this.getScaledPoints();
                 if (x) onChange(input.answerTokens[0])(pos.x.toString());
@@ -232,7 +237,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         }}
                         role='grid'
                     >
-                        {dotVisible && <div className='position-picker dot' style={{ top: `${this.unScalePoint(pos.y)}px` , left: `${this.unScalePoint(pos.x)}px` }} />}
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${this.unScalePointY(pos.y)}px`, left: `${this.unScalePointX(pos.x)}px` }} />}
                     </div>
                 </SimulatorDisplay>
             </div>

@@ -4,6 +4,9 @@ import * as sui from './sui';
 import * as data from './data';
 import * as compiler from './compiler';
 
+const SPRITE_EDITOR_DEFAULT_HEIGHT = 1023;
+const SPRITE_EDITOR_DEFAULT_WIDTH = 2100;
+
 interface ISpriteEditorProps {
     input: pxt.SnippetQuestionInput;
     onChange: (v: string) => void;
@@ -51,12 +54,12 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
     }
 
     protected setScale() {
-        // 1023 - full size value
+        // Sprite editor default height at scale 1 1023 - full size value
         const height = window.innerHeight;
-        // 2100 - full size value
+        // Sprite editor default height at scale 1 2100 - full size value
         const width = window.innerWidth;
 
-        let scale = height > width ? width / 2100 : height / 1003;
+        let scale = height > width ? width / SPRITE_EDITOR_DEFAULT_WIDTH : height / SPRITE_EDITOR_DEFAULT_HEIGHT;
 
         // Minimum resize threshold .81
         if (scale < .61) {

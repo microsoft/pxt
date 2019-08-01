@@ -9,7 +9,7 @@ import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
-import { InputHandler } from './snippetInputHandler';
+import { InputHandler } from './snippetBuilderInputHandler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -44,6 +44,9 @@ interface SnippetBuilderState {
  * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
  * TODO:
  * 1. Richer questions for different sprite paths
+ *  - This includes fleshing out a different path experience for projectile, food, and enemy.
+ *  - Stay in wall question for player.
+ *  - On collision for projectile
  */
 export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetBuilderState> {
     constructor(props: SnippetBuilderProps) {
@@ -214,8 +217,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         let md = `\`\`\`${config.outputType}\n`;
         md += this.replaceTokens(this.highlightEditedBlocks(tsOutput));
         md += `\n\`\`\``;
-        // Removeswhitespace
-        // TODO(jb) md.replace(/\s/g, '_');
+        // Removes whitespace
+        // TODO(jb) md.replace(/\s/g, '_'); - This would ensure that no breaking values are introduced to the typescript. Ideally we would ensure typescript is valid before attempting to compile it.
         this.setState({ mdOutput: md });
     }, 300, false);
 
@@ -452,7 +455,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const currentQuestion = this.getCurrentQuestion();
 
         return (
-            <sui.Modal isOpen={visible} className={'snippet-builder fullscreennobg'} overlayClassName={'snippet-builder-modal-overlay'}
+            <sui.Modal isOpen={visible} className={'snippet-builder full-screen-no-bg'} overlayClassName={'snippet-builder-modal-overlay'}
                 closeOnEscape={true} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
                 onKeyDown={this.handleModalKeyDown}
