@@ -96,7 +96,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     onItemRemove={this.removeFile}
                     onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && file.getName() != pxt.CONFIG_NAME}
+                    hasDelete={deleteFiles && !/pxt.json$/.test(file.getName())}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name} {meta.isSaved ? "" : "*"}
@@ -320,11 +320,11 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             {...rest}>
             {this.props.children}
 
-            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} /> : ''}
+            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
         </a>
     }
 }
