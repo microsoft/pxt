@@ -198,6 +198,7 @@ export class EditorPackage {
     }
 
     updateConfigAsync(update: (cfg: pxt.PackageConfig) => void) {
+        this._resolvedBannedCategories = undefined;
         let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
