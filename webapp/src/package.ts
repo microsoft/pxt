@@ -366,12 +366,18 @@ export class EditorPackage {
         return this.filterFiles(f => f.getName() == name)[0]
     }
 
+    // undefined == uncached
+    // null == cached but no hit
+    // array == means something go found...
     private _resolvedBannedCategories: string[];
     resolveBannedCategories(): string[] {
-        if (this._resolvedBannedCategories !== undefined) return this._resolvedBannedCategories;
+        if (this._resolvedBannedCategories !== undefined)
+            return this._resolvedBannedCategories; // cache hit
 
         let bannedCategories: string[] = [];
-        if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
+        if (pxt.appTarget && pxt.appTarget.runtime
+            && pxt.appTarget.runtime.bannedCategories
+            && pxt.appTarget.runtime.bannedCategories.length) {
             bannedCategories = pxt.appTarget.runtime.bannedCategories.slice();
             // scan for unbanned categories
             this.pkgAndDeps()
@@ -390,7 +396,6 @@ export class EditorPackage {
         this._resolvedBannedCategories = bannedCategories;
         if (!this._resolvedBannedCategories.length)
             this._resolvedBannedCategories = null;
-
         return this._resolvedBannedCategories;
     }
 }
