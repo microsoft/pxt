@@ -752,8 +752,13 @@ export class ProjectView
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
         if (!this.state.active
             || this.state.updatingEditorFile
-            || this.state.currFile == this.editorFile && !editorOverride)
+            || this.state.currFile == this.editorFile && !editorOverride) {
+            if (this.state.editorPosition && this.editorFile == this.state.editorPosition.file) {
+                this.editor.setViewState(this.state.editorPosition)
+                this.setState({ editorPosition: undefined });
+            }
             return undefined;
+        }
 
         let simRunning = false;
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
@@ -783,9 +788,14 @@ export class ProjectView
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
 
-                let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
-                if (e)
-                    this.editor.setViewState(e.pos)
+                if (this.state.editorPosition) {
+                    this.editor.setViewState(this.state.editorPosition);
+                    this.setState({ editorPosition: undefined })
+                } else {
+                    let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+                    if (e)
+                        this.editor.setViewState(e.pos)
+                }
 
                 container.SideDocs.notify({
                     type: "fileloaded",
@@ -810,7 +820,7 @@ export class ProjectView
      * which will decompile if necessary.
      * @param fn
      */
-    setFile(fn: pkg.File) {
+    setFile(fn: pkg.File, line?: number) {
         if (!fn) return;
 
         if (fn.name === "main.ts") {
@@ -839,15 +849,18 @@ export class ProjectView
             }
         }
 
-        this.setState({
+        const state: IAppState = {
             currFile: fn,
             showBlocks: false,
             embedSimView: false
-        })
+        };
+        if (line !== undefined)
+            state.editorPosition = { lineNumber: line, column: 1, file: fn };
+        this.setState(state)
         //this.fireResize();
     }
 
-    setSideFile(fn: pkg.File) {
+    setSideFile(fn: pkg.File, line?: number) {
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
         if (fileName != currFile && pxt.editor.isBlocks(fn)) {
@@ -859,8 +872,17 @@ export class ProjectView
                 this.textEditor.giveFocusOnLoading = false
             }
 
-            this.setFile(fn)
+            this.setFile(fn, line)
         }
+    }
+
+    navigateToError(diag: pxtc.KsDiagnostic) {
+        if (!diag) return;
+        // find file
+        let f = pkg.mainEditorPkg().lookupFile("this/" + diag.fileName);
+        if (!f) return;
+
+        this.setSideFile(f, diag.line + 1);
     }
 
     removeFile(fn: pkg.File, skipConfirm = false) {
