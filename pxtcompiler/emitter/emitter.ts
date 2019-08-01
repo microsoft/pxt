@@ -1083,6 +1083,8 @@ namespace ts.pxtc {
             for (let proc of bin.procs)
                 proc.resolve()
 
+            bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
+
             if (opts.target.isNative) {
                 if (opts.extinfo.yotta)
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
