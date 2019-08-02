@@ -181,7 +181,7 @@ namespace ts.pxtc {
             jssource += `const ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
         })
 
-        jssource += `\nreturn ${bin.procs[0].label()}\n})\n`
+        jssource += `\nreturn ${bin.procs[0] ? bin.procs[0].label() : "null"}\n})\n`
 
         bin.writeFile(BINARY_JS, jssource)
     }
