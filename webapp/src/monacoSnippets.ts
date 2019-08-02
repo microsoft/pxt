@@ -57,7 +57,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 },
                 {
                     name: "logic_if_else",
-                    snippetName: "if",
+                    snippetName: "if else",
                     snippet: `if (true) {\n\n} else {\n\n}`,
                     pySnippet: `if True:\n  pass\nelse:\n  pass`,
                     attributes: {
@@ -67,18 +67,25 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     }
                 },
                 {
-                    name: "logic_switch",
-
-                    snippetName: "switch",
-                    snippet:
-                        `switch(item) {
-            case 0:
-                break;
-            case 1:
-                break;
-        }`,
+                    name: "logic_and",
+                    snippetName: "and",
+                    snippet: `true && true`,
+                    pySnippet: `True and True`,
                     attributes: {
-                        jsDoc: lf("Runs different code based on a value")
+                        blockId: 'logic_compare',
+                        weight: 47,
+                        jsDoc: lf("Runs code if both specified conditions are true")
+                    }
+                },
+                {
+                    name: "logic_or",
+                    snippetName: "or",
+                    snippet: `true || false`,
+                    pySnippet: `True or False`,
+                    attributes: {
+                        blockId: 'logic_compare',
+                        weight: 46,
+                        jsDoc: lf("Runs code if either of two specified conditions is true")
                     }
                 }
             ],
@@ -503,6 +510,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "text_parseInt",
                     snippetName: "parseInt",
                     snippet: `parseInt("5")`,
+                    pySnippetName: "int",
+                    pySnippet: `int("5")`,
                     attributes: {
                         blockId: 'string_parseint',
                         jsDoc: lf("Converts a number written as text into a number")
@@ -513,6 +522,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "text_substr",
                     snippetName: "substr",
                     snippet: `"".substr(0, 0)`,
+                    pySnippet: `""[0:1]`,
                     attributes: {
                         blockId: 'string_substr',
                         jsDoc: lf("Returns the part of a string starting at a given index with the given length")
@@ -523,6 +533,8 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     name: "text_charAt",
                     snippetName: "charAt",
                     snippet: `"".charAt(0)`,
+                    pySnippetName: "str[0]",
+                    pySnippet: `""[0]`,
                     attributes: {
                         blockId: 'string_get',
                         jsDoc: lf("Returns the character at the given index")

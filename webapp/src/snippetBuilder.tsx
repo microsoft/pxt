@@ -9,6 +9,7 @@ import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
+import { InputHandler } from './inputHandler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -25,15 +26,16 @@ interface AnswersMap {
     [answerToken: string]: pxt.SnippetAnswerTypes;
 }
 
-export interface SnippetBuilderState {
+interface SnippetBuilderState {
     visible?: boolean;
     tsOutput?: string;
+    mdOutput?: string;
     answers?: AnswersMap;
     history: number[];
     defaults: DefaultAnswersMap; // Will be typed once more clearly defined
     config?: pxt.SnippetConfig; // Will be a config type
+    actions?: sui.ModalButton[];
 }
-
 
 /**
  * Snippet builder takes a static config file and builds a modal with inputs and outputs based on config settings.
@@ -53,6 +55,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             tsOutput: props.config.initialOutput
         };
 
+        this.cleanup = this.cleanup.bind(this);
         this.hide = this.hide.bind(this);
         this.cancel = this.cancel.bind(this);
         this.confirm = this.confirm.bind(this);
@@ -76,7 +79,54 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             }
         }
 
-        this.setState({ defaults });
+        this.setState({ defaults }, this.generateOutputMarkdown);
+    }
+
+    toggleActionButton() {
+        let newActionButton: sui.ModalButton;
+        if (this.isLastQuestion()) {
+            newActionButton =             {
+                label: lf("Done"),
+                onclick: this.confirm,
+                icon: "check",
+                className: "approve positive"
+            };
+        } else {
+            newActionButton = {
+                label: lf("Next"),
+                onclick: this.nextPage,
+                icon: 'arrow right',
+                className: 'arrow right',
+            };
+        }
+        if (this.state.actions[1] !== newActionButton) {
+            this.setState({
+                actions: [
+                    this.state.actions[0],
+                    newActionButton
+                ]
+            });
+        }
+    }
+
+    initializeActionButtons() {
+        const actions: sui.ModalButton[] = [
+            {
+                label: lf("Back"),
+                onclick: this.backPage,
+                icon: 'arrow left',
+                className: 'arrow left',
+                labelPosition: 'left',
+            },
+            {
+                label: lf("Next"),
+                onclick: this.nextPage,
+                icon: 'arrow right',
+                className: 'arrow right',
+            },
+        ];
+
+        this.setState({ actions });
     }
 
     componentDidMount() {
@@ -105,19 +155,18 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
     /**
      * 
-     * @param output - Accepts an output to convert to markdown
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
      */
-    generateOutputMarkdown(tsOutput: string) {
-        const { config } = this.state;
+    generateOutputMarkdown = pxt.Util.debounce(() => {
+        const { config, tsOutput } = this.state;
         // Attaches starting and ending line based on output type
         let md = `\`\`\`${config.outputType}\n`;
         md += this.replaceTokens(tsOutput);
         md += `\n\`\`\``;
 
-        return md
-    }
+        this.setState({ mdOutput: md });
+    }, 300, false);
 
     hide() {
         this.setState({
@@ -126,15 +175,30 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     show() {
-        pxt.tickEvent('snippetBuilder.show', null, { interactiveConsent: true });
+        pxt.tickEvent('snippet.builder.show', null, { interactiveConsent: true });
+        this.initializeActionButtons();
         this.setState({
             visible: true,
         });
     }
 
+    cleanup() {
+        // Reset state to initial values
+        this.setState({
+            answers: {},
+            history: [0],
+            tsOutput: this.props.config.initialOutput,
+        });
+
+        Blockly.hideChaff();
+    }
+
     cancel() {
-        pxt.tickEvent("snippetBuilder.cancel", undefined, { interactiveConsent: true });
+        const { name } = this.state.config;
+        pxt.tickEvent("snippet.builder.cancel", { snippet: name, page: this.getCurrentPage() }, { interactiveConsent: true });
+
         this.hide();
+        this.cleanup();
     }
 
     findRootBlock(xmlDOM: Element, type?: string): Element {
@@ -192,19 +256,58 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 // Finds the on start blocks children
                 const toAttach = this.findRootBlock(xmlOnStartBlock);
                 const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
-                // Connects new blocks to start block
+                // Hard coded in top blocks
                 this.getOnStartBlock(mainWorkspace)
                     .getInput("HANDLER").connection.connect(rootConnection.previousConnection);
             }).catch((e) => {
                 core.errorNotification(e);
                 throw new Error(`Failed to decompile snippet output`);
-            });;
+            });
     }
 
     confirm() {
+        const { name } = this.state.config;
+        pxt.tickEvent('snippet.builder.back.page', { snippet: name, page: this.getCurrentPage() }, { interactiveConsent: true });
         this.injectBlocksToWorkspace();
         Blockly.hideChaff();
         this.hide();
+    }
+
+    getCurrentPage() {
+        const { history } = this.state;
+
+        return history[history.length - 1];
+    }
+
+    getCurrentQuestion() {
+        const { config } = this.state;
+
+        return config.questions[this.getCurrentPage()];
+    }
+
+    getNextQuestion() {
+        const { config } = this.state;
+        const currentQuestion = this.getCurrentQuestion();
+        if (currentQuestion.goto) {
+            return config.questions[currentQuestion.goto.question];
+        }
+        return null;
+    }
+
+    isLastQuestion() {
+        if (this.getCurrentQuestion().goto) {
+            return false;
+        }
+
+        return true;
+    }
+
+    updateOutput(question: pxt.SnippetQuestions) {
+        const { tsOutput } = this.state;
+
+        if (question.output && tsOutput.indexOf(question.output) === -1) {
+            this.setState({ tsOutput: `${tsOutput}\n${question.output}`}, this.generateOutputMarkdown);
+        }
     }
 
     /**
@@ -213,93 +316,81 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      * is not already attached to the current output.
      */
     nextPage() {
-        const { config } = this.state;
-        const { history, tsOutput } = this.state;
-        const currentQuestion = config.questions[history[history.length - 1]];
-        const goto = currentQuestion.goto
-        if (goto) {
-            const nextQuestion = config.questions[goto.question];
+        const { config, history } = this.state;
+        const currentQuestion = this.getCurrentQuestion();
+        const goto = currentQuestion.goto;
 
-            if (nextQuestion.output && tsOutput.indexOf(nextQuestion.output) === -1) {
-                this.setState({ tsOutput: `${tsOutput}\n${nextQuestion.output}`});
-            }
-            this.setState({ history: [...history, goto.question ]})
+        if (this.isLastQuestion()) {
+            this.confirm();
+        } else if (goto) {
+            // Look ahead and update markdown
+            const nextQuestion = this.getNextQuestion();
+            this.updateOutput(nextQuestion);
+
+            this.setState({ history: [...history, goto.question ]}, this.toggleActionButton)
+            pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: goto.question}, { interactiveConsent: true });
         }
     }
 
     backPage() {
-        const { history } = this.state;
+        const { history, config } = this.state;
+
         if (history.length > 1) {
-            this.setState({ history: history.slice(0, history.length - 1)});
+            this.setState({ history: history.slice(0, history.length - 1)}, () => {
+                this.toggleActionButton();
+                pxt.tickEvent('snippet.builder.back.page', { snippet: config.name, page: this.getCurrentPage() }, { interactiveConsent: true });
+            });
         }
     }
 
-    textInputOnChange = (answerToken: string) => (v: string) => {
-        const answers = this.state.answers;
-        answers[answerToken] = v;
-
-        this.setState({ answers })
-    }
+    onChange = (answerToken: string) => (v: string) => {
+            this.setState((prevState: SnippetBuilderState) => ({
+                answers: {
+                    ...prevState.answers,
+                    [answerToken]: v,
+                }
+            }), this.generateOutputMarkdown);
+        }
 
     renderCore() {
-        const { visible, tsOutput, answers, config, history } = this.state;
+        const { visible, answers, config, mdOutput, actions } = this.state;
         const { parent } = this.props;
 
-        const actions: sui.ModalButton[] = [
-            {
-                label: lf("Back"),
-                onclick: this.backPage,
-                icon: 'arrow left',
-                className: 'arrow left',
-            },
-            {
-                label: lf("Next"),
-                onclick: this.nextPage,
-                icon: 'arrow right',
-                className: 'arrow right',
-            },
-            {
-                label: lf("Cancel"),
-                onclick: this.hide,
-                icon: "cancel",
-                className: "cancel lightgrey"
-            },
-            {
-                label: lf("Done"),
-                onclick: this.confirm,
-                icon: "check",
-                className: "approve positive"
-            }
-        ];
-
-        const currQ = config.questions[history[history.length - 1]];
+        const currentQuestion = this.getCurrentQuestion();
 
         return (
-            <sui.Modal isOpen={visible} className="snippetBuilder" size="large"
-                closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
-                dimmer={true} buttons={actions} header={config.name}
+            <sui.Modal isOpen={visible} className={'snippet-builder'} size="large"
+                closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
+                dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
             >
-                <div>
-                    <div className="list">
-                        {currQ &&
+                <div className="ui equal width grid">
+                    <div className='column snippet-question'>
+                        {currentQuestion &&
                             <div>
-                                <div>{pxt.Util.rlf(currQ.title)}</div>
-                                <div className='list horizontal'>
-                                    {currQ.inputs.map((input: pxt.SnippetQuestionInput) =>
-                                        <div key={input.answerToken}>
-                                            <sui.Input
-                                                label={input.label && pxt.Util.rlf(input.label)}
-                                                onChange={this.textInputOnChange(input.answerToken)}
-                                                value={answers[input.answerToken] || ''}
-                                            />
-                                        </div>
-                                    )}
+                                <div className='ui segment raised'>
+                                    <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
+                                    <div className='ui equal width grid'>
+                                        {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
+                                            <span className='column' key={`span-${input.answerToken}`}>
+                                                <InputHandler
+                                                    onChange={this.onChange(input.answerToken)}
+                                                    input={input}
+                                                    value={answers[input.answerToken] || ''}
+                                                    onEnter={this.nextPage}
+                                                    key={input.answerToken}
+                                                />
+                                            </span>
+                                        )}
+                                    </div>
+                                    {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                                 </div>
+                                {currentQuestion.hint &&
+                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
                             </div>
                         }
                     </div>
-                    <div className='snippetBuilderOutput'>
-                        {parent && <md.MarkedContent markdown={this.generateOutputMarkdown(tsOutput)} parent={parent} />}
+                    <div className='snippet output-section column'>
+                        {mdOutput && <md.MarkedContent className='snippet-markdown-content' markdown={mdOutput} parent={parent} />}
                     </div>
                 </div>
             </sui.Modal>
@@ -307,17 +398,17 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 }
 
-function getSnippetExtensions() {
-    return pkg
-        .allEditorPkgs()
-        .map(ep => ep.getKsPkg())
-        .map(p => !!p && p.config)
-        .filter(config => config.snippetBuilders);
+function getSnippetExtensions(): pxt.SnippetConfig[] {
+    const snippetConfigs = pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
+        .filter(file => file.name === 'pxtsnippets.json')
+        .map(file => pxt.Util.jsonTryParse(file.content)) as pxt.SnippetConfig[][];
+
+    return pxt.Util.concat(snippetConfigs);
 }
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
     const wrapper = document.body.appendChild(document.createElement('div'));
-    const props = { parent: parent, mainWorkspace: editor, config };
+    const props = { parent:   parent, mainWorkspace: editor, config };
     const snippetBuilder = ReactDOM.render(
         React.createElement(SnippetBuilder, props),
         wrapper
@@ -328,23 +419,21 @@ function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceS
 export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.BlockDefinition | toolbox.ButtonDefinition)[], editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
     const snippetExtensions = getSnippetExtensions();
 
-    snippetExtensions.forEach(config => {
-        config.snippetBuilders
-            .filter(snippet => snippet.namespace == ns)
-            .forEach(snippet => {
-                extraBlocks.push({
-                    name: `SNIPPET${name}_BUTTON`,
-                    type: "button",
-                    attributes: {
-                        blockId: `SNIPPET${name}_BUTTON`,
-                        label: snippet.label ? pxt.Util.rlf(snippet.label) : pxt.Util.lf("Editor"),
-                        weight: 101,
-                        group: snippet.group && snippet.group,
-                    },
-                    callback: () => {
-                        openSnippetDialog(snippet, editor, parent);
-                    }
-                });
+    snippetExtensions
+        .filter(snippet => snippet.namespace == ns)
+        .forEach(snippet => {
+            extraBlocks.push({
+                name: `SNIPPET${name}_BUTTON`,
+                type: "button",
+                attributes: {
+                    blockId: `SNIPPET${name}_BUTTON`,
+                    label: snippet.label ? pxt.Util.rlf(snippet.label) : pxt.Util.lf("Editor"),
+                    weight: 101,
+                    group: snippet.group && snippet.group,
+                },
+                callback: () => {
+                    openSnippetDialog(snippet, editor, parent);
+                }
             });
-    })
+        });
 }

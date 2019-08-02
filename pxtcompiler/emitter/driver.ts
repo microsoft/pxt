@@ -94,7 +94,7 @@ namespace ts.pxtc {
     }
 
     export function compile(opts: CompileOptions) {
-        let startTime = Date.now()
+        let startTime = U.cpuUs()
         let res: CompileResult = {
             outfiles: {},
             diagnostics: [],
@@ -198,7 +198,7 @@ namespace ts.pxtc {
             res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
         }
 
-        let emitStart = U.now()
+        let emitStart = U.cpuUs()
         res.times["typescript"] = emitStart - startTime
 
         if (opts.ast) {
@@ -207,7 +207,7 @@ namespace ts.pxtc {
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res, entryPoint);
-            res.times["compilebinary"] = U.now() - emitStart
+            res.times["compilebinary"] = U.cpuUs() - emitStart
             res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
 
@@ -219,18 +219,18 @@ namespace ts.pxtc {
                 res.outfiles[f.slice(6)] = opts.fileSystem[f]
         }
 
-        res.times["all"] = U.now() - startTime;
+        res.times["all"] = U.cpuUs() - startTime;
         pxt.tickEvent(`compile`, res.times);
         return res
     }
 
-    export function decompile(opts: CompileOptions, fileName: string, includeGreyBlockMessages = false, bannedCategories?: string[]) {
+    export function decompile(opts: CompileOptions, fileName: string, includeGreyBlockMessages = false) {
         let program = getTSProgram(opts);
 
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         const apis = getApiInfo(program, opts.jres);
-        const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
+        const blocksInfo = pxtc.getBlocksInfo(apis, opts.bannedCategories);
         const decompileOpts: decompiler.DecompileBlocksOptions = {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,

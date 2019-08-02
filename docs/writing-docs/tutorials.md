@@ -21,7 +21,7 @@ When a tutorial is chosen in the editor, the tutorial runner converts the conten
 
 **A real example**
 
-See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and 
+See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and
 [**rock-paper-scissors.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/rock-paper-scissors.md).
 
 ### ~
@@ -124,7 +124,19 @@ a ``"editor": "js"`` entry for JavaScript tutorials and ``"editor": "py"`` entry
 
 ## Format
 
-The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions: 
+The tutorial markdown has a format that the guides the tutorial runner in making a sequence of interactions:
+
+### Metadata
+
+Tutorial metadata can be optionally specified at the top of the document. Metadata is defined as key-value pairs, in the form: ``### @KEY VALUE``. The currrent properties are:
+
+* **activities**: Indicates a three-level tutorial, with activities and steps. Default is false.
+* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. Default is false.
+
+```markdown
+### @activities true
+### @explicitHints true
+```
 
 ### Title
 
@@ -134,9 +146,40 @@ The title is on the first line and uses a _level 1_ heading, like:
 # Light blaster
 ```
 
+### Activities
+
+Tutorials with **activities** enabled in the metadata have multiple _activities_, each consisting of several steps. An activity begins with a _level 2_ heading (``##``) followed by the activity name, which will be displayed in a dropdown next to The activity can have any number of steps, but no activity-specific text.
+
+```markdown
+## Activity 1
+
+### Step 1
+
+Instructions for step 1 of activity 1 here...
+
+### Step 2
+
+Instructions for step 2 of activity 1 here...
+
+## Activity 2
+
+### Step 1
+
+Instructions for step 1 of activity 2 here...
+```
+
 ### Steps
 
-A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. A step begins with a _level 2_ heading (``##``) and can have any text. It's common, though, to use the _Step 1, Step 2,...Step n_ sequence for each heading. Something like:
+A tutorial follows a sequence of simple steps. The runner builds an interaction from each _step_ section. 
+
+#### Default Syntax
+By default, a step begins with a _level 2_ heading (``##``), followed by the step name.
+
+#### Activity Syntax
+If the tutorial has **activities** enabled in the metadata, steps begin with a _level 3_ heading (``###``), followed by the name.
+
+#### Step format
+The step can have any name, but it's common to use the _Step 1, Step 2,...Step n_ sequence for each heading.
 
 ```markdown
 ## Step 1
@@ -146,10 +189,6 @@ Instructions for step 1 here...
 ## Step 2
 
 Instructions for step 2 here...
-
-## Step 3
-
-Instructions for step 3 here...
 ```
 
 The text in the heading is shown only when the tutorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``##``. These are valid headings:
@@ -166,13 +205,30 @@ The text in the heading is shown only when the tutorial is viewed as a help page
 
 The editor automatically parses the markdown and populates the user interface from each step section.
 
-In each step, just the first paragraph is displayed to the user in the tutorial caption. The complete text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button. If you include code snippets, images or videos, they are shown in the hint view also.
+### Hints
+
+#### Default Syntax
+
+In each step, any text before the first code snippet or image is automatically displayed to the user in the tutorial caption. The remaining text, block examples, etc. are displayed in the ``hint`` dialog when the user clicks the caption or hint button.
+
+#### Explicit Syntax
+
+If the **explicitHints** flag is specified in the tutorial metadata, the tutorial will only show hints that are explicitly defined with the hint tag, as follows: `#### ~ tutorialhint`. The hint automatically terminates at the next heading. One hint can be specified per step, and if no hint is specified all text (including blocks) will be displayed in the tutorial caption.
+
+````markdown
+#### ~ tutorialhint
+Try clicking on the 'Basic' drawer to find the blocks you need! Your code should look like this:
+
+```blocks
+basic.showString("Micro!")
+```
+````
 
 ### ~ hint
 
 **Simple, short descriptions**
 
-During an interaction, the first paragraph of the step description is shown in the caption. If the paragraph length goes beyond the display length of caption, a scroll bar appears in order to view the rest of the paragraph. It's best to keep the paragraph short enough to so all of it appears in the caption without requiring the user to scroll to see it all. If your instructions need more text, you can just create an additional step to split up the activity.
+During an interaction, the step description (all text before the first code block or image) is shown in the caption. If the paragraph length goes beyond the display length of caption, a "More" button appears in order to view the rest of the paragraph. It's best to keep the paragraph short enough to so all of it appears in the caption without requiring the user to click to see it all. If your instructions need more text, you can just create an additional step to split up the activity.
 
 ### ~
 
@@ -202,6 +258,20 @@ If you want to display your tutorial step in a dialog and then have it skip to t
 # Flash-a-rama
 
 ## It's time to code! @unplugged
+
+```
+
+
+### TutorialCompleted
+
+Used to signify that this step in the tutorial is the "last step" even if more steps are present in the markdown. This has no impact on how tutorial progress is displayed; it is only used by MakeCode editors that do something external when a tutorial is completed.
+
+```markdown
+# Flash-a-rama
+
+## This is the last step @tutorialCompleted
+
+## This is a bonus activity that comes after the last step
 
 ```
 

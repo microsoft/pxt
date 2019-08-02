@@ -53,6 +53,14 @@
     </div>
 </aside>
 
+<aside id=tutorialhint class=box>
+    <div class="ui hint message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
 <aside id=reminder class=box>
     <div class="ui warning message">
         <div class="content">
@@ -136,10 +144,10 @@
 </aside>
 
 <aside id=top-dropdown class=toc>
-    <div class="item" title="@TITLE@">
+    <div class="item" title="@TITLE@" role="menu">
         <i class="chevron right icon"></i>
-        <a class="header @ACTIVE@" href="@LINK@" role="menu">@NAME@</a>
-        <div class="menu">
+        <a class="header @ACTIVE@" href="@LINK@" role="menuitem">@NAME@</a>
+        <div class="menu" role="menu">
             @ITEMS@
         </div>
     </div>

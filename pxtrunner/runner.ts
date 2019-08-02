@@ -803,6 +803,15 @@ ${linkString}
     </div>
 </aside>
 
+<aside id=tutorialhint class=box>
+    <div class="ui icon orange message" data-inferred>
+        <div class="content">
+            <div class="header">Tutorial Hint</div>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
 <!-- wrapped around ordinary content -->
 <aside id=main-container class=box>
     <div class="ui text">

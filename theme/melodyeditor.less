@@ -9,27 +9,20 @@
 
 /* Melody Editor */
 
-#melody-name {
-    margin: 1px;
-    text-align: left;
-    float: center;
-    width: 200px;
-}
-
-#melody-name-label {
-    background-color: white;
-    margin: 10px;
-}
-
 #melody-toggle {
     margin: 10px;
     text-align: center;
     float: center;
 }
+
+#melody-editor-header-controls {
+    height: 40px;
+}
+
 .melody-grid-div {
-    margin: 10px 20px;
-    float: center;
+    margin: 10px 20px 0px;
     text-align: center;
+    background-color: inherit;
 }
 
 .cell {
@@ -39,63 +32,223 @@
 }
 
 .melody-top-bar-div {
-    margin: 10px;
+    padding: 6px 0px 0px 0px;
     float: center;
     text-align: center;
 }
 
-#melody-tempo-div {
-    display: inline-grid;
-    vertical-align: top;
+.melody-editor-div {
+    height: 100%;
+    background-color: #4f0643;
 }
 
-#melody-tempo-label {
+.melody-content-div {
+    max-height: 550px;
+    width: 300px;
+    padding: 0px;
+    overflow: hidden;
+}
+
+.melody-editor-dropdown {
+    padding: 0px !important;
+}
+
+#melody-editor-gallery-outer {
+    overflow: hidden;
+    position: absolute;
+    z-index: 1002;
+    width: 100%;
+}
+
+#melody-editor-gallery {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    padding: 10px 35px 10px 10px;
+    background: #4f0643;
+    max-height: 350px;
+}
+
+.melody-gallery-button {
+    text-align: center;
+    display: inline-block;
+    padding: 5px;
+    margin: 4px;
+    border-radius: 4px;
+    outline: none;
+    border: 1px solid;
+    transition: box-shadow .1s;
+    cursor: pointer;
+    line-height: 35px;
+}
+
+.melody-gallery-play-icon {
+    float: left;
+}
+
+.melody-confirm-button {
+    float: right;
+    margin: 0px !important;
+    height: 28px;
+    width: 70px;
     color: white;
+    background-color: #e30fc0;
+    border: none;
+    border-radius: 2px;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+    font-family: @pageFont !important;
+}
+
+.melody-confirm-button:hover {
+    background-color: #9e0986;
+    border: 1px solid #e30fc0;
+}
+
+.melody-confirm-button:focus {
+    outline: none !important;
+}
+
+.melody-editor-text {
+    margin: 0px 3px;
+    float: left;
+    font-family: @pageFont !important;
+    font-weight: bold;
+    font-size: 17px;
+}
+
+.melody-editor-field-icon {
+    fill: white;
+    font-family: "Icons";
+    font-size: 19px;
+}
+
+.melody-icon {
+    float: left;
+    height: 25px;
+}
+
+.melody-gallery-button-hover {
+    box-shadow: 0px 0px 0px 4px rgba(255, 255, 255, .2);
+}
+
+.melody-gallery-button:active {
+    box-shadow: 0px 0px 0px 6px rgba(255, 255, 255, .2);
 }
 
 #melody-tempo-input {
+    float: left;
     width: 50px;
-    margin: 1px;
+    height: 28px;
+    border-radius: 2px;
+    border: none;
+    padding-left: 5px;
+}
+
+#melody-tempo-input:focus {
+    outline: none !important;
 }
 
 #melody-play-button {
-    width: 140px;
-    margin: 3px;
+    height: 28px;
+    width: 120px;
+    display: inline-block;
+    color: white;
+    background-color: #7f8c8d;
+    border: none;
+    border-radius: 2px;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+}
+
+#melody-play-button:hover {
+    background-color: #525a5b;
+    border: 1px solid #7f8c8d;
+}
+
+#melody-play-button:focus {
+    outline: none !important;
 }
 
 .melody-bottom-bar-div {
-    margin: 10px 20px;
+    margin: 7px 3px 0px;
+    padding: 0px 20px 20px;
+    background-color: inherit;
+    text-align: center;
+}
+
+.melody-color-block {
+    margin: 4px 7px 0px 0px;
+    float: right;
+}
+
+.sliver {
     display: inline-block;
+    width: 9px;
+    height: 23px;
+    margin: 0.5px;
+    border: 1px solid rgba(0, 0, 0, .2);
+}
+
+.left-edge {
+    border-radius: 5px 0px 0px 5px;
+}
+
+.right-edge {
+    border-radius: 0px 5px 5px 0px;
+}
+
+.melody-preview-button {
+    float: right;
+    height: 35px;
+    width: 35px;
+    padding: 12px 11px !important;
+}
+
+.melody-gallery-row {
+    float: left;
 }
 
 .melody-red {
-    background-color: #A80000;
+    fill: #A80000;
+    background: #A80000;
 }
 
 .melody-orange {
-    background-color: #D83B01;
+    fill: #D83B01;
+    background: #D83B01;
 }
 
 .melody-yellow {
-    background-color: #FFB900;
+    fill: #FFB900;
+    background: #FFB900;
 }
 
 .melody-green {
-    background-color: #107C10;
+    fill: #107C10;
+    background: #107C10;
 }
 
 .melody-teal {
-    background-color: #008272;
+    fill: #008272;
+    background: #008272;
 }
 
 .melody-blue {
-    background-color: #0078D7;
+    fill: #0078D7;
+    background: #0078D7;
 }
 
 .melody-violet {
-    background-color: #B4009E;
+    fill: #B4009E;
+    background: #B4009E;
 }
 
 .melody-purple {
-    background-color: #5C2D91;
+    fill: #5C2D91;
+    background: #5C2D91;
+}
+
+.melody-default {
+    fill: #DCDCDC;
+    background: #DCDCDC;
 }
