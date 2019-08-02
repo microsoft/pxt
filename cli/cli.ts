@@ -2398,6 +2398,11 @@ class SnippetHost implements pxt.Host {
                 this.writeFile(module, filename, contents);
                 return contents;
             }
+            else if (filename === "pxt-python.d.ts") {
+                const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-python", "pxt-python.d.ts"), 'utf8');
+                this.writeFile(module, filename, contents);
+                return contents;
+            }
         }
 
         // might be ok

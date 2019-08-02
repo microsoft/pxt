@@ -9,6 +9,25 @@ namespace pxt.py {
         blockDepth: number;
     }
 
+    interface OverrideTextPart {
+        kind: "text";
+        text: string;
+    }
+
+    interface OverrideArgPart {
+        kind: "arg";
+        index: number;
+        isOptional: boolean;
+        prefix?: string;
+        default?: string;
+    }
+
+    type OverridePart = OverrideArgPart | OverrideTextPart;
+
+    interface TypeScriptOverride {
+        parts: OverridePart[];
+    }
+
     // global state
     let externalApis: pxt.Map<SymbolInfo> // slurped from libraries
     let internalApis: pxt.Map<SymbolInfo> // defined in Python
@@ -126,6 +145,9 @@ namespace pxt.py {
 
         if (U.endsWith(tp, "[]")) {
             return mkArrayType(mapTsType(tp.slice(0, -2)))
+        }
+        if (tp === "_py.Array") {
+            return mkArrayType(tpAny);
         }
 
         const t = U.lookup(builtInTypes, tp)
@@ -600,7 +622,7 @@ namespace pxt.py {
 
         if (!ct) {
             if (t.primType == "@array") {
-                ct = lookupApi("Array")
+                ct = lookupApi("_py.Array")
             } else if (t.primType == "string") {
                 ct = lookupApi("String")
             }
@@ -1715,7 +1737,7 @@ namespace pxt.py {
                     let attr = n.func as py.Attribute
                     recv = attr.value
                     recvTp = typeOf(recv)
-                    if (recvTp.classType) {
+                    if (recvTp.classType || recvTp.primType) {
                         methName = attr.attr
                         fun = getTypeField(recv, methName, true)
                         if (fun) methName = fun.name
@@ -1808,7 +1830,9 @@ namespace pxt.py {
                         error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.pyQName))
                         allargs.push(B.mkText("null"))
                     } else if (arg) {
-                        unifyTypeOf(arg, formals[i].pyType)
+                        if (formals[i].pyType.primType !== "any") {
+                            unifyTypeOf(arg, formals[i].pyType)
+                        }
                         if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
                             allargs.push(emitFunctionDef(arg.symbolInfo.pyAST as FunctionDef, true))
                         } else {
@@ -1842,6 +1866,13 @@ namespace pxt.py {
             if (fun) {
                 unifyTypeOf(n, fun.pyRetType)
                 n.symbolInfo = fun
+
+                if (fun.attributes.tsOverride) {
+                    const override = parseTypeScriptOverride(fun.attributes.tsOverride);
+                    if (override) {
+                        return buildOverride(override, allargs, methName ? expr(recv) : null);
+                    }
+                }
             }
 
             let fn = methName ? B.mkInfix(expr(recv), ".", B.mkText(methName)) : expr(n.func)
@@ -2296,4 +2327,84 @@ namespace pxt.py {
     }
 
     pxt.conversionPasses.push(convert)
+
+    function parseTypeScriptOverride(src: string): TypeScriptOverride {
+        const regex = /([^\$]*\()?([^\$\(]*)\$(\d)(?:(?:(?:=(\d+|'[a-zA-Z0-9_]*'|false|true|null|undefined))|(\?)|))/y;
+        const parts: OverridePart[] = [];
+
+        let match;
+        let lastIndex = 0;
+
+        do {
+            lastIndex = regex.lastIndex;
+
+            match = regex.exec(src);
+
+            if (match) {
+                if (match[1]) {
+                    parts.push({
+                        kind: "text",
+                        text: match[1]
+                    });
+                }
+
+                parts.push({
+                    kind: "arg",
+                    prefix: match[2],
+                    index: parseInt(match[3]),
+                    default: match[4],
+                    isOptional: !!match[5]
+                })
+            }
+        } while (match)
+
+        if (lastIndex != undefined) {
+            parts.push({
+                kind: "text",
+                text: src.substr(lastIndex)
+            });
+        }
+        else {
+            parts.push({
+                kind: "text",
+                text: src
+            });
+        }
+
+        return {
+            parts
+        };
+    }
+
+    function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
+        const result: B.JsNode[] = [];
+
+        for (const part of override.parts) {
+            if (part.kind === "text") {
+                result.push(B.mkText(part.text));
+            }
+            else if (args[part.index] || part.default) {
+                if (part.prefix) result.push(B.mkText(part.prefix))
+
+                if (args[part.index]) {
+                    result.push(args[part.index]);
+                }
+                else {
+                    result.push(B.mkText(part.default))
+                }
+            }
+            else if (part.isOptional) {
+                // do nothing
+            }
+            else {
+                return undefined;
+            }
+        }
+
+        if (recv) {
+            return B.mkInfix(recv, ".", B.mkGroup(result));
+        }
+
+        return B.mkGroup(result);
+    }
 }

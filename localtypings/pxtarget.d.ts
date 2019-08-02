@@ -536,6 +536,7 @@ declare namespace ts.pxtc {
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+        tsOverride?: string;
 
         // on class
         snippet?: string; // value used to generate TS snippet

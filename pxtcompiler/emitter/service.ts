@@ -19,6 +19,7 @@ namespace ts.pxtc {
             "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
             "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
             "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
+            "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword },
             "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
             "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
             ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
@@ -27,6 +28,8 @@ namespace ts.pxtc {
             ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
             "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
             "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+            "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+            "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
             "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
             ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
             "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
@@ -1111,8 +1114,8 @@ namespace ts.pxtc.service {
                     return mappedSi;
                 });
 
-                // filter out built-ins from the main search set as those 
-                // should come from the built-in search set 
+                // filter out built-ins from the main search set as those
+                // should come from the built-in search set
                 let builtinBlockIds: pxt.Map<Boolean> = {}
                 builtinSearchSet.forEach(b => builtinBlockIds[b.id] = true)
                 searchSet = searchSet.filter(b => !(b.id in builtinBlockIds));

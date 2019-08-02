@@ -22,6 +22,7 @@ export class TestHost implements pxt.Host {
                 let commonFiles = this.includeCommon ? [
                     "pxt-core.d.ts",
                     "pxt-helpers.ts",
+                    "pxt-python.d.ts"
                 ] : []
                 let packageFileNames = Object.keys(this.packageFiles)
                 return JSON.stringify({
@@ -75,6 +76,11 @@ export class TestHost implements pxt.Host {
         }
         else if (filename === "pxt-helpers.ts") {
             const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+            this.writeFile(module, filename, contents);
+            return contents;
+        }
+        else if (filename === "pxt-python.d.ts") {
+            const contents = fs.readFileSync(path.resolve("libs", "pxt-python", "pxt-python.d.ts"), 'utf8');
             this.writeFile(module, filename, contents);
             return contents;
         }
