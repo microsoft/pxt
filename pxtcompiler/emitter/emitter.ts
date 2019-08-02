@@ -769,6 +769,7 @@ namespace ts.pxtc {
         res: CompileResult,
         entryPoint: string): EmitResult {
         target = opts.target
+        target.debugMode = !!opts.breakpoints
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();

@@ -789,7 +789,7 @@ namespace ts.pxtc.ir {
             let allBrkp: Breakpoint[] = []
 
             let prev: Stmt = null
-            let canInline = true
+            let canInline = target.debugMode ? false : true
             let inlineBody: Expr = null
             for (let s of this.body) {
                 if (s.expr) {
