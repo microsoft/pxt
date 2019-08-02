@@ -16,8 +16,6 @@ namespace ts.pxtc.ir {
         FieldAccess,
         Store,
         CellRef,
-        Incr,
-        Decr,
         Sequence,
         JmpValue,
         Nop,
@@ -78,6 +76,12 @@ namespace ts.pxtc.ir {
             return copy
         }
 
+        ptrlabel() {
+            if (this.jsInfo as any instanceof Stmt)
+                return this.jsInfo as any as Stmt
+            return null
+        }
+
         isExpr() { return true }
 
         isPure() {
@@ -129,8 +133,6 @@ namespace ts.pxtc.ir {
                     return false;
 
                 case EK.SharedDef:
-                case EK.Incr:
-                case EK.Decr:
                 case EK.FieldAccess:
                 case EK.InstanceOf:
                     return this.args[0].canUpdateCells()
@@ -214,12 +216,6 @@ namespace ts.pxtc.ir {
 
                     case EK.SharedDef:
                         return `SHARED_DEF(#${a0.getId()}: ${str(a0)})`
-
-                    case EK.Incr:
-                        return `INCR(${str(a0)})`
-
-                    case EK.Decr:
-                        return `DECR(${str(a0)})`
 
                     case EK.FieldAccess:
                         return `${str(a0)}.${(e.data as FieldAccessInfo).name}`
@@ -346,14 +342,7 @@ namespace ts.pxtc.ir {
             if (this.isByRefLocal())
                 return rtcall("pxtrt::ldlocRef", [r])
 
-            if (this.refCountingHandledHere())
-                return op(EK.Incr, [r])
-
             return r
-        }
-
-        refCountingHandledHere() {
-            return !this.isByRefLocal()
         }
 
         isByRefLocal() {
@@ -373,16 +362,7 @@ namespace ts.pxtc.ir {
                     return this.storeDirect(rtcall(cnv, [src], 1))
                 }
 
-                if (this.refCountingHandledHere()) {
-                    let tmp = shared(src)
-                    return op(EK.Sequence, [
-                        op(EK.Decr, [tmp]),
-                        op(EK.Decr, [this.loadCore()]),
-                        this.storeDirect(tmp)
-                    ])
-                } else {
-                    return this.storeDirect(src)
-                }
+                return this.storeDirect(src)
             }
         }
 
@@ -428,10 +408,6 @@ namespace ts.pxtc.ir {
         isThis?: boolean;
     }
 
-    export interface ProcQuery {
-        action: ts.FunctionLikeDeclaration;
-    }
-
     function noRefCount(e: ir.Expr): boolean {
         switch (e.exprKind) {
             case ir.EK.Sequence:
@@ -456,22 +432,22 @@ namespace ts.pxtc.ir {
 
     export class Procedure extends Node {
         numArgs = 0;
-        info: FunctionAddInfo;
-        seqNo: number;
+        info: FunctionAddInfo = null;
+        seqNo: number = -1;
         isRoot = false;
         locals: Cell[] = [];
         captured: Cell[] = [];
         args: Cell[] = [];
-        parent: Procedure;
-        debugInfo: ProcDebugInfo;
-        fillDebugInfo: (th: assembler.File) => void;
-        classInfo: ClassInfo;
-        perfCounterName: string;
+        parent: Procedure = null;
+        debugInfo: ProcDebugInfo = null;
+        fillDebugInfo: (th: assembler.File) => void = null;
+        classInfo: ClassInfo = null;
+        perfCounterName: string = null;
         perfCounterNo = 0;
 
         body: Stmt[] = [];
         lblNo = 0;
-        action: ts.FunctionLikeDeclaration;
+        action: ts.FunctionLikeDeclaration = null;
 
         reset() {
             this.body = []
@@ -487,10 +463,6 @@ namespace ts.pxtc.ir {
 
         label() {
             return getFunctionLabel(this.action)
-        }
-
-        matches(id: ProcQuery) {
-            return (this.action == id.action)
         }
 
         toString(): string {
@@ -557,16 +529,6 @@ namespace ts.pxtc.ir {
             this.emit(stmt(SK.StackEmpty, null))
         }
 
-        emitClrIfRef(p: Cell) {
-            assert(!p.isGlobal() && !p.iscap, "!p.isGlobal() && !p.iscap")
-            this.emitExpr(op(EK.Decr, [p.loadCore()]))
-        }
-
-        emitClrs(finlbl: ir.Stmt, retval: ir.Expr) {
-            if (this.isRoot) return;
-            this.locals.forEach(p => this.emitClrIfRef(p))
-        }
-
         emitJmpZ(trg: string | Stmt, expr: Expr) {
             this.emitJmp(trg, expr, JmpMode.IfZero)
         }
@@ -628,15 +590,7 @@ namespace ts.pxtc.ir {
 
                 iterargs(e, opt)
 
-                if ((e.exprKind == EK.Decr || e.exprKind == EK.Incr) && noRefCount(e.args[0])) {
-                    return e.args[0]
-                }
-
                 switch (e.exprKind) {
-                    case EK.Decr:
-                        if (e.args[0].exprKind == EK.Incr)
-                            return e.args[0].args[0]
-                        break;
                     case EK.Sequence:
                         e.args = e.args.filter((a, i) => {
                             if (i != e.args.length - 1 && a.isPure()) {
@@ -672,6 +626,13 @@ namespace ts.pxtc.ir {
                         U.assert(e.args[0].totalUses > 0, "e.args[0].totalUses > 0")
                         e.args[0].totalUses++;
                         return e;
+                    case EK.PointerLiteral:
+                        const pl = e.ptrlabel()
+                        if (pl) {
+                            if (!pl.lblNumUses) pl.lblNumUses = 0
+                            pl.lblNumUses++
+                        }
+                        break
                 }
                 iterargs(e, cntuses)
                 return e
@@ -690,10 +651,7 @@ namespace ts.pxtc.ir {
                             return arg
                         }
                         arg.irCurrUses++
-                        //console.log("SH", e.data, arg.toString(), arg.irCurrUses, arg.sharingInfo())
-                        if (e.data === "noincr" || arg.irCurrUses == arg.totalUses)
-                            return e; // final one, no incr
-                        return op(EK.Incr, [e])
+                        return e
                     default:
                         iterargs(e, sharedincr)
                         return e
@@ -782,8 +740,6 @@ namespace ts.pxtc.ir {
     }
 
     export function op(kind: EK, args: Expr[], data?: any): Expr {
-        if (target.gc && (kind == EK.Incr || kind == EK.Decr))
-            return args[0]
         return new Expr(kind, args, data)
     }
 
@@ -791,7 +747,7 @@ namespace ts.pxtc.ir {
         return op(EK.NumberLiteral, null, v)
     }
 
-    function sharedCore(expr: Expr, data: string) {
+    export function shared(expr: Expr) {
         switch (expr.exprKind) {
             case EK.SharedRef:
                 expr = expr.args[0]
@@ -802,16 +758,7 @@ namespace ts.pxtc.ir {
         }
 
         let r = op(EK.SharedRef, [expr])
-        r.data = data
         return r
-    }
-
-    export function sharedNoIncr(expr: Expr) {
-        return sharedCore(expr, "noincr")
-    }
-
-    export function shared(expr: Expr) {
-        return sharedCore(expr, null)
     }
 
     export function ptrlit(lbl: string, jsInfo: string): Expr {

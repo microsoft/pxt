@@ -408,12 +408,7 @@ namespace ts.pxtc {
                 vt ^= 1
                 if (vt & 3) oops("Unaligned vt: " + vt)
 
-                if (target.gc) {
-                    pxt.HF2.write32(headerBytes, 0, vt)
-                } else {
-                    pxt.HF2.write16(headerBytes, 0, parseInt(pxt.REFCNT_FLASH))
-                    pxt.HF2.write16(headerBytes, 2, vt >> target.vtableShift)
-                }
+                pxt.HF2.write32(headerBytes, 0, vt)
 
                 let len = 0
                 if (isString)
@@ -688,7 +683,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         // 4 words header
         // 4 or 2 mem mgmt methods
         // 1 toString
-        return 4 + (target.gc ? 4 : 2) + 1
+        return 4 + 4 + 1
     }
 
     const primes = [
@@ -788,10 +783,8 @@ ${info.id}_VT:
 
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
-        if (target.gc) {
-            addPtr("pxt::RefRecord_scan")
-            addPtr("pxt::RefRecord_gcsize")
-        }
+        addPtr("pxt::RefRecord_scan")
+        addPtr("pxt::RefRecord_gcsize")
         let toStr = info.toStringMethod
         addPtr(toStr ? toStr.vtLabel() : "0")
 
@@ -861,7 +854,7 @@ ${hex.hexPrelude()}
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
     .word _pxt_perf_counters
-    .word 0 ; reserved
+    .word _pxt_restore_exception_state@fn
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;

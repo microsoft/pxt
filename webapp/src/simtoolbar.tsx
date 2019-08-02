@@ -104,7 +104,17 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const debugBtnEnabled = !isStarting && !isSimulatorPending;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
 
-        const runTooltip = [lf("Start the simulator"), lf("Starting the simulator"), lf("Stop the simulator")][simState];
+        const runTooltip = (() => {
+            switch (simState) {
+                case pxt.editor.SimState.Stopped:
+                    return lf("Start the simulator");
+                case pxt.editor.SimState.Pending:
+                case pxt.editor.SimState.Starting:
+                    return lf("Starting the simulator");
+                case pxt.editor.SimState.Running:
+                    return lf("Stop the simulator");
+            }
+        })();
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const debugTooltip = lf("Toggle debug mode");

@@ -122,6 +122,7 @@ namespace ts.pxtc.vm {
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",
+        "try       $lbl",
         "push",
         "pop",
     ]

@@ -53,6 +53,7 @@
         "48instanceof.ts",
         "49unicode.ts",
         "50indexedtypes.ts",
+        "51exceptions.ts",
         "99final.ts"
     ],
     "public": true,
