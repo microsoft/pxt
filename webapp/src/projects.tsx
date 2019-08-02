@@ -603,7 +603,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         return <div className="ui grid stackable padded">
             {image ? <div className="imagewrapper"><div className="image" style={{ backgroundImage: `url("${image}")` }} /></div> : undefined}
-            <div className="column eight wide">
+            <div className="column twelve wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
                     {tags ? <div className="ui labels">
