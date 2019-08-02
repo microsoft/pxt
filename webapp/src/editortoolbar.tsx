@@ -112,7 +112,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         let saveInput = [];
         if (view != View.Mobile) {
-            saveInput.push(<label htmlFor={id} id={id} className="accessible-hidden" key="label">{lf("Type a name for your project")}</label>);
+            saveInput.push(<label htmlFor={id} className="accessible-hidden" key="label">{lf("Type a name for your project")}</label>);
             saveInput.push(<EditorToolbarSaveInput id={id} view={this.getViewString(view)} key="input"
                             type="text"
                             aria-labelledby={id}

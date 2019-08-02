@@ -72,7 +72,7 @@ export function showGithubLoginAsync() {
             </ol>
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -472,7 +472,7 @@ export function showCommitDialogAsync(repo: string) {
         jsx: <div className="ui form">
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Describe your changes.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
             </div>
             <div className="ui field">
                 <PlainCheckbox
@@ -533,7 +533,7 @@ export function showImportUrlDialogAsync() {
             </div>
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -572,11 +572,11 @@ export function showCreateGithubRepoDialogAsync() {
         jsx: <div className="ui form">
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Repo name.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
             </div>
             <div className="ui field">
                 <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -627,7 +627,7 @@ export function showImportGithubDialogAsync() {
             hideAgree: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
-                <div className="ui relaxed divided list">
+                <div className="ui relaxed divided list" role="menu">
 
                     <div key={"create new"} className="item">
                         <i className="large plus circle middle aligned icon"></i>
@@ -688,7 +688,7 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
         jsx: <div className="ui form">
             <div className="ui field">
                 <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", exts.join(lf(" or ")))}</label>
-                <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
+                <input type="file" tabIndex={0} autoFocus aria-labelledby="selectFileToOpenLabel" className="ui blue fluid"></input>
             </div>
             <div className="ui secondary segment">
                 {lf("You can import files by dragging and dropping them anywhere in the editor!")}

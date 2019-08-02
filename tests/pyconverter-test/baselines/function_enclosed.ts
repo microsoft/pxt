@@ -1,0 +1,7 @@
+function whatever() {
+    function hello() {
+        
+    }
+    
+}
+

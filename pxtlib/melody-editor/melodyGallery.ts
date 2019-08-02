@@ -76,7 +76,7 @@ namespace pxtmelody {
 
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
-            const buttonWidth = "300px";
+            const buttonWidth = "255px";
             const buttonHeight = "45px";
             const samples = pxtmelody.SampleMelodies;
             for (let i = 0; i < samples.length; i++) {
@@ -151,6 +151,7 @@ namespace pxtmelody {
             clickableArea.setAttribute('data-value', sample.notes);
             clickableArea.title = sample.name;
             pxt.BrowserUtils.addClass(clickableArea, "melody-gallery-row");
+            clickableArea.style.width = "200px";
 
             let melodyName = document.createElement('div');
             melodyName.innerText = sample.name;

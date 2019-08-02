@@ -1,9 +1,9 @@
-/**
- * Any changes in this file need to be ported over to /docs/static/tutorial-tool/tutorial.ts
- */
 namespace pxt.tutorial {
+    const _h2Regex = /^##[^#](.*)$([\s\S]*?)(?=^##[^#]|$(?![\r\n]))/gmi;
+    const _h3Regex = /^###[^#](.*)$([\s\S]*?)(?=^###[^#]|$(?![\r\n]))/gmi;
+
     export function parseTutorial(tutorialmd: string): TutorialInfo {
-        const steps = parseTutorialSteps(tutorialmd);
+        const {steps, activities} = parseTutorialMarkdown(tutorialmd);
         const title = parseTutorialTitle(tutorialmd);
         if (!steps)
             return undefined; // error parsing steps
@@ -47,6 +47,7 @@ namespace pxt.tutorial {
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
             title: title,
             steps: steps,
+            activities: activities,
             code,
             templateCode
         };
@@ -67,92 +68,116 @@ namespace pxt.tutorial {
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
+    function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         const metadata = parseTutorialMetadata(tutorialmd);
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        if (metadata && metadata.activities) {
+            // tutorial with "## ACTIVITY", "### STEP" syntax
+            return parseTutorialActivities(tutorialmd, metadata);
+        } else {
+            // tutorial with "## STEP" syntax
+            let steps = parseTutorialSteps(tutorialmd);
 
-        // Download tutorial markdown
-        let steps = tutorialmd.split(/^##[^#].*$/gmi);
-        let newAuthoring = true;
-        if (steps.length <= 1) {
-            // try again, using old logic.
-            steps = tutorialmd.split(/^###[^#].*$/gmi);
-            newAuthoring = false;
+            // old: "### STEP" syntax (no activity header guaranteed)
+            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, _h3Regex);
+
+            return {steps: steps, activities: null};
         }
-        if (steps[0].indexOf("# Not found") == 0) {
+    }
+
+    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+        let stepInfo: TutorialStepInfo[] = [];
+        let activityInfo: TutorialActivityInfo[] = [];
+
+        markdown.replace(_h2Regex, function(match, name, activity) {
+            let i = activityInfo.length;
+            activityInfo.push({
+                name: name || lf("Activity ") + i,
+                step: stepInfo.length
+            })
+
+            let steps = parseTutorialSteps(activity, _h3Regex, metadata);
+            steps = steps.map(step => {
+                step.activity = i;
+                return step;
+            })
+            stepInfo = stepInfo.concat(steps);
+
+            return "";
+        })
+
+        return {steps: stepInfo, activities: activityInfo};
+    }
+
+    function parseTutorialSteps(markdown: string, regex?: RegExp, metadata?: TutorialMetadata): TutorialStepInfo[] {
+        // use regex override if present
+        let stepRegex = regex || _h2Regex;
+
+        let stepInfo: TutorialStepInfo[] = [];
+        markdown.replace(stepRegex, function (match, flags, step) {
+            step = step.trim();
+            let {header, hint} = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let info: TutorialStepInfo = {
+                fullscreen: /@(fullscreen|unplugged)/.test(flags),
+                unplugged: /@unplugged/.test(flags),
+                tutorialCompleted: /@tutorialCompleted/.test(flags),
+                contentMd: step,
+                headerContentMd: header,
+                hintContentMd: hint,
+                hasHint: hint && hint.length > 0
+            }
+            stepInfo.push(info);
+            return "";
+        });
+
+        if (markdown.indexOf("# Not found") == 0) {
             pxt.debug(`tutorial not found`);
             return undefined;
         }
-        let stepInfo: TutorialStepInfo[] = [];
-        tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
-            let info: TutorialStepInfo = {
-                fullscreen: /@(fullscreen|unplugged)/.test(s),
-                unplugged: /@unplugged/.test(s),
-                tutorialCompleted: /@tutorialCompleted/.test(s)
-            }
-            stepInfo.push(info);
-            return ""
-        });
 
-        if (steps.length < 1)
-            return undefined; // Promise.resolve();
-        steps = steps.slice(1, steps.length); // Remove tutorial title
-
-        for (let i = 0; i < steps.length; i++) {
-            const stepContent = steps[i].trim();
-            const contentLines = stepContent.split('\n');
-            const info = stepInfo[i];
-
-            info.headerContentMd = contentLines[0];
-            info.contentMd = stepContent;
-
-            let hintContentMd;
-            if (metadata && metadata.v == 2) {
-                // v2: hint is explicitly defined in HTML comment form: <!-- HINT TEXT -->
-                const hintTextRegex = /<!--([\s\S]*?)-->/i;
-                info.headerContentMd = stepContent.replace(hintTextRegex, function (f, m) {
-                    hintContentMd = m;
-                    return "";
-                });
-            } else {
-                // v1: everything after the first ``` section OR the first image is treated as a "hint"
-                const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
-                let hintText = stepContent.match(hintTextRegex);
-                if (hintText && hintText.length > 2) {
-                    info.headerContentMd = hintText[1];
-                    hintContentMd = hintText[2];
-                }
-            }
-
-            // remove hidden snippets from the hint
-            if (hintContentMd) {
-                hintContentMd = hintContentMd.replace(hiddenSnippetRegex, '');
-                info.hintContentMd = hintContentMd;
-            }
-
-            info.hasHint = hintContentMd && hintContentMd.length > 1;
-        }
         return stepInfo;
     }
 
-    /*
-        Parses metadata table at the beginning of tutorial markown. Expects a series of
-        key-value pairs, in "| key | value |\n" format.
-    */
-    function parseTutorialMetadata(tutorialmd: string): TutorialMetadata {
-        let m: any = {};
-
-        const tableRegex = /(?:\|[\s\S]+?\|[\s\S]+?\|\n)*/i;
-        const keyValueRegex = /\|([\s\S]+?)\|([\s\S]+?)\|\n/gi;
-
-        const table = tutorialmd.match(tableRegex)[0];
-        table.replace(keyValueRegex, function (f, k, v) {
-                m[k.trim()] = v.trim();
+    function parseTutorialHint(step: string, explicitHints?: boolean): {header: string, hint: string} {
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        let header = step, hint;
+        if (explicitHints) {
+            // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
+            const hintTextRegex = /#+ ~ tutorialhint([\s\S]*)/i;
+            header = step.replace(hintTextRegex, function (f, m) {
+                hint = m;
                 return "";
             });
+        } else {
+            // everything after the first ``` section OR the first image is treated as a "hint"
+            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+            let hintText = step.match(hintTextRegex);
+            if (hintText && hintText.length > 2) {
+                header = hintText[1];
+                hint = hintText[2];
+            }
+        }
 
-        const metadata = m as TutorialMetadata;
-        return metadata && metadata.v ? metadata :  null;
+        // remove hidden snippets from the hint
+        if (hint) {
+            hint = hint.replace(hiddenSnippetRegex, '');
+        }
+        return {header: header, hint: hint};
+    }
+
+    /*
+        Parses metadata at the beginning of tutorial markown. Metadata is a key-value
+        pair in the format: `### @KEY VALUE`
+    */
+    function parseTutorialMetadata(tutorialmd: string): TutorialMetadata {
+        const metadataRegex = /### @(\S+) ([ \S]+)/gi;
+        const m: any = {};
+
+        tutorialmd.replace(metadataRegex, function (f, k, v) {
+            m[k] = v;
+            return "";
+        });
+
+        return m as TutorialMetadata;
     }
 
     export function highlight(pre: HTMLPreElement): void {

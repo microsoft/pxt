@@ -527,6 +527,7 @@ export interface FileMeta {
     isReadonly: boolean;
     isSaved: boolean;
     numErrors: number;
+    diagnostics?: pxtc.KsDiagnostic[];
 }
 
 /*
@@ -544,8 +545,10 @@ data.mountVirtualApi("open-meta", {
             numErrors: f.numDiagnosticsOverride
         }
 
-        if (fs.numErrors == null)
+        if (fs.numErrors == null) {
             fs.numErrors = f.diagnostics ? f.diagnostics.length : 0
+            fs.diagnostics = f.diagnostics;
+        }
 
         return fs
     },
@@ -553,6 +556,7 @@ data.mountVirtualApi("open-meta", {
 
 export interface PackageMeta {
     numErrors: number;
+    diagnostics?: pxtc.KsDiagnostic[];
 }
 
 /*
@@ -572,9 +576,14 @@ data.mountVirtualApi("open-pkg-meta", {
         const ks = f.getKsPkg();
         if (ks && ks.invalid())
             numErrors++;
-        return <PackageMeta>{
+        const r = <PackageMeta>{
             numErrors
         }
+        if (numErrors) {
+            r.diagnostics = [];
+            files.filter(f => !!f.diagnostics).forEach(f => r.diagnostics.concat(f.diagnostics));
+        }
+        return r;
     }
 })
 

@@ -70,6 +70,7 @@ declare namespace pxt {
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
+        requiredCategories?: string[]; // ensure that those block categories are visible
     }
 
     interface PackageExtension {
