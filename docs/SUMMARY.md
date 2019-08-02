@@ -13,6 +13,7 @@
     * [Source Embedding](/source-embedding)
     * [Updating Blockly Version](/develop/blocklyupgrade)
     * [Accessibility](/develop/accessibility)
+    * [Profiling](/js/profiling)
 * [Creating Targets](/target-creation)
     * [pxtarget.json](/targets/pxtarget)
     * [Defining Blocks](/defining-blocks)

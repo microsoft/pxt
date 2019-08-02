@@ -12,6 +12,7 @@ for creating JavaScript/Blocks online editors.
 * [Contact Us](/contact)
 * [JS Editor Features](/js/editor)
 * [Programming Language](/language)
+* [Profiling performance](/js/profiling)
 * [Technical Docs](/docs)
 
 ## Documentation and translation

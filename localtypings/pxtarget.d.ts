@@ -452,6 +452,7 @@ declare namespace ts.pxtc {
         postProcessSymbols?: boolean;
         imageRefTag?: number;
         keepCppFiles?: boolean;
+        debugMode?: boolean; // set dynamically, not in config
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;

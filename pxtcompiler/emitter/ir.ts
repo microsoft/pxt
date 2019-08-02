@@ -64,7 +64,7 @@ namespace ts.pxtc.ir {
         }
 
         static clone(e: Expr) {
-            let copy = new Expr(e.exprKind, e.args.slice(0), e.data)
+            let copy = new Expr(e.exprKind, e.args ? e.args.slice(0) : null, e.data)
             if (e.jsInfo)
                 copy.jsInfo = e.jsInfo
             if (e.totalUses) {
@@ -73,6 +73,7 @@ namespace ts.pxtc.ir {
             }
             copy.callingConvention = e.callingConvention
             copy.mask = e.mask
+            copy.isStringLiteral = e.isStringLiteral
             return copy
         }
 
@@ -165,6 +166,8 @@ namespace ts.pxtc.ir {
         IfZero,
         IfNotZero,
     }
+
+    export const lblNumUsesJmpNext = -101
 
     export class Stmt extends Node {
         public lblName: string;
@@ -282,6 +285,8 @@ namespace ts.pxtc.ir {
         _debugType = "?";
         isUserVariable = false;
         bitSize = BitSize.None;
+        repl: Expr;
+        replUses: number;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
             if (def) {
@@ -408,25 +413,85 @@ namespace ts.pxtc.ir {
         isThis?: boolean;
     }
 
-    function noRefCount(e: ir.Expr): boolean {
+    // estimated cost in bytes of Thumb code to execute given expression
+    function inlineWeight(e: ir.Expr): number {
+        const cantInline = 1000000
+        const inner = () => {
+            if (!e.args) return 0
+            let inner = 0
+            for (let ee of e.args)
+                inner += inlineWeight(ee)
+            if (e.mask && e.mask.conversions)
+                inner += e.mask.conversions.length * 4
+            return inner
+        }
         switch (e.exprKind) {
-            case ir.EK.Sequence:
-                return noRefCount(e.args[e.args.length - 1])
-            case ir.EK.NumberLiteral:
-                return true
-            case ir.EK.RuntimeCall:
-                switch (e.data as string) {
-                    case "String_::mkEmpty":
-                    case "pxt::ptrOfLiteral":
-                        return true
-                    default:
-                        return false
-                }
-            case ir.EK.SharedDef:
-            case ir.EK.SharedRef:
-                return noRefCount(e.args[0])
+            case EK.NumberLiteral:
+                return 2
+            case EK.PointerLiteral:
+                return 2 + 4
+            case EK.RuntimeCall:
+                return inner() + 2 + 2 + 4
+            case EK.CellRef:
+                return 2
+            case EK.FieldAccess:
+                return inner() + ((e.data as FieldAccessInfo).needsCheck ? 4 : 0) + 2;
+
+            case EK.ProcCall:
+            case EK.SharedRef:
+            case EK.SharedDef:
+            case EK.Store:
+            case EK.Sequence:
+            case EK.JmpValue:
+            case EK.Nop:
+            case EK.InstanceOf:
+                return cantInline
+
+            /* maybe in future
+            case EK.ProcCall:
+                return inner() + 2 * e.args.length + 4 + 2
+            case EK.SharedRef:
+                return 2
+            case EK.SharedDef:
+                return inner() + 2
+            case EK.Store:
+                return inner()
+            case EK.Sequence:
+                return inner()
+            case EK.JmpValue:
+                return 0
+            case EK.Nop:
+                return 0
+            case EK.InstanceOf:
+                return inner() + 8
+                */
             default:
-                return false
+                throw U.oops()
+        }
+    }
+
+    function inlineSubst(e: Expr): Expr {
+        e = Expr.clone(e)
+        switch (e.exprKind) {
+            case EK.PointerLiteral:
+            case EK.NumberLiteral:
+                return e
+            case EK.RuntimeCall:
+                for (let i = 0; i < e.args.length; ++i)
+                    e.args[i] = inlineSubst(e.args[i])
+                return e
+            case EK.CellRef:
+                const cell = e.data as Cell
+                if (cell.repl) {
+                    cell.replUses++
+                    return cell.repl
+                }
+                return e
+            case EK.FieldAccess:
+                e.args[0] = inlineSubst(e.args[0])
+                return e
+            default:
+                throw U.oops()
         }
     }
 
@@ -448,6 +513,7 @@ namespace ts.pxtc.ir {
         body: Stmt[] = [];
         lblNo = 0;
         action: ts.FunctionLikeDeclaration = null;
+        inlineBody: ir.Expr;
 
         reset() {
             this.body = []
@@ -549,6 +615,29 @@ namespace ts.pxtc.ir {
             }
 
             this.emit(jmp)
+        }
+
+        inlineSelf(args: ir.Expr[]) {
+            const { precomp, flattened } = flattenArgs(args)
+            U.assert(flattened.length == this.args.length)
+            this.args.map((a, i) => {
+                a.repl = flattened[i]
+                a.replUses = 0
+            })
+            const r = inlineSubst(this.inlineBody)
+            this.args.forEach((a, i) => {
+                if (a.repl.exprKind == EK.SharedRef) {
+                    a.repl.args[0].totalUses += a.replUses - 1
+                }
+                a.repl = null
+                a.replUses = 0
+            })
+            if (precomp.length) {
+                precomp.push(r)
+                return op(EK.Sequence, precomp)
+            } else {
+                return r
+            }
         }
 
         resolve() {
@@ -699,13 +788,50 @@ namespace ts.pxtc.ir {
 
             let allBrkp: Breakpoint[] = []
 
+            let prev: Stmt = null
+            let canInline = target.debugMode ? false : true
+            let inlineBody: Expr = null
             for (let s of this.body) {
                 if (s.expr) {
                     s.expr = opt(sharedincr(s.expr))
                 }
 
+                // mark Jump-to-next-instruction
+                if (prev && prev.lbl == s &&
+                    prev.stmtKind == ir.SK.Jmp &&
+                    s.stmtKind == ir.SK.Label &&
+                    prev.jmpMode == ir.JmpMode.Always &&
+                    s.lblNumUses == 1) {
+                    s.lblNumUses = lblNumUsesJmpNext
+                }
+                prev = s
+
                 if (s.stmtKind == ir.SK.Breakpoint) {
                     allBrkp[s.breakpointInfo.id] = s.breakpointInfo
+                } else if (canInline) {
+                    if (s.stmtKind == ir.SK.Jmp) {
+                        if (s.expr) {
+                            if (inlineBody) canInline = false
+                            else inlineBody = s.expr
+                        }
+                    } else if (s.stmtKind == ir.SK.StackEmpty) {
+                        // OK
+                    } else if (s.stmtKind == ir.SK.Label) {
+                        if (s.lblNumUses != lblNumUsesJmpNext)
+                            canInline = false
+                    } else {
+                        canInline = false
+                    }
+                }
+            }
+
+            if (canInline && inlineBody) {
+                const bodyCost = inlineWeight(inlineBody)
+                const callCost = 4 * this.args.length + 4 + 2
+                const inlineBonus = target.isNative ? 4 : 30
+                if (bodyCost <= callCost + inlineBonus) {
+                    this.inlineBody = inlineBody
+                    //pxt.log("INLINE: " + inlineWeight(inlineBody) + "/" + callCost + " - " + this.toString())
                 }
             }
 
@@ -786,10 +912,10 @@ namespace ts.pxtc.ir {
         return r
     }
 
-    export function flattenArgs(topExpr: ir.Expr) {
-        let didStateUpdate = false
+    export function flattenArgs(args: ir.Expr[], reorder = false) {
+        let didStateUpdate = reorder ? args.some(a => a.canUpdateCells()) : false
         let complexArgs: ir.Expr[] = []
-        for (let a of U.reversed(topExpr.args)) {
+        for (let a of U.reversed(args)) {
             if (a.isStateless()) continue
             if (a.exprKind == EK.CellRef && !didStateUpdate) continue
             if (a.canUpdateCells()) didStateUpdate = true
@@ -801,7 +927,7 @@ namespace ts.pxtc.ir {
             complexArgs = []
 
         let precomp: ir.Expr[] = []
-        let flattened = topExpr.args.map(a => {
+        let flattened = args.map(a => {
             let idx = complexArgs.indexOf(a)
             if (idx >= 0) {
                 let sharedRef = a
