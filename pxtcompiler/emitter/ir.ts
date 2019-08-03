@@ -290,11 +290,8 @@ namespace ts.pxtc.ir {
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
             if (def) {
-                const s = getSourceFileOfNode(def);
-                if (s && s.fileName) {
-                    if (!/^pxt_modules\//.test(s.fileName)) {
-                        this.isUserVariable = true
-                    }
+                if (!isInPxtModules(def)) {
+                    this.isUserVariable = true
                 }
                 if (info) {
                     setCellProps(this)

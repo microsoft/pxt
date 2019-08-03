@@ -13,20 +13,43 @@ namespace ts.pxtc {
         IsBogusFunction = 0x0002,
         IsGlobalIdentifier = 0x0004,
         IsUsed = 0x0008,
+        InPxtModules = 0x0010,
     }
     export class PxtNode {
         flags = PxtNodeFlags.None;
-        typeCache: Type = null;
-        symbolCache: Symbol = null;
-        functionInfo: FunctionAddInfo = null;
-        variableInfo: VariableAddInfo = null;
-        callInfo: CallInfo = null;
-        proc: ir.Procedure = null;
-        commentAttrs: CommentAttrs = null;
-        exprInfo: BinaryExpressionInfo = null;
-        valueOverride: ir.Expr = null;
-        declCache: Declaration = undefined;
-        constructor(public wave: number, public id: number) { }
+        typeCache: Type;
+        symbolCache: Symbol;
+        functionInfo: FunctionAddInfo;
+        variableInfo: VariableAddInfo;
+        callInfo: CallInfo;
+        proc: ir.Procedure;
+        commentAttrs: CommentAttrs;
+        exprInfo: BinaryExpressionInfo;
+        valueOverride: ir.Expr;
+        declCache: Declaration;
+
+        reset() {
+            if (this.flags & PxtNodeFlags.InPxtModules) {
+                this.flags &= ~PxtNodeFlags.IsUsed
+            } else {
+                this.flags = PxtNodeFlags.None;
+                this.typeCache = null;
+                this.symbolCache = null;
+                this.commentAttrs = null;
+                this.valueOverride = null;
+                this.declCache = undefined;
+            }
+            this.functionInfo = null;
+            this.variableInfo = null;
+            this.callInfo = null;
+            this.proc = null;
+            this.exprInfo = null;
+        }
+
+        constructor(public wave: number, public id: number) {
+            this.flags = PxtNodeFlags.None;
+            this.reset()
+        }
     }
 
     enum HasLiteralType {
@@ -123,11 +146,28 @@ namespace ts.pxtc {
     let lastNodeId = 0
     let currNodeWave = 1
 
+    export function isInPxtModules(node: Node) {
+        if (node.pxt)
+            return !!(node.pxt.flags & PxtNodeFlags.InPxtModules)
+        const src = getSourceFileOfNode(node)
+        return src ? isPxtModulesFilename(src.fileName) : false
+    }
+
     export function pxtInfo(n: Node) {
-        if (!n.pxt || n.pxt.wave != currNodeWave) {
-            n.pxt = new PxtNode(currNodeWave, ++lastNodeId)
+        if (!n.pxt) {
+            const info = new PxtNode(currNodeWave, ++lastNodeId)
+            if (isInPxtModules(n))
+                info.flags |= PxtNodeFlags.InPxtModules
+            n.pxt = info
+            return info
+        } else {
+            const info = n.pxt
+            if (info.wave != currNodeWave) {
+                info.wave = currNodeWave
+                info.reset()
+            }
+            return info
         }
-        return n.pxt
     }
 
     export function getNodeId(n: Node) {
@@ -782,7 +822,6 @@ namespace ts.pxtc {
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
 
-        lastNodeId = 0
         currNodeWave++
 
         if (opts.target.isNative) {
@@ -1711,7 +1750,7 @@ ${lbl}: .short 0xffff
             if (target.switches.noTreeShake)
                 return false
             if (opts.testMode && res) {
-                if (!U.startsWith(getSourceFileOfNode(decl).fileName, "pxt_modules"))
+                if (!isInPxtModules(decl))
                     return false
             }
             return res
@@ -3245,7 +3284,7 @@ ${lbl}: .short 0xffff
             if (!opts.breakpoints)
                 return
             let src = getSourceFileOfNode(node)
-            if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
+            if (opts.justMyCode && isInPxtModules(src))
                 return;
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))

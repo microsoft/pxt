@@ -188,8 +188,8 @@ namespace ts.pxtc {
         pxtModulesOK: boolean
     }
 
-    function isModule(filename: string) {
-        return /^pxt_modules\//.test(filename)
+    export function isPxtModulesFilename(filename: string) {
+        return U.startsWith(filename, "pxt_modules/")
     }
 
     export function compile(opts: CompileOptions, env?: PersistentEnv) {
@@ -230,12 +230,10 @@ namespace ts.pxtc {
             // if pxt_modules/* stuff was OK on the last run, don't sem-check it again
             if (env && env.pxtModulesOK) {
                 const allDiag = program.getSourceFiles().map(f =>
-                    isModule(f.fileName) ? [] : program.getSemanticDiagnostics(f))
+                    isPxtModulesFilename(f.fileName) ? [] : program.getSemanticDiagnostics(f))
                 res.diagnostics = patchUpDiagnostics(U.concatArrayLike(allDiag), opts.ignoreFileResolutionErrors)
             } else {
                 res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
-                if (env && res.diagnostics.every(d => !isModule(d.fileName)))
-                    env.pxtModulesOK = true
             }
         }
 

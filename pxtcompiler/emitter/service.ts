@@ -213,17 +213,6 @@ namespace ts.pxtc {
             return false;
     }
 
-    function isInKsModule(decl: Node): boolean {
-        while (decl) {
-            if (decl.kind == SK.SourceFile) {
-                let src = decl as SourceFile
-                return src.fileName.indexOf("pxt_modules") >= 0
-            }
-            decl = decl.parent
-        }
-        return false
-    }
-
     function isReadonly(decl: Declaration) {
         return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
     }
@@ -1177,8 +1166,11 @@ namespace ts.pxtc.service {
         host.opts.fileSystem = prevFS
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
-        if (res.diagnostics.length == 0)
+        if (res.diagnostics.length == 0) {
             res = compile(host.opts, host);
+            if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
+                host.pxtModulesOK = true
+        }
         return res;
     }
 
