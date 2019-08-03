@@ -799,7 +799,18 @@ namespace ts.pxtc.Util {
     }
 
     // node.js overrides this to use process.cpuUsage()
-    export let cpuUs = () => Date.now() * 1000;
+    export let cpuUs = (): number => {
+        // current time in microseconds
+        const perf = typeof performance != "undefined" ?
+            performance.now.bind(performance) ||
+            (performance as any).moznow.bind(performance) ||
+            (performance as any).msNow.bind(performance) ||
+            (performance as any).webkitNow.bind(performance) ||
+            (performance as any).oNow.bind(performance) :
+            Date.now;
+        cpuUs = () => perf() * 1000;
+        return cpuUs();
+    }
 
     export function getMime(filename: string) {
         let m = /\.([a-zA-Z0-9]+)$/.exec(filename)

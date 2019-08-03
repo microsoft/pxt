@@ -16,21 +16,21 @@ namespace ts.pxtc {
     }
 
     export const ts2PyFunNameMap: pxt.Map<FunOverride> = {
-            "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
-            "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
-            "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
-            "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
-            "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
-            ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
-            ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
-            ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
-            ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
-            "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
-            "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
-            "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
-            ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
-            "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
-        }
+        "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
+        "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
+        "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
+        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
+        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
+        ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
+        ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
+        ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
+        ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
+        "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+        "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+        "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
+        ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
+        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
+    }
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
@@ -935,7 +935,9 @@ namespace ts.pxtc.service {
 
         compile: v => {
             host.setOpts(v.options)
-            return runConversionsAndCompileUsingService()
+            const res = runConversionsAndCompileUsingService()
+            timesToMs(res);
+            return res
         },
         decompile: v => {
             return decompile(v.options, v.fileName, false);
@@ -959,6 +961,9 @@ namespace ts.pxtc.service {
 
         allDiags: () => {
             let res = runConversionsAndCompileUsingService();
+            timesToMs(res);
+            if (host.opts.target.switches.time)
+                console.log("DIAG-TIME", res.times)
             return res.diagnostics
         },
 

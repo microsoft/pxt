@@ -109,6 +109,7 @@ namespace ts.pxtc {
     }
 
     export function runConversionsAndStoreResults(opts: CompileOptions, res?: CompileResult) {
+        const startTime = U.cpuUs()
         if (!res) res = mkCompileResult()
         const convDiag = runConversions(opts)
         storeGeneratedFiles(opts, res)
@@ -123,7 +124,15 @@ namespace ts.pxtc {
             opts.sourceFiles.push("main.ts")
         }
 
+        res.times["conversions"] = U.cpuUs() - startTime
+
         return res
+    }
+
+    export function timesToMs(res: CompileResult) {
+        for (let k of Object.keys(res.times)) {
+            res.times[k] = Math.round(res.times[k]) / 1000
+        }
     }
 
     function buildProgram(opts: CompileOptions, res: CompileResult) {
@@ -206,11 +215,15 @@ namespace ts.pxtc {
         // semantic errors.
         res.diagnostics = patchUpDiagnostics(program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics())), opts.ignoreFileResolutionErrors);
 
+        const semStart = U.cpuUs()
+
         if (res.diagnostics.length == 0) {
             res.diagnostics = patchUpDiagnostics(program.getSemanticDiagnostics(), opts.ignoreFileResolutionErrors);
         }
 
-        let emitStart = U.cpuUs()
+        const emitStart = U.cpuUs()
+        res.times["typescript-syn"] = semStart - startTime
+        res.times["typescript-sem"] = emitStart - semStart
         res.times["typescript"] = emitStart - startTime
 
         if (opts.ast) {
