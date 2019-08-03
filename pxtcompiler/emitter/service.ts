@@ -934,8 +934,8 @@ namespace ts.pxtc.service {
         },
 
         compile: v => {
-            addApiInfo(v.options)
-            return compile(v.options)
+            host.setOpts(v.options)
+            return runConversionsAndCompileUsingService()
         },
         decompile: v => {
             return decompile(v.options, v.fileName, false);
@@ -958,32 +958,8 @@ namespace ts.pxtc.service {
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
-            addApiInfo(host.opts)
-
-            let convDiag = runConversions(host.opts)
-            if (convDiag.length > 0)
-                return convDiag
-
-            let global = service.getCompilerOptionsDiagnostics() || []
-            let byFile = host.getScriptFileNames().map(fileDiags)
-            let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))
-
-            if (allD.length == 0) {
-                let res: CompileResult = {
-                    outfiles: {},
-                    diagnostics: [],
-                    success: true,
-                    times: {}
-                }
-                const program = service.getProgram();
-                const sources = program.getSourceFiles();
-                // entry point is main.ts or the last file which should be the test file if any
-                const entryPoint = sources.filter(f => f.fileName == "main.ts")[0] || sources[sources.length - 1];
-                const binOutput = compileBinary(program, null, host.opts, res, entryPoint ? entryPoint.fileName : "main.ts");
-                allD = binOutput.diagnostics
-            }
-
-            return patchUpDiagnostics(allD)
+            let res = runConversionsAndCompileUsingService();
+            return res.diagnostics
         },
 
         format: v => {
@@ -1178,6 +1154,19 @@ namespace ts.pxtc.service {
         projectSearchClear: () => {
             lastProjectFuse = undefined;
         }
+    }
+
+    function runConversionsAndCompileUsingService() {
+        addApiInfo(host.opts)
+        const prevFS = U.flatClone(host.opts.fileSystem);
+        let res = runConversionsAndStoreResults(host.opts);
+        const newFS = host.opts.fileSystem
+        host.opts.fileSystem = prevFS
+        for (let k of Object.keys(newFS))
+            host.setFile(k, newFS[k]) // update version numbers
+        if (res.diagnostics.length == 0)
+            res = compile(host.opts, service);
+        return res;
     }
 
     export function performOperation(op: string, arg: OpArg) {

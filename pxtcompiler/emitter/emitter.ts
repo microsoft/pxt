@@ -764,7 +764,6 @@ namespace ts.pxtc {
 
     export function compileBinary(
         program: Program,
-        host: CompilerHost,
         opts: CompileOptions,
         res: CompileResult,
         entryPoint: string): EmitResult {
@@ -1075,11 +1074,12 @@ namespace ts.pxtc {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit || !host)
+            if (diagnostics.getModificationCount() || opts.noEmit)
                 return;
 
-            bin.writeFile = (fn: string, data: string) =>
-                host.writeFile(fn, data, false, null, program.getSourceFiles());
+            bin.writeFile = (fn: string, data: string) => {
+                res.outfiles[fn] = data
+            }
 
             for (let proc of bin.procs)
                 proc.resolve()
