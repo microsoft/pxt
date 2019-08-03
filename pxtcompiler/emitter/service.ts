@@ -1167,7 +1167,8 @@ namespace ts.pxtc.service {
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
         if (res.diagnostics.length == 0) {
-            res = compile(host.opts, host);
+            host.opts.skipPxtModules = host.pxtModulesOK
+            res = compile(host.opts, service);
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = true
         }

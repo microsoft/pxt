@@ -183,24 +183,19 @@ namespace ts.pxtc {
         return createProgram(tsFiles, options, host);
     }
 
-    export interface PersistentEnv {
-        service: LanguageService
-        pxtModulesOK: boolean
-    }
-
     export function isPxtModulesFilename(filename: string) {
         return U.startsWith(filename, "pxt_modules/")
     }
 
-    export function compile(opts: CompileOptions, env?: PersistentEnv) {
+    export function compile(opts: CompileOptions, service?: LanguageService) {
         let startTime = U.cpuUs()
         let res = mkCompileResult()
 
         let program: Program
 
-        if (env) {
+        if (service) {
             storeGeneratedFiles(opts, res)
-            program = env.service.getProgram()
+            program = service.getProgram()
         } else {
             runConversionsAndStoreResults(opts, res)
             if (res.diagnostics.length > 0)
@@ -227,8 +222,7 @@ namespace ts.pxtc {
         const semStart = U.cpuUs()
 
         if (res.diagnostics.length == 0) {
-            // if pxt_modules/* stuff was OK on the last run, don't sem-check it again
-            if (env && env.pxtModulesOK) {
+            if (opts.skipPxtModules) {
                 const allDiag = program.getSourceFiles().map(f =>
                     isPxtModulesFilename(f.fileName) ? [] : program.getSemanticDiagnostics(f))
                 res.diagnostics = patchUpDiagnostics(U.concatArrayLike(allDiag), opts.ignoreFileResolutionErrors)
