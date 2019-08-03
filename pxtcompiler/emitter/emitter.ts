@@ -28,8 +28,8 @@ namespace ts.pxtc {
         valueOverride: ir.Expr;
         declCache: Declaration;
 
-        reset() {
-            if (this.flags & PxtNodeFlags.InPxtModules) {
+        reset(full: boolean) {
+            if (!full && this.flags & PxtNodeFlags.InPxtModules) {
                 this.flags &= ~PxtNodeFlags.IsUsed
             } else {
                 this.flags = PxtNodeFlags.None;
@@ -47,8 +47,7 @@ namespace ts.pxtc {
         }
 
         constructor(public wave: number, public id: number) {
-            this.flags = PxtNodeFlags.None;
-            this.reset()
+            this.reset(true)
         }
     }
 
@@ -164,7 +163,10 @@ namespace ts.pxtc {
             const info = n.pxt
             if (info.wave != currNodeWave) {
                 info.wave = currNodeWave
-                info.reset()
+                if (compileOptions && compileOptions.skipPxtModules)
+                    info.reset(false)
+                else
+                    info.reset(true)
             }
             return info
         }
@@ -482,6 +484,7 @@ namespace ts.pxtc {
     let lf = assembler.lf;
     let checker: TypeChecker;
     export let target: CompileTarget;
+    export let compileOptions: CompileOptions;
     let lastSecondaryError: string
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
@@ -808,6 +811,7 @@ namespace ts.pxtc {
         res: CompileResult,
         entryPoint: string): EmitResult {
         target = opts.target
+        compileOptions = opts
         target.debugMode = !!opts.breakpoints
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
@@ -943,6 +947,8 @@ namespace ts.pxtc {
 
         // 12k for decent arcade game
         // res.times["numnodes"] = lastNodeId
+
+        compileOptions = null
 
         return {
             diagnostics: diagnostics.getDiagnostics(),
