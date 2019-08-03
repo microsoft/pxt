@@ -235,9 +235,14 @@ namespace ts.pxtc.Util {
         return Object.keys(m || {}).map(k => m[k])
     }
 
-    export function pushRange<T>(trg: T[], src: T[]): void {
+    export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
+    }
+
+    // TS gets lost in type inference when this is passed an array
+    export function concatArrayLike<T>(arrays: ArrayLike<ArrayLike<T>>): T[] {
+        return concat(arrays as any)
     }
 
     export function concat<T>(arrays: T[][]): T[] {

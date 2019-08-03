@@ -713,10 +713,12 @@ namespace ts.pxtc.service {
         hexinfo: null
     }
 
-    class Host implements LanguageServiceHost {
+    class Host implements LanguageServiceHost, PersistentEnv {
         opts = emptyOptions;
         fileVersions: pxt.Map<number> = {};
         projectVer = 0;
+        pxtModulesOK = false;
+        service: LanguageService;
 
         getProjectVersion() {
             return this.projectVer + ""
@@ -728,6 +730,11 @@ namespace ts.pxtc.service {
                 this.opts.fileSystem[fn] = cont
                 this.projectVer++
             }
+        }
+
+        reset() {
+            this.setOpts(emptyOptions)
+            this.pxtModulesOK = false
         }
 
         setOpts(o: CompileOptions) {
@@ -835,7 +842,7 @@ namespace ts.pxtc.service {
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = null
-            host.setOpts(emptyOptions)
+            host.reset()
         },
 
         setOptions: v => {
@@ -1171,7 +1178,7 @@ namespace ts.pxtc.service {
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
         if (res.diagnostics.length == 0)
-            res = compile(host.opts, service);
+            res = compile(host.opts, host);
         return res;
     }
 
@@ -1200,6 +1207,7 @@ namespace ts.pxtc.service {
         if (!service) {
             host = new Host()
             service = ts.createLanguageService(host)
+            host.service = service
         }
     }
     const defaultImgLit = `\`
