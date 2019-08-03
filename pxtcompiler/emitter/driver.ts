@@ -222,7 +222,7 @@ namespace ts.pxtc {
         const semStart = U.cpuUs()
 
         if (res.diagnostics.length == 0) {
-            if (opts.skipPxtModules) {
+            if (opts.skipPxtModulesTSC) {
                 const allDiag = program.getSourceFiles().map(f =>
                     isPxtModulesFilename(f.fileName) ? [] : program.getSemanticDiagnostics(f))
                 res.diagnostics = patchUpDiagnostics(U.concatArrayLike(allDiag), opts.ignoreFileResolutionErrors)

@@ -706,7 +706,7 @@ namespace ts.pxtc.service {
         opts = emptyOptions;
         fileVersions: pxt.Map<number> = {};
         projectVer = 0;
-        pxtModulesOK = false;
+        pxtModulesOK: string = null;
 
         getProjectVersion() {
             return this.projectVer + ""
@@ -722,7 +722,7 @@ namespace ts.pxtc.service {
 
         reset() {
             this.setOpts(emptyOptions)
-            this.pxtModulesOK = false
+            this.pxtModulesOK = null
         }
 
         setOpts(o: CompileOptions) {
@@ -1166,10 +1166,22 @@ namespace ts.pxtc.service {
         for (let k of Object.keys(newFS))
             host.setFile(k, newFS[k]) // update version numbers
         if (res.diagnostics.length == 0) {
-            host.opts.skipPxtModules = host.pxtModulesOK
+            host.opts.skipPxtModulesEmit = false
+            host.opts.skipPxtModulesTSC = false
+            const currKey = host.opts.target.isNative ? "native" : "js"
+            if (host.pxtModulesOK) {
+                host.opts.skipPxtModulesTSC = true
+                // don't cache emit when debugging pxt_modules/*
+                if (host.opts.noEmit)
+                    host.opts.skipPxtModulesEmit = true
+                else if (host.opts.target.isNative)
+                    host.opts.skipPxtModulesEmit = false
+                else if (host.pxtModulesOK == "js" && (!host.opts.breakpoints || host.opts.justMyCode))
+                    host.opts.skipPxtModulesEmit = true
+            }
             res = compile(host.opts, service);
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
-                host.pxtModulesOK = true
+                host.pxtModulesOK = currKey
         }
         return res;
     }

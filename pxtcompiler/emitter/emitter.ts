@@ -28,17 +28,8 @@ namespace ts.pxtc {
         valueOverride: ir.Expr;
         declCache: Declaration;
 
-        reset(full: boolean) {
-            if (!full && this.flags & PxtNodeFlags.InPxtModules) {
-                this.flags &= ~PxtNodeFlags.IsUsed
-            } else {
-                this.flags = PxtNodeFlags.None;
-                this.typeCache = null;
-                this.symbolCache = null;
-                this.commentAttrs = null;
-                this.valueOverride = null;
-                this.declCache = undefined;
-            }
+        resetEmit() {
+            this.flags &= ~PxtNodeFlags.IsUsed
             this.functionInfo = null;
             this.variableInfo = null;
             this.callInfo = null;
@@ -46,8 +37,22 @@ namespace ts.pxtc {
             this.exprInfo = null;
         }
 
+        resetTSC() {
+            this.flags = PxtNodeFlags.None;
+            this.typeCache = null;
+            this.symbolCache = null;
+            this.commentAttrs = null;
+            this.valueOverride = null;
+            this.declCache = undefined;
+        }
+
+        resetAll() {
+            this.resetTSC()
+            this.resetEmit()
+        }
+
         constructor(public wave: number, public id: number) {
-            this.reset(true)
+            this.resetAll()
         }
     }
 
@@ -163,10 +168,14 @@ namespace ts.pxtc {
             const info = n.pxt
             if (info.wave != currNodeWave) {
                 info.wave = currNodeWave
-                if (compileOptions && compileOptions.skipPxtModules)
-                    info.reset(false)
-                else
-                    info.reset(true)
+                if (!compileOptions || !compileOptions.skipPxtModulesTSC)
+                    info.resetAll()
+                else {
+                    if (info.flags & PxtNodeFlags.InPxtModules)
+                        info.resetEmit()
+                    else
+                        info.resetAll()
+                }
             }
             return info
         }
@@ -816,7 +825,7 @@ namespace ts.pxtc {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();
-        let classInfos: pxt.Map<ClassInfo> = {}
+        let classInfos: pxt.Map<ClassInfo> = {} // TODO move to PxtNode
         let usedWorkList: Declaration[] = []
         let functionInfos: FunctionAddInfo[] = [];
         let irCachesToClear: NodeWithCache[] = []
@@ -1508,6 +1517,7 @@ ${lbl}: .short 0xffff
             } else {
                 assert(!bin.finalPass || info.capturedVars.length == 0, "!bin.finalPass || info.capturedVars.length == 0")
                 info.usedAsValue = true
+                markFunctionUsed(f)
                 return emitFunLitCore(f)
             }
         }

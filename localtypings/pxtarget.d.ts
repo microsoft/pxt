@@ -716,7 +716,8 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
-        skipPxtModules?: boolean; // skip re-checking adn re-emit of pxt_modules/*
+        skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
+        skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
 
         syntaxInfo?: SyntaxInfo;
 
