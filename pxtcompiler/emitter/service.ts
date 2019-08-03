@@ -702,12 +702,11 @@ namespace ts.pxtc.service {
         hexinfo: null
     }
 
-    class Host implements LanguageServiceHost, PersistentEnv {
+    class Host implements LanguageServiceHost {
         opts = emptyOptions;
         fileVersions: pxt.Map<number> = {};
         projectVer = 0;
         pxtModulesOK = false;
-        service: LanguageService;
 
         getProjectVersion() {
             return this.projectVer + ""
@@ -1200,7 +1199,6 @@ namespace ts.pxtc.service {
         if (!service) {
             host = new Host()
             service = ts.createLanguageService(host)
-            host.service = service
         }
     }
     const defaultImgLit = `\`
