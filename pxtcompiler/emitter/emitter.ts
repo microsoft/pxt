@@ -16,29 +16,44 @@ namespace ts.pxtc {
         InPxtModules = 0x0010,
     }
     export class PxtNode {
-        flags = PxtNodeFlags.None;
+        flags: PxtNodeFlags;
+
+        // TSC interface cache
         typeCache: Type;
         symbolCache: Symbol;
+        declCache: Declaration;
+        commentAttrs: CommentAttrs;
+
+        // compiler state
         functionInfo: FunctionAddInfo;
         variableInfo: VariableAddInfo;
-        callInfo: CallInfo;
         proc: ir.Procedure;
-        commentAttrs: CommentAttrs;
+
+        // set on global nodes to the set
+        // of nodes pulled in by the current node
+        uses: pxt.Map<Node>;
+
+        // exported to clients
+        callInfo: CallInfo;
         exprInfo: BinaryExpressionInfo;
+
+        // for wrapping ir.Expr inside of TS Expression
         valueOverride: ir.Expr;
-        declCache: Declaration;
 
         resetEmit() {
+            // clear IsUsed flag
             this.flags &= ~PxtNodeFlags.IsUsed
             this.functionInfo = null;
             this.variableInfo = null;
             this.callInfo = null;
             this.proc = null;
             this.exprInfo = null;
+            this.uses = null;
         }
 
         resetTSC() {
-            this.flags = PxtNodeFlags.None;
+            // clear all flags except for InPxtModules
+            this.flags &= PxtNodeFlags.InPxtModules;
             this.typeCache = null;
             this.symbolCache = null;
             this.commentAttrs = null;
@@ -52,6 +67,7 @@ namespace ts.pxtc {
         }
 
         constructor(public wave: number, public id: number) {
+            this.flags = PxtNodeFlags.None;
             this.resetAll()
         }
     }
@@ -834,6 +850,7 @@ namespace ts.pxtc {
         let autoCreateFunctions: pxt.Map<boolean> = {}
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
+        let currUsingContext: PxtNode = null
 
         currNodeWave++
 
@@ -918,7 +935,8 @@ namespace ts.pxtc {
         usedWorkList = [];
 
         reset();
-        emit(rootFunction)
+        emitTopLevel(rootFunction)
+        flushWorkQueue()
         layOutGlobals()
         pruneMethodsAndRecompute()
         emitVTables()
@@ -929,6 +947,8 @@ namespace ts.pxtc {
             reset();
             bin.finalPass = true
             emit(rootFunction)
+
+            U.assert(usedWorkList.length == 0)
 
             res.configData = []
             for (let k of Object.keys(configEntries)) {
@@ -1788,10 +1808,23 @@ ${lbl}: .short 0xffff
         }
 
         function markUsed(decl: Declaration) {
-            if (opts.computeUsedSymbols && decl && decl.symbol)
+            if (!decl)
+                return
+
+            if (opts.computeUsedSymbols && decl.symbol)
                 res.usedSymbols[getFullName(checker, decl.symbol)] = null
 
-            if (decl && !isUsed(decl)) {
+            if (!currUsingContext) {
+                let x = 1
+                // console.log("no using")
+                // TODO
+            } else {
+                if (!currUsingContext.uses)
+                    currUsingContext.uses = {}
+                currUsingContext.uses[nodeKey(decl)] = decl
+            }
+
+            if (!isUsed(decl)) {
                 pxtInfo(decl).flags |= PxtNodeFlags.IsUsed
                 usedWorkList.push(decl)
             }
@@ -2195,6 +2228,7 @@ ${lbl}: .short 0xffff
         }
 
         function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
+            U.assert(!bin.finalPass || !!proc)
             let data: ir.ProcId = {
                 proc: proc,
                 virtualIndex: null,
@@ -2539,6 +2573,16 @@ ${lbl}: .short 0xffff
             return ir.ptrlit(lbl + "_Lit", lbl)
         }
 
+        function flushWorkQueue() {
+            proc = lookupProc(rootFunction)
+            // we emit everything that's left, but only at top level
+            // to avoid unbounded stack
+            while (usedWorkList.length > 0) {
+                let f = usedWorkList.pop()
+                emitTopLevel(f)
+            }
+        }
+
         function emitFuncCore(node: FunctionLikeDeclaration) {
             const info = getFunctionInfo(node)
             let lit: ir.Expr = null
@@ -2697,14 +2741,6 @@ ${lbl}: .short 0xffff
             // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
 
-            // otherwise, we emit everything that's left, but only at top level
-            // to avoid unbounded stack
-            if (proc.isRoot)
-                while (usedWorkList.length > 0) {
-                    let f = usedWorkList.pop()
-                    emit(f)
-                }
-
             return lit
         }
 
@@ -2726,8 +2762,18 @@ ${lbl}: .short 0xffff
             return f.body && (f.body.kind != SK.Block || (f.body as Block).statements.length > 0)
         }
 
+        function shouldEmitNow(node: Declaration) {
+            if (!isOnDemandDecl(node))
+                return true
+            const info = pxtInfo(node)
+            if (bin.finalPass)
+                return !!(info.flags & PxtNodeFlags.IsUsed)
+            else
+                return info == currUsingContext
+        }
+
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
-            if (!isUsed(node))
+            if (!shouldEmitNow(node))
                 return undefined;
 
             let attrs = parseComments(node)
@@ -3855,7 +3901,7 @@ ${lbl}: .short 0xffff
             }
 
 
-            if (!isUsed(node)) {
+            if (!shouldEmitNow(node)) {
                 return null;
             }
             if (isConstLiteral(node))
@@ -4011,6 +4057,12 @@ ${lbl}: .short 0xffff
             let expr = emitExprCore(node);
             if (expr.isExpr()) return expr
             throw new Error("expecting expression")
+        }
+
+        function emitTopLevel(node: Declaration): void {
+            currUsingContext = pxtInfo(node)
+            emit(node)
+            currUsingContext = null
         }
 
         function emit(node: Node): void {

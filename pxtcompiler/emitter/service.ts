@@ -1171,11 +1171,11 @@ namespace ts.pxtc.service {
             const currKey = host.opts.target.isNative ? "native" : "js"
             if (host.pxtModulesOK) {
                 host.opts.skipPxtModulesTSC = true
-                // don't cache emit when debugging pxt_modules/*
                 if (host.opts.noEmit)
                     host.opts.skipPxtModulesEmit = true
                 else if (host.opts.target.isNative)
                     host.opts.skipPxtModulesEmit = false
+                // don't cache emit when debugging pxt_modules/*
                 else if (host.pxtModulesOK == "js" && (!host.opts.breakpoints || host.opts.justMyCode))
                     host.opts.skipPxtModulesEmit = true
             }
