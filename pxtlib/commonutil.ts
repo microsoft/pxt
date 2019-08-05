@@ -209,6 +209,49 @@ namespace ts.pxtc.Util {
         (<any>e).isUserError = true;
         throw e
     }
+
+    // small deep equals for primitives, objects, arrays. returns error message
+    export function deq(a: any, b: any): string {
+        if (a === b) return null;
+        if (!a || !b) return "Null value";
+
+        if (typeof a == 'object' && typeof b == 'object') {
+            if (Array.isArray(a)) {
+                if (!Array.isArray(b)) {
+                    return "Expected array";
+                }
+
+                if (a.length != b.length) {
+                    return "Expected array of length " + a.length + ", got " + b.length;
+                }
+
+                for (let i = 0; i < a.length; i++) {
+                    if (deq(a[i], b[i]) != null) {
+                        return "Expected array value " + a[i] + " got " + b[i];
+                    }
+                }
+                return null;
+            }
+
+            let ak = Object.keys(a);
+            let bk = Object.keys(a);
+            if (ak.length != bk.length) {
+                return "Expected " + ak.length + " keys, got " + bk.length;
+            }
+
+            for (let i = 0; i < ak.length; i++) {
+                if (!Object.prototype.hasOwnProperty.call(b, ak[i])) {
+                    return "Missing key " + ak[i];
+                } else if (deq(a[ak[i]], b[ak[i]]) != null) {
+                    return "Expected value of " + ak[i] + " to be " + a[ak[i]] + ", got " + b[ak[i]];
+                }
+            }
+
+            return null;
+        }
+
+        return "Unable to compare " + a + ", " + b;
+    }
 }
 
 const lf = ts.pxtc.Util.lf;
