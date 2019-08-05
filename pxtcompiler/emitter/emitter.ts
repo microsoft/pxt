@@ -1,6 +1,10 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
+// INCTODO use names for methods calls in JS
+// INCTODO use names for map set/get in JS
+// INCTODO use symbolic names for instanceof tests
+
 namespace ts {
     export interface Node {
         pxt: pxtc.PxtNode;
@@ -484,21 +488,53 @@ namespace ts.pxtc {
         setProc?: ir.Procedure;
     }
 
-    export interface ClassInfo {
-        id: string;
+    export class ClassInfo {
         derivedClasses?: ClassInfo[];
         classNo?: number;
         lastSubtypeNo?: number;
-        baseClassInfo: ClassInfo;
-        decl: ClassDeclaration;
-        allfields: FieldWithAddInfo[];
-        methods: FunctionLikeDeclaration[];
+        baseClassInfo: ClassInfo = null;
+        allfields: FieldWithAddInfo[] = [];
+        // indexed by getName(node)
+        methods: pxt.Map<FunctionLikeDeclaration[]> = {};
         attrs: CommentAttrs;
-        isUsed?: boolean;
         vtable?: ir.Procedure[];
         itable?: ITableEntry[];
         ctor?: ir.Procedure;
         toStringMethod?: ir.Procedure;
+
+        constructor(public id: string, public decl: ClassDeclaration) {
+            this.attrs = parseComments(decl)
+        }
+
+        reset() {
+            this.vtable = null
+            this.itable = null
+            this.derivedClasses = null
+        }
+
+        get isUsed() {
+            return !!(pxtInfo(this.decl).flags & PxtNodeFlags.IsUsed)
+        }
+
+        allMethods() {
+            const r: FunctionLikeDeclaration[] = []
+            for (let k of Object.keys(this.methods))
+                for (let m of this.methods[k]) {
+                    r.push(m)
+                }
+            return r
+        }
+
+        usedMethods() {
+            const r: FunctionLikeDeclaration[] = []
+            for (let k of Object.keys(this.methods))
+                for (let m of this.methods[k]) {
+                    const info = pxtInfo(m)
+                    if (info.flags & PxtNodeFlags.IsUsed)
+                        r.push(m)
+                }
+            return r
+        }
     }
 
     export interface BinaryExpressionInfo {
@@ -816,18 +852,22 @@ namespace ts.pxtc {
         written?: boolean;
     }
 
-    export interface FunctionAddInfo {
-        capturedVars: VarOrParam[];
-        decl: EmittableAsCall;
+    export class FunctionAddInfo {
+        capturedVars: VarOrParam[] = [];
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
+        // INCTODO clear these
         virtualParent?: FunctionAddInfo;
-        virtualInstances?: FunctionAddInfo[];
         virtualIndex?: number;
-        isUsed?: boolean;
         parentClassInfo?: ClassInfo;
         usedAsValue?: boolean;
         usedAsIface?: boolean;
+
+        constructor(public decl: EmittableAsCall) { }
+
+        get isUsed() {
+            return !!(pxtInfo(this.decl).flags & PxtNodeFlags.IsUsed)
+        }
     }
 
     export function compileBinary(
@@ -843,7 +883,6 @@ namespace ts.pxtc {
         let startTime = U.cpuUs();
         let classInfos: pxt.Map<ClassInfo> = {} // TODO move to PxtNode
         let usedWorkList: Declaration[] = []
-        let functionInfos: FunctionAddInfo[] = [];
         let irCachesToClear: NodeWithCache[] = []
         let ifaceMembers: pxt.Map<number> = {}
         let explicitlyUsedIfaceMembers: pxt.Map<number> = {}
@@ -936,10 +975,16 @@ namespace ts.pxtc {
 
         reset();
         emitTopLevel(rootFunction)
-        flushWorkQueue()
+
+        for (; ;) {
+            flushWorkQueue()
+            if (fixpointVTables())
+                break
+        }
+
         layOutGlobals()
-        pruneMethodsAndRecompute()
         emitVTables()
+
         let pass0 = U.cpuUs()
         res.times["pass0"] = pass0 - startTime
 
@@ -1081,13 +1126,8 @@ namespace ts.pxtc {
 
         function getFunctionInfo(f: EmittableAsCall) {
             const info = pxtInfo(f)
-            if (!info.functionInfo) {
-                info.functionInfo = {
-                    decl: f,
-                    capturedVars: []
-                }
-                functionInfos.push(info.functionInfo)
-            }
+            if (!info.functionInfo)
+                info.functionInfo = new FunctionAddInfo(f)
             return info.functionInfo
         }
 
@@ -1132,9 +1172,8 @@ namespace ts.pxtc {
                 U.assert(!bin.finalPass)
                 explicitlyUsedIfaceMembers[name] = 1
                 for (let inf of bin.usedClassInfos) {
-                    for (let m of inf.methods) {
-                        if (getName(m) == name)
-                            markFunctionUsed(m)
+                    for (let m of inf.methods[name] || []) {
+                        markFunctionUsed(m)
                     }
                 }
             }
@@ -1183,6 +1222,7 @@ namespace ts.pxtc {
         function lookupCell(decl: Declaration): ir.Cell {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
+                // INCTODO; also speed this up?
                 let ex = bin.globals.filter(l => l.def == decl)[0]
                 if (!ex) {
                     typeCheckVar(typeOf(decl))
@@ -1242,6 +1282,36 @@ namespace ts.pxtc {
                 getName(m) == "toString"
         }
 
+        function fixpointVTables() {
+            const prevLen = bin.usedClassInfos.length
+            for (let ci of bin.usedClassInfos) {
+                for (let m of ci.allMethods()) {
+                    const pinfo = pxtInfo(m)
+                    const info = getFunctionInfo(m)
+                    if (pinfo.flags & PxtNodeFlags.IsUsed) {
+                        // we need to mark the parent as used, otherwise vtable layout fails, see #3740
+                        if (info.virtualParent)
+                            markFunctionUsed(info.virtualParent.decl)
+                    } else if (info.virtualParent && info.virtualParent.isUsed) {
+                        // if our parent method is used, and our vtable is used,
+                        // we are also used
+                        markFunctionUsed(m)
+                    } else if (isToString(m) || isIfaceMemberUsed(getName(m))) {
+                        // if the name is used in interface context, also mark as used
+                        markFunctionUsed(m)
+                    }
+                }
+
+                const ctor = getCtor(ci.decl)
+                if (ctor) {
+                    markFunctionUsed(ctor)
+                }
+            }
+            if (usedWorkList.length == 0 && prevLen == bin.usedClassInfos.length)
+                return true
+            return false
+        }
+
         function getVTable(inf: ClassInfo) {
             assert(inf.isUsed, "inf.isUsed")
             if (inf.vtable)
@@ -1251,8 +1321,7 @@ namespace ts.pxtc {
             if (inf.baseClassInfo)
                 inf.baseClassInfo.derivedClasses.push(inf)
 
-
-            for (let m of inf.methods) {
+            for (let m of inf.usedMethods()) {
                 bin.numMethods++
                 let minf = getFunctionInfo(m)
                 const attrs = parseComments(m)
@@ -1294,35 +1363,32 @@ namespace ts.pxtc {
             }
 
             for (let curr = inf; curr; curr = curr.baseClassInfo) {
-                for (let m of curr.methods) {
+                for (let m of curr.usedMethods()) {
                     const n = getName(m)
-                    if (isIfaceMemberUsed(n) || isUsed(m)) {
-                        const attrs = parseComments(m);
-                        if (attrs.shim) continue;
+                    const attrs = parseComments(m);
+                    if (attrs.shim) continue;
 
-                        const proc = lookupProc(m)
-                        const ex = inf.itable.find(e => e.name == n)
-                        const isSet = m.kind == SK.SetAccessor
-                        const isGet = m.kind == SK.GetAccessor
-                        if (ex) {
-                            if (isSet && !ex.setProc)
-                                ex.setProc = proc
-                            else if (isGet && !ex.proc)
-                                ex.proc = proc
-                        } else {
-                            inf.itable.push({
-                                name: n,
-                                info: 0,
-                                idx: getIfaceMemberId(n),
-                                proc: !isSet ? proc : null,
-                                setProc: isSet ? proc : null
-                            })
-                        }
-                        proc.info.usedAsIface = true
+                    const proc = lookupProc(m)
+                    const ex = inf.itable.find(e => e.name == n)
+                    const isSet = m.kind == SK.SetAccessor
+                    const isGet = m.kind == SK.GetAccessor
+                    if (ex) {
+                        if (isSet && !ex.setProc)
+                            ex.setProc = proc
+                        else if (isGet && !ex.proc)
+                            ex.proc = proc
+                    } else {
+                        inf.itable.push({
+                            name: n,
+                            info: 0,
+                            idx: getIfaceMemberId(n),
+                            proc: !isSet ? proc : null,
+                            setProc: isSet ? proc : null
+                        })
                     }
+                    proc.info.usedAsIface = true
                 }
             }
-
 
             return inf.vtable
         }
@@ -1330,48 +1396,31 @@ namespace ts.pxtc {
         // this code determines if we will need a vtable entry
         // by checking if we are overriding a method in a super class
         function computeVtableInfo(info: ClassInfo) {
-            // walk up the inheritance chain to collect any methods
-            // we may be overriding in this class
-            let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
-            for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
-                for (let m of curr.methods) {
-                    nameMap[classFunctionKey(m)] = m
+            for (let currMethod of info.allMethods()) {
+                let baseMethod: FunctionLikeDeclaration = null
+                const key = classFunctionKey(currMethod)
+                const k = getName(currMethod)
+                for (let base = info.baseClassInfo; !!base; base = base.baseClassInfo) {
+                    if (base.methods.hasOwnProperty(k))
+                        for (let m2 of base.methods[k])
+                            if (classFunctionKey(m2) == key) {
+                                baseMethod = m2
+                                // note thare's no 'break' here - we'll go to uppermost
+                                // matching method
+                            }
                 }
-            }
-            for (let m of info.methods) {
-                let prev = U.lookup(nameMap, classFunctionKey(m))
-                if (prev) {
-                    let minf = getFunctionInfo(m)
-                    let pinf = getFunctionInfo(prev)
-                    if (prev.parameters.length != m.parameters.length)
-                        error(m, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
-                    // pinf is just the parent (why not transitive?)
+                if (baseMethod) {
+                    let minf = getFunctionInfo(currMethod)
+                    let pinf = getFunctionInfo(baseMethod)
+                    // TODO we can probably drop this check
+                    if (baseMethod.parameters.length != currMethod.parameters.length)
+                        error(currMethod, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
+                    // pinf is the transitive parent
                     minf.virtualParent = pinf
                     if (!pinf.virtualParent)
                         pinf.virtualParent = pinf
                     assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
-                    if (!pinf.virtualInstances)
-                        pinf.virtualInstances = []
-                    pinf.virtualInstances.push(minf)
                 }
-            }
-        }
-
-        function pruneMethodsAndRecompute() {
-            // reset the virtual info
-            for (let fi of functionInfos) {
-                fi.virtualParent = undefined
-                fi.virtualIndex = undefined
-                fi.virtualInstances = undefined
-            }
-            // remove methods that are not used
-            for (let ci in classInfos) {
-                classInfos[ci].methods = classInfos[ci].methods.filter((m) => getFunctionInfo(m).isUsed)
-            }
-            // recompute vtable info
-            for (let ci in classInfos) {
-                if (classInfos[ci].baseClassInfo)
-                    computeVtableInfo(classInfos[ci])
             }
         }
 
@@ -1381,18 +1430,11 @@ namespace ts.pxtc {
             let id = safeName(decl) + "__C" + getNodeId(decl)
             let info: ClassInfo = classInfos[id]
             if (!info) {
-                info = {
-                    id: id,
-                    allfields: [],
-                    attrs: parseComments(decl),
-                    decl: decl,
-                    baseClassInfo: null,
-                    methods: [],
-                }
+                info = new ClassInfo(id, decl)
                 if (info.attrs.autoCreate)
                     autoCreateFunctions[info.attrs.autoCreate] = true
                 classInfos[id] = info;
-                // only do it after storing our in case we run into cycles (which should be errors)
+                // only do it after storing ours in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
                 for (let mem of decl.members) {
                     if (mem.kind == SK.PropertyDeclaration) {
@@ -1407,7 +1449,10 @@ namespace ts.pxtc {
                     } else if (isClassFunction(mem)) {
                         let minf = getFunctionInfo(mem as any)
                         minf.parentClassInfo = info
-                        info.methods.push(mem as any)
+                        const key = getName(mem)
+                        if (!info.methods.hasOwnProperty(key))
+                            info.methods[key] = []
+                        info.methods[key].push(mem as FunctionLikeDeclaration)
                     }
                 }
                 if (info.baseClassInfo) {
@@ -1801,19 +1846,10 @@ ${lbl}: .short 0xffff
         }
 
         function markFunctionUsed(decl: EmittableAsCall) {
-            if (isStackMachine() && isClassFunction(decl))
-                getIfaceMemberId(getName(decl), true)
-            getFunctionInfo(decl).isUsed = true
             markUsed(decl)
         }
 
-        function markUsed(decl: Declaration) {
-            if (!decl)
-                return
-
-            if (opts.computeUsedSymbols && decl.symbol)
-                res.usedSymbols[getFullName(checker, decl.symbol)] = null
-
+        function recordUsage(decl: Declaration) {
             if (!currUsingContext) {
                 let x = 1
                 // console.log("no using")
@@ -1823,6 +1859,19 @@ ${lbl}: .short 0xffff
                     currUsingContext.uses = {}
                 currUsingContext.uses[nodeKey(decl)] = decl
             }
+        }
+
+        function markUsed(decl: Declaration) {
+            if (!decl)
+                return
+
+            if (opts.computeUsedSymbols && decl.symbol)
+                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+
+            if (isStackMachine() && isClassFunction(decl))
+                getIfaceMemberId(getName(decl), true)
+
+            recordUsage(decl)
 
             if (!isUsed(decl)) {
                 pxtInfo(decl).flags |= PxtNodeFlags.IsUsed
@@ -2133,21 +2182,8 @@ ${lbl}: .short 0xffff
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
                 if (info.parentClassInfo)
-                    markClassUsed(info.parentClassInfo)
-                // if we call a method and it overrides then
-                // mark the virtual root class and all its overrides as used,
-                // if their classes are used
-                if (info.virtualParent) info = info.virtualParent
-                if (!info.isUsed) {
-                    info.isUsed = true
-                    for (let vinst of info.virtualInstances || []) {
-                        if (vinst.parentClassInfo.isUsed)
-                            markFunctionUsed(vinst.decl)
-                    }
-                    // we need to mark the parent as used, otherwise vtable layout fails, see #3740
-                    if (info.decl.kind == SK.MethodDeclaration)
-                        markFunctionUsed(info.decl)
-                }
+                    markVTableUsed(info.parentClassInfo)
+                markFunctionUsed(decl) // TODO remove duplicates of this call
 
                 const needsVCall = info.virtualParent && !isSuper
                 const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
@@ -2328,23 +2364,13 @@ ${lbl}: .short 0xffff
             return U.lookup(explicitlyUsedIfaceMembers, name) != null
         }
 
-        function markClassUsed(info: ClassInfo) {
+        function markVTableUsed(info: ClassInfo) {
+            recordUsage(info.decl)
             if (info.isUsed) return
-            info.isUsed = true
-            if (info.baseClassInfo) markClassUsed(info.baseClassInfo)
+            const pinfo = pxtInfo(info.decl)
+            pinfo.flags |= PxtNodeFlags.IsUsed
+            if (info.baseClassInfo) markVTableUsed(info.baseClassInfo)
             bin.usedClassInfos.push(info)
-            for (let m of info.methods) {
-                let minf = getFunctionInfo(m)
-                if (isToString(m) ||
-                    isIfaceMemberUsed(getName(m)) ||
-                    (minf.virtualParent && minf.virtualParent.isUsed))
-                    markFunctionUsed(m)
-            }
-
-            let ctor = getCtor(info.decl)
-            if (ctor) {
-                markFunctionUsed(ctor)
-            }
         }
 
         function emitNewExpression(node: NewExpression) {
@@ -2365,7 +2391,7 @@ ${lbl}: .short 0xffff
                     if (ctor) break
                 }
 
-                markClassUsed(info)
+                markVTableUsed(info)
 
                 let lbl = info.id + "_VT"
                 let obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
@@ -3294,7 +3320,7 @@ ${lbl}: .short 0xffff
                 userError(9275, lf("unsupported instanceof expression"))
             }
             let info = getClassInfo(tp, classDecl)
-            markClassUsed(info)
+            markVTableUsed(info)
             let r = ir.op(ir.EK.InstanceOf, [emitExpr(node.left)], info)
             r.jsInfo = "bool"
             return r
@@ -4323,7 +4349,7 @@ ${lbl}: .short 0xffff
         writeFile = (fn: string, cont: string) => { };
         res: CompileResult;
         options: CompileOptions;
-        usedClassInfos: ClassInfo[] = [];
+        usedClassInfos: ClassInfo[] = []; // INCTODO
         sourceHash = "";
         checksumBlock: number[];
         numStmts = 1;
@@ -4333,7 +4359,7 @@ ${lbl}: .short 0xffff
         itFullEntries = 0;
         numMethods = 0;
         numVirtMethods = 0;
-        usedChars = new Uint32Array(0x10000 / 32);
+        usedChars = new Uint32Array(0x10000 / 32); // INCTODO
 
         ifaceMembers: string[];
         strings: pxt.Map<string> = {};
