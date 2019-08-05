@@ -2,6 +2,8 @@ import { By } from 'selenium-webdriver';
 import fs from 'fs';
 import util from 'util';
 const screenshotsFolder = './screenshots';
+import dateformat from 'dateformat';
+const actions = driver.actions();
 export class DomObject {
 
     async actionForAll(actionName, findBys) {
@@ -28,21 +30,29 @@ export class DomObject {
         return criteria;
     }
 
+    async dragAndDrop(criteria, criteria2) {
+
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
+        let element2 = await driver.wait(until.elementLocated(this.findBy(criteria2)), 10000);
+
+        return await actions.dragAndDrop(element, element2);
+    }
+
     async catchScreenShot(name) {
         if (!fs.existsSync(screenshotsFolder)) {
             fs.mkdirSync(screenshotsFolder);
         }
 
         let writeFile = util.promisify(fs.writeFile);
-
+        let fileName = name + "-" + dateformat(new Date(), "yyyymmddHHMMss");
         await driver.takeScreenshot().then(function (image) {
-            writeFile(`${screenshotsFolder}/${name}.png`, image, 'base64', function (err) {
+            writeFile(`${screenshotsFolder}/${fileName}.png`, image, 'base64', function (err) {
                 if (err) {
                     console.error(err);
                 }
             });
-        }
-        );
+        });
+        return true;
     }
 
     async switchToWindow() {

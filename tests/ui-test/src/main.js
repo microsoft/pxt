@@ -5,7 +5,7 @@ import { toggleButton } from "./toggle-button";
 import { getHelpList } from "./help-list";
 import { getMoreList } from "./more-list";
 import { viewMenuBar } from "./menubar";
-
+import { searchBox } from "./search-box";
 describe('Micro:bit Test', function () {
     before(async () => {
         return await website.open("beta");
@@ -15,9 +15,10 @@ describe('Micro:bit Test', function () {
     });
 
     newProjectPage.test();
-    // shareProject.test();
-    // toggleButton.test();
-    // getHelpList.test();
-    // getMoreList.test();
+    shareProject.test();
+    toggleButton.test();
+    getHelpList.test();
+    getMoreList.test();
     viewMenuBar.test();
+    //searchBox.test();
 });
