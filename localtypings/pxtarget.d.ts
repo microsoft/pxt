@@ -816,6 +816,7 @@ declare namespace pxt.tutorial {
         tutorialCode?: string; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
+        autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
