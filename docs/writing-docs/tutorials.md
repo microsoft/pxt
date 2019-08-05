@@ -205,9 +205,9 @@ During an interaction, the step description (all text before the first code bloc
 
 ### Fullscreen
 
-If you want to include a dramatic introduction or make certain that a special message is seen, you can use the ``@fullscreen`` tag. The section is displayed in an overlay window on top of the tutorial screen and isn't shown in the caption as part of the tutorial flow. You include it in your tutorial like this:
+Use the ``@fullscreen`` tag to make the hint for a step expand automatically. Usually, the user has to click on the light bulb to show the hint text. In the example below, the code block will appear in the hint window
 
-```markdown
+````markdown
 # Flash-a-rama
 
 ## It's time to code! @fullscreen
@@ -216,10 +216,14 @@ Let's get real bright. We're going to make all the lights flash on your board!
 
 ![Flash lights](/static/tutorials/lights-flashing.gif)
 
+```blocks
+
+```
+
 ## Step 1: Make a new variable
 
 ...
-```
+````
 
 ### Unplugged
 
@@ -229,6 +233,8 @@ If you want to display your tutorial step in a dialog and then have it skip to t
 # Flash-a-rama
 
 ## It's time to code! @unplugged
+
+Here is some text that will appear in a dialog when the user reaches this step in the tutorial.
 
 ```
 
@@ -242,7 +248,11 @@ Used to signify that this step in the tutorial is the "last step" even if more s
 
 ## This is the last step @tutorialCompleted
 
+Here is the text for the last step. When this text appears on screen, the editor will signal that the tutorial has been completed.
+
 ## This is a bonus activity that comes after the last step
+
+Here is the text for the bonus activity.
 
 ```
 

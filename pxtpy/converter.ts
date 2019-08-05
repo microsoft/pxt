@@ -624,7 +624,7 @@ namespace pxt.py {
             if (t.primType == "@array") {
                 ct = lookupApi("_py.Array")
             } else if (t.primType == "string") {
-                ct = lookupApi("String")
+                ct = lookupApi("_py.String")
             }
         }
 
@@ -1873,6 +1873,14 @@ namespace pxt.py {
                         return buildOverride(override, allargs, methName ? expr(recv) : null);
                     }
                 }
+                else if (fun.attributes.pyHelper) {
+                    return B.mkGroup([
+                        B.mkInfix(B.mkText("_py"), ".", B.mkText(fun.attributes.pyHelper)),
+                        B.mkText("("),
+                        B.mkCommaSep(recv ? [expr(recv)].concat(allargs) : allargs),
+                        B.mkText(")")
+                    ]);
+                }
             }
 
             let fn = methName ? B.mkInfix(expr(recv), ".", B.mkText(methName)) : expr(n.func)
@@ -2328,6 +2336,13 @@ namespace pxt.py {
 
     pxt.conversionPasses.push(convert)
 
+    /**
+     * Override example syntax:
+     *      indexOf()       (no arguments)
+     *      indexOf($1, $0) (arguments in different order)
+     *      indexOf($0?)    (optional argument)
+     *      indexOf($0=0)   (default value; can be numbers, single quoted strings, false, true, null, undefined)
+     */
     function parseTypeScriptOverride(src: string): TypeScriptOverride {
         const regex = /([^\$]*\()?([^\$\(]*)\$(\d)(?:(?:(?:=(\d+|'[a-zA-Z0-9_]*'|false|true|null|undefined))|(\?)|))/y;
         const parts: OverridePart[] = [];
