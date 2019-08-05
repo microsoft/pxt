@@ -91,7 +91,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
     }
 
     renderCore() {
-        return this.renderInput()
+        return this.renderInput();
     }
 }
 

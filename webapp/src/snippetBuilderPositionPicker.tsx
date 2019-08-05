@@ -4,8 +4,8 @@ import * as Snippet from './snippetBuilder';
 import * as sui from './sui';
 import { SimulatorDisplay } from './snippetBuilderSimulatorDisplay';
 
-const PICKER_WIDTH  = 296;
-const PICKER_HEIGHT = 213;
+const PICKER_WIDTH  = 309;
+const PICKER_HEIGHT = 227;
 const FULLSIZE_BROWSER_WIDTH = 2100;
 const FULLSIZE_BROWSER_HEIGHT = 1003;
 const SIMULATOR_HEIGHT = 120;
@@ -130,15 +130,6 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
         return this.unScalePoint(point, this.getYScale());
     }
 
-    protected setDotPosition() {
-        const { x, y } = this.getScaledPoints();
-
-        return {
-            x: this.unScalePointX(x),
-            y: this.unScalePointY(y),
-        };
-    }
-
     protected getScaledPoints() {
         const { x, y } = this.state;
 
@@ -237,7 +228,7 @@ export class PositionPicker extends data.Component <PositionPickerProps, Positio
                         }}
                         role='grid'
                     >
-                        {dotVisible && <div className='position-picker dot' style={{ top: `${this.unScalePointY(pos.y)}px`, left: `${this.unScalePointX(pos.x)}px` }} />}
+                        {dotVisible && <div className='position-picker dot' style={{ top: `${y}px`, left: `${x}px` }} />}
                     </div>
                 </SimulatorDisplay>
             </div>

@@ -66,8 +66,8 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
             scale = .61;
         }
         // Maximum resize threshhold
-        else if (scale > 1.01) {
-            scale = 1.01;
+        else if (scale > 1) {
+            scale = 1;
         }
 
         // Set new scale and reset sprite editor

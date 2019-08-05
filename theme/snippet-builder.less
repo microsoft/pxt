@@ -22,6 +22,7 @@
 
     .content {
         overflow: scroll;
+        height: 100%;
         max-height: 100%;
         .ui.equal.width.grid {
             .snippet.output-section.column {
@@ -88,6 +89,7 @@ input.snippet.slider-input {
     padding: 2px;
     text-align: center;
 }
+
 input.slider.blocklyMockSlider {
     margin-top: 8px;
     height: 22px;
@@ -108,7 +110,7 @@ input.slider.blocklyMockSlider[type=range] {
     width: 100%;
     background: transparent;
   }
-  
+
   input.slider.blocklyMockSlider[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
   }
@@ -120,7 +122,7 @@ input.slider.blocklyMockSlider[type=range] {
   input.slider.blocklyMockSlider[type=range]::-ms-track {
     width: 100%;
     cursor: pointer;
-    background: transparent; 
+    background: #547ab2; 
     border-color: transparent;
     color: transparent;
 }
@@ -184,20 +186,6 @@ input.slider.blocklyMockSlider[type=range]:focus::-webkit-slider-runnable-track 
     background: #547AB2;
 }
   
-input.slider.blocklyMockSlider[type=range]::-moz-range-track {
-    cursor: pointer;
-    margin-top: 8px;
-    height: 22px;
-    width: 150px;
-    max-width: 232px;
-    position: relative;
-    outline: none;
-    border-radius: 11px;
-    margin-bottom: 20px;
-    background: #547AB2;
-    padding: 0;
-}
-  
 input.slider.blocklyMockSlider[type=range]::-ms-track {
     cursor: pointer;
     margin: 8px;
@@ -211,6 +199,21 @@ input.slider.blocklyMockSlider[type=range]::-ms-track {
     background: #547AB2;
     padding: 0;
 }
+
+input.slider.blocklyMockSlider[type=range]::-moz-range-track {
+    cursor: pointer;
+    margin-top: 8px;
+    height: 22px;
+    width: 150px;
+    max-width: 232px;
+    position: relative;
+    outline: none;
+    border-radius: 11px;
+    margin-bottom: 20px;
+    background: #547AB2;
+    padding: 0;
+}
+
 input.slider.blocklyMockSlider[type=range]::-ms-fill-lower {
     cursor: pointer;
     margin: 8px;
