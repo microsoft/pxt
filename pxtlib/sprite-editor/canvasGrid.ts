@@ -19,7 +19,10 @@ namespace pxtsprite {
         mouseCol: number;
         mouseRow: number;
 
-        constructor(protected palette: string[], public state: CanvasState, protected lightMode = false) {
+        scale: number;
+
+        constructor(protected palette: string[], public state: CanvasState, protected lightMode = false, scale: number) {
+            this.scale = scale;
             this.paintLayer = document.createElement("canvas");
             this.paintLayer.setAttribute("class", "sprite-editor-canvas");
             this.overlayLayer = document.createElement("canvas")
@@ -333,8 +336,8 @@ namespace pxtsprite {
             const left = bounds.left + (window.scrollX !== null ? window.scrollX : window.pageXOffset);
             const top = bounds.top + (window.scrollY !== null ? window.scrollY : window.pageYOffset);
 
-            this.mouseCol = Math.floor((coord.clientX - left) / this.cellWidth);
-            this.mouseRow = Math.floor((coord.clientY - top) / this.cellHeight);
+            this.mouseCol = Math.floor((((coord.clientX) - left) / this.cellWidth) / this.scale);
+            this.mouseRow = Math.floor((((coord.clientY) - top) / this.cellHeight) / this.scale);
 
             return [
                 this.mouseCol,

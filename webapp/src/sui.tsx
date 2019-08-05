@@ -522,7 +522,8 @@ export interface InputProps {
     id?: string;
     ariaLabel?: string;
     autoFocus?: boolean;
-    autoComplete?: boolean
+    autoComplete?: boolean;
+    selectOnMount?: boolean;
 }
 
 export class Input extends data.Component<InputProps, { value: string }> {
@@ -535,6 +536,14 @@ export class Input extends data.Component<InputProps, { value: string }> {
         this.copy = this.copy.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleChange = this.handleChange.bind(this);
+    }
+
+    componentDidMount() {
+        const { selectOnMount, autoFocus } = this.props;
+        if (selectOnMount && autoFocus) {
+            const input = this.refs['inputField'] as HTMLInputElement;
+            input.select();
+        }
     }
 
     componentWillReceiveProps(newProps: InputProps) {
@@ -594,6 +603,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
+                        ref='inputField'
                         autoFocus={p.autoFocus}
                         id={p.id}
                         className={p.class || ""}
@@ -942,6 +952,7 @@ export interface ModalProps extends ReactModal.Props {
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
     modalDidOpen?: (ref: HTMLElement) => void;
+    overlayClassName?: string;
 }
 
 interface ModalState {
@@ -1040,7 +1051,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             onClose, closeIcon, children, onKeyDown,
             header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
-            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
+            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
         const showBack = isFullscreen && !!closeIcon;
@@ -1076,7 +1087,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             shouldCloseOnEsc={shouldCloseOnEsc || closeOnEscape}
             shouldCloseOnOverlayClick={shouldCloseOnOverlayClick || (closeOnDocumentClick || closeOnDimmerClick)}
             portalClassName={portalClassName}
-            overlayClassName={`ui page modals dimmer transition ${isOpen ? 'visible active' : ''}`}
+            overlayClassName={`ui page modals dimmer transition ${overlayClassName} ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
             aria={aria} {...rest}>
