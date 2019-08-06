@@ -518,6 +518,8 @@ namespace ts.pxtc.ir {
         lblNo = 0;
         action: ts.FunctionLikeDeclaration = null;
         inlineBody: ir.Expr;
+        cachedJS: string = null;
+        usingCtx: PxtNode = null;
 
         reset() {
             this.body = []

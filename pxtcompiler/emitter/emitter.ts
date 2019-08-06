@@ -35,7 +35,7 @@ namespace ts.pxtc {
         proc: ir.Procedure;
 
         // set of nodes pulled in by the current node
-        usedNodes: pxt.Map<Node>;
+        usedNodes: pxt.Map<Declaration>;
         // when the current node is pulled in, the actions listed will be run
         usedActions: EmitAction[];
 
@@ -45,6 +45,11 @@ namespace ts.pxtc {
 
         // for wrapping ir.Expr inside of TS Expression
         valueOverride: ir.Expr;
+
+        refresh() {
+            // clear IsUsed flag
+            this.flags &= ~PxtNodeFlags.IsUsed
+        }
 
         resetEmit() {
             // clear IsUsed flag
@@ -195,7 +200,7 @@ namespace ts.pxtc {
                     info.resetAll()
                 else {
                     if (info.flags & PxtNodeFlags.InPxtModules)
-                        info.resetEmit()
+                        info.refresh()
                     else
                         info.resetAll()
                 }
@@ -1164,12 +1169,8 @@ namespace ts.pxtc {
 
         function recordAction<T>(f: (bin: Binary) => T): T {
             const r = f(bin)
-            if (needsUsingInfo) {
-                if (currUsingContext)
-                    currUsingContext.usedActions.push(f as EmitAction)
-                else
-                    U.oops("no using ctx!")
-            }
+            if (needsUsingInfo)
+                bin.recordAction(currUsingContext, f)
             return r
         }
 
@@ -2683,12 +2684,14 @@ ${lbl}: .short 0xffff
             } else {
                 assert(!bin.finalPass, "!bin.finalPass")
                 const pinfo = pxtInfo(node)
-                proc = new ir.Procedure();
-                proc.isRoot = !!(pinfo.flags & PxtNodeFlags.IsRootFunction)
-                proc.action = node;
-                proc.info = info;
-                pinfo.proc = proc;
-                bin.addProc(proc);
+                const myProc = new ir.Procedure()
+                myProc.isRoot = !!(pinfo.flags & PxtNodeFlags.IsRootFunction)
+                myProc.action = node;
+                myProc.info = info;
+                pinfo.proc = myProc;
+                myProc.usingCtx = currUsingContext;
+                proc = myProc
+                recordAction(bin => bin.addProc(myProc));
             }
 
             proc.captured = locals;
@@ -4107,13 +4110,26 @@ ${lbl}: .short 0xffff
         }
 
         function emitTopLevel(node: Declaration): void {
-            currUsingContext = pxtInfo(node)
-            if (!currUsingContext.usedNodes) {
+            const pinfo = pxtInfo(node)
+            if (pinfo.usedNodes) {
+                for (let node of U.values(pinfo.usedNodes))
+                    markUsed(node)
+                for (let fn of pinfo.usedActions)
+                    fn(bin)
+            } else if (isGlobalVar(node)) {
+                needsUsingInfo = false
+                currUsingContext = pinfo
+                currUsingContext.usedNodes = null
+                currUsingContext.usedActions = null
+                emit(node)
+                needsUsingInfo = true
+            } else {
+                currUsingContext = pinfo
                 currUsingContext.usedNodes = {}
                 currUsingContext.usedActions = []
+                emit(node)
+                currUsingContext = null
             }
-            emit(node)
-            currUsingContext = null
         }
 
         function emit(node: Node): void {
@@ -4410,6 +4426,23 @@ ${lbl}: .short 0xffff
             this.procs.push(proc)
             proc.seqNo = this.procs.length
             //proc.binary = this
+        }
+
+        recordHelper(usingCtx: PxtNode, id: string, gen: (bin: Binary) => string) {
+            const act = (bin: Binary) => {
+                if (!bin.codeHelpers[id])
+                    bin.codeHelpers[id] = gen(bin)
+            }
+            act(this)
+            this.recordAction(usingCtx, act)
+        }
+
+        recordAction<T>(usingCtx: PxtNode, f: (bin: Binary) => T) {
+            if (usingCtx) {
+                if (usingCtx.usedActions)
+                    usingCtx.usedActions.push(f as EmitAction)
+            } else
+                U.oops("no using ctx!")
         }
 
         private emitLabelled(v: string, hash: pxt.Map<string>, lblpref: string) {

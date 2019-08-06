@@ -130,15 +130,8 @@ namespace ts.pxtc {
         "mkVTable"
     ]
 
-    interface EmitCtx {
-        framectors: pxt.Map<string>;
-    }
-
     export function jsEmit(bin: Binary) {
         let jssource = "(function (ectx) {\n'use strict';\n"
-        const ctx: EmitCtx = {
-            framectors: {}
-        }
 
         for (let n of evalIfaceFields) {
             jssource += `const ${n} = ectx.${n};\n`
@@ -169,9 +162,9 @@ namespace ts.pxtc {
         jssource += shortCallsPrefix(shortNsCalls)
 
         bin.procs.forEach(p => {
-            jssource += "\n" + irToJS(ctx, bin, p) + "\n"
+            jssource += "\n" + irToJS(bin, p) + "\n"
         })
-        jssource += U.values(ctx.framectors).join("\n") + "\n"
+        jssource += U.values(bin.codeHelpers).join("\n") + "\n"
         bin.usedClassInfos.forEach(info => {
             jssource += vtableToJs(info)
         })
@@ -183,7 +176,10 @@ namespace ts.pxtc {
         bin.writeFile(BINARY_JS, jssource)
     }
 
-    function irToJS(ctx: EmitCtx, bin: Binary, proc: ir.Procedure): string {
+    function irToJS(bin: Binary, proc: ir.Procedure): string {
+        if (proc.cachedJS)
+            return proc.cachedJS
+
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
@@ -285,6 +281,8 @@ switch (step) {
 
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
         writeRaw(hexlits)
+
+        proc.cachedJS = resText
 
         return resText
 
@@ -536,10 +534,10 @@ function ${id}(s) {
 
         function emitProcCall(topExpr: ir.Expr) {
             const procid = topExpr.data as ir.ProcId
-            const proc = procid.proc
+            const callproc = procid.proc
 
-            if (proc && proc.inlineBody)
-                return emitExpr(proc.inlineSelf(topExpr.args))
+            if (callproc && callproc.inlineBody)
+                return emitExpr(callproc.inlineSelf(topExpr.args))
 
             const frameExpr = ir.rtcall("<frame>", [])
             frameExpr.totalUses = 1
@@ -551,8 +549,8 @@ function ${id}(s) {
             const lblId = ++lblIdx
             const isLambda = procid.virtualIndex == -1
 
-            if (proc)
-                write(`${frameRef} = ${proc.label()}_mk(s);`)
+            if (callproc)
+                write(`${frameRef} = ${callproc.label()}_mk(s);`)
             else {
                 let id = "generic"
                 if (procid.ifaceIndex != null)
@@ -562,11 +560,12 @@ function ${id}(s) {
                 else if (procid.virtualIndex != null)
                     id = procid.classInfo.id + "_v" + procid.virtualIndex
                 else U.oops();
-                id += "_" + topExpr.args.length + "_mk"
-                if (!ctx.framectors[id]) {
-                    const locals = U.range(topExpr.args.length).map(i => "arg" + i)
-                    ctx.framectors[id] = fnctor(id, "null", 5, locals)
-                }
+                const argLen = topExpr.args.length
+                id += "_" + argLen + "_mk"
+                bin.recordHelper(proc.usingCtx, id, () => {
+                    const locals = U.range(argLen).map(i => "arg" + i)
+                    return fnctor(id, "null", 5, locals)
+                })
                 write(`${frameRef} = ${id}(s);`)
             }
 
@@ -585,7 +584,7 @@ function ${id}(s) {
             let callIt = `s.pc = ${lblId}; return ${frameRef};`
 
             if (procid.ifaceIndex != null) {
-                U.assert(proc == null)
+                U.assert(callproc == null)
                 let isSet = false
                 if (procid.mapMethod) {
                     write(`if (!${frameRef}.arg0.vtable.iface) {`)
@@ -611,15 +610,15 @@ function ${id}(s) {
                 callIt = ""
             } else if (procid.virtualIndex == -1) {
                 // lambda call
-                U.assert(proc == null)
+                U.assert(callproc == null)
                 write(`setupLambda(${frameRef}, ${frameRef}.argL);`)
             } else if (procid.virtualIndex != null) {
-                U.assert(proc == null)
+                U.assert(callproc == null)
                 assert(procid.virtualIndex >= 0)
                 emitInstanceOf(procid.classInfo, "validate", frameRef + ".arg0")
                 write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
             } else {
-                U.assert(proc != null)
+                U.assert(callproc != null)
             }
 
             if (callIt) write(callIt)
