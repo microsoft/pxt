@@ -2,25 +2,25 @@
 
 declare namespace _py {
     interface Array {
-        //% tsOverride="push($0)"
+        //% py2tsOverride="push($0)"
         append(value: any): void;
 
-        //% tsOverride="concat($0)"
+        //% py2tsOverride="concat($0)"
         extend(other: Array): void;
 
-        //% tsOverride="insertAt($0, $1)"
+        //% py2tsOverride="insertAt($0, $1)"
         insert(index: number, value: any): void;
 
-        //% tsOverride="removeElement($0)"
+        //% py2tsOverride="removeElement($0)"
         remove(value: any): void;
 
-        //% tsOverride="sort()"
+        //% py2tsOverride="sort()"
         sort(): void;
 
-        //% tsOverride="reverse()"
+        //% py2tsOverride="reverse()"
         reverse(): void;
 
-        //% tsOverride="slice()"
+        //% py2tsOverride="slice()"
         copy(): void;
 
         //% pyHelper="py_array_pop"

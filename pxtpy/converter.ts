@@ -1867,8 +1867,8 @@ namespace pxt.py {
                 unifyTypeOf(n, fun.pyRetType)
                 n.symbolInfo = fun
 
-                if (fun.attributes.tsOverride) {
-                    const override = parseTypeScriptOverride(fun.attributes.tsOverride);
+                if (fun.attributes.py2tsOverride) {
+                    const override = parseTypeScriptOverride(fun.attributes.py2tsOverride);
                     if (override) {
                         return buildOverride(override, allargs, methName ? expr(recv) : null);
                     }
@@ -2343,7 +2343,7 @@ namespace pxt.py {
      *      indexOf($0?)    (optional argument)
      *      indexOf($0=0)   (default value; can be numbers, single quoted strings, false, true, null, undefined)
      */
-    function parseTypeScriptOverride(src: string): TypeScriptOverride {
+    export function parseTypeScriptOverride(src: string): TypeScriptOverride {
         const regex = /([^\$]*\()?([^\$\(]*)\$(\d)(?:(?:(?:=(\d+|'[a-zA-Z0-9_]*'|false|true|null|undefined))|(\?)|))/y;
         const parts: OverridePart[] = [];
 
@@ -2391,7 +2391,7 @@ namespace pxt.py {
         };
     }
 
-    function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
+    export function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
         const result: B.JsNode[] = [];
 
         for (const part of override.parts) {
