@@ -1035,12 +1035,22 @@ namespace pxt.py {
 
             let argExps = s.arguments
                 .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
-            let args = argExps
-                .map(([a, _]) => a)
-                .join(", ")
             let sup = argExps
                 .map(([_, aSup]) => aSup)
                 .reduce((p, c) => p.concat(c), fnSup)
+
+            if (fn.indexOf("_py.py_") === 0) {
+                fn = fn.substr(11).split("_").filter((v, i) => i !== 0).join("_");
+                const recv = argExps.shift()[0];
+                const args = argExps
+                    .map(([a, _]) => a)
+                    .join(", ");
+                return  [`${recv}.${fn}(${args})`, sup]
+            }
+
+            let args = argExps
+                .map(([a, _]) => a)
+                .join(", ")
             return [`${fn}(${args})`, sup]
         }
         type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
