@@ -112,7 +112,7 @@ export function githubFooter(msg: string, close: () => void) {
             <p>
                 <br />
                 <br />
-                <a href="#github" role="button" onClick={githubLogout}>
+                <a href="#github" onClick={githubLogout}>
                     {lf("Logout from GitHub")}
                 </a>
                 <br />
@@ -125,7 +125,7 @@ export function githubFooter(msg: string, close: () => void) {
                 <br />
                 {msg}
                 {" "}
-                <a href="#github" role="button" onClick={githubLogin}>
+                <a href="#github" onClick={githubLogin}>
                     {lf("Login to GitHub")}
                 </a>
                 <br />
