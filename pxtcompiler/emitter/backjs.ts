@@ -177,9 +177,6 @@ namespace ts.pxtc {
         })
         if (bin.res.breakpoints)
             jssource += `\nconst breakpoints = setupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
-        U.iterMap(bin.hexlits, (k, v) => {
-            jssource += `const ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
-        })
 
         jssource += `\nreturn ${bin.procs[0] ? bin.procs[0].label() : "null"}\n})\n`
 
@@ -194,6 +191,7 @@ namespace ts.pxtc {
         let exprStack: ir.Expr[] = []
         let maxStack = 0
         let localsCache: pxt.Map<boolean> = {}
+        let hexlits = ""
 
         writeRaw(`
 function ${proc.label()}(s) {
@@ -286,6 +284,7 @@ switch (step) {
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
 
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
+        writeRaw(hexlits)
 
         return resText
 
@@ -396,6 +395,9 @@ function ${id}(s) {
                 case EK.PointerLiteral:
                     if (e.ptrlabel()) {
                         return e.ptrlabel().lblId + "";
+                    } else if (e.hexlit()) {
+                        hexlits += `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`
+                        return e.data;
                     } else {
                         return e.jsInfo;
                     }

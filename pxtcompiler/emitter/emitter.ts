@@ -19,6 +19,7 @@ namespace ts.pxtc {
         IsUsed = 0x0008,
         InPxtModules = 0x0010,
     }
+    export type EmitAction = (bin: Binary) => void;
     export class PxtNode {
         flags: PxtNodeFlags;
 
@@ -33,9 +34,10 @@ namespace ts.pxtc {
         variableInfo: VariableAddInfo;
         proc: ir.Procedure;
 
-        // set on global nodes to the set
-        // of nodes pulled in by the current node
-        uses: pxt.Map<Node>;
+        // set of nodes pulled in by the current node
+        usedNodes: pxt.Map<Node>;
+        // when the current node is pulled in, the actions listed will be run
+        usedActions: EmitAction[];
 
         // exported to clients
         callInfo: CallInfo;
@@ -52,7 +54,8 @@ namespace ts.pxtc {
             this.callInfo = null;
             this.proc = null;
             this.exprInfo = null;
-            this.uses = null;
+            this.usedNodes = null;
+            this.usedActions = null;
         }
 
         resetTSC() {
@@ -884,12 +887,11 @@ namespace ts.pxtc {
         let classInfos: pxt.Map<ClassInfo> = {} // TODO move to PxtNode
         let usedWorkList: Declaration[] = []
         let irCachesToClear: NodeWithCache[] = []
-        let ifaceMembers: pxt.Map<number> = {}
-        let explicitlyUsedIfaceMembers: pxt.Map<number> = {}
         let autoCreateFunctions: pxt.Map<boolean> = {}
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
         let currUsingContext: PxtNode = null
+        let needsUsingInfo = true
 
         currNodeWave++
 
@@ -983,6 +985,7 @@ namespace ts.pxtc {
         }
 
         layOutGlobals()
+        needsUsingInfo = false
         emitVTables()
 
         let pass0 = U.cpuUs()
@@ -990,6 +993,7 @@ namespace ts.pxtc {
 
         if (diagnostics.getModificationCount() == 0) {
             reset();
+            needsUsingInfo = false
             bin.finalPass = true
             emit(rootFunction)
 
@@ -1158,32 +1162,34 @@ namespace ts.pxtc {
             }
         }
 
-        function scope(f: () => void) {
-            let prevProc = proc;
-            try {
-                f();
-            } finally {
-                proc = prevProc;
+        function recordAction<T>(f: (bin: Binary) => T): T {
+            const r = f(bin)
+            if (needsUsingInfo) {
+                if (currUsingContext)
+                    currUsingContext.usedActions.push(f as EmitAction)
+                else
+                    U.oops("no using ctx!")
             }
+            return r
         }
 
         function getIfaceMemberId(name: string, markUsed = false) {
-            if (markUsed && !U.lookup(explicitlyUsedIfaceMembers, name)) {
-                U.assert(!bin.finalPass)
-                explicitlyUsedIfaceMembers[name] = 1
-                for (let inf of bin.usedClassInfos) {
-                    for (let m of inf.methods[name] || []) {
-                        markFunctionUsed(m)
+            return recordAction(bin => {
+                if (markUsed) {
+                    if (!U.lookup(bin.explicitlyUsedIfaceMembers, name)) {
+                        U.assert(!bin.finalPass)
+                        bin.explicitlyUsedIfaceMembers[name] = true
                     }
                 }
-            }
-            let v = U.lookup(ifaceMembers, name)
-            if (v != null) return v
-            U.assert(!bin.finalPass)
-            // this gets renumbered before the final pass
-            v = ifaceMembers[name] = -1;
-            bin.emitString(name)
-            return v
+
+                let v = U.lookup(bin.ifaceMemberMap, name)
+                if (v != null) return v
+                U.assert(!bin.finalPass)
+                // this gets renumbered before the final pass
+                v = bin.ifaceMemberMap[name] = -1;
+                bin.emitString(name)
+                return v
+            })
         }
 
         function finalEmit() {
@@ -1283,6 +1289,7 @@ namespace ts.pxtc {
         }
 
         function fixpointVTables() {
+            needsUsingInfo = false
             const prevLen = bin.usedClassInfos.length
             for (let ci of bin.usedClassInfos) {
                 for (let m of ci.allMethods()) {
@@ -1307,6 +1314,7 @@ namespace ts.pxtc {
                     markFunctionUsed(ctor)
                 }
             }
+            needsUsingInfo = true
             if (usedWorkList.length == 0 && prevLen == bin.usedClassInfos.length)
                 return true
             return false
@@ -1623,7 +1631,7 @@ ${lbl}: .short 0xffff
             if (str == "") {
                 r = ir.rtcall("String_::mkEmpty", [])
             } else {
-                let lbl = bin.emitString(str)
+                let lbl = emitAndMarkString(str)
                 r = ir.ptrlit(lbl, JSON.stringify(str))
             }
             r.isStringLiteral = true
@@ -1849,15 +1857,22 @@ ${lbl}: .short 0xffff
             markUsed(decl)
         }
 
+        function emitAndMarkString(str: string) {
+            return recordAction(bin => {
+                return bin.emitString(str)
+            })
+        }
+
         function recordUsage(decl: Declaration) {
+            if (!needsUsingInfo)
+                return
             if (!currUsingContext) {
-                let x = 1
+                // U.oops("no using ctx for: " + getName(decl))
+                let x = 123
                 // console.log("no using")
                 // TODO
             } else {
-                if (!currUsingContext.uses)
-                    currUsingContext.uses = {}
-                currUsingContext.uses[nodeKey(decl)] = decl
+                currUsingContext.usedNodes[nodeKey(decl)] = decl
             }
         }
 
@@ -2323,15 +2338,15 @@ ${lbl}: .short 0xffff
                 getVTable(info) // gets cached
             }
 
-            let keys = Object.keys(ifaceMembers)
+            let keys = Object.keys(bin.ifaceMemberMap)
             keys.sort(U.strcmp)
             keys.unshift("") // make sure idx=0 is invalid
             bin.emitString("")
             bin.ifaceMembers = keys
-            ifaceMembers = {}
+            bin.ifaceMemberMap = {}
             let idx = 0
             for (let k of keys) {
-                ifaceMembers[k] = idx++
+                bin.ifaceMemberMap[k] = idx++
             }
 
             for (let info of bin.usedClassInfos) {
@@ -2361,7 +2376,7 @@ ${lbl}: .short 0xffff
         }
 
         function isIfaceMemberUsed(name: string) {
-            return U.lookup(explicitlyUsedIfaceMembers, name) != null
+            return U.lookup(bin.explicitlyUsedIfaceMembers, name) != null
         }
 
         function markVTableUsed(info: ClassInfo) {
@@ -2479,7 +2494,7 @@ ${lbl}: .short 0xffff
                 return f4EncodeImg(maxLen, matrix.length, bpp, (x, y) => matrix[y][x] || 0)
             }
 
-            function parseHexLiteral(s: string) {
+            function parseHexLiteral(node: Node, s: string) {
                 let thisJres = currJres
                 if (s[0] == '_' && s[1] == '_' && opts.jres[s]) {
                     thisJres = opts.jres[s]
@@ -2527,8 +2542,13 @@ ${lbl}: .short 0xffff
                     else
                         throw unhandled(node, lf("invalid character in hex literal '{0}'", c), 9265)
                 }
-                let lbl = bin.emitHexLiteral(res.toLowerCase())
-                return ir.ptrlit(lbl, lbl)
+                if (target.isNative) {
+                    const lbl = bin.emitHexLiteral(res.toLowerCase())
+                    return ir.ptrlit(lbl, lbl)
+                } else {
+                    const lbl = "_hex" + nodeKey(node)
+                    return ir.ptrlit(lbl, { hexlit: res.toLowerCase() } as any)
+                }
             }
             let decl = getDecl(node.tag) as FunctionLikeDeclaration
             if (!decl)
@@ -2547,7 +2567,7 @@ ${lbl}: .short 0xffff
             function handleHexLike(pp: (s: string) => string) {
                 if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
                     throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
-                res = parseHexLiteral(pp((node.template as ts.LiteralExpression).text))
+                res = parseHexLiteral(node, pp((node.template as ts.LiteralExpression).text))
             }
 
             switch (attrs.shim) {
@@ -4087,6 +4107,10 @@ ${lbl}: .short 0xffff
 
         function emitTopLevel(node: Declaration): void {
             currUsingContext = pxtInfo(node)
+            if (!currUsingContext.usedNodes) {
+                currUsingContext.usedNodes = {}
+                currUsingContext.usedActions = []
+            }
             emit(node)
             currUsingContext = null
         }
@@ -4361,6 +4385,8 @@ ${lbl}: .short 0xffff
         numVirtMethods = 0;
         usedChars = new Uint32Array(0x10000 / 32); // INCTODO
 
+        explicitlyUsedIfaceMembers: pxt.Map<boolean> = {};
+        ifaceMemberMap: pxt.Map<number> = {};
         ifaceMembers: string[];
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};

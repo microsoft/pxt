@@ -83,6 +83,13 @@ namespace ts.pxtc.ir {
             return null
         }
 
+        hexlit() {
+            const anyJs = this.jsInfo as any
+            if (anyJs.hexlit)
+                return anyJs.hexlit
+            return null
+        }
+
         isExpr() { return true }
 
         isPure() {
