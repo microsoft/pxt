@@ -32,6 +32,7 @@ namespace ts.pxtc {
         // compiler state
         functionInfo: FunctionAddInfo;
         variableInfo: VariableAddInfo;
+        classInfo: ClassInfo;
         proc: ir.Procedure;
 
         // set of nodes pulled in by the current node
@@ -56,6 +57,7 @@ namespace ts.pxtc {
             this.flags &= ~PxtNodeFlags.IsUsed
             this.functionInfo = null;
             this.variableInfo = null;
+            this.classInfo = null;
             this.callInfo = null;
             this.proc = null;
             this.exprInfo = null;
@@ -864,10 +866,11 @@ namespace ts.pxtc {
         capturedVars: VarOrParam[] = [];
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
-        // INCTODO clear these
+        // INCTODO clear these?
         virtualParent?: FunctionAddInfo;
         virtualIndex?: number;
         parentClassInfo?: ClassInfo;
+        // these two are only used in native backend
         usedAsValue?: boolean;
         usedAsIface?: boolean;
 
@@ -889,10 +892,9 @@ namespace ts.pxtc {
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();
-        let classInfos: pxt.Map<ClassInfo> = {} // TODO move to PxtNode
         let usedWorkList: Declaration[] = []
         let irCachesToClear: NodeWithCache[] = []
-        let autoCreateFunctions: pxt.Map<boolean> = {}
+        let autoCreateFunctions: pxt.Map<boolean> = {} // INCTODO
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
         let currUsingContext: PxtNode = null
@@ -1204,6 +1206,7 @@ namespace ts.pxtc {
             for (let proc of bin.procs)
                 proc.resolve()
 
+            // INCTODO - probably needs to remove this
             bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
 
             if (opts.target.isNative) {
@@ -1436,13 +1439,13 @@ namespace ts.pxtc {
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let id = safeName(decl) + "__C" + getNodeId(decl)
-            let info: ClassInfo = classInfos[id]
-            if (!info) {
-                info = new ClassInfo(id, decl)
+            const pinfo = pxtInfo(decl)
+            if (!pinfo.classInfo) {
+                const id = safeName(decl) + "__C" + getNodeId(decl)
+                const info = new ClassInfo(id, decl)
+                pinfo.classInfo = info
                 if (info.attrs.autoCreate)
                     autoCreateFunctions[info.attrs.autoCreate] = true
-                classInfos[id] = info;
                 // only do it after storing ours in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
                 for (let mem of decl.members) {
@@ -1470,7 +1473,7 @@ namespace ts.pxtc {
                 }
 
             }
-            return info;
+            return pinfo.classInfo;
         }
 
         function emitImageLiteral(s: string): LiteralExpression {
@@ -4112,10 +4115,12 @@ ${lbl}: .short 0xffff
         function emitTopLevel(node: Declaration): void {
             const pinfo = pxtInfo(node)
             if (pinfo.usedNodes) {
+                needsUsingInfo = false
                 for (let node of U.values(pinfo.usedNodes))
                     markUsed(node)
                 for (let fn of pinfo.usedActions)
                     fn(bin)
+                needsUsingInfo = true
             } else if (isGlobalVar(node)) {
                 needsUsingInfo = false
                 currUsingContext = pinfo
@@ -4400,7 +4405,7 @@ ${lbl}: .short 0xffff
         itFullEntries = 0;
         numMethods = 0;
         numVirtMethods = 0;
-        usedChars = new Uint32Array(0x10000 / 32); // INCTODO
+        usedChars = new Uint32Array(0x10000 / 32);
 
         explicitlyUsedIfaceMembers: pxt.Map<boolean> = {};
         ifaceMemberMap: pxt.Map<number> = {};
