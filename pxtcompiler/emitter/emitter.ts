@@ -701,14 +701,25 @@ namespace ts.pxtc {
         return !!(node && (node as NamedDeclaration).name);
     }
 
+    function parentPrefix(node: Node): string {
+        if (!node)
+            return ""
+        switch (node.kind) {
+            case SK.ModuleBlock:
+                return parentPrefix(node.parent)
+            case SK.ClassDeclaration:
+            case SK.ModuleDeclaration:
+                return parentPrefix(node.parent) + (node as ModuleDeclaration).name.text + "."
+            default:
+                return ""
+        }
+    }
+
     export function getDeclName(node: Declaration) {
         let text = isNamedDeclaration(node) ? (<Identifier>node.name).text : null
-        if (!text && node.kind == SK.Constructor)
-            text = "constructor"
-        if (node && node.parent && node.parent.kind == SK.ClassDeclaration)
-            text = (<ClassDeclaration>node.parent).name.text + "." + text
-        text = text || "inline"
-        return text;
+        if (!text)
+            text = node.kind == SK.Constructor ? "constructor" : "inline"
+        return parentPrefix(node.parent) + text;
     }
 
     function safeName(node: Declaration) {
@@ -758,6 +769,7 @@ namespace ts.pxtc {
         res: CompileResult,
         entryPoint: string): EmitResult {
         target = opts.target
+        target.debugMode = !!opts.breakpoints
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();
@@ -830,7 +842,7 @@ namespace ts.pxtc {
             });
         }
 
-        let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
+        let mainSrcFile = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
 
         let rootFunction = <any>{
             kind: SK.FunctionDeclaration,
@@ -844,7 +856,7 @@ namespace ts.pxtc {
                 kind: SK.Block,
                 statements: allStmts
             },
-            parent: src,
+            parent: mainSrcFile,
             pos: 0,
             end: 0,
         }
@@ -1068,6 +1080,11 @@ namespace ts.pxtc {
 
             bin.writeFile = (fn: string, data: string) =>
                 host.writeFile(fn, data, false, null, program.getSourceFiles());
+
+            for (let proc of bin.procs)
+                proc.resolve()
+
+            bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
 
             if (opts.target.isNative) {
                 if (opts.extinfo.yotta)
@@ -2133,7 +2150,7 @@ ${lbl}: .short 0xffff
 
         function mkMethodCall(ci: ClassInfo, vidx: number, ifaceIdx: number, args: ir.Expr[]) {
             let data: ir.ProcId = {
-                proc: proc,
+                proc: null,
                 virtualIndex: vidx,
                 ifaceIndex: ifaceIdx,
                 classInfo: ci
@@ -2614,15 +2631,13 @@ ${lbl}: .short 0xffff
             proc.stackEmpty();
 
             let lbl = proc.mkLabel("final")
-            let hasRet = funcHasReturn(proc.action)
-            if (hasRet) {
-                let v = captureJmpValue()
-                proc.emitJmp(lbl, v, ir.JmpMode.Always)
+            if (funcHasReturn(proc.action)) {
+                // the jmp will take R0 with it as the return value
+                proc.emitJmp(lbl)
             } else {
-                // TODO emit 'return undefined'
+                proc.emitJmp(lbl, emitLit(undefined))
             }
-            if (hasRet || isStackMachine())
-                proc.emitLbl(lbl)
+            proc.emitLbl(lbl)
 
             // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
@@ -2881,7 +2896,7 @@ ${lbl}: .short 0xffff
                     // unfortunately, this uses completely different syntax tree nodes to the patters in const/let...
                     const bindingExpr = ir.shared(emitExpr(src));
                     (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
-                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, emitLit(idx)])))
+                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, ir.numlit(idx)])))
                     })
                 }
             } else {
@@ -3037,7 +3052,7 @@ ${lbl}: .short 0xffff
         function isNumberLike(e: Expression) {
             if (e.kind == SK.NullKeyword) {
                 let vo: ir.Expr = pxtInfo(e).valueOverride
-                if (vo !== undefined) {
+                if (vo != null) {
                     if (vo.exprKind == EK.NumberLiteral) {
                         if (opts.target.isNative)
                             return !!((vo.data as number) & 1)
@@ -3697,8 +3712,56 @@ ${lbl}: .short 0xffff
             emit(node.statement)
             proc.emitLblDirect(l.brk)
         }
-        function emitThrowStatement(node: ThrowStatement) { }
-        function emitTryStatement(node: TryStatement) { }
+
+        function emitThrowStatement(node: ThrowStatement) {
+            emitBrk(node)
+            proc.emitExpr(rtcallMaskDirect("pxt::throwValue", [emitExpr(node.expression)]))
+        }
+
+        function emitTryStatement(node: TryStatement) {
+            const beginTry = (lbl: ir.Stmt) =>
+                rtcallMaskDirect("pxt::beginTry", [ir.ptrlit(lbl.lblName, lbl as any)])
+
+            emitBrk(node)
+
+            const lcatch = proc.mkLabel("catch")
+            lcatch.lblName = "_catch_" + getNodeId(node)
+            const lfinally = proc.mkLabel("finally")
+            lfinally.lblName = "_finally_" + getNodeId(node)
+
+            if (node.finallyBlock)
+                proc.emitExpr(beginTry(lfinally))
+            if (node.catchClause)
+                proc.emitExpr(beginTry(lcatch))
+
+            proc.stackEmpty()
+            emitBlock(node.tryBlock)
+            proc.stackEmpty()
+
+            if (node.catchClause) {
+                const skip = proc.mkLabel("catchend")
+                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                proc.emitJmp(skip)
+
+                proc.emitLbl(lcatch)
+                const decl = node.catchClause.variableDeclaration
+                if (decl) {
+                    emitVariableDeclaration(decl)
+                    const loc = lookupCell(decl)
+                    proc.emitExpr(loc.storeByRef(rtcallMaskDirect("pxt::getThrownValue", [])))
+                }
+                emitBlock(node.catchClause.block)
+                proc.emitLbl(skip)
+            }
+
+            if (node.finallyBlock) {
+                proc.emitExpr(rtcallMaskDirect("pxt::endTry", []))
+                proc.emitLbl(lfinally)
+                emitBlock(node.finallyBlock)
+                proc.emitExpr(rtcallMaskDirect("pxt::endFinally", []))
+            }
+        }
+
         function emitCatchClause(node: CatchClause) { }
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
@@ -3820,7 +3883,7 @@ ${lbl}: .short 0xffff
                     userError(9203, lf("spread operator not supported yet"))
                 const myType = arrayElementType(parentType, idx)
                 return [
-                    rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
+                    rtcallMaskDirect("Array_::getAt", [parentAccess, ir.numlit(idx)]),
                     myType
                 ]
             } else {
@@ -3952,6 +4015,10 @@ ${lbl}: .short 0xffff
                 case SK.TypeAliasDeclaration:
                     // skip
                     return
+                case SyntaxKind.TryStatement:
+                    return emitTryStatement(<TryStatement>node);
+                case SyntaxKind.ThrowStatement:
+                    return emitThrowStatement(<ThrowStatement>node);
                 case SK.DebuggerStatement:
                     return emitDebuggerStatement(node);
                 case SK.GetAccessor:
@@ -4082,10 +4149,6 @@ ${lbl}: .short 0xffff
                 case SyntaxKind.CaseClause:
                 case SyntaxKind.DefaultClause:
                     return emitCaseOrDefaultClause(<CaseOrDefaultClause>node);
-                case SyntaxKind.ThrowStatement:
-                    return emitThrowStatement(<ThrowStatement>node);
-                case SyntaxKind.TryStatement:
-                    return emitTryStatement(<TryStatement>node);
                 case SyntaxKind.CatchClause:
                     return emitCatchClause(<CatchClause>node);
                 case SyntaxKind.ClassExpression:

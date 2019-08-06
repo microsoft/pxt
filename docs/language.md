@@ -55,6 +55,8 @@ and might not be available in your editor.
 * initializers for class fields
 * lambda functions with more than three arguments
 * using generic functions as values and nested generic functions
+* binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
+* exceptions (`throw`, `try ... catch`, `try ... finally`)
 
 The following used to be disallowed, but should be supported now,
 though they require testing:
@@ -80,9 +82,6 @@ We generally stay away from the more dynamic parts of JavaScript.  Things you ma
 
 * object destructuring with initializers
 * shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
-* exceptions (`throw`, `try ... catch`, `try ... finally`);
-  currently all exceptions just stop the program
-* binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `delete` statement (on object literals)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays

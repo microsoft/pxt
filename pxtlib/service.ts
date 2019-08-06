@@ -438,13 +438,8 @@ namespace ts.pxtc {
             }
         }
 
-        if (pxt.appTarget && pxt.appTarget.runtime && Array.isArray(pxt.appTarget.runtime.bannedCategories)) {
-            filterCategories(pxt.appTarget.runtime.bannedCategories)
-        }
-
-        if (categoryFilters) {
+        if (categoryFilters)
             filterCategories(categoryFilters);
-        }
 
         return {
             apis: info,

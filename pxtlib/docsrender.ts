@@ -18,7 +18,9 @@ namespace pxt.docs {
     let stdsettings: Map<string> = {
         "parent": stdSetting,
         "short": stdSetting,
-        "description": "<!-- desc -->"
+        "description": "<!-- desc -->",
+        "activities": "<!-- activities -->",
+        "explicitHints": "<!-- hints -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -522,15 +524,29 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             (f, pref, addr) => pref + '/static/' + addr + '"')
 
         let endBox = ""
+        let boxSize = 0;
+        function appendEndBox(size: number, box: string, html: string): string {
+            let r = html;
+            if (size <= boxSize) {
+                r = endBox + r;
+                endBox = "";
+                boxSize = 0;
+            }
+            return r;
+        }
 
-        html = html.replace(/<h\d[^>]+>\s*([~@])\s*(.*?)<\/h\d>/g, (f, tp, body) => {
+        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (f, lvl, tp, body) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""
             let rawArgs = args
             args = html2Quote(args)
             cmd = html2Quote(cmd)
-            if (tp == "@") {
+            lvl = parseInt(lvl);
+
+            if (!tp) {
+                return appendEndBox(lvl, endBox, f);
+            } else if (tp == "@") {
                 let expansion = U.lookup(d.settings, cmd)
                 if (expansion != null) {
                     pubinfo[cmd] = args
@@ -548,7 +564,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     CMD: cmd
                 }
 
-                return injectHtml(expansion, ivars, ["ARGS", "CMD"])
+                return appendEndBox(lvl, endBox, injectHtml(expansion, ivars, ["ARGS", "CMD"]))
             } else {
                 if (!cmd) {
                     let r = endBox
@@ -559,8 +575,14 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 let box = U.lookup(d.boxes, cmd)
                 if (box) {
                     let parts = box.split("@BODY@")
-                    endBox = parts[1]
-                    return parts[0].replace("@ARGS@", args)
+                    let r = appendEndBox(lvl, endBox, parts[0].replace("@ARGS@", args));
+                    endBox = parts[1];
+
+                    let attrs = box.match(/data-[^>\s]+/ig);
+                    if (attrs && attrs.indexOf('data-inferred') >= 0) {
+                        boxSize = lvl;
+                    }
+                    return r;
                 } else {
                     if (opts.throwOnError)
                         U.userError(`Unknown box: ~ ${cmd}`);
@@ -568,6 +590,8 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 }
             }
         })
+
+        if (endBox) html = html + endBox;
 
         if (!pubinfo["title"]) {
             let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)

@@ -274,10 +274,6 @@ _start_${name}:
 
         const immMax = (1 << 23) - 1
 
-        //console.log(proc.toString())
-        proc.resolve()
-        // console.log("OPT", proc.toString())
-
         emitAll()
         resText = ""
         for (let t of alltmps) t.currUses = 0
@@ -534,6 +530,12 @@ _start_${name}:
 
         function emitRtCall(topExpr: ir.Expr) {
             let name: string = topExpr.data
+
+            if (name == "pxt::beginTry") {
+                write(`try ${topExpr.args[0].data}`)
+                return
+            }
+
             name = U.lookup(vmCallMap, name) || name
 
             clearStack()
@@ -585,6 +587,9 @@ _start_${name}:
         function emitProcCall(topExpr: ir.Expr) {
             let calledProcId = topExpr.data as ir.ProcId
             let calledProc = calledProcId.proc
+
+            if (calledProc && calledProc.inlineBody)
+                return emitExpr(calledProc.inlineSelf(topExpr.args))
 
             let numPush = 0
             const args = topExpr.args.slice()

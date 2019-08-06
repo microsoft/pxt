@@ -30,6 +30,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
         this.togglePkg = this.togglePkg.bind(this);
+        this.navigateToError = this.navigateToError.bind(this);
     }
 
     componentWillReceiveProps(nextProps: ISettingsProps) {
@@ -76,23 +77,30 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             .done()
     }
 
+    private navigateToError(meta: pkg.FileMeta) {
+        const diag = meta && meta.diagnostics && meta.diagnostics[0];
+        if (diag)
+            this.props.parent.navigateToError(diag);
+    }
+
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
-            let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             return (
-                <FileTreeItem key={file.getName()} file={file}
+                <FileTreeItem key={file.getName()}
+                    file={file}
+                    meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
+                    onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && /\.blocks$/i.test(file.getName())}
+                    hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
-                    {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                 </FileTreeItem>);
         })
     }
@@ -262,8 +270,10 @@ namespace custom {
 
 interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
     file: pkg.File;
+    meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onErrorClick: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
 }
@@ -273,12 +283,18 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleErrorClick = this.handleErrorClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
         this.props.onItemClick(this.props.file);
+        e.stopPropagation();
+    }
+
+    handleErrorClick(e: React.MouseEvent<HTMLElement>) {
+        this.props.onErrorClick(this.props.meta);
         e.stopPropagation();
     }
 
@@ -292,7 +308,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -308,6 +324,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} /> : ''}
+            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
         </a>
     }
 }

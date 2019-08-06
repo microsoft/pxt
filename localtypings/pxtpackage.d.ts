@@ -70,6 +70,7 @@ declare namespace pxt {
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
+        requiredCategories?: string[]; // ensure that those block categories are visible
     }
 
     interface PackageExtension {
@@ -178,7 +179,7 @@ declare namespace pxt {
     interface SnippetGoToOptions {
         question?: number;
         validate?: SnippetValidate;
-        parameters?: SnippetParameters;
+        parameters?: SnippetParameters[]; // Answer token with corresponding question
     }
 
     interface SnippetOutputOptions {
@@ -187,19 +188,39 @@ declare namespace pxt {
     }
 
     interface SnippetParameters {
-        output?: SnippetOutputOptions;
-        goto?: SnippetGoToOptions;
+        token?: string;
+        answer?: string;
+        question: number;
     }
 
-    interface SnippetQuestionInput {
+    interface SnippetInputAnswerSingular {
         answerToken: string;
         defaultAnswer: SnippetAnswerTypes;
-        type?: string;
-        label?: string;
+    }
+
+    interface SnippetInputAnswerPlural {
+        answerTokens: string[];
+        defaultAnswers: SnippetAnswerTypes[];
+    }
+
+    interface SnippetInputOtherType {
+        type: string;
+    }
+
+    interface SnippetInputNumberType {
+        type: 'number' | 'positionPicker';
         max?: number;
         min?: number;
-        options?: pxt.Map<string>;
     }
+
+    interface SnippetInputDropdownType {
+        type: "dropdown";
+        options: pxt.Map<string>;
+    }
+
+    type SnippetQuestionInput = { label?: string; }
+        & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType)
 
     interface SnippetValidateRegex {
         token: string;

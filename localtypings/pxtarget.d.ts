@@ -452,6 +452,7 @@ declare namespace ts.pxtc {
         postProcessSymbols?: boolean;
         imageRefTag?: number;
         keepCppFiles?: boolean;
+        debugMode?: boolean; // set dynamically, not in config
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -716,6 +717,7 @@ declare namespace ts.pxtc {
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
+        bannedCategories?: string[];
 
         syntaxInfo?: SyntaxInfo;
 
@@ -781,8 +783,8 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialMetadata {
-        v: number; // version of tutorial markdown syntax
-        title?: string;
+        activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
+        explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
     }
 
     interface TutorialStepInfo {

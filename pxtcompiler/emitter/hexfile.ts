@@ -854,7 +854,7 @@ ${hex.hexPrelude()}
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
     .word _pxt_perf_counters
-    .word 0 ; reserved
+    .word _pxt_restore_exception_state@fn
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;

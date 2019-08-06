@@ -45,6 +45,10 @@ namespace ts.pxtc {
     //   - registers for runtime calls (r0, r1,r2,r3)
     //   - r5 is for captured locals in lambda
     //   - r6 for global{}
+    //   - r4 and r7 are used as temporary
+    //   - C code assumes the following are calee saved: r4-r7, r8-r11
+    //   - r12 is intra-procedure scratch and can be treated like r0-r3
+    //   - r13 is sp, r14 is lr, r15 is pc
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
@@ -297,10 +301,6 @@ ${baseLabel}_nochk:
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
-
-            //console.log(proc.toString())
-            this.proc.resolve()
-            //console.log("OPT", proc.toString())
 
             for (let i = 0; i < this.proc.body.length; ++i) {
                 let s = this.proc.body[i]
@@ -819,8 +819,18 @@ ${baseLabel}_nochk:
             return { id: "builtin" + typeNo, classNo: typeNo, lastSubtypeNo: typeNo } as any
         }
 
+        private emitBeginTry(topExpr: ir.Expr) {
+            // this.write(`adr r0, ${topExpr.args[0].data}`)
+            this.emitExprInto(topExpr.args[0], "r0")
+            this.write(`bl _pxt_save_exception_state`)
+        }
+
         private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
             let name: string = topExpr.data
+
+            if (name == "pxt::beginTry") {
+                return this.emitBeginTry(topExpr)
+            }
 
             let maskInfo = topExpr.mask || { refMask: 0 }
             let convs = maskInfo.conversions || []
@@ -1162,10 +1172,16 @@ ${baseLabel}_nochk:
             .section code
             _pxt_lambda_trampoline:
                 push {${r3} r4, r5, r6, r7, lr}
+                mov r4, r8
+                mov r5, r9
+                mov r6, r10
+                mov r7, r11
+                push {r4, r5, r6, r7} ; save high registers
                 mov r4, r1
                 mov r5, r2
                 mov r6, r3
-                mov r7, r0`)
+                mov r7, r0
+                `)
             // TODO should inline this?
             this.emitInstanceOf(this.builtInClassNo(pxt.BuiltInType.RefAction), "validate")
             this.write(`
@@ -1184,7 +1200,42 @@ ${baseLabel}_nochk:
                 mov r0, r6   ; or pop the thread context
                 bl pxt::popThreadContext
                 mov r0, r7 ; restore result
+                pop {r4, r5, r6, r7} ; restore high registers
+                mov r8, r4
+                mov r9, r5
+                mov r10, r6
+                mov r11, r7
                 pop {${r3} r4, r5, r6, r7, pc}`)
+
+            this.write(`
+            .section code
+            ; r0 - try frame
+            ; r1 - handler PC
+            _pxt_save_exception_state:
+                push {r0, lr}
+                ${this.t.callCPP("pxt::beginTry")}
+                pop {r1, r4}
+                str r1, [r0, #1*4] ; PC
+                mov r1, sp
+                str r1, [r0, #2*4] ; SP
+                str r5, [r0, #3*4] ; lambda ptr
+                bx r4
+                `)
+
+            this.write(`
+            .section code
+            ; r0 - try frame
+            ; r1 - thread context
+            _pxt_restore_exception_state:
+                mov r6, r1
+                ldr r1, [r0, #2*4] ; SP
+                mov sp, r1
+                ldr r5, [r0, #3*4] ; lambda ptr
+                ldr r1, [r0, #1*4] ; PC
+                movs r0, #1
+                orrs r1, r0
+                bx r1
+                `)
 
             this.write(`
             .section code
@@ -1221,6 +1272,9 @@ ${baseLabel}_nochk:
             let theOne: ir.Expr = null
             let theOneReg = ""
             let procid = topExpr.data as ir.ProcId
+
+            if (procid.proc && procid.proc.inlineBody)
+                return this.emitExpr(procid.proc.inlineSelf(topExpr.args))
 
             let isLambda = procid.virtualIndex == -1
 

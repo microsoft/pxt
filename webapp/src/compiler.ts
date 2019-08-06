@@ -78,14 +78,16 @@ export interface CompileOptions {
 }
 
 export let emptyProgram =
-    `'use strict';
-__this.setupPerfCounters([]);
-entryPoint = function (s) {
+    `(function (ectx) {
+'use strict';
+ectx.runtime.setupPerfCounters([]);
+ectx.setupDebugger(1)
+return function (s) {
     // START
-    __this.kill()
-    return leave(s, s.r0)
+    ectx.runtime.kill()
+    return ectx.leave(s, s.r0)
 }
-setupDebugger(1)
+})
 `
 
 export function emptyCompileResult(): pxtc.CompileResult {
@@ -241,7 +243,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
+    return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
 export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
@@ -332,8 +334,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
             return workerOpAsync("apiSearch", {
                 search: searchFor,
-                blocks: blocksOptions(),
-                runtime: pxt.appTarget.runtime
+                blocks: blocksOptions()
             });
         });
 }
@@ -386,7 +387,8 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
         : getApisInfoAsync().then(info => {
-            cachedBlocks = pxtc.getBlocksInfo(info);
+            const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+            cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
             return cachedBlocks;
         });
 }
@@ -640,8 +642,8 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {
-    if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
-        return { bannedCategories: pxt.appTarget.runtime.bannedCategories };
-    }
+    const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+    if (bannedCategories)
+        return {  bannedCategories };
     return undefined;
 }
