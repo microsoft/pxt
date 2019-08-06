@@ -398,8 +398,10 @@ function ${id}(s) {
                     } else if (e.hexlit()) {
                         hexlits += `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`
                         return e.data;
-                    } else {
+                    } else if (typeof e.jsInfo == "string") {
                         return e.jsInfo;
+                    } else {
+                        U.oops()
                     }
                 case EK.SharedRef:
                     let arg = e.args[0]
@@ -449,7 +451,7 @@ function ${id}(s) {
                     return e.args.forEach(emitExpr)
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    emitInstanceOf(e.data, e.jsInfo)
+                    emitInstanceOf(e.data, e.jsInfo as string)
                     return
                 default:
                     write(`r0 = ${emitExprInto(e)};`)

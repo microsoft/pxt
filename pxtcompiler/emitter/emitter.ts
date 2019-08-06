@@ -3206,10 +3206,11 @@ ${lbl}: .short 0xffff
                         return true
                     } else if (vo.exprKind == EK.RuntimeCall && vo.data == "pxt::ptrOfLiteral") {
                         if (vo.args[0].exprKind == EK.PointerLiteral &&
-                            !isNaN(parseFloat(vo.args[0].jsInfo)))
+                            !isNaN(parseFloat(vo.args[0].jsInfo as string)))
                             return true
                         return false
-                    } else if (vo.exprKind == EK.PointerLiteral && !isNaN(parseFloat(vo.jsInfo))) {
+                    } else if (vo.exprKind == EK.PointerLiteral &&
+                        !isNaN(parseFloat(vo.jsInfo as string))) {
                         return true
                     } else
                         return false

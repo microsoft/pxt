@@ -455,7 +455,7 @@ _start_${name}:
                     return
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    emitInstanceOf(e.data, e.jsInfo)
+                    emitInstanceOf(e.data, e.jsInfo as string)
                     break
 
                 default: throw oops("kind: " + e.exprKind);

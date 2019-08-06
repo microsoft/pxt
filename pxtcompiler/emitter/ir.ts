@@ -47,7 +47,7 @@ namespace ts.pxtc.ir {
     }
 
     export class Expr extends Node {
-        public jsInfo: string;
+        public jsInfo: {};
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public irCurrUses: number;
@@ -78,8 +78,8 @@ namespace ts.pxtc.ir {
         }
 
         ptrlabel() {
-            if (this.jsInfo as any instanceof Stmt)
-                return this.jsInfo as any as Stmt
+            if (this.jsInfo instanceof Stmt)
+                return this.jsInfo as Stmt
             return null
         }
 
