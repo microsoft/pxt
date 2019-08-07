@@ -621,11 +621,7 @@ namespace pxt.py {
         let ct = t.classType
 
         if (!ct) {
-            if (t.primType == "@array") {
-                ct = lookupApi("_py.Array")
-            } else if (t.primType == "string") {
-                ct = lookupApi("_py.String")
-            }
+            ct = resolvePrimType(t.primType);
         }
 
         if (ct) {
@@ -652,6 +648,15 @@ namespace pxt.py {
         }
 
         return null
+    }
+
+    function resolvePrimType(primType: string) {
+        if (primType == "@array") {
+            return lookupApi("_py.Array")
+        } else if (primType == "string") {
+            return lookupApi("_py.String")
+        }
+        return undefined
     }
 
     function lookupVar(n: string) {
@@ -2284,14 +2289,19 @@ namespace pxt.py {
                             syntaxInfo.symbols.push(v)
                         }
                     }
-                } else if (tp.classType) {
-                    let types = tp.classType.extendsTypes.concat(tp.classType.qName)
-                    for (let v of apis) {
-                        if (v.isInstance && types.indexOf(v.namespace) >= 0) {
-                            syntaxInfo.symbols.push(v)
+                } else if (tp.classType || tp.primType) {
+                    const ct = tp.classType || resolvePrimType(tp.primType);
+
+                    if (ct) {
+                        let types = ct.extendsTypes.concat(ct.qName)
+                        for (let v of apis) {
+                            if (v.isInstance && types.indexOf(v.namespace) >= 0) {
+                                syntaxInfo.symbols.push(v)
+                            }
                         }
                     }
                 }
+
             } else if (syntaxInfo.type == "identifierCompletion") {
                 let existing: SymbolInfo[] = []
                 const addSym = (v: SymbolInfo) => {

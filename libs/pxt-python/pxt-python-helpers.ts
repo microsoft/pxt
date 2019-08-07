@@ -1,7 +1,7 @@
 namespace _py {
-    export const ATTRIBUTE_ERROR = "AttributeError";
-    export const INDEX_ERROR = "IndexError";
-    export const VALUE_ERROR = "ValueError";
+    export const ATTRIBUTE_ERROR: string = "AttributeError";
+    export const INDEX_ERROR: string = "IndexError";
+    export const VALUE_ERROR: string = "ValueError";
 
     export function py_string_capitalize(str: string): string {
         nullCheck(str);
