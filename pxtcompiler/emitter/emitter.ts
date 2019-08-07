@@ -34,6 +34,7 @@ namespace ts.pxtc {
         variableInfo: VariableAddInfo;
         classInfo: ClassInfo;
         proc: ir.Procedure;
+        cell: ir.Cell;
 
         // set of nodes pulled in by the current node
         usedNodes: pxt.Map<Declaration>;
@@ -60,6 +61,7 @@ namespace ts.pxtc {
             this.classInfo = null;
             this.callInfo = null;
             this.proc = null;
+            this.cell = null;
             this.exprInfo = null;
             this.usedNodes = null;
             this.usedActions = null;
@@ -767,9 +769,9 @@ namespace ts.pxtc {
         return false;
     }
 
-    function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
-        for (let cl in classes) {
-            if (classes[cl].decl.symbol == decl.symbol) {
+    function checkInterfaceDeclaration(bin:Binary, decl: InterfaceDeclaration) {
+        for (let cl of bin.usedClassInfos) {
+            if (cl.decl.symbol == decl.symbol) {
                 userError(9261, lf("Interface with same name as a class not supported"))
             }
         }
@@ -1206,8 +1208,8 @@ namespace ts.pxtc {
             for (let proc of bin.procs)
                 proc.resolve()
 
-            // INCTODO - probably needs to remove this
-            bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
+            if (target.isNative)
+                bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
 
             if (opts.target.isNative) {
                 if (opts.extinfo.yotta)
@@ -1229,17 +1231,22 @@ namespace ts.pxtc {
             }
         }
 
+        function emitGlobal(decl: Declaration) {
+            const pinfo = pxtInfo(decl)
+            if (!pinfo.cell)
+                pinfo.cell = new ir.Cell(null, decl, getVarInfo(decl))
+            typeCheckVar(typeOf(decl))
+            if (bin.globals.indexOf(pinfo.cell) < 0)
+                bin.globals.push(pinfo.cell)
+        }
+
         function lookupCell(decl: Declaration): ir.Cell {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
-                // INCTODO; also speed this up?
-                let ex = bin.globals.filter(l => l.def == decl)[0]
-                if (!ex) {
-                    typeCheckVar(typeOf(decl))
-                    ex = new ir.Cell(null, decl, getVarInfo(decl))
-                    bin.globals.push(ex)
-                }
-                return ex
+                const pinfo = pxtInfo(decl)
+                if (!pinfo.cell)
+                    emitGlobal(decl)
+                return pinfo.cell
             } else {
                 let res = proc.localIndex(decl)
                 if (!res) {
@@ -1839,7 +1846,7 @@ ${lbl}: .short 0xffff
         }
 
         function isOnDemandDecl(decl: Declaration) {
-            let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl)
+            let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl) || isClassDeclaration(decl)
             if (target.switches.noTreeShake)
                 return false
             if (opts.testMode && res) {
@@ -1871,10 +1878,7 @@ ${lbl}: .short 0xffff
             if (!needsUsingInfo)
                 return
             if (!currUsingContext) {
-                // U.oops("no using ctx for: " + getName(decl))
-                let x = 123
-                // console.log("no using")
-                // TODO
+                U.oops("no using ctx for: " + getName(decl))
             } else {
                 currUsingContext.usedNodes[nodeKey(decl)] = decl
             }
@@ -3959,8 +3963,15 @@ ${lbl}: .short 0xffff
             }
             if (isConstLiteral(node))
                 return null;
-            let loc = isGlobalVar(node) ?
-                lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
+            let loc: ir.Cell
+
+            if (isGlobalVar(node)) {
+                emitGlobal(node)
+                loc = lookupCell(node)
+            } else {
+                loc = proc.mkLocal(node, getVarInfo(node))
+            }
+
             if (loc.isByRefLocal()) {
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
             }
@@ -4047,11 +4058,13 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            getClassInfo(null, node)
+            const info = getClassInfo(null, node)
+            if (info.isUsed && bin.usedClassInfos.indexOf(info) < 0)
+                bin.usedClassInfos.push(info)
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            checkInterfaceDeclaration(node, classInfos)
+            checkInterfaceDeclaration(bin, node)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true
@@ -4121,11 +4134,12 @@ ${lbl}: .short 0xffff
                 for (let fn of pinfo.usedActions)
                     fn(bin)
                 needsUsingInfo = true
-            } else if (isGlobalVar(node)) {
+            } else if (isGlobalVar(node) || isClassDeclaration(node)) {
                 needsUsingInfo = false
                 currUsingContext = pinfo
                 currUsingContext.usedNodes = null
                 currUsingContext.usedActions = null
+                if (isGlobalVar(node)) emitGlobal(node)
                 emit(node)
                 needsUsingInfo = true
             } else {
@@ -4395,7 +4409,7 @@ ${lbl}: .short 0xffff
         writeFile = (fn: string, cont: string) => { };
         res: CompileResult;
         options: CompileOptions;
-        usedClassInfos: ClassInfo[] = []; // INCTODO
+        usedClassInfos: ClassInfo[] = [];
         sourceHash = "";
         checksumBlock: number[];
         numStmts = 1;
