@@ -1,4 +1,8 @@
 namespace _py {
+    export const ATTRIBUTE_ERROR = "AttributeError";
+    export const INDEX_ERROR = "IndexError";
+    export const VALUE_ERROR = "ValueError";
+
     export function py_string_capitalize(str: string): string {
         nullCheck(str);
         return str;
@@ -188,7 +192,7 @@ namespace _py {
         nullCheck(arr);
 
         if (arr.length === 0) {
-            // IndexError
+            throw INDEX_ERROR;
         }
 
         if (index == undefined) {
@@ -198,8 +202,7 @@ namespace _py {
             return arr.removeAt(index | 0);
         }
 
-        // IndexError
-        return null;
+        throw INDEX_ERROR;
     }
 
     export function py_array_clear(arr: any[]): void {
@@ -229,9 +232,7 @@ namespace _py {
             }
         }
 
-        // ValueError
-
-        return -1;
+        throw VALUE_ERROR;
     }
 
     export function py_array_count(arr: any[], value: any): number {
@@ -248,7 +249,7 @@ namespace _py {
 
     function nullCheck(arg: any) {
         if (arg == null) {
-            // AttributeError
+            throw ATTRIBUTE_ERROR;
         }
     }
 
