@@ -48,7 +48,7 @@
 @editorLogoZIndex: ((@blocklyFlyoutZIndex)-1); /* Should be below the flyouts blocklyFlyout and @monacoFlyoutZIndex */
 
 /* Tutorial */
-@tutorialCardZIndex: @simulatorZIndex+1;
+@tutorialCardZIndex:  (@dimmerZIndex)-5;
 @tutorialLightboxCardZIndex: @tutorialCardZIndex+1;
 
 /* Extension frames */
