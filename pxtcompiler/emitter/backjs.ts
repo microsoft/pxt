@@ -84,6 +84,8 @@ namespace ts.pxtc {
     }
 
     function vtableToJs(info: ClassInfo) {
+        U.assert(info.classNo !== undefined)
+        U.assert(info.lastSubtypeNo !== undefined)
         let s = `const ${info.id}_VT = mkVTable({\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +

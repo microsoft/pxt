@@ -2370,6 +2370,11 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            for (let info of bin.usedClassInfos) {
+                info.lastSubtypeNo = undefined
+                info.classNo = undefined
+            }
+
             let classNo = pxt.BuiltInType.User0
             const numberClasses = (i: ClassInfo) => {
                 U.assert(!i.classNo)
