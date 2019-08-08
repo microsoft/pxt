@@ -935,11 +935,12 @@ namespace ts.pxtc.service {
             return res
         },
         decompile: v => {
-            return decompile(v.options, v.fileName, false);
+            host.setOpts(v.options)
+            return decompile(service.getProgram(), v.options, v.fileName, false);
         },
         pydecompile: v => {
-            let program = getTSProgram(v.options);
-            return (pxt as any).py.decompileToPython(program, v.fileName);
+            host.setOpts(v.options)
+            return (pxt as any).py.decompileToPython(service.getProgram(), v.fileName);
         },
         assemble: v => {
             return {

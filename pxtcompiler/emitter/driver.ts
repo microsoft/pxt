@@ -259,9 +259,7 @@ namespace ts.pxtc {
         return res
     }
 
-    export function decompile(opts: CompileOptions, fileName: string, includeGreyBlockMessages = false) {
-        let program = getTSProgram(opts);
-
+    export function decompile(program: Program, opts: CompileOptions, fileName: string, includeGreyBlockMessages = false) {
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         const apis = getApiInfo(program, opts.jres);
