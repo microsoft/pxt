@@ -2379,7 +2379,9 @@ ${lbl}: .short 0xffff
             const numberClasses = (i: ClassInfo) => {
                 U.assert(!i.classNo)
                 i.classNo = classNo++
-                i.derivedClasses.forEach(numberClasses)
+                for (let subt of i.derivedClasses)
+                    if (subt.isUsed)
+                        numberClasses(subt)
                 i.lastSubtypeNo = classNo - 1
             }
             for (let info of bin.usedClassInfos) {
