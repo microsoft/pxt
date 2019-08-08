@@ -1070,10 +1070,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             core.highContrast ? 'hc' : '',
             mountClasses
         ])
-        const closeIconName = closeIcon === true ? 'close' : closeIcon as string;
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc',
+            modal: 'true'
         }
         const customStyles = {
             content: {
