@@ -1245,9 +1245,9 @@ namespace ts.pxtc {
 
         function emitGlobal(decl: Declaration) {
             const pinfo = pxtInfo(decl)
+            typeCheckVar(typeOf(decl))
             if (!pinfo.cell)
                 pinfo.cell = new ir.Cell(null, decl, getVarInfo(decl))
-            typeCheckVar(typeOf(decl))
             if (bin.globals.indexOf(pinfo.cell) < 0)
                 bin.globals.push(pinfo.cell)
         }
