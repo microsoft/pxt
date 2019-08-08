@@ -772,11 +772,14 @@ namespace ts.pxtc {
     }
 
     function checkInterfaceDeclaration(bin: Binary, decl: InterfaceDeclaration) {
-        for (let cl of bin.usedClassInfos) {
-            if (cl.decl.symbol == decl.symbol) {
+        const check = (d: Declaration) => {
+            if (d && d.kind == SK.ClassDeclaration)
                 userError(9261, lf("Interface with same name as a class not supported"))
-            }
         }
+        check(decl.symbol.valueDeclaration)
+        if (decl.symbol.declarations)
+            decl.symbol.declarations.forEach(check)
+
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
                 switch (h.token) {
