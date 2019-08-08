@@ -537,6 +537,8 @@ declare namespace ts.pxtc {
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+        py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
+        pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
 
         // on class
         snippet?: string; // value used to generate TS snippet
