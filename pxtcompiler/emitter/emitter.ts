@@ -2213,7 +2213,7 @@ ${lbl}: .short 0xffff
                 let info = getFunctionInfo(decl)
                 if (info.parentClassInfo)
                     markVTableUsed(info.parentClassInfo)
-                markFunctionUsed(decl) // TODO remove duplicates of this call
+                markFunctionUsed(decl) // INCTODO remove duplicates of this call
 
                 const needsVCall = info.virtualParent && !isSuper
                 const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
