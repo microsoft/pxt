@@ -162,8 +162,19 @@ namespace ts.pxtc {
         jssource += shortCallsPrefix(shortCalls)
         jssource += shortCallsPrefix(shortNsCalls)
 
+        let cachedLen = 0
+        let newLen = 0
+
         bin.procs.forEach(p => {
-            jssource += "\n" + irToJS(bin, p) + "\n"
+            let curr: string
+            if (p.cachedJS) {
+                curr = p.cachedJS
+                cachedLen += curr.length
+            } else {
+                curr = irToJS(bin, p)
+                newLen += curr.length
+            }
+            jssource += "\n" + curr + "\n"
         })
         jssource += U.values(bin.codeHelpers).join("\n") + "\n"
         bin.usedClassInfos.forEach(info => {
@@ -174,7 +185,10 @@ namespace ts.pxtc {
 
         jssource += `\nreturn ${bin.procs[0] ? bin.procs[0].label() : "null"}\n})\n`
 
-        bin.writeFile(BINARY_JS, jssource)
+        const total = jssource.length
+        const perc = (n: number) => ((100 * n) / total).toFixed(2) + "%"
+        const sizes = `// total=${jssource.length} new=${perc(newLen)} cached=${perc(cachedLen)} other=${perc(total - newLen - cachedLen)}\n`
+        bin.writeFile(BINARY_JS, sizes + jssource)
     }
 
     function irToJS(bin: Binary, proc: ir.Procedure): string {
@@ -598,7 +612,7 @@ function ${id}(s) {
                     if (/Set/.test(procid.mapMethod))
                         isSet = true
                 }
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`) 
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`)
                 let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
                 if (isSet) {
                     write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)

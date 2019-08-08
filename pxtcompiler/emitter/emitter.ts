@@ -1206,7 +1206,8 @@ namespace ts.pxtc {
             }
 
             for (let proc of bin.procs)
-                proc.resolve()
+                if (!proc.cachedJS || proc.inlineBody)
+                    proc.resolve()
 
             if (target.isNative)
                 bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
