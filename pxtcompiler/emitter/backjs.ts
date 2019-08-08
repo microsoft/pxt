@@ -603,6 +603,7 @@ function ${id}(s) {
                 U.assert(callproc == null)
                 let isSet = false
                 const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
+                U.assert(!!ifaceFieldName)
                 if (procid.mapMethod) {
                     write(`if (!${frameRef}.arg0.vtable.iface) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)

@@ -955,7 +955,8 @@ namespace ts.pxtc.service {
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
-            host.opts.noEmit = true
+            // not comapatible with incremental compilation
+            // host.opts.noEmit = true
             let res = runConversionsAndCompileUsingService();
             timesToMs(res);
             if (host.opts.target.switches.time)

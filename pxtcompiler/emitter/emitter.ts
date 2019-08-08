@@ -14,6 +14,7 @@ namespace ts.pxtc {
         IsGlobalIdentifier = 0x0004,
         IsUsed = 0x0008,
         InPxtModules = 0x0010,
+        FromPreviousCompile = 0x0020,
     }
     export type EmitAction = (bin: Binary) => void;
     export class PxtNode {
@@ -50,6 +51,8 @@ namespace ts.pxtc {
             // this happens for top-level function expression - we just re-emit them
             if (this.proc && !this.usedActions && !getEnclosingFunction(this.proc.action))
                 this.resetEmit()
+            else if (this.usedNodes)
+                this.flags |= PxtNodeFlags.FromPreviousCompile
         }
 
         resetEmit() {
@@ -2834,6 +2837,9 @@ ${lbl}: .short 0xffff
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
             if (!shouldEmitNow(node))
+                return undefined;
+
+            if (pxtInfo(node).flags & PxtNodeFlags.FromPreviousCompile)
                 return undefined;
 
             let attrs = parseComments(node)
