@@ -51,8 +51,12 @@ namespace ts.pxtc {
             // this happens for top-level function expression - we just re-emit them
             if (this.proc && !this.usedActions && !getEnclosingFunction(this.proc.action))
                 this.resetEmit()
+            else if (this.proc && !this.proc.cachedJS)
+                this.resetEmit()
             else if (this.usedNodes)
                 this.flags |= PxtNodeFlags.FromPreviousCompile
+            if (this.classInfo)
+                this.classInfo.reset()
         }
 
         resetEmit() {
@@ -518,12 +522,13 @@ namespace ts.pxtc {
 
         constructor(public id: string, public decl: ClassDeclaration) {
             this.attrs = parseComments(decl)
+            this.reset()
         }
 
         reset() {
             this.vtable = null
             this.itable = null
-            this.derivedClasses = null
+            this.ctor = null
         }
 
         get isUsed() {
