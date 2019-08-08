@@ -167,12 +167,12 @@ namespace pxt.blocks {
                     }
 
                     const defName = def ? def.name : (bInfo ? bInfo.params[defIndex++] : p.name);
-                    const isVar = (def && def.shadowBlockId) === "variables_get";
+                    const isVarOrArray = def && (def.shadowBlockId === "variables_get" || def.shadowBlockId == "lists_create_with");
 
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
-                        defaultValue: isVar ? (def.varName || p.default) : p.default,
+                        defaultValue: isVarOrArray ? (def.varName || p.default) : p.default,
                         definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,
