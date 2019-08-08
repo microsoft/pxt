@@ -48,7 +48,7 @@ namespace ts.pxtc {
         "pxsim.pxtcore.mkAction": "",
         "pxsim.pxtcore.mkClassInstance": "",
         "pxsim.pxtrt.ldlocRef": "",
-        "pxsim.pxtrt.mapGet": "",
+        "pxsim.pxtrt.mapGetByString": "",
         "pxsim.pxtrt.stclo": "",
         "pxsim.pxtrt.stlocRef": "",
     }
@@ -88,11 +88,12 @@ namespace ts.pxtc {
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
-            `  methods: [\n`
+            `  lastSubtypeNo: ${info.lastSubtypeNo},\n` +
+            `  methods: {\n`
         for (let m of info.vtable) {
-            s += `    ${m.label()},\n`
+            s += `    "${m.getName()}": ${m.label()},\n`
         }
-        s += "  ],\n"
+        s += "  },\n"
         s += "  iface: {\n"
         for (let m of info.itable) {
             s += `    "${m.name}": ${m.proc ? m.proc.label() : "null"},\n`
@@ -457,7 +458,8 @@ function ${id}(s) {
         }
 
         function checkSubtype(info: ClassInfo, r0 = "r0") {
-            return `checkSubtype(${r0}, ${info.classNo}, ${info.lastSubtypeNo})`
+            const vt = `${info.id}_VT`
+            return `checkSubtype(${r0}, ${vt}.classNo, ${vt}.lastSubtypeNo)`
         }
 
         function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
@@ -586,17 +588,18 @@ function ${id}(s) {
             if (procid.ifaceIndex != null) {
                 U.assert(callproc == null)
                 let isSet = false
+                const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
                 if (procid.mapMethod) {
                     write(`if (!${frameRef}.arg0.vtable.iface) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
-                    args.splice(1, 0, procid.ifaceIndex.toString())
-                    write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
+                    args.splice(1, 0, JSON.stringify(ifaceFieldName))
+                    write(`  s.retval = ${shimToJs(procid.mapMethod)}ByString(${args.join(", ")});`)
                     write(`} else {`)
                     if (/Set/.test(procid.mapMethod))
                         isSet = true
                 }
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
-                let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`) 
+                let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
                 if (isSet) {
                     write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
                     write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
@@ -616,7 +619,8 @@ function ${id}(s) {
                 U.assert(callproc == null)
                 assert(procid.virtualIndex >= 0)
                 emitInstanceOf(procid.classInfo, "validate", frameRef + ".arg0")
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
+                const meth = procid.classInfo.vtable[procid.virtualIndex]
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods.${meth.getName()};`)
             } else {
                 U.assert(callproc != null)
             }

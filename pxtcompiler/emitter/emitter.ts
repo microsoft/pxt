@@ -1,10 +1,6 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 /// <reference path="../../localtypings/pxtpackage.d.ts"/>
 
-// INCTODO use names for methods calls in JS
-// INCTODO use names for map set/get in JS
-// INCTODO use symbolic names for instanceof tests
-
 namespace ts {
     export interface Node {
         pxt: pxtc.PxtNode;
@@ -900,7 +896,7 @@ namespace ts.pxtc {
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
         let currUsingContext: PxtNode = null
-        let needsUsingInfo = true
+        let needsUsingInfo = false
 
         currNodeWave++
 
@@ -985,6 +981,7 @@ namespace ts.pxtc {
         usedWorkList = [];
 
         reset();
+        needsUsingInfo = true
         emitTopLevel(rootFunction)
 
         for (; ;) {
@@ -1720,12 +1717,15 @@ ${lbl}: .short 0xffff
                 }
                 const keyName = p.name.kind == SK.StringLiteral ?
                     (p.name as StringLiteral).text : p.name.getText();
+                const fieldId = target.isNative 
+                    ? ir.numlit(getIfaceMemberId(keyName))
+                    :                ir.ptrlit(null, JSON.stringify(keyName)) 
                 const args = [
                     expr,
-                    ir.numlit(getIfaceMemberId(keyName)),
+                    fieldId,
                     emitExpr(p.initializer)
                 ];
-                proc.emitExpr(ir.rtcall("pxtrt::mapSet", args))
+                proc.emitExpr(ir.rtcall(target.isNative ? "pxtrt::mapSet" : "pxtrt::mapSetByString", args))
             })
             return expr
         }
