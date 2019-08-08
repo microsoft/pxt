@@ -47,6 +47,9 @@ namespace ts.pxtc {
         refresh() {
             // clear IsUsed flag
             this.flags &= ~PxtNodeFlags.IsUsed
+            // this happens for top-level function expression - we just re-emit them
+            if (this.proc && !this.usedActions && !getEnclosingFunction(this.proc.action))
+                this.resetEmit()
         }
 
         resetEmit() {
@@ -765,7 +768,7 @@ namespace ts.pxtc {
         return false;
     }
 
-    function checkInterfaceDeclaration(bin:Binary, decl: InterfaceDeclaration) {
+    function checkInterfaceDeclaration(bin: Binary, decl: InterfaceDeclaration) {
         for (let cl of bin.usedClassInfos) {
             if (cl.decl.symbol == decl.symbol) {
                 userError(9261, lf("Interface with same name as a class not supported"))
@@ -1717,9 +1720,9 @@ ${lbl}: .short 0xffff
                 }
                 const keyName = p.name.kind == SK.StringLiteral ?
                     (p.name as StringLiteral).text : p.name.getText();
-                const fieldId = target.isNative 
+                const fieldId = target.isNative
                     ? ir.numlit(getIfaceMemberId(keyName))
-                    :                ir.ptrlit(null, JSON.stringify(keyName)) 
+                    : ir.ptrlit(null, JSON.stringify(keyName))
                 const args = [
                     expr,
                     fieldId,

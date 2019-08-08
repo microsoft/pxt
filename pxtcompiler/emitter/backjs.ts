@@ -459,7 +459,7 @@ function ${id}(s) {
 
         function checkSubtype(info: ClassInfo, r0 = "r0") {
             const vt = `${info.id}_VT`
-            return `checkSubtype(${r0}, ${vt}.classNo, ${vt}.lastSubtypeNo)`
+            return `checkSubtype(${r0}, ${vt})`
         }
 
         function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
