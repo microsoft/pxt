@@ -3226,7 +3226,7 @@ ${lbl}: .short 0xffff
         function isNumberLike(e: Expression) {
             if (e.kind == SK.NullKeyword) {
                 let vo: ir.Expr = pxtInfo(e).valueOverride
-                if (vo !== undefined) {
+                if (vo != null) {
                     if (vo.exprKind == EK.NumberLiteral) {
                         if (opts.target.isNative)
                             return !!((vo.data as number) & 1)
