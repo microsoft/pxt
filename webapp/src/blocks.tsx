@@ -770,6 +770,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
+        this.compilationResult.diagnostics.forEach(d => {
+            if (d.blockId) {
+                let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
+                if (b) {
+                    b.setWarningText(d.message);
+                    b.setHighlightWarning(true);
+                }
+            }
+        })
         this.setBreakpointsFromBlocks();
     }
 
