@@ -25,6 +25,7 @@ namespace ts.pxtc {
         symbolCache: Symbol;
         declCache: Declaration;
         commentAttrs: CommentAttrs;
+        fullName: string;
 
         // compiler state
         functionInfo: FunctionAddInfo;
@@ -81,6 +82,7 @@ namespace ts.pxtc {
             this.commentAttrs = null;
             this.valueOverride = null;
             this.declCache = undefined;
+            this.fullName = null;
         }
 
         resetAll() {
@@ -877,7 +879,6 @@ namespace ts.pxtc {
         capturedVars: VarOrParam[] = [];
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
-        // INCTODO clear these?
         virtualParent?: FunctionAddInfo;
         virtualIndex?: number;
         parentClassInfo?: ClassInfo;
@@ -1847,6 +1848,13 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function getNodeFullName(node: Node) {
+            const pinfo = pxtInfo(node)
+            if (pinfo.fullName == null)
+                pinfo.fullName = getFullName(checker, node.symbol)
+            return pinfo.fullName
+        }
+
         function isOnDemandGlobal(decl: Declaration) {
             if (!isGlobalVar(decl))
                 return false
@@ -1890,9 +1898,8 @@ ${lbl}: .short 0xffff
                 return
             }
 
-            // INCTODO only do this when needed, or else cache full name
             if (opts.computeUsedSymbols && decl.symbol)
-                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+                res.usedSymbols[getNodeFullName(decl)] = null
 
             if (isStackMachine() && isClassFunction(decl))
                 getIfaceMemberId(getName(decl), true)
@@ -2169,12 +2176,12 @@ ${lbl}: .short 0xffff
                 let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
-                        return getFullName(checker, d.symbol)
+                        return getNodeFullName(d)
                     else if (e && e.kind == SK.StringLiteral)
                         return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
-                let fn = getFullName(checker, decl.symbol)
+                let fn = getNodeFullName(decl)
                 let lst = res.usedArguments[fn]
                 if (!lst) {
                     lst = res.usedArguments[fn] = []
@@ -2230,7 +2237,7 @@ ${lbl}: .short 0xffff
                 let info = getFunctionInfo(decl)
                 if (info.parentClassInfo)
                     markVTableUsed(info.parentClassInfo)
-                markFunctionUsed(decl) // INCTODO remove duplicates of this call
+                markFunctionUsed(decl)
 
                 const needsVCall = info.virtualParent && !isSuper
                 const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
@@ -2292,7 +2299,6 @@ ${lbl}: .short 0xffff
                     let name = getName(decl)
                     return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {
-                    markFunctionUsed(decl)
                     return emitPlain();
                 }
             }
@@ -2597,7 +2603,7 @@ ${lbl}: .short 0xffff
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                qName: decl ? getNodeFullName(decl) : "?",
                 args: [node.template],
                 isExpression: true
             };
@@ -4013,7 +4019,7 @@ ${lbl}: .short 0xffff
                     let jrname = attrs.jres
                     if (jrname) {
                         if (jrname == "true") {
-                            jrname = getFullName(checker, node.symbol)
+                            jrname = getNodeFullName(node)
                         }
                         let jr = U.lookup(opts.jres || {}, jrname)
                         if (!jr)
