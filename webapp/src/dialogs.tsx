@@ -726,12 +726,12 @@ export function showReportAbuseAsync(pubId?: string) {
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">
             <div className="ui field">
-                <label>{lf("What is the URL of the offensive project?")}</label>
-                <input type="url" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
+                <label id="abuseUrlLabel">{lf("What is the URL of the offensive project?")}</label>
+                <input type="url" aria-labelledby="abuseUrlLabel" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
             </div>
             <div className="ui field">
-                <label>{lf("Why do you find it offensive?")}</label>
-                <textarea></textarea>
+                <label id="abuseDescriptionLabel">{lf("Why do you find it offensive?")}</label>
+                <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
     }).done(res => {
