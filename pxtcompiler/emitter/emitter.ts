@@ -1871,11 +1871,39 @@ ${lbl}: .short 0xffff
             return res
         }
 
-        function isUsed(decl: Declaration) {
-            if (isOnDemandDecl(decl)) {
-                return !!(pxtInfo(decl).flags & PxtNodeFlags.IsUsed)
-            } else {
+        function shouldEmitNow(node: Declaration) {
+            if (!isOnDemandDecl(node))
                 return true
+            const info = pxtInfo(node)
+            if (bin.finalPass)
+                return !!(info.flags & PxtNodeFlags.IsUsed)
+            else
+                return info == currUsingContext
+        }
+
+        function markUsed(decl: Declaration) {
+            if (!decl)
+                return
+
+            const pinfo = pxtInfo(decl)
+            if (pinfo.classInfo) {
+                markVTableUsed(pinfo.classInfo)
+                return
+            }
+
+            // INCTODO only do this when needed, or else cache full name
+            if (opts.computeUsedSymbols && decl.symbol)
+                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+
+            if (isStackMachine() && isClassFunction(decl))
+                getIfaceMemberId(getName(decl), true)
+
+            recordUsage(decl)
+
+            if (!(pinfo.flags & PxtNodeFlags.IsUsed)) {
+                pinfo.flags |= PxtNodeFlags.IsUsed
+                if (isOnDemandDecl(decl))
+                    usedWorkList.push(decl)
             }
         }
 
@@ -1896,24 +1924,6 @@ ${lbl}: .short 0xffff
                 U.oops("no using ctx for: " + getName(decl))
             } else {
                 currUsingContext.usedNodes[nodeKey(decl)] = decl
-            }
-        }
-
-        function markUsed(decl: Declaration) {
-            if (!decl)
-                return
-
-            if (opts.computeUsedSymbols && decl.symbol)
-                res.usedSymbols[getFullName(checker, decl.symbol)] = null
-
-            if (isStackMachine() && isClassFunction(decl))
-                getIfaceMemberId(getName(decl), true)
-
-            recordUsage(decl)
-
-            if (!isUsed(decl)) {
-                pxtInfo(decl).flags |= PxtNodeFlags.IsUsed
-                usedWorkList.push(decl)
             }
         }
 
@@ -2838,16 +2848,6 @@ ${lbl}: .short 0xffff
                 return false
             let f = node as FunctionLikeDeclaration
             return f.body && (f.body.kind != SK.Block || (f.body as Block).statements.length > 0)
-        }
-
-        function shouldEmitNow(node: Declaration) {
-            if (!isOnDemandDecl(node))
-                return true
-            const info = pxtInfo(node)
-            if (bin.finalPass)
-                return !!(info.flags & PxtNodeFlags.IsUsed)
-            else
-                return info == currUsingContext
         }
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
