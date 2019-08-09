@@ -570,6 +570,13 @@ namespace ts.pxtc {
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
 
+    export function getNodeFullName(checker: TypeChecker, node: Node) {
+        const pinfo = pxtInfo(node)
+        if (pinfo.fullName == null)
+            pinfo.fullName = getFullName(checker, node.symbol)
+        return pinfo.fullName
+    }
+
     export function getComments(node: Node) {
         if (node.kind == SK.VariableDeclaration)
             node = node.parent.parent // we need variable stmt
@@ -1848,13 +1855,6 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function getNodeFullName(node: Node) {
-            const pinfo = pxtInfo(node)
-            if (pinfo.fullName == null)
-                pinfo.fullName = getFullName(checker, node.symbol)
-            return pinfo.fullName
-        }
-
         function isOnDemandGlobal(decl: Declaration) {
             if (!isGlobalVar(decl))
                 return false
@@ -1899,7 +1899,7 @@ ${lbl}: .short 0xffff
             }
 
             if (opts.computeUsedSymbols && decl.symbol)
-                res.usedSymbols[getNodeFullName(decl)] = null
+                res.usedSymbols[getNodeFullName(checker, decl)] = null
 
             if (isStackMachine() && isClassFunction(decl))
                 getIfaceMemberId(getName(decl), true)
@@ -2176,12 +2176,12 @@ ${lbl}: .short 0xffff
                 let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
-                        return getNodeFullName(d)
+                        return getNodeFullName(checker, d)
                     else if (e && e.kind == SK.StringLiteral)
                         return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
-                let fn = getNodeFullName(decl)
+                let fn = getNodeFullName(checker, decl)
                 let lst = res.usedArguments[fn]
                 if (!lst) {
                     lst = res.usedArguments[fn] = []
@@ -2603,7 +2603,7 @@ ${lbl}: .short 0xffff
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getNodeFullName(decl) : "?",
+                qName: decl ? getNodeFullName(checker, decl) : "?",
                 args: [node.template],
                 isExpression: true
             };
@@ -4019,7 +4019,7 @@ ${lbl}: .short 0xffff
                     let jrname = attrs.jres
                     if (jrname) {
                         if (jrname == "true") {
-                            jrname = getNodeFullName(node)
+                            jrname = getNodeFullName(checker, node)
                         }
                         let jr = U.lookup(opts.jres || {}, jrname)
                         if (!jr)
