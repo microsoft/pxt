@@ -528,7 +528,6 @@ namespace ts.pxtc {
         reset() {
             this.vtable = null
             this.itable = null
-            this.ctor = null
         }
 
         get isUsed() {
