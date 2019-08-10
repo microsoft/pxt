@@ -1,19 +1,19 @@
 namespace pxtmelody {
     export class MelodyArray {
-        // check that array is 8x8 
+        // check that array is 8x8
         private tempo: number;
         private numCols: number = 8;
         private numRows: number = 8;
         private melody: boolean[][];
 
+        // Whether or now the melody can contain more than one note at a single beat
+        private polyphonic = false;
+
         // constructor
         constructor(tempo?: number) {
             if (tempo) this.tempo = tempo;
             // set all elements to false
-            this.melody = new Array(this.numCols);
-            for (let i = 0; i < this.numCols; i++) {
-                this.melody[i] = new Array(this.numRows).fill(false);
-            }
+            this.resetMelody();
         }
 
         public setTempo(tempo: number): void {
@@ -46,7 +46,15 @@ namespace pxtmelody {
         }
 
         public updateMelody(row: number, col: number): void {
-            this.melody[row][col] = !this.melody[row][col];
+            const newValue = !this.melody[row][col];
+
+            if (newValue && !this.polyphonic) {
+                for (let r = 0; r < this.numRows; r++) {
+                    this.melody[r][col] = false;
+                }
+            }
+
+            this.melody[row][col] = newValue;
         }
 
         // function to turn into string
@@ -98,6 +106,21 @@ namespace pxtmelody {
                 if (notes[i] != "-") {
                     this.melody[noteToRow(notes[i])][i] = true;
                 }
+            }
+        }
+
+        public setPolyphonic(isPolyphonic: boolean) {
+            this.polyphonic = isPolyphonic;
+        }
+
+        public isPolyphonic() {
+            return this.polyphonic;
+        }
+
+        public resetMelody() {
+            this.melody = new Array(this.numCols);
+            for (let i = 0; i < this.numCols; i++) {
+                this.melody[i] = new Array(this.numRows).fill(false);
             }
         }
     }
