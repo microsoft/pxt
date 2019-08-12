@@ -27,5 +27,5 @@
         }
     ],
     "activities": null,
-    "code": "\n { \n basic.showString(\"Micro!\")\n } \n\n { \n let x = 1;\nlet y = x + 2;\n } \n"
+    "code": "\n { \n basic.showString(\"Micro!\")\n } \n\n { \n let x = 1;\nlet y = x + 2;\n } \n\n { \n basic.showIcon(IconNames.Square)\n } \n"
 }
