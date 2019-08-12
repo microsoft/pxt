@@ -153,6 +153,10 @@ namespace pxsim {
     }
 
     export namespace pxtcore {
+        export function seedAddRandom(num: number) {
+            // nothing yet
+        }
+
         export function mkAction(len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
