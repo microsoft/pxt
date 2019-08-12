@@ -13,10 +13,8 @@
             "fullscreen": false,
             "unplugged": false,
             "tutorialCompleted": false,
-            "contentMd": "The template blocks appear in the workspace at the start of the tutorials\n\n\n```template\nbasic.forever(() => {\n    basic.showString(\"MICRO\");\n});\n\n```",
-            "headerContentMd": "The template blocks appear in the workspace at the start of the tutorials",
-            "hintContentMd": "",
-            "hasHint": ""
+            "contentMd": "The template blocks appear in the workspace at the start of the tutorials",
+            "headerContentMd": "The template blocks appear in the workspace at the start of the tutorials"
         }
     ],
     "activities": null,
