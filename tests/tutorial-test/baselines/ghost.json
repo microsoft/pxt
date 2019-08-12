@@ -13,7 +13,7 @@
             "fullscreen": false,
             "unplugged": false,
             "tutorialCompleted": false,
-            "contentMd": "Multiple ghost sections can be included in one tutorial\n\n```blocks\nbasic.showString(\"Hello\")\n```\n\n\n```ghost\nbasic.forever(function() {\n    basic.showLeds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n\n```\n\n```ghost\ninput.onButtonPressed(Button.A, () => {\n    radio.sendNumber(0)\n})\n\n```",
+            "contentMd": "Multiple ghost sections can be included in one tutorial\n\n```blocks\nbasic.showString(\"Hello\")\n```",
             "headerContentMd": "Multiple ghost sections can be included in one tutorial",
             "hintContentMd": "```blocks\nbasic.showString(\"Hello\")\n```",
             "hasHint": true
