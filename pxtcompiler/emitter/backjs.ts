@@ -150,7 +150,7 @@ namespace ts.pxtc {
         jssource += `let yieldSteps = 1;\n`
         jssource += `ectx.setupYield(function() { yieldSteps = 100; })\n`
 
-        jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
+        jssource += "pxsim.setTitle(" + JSON.stringify(bin.getTitle()) + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
         for (let ce of bin.res.configData || []) {

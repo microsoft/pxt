@@ -358,6 +358,10 @@ namespace pxsim {
             return 0;
         }
 
+        export function programName() {
+            return pxsim.title;
+        }
+
         export function programSize() {
             return 0;
         }

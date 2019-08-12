@@ -855,7 +855,7 @@ ${hex.hexPrelude()}
     .word _pxt_lambda_trampoline@fn
     .word _pxt_perf_counters
     .word _pxt_restore_exception_state@fn
-    .word 0 ; reserved
+    .word ${bin.emitString(bin.getTitle())} ; name
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
