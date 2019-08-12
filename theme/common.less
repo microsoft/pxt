@@ -403,6 +403,9 @@ div.simframe > iframe {
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
+
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
 }
 
 /* Icon and text */
@@ -1263,11 +1266,11 @@ p.ui.font.small {
         padding: 0.5rem 1.5rem;
     }
     #editortools {
-        height: @editorToolsThinHeight; 
+        height: @editorToolsThinHeight;
     }
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
         bottom: @editorToolsThinHeight;
-    }    
+    }
     #editortools .ui.button {
         padding: .5em;
     }
