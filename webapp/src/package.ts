@@ -112,8 +112,6 @@ export class File implements pxt.editor.IFile {
     }
 }
 
-const SIM_STATE = ".simstate.json"
-
 export class EditorPackage {
     files: pxt.Map<File> = {};
     header: pxt.workspace.Header;
@@ -134,9 +132,9 @@ export class EditorPackage {
 
     getSimState() {
         if (!this.simState) {
-            if (!this.files[SIM_STATE])
-                this.setFile(SIM_STATE, "{}")
-            const f = this.files[SIM_STATE]
+            if (!this.files[pxt.SIMSTATE_JSON])
+                this.setFile(pxt.SIMSTATE_JSON, "{}")
+            const f = this.files[pxt.SIMSTATE_JSON]
             try {
                 this.simState = JSON.parse(f.content)
             } catch {
@@ -160,7 +158,7 @@ export class EditorPackage {
                 this.simStateSaveScheduled = false
                 if (!this.simState)
                     return
-                const f = this.files[SIM_STATE]
+                const f = this.files[pxt.SIMSTATE_JSON]
                 if (!f)
                     return
                 f.setContentAsync(JSON.stringify(this.simState)).done()

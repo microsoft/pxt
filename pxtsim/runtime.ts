@@ -268,7 +268,6 @@ namespace pxsim {
         id: string;
         bus: pxsim.EventBus;
         runOptions: SimulatorRunMessage;
-        storedState: Map<any>;
         messageListeners: MessageListener[] = [];
 
         constructor() {
@@ -288,9 +287,14 @@ namespace pxsim {
             this.messageListeners.push(listener);
         }
 
+        get storedState(): Map<any> {
+            if (!this.runOptions) return {}
+            if (!this.runOptions.storedState)
+                this.runOptions.storedState = {}
+            return this.runOptions.storedState
+        }
         public initAsync(msg: SimulatorRunMessage): Promise<void> {
             this.runOptions = msg;
-            this.storedState = this.runOptions.storedState || {};
             return Promise.resolve()
         }
         public setStoredState(k: string, value: any) {
