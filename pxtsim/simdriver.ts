@@ -51,6 +51,7 @@ namespace pxsim {
         version?: string;
         clickTrigger?: boolean;
         breakOnStart?: boolean;
+        storedState?: Map<any>;
     }
 
     export interface HwDebugger {
@@ -441,7 +442,8 @@ namespace pxsim {
                 refCountingDebug: opts.refCountingDebug,
                 version: opts.version,
                 clickTrigger: opts.clickTrigger,
-                breakOnStart: opts.breakOnStart
+                breakOnStart: opts.breakOnStart,
+                storedState: opts.storedState,
             }
             this.start();
         }

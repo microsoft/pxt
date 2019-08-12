@@ -11,6 +11,7 @@ interface SimulatorConfig {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
+    setState(key: string, value: any): void;
     editor: string;
 }
 
@@ -162,6 +163,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
+                case "setstate":
+                    cfg.setState(msg.stateKey, msg.stateValue);
+                    break
                 case "restart":
                     cfg.restartSimulator();
                     break;
@@ -246,7 +250,7 @@ export function setPending() {
 export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, mute?: boolean,
     highContrast?: boolean, light?: boolean,
-    clickTrigger?: boolean) {
+    clickTrigger?: boolean, storedState?: pxt.Map<any>) {
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
@@ -268,7 +272,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         refCountingDebug: pxt.options.debug,
         version: pkg.version(),
         clickTrigger: clickTrigger,
-        breakOnStart: debug
+        breakOnStart: debug,
+        storedState: storedState,
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

@@ -268,6 +268,7 @@ namespace pxsim {
         id: string;
         bus: pxsim.EventBus;
         runOptions: SimulatorRunMessage;
+        storedState: Map<any>;
         messageListeners: MessageListener[] = [];
 
         constructor() {
@@ -289,7 +290,20 @@ namespace pxsim {
 
         public initAsync(msg: SimulatorRunMessage): Promise<void> {
             this.runOptions = msg;
+            this.storedState = this.runOptions.storedState || {};
             return Promise.resolve()
+        }
+        public setStoredState(k: string, value: any) {
+            if (value == null)
+                delete this.storedState[k]
+            else
+                this.storedState[k] = value
+            Runtime.postMessage({
+                type: "simulator",
+                command: "setstate",
+                stateKey: k,
+                stateValue: value
+            } as SimulatorCommandMessage)
         }
         public onDebuggerResume() { }
         public screenshotAsync(width?: number): Promise<ImageData> {
@@ -529,7 +543,7 @@ namespace pxsim {
             methods: src.methods,
             iface: src.iface,
             toStringMethod: src.toStringMethod
-          };
+        };
     }
 
     let mapVTable: VTable = null

@@ -112,12 +112,16 @@ export class File implements pxt.editor.IFile {
     }
 }
 
+const SIM_STATE = ".simstate.json"
+
 export class EditorPackage {
     files: pxt.Map<File> = {};
     header: pxt.workspace.Header;
     onupdate = () => { };
     saveScheduled = false;
     savingNow = 0;
+    private simState: pxt.Map<any>;
+    private simStateSaveScheduled = false;
 
     id: string;
     outputPkg: EditorPackage;
@@ -126,6 +130,42 @@ export class EditorPackage {
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
         if (ksPkg && ksPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(ksPkg.verArgument())
+    }
+
+    getSimState() {
+        if (!this.simState) {
+            if (!this.files[SIM_STATE])
+                this.setFile(SIM_STATE, "{}")
+            const f = this.files[SIM_STATE]
+            try {
+                this.simState = JSON.parse(f.content)
+            } catch {
+                this.simState = {}
+            }
+        }
+        return this.simState
+    }
+
+    setSimState(k: string, v: any) {
+        const state = this.getSimState()
+        if (state[k] == v)
+            return
+        if (v == null)
+            delete state[k]
+        else
+            state[k] = v
+        if (!this.simStateSaveScheduled) {
+            this.simStateSaveScheduled = true
+            setTimeout(() => {
+                this.simStateSaveScheduled = false
+                if (!this.simState)
+                    return
+                const f = this.files[SIM_STATE]
+                if (!f)
+                    return
+                f.setContentAsync(JSON.stringify(this.simState)).done()
+            }, 2000)
+        }
     }
 
     getTopHeader() {
