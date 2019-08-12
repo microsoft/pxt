@@ -70,6 +70,7 @@ namespace pxt.tutorial {
 
     function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         const metadata = parseTutorialMetadata(tutorialmd);
+        tutorialmd = stripHiddenSnippets(tutorialmd);
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
             return parseTutorialActivities(tutorialmd, metadata);
@@ -151,8 +152,8 @@ namespace pxt.tutorial {
             const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
-                header = stripHiddenSnippets(hintText[1]);
-                hint = stripHiddenSnippets(hintText[2]);
+                header = hintText[1].trim();
+                hint = hintText[2].trim();
             }
         }
 

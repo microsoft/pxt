@@ -26,3 +26,7 @@ The text and code are all displayed in the card.
 let x = 1;
 let y = x + 2;
 ```
+
+```ghost
+basic.showIcon(IconNames.Square)
+```
