@@ -2503,7 +2503,7 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
-                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, 
+                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute,
                                 this.state.highContrast, pxt.options.light, opts.clickTrigger,
                                 pkg.mainEditorPkg().getSimState())
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints);
