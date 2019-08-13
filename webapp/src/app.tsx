@@ -391,6 +391,8 @@ export class ProjectView
                 mpkg.setFile("main.py", "# ...");
             this.setFile(pkg.mainEditorPkg().files["main.py"])
         }
+
+        pxt.Util.setEditorLanguagePref("py");
     }
 
     openJavaScript(giveFocusOnLoading = true) {
@@ -413,6 +415,8 @@ export class ProjectView
         } else if (this.isPythonActive()) {
             this.openTypeScriptAsync().done()
         } else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+
+        pxt.Util.setEditorLanguagePref("js");
     }
 
     openBlocks() {

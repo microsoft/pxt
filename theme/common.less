@@ -291,15 +291,41 @@ div.simframe > iframe {
     box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
-.active.item.javascript-menuitem ~ .toggle {
+.active.item.javascript-menuitem ~ .toggle,
+.active.item.python-menuitem ~ .toggle {
     margin-left: 140px !important;
     box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
-.active.item.python-menuitem ~ .toggle {
-    margin-left: 280px !important;
-    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
+
+#editortoggle .active.item.javascript-menuitem ~ .toggle.hasdropdown,
+#editortoggle .active.item.python-menuitem ~ .toggle.hasdropdown  {
+    border-top-right-radius: 0px!important;
+    border-bottom-right-radius: 0px!important;
+}
+#editortoggle > .link {
+    justify-content: center;
+}
+
+#editordropdown {
+    width: auto;
+    border-top-left-radius: 0px!important;
+    border-bottom-left-radius: 0px!important;
+}
+#editordropdown.active, #mainmenu #editordropdown.active:focus {
+    background-color: @editorToggleColor!important;
+}
+#editordropdown .menu > .item {
+    width: 184px;
+    opacity: 1;
+}
+#editordropdown .menu > .item.selected {
+    background: none;
+    color: @mainMenuInvertedBackground !important;
+}
+#editordropdown .menu > .item.selected:after {
+    content: '✔';
+    float: right;
 }
 
 /* Help card */

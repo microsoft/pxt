@@ -307,6 +307,137 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 }
 
+
+interface IBaseMenuItemProps extends ISettingsProps {
+    onClick: () => void;
+    isActive: () => boolean;
+
+    icon?: string;
+    text?: string;
+    title?: string;
+    className?: string;
+}
+
+class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
+    constructor(props: IBaseMenuItemProps) {
+        super(props);
+    }
+
+    renderCore() {
+        const active = this.props.isActive();
+        return <sui.Item className={`${this.props.className} ${active ? "selected" : ""}`} role="menuitem" textClass="landscape only" text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} />
+    }
+}
+
+class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.javascript", undefined, { interactiveConsent: true });
+        this.props.parent.openJavaScript();
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isJavaScriptActive();
+    }
+
+    renderCore() {
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+    }
+}
+
+class PythonMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.python", undefined, { interactiveConsent: true });
+        this.props.parent.openPython();
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isPythonActive();
+    }
+
+    renderCore() {
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+    }
+}
+
+class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
+        this.props.parent.openBlocks();
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isBlocksActive();
+    }
+
+    renderCore() {
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+    }
+}
+
+class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.simView", undefined, { interactiveConsent: true });
+        this.props.parent.openSimView();
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isEmbedSimActive();
+    }
+
+    renderCore() {
+        const active = this.isActive();
+        const isRunning = this.props.parent.state.simState == pxt.editor.SimState.Running;
+        const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
+
+        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+    }
+}
+
+interface IEditorSelectorProps extends ISettingsProps {
+    python?: boolean;
+    sandbox?: boolean;
+}
+
+export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
+    constructor(props: ISettingsProps) {
+        super(props);
+    }
+
+    renderCore () {
+        const blockActive = this.props.parent.isBlocksActive();
+        const pythonEnabled = this.props.python;
+
+        return (<div>
+            <div id="editortoggle" className="ui grid padded">
+                {this.props.sandbox && <SandboxMenuItem parent={this.props.parent} />}
+                <BlocksMenuItem parent={this.props.parent} />
+                {pxt.Util.isPyLangPref() && pythonEnabled ? <PythonMenuItem parent={this.props.parent} /> : <JavascriptMenuItem parent={this.props.parent} />}
+                {pythonEnabled && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${!blockActive ? "active" : ""}`}>
+                    <JavascriptMenuItem parent={this.props.parent} />
+                    <PythonMenuItem parent={this.props.parent} />
+                </sui.DropdownMenu>}
+                <div className={`ui item toggle ${pythonEnabled ? 'hasdropdown' : ''}`}></div>
+            </div>
+        </div>)
+    }
+}
+
 export class MainMenu extends data.Component<ISettingsProps, {}> {
 
     constructor(props: ISettingsProps) {
@@ -319,10 +450,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.goHome = this.goHome.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.launchFullEditor = this.launchFullEditor.bind(this);
-        this.openSimView = this.openSimView.bind(this);
-        this.openBlocks = this.openBlocks.bind(this);
-        this.openJavaScript = this.openJavaScript.bind(this);
-        this.openPython = this.openPython.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.toggleDebug = this.toggleDebug.bind(this);
@@ -353,26 +480,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     launchFullEditor() {
         pxt.tickEvent("sandbox.openfulleditor", undefined, { interactiveConsent: true });
         this.props.parent.launchFullEditor();
-    }
-
-    openSimView() {
-        pxt.tickEvent("menu.simView", undefined, { interactiveConsent: true });
-        this.props.parent.openSimView();
-    }
-
-    openBlocks() {
-        pxt.tickEvent("menu.blocks", undefined, { interactiveConsent: true });
-        this.props.parent.openBlocks();
-    }
-
-    openJavaScript() {
-        pxt.tickEvent("menu.javascript", undefined, { interactiveConsent: true });
-        this.props.parent.openJavaScript();
-    }
-
-    openPython() {
-        pxt.tickEvent("menu.python", undefined, { interactiveConsent: true });
-        this.props.parent.openPython();
     }
 
     exitTutorial() {
@@ -410,7 +517,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             null;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
-        const isRunning = simState == pxt.editor.SimState.Running;
         const hc = !!this.props.parent.state.highContrast;
         const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController && !debugging;
 
@@ -419,13 +525,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
-
-        const simActive = this.props.parent.isEmbedSimActive();
-        const blockActive = this.props.parent.isBlocksActive();
-        const javascriptActive = this.props.parent.isJavaScriptActive();
-        const pythonActive = this.props.parent.isPythonActive();
-
-        const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -447,16 +546,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
-            {!inTutorial && !targetTheme.blocksOnly && !debugging ? <div className="ui item link editor-menuitem">
-                <div className="ui grid padded">
-                    {sandbox ? <sui.Item className="sim-menuitem" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={this.openSimView} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
-                    <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={this.openBlocks} title={lf("Convert code to Blocks")} />
-                    <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={"JavaScript"} icon="xicon js" active={javascriptActive} onClick={this.openJavaScript} title={lf("Convert code to JavaScript")} />
-                    {targetTheme.python ?
-                        <sui.Item className="python-menuitem" role="menuitem" textClass="landscape only" text={"Python"} icon="xicon python" active={pythonActive} onClick={this.openPython} title={lf("Convert code to Python")} /> : undefined}
-                    <div className="ui item toggle"></div>
-                </div>
-            </div> : undefined}
+            {!inTutorial && !targetTheme.blocksOnly && !debugging && <div className="ui item link editor-menuitem">
+                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} />
+            </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && <tutorial.TutorialMenu parent={this.props.parent} />}
             {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
