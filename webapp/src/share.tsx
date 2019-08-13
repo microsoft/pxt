@@ -455,7 +455,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
+                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {qrCodeUri ?
                             <img className="ui tiny image floated right" alt={lf("QR Code of the saved program")} src={qrCodeUri} />
