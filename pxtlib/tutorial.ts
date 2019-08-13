@@ -70,15 +70,16 @@ namespace pxt.tutorial {
 
     function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         const metadata = parseTutorialMetadata(tutorialmd);
+        tutorialmd = stripHiddenSnippets(tutorialmd);
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
             return parseTutorialActivities(tutorialmd, metadata);
         } else {
             // tutorial with "## STEP" syntax
-            let steps = parseTutorialSteps(tutorialmd);
+            let steps = parseTutorialSteps(tutorialmd, null, metadata);
 
             // old: "### STEP" syntax (no activity header guaranteed)
-            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, _h3Regex);
+            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, _h3Regex, metadata);
 
             return {steps: steps, activities: null};
         }
@@ -138,7 +139,6 @@ namespace pxt.tutorial {
     }
 
     function parseTutorialHint(step: string, explicitHints?: boolean): {header: string, hint: string} {
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
         let header = step, hint;
         if (explicitHints) {
             // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
@@ -152,16 +152,19 @@ namespace pxt.tutorial {
             const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
             let hintText = step.match(hintTextRegex);
             if (hintText && hintText.length > 2) {
-                header = hintText[1];
-                hint = hintText[2];
+                header = hintText[1].trim();
+                hint = hintText[2].trim();
             }
         }
 
-        // remove hidden snippets from the hint
-        if (hint) {
-            hint = hint.replace(hiddenSnippetRegex, '');
-        }
         return {header: header, hint: hint};
+    }
+
+    /* Remove hidden snippets from text */
+    function stripHiddenSnippets(str: string): string {
+        if (!str) return null;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        return str.replace(hiddenSnippetRegex, '').trim();
     }
 
     /*

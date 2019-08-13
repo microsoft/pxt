@@ -937,6 +937,7 @@ export class ProjectView
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;
+        tutorialOptions.autoexpandStep = value;
         this.setState(
             { tutorialOptions: tutorialOptions },
             () => {
@@ -3059,6 +3060,11 @@ export class ProjectView
         if (tc) tc.showHint(true, showFullText);
     }
 
+    getExpandedCardStyle(): any {
+        let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
+        return tc ? tc.getExpandedCardStyle('top') : null;
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////     User alert/notifications     /////////////
     ///////////////////////////////////////////////////////////
@@ -3215,6 +3221,7 @@ export class ProjectView
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
+        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() :  null;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3291,7 +3298,7 @@ export class ProjectView
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {showCollapseButton && <sui.Button id='computertogglesim' className={`computer only collapse-button large`} icon={`inverted chevron ${showRightChevron ? 'right' : 'left'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
                     {showCollapseButton && <sui.Button id='mobiletogglesim' className={`mobile tablet only collapse-button large`} icon={`inverted chevron ${this.state.collapseEditorTools ? 'up' : 'down'}`} title={collapseIconTooltip} onClick={this.toggleSimulatorCollapse} />}
-                    {this.allEditors.map(e => e.displayOuter())}
+                    {this.allEditors.map(e => e.displayOuter(expandedStyle))}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
                     <div className="ui home projectsdialog">
@@ -3951,7 +3958,8 @@ function getTutorialOptions(md: string, tutorialId: string, filename: string, re
         tutorialMd: md,
         tutorialCode: tutorialInfo.code,
         tutorialRecipe: !!recipe,
-        templateCode: tutorialInfo.templateCode
+        templateCode: tutorialInfo.templateCode,
+        autoexpandStep: true
     };
 
     return { options: tutorialOptions, editor: tutorialInfo.editor };

@@ -1,0 +1,29 @@
+{
+    "editor": "blocksprj",
+    "title": "Tutorial Completed ",
+    "steps": [
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Let's get started!",
+            "headerContentMd": "Let's get started!"
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": true,
+            "contentMd": "The tutorial finishes at this step",
+            "headerContentMd": "The tutorial finishes at this step"
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "There may be steps afterwards",
+            "headerContentMd": "There may be steps afterwards"
+        }
+    ],
+    "activities": null,
+    "code": ""
+}

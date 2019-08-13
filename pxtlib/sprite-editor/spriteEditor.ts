@@ -56,7 +56,7 @@ namespace pxtsprite {
         private edit: Edit;
         private activeTool: PaintTool = PaintTool.Normal;
         private toolWidth = 1;
-        private color = 1;
+        public color = 1;
 
         private cursorCol = 0;
         private cursorRow = 0;
@@ -74,7 +74,7 @@ namespace pxtsprite {
 
         private closeHandler: () => void;
 
-        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
+        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false, public scale = 1) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -87,13 +87,14 @@ namespace pxtsprite {
             this.group = this.root.group();
             this.createDefs();
 
-            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
+            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode, this.scale);
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
                 if (!this.altDown) {
                     this.setCell(col, row, this.color, false);
                 }
+
                 this.bottomBar.updateCursor(col, row);
             });
 
@@ -147,6 +148,13 @@ namespace pxtsprite {
             this.bottomBar = new ReporterBar(this.group, this, REPORTER_BAR_HEIGHT);
 
             this.updateUndoRedo();
+
+            // Sets canvas scale
+            this.scale = scale;
+        }
+
+        setSidebarColor(color: number) {
+            this.sidebar.setColor(color);
         }
 
         setCell(col: number, row: number, color: number, commit: boolean): void {

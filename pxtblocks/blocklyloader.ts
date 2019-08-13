@@ -143,34 +143,29 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        // if an array of booleans, numbers, or strings
-        if (isArray && typeInfo && !shadowId) {
-            const mut = document.createElement('mutation');
-            mut.setAttribute("items", "3");
-            shadow.appendChild(mut);
-            for (let i = 0; i < 3; i++) {
-                const innerValue = document.createElement("value");
-                innerValue.setAttribute("name", "ADD" + i);
-                const innerShadow = document.createElement("shadow");
-                innerShadow.setAttribute("type", typeInfo.block);
-                const field = document.createElement("field");
-                field.setAttribute("name", typeInfo.field);
+        if (isArray) {
+            // if an array of booleans, numbers, or strings
+            if (typeInfo && !shadowId) {
+                let fieldValues: string[];
+
                 switch (isArray) {
                     case "number":
-                        field.appendChild(document.createTextNode("" + (i + 1)));
+                        fieldValues = ["1", "2", "3"];
                         break;
                     case "string":
-                        field.appendChild(document.createTextNode(String.fromCharCode('a'.charCodeAt(0) + i)));
+                        fieldValues = ["a", "b", "c"];
                         break;
                     case "boolean":
-                        field.appendChild(document.createTextNode("FALSE"));
+                        fieldValues = ["FALSE", "FALSE", "FALSE"];
                         break;
                 }
-                innerShadow.appendChild(field);
-                innerValue.appendChild(innerShadow);
-                shadow.appendChild(innerValue);
+                buildArrayShadow(shadow, typeInfo.block, typeInfo.field, fieldValues);
+                return value;
             }
-            return value;
+            else if (shadowId && defaultValue) {
+                buildArrayShadow(shadow, defaultValue);
+                return value;
+            }
         }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
@@ -243,6 +238,30 @@ namespace pxt.blocks {
         }
 
         return value;
+    }
+
+    function buildArrayShadow(shadow: Element, blockType: string, fieldName?: string, fieldValues?: string[]) {
+        const itemCount = fieldValues ? fieldValues.length : 2;
+        const mut = document.createElement('mutation');
+        mut.setAttribute("items", "" + itemCount);
+        shadow.appendChild(mut);
+
+        for (let i = 0; i < itemCount; i++) {
+            const innerValue = document.createElement("value");
+            innerValue.setAttribute("name", "ADD" + i);
+            const innerShadow = document.createElement("shadow");
+            innerShadow.setAttribute("type", blockType);
+            if (fieldName) {
+                const field = document.createElement("field");
+                field.setAttribute("name", fieldName);
+                if (fieldValues) {
+                    field.appendChild(document.createTextNode(fieldValues[i]));
+                }
+                innerShadow.appendChild(field);
+            }
+            innerValue.appendChild(innerShadow);
+            shadow.appendChild(innerValue);
+        }
     }
 
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {

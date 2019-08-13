@@ -9,7 +9,7 @@ import * as ReactDOM from 'react-dom';
 import * as pkg from './package';
 import * as toolbox from "./toolbox";
 import * as core from "./core";
-import { InputHandler } from './inputHandler';
+import { InputHandler } from './snippetBuilderInputHandler';
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -28,7 +28,7 @@ interface AnswersMap {
 
 interface SnippetBuilderState {
     visible?: boolean;
-    tsOutput?: string;
+    tsOutput?: string[];
     mdOutput?: string;
     answers?: AnswersMap;
     history: number[];
@@ -42,6 +42,11 @@ interface SnippetBuilderState {
  * An output type is attached to the start of your markdown allowing you to define a number of markdown output. (blocks, lang)
  * An initial output is set and outputs defined at each questions are appended to the initial output.
  * answerTokens can be defined and are replaced before being outputted. This allows you to output answers and default values.
+ * TODO:
+ * 1. Richer questions for different sprite paths
+ *  - This includes fleshing out a different path experience for projectile, food, and enemy.
+ *  - Stay in wall question for player.
+ *  - On collision for projectile
  */
 export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetBuilderState> {
     constructor(props: SnippetBuilderProps) {
@@ -52,7 +57,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             history: [0], // Index to track current question
             defaults: {},
             config: props.config,
-            tsOutput: props.config.initialOutput
+            tsOutput: [props.config.initialOutput]
         };
 
         this.cleanup = this.cleanup.bind(this);
@@ -61,6 +66,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         this.confirm = this.confirm.bind(this);
         this.backPage = this.backPage.bind(this);
         this.nextPage = this.nextPage.bind(this);
+        this.handleModalKeyDown = this.handleModalKeyDown.bind(this);
     }
 
     /**
@@ -69,17 +75,27 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      */
     buildDefaults() {
         const { config } = this.state;
-        const defaults: DefaultAnswersMap = {};
+        const defaults: AnswersMap = {};
 
         for (const question of config.questions) {
             const { inputs } = question;
             for (const input of inputs) {
-                const { defaultAnswer, answerToken } = input;
-                defaults[answerToken] = defaultAnswer;
+                if (isSnippetInputAnswerSingular(input)) {
+                    const { defaultAnswer, answerToken } = input;
+                    defaults[answerToken] = defaultAnswer;
+                }
+                else {
+                    const { defaultAnswers, answerTokens } = input;
+                    for (let i = 0; i < answerTokens.length; i++) {
+                        const token = answerTokens[i];
+                        const defaultAnswer = defaultAnswers[i];
+                        defaults[token] = defaultAnswer;
+                    }
+                }
             }
         }
 
-        this.setState({ defaults }, this.generateOutputMarkdown);
+        this.setState({ answers: defaults, defaults }, this.generateOutputMarkdown);
     }
 
     toggleActionButton() {
@@ -139,9 +155,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      * Loops over each token previously added to defaults and replaces with the answer value if one
      * exists. Otherwise it replaces the token with the provided default value.
      */
-    replaceTokens(tsOutput: string) {
+    replaceTokens(tsOutput: string[]) {
         const { answers, defaults } = this.state;
-        let tokenizedOutput = tsOutput;
+        let tokenizedOutput = tsOutput.join('\n');
         const tokens = Object.keys(defaults);
 
         // Replaces output tokens with answer if available or default value
@@ -154,17 +170,55 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     /**
+     * Takes in ts output and highlights the currently edited block 
+     */
+    highlightEditedBlocks(tsOutput: string[]) {
+        const highlightString = '// @highlight';
+        const inputs = this.getCurrentQuestion().inputs;
+
+        // Get answer tokens being edited by inputs in this question
+        const editedAnswerTokens = inputs
+            .reduce((tokens: string[], input: pxt.SnippetQuestionInput) => {
+                if (isSnippetInputAnswerSingular(input)) {
+                    // Return singular answerToken
+                    return pxt.Util.concat([tokens, [input.answerToken]]);
+                }
+                else {
+                    // Return multiple answer tokens
+                    return pxt.Util.concat([tokens, input.answerTokens]);
+                }
+            }, []);
+
+        // Finds all blocks containing a currently editable answer token and adds a highlight line
+        const highlightedOutput = tsOutput
+            .reduce((newOutput: string[], currentLine: string) => {
+                for (const answerToken of editedAnswerTokens) {
+                    if (currentLine.indexOf(answerToken) !== -1) {
+                        return pxt.Util.concat([newOutput, [highlightString, currentLine]]);
+                    }
+                }
+
+                return pxt.Util.concat([newOutput, [currentLine]]);
+
+            }, [])
+
+        return highlightedOutput;
+    }
+
+    /**
      * 
      * This attaches three backticks to the front followed by an output type (blocks, lang)
      * The current output is then tokenized and three backticks are appended to the end of the string.
      */
     generateOutputMarkdown = pxt.Util.debounce(() => {
         const { config, tsOutput } = this.state;
+
         // Attaches starting and ending line based on output type
         let md = `\`\`\`${config.outputType}\n`;
-        md += this.replaceTokens(tsOutput);
+        md += this.replaceTokens(this.highlightEditedBlocks(tsOutput));
         md += `\n\`\`\``;
-
+        // Removes whitespace
+        // TODO(jb) md.replace(/\s/g, '_'); - This would ensure that no breaking values are introduced to the typescript. Ideally we would ensure typescript is valid before attempting to compile it.
         this.setState({ mdOutput: md });
     }, 300, false);
 
@@ -187,7 +241,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         this.setState({
             answers: {},
             history: [0],
-            tsOutput: this.props.config.initialOutput,
+            tsOutput: [this.props.config.initialOutput],
         });
 
         Blockly.hideChaff();
@@ -285,12 +339,36 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return config.questions[this.getCurrentPage()];
     }
 
+    getNextQuestionNumber() {
+        const { answers, defaults } = this.state;
+        const currentQuestion = this.getCurrentQuestion();
+
+        if (currentQuestion.goto) {
+            const { parameters } = currentQuestion.goto;
+
+            if (parameters) {
+                for (const parameter of parameters) {
+                    const { answer, token } = parameter;
+                    if (answer === answers[token] || (!answers[token] && answer === defaults[token])) {
+                        return parameter.question;
+                    }
+                }
+            }
+
+            return currentQuestion.goto.question;
+        }
+
+        return null;
+    }
+
     getNextQuestion() {
         const { config } = this.state;
-        const currentQuestion = this.getCurrentQuestion();
-        if (currentQuestion.goto) {
-            return config.questions[currentQuestion.goto.question];
+        const nextQuestionNumber = this.getNextQuestionNumber();
+
+        if (nextQuestionNumber) {
+            return config.questions[nextQuestionNumber];
         }
+
         return null;
     }
 
@@ -306,7 +384,8 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const { tsOutput } = this.state;
 
         if (question.output && tsOutput.indexOf(question.output) === -1) {
-            this.setState({ tsOutput: `${tsOutput}\n${question.output}`}, this.generateOutputMarkdown);
+            const newOutput = pxt.Util.concat([tsOutput, [question.output]]);
+            this.setState({ tsOutput: newOutput }, this.generateOutputMarkdown);
         }
     }
 
@@ -326,9 +405,12 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             // Look ahead and update markdown
             const nextQuestion = this.getNextQuestion();
             this.updateOutput(nextQuestion);
+            const nextQuestionNumber = this.getNextQuestionNumber();
 
-            this.setState({ history: [...history, goto.question ]}, this.toggleActionButton)
-            pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: goto.question}, { interactiveConsent: true });
+            this.setState({ history: [...history, nextQuestionNumber] }, this.toggleActionButton)
+            pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: nextQuestionNumber }, { interactiveConsent: true });
+            // Force generates output markdown for updated highlighting
+            this.generateOutputMarkdown();
         }
     }
 
@@ -339,56 +421,69 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             this.setState({ history: history.slice(0, history.length - 1)}, () => {
                 this.toggleActionButton();
                 pxt.tickEvent('snippet.builder.back.page', { snippet: config.name, page: this.getCurrentPage() }, { interactiveConsent: true });
+
+                // Force generates output markdown for updated highlighting
+                this.generateOutputMarkdown();
             });
         }
     }
 
-    onChange = (answerToken: string) => (v: string) => {
-            this.setState((prevState: SnippetBuilderState) => ({
-                answers: {
-                    ...prevState.answers,
-                    [answerToken]: v,
-                }
-            }), this.generateOutputMarkdown);
+    handleModalKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+        // Move to next page if enter or right arrow key pressed
+        if (e.keyCode === 13 || e.keyCode === 39) {
+            this.nextPage();
         }
+        // Move to the previous page if left arrow key is pressed
+        if (e.keyCode === 37) {
+            this.backPage();
+        }
+    }
+
+    onChange = (answerToken: string) => (v: string) => {
+        this.setState((prevState: SnippetBuilderState) => ({
+            answers: {
+                ...prevState.answers,
+                [answerToken]: v,
+            }
+        }), this.generateOutputMarkdown);
+    }
 
     renderCore() {
-        const { visible, answers, config, mdOutput, actions } = this.state;
+        const { visible, answers, config, mdOutput, actions, defaults } = this.state;
         const { parent } = this.props;
 
         const currentQuestion = this.getCurrentQuestion();
 
         return (
-            <sui.Modal isOpen={visible} className={'snippet-builder'} size="large"
-                closeOnEscape={false} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
+            <sui.Modal isOpen={visible} className={'snippet-builder full-screen-no-bg'} overlayClassName={'snippet-builder-modal-overlay'}
+                closeOnEscape={true} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
+                onKeyDown={this.handleModalKeyDown}
             >
                 <div className="ui equal width grid">
-                    <div className='column snippet-question'>
-                        {currentQuestion &&
-                            <div>
-                                <div className='ui segment raised'>
-                                    <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
-                                    <div className='ui equal width grid'>
-                                        {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput) =>
-                                            <span className='column' key={`span-${input.answerToken}`}>
-                                                <InputHandler
-                                                    onChange={this.onChange(input.answerToken)}
-                                                    input={input}
-                                                    value={answers[input.answerToken] || ''}
-                                                    onEnter={this.nextPage}
-                                                    key={input.answerToken}
-                                                />
-                                            </span>
-                                        )}
-                                    </div>
-                                    {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
+                    {currentQuestion &&
+                        <div className='column snippet-question'>
+                            <div className='ui segment raised'>
+                                <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
+                                <div className='ui equal width grid'>
+                                    {currentQuestion.inputs.map((input: pxt.SnippetQuestionInput, i: number) =>
+                                        <span className='column' key={`span-${i}`}>
+                                            <InputHandler
+                                                onChange={isSnippetInputAnswerSingular(input) ? this.onChange(input.answerToken) : this.onChange}
+                                                input={input}
+                                                value={isSnippetInputAnswerSingular(input) ? answers[input.answerToken] : answers[input.answerTokens[0]]}
+                                                onEnter={this.nextPage}
+                                                key={isSnippetInputAnswerSingular(input) ? input.answerToken : input.answerTokens[0]}
+                                            />
+                                        </span>
+                                    )}
                                 </div>
-                                {currentQuestion.hint &&
-                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                             </div>
-                        }
-                    </div>
+                            {currentQuestion.hint &&
+                            <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                        </div>
+                    }
                     <div className='snippet output-section column'>
                         {mdOutput && <md.MarkedContent className='snippet-markdown-content' markdown={mdOutput} parent={parent} />}
                     </div>
@@ -407,7 +502,8 @@ function getSnippetExtensions(): pxt.SnippetConfig[] {
 }
 
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
-    const wrapper = document.body.appendChild(document.createElement('div'));
+    const overlay = document.createElement('div');
+    const wrapper = document.body.appendChild(overlay);
     const props = { parent:   parent, mainWorkspace: editor, config };
     const snippetBuilder = ReactDOM.render(
         React.createElement(SnippetBuilder, props),
@@ -436,4 +532,21 @@ export function initializeSnippetExtensions(ns: string, extraBlocks: (toolbox.Bl
                 }
             });
         });
+}
+
+// Type guard functions
+export function isSnippetInputAnswerSingular(input: pxt.SnippetInputAnswerSingular | pxt.SnippetInputAnswerPlural): input is pxt.SnippetInputAnswerSingular {
+    return (input as pxt.SnippetInputAnswerSingular).answerToken !== undefined;
+}
+
+export function isSnippetInputAnswerTypeOther(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputOtherType {
+    return (input as pxt.SnippetInputOtherType).type !== ('number' || 'dropdown');
+}
+
+export function isSnippetInputAnswerTypeNumber(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputNumberType {
+    return (input as pxt.SnippetInputNumberType).max !== undefined;
+}
+
+export function isSnippetInputAnswerTypeDropdown(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputDropdownType {
+    return (input as pxt.SnippetInputDropdownType).options !== undefined;
 }
