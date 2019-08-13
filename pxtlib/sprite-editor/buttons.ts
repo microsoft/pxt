@@ -440,11 +440,13 @@ namespace pxtsprite {
 
             this.undo = new TextButton(undo, "\uf118", "sprite-editor-xicon");
             this.undo.onClick(() => this.host.undo());
+            this.undo.title(lf("Undo"));
             this.root.appendChild(this.undo.getElement());
 
 
             this.redo = new TextButton(redo, "\uf111", "sprite-editor-xicon");
             this.redo.onClick(() => this.host.redo());
+            this.redo.title(lf("Redo"));
             this.root.appendChild(this.redo.getElement());
         }
 

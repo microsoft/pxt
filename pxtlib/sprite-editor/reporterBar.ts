@@ -27,9 +27,8 @@ namespace pxtsprite {
             this.undoRedo = new UndoRedoGroup(this.root, host, UNDO_REDO_WIDTH, height);
 
             this.sizeButton = mkTextButton("16x16", SIZE_BUTTON_WIDTH, height);
-            this.sizeButton.onClick(() => {
-                this.nextSize();
-            });
+            this.sizeButton.onClick(() => this.nextSize());
+            this.sizeButton.title(lf("Change size"));
 
             this.root.appendChild(this.sizeButton.getElement());
 
