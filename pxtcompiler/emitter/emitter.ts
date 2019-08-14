@@ -62,7 +62,7 @@ namespace ts.pxtc {
 
         resetEmit() {
             // clear IsUsed flag
-            this.flags &= ~PxtNodeFlags.IsUsed
+            this.flags &= ~(PxtNodeFlags.IsUsed | PxtNodeFlags.FromPreviousCompile)
             this.functionInfo = null;
             this.variableInfo = null;
             this.classInfo = null;
@@ -211,9 +211,12 @@ namespace ts.pxtc {
                 if (!compileOptions || !compileOptions.skipPxtModulesTSC)
                     info.resetAll()
                 else {
-                    if (info.flags & PxtNodeFlags.InPxtModules)
-                        info.refresh()
-                    else
+                    if (info.flags & PxtNodeFlags.InPxtModules) {
+                        if (compileOptions.skipPxtModulesEmit)
+                            info.refresh()
+                        else
+                            info.resetEmit()
+                    } else
                         info.resetAll()
                 }
             }
