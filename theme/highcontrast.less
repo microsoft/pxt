@@ -262,15 +262,9 @@
             color: white !important;
         }
 
-        &:hover {
-            .header, .description, .meta {
-                color: @hcYellow !important;
-            }
-        }
-
-        &:focus {
-            .header, .description, .meta {
-                color: @selected !important;
+        &:hover, &:focus {
+            .header, .meta, .description {
+                color: lighten(@selected, 10) !important;
             }
         }
 
@@ -278,6 +272,10 @@
             background: @disabled !important;
             border-color: @disabled !important;
             color: black !important;
+        }
+
+        a, .link {
+            color: lighten(@selected, 10) !important;
         }
     }
 
