@@ -4470,6 +4470,14 @@ ${lbl}: .short 0xffff
             this.numStmts = 0
         }
 
+        getTitle() {
+            const title = this.options.name || U.lf("Untitled")
+            if (title.length >= 90)
+                return title.slice(0, 87) + "..."
+            else
+                return title
+        }
+
         addProc(proc: ir.Procedure) {
             assert(!this.finalPass, "!this.finalPass")
             this.procs.push(proc)

@@ -113,7 +113,7 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         files: []
     };
 
-    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON])) {
+    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON, pxt.SIMSTATE_JSON])) {
         let st = await statOptAsync(path.join(dirname, fn))
         let ff: FsFile = {
             name: fn,
@@ -121,6 +121,9 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         }
 
         let thisFileContents = st && fileContents
+
+        if (!st && fn == pxt.SIMSTATE_JSON)
+            continue
 
         if (fn == pxt.github.GIT_JSON) {
             // skip .git.json altogether if missing
