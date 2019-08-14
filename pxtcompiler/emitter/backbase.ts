@@ -470,10 +470,7 @@ ${baseLabel}_nochk:
         private emitExprInto(e: ir.Expr, reg: string) {
             switch (e.exprKind) {
                 case ir.EK.NumberLiteral:
-                    if (e.data === true) this.write(this.t.emit_int(1, reg))
-                    else if (e.data === false) this.write(this.t.emit_int(0, reg))
-                    else if (e.data === null) this.write(this.t.emit_int(0, reg))
-                    else if (typeof e.data == "number") this.write(this.t.emit_int(e.data, reg))
+                    if (typeof e.data == "number") this.write(this.t.emit_int(e.data, reg))
                     else oops();
                     break;
                 case ir.EK.PointerLiteral:
