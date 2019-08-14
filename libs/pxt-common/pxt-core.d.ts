@@ -15,6 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
+    //% ts2pyOverride="append($0)"
     push(item: T): void;
 
     /**
@@ -22,6 +23,7 @@ interface Array<T> {
       * @param arr The other array that is being concatenated with
       */
     //% helper=arrayConcat weight=40
+    //% ts2pyOverride="extend($0)"
     concat(arr: T[]): T[];
 
     /**
@@ -31,6 +33,7 @@ interface Array<T> {
     //% shim=Array_::pop weight=45
     //% blockId="array_pop" block="get and remove last value from %list" blockNamespace="arrays"
     //% blockGap=64
+    //% ts2pyOverride="pop()"
     pop(): T;
 
     /**
@@ -47,6 +50,7 @@ interface Array<T> {
     //% help=arrays/shift
     //% helper=arrayShift weight=30
     //% blockId="array_shift" block="get and remove first value from %list" blockNamespace="arrays"
+    //% ts2pyOverride="pop(0)"
     shift(): T;
 
     /**
@@ -56,6 +60,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
+    //% ts2pyOverride="insert(0, $0)"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
 
@@ -82,7 +87,7 @@ interface Array<T> {
       */
     //% helper=arrayJoin weight=40
     join(sep?: string): string;
-    
+
     /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
       * @param callbackfn A function that accepts up to two arguments. The some method calls the callbackfn function one time for each element in the array.
@@ -96,7 +101,7 @@ interface Array<T> {
       */
     //% helper=arrayEvery weight=40
     every(callbackfn: (value: T, index: number) => boolean): boolean;
-    
+
     /**
       * Sort the elements of an array in place and returns the array. The sort is not necessarily stable.
       * @param specifies a function that defines the sort order. If omitted, the array is sorted according to the prmitive type
@@ -117,7 +122,7 @@ interface Array<T> {
       */
     //% helper=arrayForEach weight=40
     forEach(callbackfn: (value: T, index: number) => void): void;
-    
+
     /**
       * Return the elements of an array that meet the condition specified in a callback function.
       * @param callbackfn A function that accepts up to two arguments. The filter method calls the callbackfn function one time for each element in the array.
@@ -130,10 +135,10 @@ interface Array<T> {
       */
     //% helper=arrayFill weight=39
     fill(value: T, start?: number, end?: number): T[];
-    
+
     /**
      * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
-     * @param callbackfn 
+     * @param callbackfn
      */
     //% helper=arrayFind weight=40
     find(callbackfn: (value: T, index: number) => boolean): T;
@@ -149,12 +154,14 @@ interface Array<T> {
 
     /** Remove the first occurence of an object. Returns true if removed. */
     //% shim=Array_::removeElement weight=48
+    //% ts2pyOverride="remove($0)"
     removeElement(element: T): boolean;
 
     /** Remove the element at a certain index. */
     //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=15
     //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
+    //% ts2pyOverride="pop($0)"
     removeAt(index: number): T;
 
     /**
@@ -165,6 +172,7 @@ interface Array<T> {
     //% help=arrays/insert-at
     //% shim=Array_::insertAt weight=20
     //% blockId="array_insertAt" block="%list| insert at %index| value %value" blockNamespace="arrays"
+    //% ts2pyOverride="insert($0, $1)"
     insertAt(index: number, value: T): void;
 
     /**
@@ -175,6 +183,7 @@ interface Array<T> {
     //% help=arrays/index-of
     //% shim=Array_::indexOf weight=40
     //% blockId="array_indexof" block="%list| find index of %value" blockNamespace="arrays"
+    //% ts2pyOverride="index($0, $1?)"
     indexOf(item: T, fromIndex?: number): number;
 
     /**
@@ -287,8 +296,8 @@ declare interface String {
 
     /**
      * Splits the string according to the separators
-     * @param separator 
-     * @param limit 
+     * @param separator
+     * @param limit
      */
     //% helper=stringSplit
     //% help=text/split

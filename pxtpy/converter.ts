@@ -9,25 +9,6 @@ namespace pxt.py {
         blockDepth: number;
     }
 
-    interface OverrideTextPart {
-        kind: "text";
-        text: string;
-    }
-
-    interface OverrideArgPart {
-        kind: "arg";
-        index: number;
-        isOptional: boolean;
-        prefix?: string;
-        default?: string;
-    }
-
-    type OverridePart = OverrideArgPart | OverrideTextPart;
-
-    interface TypeScriptOverride {
-        parts: OverridePart[];
-    }
-
     // global state
     let externalApis: pxt.Map<SymbolInfo> // slurped from libraries
     let internalApis: pxt.Map<SymbolInfo> // defined in Python
@@ -2345,91 +2326,4 @@ namespace pxt.py {
     }
 
     pxt.conversionPasses.push(convert)
-
-    /**
-     * Override example syntax:
-     *      indexOf()       (no arguments)
-     *      indexOf($1, $0) (arguments in different order)
-     *      indexOf($0?)    (optional argument)
-     *      indexOf($0=0)   (default value; can be numbers, single quoted strings, false, true, null, undefined)
-     */
-    function parseTypeScriptOverride(src: string): TypeScriptOverride {
-        const regex = /([^\$]*\()?([^\$\(]*)\$(\d)(?:(?:(?:=(\d+|'[a-zA-Z0-9_]*'|false|true|null|undefined))|(\?)|))/y;
-        const parts: OverridePart[] = [];
-
-        let match;
-        let lastIndex = 0;
-
-        do {
-            lastIndex = regex.lastIndex;
-
-            match = regex.exec(src);
-
-            if (match) {
-                if (match[1]) {
-                    parts.push({
-                        kind: "text",
-                        text: match[1]
-                    });
-                }
-
-                parts.push({
-                    kind: "arg",
-                    prefix: match[2],
-                    index: parseInt(match[3]),
-                    default: match[4],
-                    isOptional: !!match[5]
-                })
-            }
-        } while (match)
-
-        if (lastIndex != undefined) {
-            parts.push({
-                kind: "text",
-                text: src.substr(lastIndex)
-            });
-        }
-        else {
-            parts.push({
-                kind: "text",
-                text: src
-            });
-        }
-
-        return {
-            parts
-        };
-    }
-
-    function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
-        const result: B.JsNode[] = [];
-
-        for (const part of override.parts) {
-            if (part.kind === "text") {
-                result.push(B.mkText(part.text));
-            }
-            else if (args[part.index] || part.default) {
-                if (part.prefix) result.push(B.mkText(part.prefix))
-
-                if (args[part.index]) {
-                    result.push(args[part.index]);
-                }
-                else {
-                    result.push(B.mkText(part.default))
-                }
-            }
-            else if (part.isOptional) {
-                // do nothing
-            }
-            else {
-                return undefined;
-            }
-        }
-
-        if (recv) {
-            return B.mkInfix(recv, ".", B.mkGroup(result));
-        }
-
-        return B.mkGroup(result);
-    }
 }

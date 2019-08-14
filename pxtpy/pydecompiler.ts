@@ -147,6 +147,20 @@ namespace pxt.py {
             }
             return outName
         }
+        function getCallSymbol(exp: ts.Node) {
+            const info = getCallInfo(exp);
+            if (info) {
+                return symbols[info.qName];
+            }
+            return undefined;
+        }
+        function getCallInfo(exp: ts.Node) {
+            const pxtNode: pxtc.PxtNode = (exp as any).pxt;
+            if (pxtNode) {
+                return pxtNode.callInfo
+            }
+            return undefined;
+        }
         function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
             // TODO right now this uses a global name set, but really there should be options to allow shadowing
             if (typeof nameHint !== "string")
@@ -1030,11 +1044,28 @@ namespace pxt.py {
                 }
             }
 
+            let argExps = s.arguments
+                .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
+
+            const sym = getCallSymbol(s);
+
+            if (sym && sym.attributes.ts2pyOverride) {
+                const override = parseTypeScriptOverride(sym.attributes.ts2pyOverride);
+
+                if (override) {
+                    const callInfo = getCallInfo(s);
+                    const [recv, rSup] = emitExp(callInfo.args[0]);
+                    const sup = argExps
+                        .map(([_, aSup]) => aSup)
+                        .reduce((p, c) => p.concat(c), rSup)
+
+                    return [buildOverrideString(override, argExps.map(([a, _]) => a), recv), sup];
+                }
+            }
+
             // TODO inspect type info to rewrite things like console.log, Math.max, etc.
             let [fn, fnSup] = emitExp(s.expression)
 
-            let argExps = s.arguments
-                .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
             let sup = argExps
                 .map(([_, aSup]) => aSup)
                 .reduce((p, c) => p.concat(c), fnSup)
