@@ -550,12 +550,20 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
+        this.openLinkedUrl = this.openLinkedUrl.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
     }
 
     handleDetailClick() {
         const { scr, onClick } = this.props;
         onClick(scr);
+    }
+
+    openLinkedUrl() {
+        const { youTubeId, url } = this.props;
+        const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
+            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+        window.open(linkHref, '_blank');
     }
 
     handleOpenForumUrlInEditor() {
@@ -588,18 +596,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
 
-        const action = {
-            label: clickLabel,
-            onClick: this.handleDetailClick,
-            icon: '',
-            className: 'huge positive'
-        }
-
         // featured link: featured_link
         const isForum = cardType == "forumUrl" && url;
         const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
-        const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
-            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
         return <div className="ui grid stackable padded">
             {image ? <div className="imagewrapper"><div className="image" style={{ backgroundImage: `url("${image}")` }} /></div> : undefined}
@@ -615,26 +614,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             </p>
                     })}
                     <div className="actions">
-                        {isLink && linkHref ?
-                            <sui.Link
-                                key={`action_${action.label}`}
-                                href={linkHref} target={'_blank'}
-                                icon={action.icon}
-                                text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                onClick={action.onClick}
-                                onKeyDown={sui.fireClickOnEnter}
-                            />
-                            : <sui.Button
-                                key={`action_${action.label}`}
-                                icon={action.icon}
-                                text={action.label}
-                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                onClick={action.onClick}
-                                onKeyDown={sui.fireClickOnEnter}
-                                autoFocus={true}
-                            />
-                        }
+                        <sui.Button
+                            key={`action_${clickLabel}`}
+                            text={clickLabel}
+                            className={`approve huge positive`}
+                            onClick={isLink ? this.openLinkedUrl : this.handleDetailClick}
+                            onKeyDown={sui.fireClickOnEnter}
+                            autoFocus={true}
+                        />
                         {isForum && <sui.Button
                             key="action_open"
                             text={lf("Open in Editor")}

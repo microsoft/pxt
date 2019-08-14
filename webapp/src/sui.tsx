@@ -476,7 +476,8 @@ export class Link extends StatelessUIElement<LinkProps> {
                 aria-label={this.props.ariaLabel}
                 aria-expanded={this.props.ariaExpanded}
                 onClick={this.props.onClick}
-                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}
+            >
                 {genericContent(this.props)}
                 {this.props.children}
             </a>
