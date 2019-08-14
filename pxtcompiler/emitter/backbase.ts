@@ -559,7 +559,7 @@ ${baseLabel}_nochk:
                     return this.clearStack()
                 case ir.EK.InstanceOf:
                     this.emitExpr(e.args[0])
-                    return this.emitInstanceOf(e.data, e.jsInfo)
+                    return this.emitInstanceOf(e.data, e.jsInfo as string)
                 default:
                     return this.emitExprInto(e, "r0")
             }

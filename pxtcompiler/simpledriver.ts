@@ -54,7 +54,7 @@ namespace pxt {
             const opts2 = U.clone(opts)
             opts2.ast = true
             opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-            opts2.noEmit = true
+            //opts2.noEmit = true
             // remove previously converted .ts files, so they don't end up in apisinfo
             for (let f of opts2.sourceFiles) {
                 if (U.endsWith(f, ".py"))

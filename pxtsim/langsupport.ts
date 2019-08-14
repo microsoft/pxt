@@ -107,6 +107,7 @@ namespace pxsim {
         numFields: number;
         toStringMethod?: LabelFn;
         classNo: number;
+        lastSubtypeNo: number;
         iface?: Map<any>;
     }
 

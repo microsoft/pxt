@@ -135,7 +135,7 @@ namespace ts.pxtc {
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                qName: decl ? getNodeFullName(checker, decl) : "?",
                 args: args,
                 isExpression: hasRet
             };

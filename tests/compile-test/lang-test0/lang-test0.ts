@@ -5,7 +5,7 @@
 // Do not use anything besides pause, control.runInBackground, console.log
 //
 
-pause(2000)
+// pause(2000)
 
 function msg(s: string): void {
     control.__log(s)

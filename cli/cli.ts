@@ -3514,7 +3514,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
-                const decompiled = pxtc.decompile(opts, "main.ts");
+                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
                 }
