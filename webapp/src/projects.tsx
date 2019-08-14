@@ -588,12 +588,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
 
-        const actions = [{
+        const action = {
             label: clickLabel,
             onClick: this.handleDetailClick,
             icon: '',
             className: 'huge positive'
-        }]
+        }
 
         // featured link: featured_link
         const isForum = cardType == "forumUrl" && url;
@@ -615,25 +615,26 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             </p>
                     })}
                     <div className="actions">
-                        {actions.map(action =>
-                            isLink && linkHref ?
-                                <sui.Link
-                                    key={`action_${action.label}`}
-                                    href={linkHref} target={'_blank'}
-                                    icon={action.icon}
-                                    text={action.label}
-                                    className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                    onClick={action.onClick}
-                                    onKeyDown={sui.fireClickOnEnter}
-                                />
-                                : <sui.Button
-                                    key={`action_${action.label}`}
-                                    icon={action.icon}
-                                    text={action.label}
-                                    className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                    onClick={action.onClick}
-                                    onKeyDown={sui.fireClickOnEnter} />
-                        )}
+                        {isLink && linkHref ?
+                            <sui.Link
+                                key={`action_${action.label}`}
+                                href={linkHref} target={'_blank'}
+                                icon={action.icon}
+                                text={action.label}
+                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                onClick={action.onClick}
+                                onKeyDown={sui.fireClickOnEnter}
+                            />
+                            : <sui.Button
+                                key={`action_${action.label}`}
+                                icon={action.icon}
+                                text={action.label}
+                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                onClick={action.onClick}
+                                onKeyDown={sui.fireClickOnEnter}
+                                autoFocus={true}
+                            />
+                        }
                         {isForum && <sui.Button
                             key="action_open"
                             text={lf("Open in Editor")}

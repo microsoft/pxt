@@ -419,6 +419,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     labelPosition?: "left" | "right";
     color?: string;
     size?: SIZES;
+    autoFocus?: boolean;
 }
 
 export class Button extends StatelessUIElement<ButtonProps> {
@@ -439,7 +440,9 @@ export class Button extends StatelessUIElement<ButtonProps> {
             aria-label={this.props.ariaLabel}
             aria-expanded={this.props.ariaExpanded}
             onClick={this.props.onClick}
-            onKeyDown={this.props.onKeyDown}>
+            onKeyDown={this.props.onKeyDown}
+            autoFocus={this.props.autoFocus}
+        >
             {genericContent(this.props)}
             {this.props.children}
         </button>;
