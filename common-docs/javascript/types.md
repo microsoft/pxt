@@ -64,8 +64,8 @@ As in other languages, we use the type `string` to refer to textual data.
 Use double quotes (`"`) or single quotes (`'`) to surround string data.
 
 ```typescript
-let color: string = "blue";
-color = 'red';
+let myColor: string = "blue";
+myColor = 'red';
 ```
 
 You can also use *template strings*, which can span multiple lines and have embedded expressions.
