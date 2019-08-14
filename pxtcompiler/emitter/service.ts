@@ -1174,7 +1174,7 @@ namespace ts.pxtc.service {
             host.opts.skipPxtModulesEmit = false
             host.opts.skipPxtModulesTSC = false
             const currKey = host.opts.target.isNative ? "native" : "js"
-            if (host.pxtModulesOK) {
+            if (!host.opts.target.switches.noIncr && host.pxtModulesOK) {
                 host.opts.skipPxtModulesTSC = true
                 if (host.opts.noEmit)
                     host.opts.skipPxtModulesEmit = true
