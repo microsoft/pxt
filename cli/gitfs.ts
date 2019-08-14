@@ -7,7 +7,7 @@ import U = pxt.Util;
 /*
 Purpose:
     UploadRefs uploads git objects (commits, trees, blobs) to cloud storage for
-    retrieval when servering our web apps or docs. The cloud also has logic to
+    retrieval when serving our web apps or docs. The cloud also has logic to
     request (from github) git objects and store them in the cloud however the
     github APIs sometimes throttle us too much when we're uploading lots of objects
     so this CLI command is useful when uploading large amounts of git objects.
