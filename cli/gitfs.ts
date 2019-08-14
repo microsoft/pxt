@@ -4,6 +4,38 @@ import * as util from 'util';
 
 import U = pxt.Util;
 
+/*
+Purpose:
+    UploadRefs uploads git objects (commits, trees, blobs) to cloud storage for
+    retrieval when servering our web apps or docs. The cloud also has logic to
+    request (from github) git objects and store them in the cloud however the
+    github APIs sometimes throttle us too much when we're uploading lots of objects
+    so this CLI command is useful when uploading large amounts of git objects.
+
+TODOs (updated 8/14/2019 by Daryl & Michal)
+- Upload tree & file objects first: currently this code uploads 
+  all commits first and then the associated "tree" and blob objects.
+  The issue with this is that the cloud checks for the exists of a
+  commit object and assumes if it exists that all the associated tree
+  objects have already been uploaded. So if "uploadRefs" gets interrupted,
+  the git cache could be in an inconsitent state where commits are uploaded
+  but not all of the necessary data is present. To fix the broken state, we
+  simply need to let uploadRefs run to completion, but it'd be better to not
+  allow this inconsitency in the first place by uploading commits last.
+- Handle network interruptions: when running "pxt uploadrefs", we occassionally
+  get "INTERNAL ERROR: Error: socket hang up" errors which can leave things in a
+  bad state (see above.) We should have retry logic built in.
+- Add commandline switches for:
+    - Forcing re-upload of everything. If the cloud ever gets in a very inconsistent
+      state it would be useful to have a way to force the reupload of all git objects
+      regerdless of what the cloud thinks is already present.
+    - Traverse parent commits. By default uploadRefs will not follow the parents of a
+      commit, but there may be times where this is useful (it could save the server extra
+      work).
+    - Start from a specific commit. If uploadRefs gets interrupted it would save a lot
+      of time if we could pass a certain commit to resume from.
+*/
+
 export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     pxt.log(`uploading refs starting from ${id} in ${repoUrl} to ${pxt.Cloud.apiRoot}`);
     let gitCatFile: child_process.ChildProcess
