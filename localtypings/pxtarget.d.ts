@@ -411,6 +411,7 @@ declare namespace ts.pxtc {
         inlineConversions?: boolean;
         noPeepHole?: boolean;
         time?: boolean;
+        noIncr?: boolean;
     }
 
     interface CompileTarget {
