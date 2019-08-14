@@ -17,29 +17,27 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     let repoPath = ''
 
     startGitCatFile()
-    gitCatFile.stdin.write(id + "\n")
-
     let visited: SMap<boolean> = {};
     let toCheck: string[] = [];
 
     await processCommit(id);
 
-    await checkHash(undefined, true);
+    await uploadMissingObjects(undefined, true);
 
     await refreshRefs(id, repoUrl);
 
     killGitCatFile();
     process.exit(0);
 
-    async function processCommit(id: string) {
+    async function processCommit(id: string, uploadParents = false) {
         if (visited[id]) return;
         visited[id] = true;
-        await checkHash(id);
+        await uploadMissingObjects(id);
         //console.log('commit: ' + id);
         let obj = await getGitObjectAsync(id);
         if (obj.type != "commit")
             throw new Error("bad type")
-        if (obj.commit.parents) {
+        if (uploadParents && obj.commit.parents) {
             // Iterate through every parent and parse the commit.
             for (let parent of obj.commit.parents) {
                 await processCommit(parent);
@@ -59,7 +57,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
     async function processTreeEntry(mode: string, id: string) {
         if (visited[id]) return;
         visited[id] = true;
-        await checkHash(id);
+        await uploadMissingObjects(id);
         if (mode.indexOf('1') != 0) {
             let obj = await getGitObjectAsync(id);
             if (obj.type == 'tree') {
@@ -106,7 +104,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         gitCatFile.kill();
     }
 
-    async function checkHash(id: string, force?: boolean) {
+    async function uploadMissingObjects(id: string, force?: boolean) {
         if (id) toCheck.push(id);
         if (toCheck.length > 50 || force) {
             let hashes = toCheck;
