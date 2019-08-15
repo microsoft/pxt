@@ -188,51 +188,10 @@ namespace _py {
         return str;
     }
 
-    export function py_array_pop<T>(arr: T[], index?: number): T {
-        nullCheck(arr);
-
-        if (arr.length === 0) {
-            throw INDEX_ERROR;
-        }
-
-        if (index == undefined) {
-            return arr.pop();
-        }
-        else if (index > 0 && index < arr.length) {
-            return arr.removeAt(index | 0);
-        }
-
-        throw INDEX_ERROR;
-    }
-
     export function py_array_clear<T>(arr: T[]): void {
         nullCheck(arr);
 
         arr.length = 0;
-    }
-
-    export function py_array_index<T>(arr: T[], value: any, start?: number, end?: number): number {
-        nullCheck(arr);
-
-        start = fixIndex(arr, start);
-        end = fixIndex(arr, end);
-
-        if (start == null) {
-            start = 0;
-        }
-
-        if (end == null) {
-            // end is exclusive
-            end = arr.length;
-        }
-
-        for (let i = start; i < end; i++) {
-            if (arr[i] === value) {
-                return i;
-            }
-        }
-
-        throw VALUE_ERROR;
     }
 
     export function py_array_count<T>(arr: T[], value: any): number {
@@ -251,13 +210,5 @@ namespace _py {
         if (arg == null) {
             throw ATTRIBUTE_ERROR;
         }
-    }
-
-    function fixIndex(arr: any[], index: number) {
-        if (index != null && arr.length) {
-            index = index | 0;
-            while (index < 0) index += arr.length;
-        }
-        return index;
     }
 }

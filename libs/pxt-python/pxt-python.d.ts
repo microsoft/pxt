@@ -23,17 +23,22 @@ declare namespace _py {
         //% py2tsOverride="slice()"
         copy(): void;
 
-        //% pyHelper="py_array_pop"
+        //% py2tsOverride="removeAt($0?)"
         pop(index?: number): T;
 
         //% pyHelper="py_array_clear"
         clear(): void;
 
-        //% pyHelper="py_array_index"
-        index(value: T, start?: number, end?: number): number;
-
         //% pyHelper="py_array_count"
         count(value: T): number;
+
+        /* Begin nonstandard APIs */
+
+        //% py2tsOverride="unshift($0)"
+        unshift(value: T): number;
+
+        //% py2tsOverride="indexOf($0, $1?)"
+        index(value: T, start?: number): number;
     }
 
     interface String {

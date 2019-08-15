@@ -60,7 +60,7 @@ interface Array<T> {
     //% help=arrays/unshift
     //% helper=arrayUnshift weight=25
     //% blockId="array_unshift" block="%list| insert %value| at beginning" blockNamespace="arrays"
-    //% ts2pyOverride="insert(0, $0)"
+    //% ts2pyOverride="unshift($0)"
     //unshift(...values:T[]): number; //rest is not supported in our compiler yet.
     unshift(value: T): number;
 
@@ -153,7 +153,7 @@ interface Array<T> {
 
 
     /** Remove the first occurence of an object. Returns true if removed. */
-    //% shim=Array_::removeElement weight=48
+    //% weight=48 helper=arrayRemoveAt
     //% ts2pyOverride="remove($0)"
     removeElement(element: T): boolean;
 
@@ -162,7 +162,7 @@ interface Array<T> {
     //% shim=Array_::removeAt weight=15
     //% blockId="array_removeat" block="%list| remove value at %index" blockNamespace="arrays"
     //% ts2pyOverride="pop($0)"
-    removeAt(index: number): T;
+    removeAt(index?: number): T;
 
     /**
      * Insert the value at a particular index, increases length by 1
@@ -202,6 +202,9 @@ interface Array<T> {
     //% help=arrays/set
     //% shim=Array_::setAt weight=84
     set(index: number, value: T): void;
+
+    //% shim=Array_::removeAt
+    _removeAt(index: number): T;
 
     [n: number]: T;
 }

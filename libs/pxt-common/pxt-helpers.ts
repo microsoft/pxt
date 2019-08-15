@@ -99,6 +99,11 @@ namespace helpers {
         return arr.length;
     }
 
+    export function arrayRemoveAt<T>(arr: T[], index?: number) {
+        if (index == null) index = arr.length - 1;
+        return arr._removeAt(index);
+    }
+
     function swap<T>(arr: T[], i: number, j: number): void {
         let temp: T = arr[i];
         arr[i] = arr[j];
@@ -526,7 +531,7 @@ namespace __internal {
     //% blockId=protractorPicker block="%angle"
     //% shim=TD_ID
     //% angle.fieldEditor=protractor
-    //% angle.fieldOptions.decompileLiterals=1    
+    //% angle.fieldOptions.decompileLiterals=1
     //% colorSecondary="#FFFFFF"
     //% blockHidden=1
     export function __protractor(angle: number) {
