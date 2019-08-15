@@ -550,20 +550,39 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
-        this.openLinkedUrl = this.openLinkedUrl.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
     }
 
     handleDetailClick() {
-        const { scr, onClick } = this.props;
-        onClick(scr);
-    }
+        const  { cardType, url, youTubeId, scr, onClick } = this.props;
 
-    openLinkedUrl() {
-        const { youTubeId, url } = this.props;
-        const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
-            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
-        window.open(linkHref, '_blank');
+        const isForum = cardType == "forumUrl";
+        const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
+
+        if (isLink) {
+            const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
+                ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+            window.open(linkHref, '_blank');
+        } else {
+            onClick(scr);
+        }
+
+        function isCodeCardType(value: string): value is pxt.CodeCardType {
+            switch (value) {
+                case "file":
+                case "example":
+                case "codeExample":
+                case "tutorial":
+                case "side":
+                case "template":
+                case "package":
+                case "hw":
+                case "forumUrl":
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 
     handleOpenForumUrlInEditor() {
@@ -583,31 +602,32 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     renderCore() {
         const { name, description, imageUrl, largeImageUrl, youTubeId, url, cardType, tags } = this.props;
 
-        const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
+        const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
 
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial") {
+        if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
-        }
-        else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
-        else if (cardType == "forumUrl") clickLabel = lf("Open in Forum");
-        else if (cardType == "template") clickLabel = lf("New Project");
-        else if (youTubeId) clickLabel = lf("Play Video");
-
-        // featured link: featured_link
-        const isForum = cardType == "forumUrl" && url;
-        const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
+        else if (cardType == "codeExample" || cardType == "example")
+            clickLabel = lf("Open Example");
+        else if (cardType == "forumUrl")
+            clickLabel = lf("Open in Forum");
+        else if (cardType == "template")
+            clickLabel = lf("New Project");
+        else if (youTubeId)
+            clickLabel = lf("Play Video");
 
         return <div className="ui grid stackable padded">
-            {image ? <div className="imagewrapper"><div className="image" style={{ backgroundImage: `url("${image}")` }} /></div> : undefined}
+            {image && <div className="imagewrapper">
+                <div className="image" style={{ backgroundImage: `url("${image}")` }} />
+            </div>}
             <div className="column twelve wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
-                    {tags ? <div className="ui labels">
+                    {tags && <div className="ui labels">
                         {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
-                        </div>)}</div> : undefined}
+                        </div>)}</div>}
                     {descriptions && descriptions.map((desc, index) => {
                         return <p key={`line${index}`} className="detail">
                                 {desc}
@@ -618,11 +638,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             key={`action_${clickLabel}`}
                             text={clickLabel}
                             className={`approve huge positive`}
-                            onClick={isLink ? this.openLinkedUrl : this.handleDetailClick}
+                            onClick={this.handleDetailClick}
                             onKeyDown={sui.fireClickOnEnter}
                             autoFocus={true}
                         />
-                        {isForum && <sui.Button
+                        {cardType == "forumUrl" && <sui.Button
                             key="action_open"
                             text={lf("Open in Editor")}
                             className={`approve huge`}
@@ -633,23 +653,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 </div>
             </div>
         </div>;
-
-        function isCodeCardType(value: string): value is pxt.CodeCardType {
-            switch (value) {
-                case "file":
-                case "example":
-                case "codeExample":
-                case "tutorial":
-                case "side":
-                case "template":
-                case "package":
-                case "hw":
-                case "forumUrl":
-                    return true;
-                default:
-                    return false;
-            }
-        }
     }
 }
 
