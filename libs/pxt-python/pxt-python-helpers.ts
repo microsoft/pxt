@@ -183,12 +183,12 @@ namespace _py {
         return str;
     }
 
-    export function py_string_zfill(str: string, width: number): string {
+    export function py_string_zfill(str : string, width: number): string {
         nullCheck(str);
         return str;
     }
 
-    export function py_array_pop(arr: any[], index?: number): any {
+    export function py_array_pop<T>(arr: T[], index?: number): T {
         nullCheck(arr);
 
         if (arr.length === 0) {
@@ -205,13 +205,13 @@ namespace _py {
         throw INDEX_ERROR;
     }
 
-    export function py_array_clear(arr: any[]): void {
+    export function py_array_clear<T>(arr: T[]): void {
         nullCheck(arr);
 
         arr.length = 0;
     }
 
-    export function py_array_index(arr: any[], value: any, start?: number, end?: number): number {
+    export function py_array_index<T>(arr: T[], value: any, start?: number, end?: number): number {
         nullCheck(arr);
 
         start = fixIndex(arr, start);
@@ -235,7 +235,7 @@ namespace _py {
         throw VALUE_ERROR;
     }
 
-    export function py_array_count(arr: any[], value: any): number {
+    export function py_array_count<T>(arr: T[], value: any): number {
         nullCheck(arr);
 
         let count = 0;

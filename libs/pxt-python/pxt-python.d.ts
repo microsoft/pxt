@@ -1,18 +1,18 @@
 /// <reference no-default-lib="true"/>
 
 declare namespace _py {
-    interface Array {
+    interface Array<T> {
         //% py2tsOverride="push($0)"
-        append(value: any): void;
+        append(value: T): void;
 
         //% py2tsOverride="concat($0)"
-        extend(other: Array): void;
+        extend(other: Array<T>): void;
 
         //% py2tsOverride="insertAt($0, $1)"
-        insert(index: number, value: any): void;
+        insert(index: number, value: T): void;
 
         //% py2tsOverride="removeElement($0)"
-        remove(value: any): void;
+        remove(value: T): void;
 
         //% py2tsOverride="sort()"
         sort(): void;
@@ -24,16 +24,16 @@ declare namespace _py {
         copy(): void;
 
         //% pyHelper="py_array_pop"
-        pop(index?: number): any;
+        pop(index?: number): T;
 
         //% pyHelper="py_array_clear"
         clear(): void;
 
         //% pyHelper="py_array_index"
-        index(value: any, start?: number, end?: number): number;
+        index(value: T, start?: number, end?: number): number;
 
         //% pyHelper="py_array_count"
-        count(value: any): number;
+        count(value: T): number;
     }
 
     interface String {

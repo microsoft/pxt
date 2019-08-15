@@ -127,8 +127,8 @@ namespace pxt.py {
         if (U.endsWith(tp, "[]")) {
             return mkArrayType(mapTsType(tp.slice(0, -2)))
         }
-        if (tp === "_py.Array") {
-            return mkArrayType(tpAny);
+        if (tp.indexOf("_py.Array") === 0) {
+            return mkArrayType(mapTsType("T"));
         }
 
         const t = U.lookup(builtInTypes, tp)
@@ -418,7 +418,7 @@ namespace pxt.py {
     }
 
     function typeCtor(t: Type): any {
-        if (t.primType) return t.primType
+        if (t.primType && t.primType !== "'T") return t.primType
         else if (t.classType) return t.classType
         else if (t.moduleType) {
             // a class SymbolInfo can be used as both classType and moduleType
@@ -509,6 +509,14 @@ namespace pxt.py {
             // detect late unifications
             // if (currIteration > 2) error(a, `unify ${t2s(t0)} ${t2s(t1)}`)
         }
+    }
+
+    function getAttributeReturnType(recvType: Type, method: SymbolInfo) {
+        if (recvType.typeArgs && recvType.typeArgs.length && method.pyRetType && method.pyRetType.primType && method.pyRetType.primType.indexOf("'") === 0) {
+            // FIXME: Multiple type arguments?
+            return recvType.typeArgs[0];
+        }
+        return method.pyRetType;
     }
 
     function mkSymbol(kind: SK, qname: string): SymbolInfo {
@@ -1850,7 +1858,7 @@ namespace pxt.py {
             }
 
             if (fun) {
-                unifyTypeOf(n, fun.pyRetType)
+                unifyTypeOf(n, recvTp ? getAttributeReturnType(recvTp, fun) : fun.pyRetType)
                 n.symbolInfo = fun
 
                 if (fun.attributes.py2tsOverride) {
@@ -1917,7 +1925,7 @@ namespace pxt.py {
             if (fd) {
                 n.symbolInfo = fd
                 addCaller(n, fd)
-                unify(n, n.tsType, fd.pyRetType)
+                unify(n, n.tsType, getAttributeReturnType(part, fd));
                 nm = fd.name
             } else if (part.moduleType) {
                 let sym = lookupGlobalSymbol(part.moduleType.pyQName + "." + n.attr)
@@ -2027,7 +2035,18 @@ namespace pxt.py {
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
-        unify(n, n.tsType, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
+        if (n.kind === "List" && n.elts.length > 1) {
+            const memberType = typeOf(n.elts[0]);
+
+            for (let i = 1; i < n.elts.length; i++) {
+                unify(n, memberType, typeOf(n.elts[i]));
+            }
+
+            unify(n, n.tsType, mkArrayType(memberType));
+        }
+        else {
+            unify(n, n.tsType, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
+        }
         return B.mkGroup([
             B.mkText("["),
             B.mkCommaSep(n.elts.map(expr)),
