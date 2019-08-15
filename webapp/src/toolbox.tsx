@@ -716,15 +716,16 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             </style>
             iconContent = undefined;
         }
+        const rowTitle = name ? name : Util.capitalize(subns || nameid);
 
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
-            style={treeRowStyle} tabIndex={0}
+            style={treeRowStyle} tabIndex={0} aria-label={lf("Open category {0}", rowTitle)}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
-            <span className="blocklyTreeLabel">{name ? name : `${Util.capitalize(subns || nameid)}`}</span>
+            <span className="blocklyTreeLabel">{rowTitle}</span>
         </div>
     }
 }
