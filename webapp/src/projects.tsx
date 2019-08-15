@@ -401,6 +401,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     </div>
                 </div>
             } else {
+                const selectedElement = cards.filter((scr, index) => index == selectedIndex)[0];
                 return <div>
                     <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
@@ -422,26 +423,22 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             />
                         )}
                     </carousel.Carousel>
-                    <div ref="detailView" className={`detailview ${cards.filter((scr, index) => index == selectedIndex).length > 0 ? 'visible' : ''}`}>
-                        {cards.filter((scr, index) => index == selectedIndex).length > 0 ?
-                            <div className="close">
-                                <sui.Icon tabIndex={0} aria-hidden={false} icon="remove circle" onClick={this.closeDetail} />
-                            </div> : undefined}
-                        {cards.filter((scr, index) => index == selectedIndex).map(scr =>
-                            <ProjectsDetail parent={this.props.parent}
-                                name={scr.name}
-                                key={'detail' + scr.name}
-                                description={scr.description}
-                                url={scr.url}
-                                imageUrl={scr.imageUrl}
-                                largeImageUrl={scr.largeImageUrl}
-                                youTubeId={scr.youTubeId}
-                                scr={scr}
+                    <div ref="detailView" className={`detailview ${selectedElement ? 'visible' : ''}`}>
+                        {selectedElement && <sui.CloseButton onClick={this.closeDetail}/>}
+                        {selectedElement &&  <ProjectsDetail parent={this.props.parent}
+                                name={selectedElement.name}
+                                key={'detail' + selectedElement.name}
+                                description={selectedElement.description}
+                                url={selectedElement.url}
+                                imageUrl={selectedElement.imageUrl}
+                                largeImageUrl={selectedElement.largeImageUrl}
+                                youTubeId={selectedElement.youTubeId}
+                                scr={selectedElement}
                                 onClick={this.props.onClick}
-                                cardType={scr.cardType}
-                                tags={scr.tags}
+                                cardType={selectedElement.cardType}
+                                tags={selectedElement.tags}
                             />
-                        )}
+                        }
                     </div>
                 </div>
             }

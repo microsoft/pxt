@@ -452,6 +452,23 @@ export class Button extends StatelessUIElement<ButtonProps> {
     }
 }
 
+
+export interface CloseButtonProps extends UiProps, TooltipUIProps {
+    onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+}
+export class CloseButton extends StatelessUIElement<CloseButtonProps> {
+    renderCore() {
+        const { onClick } = this.props;
+        return <div role="button" className="closeIcon" tabIndex={0}
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
+            aria-label={lf("Close")}
+        >
+            <Icon icon="close remove circle" />
+        </div>
+    }
+}
+
 ///////////////////////////////////////////////////////////
 ////////////             Links                /////////////
 ///////////////////////////////////////////////////////////
@@ -1134,11 +1151,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 {...action} labelPosition={action.labelPosition} />
                     )}
                 </div> : undefined}
-            {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
-                onClick={onClose}
-                onKeyDown={fireClickOnEnter}
-                aria-label={lf("Close")}
-            ><Icon icon="close remove circle" /> </div> : undefined}
+            {!isFullscreen && closeIcon && <CloseButton onClick={onClose} />}
         </ReactModal>
     }
 }
