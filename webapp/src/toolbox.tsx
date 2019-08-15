@@ -719,7 +719,8 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         const rowTitle = name ? name : Util.capitalize(subns || nameid);
 
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
-            style={treeRowStyle} tabIndex={0} aria-label={lf("Open category {0}", rowTitle)}
+            style={treeRowStyle} tabIndex={0}
+            aria-label={lf("Open category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
