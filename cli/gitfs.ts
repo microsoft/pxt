@@ -9,7 +9,7 @@ Purpose:
     UploadRefs uploads git objects (commits, trees, blobs) to cloud storage for
     retrieval when serving our web apps or docs. The cloud also has logic to
     request (from github) git objects and store them in the cloud however the
-    github APIs sometimes throttle us too much when we're uploading lots of objects
+    server can run out of memory (which should be fixable) when we're uploading lots of objects
     so this CLI command is useful when uploading large amounts of git objects.
 
 TODOs (updated 8/14/2019 by Daryl & Michal)
@@ -26,9 +26,6 @@ TODOs (updated 8/14/2019 by Daryl & Michal)
   get "INTERNAL ERROR: Error: socket hang up" errors which can leave things in a
   bad state (see above.) We should have retry logic built in.
 - Add commandline switches for:
-    - Forcing re-upload of everything. If the cloud ever gets in a very inconsistent
-      state it would be useful to have a way to force the reupload of all git objects
-      regerdless of what the cloud thinks is already present.
     - Traverse parent commits. By default uploadRefs will not follow the parents of a
       commit, but there may be times where this is useful (it could save the server extra
       work).
