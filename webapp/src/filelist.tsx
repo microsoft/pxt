@@ -308,7 +308,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, ...rest } = this.props;
+        // onErrorClick is explicitly set so that it is not passed down under the ...rest
+        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, onErrorClick, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
