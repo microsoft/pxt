@@ -47,41 +47,44 @@
 
     /* Focus */
 
-    *[tabindex='0']:focus,
-    *[tabindex*='d1']:focus,
-    *[tabindex*='d2']:focus, /* Takes items with a defined tabIndex from 0 to 29. */
-    *[role='menuitem']:focus,
-    a:not([tabindex='-1']):focus,
-    input:not([tabindex='-1']):focus,
-    button:not([tabindex='-1']):focus,
-    #monacoEditor .blocklyTreeRow:focus,
-    #monacoEditor .monacoDraggableBlock:focus {
-        outline: 2px solid @selected !important;
-    }
-
-    @media all and (pointer:coarse) { /* If touch screen */
-        *[tabindex='0']:focus,
-        *[tabindex*='d1']:focus,
-        *[tabindex*='d2']:focus,
-        *[role='menuitem']:focus,
-        a:not([tabindex='-1']):focus,
-        input:not([tabindex='-1']):focus,
-        button:not([tabindex='-1']):focus,
-        #monacoEditor .blocklyTreeRow:focus,
-        #monacoEditor .monacoDraggableBlock:focus {
-            outline: 1px solid transparent !important;
+    *[tabindex='0'],
+    *[tabindex*='d1'],
+    *[tabindex*='d2'], /* Takes items with a defined tabIndex from 0 to 29. */
+    *[role='menuitem'],
+    a:not([tabindex='-1']),
+    input:not([tabindex='-1']),
+    button:not([tabindex='-1']),
+    #monacoEditor .blocklyTreeRow,
+    #monacoEditor .monacoDraggableBlock {
+        &:focus {
+            outline: 2px solid @selected !important;
         }
     }
 
-    .blocklyWidgetDiv *:focus,
-    .blocklySVG *:focus,
-    .monaco-editor *:focus,
-    #monacoEditor *:focus {
-        outline: none !important;
+    @media all and (pointer:coarse) { /* If touch screen */
+        *[tabindex='0'],
+        *[tabindex*='d1'],
+        *[tabindex*='d2'],
+        *[role='menuitem'],
+        a:not([tabindex='-1']),
+        input:not([tabindex='-1']),
+        button:not([tabindex='-1']),
+        #monacoEditor .blocklyTreeRow,
+        #monacoEditor .monacoDraggableBlock {
+            &:focus {
+                outline: 1px solid transparent !important;
+            }
+        }
     }
 
-    .blocklyTreeRoot:focus {
-        outline: none !important;
+    .blocklyWidgetDiv *,
+    .blocklySVG *,
+    .monaco-editor *,
+    #monacoEditor *,
+    .blocklyTreeRoot {
+        &:focus {
+            outline: none !important;
+        }
     }
 
     /* Blockly toolbox */
