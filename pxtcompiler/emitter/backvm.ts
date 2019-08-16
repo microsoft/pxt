@@ -380,7 +380,7 @@ _start_${name}:
         function emitInstanceOf(info: ClassInfo, tp: string) {
             if (tp == "bool") {
                 write(`checkinst ${info.id}_VT`)
-            } else if (tp == "validate" || tp == "validateDecr") {
+            } else if (tp == "validate") {
                 U.oops()
             } else {
                 U.oops()

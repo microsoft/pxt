@@ -481,7 +481,7 @@ function ${id}(s) {
         function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
             if (tp == "bool")
                 write(`r0 = ${checkSubtype(info)};`)
-            else if (tp == "validate" || tp == "validateDecr") {
+            else if (tp == "validate") {
                 write(`if (!${checkSubtype(info, r0)}) failedCast(${r0});`)
             } else {
                 U.oops()
