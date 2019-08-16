@@ -226,7 +226,7 @@ declare interface String {
      * @param index The zero-based index of the desired character.
      */
     //% shim=String_::charAt weight=48
-    //% help=text/char-at
+    //% help=text/char-at ts2pyOverride="[$0]"
     //% blockId="string_get" block="char from %this=text|at %pos" blockNamespace="text"
     charAt(index: number): string;
 
@@ -284,6 +284,7 @@ declare interface String {
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
     //% block="%this=text|find index of %searchValue"
+    //% ts2pyOverride="index($0, $1?)"
     indexOf(searchValue: string, start?: number): number;
 
     /**

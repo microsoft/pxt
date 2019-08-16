@@ -32,6 +32,7 @@ declare namespace _py {
         //% pyHelper="py_array_count"
         count(value: T): number;
 
+
         /* Begin nonstandard APIs */
 
         //% py2tsOverride="unshift($0)"
@@ -59,9 +60,6 @@ declare namespace _py {
 
         //% pyHelper="py_string_find"
         find(sub: string, start?: number, end?: number): number;
-
-        //% pyHelper="py_string_index"
-        index(sub: string, start?: number, end?: number): number;
 
         //% pyHelper="py_string_isalnum"
         isalnum(): boolean;
@@ -152,6 +150,20 @@ declare namespace _py {
 
         //% pyHelper="py_string_zfill"
         zfill(width: number): string;
+
+
+        /* Begin nonstandard APIs */
+
+        //% py2tsOverride="indexOf($0, $1?)"
+        index(sub: string, start?: number): number;
+
+        compare(that: string): number;
+
+        substr(start: number, length?: number): string;
+
+        isEmpty(): boolean;
+
+        includes(searchValue: string, start?: number): boolean;
     }
 
     interface Dict {

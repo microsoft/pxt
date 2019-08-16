@@ -18,6 +18,7 @@ namespace pxt.py {
 
     export interface OverrideMap {
         parts: OverridePart[];
+        isProperty: boolean;
     }
 
     /**
@@ -71,7 +72,8 @@ namespace pxt.py {
         }
 
         return {
-            parts
+            parts,
+            isProperty: ts.isIdentifierStart(src.charCodeAt(0), ts.ScriptTarget.ES5)
         };
     }
 
@@ -101,7 +103,12 @@ namespace pxt.py {
         }
 
         if (recv) {
-            return B.mkInfix(recv, ".", B.mkGroup(result));
+            if (override.isProperty) {
+                return B.mkInfix(recv, ".", B.mkGroup(result));
+            }
+            else {
+                return B.mkGroup([recv].concat(result));
+            }
         }
 
         return B.mkGroup(result);
@@ -132,7 +139,7 @@ namespace pxt.py {
         }
 
         if (recv) {
-            return `${recv}.${res}`;
+            return `${recv}${override.isProperty ? "." : ""}${res}`;
         }
 
         return res;

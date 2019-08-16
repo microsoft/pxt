@@ -33,11 +33,6 @@ namespace _py {
         return 0;
     }
 
-    export function py_string_index(str: string, sub: string, start?: number, end?: number): number {
-        nullCheck(str);
-        return 0;
-    }
-
     export function py_string_isalnum(str: string): boolean {
         nullCheck(str);
         return false;
@@ -146,11 +141,6 @@ namespace _py {
     export function py_string_rstrip(str: string, chars?: string): string {
         nullCheck(str);
         return str;
-    }
-
-    export function py_string_split(str: string, sep?: string, maxsplit?: number): string[] {
-        nullCheck(str);
-        return [];
     }
 
     export function py_string_splitlines(str: string, keepends?: boolean): string[] {
