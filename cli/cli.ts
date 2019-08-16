@@ -5023,15 +5023,16 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             Object.keys(targeConfig.galleries).forEach(gallery => todo.push(targeConfig.galleries[gallery]));
     }
 
+    // push files from targetconfig checkdocsdirs
     const mdRegex = /\.md$/;
     const targetDirs = pxt.appTarget.checkdocsdirs;
     if (targetDirs) {
         targetDirs.forEach(dir => {
             pxt.log(`looking for markdown files in ${dir}`);
-            nodeutil.allFiles(dir, 3).filter(f => mdRegex.test(f))
-            .forEach(md => {
-                pushUrl(md.replace(mdRegex, ""), true);
-            });
+            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+                .forEach(md => {
+                    pushUrl(md.slice(5).replace(mdRegex, ""), true);
+                });
         })
     }
 
