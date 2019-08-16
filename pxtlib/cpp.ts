@@ -1028,8 +1028,9 @@ int main() {
             inc += "PXT_OBJS := $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
             res.generatedFiles["/Makefile"] = makefile
             res.generatedFiles["/Makefile.inc"] = inc
-
         }
+
+        res.generatedFiles["/functions.json"] = JSON.stringify(res.functions, null, 1)
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)
