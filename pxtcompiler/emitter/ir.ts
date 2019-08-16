@@ -39,6 +39,7 @@ namespace ts.pxtc.ir {
         method: string;
         returnsRef?: boolean;
         refTag?: pxt.BuiltInType;
+        refTagNullable?: boolean;
     }
 
     export interface MaskInfo {
