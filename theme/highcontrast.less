@@ -9,9 +9,8 @@
         High Contrast
 *******************************/
 
-@selected: #6b5e16;
+@selected: yellow;
 @disabled: #3ff23f;
-@hcYellow: yellow;
 
 /* Messages */
 #msg .hc {
@@ -54,7 +53,8 @@
     *[role='menuitem']:focus,
     a:not([tabindex='-1']):focus,
     input:not([tabindex='-1']):focus,
-    button:not([tabindex='-1']):focus {
+    button:not([tabindex='-1']):focus,
+    #monacoEditor .blocklyTreeRow:focus {
         outline: 2px solid @selected !important;
     }
 
@@ -65,7 +65,8 @@
         *[role='menuitem']:focus,
         a:not([tabindex='-1']):focus,
         input:not([tabindex='-1']):focus,
-        button:not([tabindex='-1']):focus {
+        button:not([tabindex='-1']):focus,
+        #monacoEditor .blocklyTreeRow:focus {
             outline: 1px solid transparent !important;
         }
     }
@@ -190,11 +191,11 @@
         border: 1px solid @HCbuttonTextColor !important;
 
         &:focus {
-            color: @selected !important;
+            color: @HCbuttonTextColor !important;
             border-color: @selected !important;
 
             i, span {
-                color: @selected !important;
+                color: @HCbuttonTextColor !important;
             }
         }
 
@@ -262,7 +263,7 @@
             color: white !important;
         }
 
-        &:hover, &:focus {
+        &:focus, &:hover {
             .header, .meta, .description {
                 color: lighten(@selected, 10) !important;
             }
@@ -287,7 +288,7 @@
             border: 1px solid white !important;
         }
         .item:focus {
-            background: @selected !important;
+            border-color: @selected !important;
 
             span {
                 color: black !important;
@@ -364,11 +365,11 @@
         color: black !important;
 
         &:focus {
-            color: @selected !important;
+            color: @HCbuttonTextColor !important;
             font-weight: normal !important;
 
             i, span {
-                color: @selected !important;
+                color: @HCbuttonTextColor !important;
                 font-weight: normal !important;
             }
         }
