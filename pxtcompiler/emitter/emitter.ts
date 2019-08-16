@@ -3758,9 +3758,11 @@ ${lbl}: .short 0xffff
 
             //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it
             markUsed(declList.declarations[0])
-            let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            const iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            U.assert(!!iterVar || !bin.finalPass)
             //Start with undefined
-            proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
+            if (iterVar)
+                proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
             proc.stackEmpty()
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
@@ -3791,7 +3793,8 @@ ${lbl}: .short 0xffff
             }
 
             // c = a[i]
-            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
+            if (iterVar)
+                proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);
