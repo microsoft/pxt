@@ -3305,7 +3305,8 @@ ${lbl}: .short 0xffff
                         convInfos.push({
                             argIdx: i,
                             method: "_validate",
-                            refTag: t
+                            refTag: t,
+                            refTagNullable: !!attrs.argsNullable
                         })
                     }
                     return r

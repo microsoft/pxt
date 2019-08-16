@@ -557,7 +557,8 @@ namespace ts.pxtc {
         "decompileIndirectFixedInstances",
         "topblock",
         "callInDebugger",
-        "duplicateShadowOnDrag"
+        "duplicateShadowOnDrag",
+        "argsNullable"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

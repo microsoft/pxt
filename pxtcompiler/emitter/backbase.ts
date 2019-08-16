@@ -567,7 +567,7 @@ ${baseLabel}_nochk:
             let pref = store ? "st" : "ld"
             let lbl = pref + "fld_" + info.classInfo.id + "_" + info.name
             if (info.needsCheck && !target.switches.skipClassCheck) {
-                this.emitInstanceOf(info.classInfo, "validateDecr")
+                this.emitInstanceOf(info.classInfo, "validate")
                 lbl += "_chk"
             }
 
@@ -750,11 +750,11 @@ ${baseLabel}_nochk:
         }
 
         // keep r0, keep r1, clobber r2, vtable in r3
-        private loadVTable(decr = false, r2 = "r2") {
+        private loadVTable(r2 = "r2", taglbl = ".fail", nulllbl = ".fail") {
             this.write(`lsls ${r2}, r0, #30`)
-            this.write(`bne .fail`) // tagged
+            this.write(`bne ${taglbl}`) // tagged
             this.write(`cmp r0, #0`)
-            this.write(`beq .fail`) // null
+            this.write(`beq ${nulllbl}`) // null
 
             this.write(`ldr r3, [r0, #0]`)
             this.write("; vtable in R3")
@@ -764,7 +764,10 @@ ${baseLabel}_nochk:
             let lbl = "inst_" + info.id + "_" + tp
 
             this.emitLabelledHelper(lbl, () => {
-                this.loadVTable(tp == "validateDecr")
+                if (tp == "validateNullable")
+                    this.loadVTable("r2", ".tagged", ".undefined")
+                else
+                    this.loadVTable("r2", ".fail", ".fail")
                 this.checkSubtype(info)
 
                 if (tp == "bool") {
@@ -773,7 +776,17 @@ ${baseLabel}_nochk:
                     this.write(`.fail:`)
                     this.write(`movs r0, #${taggedFalse}`)
                     this.write(`bx lr`)
-                } else if (tp == "validate" || tp == "validateDecr") {
+                } else if (tp == "validate") {
+                    this.write(`bx lr`)
+                    this.write(`.fail:`)
+                    this.write(this.t.callCPP("pxt::failedCast"))
+                } else if (tp == "validateNullable") {
+                    this.write(`.undefined:`)
+                    this.write(`bx lr`)
+                    this.write(`.tagged:`)
+                    this.write(`cmp r0, #${taggedNull} ; check for null`)
+                    this.write(`bne .fail`)
+                    this.write(`movs r0, #0`)
                     this.write(`bx lr`)
                     this.write(`.fail:`)
                     this.write(this.t.callCPP("pxt::failedCast"))
@@ -903,7 +916,8 @@ ${baseLabel}_nochk:
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
                                 if (a.conv.refTag) {
                                     if (!target.switches.skipClassCheck)
-                                        this.emitInstanceOf(this.builtInClassNo(a.conv.refTag), "validate")
+                                        this.emitInstanceOf(this.builtInClassNo(a.conv.refTag),
+                                            a.conv.refTagNullable ? "validateNullable" : "validate")
                                 } else {
                                     this.alignedCall(a.conv.method, "", off)
                                     if (a.conv.returnsRef)
@@ -1023,7 +1037,7 @@ ${baseLabel}_nochk:
                 _pxt_map_${op}:
                 `)
 
-                this.loadVTable(false, "r4")
+                this.loadVTable("r4")
                 this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefMap), ".notmap", "r4")
 
                 this.write(this.t.callCPPPush(op == "set" ? "pxtrt::mapSetByString" : "pxtrt::mapGetByString"))
@@ -1075,7 +1089,7 @@ ${baseLabel}_nochk:
             _pxt_${isBuffer ? "buffer" : "array"}_${op}:
             `)
 
-            this.loadVTable(false, "r4")
+            this.loadVTable("r4")
 
             let classNo = this.builtInClassNo(!isBuffer ?
                 pxt.BuiltInType.RefCollection : pxt.BuiltInType.BoxedBuffer)
