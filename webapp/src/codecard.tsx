@@ -70,7 +70,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const className = card.className;
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
-        const ariaLabel = card.ariaLabel || card.title;
+        const ariaLabel = card.ariaLabel || card.title || card.shortName || card.name;
 
         const descriptions = card && card.description && card.description.split("\n");
 
@@ -106,7 +106,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                         {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}
                     </label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
+                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper" aria-hidden={true} role="presentation">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
                 </div> : undefined}
                 {card.cardType == "file" && !imageUrl ? <div className="ui fileimage" /> : undefined}
