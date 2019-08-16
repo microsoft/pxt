@@ -324,8 +324,11 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             {hasDelete ? <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} /> : ''}
-            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
+                onKeyDown={this.handleButtonKeydown} /> : undefined}
+            {meta && meta.numErrors ? <sui.Button className='ui label red button' role="button"
+                title={lf("Go to error")} onClick={this.handleErrorClick}>
+                {meta.numErrors}
+            </sui.Button> : undefined}
         </a>
     }
 }
