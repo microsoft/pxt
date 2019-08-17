@@ -56,7 +56,7 @@
     button:not([tabindex='-1']),
     #monacoEditor .blocklyTreeRow,
     #monacoEditor .monacoDraggableBlock {
-        &:focus {
+        &:focus, &:hover {
             outline: 2px solid @selected !important;
         }
     }
@@ -71,7 +71,7 @@
         button:not([tabindex='-1']),
         #monacoEditor .blocklyTreeRow,
         #monacoEditor .monacoDraggableBlock {
-            &:focus {
+            &:focus, &:hover {
                 outline: 1px solid transparent !important;
             }
         }
@@ -82,7 +82,7 @@
     .monaco-editor *,
     #monacoEditor *,
     .blocklyTreeRoot {
-        &:focus {
+        &:focus, &:hover {
             outline: none !important;
         }
     }
@@ -195,7 +195,7 @@
         color: @HCbuttonTextColor !important;
         border: 1px solid @HCbuttonTextColor !important;
 
-        &:focus {
+        &:focus, &:hover {
             color: @HCbuttonTextColor !important;
             border-color: @selected !important;
 
@@ -215,6 +215,16 @@
 
         i, span {
             color: @disabled !important;
+        }
+    }
+
+    .filemenu .ui.button,
+    .header-close .ui.button {
+        &:focus, &:hover {
+            color: @selected !important;
+            i, span {
+                color: @selected !important;
+            }
         }
     }
 
@@ -270,7 +280,7 @@
 
         &:focus, &:hover {
             .header, .meta, .description {
-                color: lighten(@selected, 10) !important;
+                color: @selected !important;
             }
         }
 
@@ -281,7 +291,7 @@
         }
 
         a, .link {
-            color: lighten(@selected, 10) !important;
+            color: @selected !important;
         }
     }
 
@@ -343,7 +353,7 @@
 
     /* Hyperlinks */
     a {
-        color: @selected !important;
+        color: @HCbuttonTextColor !important;
     }
 
     #sidedocsbar {
@@ -420,7 +430,6 @@
     }
 
     .ui.blue.labels .label, .ui.blue.label {
-        background-color: @selected !important;
         border-color: @selected !important;
     }
 
