@@ -3951,9 +3951,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
-    // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
-    md = pxt.tutorial.patchArcadeSnippets(md);
-
     const tutorialInfo = pxt.tutorial.parseTutorial(md);
     if (!tutorialInfo)
         throw new Error(lf("Invalid tutorial format"));
