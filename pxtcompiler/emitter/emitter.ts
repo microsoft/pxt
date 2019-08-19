@@ -2577,7 +2577,7 @@ ${lbl}: .short 0xffff
                             thisJres.dataEncoding, thisJres.id))
                     }
                 }
-                if (/^e[14]/i.test(s) && node.parent && node.parent.kind == SK.CallExpression && 
+                if (/^e[14]/i.test(s) && node.parent && node.parent.kind == SK.CallExpression &&
                     (node.parent as CallExpression).expression.getText() == "image.ofBuffer") {
                         const m = /^e([14])(..)(..)..(.*)/i.exec(s)
                         s = `870${m[1]}${m[2]}00${m[3]}000000${m[4]}`
