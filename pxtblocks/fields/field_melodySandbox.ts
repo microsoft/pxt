@@ -131,12 +131,15 @@ namespace pxtblockly {
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
+            let color = this.getDropdownBackgroundColour();
+            let secondaryColor = this.getDropdownBorderColour();
+
             this.topDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
 
             // Same toggle set up as sprite editor
             this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
-            this.toggle = new pxtsprite.Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: "#B4009E" });
+            this.toggle = new pxtsprite.Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
                     this.hideGallery();
@@ -153,6 +156,7 @@ namespace pxtblockly {
 
             this.editorDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
+            this.editorDiv.style.setProperty("background-color", secondaryColor);
 
             this.gridDiv = this.createGridDisplay();
             this.editorDiv.appendChild(this.gridDiv);
@@ -164,6 +168,7 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
             this.doneButton.innerText = lf("Done");
             this.doneButton.addEventListener("click", () => this.onDone());
+            this.doneButton.style.setProperty("background-color", color);
 
             this.playButton = document.createElement("button");
             this.playButton.id = "melody-play-button";
@@ -298,7 +303,7 @@ namespace pxtblockly {
         }
 
         protected getDropdownBorderColour() {
-            return "#4f0643";
+            return this.sourceBlock_.parentBlock_.getColourTertiary();
         }
 
         private updateFieldLabel(): void {
