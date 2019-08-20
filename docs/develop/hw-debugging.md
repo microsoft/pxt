@@ -89,6 +89,19 @@ If you ever see a panic on a CPX device (flashing light plus red and blue light 
 - Run `(gdb) boot` to reboot the CPX into bootloader mode (for flashing a new program)
 - Run `(gdb) q` to quit
 
+### Handy ~/.gdbinit
+This .gdbinit file tweaks a few GDB settings to make it easier to work with MakeCode hardware.
+```
+set print elements 10000
+set history save on
+set history filename ~/.gdb_history
+define hook-quit
+    set confirm off
+end
+# useful for black magic probe
+set mem inaccessible-by-default off
+```
+
 ### Debugging tips
 - If you're stopped at a panic, look for "target_panic" in the `bt` and ignore stackframes above that.
 
