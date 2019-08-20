@@ -275,12 +275,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
+        const showProjectSettings = targetTheme.showProjectSettings;
 
         // Electron does not currently support webusb
         const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
-            <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} />
+            {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} /> : undefined}
             {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
