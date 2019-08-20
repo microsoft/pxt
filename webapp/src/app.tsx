@@ -3280,7 +3280,7 @@ export class ProjectView
                 </div> : undefined}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
-                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")}>
+                        <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
                         </div>
                         <simtoolbar.SimulatorToolbar parent={this} />
                         <div className="ui item portrait hide hidefullscreen">
