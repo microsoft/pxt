@@ -86,7 +86,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         const isRTL = pxt.Util.isUserLanguageRtl();
 
         return <div className="ui carouselouter">
-            <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} aria-label={lf("See previous")}
+            <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")}
+                aria-label={lf("See previous")} aria-hidden={leftDisabled}
                 tabIndex={leftDisabled ? -1 : 0} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon={"circle angle " + (!isRTL ? "left" : "right")} />
             </span>
@@ -100,7 +101,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                     }
                 </div>
             </div>
-            <span role="button" className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} aria-label={lf("See more")}
+            <span role="button" className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")}
+                aria-label={lf("See more")} aria-hidden={rightDisabled}
                 tabIndex={rightDisabled ? -1 : 0} onClick={this.onRightArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon={"circle angle " + (!pxt.Util.isUserLanguageRtl() ? "right" : "left")} />
             </span>
