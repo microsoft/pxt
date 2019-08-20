@@ -93,7 +93,7 @@ If you ever see a panic on a CPX device (flashing light plus red and blue light 
 - If you're stopped at a panic, look for "target_panic" in the `bt` and ignore stackframes above that.
 
 ### printf debugging loop
-1. Add `DMSG("...")` print statements in your .cpp (either in codal or pxt-common-packages) and re-build and deploy (`pxt` cmd inside your project)
+1. Add `DMESG("...")` print statements in your .cpp (either in codal or pxt-common-packages) and re-build and deploy (`pxt` cmd inside your project)
 2. Connect GDB: `pxt gdb`
 3. See the logs: `(gdb) log`
 
