@@ -116,3 +116,7 @@ If you ever see a panic on a CPX device (flashing light plus red and blue light 
     lrwxr-xr-x    1 darzu  staff     19 Aug 19 14:23 pxt-core -> /Users/darzu/mc/pxt
     ```
 1. Changes made to these .cpp files should automatically be rebuilt when you run `pxt` in the project dir
+
+## Related docs
+- This out of date doc on GDB with CPX: https://github.com/microsoft/pxt-adafruit/blob/master/docs/gdb.md
+    - It says that you can have common GND through the USB, but this doesn't always work.
