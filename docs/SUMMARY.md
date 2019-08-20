@@ -14,6 +14,7 @@
     * [Updating Blockly Version](/develop/blocklyupgrade)
     * [Accessibility](/develop/accessibility)
     * [Profiling](/js/profiling)
+    * [Debugging Hardware](/develop/hw-debugging)
 * [Creating Targets](/target-creation)
     * [pxtarget.json](/targets/pxtarget)
     * [Defining Blocks](/defining-blocks)
