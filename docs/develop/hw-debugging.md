@@ -64,7 +64,7 @@ If you ever see a panic on a CPX device (flashing light plus red and blue light 
 1. Connect the Particle Debugger to the SWD pins on the CircuitPlayground. Probably by:
     - soldering 3 jumpers to the CPX using this diagram:
         https://learn.adafruit.com/assets/47156
-        Solder to: SWCCLK (45), SWDIO (46), RESET (40)
+        Solder to: SWCCLK (45), SWDIO (46)
     - connecting those to a SWD breakout board like this:
         https://www.adafruit.com/product/2743
     - and then running a SWD cable to your Particle Debugger
