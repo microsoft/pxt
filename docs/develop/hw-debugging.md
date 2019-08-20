@@ -65,8 +65,10 @@ If you ever see a panic on a CPX device (flashing light plus red and blue light 
     - soldering 3 jumpers to the CPX using this diagram:
         https://learn.adafruit.com/assets/47156
         Solder to: SWCCLK (45), SWDIO (46)
+        Separately, solder to any GND pad; optionally, also solder to a 3V pad.
     - connecting those to a SWD breakout board like this:
         https://www.adafruit.com/product/2743
+        - Alternatively, connect jumper cables directly to particle debugger. Pins are labelled at the bottom.
     - and then running a SWD cable to your Particle Debugger
         https://www.adafruit.com/product/4001
 2. Connect the Particle Debugger to you computers USB. Ensure you see a "DAPLINK" in the USB devices.
@@ -83,7 +85,7 @@ If you ever see a panic on a CPX device (flashing light plus red and blue light 
 - Run `(gdb) bt` to see a backtrace from the current position
 - Run `(gdb) l` to see lines of code around your current program position
 - Run `(gdb) up` to move up the stack frame
-- Run `(gdb) f 5` to move to the #5 stack frame as shown by `bt`
+- Run `(gdb) f 5` to move to the `#5` stack frame as shown by `bt`
 - Run `(gdb) boot` to reboot the CPX into bootloader mode (for flashing a new program)
 - Run `(gdb) q` to quit
 
