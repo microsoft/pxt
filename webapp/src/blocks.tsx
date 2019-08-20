@@ -412,6 +412,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
         (Blockly as any).Colours = blocklyColors;
+
+        let shouldRestartSim = false;
+
         this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui' || this.markIncomplete) {
@@ -450,6 +453,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // } else {
                     //     this.removeBreakpointFromEvent(ev.blockId);
                     // }
+                }
+                else if (ev.element == 'melody-editor') {
+                    if (ev.newValue) {
+                        shouldRestartSim = this.parent.state.simState == pxt.editor.SimState.Running;
+                        this.parent.stopSimulator();
+                    }
+                    else {
+                        if (shouldRestartSim) {
+                            this.parent.startSimulator();
+                        }
+                    }
                 }
             }
 
