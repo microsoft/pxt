@@ -78,7 +78,7 @@ namespace pxtblockly {
 
             this.prevString = this.getText();
 
-            // The webapp listens fo this event and stops the simulator so that you don't get the melody
+            // The webapp listens to this event and stops the simulator so that you don't get the melody
             // playing twice (once in the editor and once when the code runs in the sim)
             Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", false, true))
 
