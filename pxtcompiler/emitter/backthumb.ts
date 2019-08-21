@@ -309,7 +309,7 @@ _numops_${op}:
                 else {
                     if (op == "lsrs")
                         r += `
-    asrs r2, r0, #1    
+    asrs r2, r0, #1
     lsrs r2, r3
     lsrs r3, r2, #30
     bne .boxed
