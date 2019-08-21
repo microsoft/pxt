@@ -37,7 +37,7 @@ When you clear browsing data, all of the saved projects and files that support M
 
 ## Where does a project that I share go? #sharing
 
-When you share a project it's saved to the public cloud for MakeCode. Anyone can see your project if they have it's shared URL.
+When you share a project it's saved to the public cloud for MakeCode. Anyone can see your project if they have its shared URL.
 
 ## What are some additional ways I can share projects with teachers and friends? #share-options
 
