@@ -401,7 +401,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     </div>
                 </div>
             } else {
-                const selectedElement = cards.filter((scr, index) => index == selectedIndex)[0];
+                const selectedElement = cards[selectedIndex];
                 return <div>
                     <carousel.Carousel ref="carousel" bleedPercent={20} selectedIndex={selectedIndex}>
                         {cards.map((scr, index) =>
@@ -551,7 +551,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     handleDetailClick() {
-        const  { cardType, url, youTubeId, scr, onClick } = this.props;
+        const { cardType, url, youTubeId, scr, onClick } = this.props;
 
         const isForum = cardType == "forumUrl";
         const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
