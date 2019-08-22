@@ -736,6 +736,7 @@ namespace pxt.runner {
 
         function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
             const opts = pxt.U.clone(woptions);
