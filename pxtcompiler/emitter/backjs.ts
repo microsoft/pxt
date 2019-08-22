@@ -48,7 +48,7 @@ namespace ts.pxtc {
         "pxsim.pxtcore.mkAction": "",
         "pxsim.pxtcore.mkClassInstance": "",
         "pxsim.pxtrt.ldlocRef": "",
-        "pxsim.pxtrt.mapGet": "",
+        "pxsim.pxtrt.mapGetByString": "",
         "pxsim.pxtrt.stclo": "",
         "pxsim.pxtrt.stlocRef": "",
     }
@@ -84,15 +84,18 @@ namespace ts.pxtc {
     }
 
     function vtableToJs(info: ClassInfo) {
+        U.assert(info.classNo !== undefined)
+        U.assert(info.lastSubtypeNo !== undefined)
         let s = `const ${info.id}_VT = mkVTable({\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
-            `  methods: [\n`
+            `  lastSubtypeNo: ${info.lastSubtypeNo},\n` +
+            `  methods: {\n`
         for (let m of info.vtable) {
-            s += `    ${m.label()},\n`
+            s += `    "${m.getName()}": ${m.label()},\n`
         }
-        s += "  ],\n"
+        s += "  },\n"
         s += "  iface: {\n"
         for (let m of info.itable) {
             s += `    "${m.name}": ${m.proc ? m.proc.label() : "null"},\n`
@@ -130,15 +133,8 @@ namespace ts.pxtc {
         "mkVTable"
     ]
 
-    interface EmitCtx {
-        framectors: pxt.Map<string>;
-    }
-
     export function jsEmit(bin: Binary) {
         let jssource = "(function (ectx) {\n'use strict';\n"
-        const ctx: EmitCtx = {
-            framectors: {}
-        }
 
         for (let n of evalIfaceFields) {
             jssource += `const ${n} = ectx.${n};\n`
@@ -150,7 +146,7 @@ namespace ts.pxtc {
         jssource += `let yieldSteps = 1;\n`
         jssource += `ectx.setupYield(function() { yieldSteps = 100; })\n`
 
-        jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
+        jssource += "pxsim.setTitle(" + JSON.stringify(bin.getTitle()) + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
         for (let ce of bin.res.configData || []) {
@@ -168,25 +164,39 @@ namespace ts.pxtc {
         jssource += shortCallsPrefix(shortCalls)
         jssource += shortCallsPrefix(shortNsCalls)
 
+        let cachedLen = 0
+        let newLen = 0
+
         bin.procs.forEach(p => {
-            jssource += "\n" + irToJS(ctx, bin, p) + "\n"
+            let curr: string
+            if (p.cachedJS) {
+                curr = p.cachedJS
+                cachedLen += curr.length
+            } else {
+                curr = irToJS(bin, p)
+                newLen += curr.length
+            }
+            jssource += "\n" + curr + "\n"
         })
-        jssource += U.values(ctx.framectors).join("\n") + "\n"
+        jssource += U.values(bin.codeHelpers).join("\n") + "\n"
         bin.usedClassInfos.forEach(info => {
             jssource += vtableToJs(info)
         })
         if (bin.res.breakpoints)
             jssource += `\nconst breakpoints = setupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
-        U.iterMap(bin.hexlits, (k, v) => {
-            jssource += `const ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
-        })
 
         jssource += `\nreturn ${bin.procs[0] ? bin.procs[0].label() : "null"}\n})\n`
 
-        bin.writeFile(BINARY_JS, jssource)
+        const total = jssource.length
+        const perc = (n: number) => ((100 * n) / total).toFixed(2) + "%"
+        const sizes = `// total=${jssource.length} new=${perc(newLen)} cached=${perc(cachedLen)} other=${perc(total - newLen - cachedLen)}\n`
+        bin.writeFile(BINARY_JS, sizes + jssource)
     }
 
-    function irToJS(ctx: EmitCtx, bin: Binary, proc: ir.Procedure): string {
+    function irToJS(bin: Binary, proc: ir.Procedure): string {
+        if (proc.cachedJS)
+            return proc.cachedJS
+
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
@@ -194,6 +204,7 @@ namespace ts.pxtc {
         let exprStack: ir.Expr[] = []
         let maxStack = 0
         let localsCache: pxt.Map<boolean> = {}
+        let hexlits = ""
 
         writeRaw(`
 function ${proc.label()}(s) {
@@ -286,6 +297,9 @@ switch (step) {
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
 
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
+        writeRaw(hexlits)
+
+        proc.cachedJS = resText
 
         return resText
 
@@ -396,8 +410,13 @@ function ${id}(s) {
                 case EK.PointerLiteral:
                     if (e.ptrlabel()) {
                         return e.ptrlabel().lblId + "";
-                    } else {
+                    } else if (e.hexlit()) {
+                        hexlits += `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`
+                        return e.data;
+                    } else if (typeof e.jsInfo == "string") {
                         return e.jsInfo;
+                    } else {
+                        U.oops()
                     }
                 case EK.SharedRef:
                     let arg = e.args[0]
@@ -447,7 +466,7 @@ function ${id}(s) {
                     return e.args.forEach(emitExpr)
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    emitInstanceOf(e.data, e.jsInfo)
+                    emitInstanceOf(e.data, e.jsInfo as string)
                     return
                 default:
                     write(`r0 = ${emitExprInto(e)};`)
@@ -455,13 +474,14 @@ function ${id}(s) {
         }
 
         function checkSubtype(info: ClassInfo, r0 = "r0") {
-            return `checkSubtype(${r0}, ${info.classNo}, ${info.lastSubtypeNo})`
+            const vt = `${info.id}_VT`
+            return `checkSubtype(${r0}, ${vt})`
         }
 
         function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
             if (tp == "bool")
                 write(`r0 = ${checkSubtype(info)};`)
-            else if (tp == "validate" || tp == "validateDecr") {
+            else if (tp == "validate") {
                 write(`if (!${checkSubtype(info, r0)}) failedCast(${r0});`)
             } else {
                 U.oops()
@@ -532,10 +552,10 @@ function ${id}(s) {
 
         function emitProcCall(topExpr: ir.Expr) {
             const procid = topExpr.data as ir.ProcId
-            const proc = procid.proc
+            const callproc = procid.proc
 
-            if (proc && proc.inlineBody)
-                return emitExpr(proc.inlineSelf(topExpr.args))
+            if (callproc && callproc.inlineBody)
+                return emitExpr(callproc.inlineSelf(topExpr.args))
 
             const frameExpr = ir.rtcall("<frame>", [])
             frameExpr.totalUses = 1
@@ -547,8 +567,8 @@ function ${id}(s) {
             const lblId = ++lblIdx
             const isLambda = procid.virtualIndex == -1
 
-            if (proc)
-                write(`${frameRef} = ${proc.label()}_mk(s);`)
+            if (callproc)
+                write(`${frameRef} = ${callproc.label()}_mk(s);`)
             else {
                 let id = "generic"
                 if (procid.ifaceIndex != null)
@@ -558,11 +578,12 @@ function ${id}(s) {
                 else if (procid.virtualIndex != null)
                     id = procid.classInfo.id + "_v" + procid.virtualIndex
                 else U.oops();
-                id += "_" + topExpr.args.length + "_mk"
-                if (!ctx.framectors[id]) {
-                    const locals = U.range(topExpr.args.length).map(i => "arg" + i)
-                    ctx.framectors[id] = fnctor(id, "null", 5, locals)
-                }
+                const argLen = topExpr.args.length
+                id += "_" + argLen + "_mk"
+                bin.recordHelper(proc.usingCtx, id, () => {
+                    const locals = U.range(argLen).map(i => "arg" + i)
+                    return fnctor(id, "null", 5, locals)
+                })
                 write(`${frameRef} = ${id}(s);`)
             }
 
@@ -581,19 +602,21 @@ function ${id}(s) {
             let callIt = `s.pc = ${lblId}; return ${frameRef};`
 
             if (procid.ifaceIndex != null) {
-                U.assert(proc == null)
+                U.assert(callproc == null)
                 let isSet = false
+                const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
+                U.assert(!!ifaceFieldName)
                 if (procid.mapMethod) {
                     write(`if (!${frameRef}.arg0.vtable.iface) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
-                    args.splice(1, 0, procid.ifaceIndex.toString())
-                    write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
+                    args.splice(1, 0, JSON.stringify(ifaceFieldName))
+                    write(`  s.retval = ${shimToJs(procid.mapMethod)}ByString(${args.join(", ")});`)
                     write(`} else {`)
                     if (/Set/.test(procid.mapMethod))
                         isSet = true
                 }
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
-                let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`)
+                let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
                 if (isSet) {
                     write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
                     write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
@@ -607,15 +630,16 @@ function ${id}(s) {
                 callIt = ""
             } else if (procid.virtualIndex == -1) {
                 // lambda call
-                U.assert(proc == null)
+                U.assert(callproc == null)
                 write(`setupLambda(${frameRef}, ${frameRef}.argL);`)
             } else if (procid.virtualIndex != null) {
-                U.assert(proc == null)
+                U.assert(callproc == null)
                 assert(procid.virtualIndex >= 0)
                 emitInstanceOf(procid.classInfo, "validate", frameRef + ".arg0")
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
+                const meth = procid.classInfo.vtable[procid.virtualIndex]
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods.${meth.getName()};`)
             } else {
-                U.assert(proc != null)
+                U.assert(callproc != null)
             }
 
             if (callIt) write(callIt)

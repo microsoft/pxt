@@ -380,7 +380,7 @@ _start_${name}:
         function emitInstanceOf(info: ClassInfo, tp: string) {
             if (tp == "bool") {
                 write(`checkinst ${info.id}_VT`)
-            } else if (tp == "validate" || tp == "validateDecr") {
+            } else if (tp == "validate") {
                 U.oops()
             } else {
                 U.oops()
@@ -455,7 +455,7 @@ _start_${name}:
                     return
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    emitInstanceOf(e.data, e.jsInfo)
+                    emitInstanceOf(e.data, e.jsInfo as string)
                     break
 
                 default: throw oops("kind: " + e.exprKind);

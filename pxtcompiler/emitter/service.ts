@@ -16,24 +16,24 @@ namespace ts.pxtc {
     }
 
     export const ts2PyFunNameMap: pxt.Map<FunOverride> = {
-            "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
-            "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
-            "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
-            "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword },
-            "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
-            "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
-            ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
-            ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
-            ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
-            ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
-            "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
-            "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
-            "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
-            "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
-            "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
-            ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
-            "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
-        }
+        "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
+        "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
+        "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
+        "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword },
+        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
+        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
+        ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
+        ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
+        ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
+        ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
+        "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+        "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+        "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+        "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+        "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
+        ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
+        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
+    }
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
@@ -214,17 +214,6 @@ namespace ts.pxtc {
             return true;
         else
             return false;
-    }
-
-    function isInKsModule(decl: Node): boolean {
-        while (decl) {
-            if (decl.kind == SK.SourceFile) {
-                let src = decl as SourceFile
-                return src.fileName.indexOf("pxt_modules") >= 0
-            }
-            decl = decl.parent
-        }
-        return false
     }
 
     function isReadonly(decl: Declaration) {
@@ -720,6 +709,7 @@ namespace ts.pxtc.service {
         opts = emptyOptions;
         fileVersions: pxt.Map<number> = {};
         projectVer = 0;
+        pxtModulesOK: string = null;
 
         getProjectVersion() {
             return this.projectVer + ""
@@ -731,6 +721,11 @@ namespace ts.pxtc.service {
                 this.opts.fileSystem[fn] = cont
                 this.projectVer++
             }
+        }
+
+        reset() {
+            this.setOpts(emptyOptions)
+            this.pxtModulesOK = null
         }
 
         setOpts(o: CompileOptions) {
@@ -838,7 +833,7 @@ namespace ts.pxtc.service {
         reset: () => {
             service.cleanupSemanticCache();
             lastApiInfo = null
-            host.setOpts(emptyOptions)
+            host.reset()
         },
 
         setOptions: v => {
@@ -937,15 +932,18 @@ namespace ts.pxtc.service {
         },
 
         compile: v => {
-            addApiInfo(v.options)
-            return compile(v.options)
+            host.setOpts(v.options)
+            const res = runConversionsAndCompileUsingService()
+            timesToMs(res);
+            return res
         },
         decompile: v => {
-            return decompile(v.options, v.fileName, false);
+            host.setOpts(v.options)
+            return decompile(service.getProgram(), v.options, v.fileName, false);
         },
         pydecompile: v => {
-            let program = getTSProgram(v.options);
-            return (pxt as any).py.decompileToPython(program, v.fileName);
+            host.setOpts(v.options)
+            return (pxt as any).py.decompileToPython(service.getProgram(), v.fileName);
         },
         assemble: v => {
             return {
@@ -961,32 +959,13 @@ namespace ts.pxtc.service {
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
-            addApiInfo(host.opts)
-
-            let convDiag = runConversions(host.opts)
-            if (convDiag.length > 0)
-                return convDiag
-
-            let global = service.getCompilerOptionsDiagnostics() || []
-            let byFile = host.getScriptFileNames().map(fileDiags)
-            let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))
-
-            if (allD.length == 0) {
-                let res: CompileResult = {
-                    outfiles: {},
-                    diagnostics: [],
-                    success: true,
-                    times: {}
-                }
-                const program = service.getProgram();
-                const sources = program.getSourceFiles();
-                // entry point is main.ts or the last file which should be the test file if any
-                const entryPoint = sources.filter(f => f.fileName == "main.ts")[0] || sources[sources.length - 1];
-                const binOutput = compileBinary(program, null, host.opts, res, entryPoint ? entryPoint.fileName : "main.ts");
-                allD = binOutput.diagnostics
-            }
-
-            return patchUpDiagnostics(allD)
+            // not comapatible with incremental compilation
+            // host.opts.noEmit = true
+            let res = runConversionsAndCompileUsingService();
+            timesToMs(res);
+            if (host.opts.target.switches.time)
+                console.log("DIAG-TIME", res.times)
+            return res.diagnostics
         },
 
         format: v => {
@@ -1181,6 +1160,35 @@ namespace ts.pxtc.service {
         projectSearchClear: () => {
             lastProjectFuse = undefined;
         }
+    }
+
+    function runConversionsAndCompileUsingService() {
+        addApiInfo(host.opts)
+        const prevFS = U.flatClone(host.opts.fileSystem);
+        let res = runConversionsAndStoreResults(host.opts);
+        const newFS = host.opts.fileSystem
+        host.opts.fileSystem = prevFS
+        for (let k of Object.keys(newFS))
+            host.setFile(k, newFS[k]) // update version numbers
+        if (res.diagnostics.length == 0) {
+            host.opts.skipPxtModulesEmit = false
+            host.opts.skipPxtModulesTSC = false
+            const currKey = host.opts.target.isNative ? "native" : "js"
+            if (!host.opts.target.switches.noIncr && host.pxtModulesOK) {
+                host.opts.skipPxtModulesTSC = true
+                if (host.opts.noEmit)
+                    host.opts.skipPxtModulesEmit = true
+                else if (host.opts.target.isNative)
+                    host.opts.skipPxtModulesEmit = false
+                // don't cache emit when debugging pxt_modules/*
+                else if (host.pxtModulesOK == "js" && (!host.opts.breakpoints || host.opts.justMyCode))
+                    host.opts.skipPxtModulesEmit = true
+            }
+            res = compile(host.opts, service);
+            if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
+                host.pxtModulesOK = currKey
+        }
+        return res;
     }
 
     export function performOperation(op: string, arg: OpArg) {

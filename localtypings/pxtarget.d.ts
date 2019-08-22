@@ -49,7 +49,8 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
-        unsupportedBrowsers?: BrowserOptions[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
     }
 
     interface BrowserOptions {
@@ -282,6 +283,7 @@ declare namespace pxt {
         debugger?: boolean; // debugger button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
+        showProjectSettings?: boolean; // show a link to pxt.json in the cogwheel menu
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
@@ -411,6 +413,7 @@ declare namespace ts.pxtc {
         inlineConversions?: boolean;
         noPeepHole?: boolean;
         time?: boolean;
+        noIncr?: boolean;
     }
 
     interface CompileTarget {
@@ -539,6 +542,7 @@ declare namespace ts.pxtc {
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
+        argsNullable?: boolean; // allow NULL to be passed to C++ shim function
 
         // on class
         snippet?: string; // value used to generate TS snippet
@@ -718,6 +722,8 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
         bannedCategories?: string[];
+        skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
+        skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
 
         syntaxInfo?: SyntaxInfo;
 

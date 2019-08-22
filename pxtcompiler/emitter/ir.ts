@@ -39,6 +39,7 @@ namespace ts.pxtc.ir {
         method: string;
         returnsRef?: boolean;
         refTag?: pxt.BuiltInType;
+        refTagNullable?: boolean;
     }
 
     export interface MaskInfo {
@@ -47,7 +48,7 @@ namespace ts.pxtc.ir {
     }
 
     export class Expr extends Node {
-        public jsInfo: string;
+        public jsInfo: {};
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public irCurrUses: number;
@@ -78,8 +79,15 @@ namespace ts.pxtc.ir {
         }
 
         ptrlabel() {
-            if (this.jsInfo as any instanceof Stmt)
-                return this.jsInfo as any as Stmt
+            if (this.jsInfo instanceof Stmt)
+                return this.jsInfo as Stmt
+            return null
+        }
+
+        hexlit() {
+            const anyJs = this.jsInfo as any
+            if (anyJs.hexlit)
+                return anyJs.hexlit
             return null
         }
 
@@ -290,11 +298,8 @@ namespace ts.pxtc.ir {
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
             if (def) {
-                const s = getSourceFileOfNode(def);
-                if (s && s.fileName) {
-                    if (!/^pxt_modules\//.test(s.fileName)) {
-                        this.isUserVariable = true
-                    }
+                if (!isInPxtModules(def)) {
+                    this.isUserVariable = true
                 }
                 if (info) {
                     setCellProps(this)
@@ -514,6 +519,8 @@ namespace ts.pxtc.ir {
         lblNo = 0;
         action: ts.FunctionLikeDeclaration = null;
         inlineBody: ir.Expr;
+        cachedJS: string = null;
+        usingCtx: PxtNode = null;
 
         reset() {
             this.body = []

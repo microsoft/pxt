@@ -386,6 +386,7 @@ namespace pxt {
     }
 
     export const CONFIG_NAME = "pxt.json"
+    export const SIMSTATE_JSON = ".simstate.json"
     export const SERIAL_EDITOR_FILE = "serial.txt"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";

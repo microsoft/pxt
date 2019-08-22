@@ -3514,7 +3514,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
-                const decompiled = pxtc.decompile(opts, "main.ts");
+                const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
                 }
@@ -5021,6 +5021,19 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         const targeConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
         if (targeConfig.galleries)
             Object.keys(targeConfig.galleries).forEach(gallery => todo.push(targeConfig.galleries[gallery]));
+    }
+
+    // push files from targetconfig checkdocsdirs
+    const mdRegex = /\.md$/;
+    const targetDirs = pxt.appTarget.checkdocsdirs;
+    if (targetDirs) {
+        targetDirs.forEach(dir => {
+            pxt.log(`looking for markdown files in ${dir}`);
+            nodeutil.allFiles(path.join("docs", dir), 3).filter(f => mdRegex.test(f))
+                .forEach(md => {
+                    pushUrl(md.slice(5).replace(mdRegex, ""), true);
+                });
+        })
     }
 
     while (todo.length) {

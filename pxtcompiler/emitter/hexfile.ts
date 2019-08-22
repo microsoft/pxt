@@ -855,7 +855,7 @@ ${hex.hexPrelude()}
     .word _pxt_lambda_trampoline@fn
     .word _pxt_perf_counters
     .word _pxt_restore_exception_state@fn
-    .word 0 ; reserved
+    .word ${bin.emitString(bin.getTitle())} ; name
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
@@ -1148,7 +1148,13 @@ __flash_checksums:
     export let validateShim = hex.validateShim;
 
     export function f4EncodeImg(w: number, h: number, bpp: number, getPix: (x: number, y: number) => number) {
-        let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
+        const header = [
+            0x87, bpp,
+            w & 0xff, w >> 8,
+            h & 0xff, h >> 8,
+            0, 0
+        ]
+        let r = header.map(hex2).join("")
         let ptr = 4
         let curr = 0
         let shift = 0
@@ -1181,6 +1187,5 @@ __flash_checksums:
         function hex2(n: number) {
             return ("0" + n.toString(16)).slice(-2)
         }
-
     }
 }

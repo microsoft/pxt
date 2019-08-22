@@ -287,9 +287,27 @@ namespace pxsim {
             this.messageListeners.push(listener);
         }
 
+        get storedState(): Map<any> {
+            if (!this.runOptions) return {}
+            if (!this.runOptions.storedState)
+                this.runOptions.storedState = {}
+            return this.runOptions.storedState
+        }
         public initAsync(msg: SimulatorRunMessage): Promise<void> {
             this.runOptions = msg;
             return Promise.resolve()
+        }
+        public setStoredState(k: string, value: any) {
+            if (value == null)
+                delete this.storedState[k]
+            else
+                this.storedState[k] = value
+            Runtime.postMessage({
+                type: "simulator",
+                command: "setstate",
+                stateKey: k,
+                stateValue: value
+            } as SimulatorCommandMessage)
         }
         public onDebuggerResume() { }
         public screenshotAsync(width?: number): Promise<ImageData> {
@@ -528,13 +546,14 @@ namespace pxsim {
             classNo: src.classNo,
             methods: src.methods,
             iface: src.iface,
+            lastSubtypeNo: src.lastSubtypeNo,
             toStringMethod: src.toStringMethod
-          };
+        };
     }
 
     let mapVTable: VTable = null
     export function mkMapVTable() {
-        if (!mapVTable) mapVTable = mkVTable({ name: "_Map", numFields: 0, classNo: 0, methods: null })
+        if (!mapVTable) mapVTable = mkVTable({ name: "_Map", numFields: 0, classNo: 0, lastSubtypeNo: 0, methods: null })
         return mapVTable
     }
 
@@ -1076,8 +1095,13 @@ namespace pxsim {
                 }
             }
 
-            function checkSubtype(v: RefRecord, low: number, high: number) {
-                return v && v.vtable && low <= v.vtable.classNo && v.vtable.classNo <= high;
+            function checkSubtype(v: RefRecord, vt: VTable) {
+                if (!v)
+                    return false
+                const vt2 = v.vtable
+                if (vt === vt2)
+                    return true
+                return vt2 && vt.classNo <= vt2.classNo && vt2.classNo <= vt.lastSubtypeNo;
             }
 
             function failedCast(v: any) {

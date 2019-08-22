@@ -391,6 +391,8 @@ export class ProjectView
                 mpkg.setFile("main.py", "# ...");
             this.setFile(pkg.mainEditorPkg().files["main.py"])
         }
+
+        pxt.Util.setEditorLanguagePref("py");
     }
 
     openJavaScript(giveFocusOnLoading = true) {
@@ -413,6 +415,8 @@ export class ProjectView
         } else if (this.isPythonActive()) {
             this.openTypeScriptAsync().done()
         } else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+
+        pxt.Util.setEditorLanguagePref("js");
     }
 
     openBlocks() {
@@ -717,6 +721,9 @@ export class ProjectView
                         this.setState({ simState: pxt.editor.SimState.Running });
                         break;
                 }
+            },
+            setState: (k, v) => {
+                pkg.mainEditorPkg().setSimState(k, v)
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
@@ -2101,7 +2108,10 @@ export class ProjectView
             return;
         }
 
-        const simRestart = this.state.simState != pxt.editor.SimState.Stopped;
+        let simRestart = this.state.simState != pxt.editor.SimState.Stopped;
+        // if we're just waiting for empty code to run, don't force restart
+        if (simRestart && this.state.simState == pxt.editor.SimState.Pending && pxt.appTarget.simulator.emptyRunCode)
+            simRestart = false
         this.setState({ compiling: true });
         this.clearSerial();
         this.editor.beforeCompile();
@@ -2500,7 +2510,9 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
-                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute,
+                                this.state.highContrast, pxt.options.light, opts.clickTrigger,
+                                pkg.mainEditorPkg().getSimState())
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints);
                             this.textEditor.setBreakpointsMap(resp.breakpoints);
                             if (!cancellationToken.isCancelled()) {
@@ -3221,7 +3233,7 @@ export class ProjectView
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
-        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() :  null;
+        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() : null;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3938,7 +3950,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })
 
 
-function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string} {
+function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
     // FIXME: Remove this once arcade documentation has been updated from enums to namespace for spritekind
     md = pxt.tutorial.patchArcadeSnippets(md);
 

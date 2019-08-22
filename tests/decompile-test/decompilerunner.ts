@@ -105,7 +105,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
     return util.getTestCompileOptsAsync({ "main.ts": tsMain }, dependency, true)
         .then(opts => {
-            const decompiled = pxtc.decompile(opts, "main.ts", true);
+            const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts", true);
             if (decompiled.success) {
                 return decompiled.outfiles["main.blocks"];
             }

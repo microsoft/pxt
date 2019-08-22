@@ -107,6 +107,7 @@ namespace pxsim {
         numFields: number;
         toStringMethod?: LabelFn;
         classNo: number;
+        lastSubtypeNo: number;
         iface?: Map<any>;
     }
 
@@ -153,6 +154,10 @@ namespace pxsim {
     }
 
     export namespace pxtcore {
+        export function seedAddRandom(num: number) {
+            // nothing yet
+        }
+
         export function mkAction(len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
@@ -352,6 +357,10 @@ namespace pxsim {
 
         export function programHash() {
             return 0;
+        }
+
+        export function programName() {
+            return pxsim.title;
         }
 
         export function programSize() {

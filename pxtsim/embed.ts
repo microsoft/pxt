@@ -20,6 +20,7 @@ namespace pxsim {
         version?: string;
         clickTrigger?: boolean;
         breakOnStart?: boolean;
+        storedState?: Map<any>;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -95,7 +96,9 @@ namespace pxsim {
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart" | "reload"
+        command: "modal" | "restart" | "reload" | "setstate"
+        stateKey?: string;
+        stateValue?: any;
         header?: string;
         body?: string;
         copyable?: string;
