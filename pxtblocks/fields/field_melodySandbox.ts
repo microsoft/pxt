@@ -404,7 +404,7 @@ namespace pxtblockly {
             this.invalidString = null;
             this.melody.updateMelody(row, col);
 
-            if (this.melody.getValue(row, col)) {
+            if (this.melody.getValue(row, col) && !this.isPlaying) {
                 this.playNote(row, col);
             }
 
@@ -552,15 +552,24 @@ namespace pxtblockly {
         }
 
         private togglePlay() {
-            if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) {
-                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
-                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            if (!this.isPlaying) {
                 this.isPlaying = true;
                 this.playMelody();
             } else {
+                this.stopMelody();
+            }
+
+            this.updatePlayButton();
+        }
+
+        private updatePlayButton() {
+            if (this.isPlaying) {
+                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
+                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            }
+            else {
                 pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "play icon");
-                this.stopMelody();
             }
         }
 
@@ -588,6 +597,7 @@ namespace pxtblockly {
 
         private showGallery() {
             this.stopMelody();
+            this.updatePlayButton();
             this.gallery.show((result: string) => {
                 if (result) {
                     this.melody.parseNotes(result);

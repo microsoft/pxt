@@ -63,22 +63,62 @@
 #melody-editor-gallery {
     overflow-y: scroll;
     overflow-x: hidden;
-    padding: 10px 35px 10px 10px;
+    padding: 0.75rem;
     background: #4f0643;
     max-height: 350px;
 }
 
 .melody-gallery-button {
     text-align: center;
-    display: inline-block;
-    padding: 5px;
-    margin: 4px;
+    display: flex;
     border-radius: 4px;
-    outline: none;
-    border: 1px solid;
     transition: box-shadow .1s;
     cursor: pointer;
-    line-height: 35px;
+    background-color: #dcdcdc;
+
+    width: 100%;
+    margin-bottom: 0.75rem;
+    height: 2.75rem;
+    line-height: 2.5rem;
+}
+
+.melody-gallery-button .melody-color-block {
+    margin-top: 0.5rem;
+}
+
+.melody-editor-button.left-button {
+    flex-grow: 1;
+    border-radius: 4px 0 0 4px;
+    border-left: 1px #ffffff solid;
+    border-bottom: 1px #ffffff solid;
+    border-top: 1px #ffffff solid;
+    padding-left: 0.5rem;
+    padding-right: 0.3rem;
+}
+
+.melody-editor-button.right-button {
+    min-width: 2.75rem;
+    padding-left: 0.3rem;
+    border-radius: 0 4px 4px 0;
+    border-left: 1px solid #4f0643;
+    border-right: 1px #ffffff solid;
+    border-bottom: 1px #ffffff solid;
+    border-top: 1px #ffffff solid;
+}
+
+.melody-editor-button {
+    background-color: #dcdcdc;
+    color: rgb(0, 0, 0, 0.6);
+
+    transition: color .1s, background-color .1s;
+}
+.melody-editor-button:hover {
+    background-color: #cacbcd;
+    color: rgb(0, 0, 0, 0.8);
+}
+
+.melody-editor-button.right-button .icon {
+    opacity: 0.9;
 }
 
 .melody-gallery-play-icon {
@@ -255,5 +295,5 @@
 }
 
 .playing {
-    fill-opacity: 0.8;
+    fill-opacity: 0.7;
 }
