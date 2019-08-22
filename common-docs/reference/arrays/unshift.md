@@ -26,9 +26,9 @@ Make an array that simulates a train. Place the parts of the train in the right 
 ```blocks
 let count = 0
 let part = ""
+let train: string[] = []
 let parts = ["flatcar", "boxcar", "tanker", "engine", "flatcar", "caboose", "boxcar"]
 while (parts.length > 0) {
-    let train: string[] = []
     part = parts.shift()
     if (parts.length > 1) {
         if (part == "engine") {
