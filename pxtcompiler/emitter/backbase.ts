@@ -738,6 +738,10 @@ ${baseLabel}_nochk:
 
         // vtable in r3; clobber r2
         private checkSubtype(info: ClassInfo, failLbl = ".fail", r2 = "r2") {
+            if (!info.classNo) {
+                this.write(`b ${failLbl} ; always fails; class never instantiated`)
+                return
+            }
             this.write(`ldrh ${r2}, [r3, #8]`)
             this.write(`cmp ${r2}, #${info.classNo}`)
             if (info.classNo == info.lastSubtypeNo) {
