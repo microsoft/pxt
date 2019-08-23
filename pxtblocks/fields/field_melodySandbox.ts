@@ -404,7 +404,7 @@ namespace pxtblockly {
             this.invalidString = null;
             this.melody.updateMelody(row, col);
 
-            if (this.melody.getValue(row, col)) {
+            if (this.melody.getValue(row, col) && !this.isPlaying) {
                 this.playNote(row, col);
             }
 
@@ -432,10 +432,54 @@ namespace pxtblockly {
         }
 
         private playNote(rowNumber: number, colNumber?: number): void {
-            let tone: number = 0;
             let count: number = ++this.soundingKeys;
 
-            switch (rowNumber) {
+            if (this.isPlaying) {
+                this.timeouts.push(setTimeout(() => {
+                    this.playToneCore(rowNumber);
+                }, colNumber * this.getDuration()));
+
+                this.timeouts.push(setTimeout(() => {
+                    pxt.AudioContextManager.stop();
+                }, (colNumber + 1) * this.getDuration()));
+            }
+            else {
+                this.playToneCore(rowNumber);
+                this.timeouts.push(setTimeout(() => {
+                    if (this.soundingKeys == count)
+                        pxt.AudioContextManager.stop();
+                }, this.getDuration()));
+            }
+        }
+
+        protected queueToneForColumn(column: number, delay: number, duration: number) {
+            const start = setTimeout(() => {
+                ++this.soundingKeys;
+                pxt.AudioContextManager.stop();
+
+                for (let i = 0; i < this.numRow; i++) {
+                    if (this.melody.getValue(i, column)) {
+                        this.playToneCore(i);
+                    }
+                }
+                this.highlightColumn(column, true);
+                this.timeouts = this.timeouts.filter(t => t !== start);
+            }, delay);
+
+            const end = setTimeout(() => {
+                // pxt.AudioContextManager.stop();
+                this.timeouts = this.timeouts.filter(t => t !== end);
+                this.highlightColumn(column, false);
+            }, delay + duration)
+
+            this.timeouts.push(start);
+            this.timeouts.push(end);
+        }
+
+        protected playToneCore(row: number) {
+            let tone: number = 0;
+
+            switch (row) {
                 case 0: tone = 523; break; // Tenor C
                 case 1: tone = 494; break; // Middle B
                 case 2: tone = 440; break; // Middle A
@@ -446,24 +490,16 @@ namespace pxtblockly {
                 case 7: tone = 262; break; // Middle C
             }
 
-            if (this.isPlaying) { // when melody is playing
-                // start note
-                this.timeouts.push(setTimeout(() => {
-                    pxt.AudioContextManager.tone(tone);
-                }, colNumber * this.getDuration()));
-                // stop note
-                this.timeouts.push(setTimeout(() => {
-                    pxt.AudioContextManager.stop();
-                }, (colNumber + 1) * this.getDuration()));
-            } else { // when a single note is selected
-                // start note
-                pxt.AudioContextManager.tone(tone);
-                // stop note
-                this.timeouts.push(setTimeout(() => {
-                    if (this.soundingKeys == count)
-                        pxt.AudioContextManager.stop();
-                }, this.getDuration()));
-            }
+            pxt.AudioContextManager.tone(tone);
+        }
+
+        private highlightColumn(col: number, on: boolean) {
+            const cells = this.cells.map(row => row[col]);
+
+            cells.forEach(cell => {
+                if (on) pxt.BrowserUtils.addClass(cell, "playing")
+                else pxt.BrowserUtils.removeClass(cell, "playing")
+            });
         }
 
         private createGridDisplay(): SVGSVGElement {
@@ -516,26 +552,31 @@ namespace pxtblockly {
         }
 
         private togglePlay() {
-            if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) {
-                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
-                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            if (!this.isPlaying) {
                 this.isPlaying = true;
                 this.playMelody();
             } else {
+                this.stopMelody();
+            }
+
+            this.updatePlayButton();
+        }
+
+        private updatePlayButton() {
+            if (this.isPlaying) {
+                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
+                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            }
+            else {
                 pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "play icon");
-                this.stopMelody();
             }
         }
 
         private playMelody() {
             if (this.isPlaying) {
                 for (let i = 0; i < this.numCol; i++) {
-                    for (let j = 0; j < this.numRow; j++) {
-                        if (this.melody.getValue(j, i)) {
-                            this.playNote(j, i);
-                        }
-                    }
+                    this.queueToneForColumn(i, i * this.getDuration(), this.getDuration());
                 }
                 this.timeouts.push(setTimeout( // call the melody again after it finishes
                     () => this.playMelody(), (this.numCol) * this.getDuration()));
@@ -549,11 +590,14 @@ namespace pxtblockly {
                 while (this.timeouts.length) clearTimeout(this.timeouts.shift());
                 pxt.AudioContextManager.stop();
                 this.isPlaying = false;
+
+                this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell, "playing")));
             }
         }
 
         private showGallery() {
             this.stopMelody();
+            this.updatePlayButton();
             this.gallery.show((result: string) => {
                 if (result) {
                     this.melody.parseNotes(result);
