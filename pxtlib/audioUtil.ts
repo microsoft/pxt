@@ -1,7 +1,8 @@
 namespace pxt.AudioContextManager {
     let _frequency = 0;
-    let _context: any; // AudioContext
-    let _vco: any; // OscillatorNode;
+    let _context: AudioContext; // AudioContext
+    let _vco: OscillatorNode; // OscillatorNode;
+    let _gain: GainNode;
 
     let _mute = false; //mute audio
 
@@ -27,12 +28,20 @@ namespace pxt.AudioContextManager {
             return;
         _mute = mute;
         stop();
+
+        if (mute && _vco) {
+            _vco.disconnect();
+            _gain.disconnect();
+            _vco = undefined;
+            _gain = undefined;
+        }
     }
 
     export function stop() {
         if (!_context)
             return;
-        _vco.disconnect();
+
+        _gain.gain.setTargetAtTime(0, _context.currentTime, 0.015);
         _frequency = 0;
     }
 
@@ -45,20 +54,24 @@ namespace pxt.AudioContextManager {
         if (frequency <= 0) return;
         _frequency = frequency;
 
-        let ctx = context();
+        let ctx = context() as AudioContext;
         if (!ctx) return;
 
         try {
-            if (_vco) {
-                _vco.disconnect();
-                _vco = undefined;
-            }
-            _vco = ctx.createOscillator();
-            _vco.frequency.value = frequency;
-            _vco.type = 'triangle';
-            _vco.connect(ctx.destination);
+            if (!_vco) {
+                _vco = ctx.createOscillator();
+                _vco.type = 'triangle';
 
-            _vco.start(0);
+                _gain = ctx.createGain();
+                _gain.connect(ctx.destination);
+
+                _vco.connect(_gain);
+                _vco.start(0);
+
+            }
+            _vco.frequency.value = frequency;
+            _gain.gain.setTargetAtTime(1, _context.currentTime, 0.015);
+
         } catch (e) {
             _vco = undefined;
             return;
