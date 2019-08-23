@@ -84,8 +84,6 @@ export function setupWorkspace(id: string) {
     }
 }
 
-
-
 export function getHeaders(withDeleted = false) {
     checkSession();
     let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
@@ -714,7 +712,6 @@ export function saveToCloudAsync(h: Header) {
     checkSession();
     return cloudsync.saveToCloudAsync(h)
 }
-
 
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
