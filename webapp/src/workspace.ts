@@ -5,7 +5,7 @@
 import * as db from "./db";
 import * as core from "./core";
 import * as data from "./data";
-import * as cloudworkspace from "./browserworkspace"
+import * as browserworkspace from "./browserworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
@@ -50,7 +50,7 @@ export function copyProjectToLegacyEditor(header: Header, majorVersion: number):
     if (!isBrowserWorkspace()) {
         return Promise.reject("Copy operation only works in browser workspace");
     }
-    return cloudworkspace.copyProjectToLegacyEditor(header, majorVersion);
+    return browserworkspace.copyProjectToLegacyEditor(header, majorVersion);
 }
 
 export function setupWorkspace(id: string) {
@@ -79,10 +79,12 @@ export function setupWorkspace(id: string) {
         case "cloud":
         case "browser":
         default:
-            impl = cloudworkspace.provider
+            impl = browserworkspace.provider
             break;
     }
 }
+
+
 
 export function getHeaders(withDeleted = false) {
     checkSession();
@@ -163,7 +165,7 @@ function checkSession() {
 }
 
 export function initAsync() {
-    if (!impl) impl = cloudworkspace.provider;
+    if (!impl) impl = browserworkspace.provider;
 
     // generate new workspace session id to avoid races with other tabs
     sessionID = ts.pxtc.Util.guidGen();
@@ -713,6 +715,7 @@ export function saveToCloudAsync(h: Header) {
     return cloudsync.saveToCloudAsync(h)
 }
 
+
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
 
@@ -786,7 +789,7 @@ export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
 }
 
 export function isBrowserWorkspace() {
-    return impl === cloudworkspace.provider;
+    return impl === browserworkspace.provider;
 }
 
 export function fireEvent(ev: pxt.editor.events.Event) {
