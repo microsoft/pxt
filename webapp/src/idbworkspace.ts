@@ -29,7 +29,7 @@ function migrateBrowserWorkspaceAsync(): Promise<void> {
         })
         .then((allDbHeaders) => {
                 if (allDbHeaders.length) {
-                    // There are already scripts using the prefix, so a migration has already happened
+                    // There are already scripts using the idbworkspace, so a migration has already happened
                     return Promise.resolve();
                 }
 
