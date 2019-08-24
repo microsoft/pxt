@@ -308,8 +308,10 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        // onErrorClick is explicitly set so that it is not passed down under the ...rest
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, onErrorClick, ...rest } = this.props;
+        // props starting with `on` are used in other methods,
+        // and only stored as local variables here to prevent them from propagating in the ...rest
+        const { isActive, hasDelete, file, meta,
+            onClick, onItemClick, onItemRemove, onErrorClick, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -373,8 +375,10 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { onItemClick, onItemRemove, onItemRefresh, version,
-            isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
+        // props starting with `on` are used in other methods,
+        // and only stored as local variables here to prevent them from propagating in the ...rest
+        const { version, isActive, hasRefresh, hasDelete, pkg: p,
+            onItemClick, onItemRemove, onItemRefresh, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
             aria-selected={isActive} aria-expanded={isActive}
