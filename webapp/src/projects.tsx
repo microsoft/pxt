@@ -596,7 +596,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, url, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
