@@ -423,23 +423,22 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             />
                         )}
                     </carousel.Carousel>
-                    <div ref="detailView" className={`detailview ${selectedElement ? 'visible' : ''}`}>
-                        {selectedElement && <sui.CloseButton onClick={this.closeDetail}/>}
-                        {selectedElement &&  <ProjectsDetail parent={this.props.parent}
-                                name={selectedElement.name}
-                                key={'detail' + selectedElement.name}
-                                description={selectedElement.description}
-                                url={selectedElement.url}
-                                imageUrl={selectedElement.imageUrl}
-                                largeImageUrl={selectedElement.largeImageUrl}
-                                youTubeId={selectedElement.youTubeId}
-                                scr={selectedElement}
-                                onClick={this.props.onClick}
-                                cardType={selectedElement.cardType}
-                                tags={selectedElement.tags}
-                            />
-                        }
-                    </div>
+                    {selectedElement && <div ref="detailView" className={`detailview`}>
+                        <sui.CloseButton onClick={this.closeDetail}/>
+                        <ProjectsDetail parent={this.props.parent}
+                            name={selectedElement.name}
+                            key={'detail' + selectedElement.name}
+                            description={selectedElement.description}
+                            url={selectedElement.url}
+                            imageUrl={selectedElement.imageUrl}
+                            largeImageUrl={selectedElement.largeImageUrl}
+                            youTubeId={selectedElement.youTubeId}
+                            scr={selectedElement}
+                            onClick={this.props.onClick}
+                            cardType={selectedElement.cardType}
+                            tags={selectedElement.tags}
+                        />
+                    </div>}
                 </div>
             }
         } else {
