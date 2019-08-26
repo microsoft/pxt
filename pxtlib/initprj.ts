@@ -89,21 +89,21 @@ pxt_modules
 on: [push]
 
 jobs:
-    build:
+  build:
 
     runs-on: ubuntu-latest
 
     strategy:
-        matrix:
+      matrix:
         node-version: [8.x]
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Use Node.js $\{{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: $\{{ matrix.node-version }}
-    - name: npm install, build, and test
+        - uses: actions/checkout@v1
+        - name: Use Node.js $\{{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+            node-version: $\{{ matrix.node-version }}
+        - name: npm install, build, and test
         run: |
             npm install -g pxt
             pxt target @TARGET@
