@@ -9,9 +9,8 @@
         High Contrast
 *******************************/
 
-@selected: #10C8CD;
+@selected: yellow;
 @disabled: #3ff23f;
-@hcYellow: yellow;
 
 /* Messages */
 #msg .hc {
@@ -48,37 +47,44 @@
 
     /* Focus */
 
-    *[tabindex='0']:focus,
-    *[tabindex*='d1']:focus,
-    *[tabindex*='d2']:focus, /* Takes items with a defined tabIndex from 0 to 29. */
-    *[role='menuitem']:focus,
-    a:not([tabindex='-1']):focus,
-    input:not([tabindex='-1']):focus,
-    button:not([tabindex='-1']):focus {
-        outline: 2px solid @selected !important;
-    }
-
-    @media all and (pointer:coarse) { /* If touch screen */
-        *[tabindex='0']:focus,
-        *[tabindex*='d1']:focus,
-        *[tabindex*='d2']:focus,
-        *[role='menuitem']:focus,
-        a:not([tabindex='-1']):focus,
-        input:not([tabindex='-1']):focus,
-        button:not([tabindex='-1']):focus {
-            outline: 1px solid transparent !important;
+    *[tabindex='0'],
+    *[tabindex*='d1'],
+    *[tabindex*='d2'], /* Takes items with a defined tabIndex from 0 to 29. */
+    *[role='menuitem'],
+    a:not([tabindex='-1']),
+    input:not([tabindex='-1']),
+    button:not([tabindex='-1']),
+    #monacoEditor .blocklyTreeRow,
+    #monacoEditor .monacoDraggableBlock {
+        &:focus, &:hover {
+            outline: 2px solid @selected !important;
         }
     }
 
-    .blocklyWidgetDiv *:focus,
-    .blocklySVG *:focus,
-    .monaco-editor *:focus,
-    #monacoEditor *:focus {
-        outline: none !important;
+    @media all and (pointer:coarse) { /* If touch screen */
+        *[tabindex='0'],
+        *[tabindex*='d1'],
+        *[tabindex*='d2'],
+        *[role='menuitem'],
+        a:not([tabindex='-1']),
+        input:not([tabindex='-1']),
+        button:not([tabindex='-1']),
+        #monacoEditor .blocklyTreeRow,
+        #monacoEditor .monacoDraggableBlock {
+            &:focus, &:hover {
+                outline: 1px solid transparent !important;
+            }
+        }
     }
 
-    .blocklyTreeRoot:focus {
-        outline: none !important;
+    .blocklyWidgetDiv *,
+    .blocklySVG *,
+    .monaco-editor *,
+    #monacoEditor *,
+    .blocklyTreeRoot {
+        &:focus, &:hover {
+            outline: none !important;
+        }
     }
 
     /* Blockly toolbox */
@@ -189,12 +195,12 @@
         color: @HCbuttonTextColor !important;
         border: 1px solid @HCbuttonTextColor !important;
 
-        &:focus {
-            color: @selected !important;
+        &:focus, &:hover {
+            color: @HCbuttonTextColor !important;
             border-color: @selected !important;
 
             i, span {
-                color: @selected !important;
+                color: @HCbuttonTextColor !important;
             }
         }
 
@@ -212,6 +218,16 @@
         }
     }
 
+    .filemenu .ui.button,
+    .header-close .ui.button {
+        &:focus, &:hover {
+            color: @selected !important;
+            i, span {
+                color: @selected !important;
+            }
+        }
+    }
+
     /* Inputs */
     .ui.input input {
         background: white !important;
@@ -219,7 +235,7 @@
         border: 1px solid black !important;
     }
     input::placeholder {
-        color: @selected !important;
+        color: black !important;
     }
 
     /* Home screen */
@@ -262,14 +278,8 @@
             color: white !important;
         }
 
-        &:hover {
-            .header, .description, .meta {
-                color: @hcYellow !important;
-            }
-        }
-
-        &:focus {
-            .header, .description, .meta {
+        &:focus, &:hover {
+            .header, .meta, .description {
                 color: @selected !important;
             }
         }
@@ -278,6 +288,10 @@
             background: @disabled !important;
             border-color: @disabled !important;
             color: black !important;
+        }
+
+        a, .link {
+            color: @selected !important;
         }
     }
 
@@ -288,8 +302,8 @@
             color: white !important;
             border: 1px solid white !important;
         }
-        .item:focus, .item.active {
-            background: @selected !important;
+        .item:focus {
+            border-color: @selected !important;
 
             span {
                 color: black !important;
@@ -339,7 +353,7 @@
 
     /* Hyperlinks */
     a {
-        color: @selected !important;
+        color: @HCbuttonTextColor !important;
     }
 
     #sidedocsbar {
@@ -366,11 +380,11 @@
         color: black !important;
 
         &:focus {
-            color: @selected !important;
+            color: @HCbuttonTextColor !important;
             font-weight: normal !important;
 
             i, span {
-                color: @selected !important;
+                color: @HCbuttonTextColor !important;
                 font-weight: normal !important;
             }
         }
@@ -389,7 +403,6 @@
 
     .ui.secondary.menu > .item.active, .ui.secondary.menu > .item.active:hover,
     .ui.secondary.pointing.menu > .item.active, .ui.secondary.pointing.menu > .item.active:hover {
-        color: @selected !important;
         border: 2px solid @selected !important;
         border-radius: initial !important;
         box-shadow: initial !important;
@@ -416,7 +429,6 @@
     }
 
     .ui.blue.labels .label, .ui.blue.label {
-        background-color: @selected !important;
         border-color: @selected !important;
     }
 

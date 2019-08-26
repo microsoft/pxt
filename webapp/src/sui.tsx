@@ -419,6 +419,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     labelPosition?: "left" | "right";
     color?: string;
     size?: SIZES;
+    autoFocus?: boolean;
 }
 
 export class Button extends StatelessUIElement<ButtonProps> {
@@ -439,13 +440,32 @@ export class Button extends StatelessUIElement<ButtonProps> {
             aria-label={this.props.ariaLabel}
             aria-expanded={this.props.ariaExpanded}
             onClick={this.props.onClick}
-            onKeyDown={this.props.onKeyDown}>
+            onKeyDown={this.props.onKeyDown}
+            autoFocus={this.props.autoFocus}
+        >
             {genericContent(this.props)}
             {this.props.children}
         </button>;
         // Tooltips don't work great on IOS, disabling them
         return this.props.tooltipId && !pxt.BrowserUtils.isIOS() ? <Tooltip id={this.props.tooltipId} content={this.props.tooltip || this.props.title}
             place={this.props.tooltipPlace} delayShow={this.props.tooltipDelayShow}>{button}</Tooltip> : button;
+    }
+}
+
+
+export interface CloseButtonProps extends UiProps, TooltipUIProps {
+    onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+}
+export class CloseButton extends StatelessUIElement<CloseButtonProps> {
+    renderCore() {
+        const { onClick } = this.props;
+        return <div role="button" className="closeIcon" tabIndex={0}
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
+            aria-label={lf("Close")}
+        >
+            <Icon icon="close remove circle" />
+        </div>
     }
 }
 
@@ -473,7 +493,8 @@ export class Link extends StatelessUIElement<LinkProps> {
                 aria-label={this.props.ariaLabel}
                 aria-expanded={this.props.ariaExpanded}
                 onClick={this.props.onClick}
-                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}
+            >
                 {genericContent(this.props)}
                 {this.props.children}
             </a>
@@ -1070,10 +1091,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             core.highContrast ? 'hc' : '',
             mountClasses
         ])
-        const closeIconName = closeIcon === true ? 'close' : closeIcon as string;
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc',
+            modal: 'true'
         }
         const customStyles = {
             content: {
@@ -1130,11 +1151,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 {...action} labelPosition={action.labelPosition} />
                     )}
                 </div> : undefined}
-            {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
-                onClick={onClose}
-                onKeyDown={fireClickOnEnter}
-                aria-label={lf("Close")}
-            ><Icon icon="close remove circle" /> </div> : undefined}
+            {!isFullscreen && closeIcon && <CloseButton onClick={onClose} />}
         </ReactModal>
     }
 }

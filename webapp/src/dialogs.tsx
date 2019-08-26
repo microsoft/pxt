@@ -112,7 +112,7 @@ export function githubFooter(msg: string, close: () => void) {
             <p>
                 <br />
                 <br />
-                <a href="#github" role="button" onClick={githubLogout}>
+                <a href="#github" onClick={githubLogout}>
                     {lf("Logout from GitHub")}
                 </a>
                 <br />
@@ -125,7 +125,7 @@ export function githubFooter(msg: string, close: () => void) {
                 <br />
                 {msg}
                 {" "}
-                <a href="#github" role="button" onClick={githubLogin}>
+                <a href="#github" onClick={githubLogin}>
                     {lf("Login to GitHub")}
                 </a>
                 <br />
@@ -726,12 +726,12 @@ export function showReportAbuseAsync(pubId?: string) {
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">
             <div className="ui field">
-                <label>{lf("What is the URL of the offensive project?")}</label>
-                <input type="url" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
+                <label id="abuseUrlLabel">{lf("What is the URL of the offensive project?")}</label>
+                <input type="url" aria-labelledby="abuseUrlLabel" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
             </div>
             <div className="ui field">
-                <label>{lf("Why do you find it offensive?")}</label>
-                <textarea></textarea>
+                <label id="abuseDescriptionLabel">{lf("Why do you find it offensive?")}</label>
+                <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
     }).done(res => {
