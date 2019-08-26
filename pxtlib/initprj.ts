@@ -100,9 +100,9 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Use Node.js $\{{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: $\{{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: $\{{ matrix.node-version }}
       - name: npm install, build, and test
       run: |
         npm install -g pxt
