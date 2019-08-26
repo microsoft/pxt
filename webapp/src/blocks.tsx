@@ -216,26 +216,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let flyoutOnly = !this.editor.toolbox_ && (this.editor as any).flyout_;
 
         (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
-            const tp = b.getBoundingRectangle().topLeft;
-            if (minX === undefined || tp.x < minX) {
-                minX = tp.x;
+            const tpX = b.getBoundingRectangle().left;
+            const tpY = b.getBoundingRectangle().top;
+            if (minX === undefined || tpX < minX) {
+                minX = tpX;
             }
-            if (minY === undefined || tp.y < minY) {
-                minY = tp.y;
+            if (minY === undefined || tpY < minY) {
+                minY = tpY;
             }
 
-            needsLayout = needsLayout || (tp.x == 10 && tp.y == 10);
+            needsLayout = needsLayout || (tpX == 10 && tpY == 10);
         });
         (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
-            const tp = b.getBoundingRectangle().topLeft;
-            if (minX === undefined || tp.x < minX) {
-                minX = tp.x;
+            const tpX = b.getBoundingRectangle().left;
+            const tpY = b.getBoundingRectangle().top;
+            if (minX === undefined || tpX < minX) {
+                minX = tpX;
             }
-            if (minY === undefined || tp.y < minY) {
-                minY = tp.y;
+            if (minY === undefined || tpY < minY) {
+                minY = tpY;
             }
 
-            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 10 && tp.y == 10);
+            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tpX == 10 && tpY == 10);
         });
 
         if (needsLayout && !flyoutOnly) {
@@ -762,7 +764,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
 
         // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.BlockSvg) => {
+        this.editor.getAllBlocks().filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
@@ -863,7 +865,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
-        blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
+        blocks.filter(b => b.isShadow()).forEach(b => b.dispose(false));
     }
 
     private getBlocklyOptions(forceHasCategories?: boolean) {

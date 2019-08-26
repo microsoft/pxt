@@ -513,7 +513,7 @@ namespace pxt.blocks.layout {
 
         function moveFormattable(f: Formattable, x: number, y: number) {
             const bounds = f.value.getBoundingRectangle();
-            f.value.moveBy(x - bounds.topLeft.x, y - bounds.topLeft.y);
+            f.value.moveBy(x - bounds.left, y - bounds.top);
         }
     }
 

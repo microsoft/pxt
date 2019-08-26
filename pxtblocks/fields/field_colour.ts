@@ -92,7 +92,7 @@ namespace pxtblockly {
         showEditor_() {
             super.showEditor_();
             if (this.className_ && this.colorPicker_)
-                pxt.BrowserUtils.addClass(this.colorPicker_.getElement() as SVGElement, this.className_);
+                pxt.BrowserUtils.addClass(this.colorPicker_ as HTMLElement, this.className_);
         }
 
         getColours_(): string[] {

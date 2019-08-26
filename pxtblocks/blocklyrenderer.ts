@@ -96,12 +96,12 @@ namespace pxt.blocks {
         let m: { l: number, r: number, t: number, b: number } = undefined;
         blocks.forEach((b: Blockly.BlockSvg) => {
             const r = b.getBoundingRectangle();
-            if (!m) m = { l: r.topLeft.x, r: r.bottomRight.x, t: r.topLeft.y, b: r.bottomRight.y }
+            if (!m) m = { l: r.left, r: r.right, t: r.top, b: r.bottom }
             else {
-                m.l = Math.min(m.l, r.topLeft.x);
-                m.r = Math.max(m.r, r.bottomRight.y);
-                m.t = Math.min(m.t, r.topLeft.y);
-                m.b = Math.min(m.b, r.bottomRight.y);
+                m.l = Math.min(m.l, r.left);
+                m.r = Math.max(m.r, r.right);
+                m.t = Math.min(m.t, r.top);
+                m.b = Math.min(m.b, r.bottom);
             }
         })
 

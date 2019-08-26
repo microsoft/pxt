@@ -99,11 +99,11 @@ namespace pxt.blocks {
         });
 
         function addPlusButton() {
-            i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Add argument"),
+            i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
                 () => {
                     currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
                     updateShape();
-                }), "_HANDLER_ADD");
+                }, false), "_HANDLER_ADD");
         }
     }
 
@@ -237,7 +237,7 @@ namespace pxt.blocks {
 
         function addButton(name: string, uri: string, alt: string, delta: number) {
             b.appendDummyInput(name)
-            .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
+            .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => updateShape(delta), false))
         }
 
         function updateButtons() {

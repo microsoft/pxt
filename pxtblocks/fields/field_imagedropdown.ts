@@ -213,7 +213,7 @@ namespace pxtblockly {
          * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
-        updateWidth() {
+        updateSize_() {
             // Calculate width of field
             let width = this.imageJson_.width + 5;
 
@@ -265,11 +265,11 @@ namespace pxtblockly {
             this.imageElement_ = null;
             if (this.imageJson_) {
                 // Image option is selected.
-                this.imageElement_ = Blockly.utils.createSvgElement('image',
+                this.imageElement_ = Blockly.utils.dom.createSvgElement('image',
                     {
                         'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
                         'width': this.imageJson_.width + 'px'
-                    });
+                    }, null);
                 this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
                     'xlink:href', this.imageJson_.src);
                 this.size_.height = Number(this.imageJson_.height) + 10;

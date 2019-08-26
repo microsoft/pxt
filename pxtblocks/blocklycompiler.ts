@@ -1982,8 +1982,8 @@ namespace pxt.blocks {
             const size = block.getHeightWidth();
             return {
                 id: block.id,
-                x: bounds.topLeft.x,
-                y: bounds.topLeft.y,
+                x: bounds.left,
+                y: bounds.top,
                 width: size.width,
                 height: size.height
             }
@@ -1999,8 +1999,8 @@ namespace pxt.blocks {
             const bounds = comment.getBoundingRectangle();
             const size = comment.getHeightWidth();
 
-            const x = bounds.topLeft.x;
-            const y = bounds.topLeft.y;
+            const x = bounds.left;
+            const y = bounds.top;
 
             let parent: Rect;
 
