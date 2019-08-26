@@ -305,7 +305,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { isActive, hasDelete, file, meta, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
+            isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -366,7 +367,8 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { version, isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
+        const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
+            isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
             aria-selected={isActive} aria-expanded={isActive}
