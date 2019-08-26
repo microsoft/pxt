@@ -116,7 +116,7 @@ namespace pxtblockly {
             } else {
                 if (!this.fieldGroup_) {
                     // Build the DOM.
-                    this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+                    this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
                 }
                 if (!this.visible_) {
                     (this.fieldGroup_ as any).style.display = 'none';
@@ -295,7 +295,7 @@ namespace pxtblockly {
 
         // The width of the preview on the block itself
         protected getPreviewWidth(): number {
-            this.updateWidth();
+            this.updateSize_();
             return this.size_.width;
         }
 

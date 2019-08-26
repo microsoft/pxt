@@ -2639,7 +2639,7 @@ namespace pxt.blocks {
                 render();
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
-                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
                 // Create new text, line by line.
                 let lines = tip.split('\n');
                 for (let i = 0; i < lines.length; i++) {
@@ -2699,7 +2699,7 @@ namespace pxt.blocks {
             pxt.log(`missing jres icon ${id}`)
             return undefined;
         }
-        return new Blockly.FieldImage(url, 40, 40, Util.isUserLanguageRtl(), '');
+        return new Blockly.FieldImage(url, 40, 40, '', null, Util.isUserLanguageRtl());
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
