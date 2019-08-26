@@ -104,13 +104,13 @@ jobs:
         with:
           node-version: $\{{ matrix.node-version }}
       - name: npm install, build, and test
-      run: |
-        npm install -g pxt
-        pxt target @TARGET@
-        pxt install
-        pxt build --cloud
-      env:
-        CI: true
+        run: |
+          npm install -g pxt
+          pxt target @TARGET@
+          pxt install
+          pxt build --cloud
+        env:
+          CI: true
 `,
         ".travis.yml": `language: node_js
 node_js:
