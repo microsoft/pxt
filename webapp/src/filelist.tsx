@@ -273,7 +273,7 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
-    onErrorClick: (meta: pkg.FileMeta) => void;
+    onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
 }
@@ -283,18 +283,15 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
-        this.handleErrorClick = this.handleErrorClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onItemClick(this.props.file);
-        e.stopPropagation();
-    }
-
-    handleErrorClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onErrorClick(this.props.meta);
+        if (this.props.onErrorClick && this.props.meta && this.props.meta.numErrors)
+            this.props.onErrorClick(this.props.meta);
+        else
+            this.props.onItemClick(this.props.file);
         e.stopPropagation();
     }
 
@@ -308,7 +305,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
+            isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -324,7 +322,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} /> : ''}
-            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
+            {meta &&  meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
         </a>
     }
 }
@@ -369,7 +367,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { onItemClick, onItemRemove, onItemRefresh, version,
+        const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
