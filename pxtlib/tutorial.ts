@@ -211,40 +211,4 @@ namespace pxt.tutorial {
             }
         }
     }
-
-    /**
-     * This is a temporary hack to automatically patch examples and tutorials while
-     * the pxt-arcade APIs are being updated. This should be removed once that upgrade is
-     * complete.
-     *
-     * @param inputJS The snippet of js (or markdown with js snippets) to upgrade
-     */
-    export function patchArcadeSnippets(inputJS: string): string {
-        if (pxt.appTarget.id !== "arcade" && pxt.appTarget.id !== "pxt-32") return inputJS;
-
-        const declRegex = /enum\s+SpriteKind\s*{((?:[^}]|\s)+)}/gm;
-        const builtin = ["Player", "Projectile", "Enemy", "Food"]
-        const match = declRegex.exec(inputJS);
-
-        if (match) {
-            const referencedNames = match[1].split(/(?:\s|,)+/)
-                .map(n => n.trim())
-                .filter(n => /[a-zA-Z]+/.test(n))
-                .filter(n => builtin.indexOf(n) === -1);
-
-            if (referencedNames.length) {
-                return inputJS.replace(declRegex,
-`
-namespace SpriteKind {
-${referencedNames.map(rn => "    export const " + rn + " = SpriteKind.create()").join("\n")}
-}
-`)
-            }
-            else {
-                return inputJS.replace(declRegex, "");
-            }
-        }
-
-        return inputJS;
-    }
 }

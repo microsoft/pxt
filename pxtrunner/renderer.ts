@@ -238,9 +238,6 @@ namespace pxt.runner {
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
 
-        // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-        $el.text(pxt.tutorial.patchArcadeSnippets($el.text()));
-
         renderQueue.push({ el: $el, source: $el.text(), options, render });
         $el.addClass("lang-shadow");
         $el.removeClass(cls);
@@ -739,8 +736,7 @@ namespace pxt.runner {
 
         function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
-                // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-                $(e).text(pxt.tutorial.patchArcadeSnippets($(e).text().replace(/^\s*\r?\n/, '')))
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
             const opts = pxt.U.clone(woptions);
