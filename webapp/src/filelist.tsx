@@ -273,7 +273,7 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
-    onErrorClick: (meta: pkg.FileMeta) => void;
+    onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
 }
@@ -283,18 +283,15 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
-        this.handleErrorClick = this.handleErrorClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onItemClick(this.props.file);
-        e.stopPropagation();
-    }
-
-    handleErrorClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onErrorClick(this.props.meta);
+        if (this.props.onErrorClick && this.props.meta && this.props.meta.numErrors)
+            this.props.onErrorClick(this.props.meta);
+        else
+            this.props.onItemClick(this.props.file);
         e.stopPropagation();
     }
 
@@ -308,10 +305,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        // props starting with `on` are used in other methods,
-        // and only stored as local variables here to prevent them from propagating in the ...rest
-        const { isActive, hasDelete, file, meta,
-            onClick, onItemClick, onItemRemove, onErrorClick, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
+            isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -326,11 +321,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
             {hasDelete ? <sui.Button className="primary label" icon="trash"
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
-                onKeyDown={this.handleButtonKeydown} /> : undefined}
-            {meta && meta.numErrors ? <sui.Button className='ui label red button' role="button"
-                title={lf("Go to error")} onClick={this.handleErrorClick}>
-                {meta.numErrors}
-            </sui.Button> : undefined}
+                onKeyDown={this.handleButtonKeydown} /> : ''}
+            {meta &&  meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
         </a>
     }
 }
@@ -375,10 +367,8 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        // props starting with `on` are used in other methods,
-        // and only stored as local variables here to prevent them from propagating in the ...rest
-        const { version, isActive, hasRefresh, hasDelete, pkg: p,
-            onItemClick, onItemRemove, onItemRefresh, ...rest } = this.props;
+        const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
+            isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
             aria-selected={isActive} aria-expanded={isActive}
