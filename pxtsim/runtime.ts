@@ -870,7 +870,7 @@ namespace pxsim {
             function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
                 breakpoints = new Uint8Array(numBreakpoints)
                 // start running and let user put a breakpoint on start
-                // breakpoints[0] = 1
+                breakpoints[0] = msg.breakOnStart ? 1 : 0;
                 userGlobals = userCodeGlobals;
                 return breakpoints
             }
