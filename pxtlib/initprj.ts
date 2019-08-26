@@ -98,19 +98,19 @@ jobs:
         node-version: [8.x]
 
     steps:
-        - uses: actions/checkout@v1
-        - name: Use Node.js $\{{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-            node-version: $\{{ matrix.node-version }}
-        - name: npm install, build, and test
-        run: |
-            npm install -g pxt
-            pxt target @TARGET@
-            pxt install
-            pxt build --cloud
-        env:
-            CI: true
+      - uses: actions/checkout@v1
+      - name: Use Node.js $\{{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: $\{{ matrix.node-version }}
+      - name: npm install, build, and test
+      run: |
+        npm install -g pxt
+        pxt target @TARGET@
+        pxt install
+        pxt build --cloud
+      env:
+        CI: true
 `,
         ".travis.yml": `language: node_js
 node_js:
