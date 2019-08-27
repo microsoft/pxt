@@ -1488,7 +1488,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const variables = this.editor.getVariablesOfType("");
                     let varNameUnique = varName;
                     let index = 2;
-                    while (variables.some(v => v.name == varNameUnique)) {
+                    while (variableIsAssigned(varNameUnique, variables, this.editor)) {
                         varNameUnique = varName + index++;
                     }
                     varName = varNameUnique;
@@ -1535,6 +1535,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             return that.shouldShowBlock(fn.attributes.blockId, ns);
+        }
+
+        function variableIsAssigned(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
+            return variables.some(v => {
+                if (v.name != name)
+                    return false;
+                const variableUsage = editor.getVariableUsesById(v.id_);
+                return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
+            });
         }
     }
 
