@@ -429,8 +429,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
-            else if (ev.type == 'var_create') {
-                // a new variable was created,
+            else if (ev.type == 'var_create' || ev.type == "delete") {
+                // a new variable was created or blocks were removed,
                 // clear the toolbox caches as some blocks may need to be recomputed
                 this.clearFlyoutCaches();
             }
