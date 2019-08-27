@@ -2354,7 +2354,7 @@ namespace pxt.py {
      *      indexOf($0=0)   (default value; can be numbers, single quoted strings, false, true, null, undefined)
      */
     function parseTypeScriptOverride(src: string): TypeScriptOverride {
-        const regex = /([^\$]*\()?([^\$\(]*)\$(\d)(?:(?:(?:=(\d+|'[a-zA-Z0-9_]*'|false|true|null|undefined))|(\?)|))/y;
+        const regex = new RegExp(/([^\$]*\()?([^\$\(]*)\$(\d)(?:(?:(?:=(\d+|'[a-zA-Z0-9_]*'|false|true|null|undefined))|(\?)|))/, 'y');
         const parts: OverridePart[] = [];
 
         let match;
