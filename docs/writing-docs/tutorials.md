@@ -131,7 +131,7 @@ The tutorial markdown has a format that the guides the tutorial runner in making
 Tutorial metadata is optionally specified at the top of the document. Metadata is defined as key-value pairs, in the form: ``### @KEY VALUE``. The currrent properties are:
 
 * **activities**: Indicates a three-level tutorial, with activities and steps within the activities. The default is ``false`` which means that the tutorial is just a simple sequence of steps.
-* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. Default is false.
+* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. The default  is ``false`` making hints available for each step.
 
 ```markdown
 ### @activities true
