@@ -71,7 +71,6 @@ namespace pxt.runner {
         $btn.find('i').attr("class", icon);
         $btn.find('span').text(label);
 
-
         addFireClickOnEnter($btn);
         return $btn;
     }
