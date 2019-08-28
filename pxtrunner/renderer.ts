@@ -81,7 +81,7 @@ namespace pxt.runner {
             const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
             if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
                 e.preventDefault();
-                (e.currentTarget as HTMLElement).click();
+                e.currentTarget.click();
             }
         });
     }
