@@ -1,36 +1,42 @@
-# User Tutorials
+# User tutorials
 
-This guide explains how users can publish their own [tutorials](/writing-docs/tutorials) on the MakeCode editor.
+This guide explains how users can publish their own [tutorials](/writing-docs/tutorials) for the MakeCode editor.
 
-There are 2 ways of sharing a tutorial: using a shared script or using a [GitHub](https://github.com) repository.
+There are 2 ways of sharing a tutorial: use a shared script or publish it in a [GitHub](https://github.com) repository.
 
 ## Authoring
 
-Author the tutorial content in the **README.md** file in your project. The format is the same as documented in [tutorials](/writing-docs/tutorials). 
+Author the tutorial content in the **README.md** file in your project. The format is the same as what's documented in [tutorials](/writing-docs/tutorials). 
 
 The dependencies are used when starting the tutorial project, but code content (``main.blocks``, ``main.ts``) is ignored.
 
 ### ~ hint
 
-You can access ``README.md`` through by switching to **JavaScript**, then **Explorer**, then click on **README.md**.
+#### Edit README.md
+
+You can access ``README.md`` in the editor. Switch to **JavaScript**, go to **Explorer**, and then click on **README.md**.
 
 ### ~
 
 ## Share
 
-The easiest way to share a tutorial is to share the program and use the shared project url as follows
+The easiest way to share a tutorial is to first share the program. Then, use the shared project url combined with editor url and the ``#tutorial:`` specifier.
 
     https://[editor url]/#tutorial:[shared project url]
 
 * where ``editor url`` is the editor dmain, like ``makecode.microbit.org``
 * where ``shared project url`` is the url give to you by MakeCode after sharing, ``https://makecode.com/_somefunnyletters``.
 
+The complete shared url is formatted like:
+
+    https://makecode.microbit.org/#tutorial:https://makecode.com/_sIty7Iop
+
 ## GitHub repository
 
-If you plan to update your tutorial over time, we recommend to store your project in a GitHub repository. In such case, the URL to open the tutorial directly takes the full GitHub repository URL:
+If you plan to update your tutorial over time, we recommend storing your project in a GitHub repository. With a repository, the URL to open the tutorial takes the full GitHub repository URL:
 
-        https://[editor url]/#tutorial:[GitHub repository url]
+    https://[editor url]/#tutorial:[GitHub repository url]
 
-## Report Abuse and approvals
+## Report abuse and approvals
 
-By default, all tutorials opened from a user shared project or GitHub repository will have a **Report Abuse** button. If you whish to avoid this button, use the GitHub project approach and get the repository approved.
+By default, all tutorials opened from a user shared project or GitHub repository will have a **Report Abuse** button. If you would rather not have this button appear, use the GitHub project approach and get the repository approved.
