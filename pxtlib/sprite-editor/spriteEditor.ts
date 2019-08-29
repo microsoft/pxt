@@ -301,6 +301,10 @@ namespace pxtsprite {
             this.bottomBar.setSizePresets(presets, this.columns, this.rows);
         }
 
+        setGalleryFilter(filter: string) {
+            this.gallery.setFilter(filter);
+        }
+
         canvasWidth() {
             return this.columns;
         }

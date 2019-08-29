@@ -13,6 +13,8 @@ namespace pxtblockly {
 
         initWidth: string;
         initHeight: string;
+
+        filter?: string;
     }
 
     interface ParsedSpriteEditorOptions {
@@ -20,6 +22,7 @@ namespace pxtblockly {
         initColor: number;
         initWidth: number;
         initHeight: number;
+        filter?: string;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -83,9 +86,7 @@ namespace pxtblockly {
          * @private
          */
         showEditor_() {
-            const windowSize = goog.dom.getViewportSize();
-            const scrollOffset = goog.style.getViewportPageOffset(document);
-
+            const { sizes, initColor, filter} = this.params;
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
@@ -104,11 +105,15 @@ namespace pxtblockly {
                 Blockly.DropDownDiv.hideIfOwner(this);
             });
 
-            this.editor.setActiveColor(this.params.initColor, true);
-            if (!this.params.sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
-                this.params.sizes.push([this.state.width, this.state.height]);
+            this.editor.setActiveColor(initColor, true);
+            if (!sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
+                sizes.push([this.state.width, this.state.height]);
             }
-            this.editor.setSizePresets(this.params.sizes);
+            this.editor.setSizePresets(sizes);
+
+            if (filter) {
+                this.editor.setGalleryFilter(filter);
+            }
 
             goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
             goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
@@ -288,6 +293,10 @@ namespace pxtblockly {
                 parsed.initWidth = sizes[0][0];
                 parsed.initHeight = sizes[0][1];
             }
+        }
+
+        if (opts.filter != null) {
+            parsed.filter = opts.filter;
         }
 
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);

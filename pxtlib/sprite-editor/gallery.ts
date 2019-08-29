@@ -3,6 +3,7 @@ namespace pxtsprite {
         qName: string;
         src: string;
         alt: string;
+        tags: string;
     }
 
     const COLUMNS = 4;
@@ -11,6 +12,7 @@ namespace pxtsprite {
         protected info: pxtc.BlocksInfo;
         protected contentDiv: HTMLDivElement;
         protected containerDiv: HTMLDivElement;
+        protected galleryItems: GalleryItem[];
 
         protected itemBorderColor: string;
         protected itemBackgroundColor: string;
@@ -75,11 +77,35 @@ namespace pxtsprite {
             this.containerDiv.style.height = height + "px";
         }
 
+        setFilter(filter: string) {
+            const filterPieces = filter && filter.split(" ");
+            this.galleryItems = this.applyFilter(this.getGalleryItems("Image"), filterPieces);
+        }
+
+        protected applyFilter(target: GalleryItem[], tags: string[]) {
+            return target.filter(el =>
+                tags.every(tag => {
+                    if (tag.startsWith("!")) {
+                        return !itemContainsTag(el, tag.substring(1));
+                    } else {
+                        return itemContainsTag(el, tag);
+                    }
+                })
+            );
+
+            function itemContainsTag(item: GalleryItem, tag: string) {
+                return item.tags.indexOf(tag) != -1 || item.qName.indexOf(tag) != -1
+            }
+        }
+
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
             const totalWidth = this.containerDiv.clientWidth - 17;
             const buttonWidth = (Math.floor(totalWidth / COLUMNS) - 8) + "px";
-            this.getGalleryItems("Image").forEach((item, i) => this.mkButton(item.src, item.alt, item.qName, i, buttonWidth));
+            if (!this.galleryItems) {
+                this.galleryItems = this.getGalleryItems("Image");
+            }
+            this.galleryItems.forEach((item, i) => this.mkButton(item.src, item.alt, item.qName, i, buttonWidth));
         }
 
         protected initStyles() {
@@ -225,7 +251,8 @@ namespace pxtsprite {
                 return {
                     qName: sym.qName,
                     src: sym.attributes.iconURL,
-                    alt: sym.qName
+                    alt: sym.qName,
+                    tags: sym.attributes.tags || ""
                 };
             });
         }
