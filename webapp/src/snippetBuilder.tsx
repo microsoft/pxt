@@ -14,7 +14,7 @@ import { InputHandler } from './snippetBuilderInputHandler';
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface SnippetBuilderProps extends ISettingsProps {
-    mainWorkspace: Blockly.Workspace;
+    mainWorkspace: Blockly.WorkspaceSvg;
     config: pxt.SnippetConfig;
 }
 
@@ -349,6 +349,11 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                     Blockly.Xml.domToBlock(newB, mainWorkspace);
                 }
                 toAttach.forEach(attach)
+
+                // if there wasn't more than one existing block, reformat the code
+                if (existingBlocks.length <= 1) {
+                    pxt.blocks.layout.flow(mainWorkspace, { useViewWidth: true });
+                }
             }).catch((e) => {
                 core.errorNotification(e);
                 throw new Error(`Failed to decompile snippet output`);
