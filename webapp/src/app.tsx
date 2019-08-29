@@ -3112,7 +3112,7 @@ export class ProjectView
         const highContrastOn = !this.state.highContrast;
         pxt.tickEvent("app.highcontrast", { on: highContrastOn ? 1 : 0 });
         this.setState({ highContrast: highContrastOn }, () => {
-            if (this.isSimulatorRunning) {  // if running, send updated high contrast state.
+            if (this.isSimulatorRunning()) {  // if running, send updated high contrast state.
                 this.startSimulator()
             }
         });
