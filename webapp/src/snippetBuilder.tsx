@@ -37,6 +37,39 @@ interface SnippetBuilderState {
     actions?: sui.ModalButton[];
 }
 
+// helper functions
+function findRootBlocks(xmlDOM: Element, type?: string): Element[] {
+    let blocks: Element[] = []
+    for (const child in xmlDOM.children) {
+        const xmlChild = xmlDOM.children[child];
+
+        if (xmlChild.tagName === 'block') {
+            if (type) {
+                const childType = xmlChild.getAttribute('type');
+
+                if (childType && childType === type) {
+                    blocks.push(xmlChild)
+                }
+            } else {
+                blocks.push(xmlChild)
+            }
+        } else {
+            const childChildren = findRootBlock(xmlChild);
+            if (childChildren) {
+                blocks = blocks.concat(childChildren)
+            }
+        }
+    }
+    return blocks;
+}
+
+function findRootBlock(xmlDOM: Element, type?: string): Element {
+    let blks = findRootBlocks(xmlDOM, type)
+    if (blks.length)
+        return blks[0]
+    return null
+}
+
 /**
  * Snippet builder takes a static config file and builds a modal with inputs and outputs based on config settings.
  * An output type is attached to the start of your markdown allowing you to define a number of markdown output. (blocks, lang)
@@ -101,7 +134,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     toggleActionButton() {
         let newActionButton: sui.ModalButton;
         if (this.isLastQuestion()) {
-            newActionButton =             {
+            newActionButton = {
                 label: lf("Done"),
                 onclick: this.confirm,
                 icon: "check",
@@ -255,42 +288,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         this.cleanup();
     }
 
-    findRootBlock(xmlDOM: Element, type?: string): Element {
-        for (const child in xmlDOM.children) {
-            const xmlChild = xmlDOM.children[child];
-
-            if (xmlChild.tagName === 'block') {
-                if (type) {
-                    const childType = xmlChild.getAttribute('type');
-
-                    if (childType && childType === type) {
-                        return xmlChild
-                        // return this.findRootBlock(xmlChild);
-                    }
-                } else {
-                    return xmlChild;
-                }
-            }
-
-            const childChildren = this.findRootBlock(xmlChild);
-            if (childChildren) {
-                return childChildren;
-            }
-        }
-        return null;
-    }
-
-    getOnStartBlock(mainWorkspace: Blockly.Workspace) {
-        const topBlocks = mainWorkspace.getTopBlocks(true);
-        for (const block of topBlocks) {
-            if (block.type === 'pxt-on-start') {
-                return block;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * Takes the output from state, runs replace tokens, decompiles the resulting typescript
      * and outputs the result as a Blockly xmlDOM. This then uses appendDomToWorkspace to attach 
@@ -303,16 +300,33 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
             .then(resp => {
-                // Convert XML text to xml dom in order to parse
-                const xmlDOM = Blockly.Xml.textToDom(resp);
-                // TODO(jb) hard coded in topmost child should be generalized
-                const xmlOnStartBlock = this.findRootBlock(xmlDOM, 'pxt-on-start');
-                // Finds the on start blocks children
-                const toAttach = this.findRootBlock(xmlOnStartBlock);
-                const rootConnection = Blockly.Xml.domToBlock(toAttach, mainWorkspace);
-                // Hard coded in top blocks
-                this.getOnStartBlock(mainWorkspace)
-                    .getInput("HANDLER").connection.connect(rootConnection.previousConnection);
+                // get the root blocks (e.g. on_start) from the new code
+                const newXml = Blockly.Xml.textToDom(resp);
+                const newBlocksDom = findRootBlocks(newXml)
+
+                // get the existing root blocks
+                const existingBlocks = mainWorkspace.getTopBlocks(true);
+
+                // determine how they should merge
+                // TODO(dz): handle parameter mismatch like on collision
+                let toMerge = newBlocksDom.map(newB => {
+                    let coincides = existingBlocks.filter(exB => {
+                        const newType = newB.getAttribute('type');
+                        return newType === exB.type
+                    })
+                    if (coincides.length)
+                        return { newB, exB: coincides[0] }
+                    return null
+                })
+
+                // merge them
+                function merge(pair: { newB: Element, exB: Blockly.Block }) {
+                    let { newB, exB } = pair;
+                    const firstChild = findRootBlock(newB)
+                    const toAttach = Blockly.Xml.domToBlock(firstChild, mainWorkspace);
+                    exB.getInput("HANDLER").connection.connect(toAttach.previousConnection);
+                }
+                toMerge.forEach(merge)
             }).catch((e) => {
                 core.errorNotification(e);
                 throw new Error(`Failed to decompile snippet output`);
@@ -418,7 +432,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         const { history, config } = this.state;
 
         if (history.length > 1) {
-            this.setState({ history: history.slice(0, history.length - 1)}, () => {
+            this.setState({ history: history.slice(0, history.length - 1) }, () => {
                 this.toggleActionButton();
                 pxt.tickEvent('snippet.builder.back.page', { snippet: config.name, page: this.getCurrentPage() }, { interactiveConsent: true });
 
@@ -481,7 +495,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                 {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                             </div>
                             {currentQuestion.hint &&
-                            <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
                         </div>
                     }
                     <div className='snippet output-section column'>
@@ -504,7 +518,7 @@ function getSnippetExtensions(): pxt.SnippetConfig[] {
 function openSnippetDialog(config: pxt.SnippetConfig, editor: Blockly.WorkspaceSvg, parent: pxt.editor.IProjectView) {
     const overlay = document.createElement('div');
     const wrapper = document.body.appendChild(overlay);
-    const props = { parent:   parent, mainWorkspace: editor, config };
+    const props = { parent: parent, mainWorkspace: editor, config };
     const snippetBuilder = ReactDOM.render(
         React.createElement(SnippetBuilder, props),
         wrapper
