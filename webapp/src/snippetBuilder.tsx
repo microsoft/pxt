@@ -307,17 +307,23 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 // get the existing root blocks
                 const existingBlocks = mainWorkspace.getTopBlocks(true);
 
-                // determine how they should merge
-                // TODO(dz): handle parameter mismatch like on collision
-                let toMerge = newBlocksDom.map(newB => {
+                // determine which blocks should merge together
+                // TODO: handle parameter mismatch like on_collision's "kind" field.
+                //      At the time of this writting this isn't a blocking issue since
+                //      the snippet builder is only used for the Sprite Wizard (which
+                //      only uses on_start and game modding (which outputs an entirely
+                //      new game)
+                let toMergeOrAttach = newBlocksDom.map(newB => {
                     let coincides = existingBlocks.filter(exB => {
                         const newType = newB.getAttribute('type');
                         return newType === exB.type
                     })
                     if (coincides.length)
                         return { newB, exB: coincides[0] }
-                    return null
+                    return { newB, exB: null }
                 })
+                let toMerge = toMergeOrAttach.filter(p => !!p.exB);
+                let toAttach = toMergeOrAttach.filter(p => !p.exB);
 
                 // merge them
                 function merge(pair: { newB: Element, exB: Blockly.Block }) {
@@ -327,6 +333,13 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                     exB.getInput("HANDLER").connection.connect(toAttach.previousConnection);
                 }
                 toMerge.forEach(merge)
+
+                // attach the rest
+                function attach(pair: { newB: Element }) {
+                    let { newB } = pair;
+                    Blockly.Xml.domToBlock(newB, mainWorkspace);
+                }
+                toAttach.forEach(attach)
             }).catch((e) => {
                 core.errorNotification(e);
                 throw new Error(`Failed to decompile snippet output`);
