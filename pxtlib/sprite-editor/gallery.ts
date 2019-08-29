@@ -85,7 +85,7 @@ namespace pxtsprite {
         protected applyFilter(target: GalleryItem[], tags: string[]) {
             return target.filter(el =>
                 tags.every(tag => {
-                    if (tag.startsWith("!")) {
+                    if (tag.indexOf("!") === 0) {
                         return !itemContainsTag(el, tag.substring(1));
                     } else {
                         return itemContainsTag(el, tag);
