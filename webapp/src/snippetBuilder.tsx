@@ -296,6 +296,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     injectBlocksToWorkspace() {
         const { tsOutput } = this.state;
         const { mainWorkspace } = this.props
+        const { outputBehavior } = this.state.config;
 
         compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(this.replaceTokens(tsOutput), blocksInfo))
@@ -305,7 +306,15 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 const newBlocksDom = findRootBlocks(newXml)
 
                 // get the existing root blocks
-                const existingBlocks = mainWorkspace.getTopBlocks(true);
+                let existingBlocks = mainWorkspace.getTopBlocks(true);
+
+                // if we're replacing all existing blocks, do that first
+                if (outputBehavior === "replace") {
+                    existingBlocks.forEach(b => {
+                        b.dispose(false);
+                    })
+                    existingBlocks = []
+                }
 
                 // determine which blocks should merge together
                 // TODO: handle parameter mismatch like on_collision's "kind" field.

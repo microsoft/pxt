@@ -164,12 +164,15 @@ declare namespace pxt {
         mimeType: string;
     }
 
+    type SnippetOutputType = 'blocks'
+    type SnippetOutputBehavior = /*assumed default*/'merge' | 'replace'
     interface SnippetConfig {
         name: string;
         namespace: string;
         group?: string;
         label: string;
-        outputType: string;
+        outputType: SnippetOutputType;
+        outputBehavior?: SnippetOutputBehavior;
         initialOutput?: string;
         questions: SnippetQuestions[];
     }
