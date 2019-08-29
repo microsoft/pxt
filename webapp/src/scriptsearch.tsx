@@ -412,7 +412,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 description={description}>
                 <div className="ui">
                     {mode == ScriptSearchMode.Experiments ?
-                        <div className="ui message">
+                        <div className="ui message info">
                             <div className="header">{lf("WARNING: EXPERIMENTAL FEATURES AHEAD!")}</div>
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
