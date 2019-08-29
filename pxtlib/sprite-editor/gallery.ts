@@ -78,7 +78,7 @@ namespace pxtsprite {
         }
 
         setFilter(filter: string) {
-            const filterPieces = filter && filter.split(" ");
+            const filterPieces = filter && filter.split(" ").filter(el => !!el);
             this.galleryItems = this.applyFilter(this.getGalleryItems("Image"), filterPieces);
         }
 
@@ -94,7 +94,7 @@ namespace pxtsprite {
             );
 
             function itemContainsTag(item: GalleryItem, tag: string) {
-                return item.tags.indexOf(tag) != -1 || item.qName.indexOf(tag) != -1
+                return item.tags.indexOf(tag) != -1;
             }
         }
 
