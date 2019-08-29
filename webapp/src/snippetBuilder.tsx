@@ -535,9 +535,28 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 }
 
 function getSnippetExtensions(): pxt.SnippetConfig[] {
-    const snippetConfigs = pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
+    let allFiles = pxt.Util.concat(pkg.allEditorPkgs().map(p => p.sortedFiles()))
+    let snippetConfigs = allFiles
         .filter(file => file.name === 'pxtsnippets.json')
         .map(file => pxt.Util.jsonTryParse(file.content)) as pxt.SnippetConfig[][];
+
+    // patch in external typescript files (makes it much easier to edit large snippets)
+    // TODO: support more .ts fields than just "initialOutput"
+    const snippetExternalTs = allFiles
+        .filter(file => file.name.endsWith('.snippetts'))
+    snippetConfigs = snippetConfigs.map(cs => cs.map(c => {
+        if (c.initialOutput.startsWith("file:")) {
+            let externalFileName = c.initialOutput.slice("file:".length, c.initialOutput.length)
+            let externalTs = snippetExternalTs
+                .filter(f => f.name === externalFileName)
+            if (externalTs.length != 1) {
+                pxt.reportError("snippetbuilder", `invalid external .ts file path: ${externalFileName}`);
+                return null
+            }
+            c.initialOutput = externalTs[0].content;
+        }
+        return c
+    }).filter(c => !!c))
 
     return pxt.Util.concat(snippetConfigs);
 }
