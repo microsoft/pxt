@@ -83,18 +83,17 @@ namespace pxtsprite {
         }
 
         protected applyFilter(target: GalleryItem[], tags: string[]) {
+            const includeTags = tags.filter(tag => tag.indexOf("!") !== 0);
+            const excludeTags = tags.filter(tag => tag.indexOf("!") === 0).map(el => el.substring(1));
+
             return target.filter(el =>
-                tags.every(tag => {
-                    if (tag.indexOf("!") === 0) {
-                        return !itemContainsTag(el, tag.substring(1));
-                    } else {
-                        return itemContainsTag(el, tag);
-                    }
-                })
+                includeTags.every(tag => itemContainsTag(el, tag))
+                && excludeTags.every(tag => !itemContainsTag(el, tag))
+
             );
 
             function itemContainsTag(item: GalleryItem, tag: string) {
-                return item.tags.indexOf(tag) != -1;
+                return item.tags.indexOf(tag) !== -1;
             }
         }
 
