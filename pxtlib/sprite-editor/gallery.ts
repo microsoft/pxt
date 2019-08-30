@@ -78,16 +78,17 @@ namespace pxtsprite {
         }
 
         setFilter(filter: string) {
-            const filterPieces = filter && filter.split(" ").filter(el => !!el);
+            const filterPieces = filter && filter.split(" ");
             this.galleryItems = this.applyFilter(this.getGalleryItems("Image"), filterPieces);
         }
 
         protected applyFilter(target: GalleryItem[], tags: string[]) {
             const includeTags = tags
-                .filter(tag => tag.indexOf("!") !== 0);
+                .filter(tag => tag && tag.indexOf("!") !== 0);
             const excludeTags = tags
-                .filter(tag => tag.indexOf("!") === 0)
-                .map(el => el.substring(1));
+                .filter(tag => tag && tag.indexOf("!") === 0)
+                .map(el => el.substring(1))
+                .filter(el => !!el);
 
             return target.filter(el =>
                 includeTags.every(tag => itemContainsTag(el, tag))
