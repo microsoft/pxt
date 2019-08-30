@@ -3,7 +3,7 @@ namespace pxtsprite {
         qName: string;
         src: string;
         alt: string;
-        tags: string;
+        tags: string[];
     }
 
     const COLUMNS = 4;
@@ -93,13 +93,22 @@ namespace pxtsprite {
                 .map(el => el.substring(1))
                 .filter(el => !!el);
 
-            return target.filter(el =>
-                includeTags.every(tag => el.tags.indexOf(tag) !== -1)
-                && excludeTags.every(tag => {
-                    const index = el.tags.indexOf(tag);
-                    return index === -1 || el.tags.charAt(index - 1) === "?";
-                })
-            );
+            return target.filter(el => checkInclude(el) && checkExclude(el));
+
+            function checkInclude(item: GalleryItem) {
+                return includeTags.every(filterTag =>
+                    item.tags.some(tag => {
+                        const ind = tag.indexOf(filterTag);
+                        return ind === 0 || ind === 1 && tag.charAt(0) === "?";
+                    })
+                )
+            }
+
+            function checkExclude(item: GalleryItem) {
+                return excludeTags.every(filterTag =>
+                    !item.tags.some(tag => tag.indexOf(filterTag) === -1)
+                )
+            }
         }
 
         protected buildDom() {
@@ -259,12 +268,16 @@ namespace pxtsprite {
             generateIcons(syms);
 
             return syms.map(sym => {
-                const { tags } = sym.attributes;
+                const splitTags = (sym.attributes.tags || "")
+                    .toLowerCase()
+                    .split(" ")
+                    .filter(el => !!el);
+
                 return {
                     qName: sym.qName,
                     src: sym.attributes.iconURL,
                     alt: sym.qName,
-                    tags: (tags && tags.toLowerCase()) || ""
+                    tags: splitTags
                 };
             });
         }
