@@ -594,6 +594,10 @@ export class ProjectView
                 pxt.debug(`sim: skip blocks auto, !active`)
                 return;
             }
+            if (this.blocksEditor && this.blocksEditor.isDropdownDivVisible()) {
+                pxt.debug(`sim: skip blocks auto, field editor is open`);
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
