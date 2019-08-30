@@ -1,6 +1,6 @@
 # pxt-buildsprites Manual Page
 
-### @description Encode sprite sheets into a Jres resource
+## @description Encode sprite sheets into a Jres resource
 
 Encode sprite sheets into a Jres resource
 
@@ -46,6 +46,8 @@ Example:
 }
 ```
 
+### Multiple sprites per file
+
 If your PNG files contain more than one sprite each, you can add the following
 to the `meta.json` file:
 
@@ -84,6 +86,22 @@ with different directions in which 16x16 sprite is going you would use the follo
 The frames will be called `images.castle.princessFront0` etc., where the namespace
 is taken from `meta.json` above, `princess` from file name, and the suffix from `frames`
 field.
+
+### Tags
+
+You can add tags that describe your sprites in the `meta.json` file.
+
+```json
+{
+    "tags": "character hero"
+    // ...
+}
+```
+
+These can be used to filter sprites into (or out of) galleries in the image editor.
+
+You can add tags per PNG file as well. If both the `meta.json` and
+the `json` file for the specific PNG contain tags, then **both** sets are included.
 
 ## See Also
 
