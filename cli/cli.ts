@@ -4314,6 +4314,7 @@ interface SpriteGlobalMeta {
     height?: number;
     blockIdentity: string;
     creator: string;
+    tags?: string;
     standaloneSprites?: string[];
 }
 
@@ -4514,8 +4515,10 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                 }
 
                 ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
-                if (info.tags)
-                    ts += `    //% tags="${info.tags}"\n`;
+                if (info.tags || metaInfo.tags) {
+                    const tags = `${metaInfo.tags || ""} ${info.tags || ""}`;
+                    ts += `    //% tags="${tags.trim()}"\n`;
+                }
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
                 pxt.log(`add ${key}; ${JSON.stringify(jresources[key]).length} bytes`)
