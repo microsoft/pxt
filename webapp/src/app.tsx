@@ -63,6 +63,7 @@ import { HintManager } from "./hinttooltip";
 pxsim.util.injectPolyphils();
 
 let theEditor: ProjectView;
+let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
 function getEditorAsync() {
@@ -745,7 +746,7 @@ export class ProjectView
             if (!lastCriticalError || (!isNaN(lastCriticalError) && Date.now() - lastCriticalError > 60 * 1000)) {
                 pxt.storage.setLocal("lastcriticalerror", new Date().toISOString());
                 setTimeout(() => {
-                    location.reload();
+                    this.reloadEditor();
                 }, 2000)
             }
         } catch (e) {
@@ -1788,8 +1789,25 @@ export class ProjectView
     }
 
     reloadEditor() {
-        if (this.state.home) location.hash = `#reload`;
-        location.reload();
+        try {
+            // Prevent us from stripping out the hash before the reload is complete
+            clearHashChange();
+            // On embedded pages, preserve the loaded project
+            if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+                location.hash = `#${hash.cmd}:${hash.arg}`;
+            }
+            else if (this.state && this.state.home) {
+                location.hash = "#reload"
+            }
+            // if in editor, reload project
+            else if (this.state && this.state.header && !this.state.header.isDeleted) {
+                location.hash = "#editor"
+            }
+            location.reload();
+        } catch (e) {
+            pxt.reportException(e);
+            location.reload();
+        }
     }
 
     getPreferredEditor(): string {
@@ -3736,28 +3754,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     initLogin();
-    const hash = parseHash();
-    const appCacheUpdated = () => {
-        try {
-            // Prevent us from stripping out the hash before the reload is complete
-            clearHashChange();
-            // On embedded pages, preserve the loaded project
-            if (pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
-                location.hash = `#${hash.cmd}:${hash.arg}`;
-            }
-            // if in editor, reload project
-            else if (theEditor
-                && !theEditor.home.state.visible
-                && theEditor.state && theEditor.state.header && !theEditor.state.header.isDeleted) {
-                location.hash = "#reload"
-            }
-            location.reload();
-        } catch (e) {
-            pxt.reportException(e);
-            location.reload();
-        }
-    };
-    appcache.init(appCacheUpdated);
+    hash = parseHash();
+    appcache.init(() => theEditor.reloadEditor());
 
     pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
