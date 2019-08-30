@@ -264,7 +264,7 @@ namespace pxtblockly {
             return parsed;
         }
 
-        if (opts.sizes != null) {
+        if (opts.sizes) {
             const pairs = opts.sizes.split(";");
             const sizes: [number, number][] = [];
             for (let i = 0; i < pairs.length; i++) {
@@ -295,7 +295,7 @@ namespace pxtblockly {
             }
         }
 
-        if (opts.filter != null) {
+        if (opts.filter) {
             parsed.filter = opts.filter;
         }
 
