@@ -4442,7 +4442,6 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.colorType == 0) {
             sheet.colorType = 6
             sheet.depth = 8
-            let transparent = palette[0][0] < 10 ? 0x00 : 0xff
             for (let i = 0; i < sheet.data.length; i += 4) {
                 if (closestColor(sheet.data, i, false) == 0)
                     sheet.data[i + 3] = 0x00
