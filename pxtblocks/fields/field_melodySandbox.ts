@@ -7,6 +7,8 @@ namespace pxtblockly {
 
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
+
         protected params: U;
         private melody: pxtmelody.MelodyArray;
         private soundingKeys: number = 0;
@@ -76,7 +78,7 @@ namespace pxtblockly {
             this.gallery = new pxtmelody.MelodyGallery();
             this.renderEditor(contentDiv);
 
-            this.prevString = this.getText();
+            this.prevString = this.getValue();
 
             // The webapp listens to this event and stops the simulator so that you don't get the melody
             // playing twice (once in the editor and once when the code runs in the sim)
@@ -92,19 +94,19 @@ namespace pxtblockly {
             });
         }
 
-        getText() {
+        getValue() {
             this.stringRep = this.getTypeScriptValue();
             return this.stringRep;
         }
 
-        setText(newText: string) {
-            if (newText == null || newText == "" || newText == "\"\"" || (this.stringRep && this.stringRep === newText)) { // ignore empty strings
+        doValueUpdate_(newValue: string) {
+            if (newValue == null || newValue == "" || newValue == "\"\"" || (this.stringRep && this.stringRep === newValue)) { // ignore empty strings
                 return;
             }
-            this.stringRep = newText;
-            this.parseTypeScriptValue(newText);
+            this.stringRep = newValue;
+            this.parseTypeScriptValue(newValue);
+            super.doValueUpdate_(this.getValue());
         }
-
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
@@ -209,9 +211,9 @@ namespace pxtblockly {
             }
             this.clearDomReferences();
 
-            if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.getText() !== this.prevString) {
+            if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.getValue() !== this.prevString) {
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this.sourceBlock_, 'field', this.name, this.prevString, this.getText()));
+                    this.sourceBlock_, 'field', this.name, this.prevString, this.getValue()));
             }
 
             this.prevString = undefined;

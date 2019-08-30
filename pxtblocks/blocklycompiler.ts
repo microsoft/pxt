@@ -1734,7 +1734,7 @@ namespace pxt.blocks {
 
     function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
         // unset disabled
-        allBlocks.forEach(b => b.setDisabled(false));
+        allBlocks.forEach(b => b.setEnabled(true));
 
         // update top blocks
         const events: Map<Blockly.Block> = {};
@@ -1743,9 +1743,9 @@ namespace pxt.blocks {
             const otherEvent = events[key];
             if (otherEvent) {
                 // another block is already registered
-                block.setDisabled(true);
+                block.setEnabled(false);
             } else {
-                block.setDisabled(false);
+                block.setEnabled(true);
                 events[key] = block;
             }
         }
@@ -1766,7 +1766,7 @@ namespace pxt.blocks {
                 // all non-events are disabled
                 let t = b;
                 while (t) {
-                    t.setDisabled(true);
+                    t.setEnabled(false);
                     t = t.getNextBlock();
                 }
             }

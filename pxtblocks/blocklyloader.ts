@@ -884,14 +884,14 @@ namespace pxt.blocks {
         initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
-            if (this.disabled != disabled) {
+        (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
+            if (this.isEnabled() != enabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this, 'disabled', null, this.disabled, disabled));
+                    this, 'disabled', null, this.disabled, !enabled));
                 (Blockly as any).Events.recordUndo = oldRecordUndo;
-                this.disabled = disabled;
+                this.disabled = !enabled;
             }
         };
     }
