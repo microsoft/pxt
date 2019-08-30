@@ -4322,6 +4322,7 @@ interface SpriteInfo {
     height?: number;
     xSpacing?: number;
     ySpacing?: number;
+    tags?: string;
     frames?: string[];
 }
 
@@ -4442,7 +4443,6 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.colorType == 0) {
             sheet.colorType = 6
             sheet.depth = 8
-            let transparent = palette[0][0] < 10 ? 0x00 : 0xff
             for (let i = 0; i < sheet.data.length; i += 4) {
                 if (closestColor(sheet.data, i, false) == 0)
                     sheet.data[i + 3] = 0x00
@@ -4514,6 +4514,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                 }
 
                 ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
+                if (info.tags)
+                    ts += `    //% tags="${info.tags}"\n`;
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
 
                 pxt.log(`add ${key}; ${JSON.stringify(jresources[key]).length} bytes`)
