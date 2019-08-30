@@ -41,7 +41,7 @@ namespace pxt.runner {
     }
 
     function appendBlocks($parent: JQuery, $svg: JQuery) {
-        $parent.append($('<div class="ui content blocks"/>').append($svg));
+        $parent.append($('<div class="ui content blocks"><div class="right">lf("blocks")</div></div>').append($svg));
     }
 
     function highlight($js: JQuery) {
@@ -55,12 +55,12 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
+        $parent.append($('<div class="ui content js"><div class="right">JavaScript</div></div>').append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/>Python</div></div>').append($py));
+        $parent.append($('<div class="ui content py"><div class="right">Python</div></div>').append($py));
         highlight($py);
     }
 
@@ -143,7 +143,7 @@ namespace pxt.runner {
 
         let r = [$c];
         // don't add menu if empty
-        if ($menu.children().length) r.push($h);
+        if ($menu.children().length) r.unshift($h);
 
         // inject container
         $container.replaceWith(r as any);

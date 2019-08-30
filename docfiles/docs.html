@@ -7,6 +7,7 @@
 	<meta name="Description" content="@description@" />
 
 	<!-- @include meta.html -->
+
 	<!-- @include head.html -->
 
 </head>
@@ -17,32 +18,41 @@
 		@accMenu@
 	</div>
 
+	<!-- @include docsheader.html-->
 
-	<!-- @include tocheader.html -->
+	
+	<button id="sticky-btn" style="display:none;"><i class="ellipsis vertical icon"></i></button>
+	<div id="docs" class="">
 
-	<div id="docs" class="pusher">
+		<!-- @include tocheader.html -->
 
-		<!-- @include toc.html -->
-
-		<div class="article" id="maincontent">
+		<div class="article pusher" id="maincontent">
 			<div class="article-inner">
 
 				<!-- @include header.html -->
 
-				<div class="main ui container fluid mainbody">
+				<div class="main ui grid fluid mainbody full-width">
+					<div class="one wide computer column zero wide mobile column"></div>
+					<div id="content-column" class="ten wide computer column sixteen wide mobile column">
 					@printBtn@ @body@
 					<div class="hideprint">@github@</div>
+					</div>
+					<div id="sticky-column" class="four wide computer column zero wide mobile column">	
+					</div>
+					<div class="one wide computer column zero wide mobile column"></div>
+					
 				</div>
 
-				<!-- @include footer.html -->
+			
 			</div>
-
+        
 		</div>
+		<!-- @include footer.html -->
 
 	</div>
 
-
 	<!-- @include macros.html -->
+	
 	<!-- @include tracking.html -->
 
 </body>

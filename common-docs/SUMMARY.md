@@ -4,6 +4,7 @@
 * [FAQ](/faq)
 * [Projects](/projects)
 
+
 ## #support
 
 ## #examples
@@ -61,7 +62,7 @@
 
 ## Miscellaneous #misc
 
-* Miscellaneous
+* [Miscellaneous](/miscellaneous)
     * [About](/about)
     * [Support](/support)
     * [Translate](/translate)
@@ -71,7 +72,7 @@
 
 ## Developers #devs
 
-* Developers
+* [Developers](/developers)
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Blocks Embed](/blocks-embed)
