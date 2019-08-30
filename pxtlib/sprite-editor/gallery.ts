@@ -85,13 +85,12 @@ namespace pxtsprite {
         protected applyFilter(target: GalleryItem[], tags: string[]) {
             tags = tags
                 .filter(el => !!el)
-                .map(el => el && el.toLowerCase());
+                .map(el => el.toLowerCase());
             const includeTags = tags
                 .filter(tag => tag.indexOf("!") !== 0);
             const excludeTags = tags
-                .filter(tag => tag.indexOf("!") === 0)
-                .map(el => el.substring(1))
-                .filter(el => !!el);
+                .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
+                .map(tag => tag.substring(1));
 
             return target.filter(el => checkInclude(el) && checkExclude(el));
 
@@ -101,13 +100,13 @@ namespace pxtsprite {
                         const ind = tag.indexOf(filterTag);
                         return ind === 0 || ind === 1 && tag.charAt(0) === "?";
                     })
-                )
+                );
             }
 
             function checkExclude(item: GalleryItem) {
                 return excludeTags.every(filterTag =>
                     !item.tags.some(tag => tag.indexOf(filterTag) === -1)
-                )
+                );
             }
         }
 
