@@ -519,7 +519,7 @@ export function showImportUrlDialogAsync() {
         },
         jsx: <div className="ui form">
             <div className="ui icon violet message">
-                <i className="user icon"></i>
+                <i className="user icon" aria-hidden={true}></i>
                 <div className="content">
                     <h3 className="header">
                         {lf("User-provided content")}

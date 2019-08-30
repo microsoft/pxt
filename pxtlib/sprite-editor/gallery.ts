@@ -206,10 +206,17 @@ namespace pxtsprite {
         protected getBitmap(qName: string) {
             const sym = this.info.apis.byQName[qName];
             const jresURL = sym.attributes.jresURL;
-            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
-            const magic = data.charCodeAt(0);
-            const w = data.charCodeAt(1);
-            const h = data.charCodeAt(2);
+            let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            let magic = data.charCodeAt(0);
+            let w = data.charCodeAt(1);
+            let h = data.charCodeAt(2);
+
+            if (magic === 0x87) {
+                magic = 0xe0 | data.charCodeAt(1);
+                w = data.charCodeAt(2) | (data.charCodeAt(3) << 8);
+                h = data.charCodeAt(4) | (data.charCodeAt(5) << 8);
+                data = data.slice(4);
+            }
 
             const out = new Bitmap(w, h);
 

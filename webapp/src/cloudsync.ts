@@ -289,6 +289,7 @@ function updateNameAsync() {
                     if (res) {
                         ws.resetAsync()
                             .then(() => {
+                                // FIXME: should call ProjectView.reloadEditor()
                                 location.hash = "#reload"
                                 location.reload()
                             })

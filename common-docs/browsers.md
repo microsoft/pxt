@@ -8,7 +8,6 @@ Windows 10:
 * Microsoft Edge
 * Google Chrome
 * Mozilla Firefox
-* Internet Explorer 11 (Exception: for MakeCode Arcade use one of the other browsers)
 
 ## Mac
 
@@ -63,13 +62,6 @@ version of one of the following:
 
 ![](/static/configurations/osx-version.png)
 
-### Internet Explorer
-
-* Click on the Settings icon in the top right
-* Click 'About Internet Explorer'
-* This window will be displayed:
-
-![](/static/configurations/ie-version.png)
 
 ### Microsoft Edge
 
