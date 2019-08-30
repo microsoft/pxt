@@ -94,13 +94,12 @@ namespace pxtsprite {
                 .filter(el => !!el);
 
             return target.filter(el =>
-                includeTags.every(tag => itemContainsTag(el, tag))
-                && excludeTags.every(tag => !itemContainsTag(el, tag))
+                includeTags.every(tag => el.tags.indexOf(tag) !== -1)
+                && excludeTags.every(tag => {
+                    const index = el.tags.indexOf(tag);
+                    return index === -1 || el.tags.charAt(index - 1) === "?";
+                })
             );
-
-            function itemContainsTag(item: GalleryItem, tag: string) {
-                return item.tags.indexOf(tag) !== -1;
-            }
         }
 
         protected buildDom() {
@@ -253,11 +252,12 @@ namespace pxtsprite {
             generateIcons(syms);
 
             return syms.map(sym => {
+                const { tags } = sym.attributes;
                 return {
                     qName: sym.qName,
                     src: sym.attributes.iconURL,
                     alt: sym.qName,
-                    tags: sym.attributes.tags.toLowerCase() || ""
+                    tags: (tags && tags.toLowerCase()) || ""
                 };
             });
         }
