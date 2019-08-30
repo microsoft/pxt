@@ -162,6 +162,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    isDropdownDivVisible() {
+        return Blockly && Blockly.DropDownDiv && Blockly.DropDownDiv.isVisible();
+    }
+
     private saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
@@ -456,7 +460,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else if (ev.element == 'melody-editor') {
                     if (ev.newValue) {
-                        shouldRestartSim = this.parent.state.simState == pxt.editor.SimState.Running;
+                        shouldRestartSim = this.parent.state.simState != pxt.editor.SimState.Stopped;
                         this.parent.stopSimulator();
                     }
                     else {
