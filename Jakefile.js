@@ -146,11 +146,28 @@ if (!fs.existsSync("webapp/public/blockly/msg")) fs.mkdirSync("webapp/public/blo
 if (!fs.existsSync("webapp/public/blockly/msg/js")) fs.mkdirSync("webapp/public/blockly/msg/js");
 if (!fs.existsSync("webapp/public/blockly/msg/json")) fs.mkdirSync("webapp/public/blockly/msg/json");
 
-jake.cpR('node_modules/pxt-blockly/blocks_compressed.js', 'webapp/public/blockly/');
-jake.cpR('node_modules/pxt-blockly/blockly_compressed.js', 'webapp/public/blockly/');
-jake.cpR('node_modules/pxt-blockly/msg/js/en.js', 'webapp/public/blockly/msg/js/');
-jake.cpR('node_modules/pxt-blockly/msg/json/en.json', 'webapp/public/blockly/msg/json/');
-jake.cpR('node_modules/pxt-blockly/media', 'webapp/public/blockly/');
+// avoid unnecessary copy to avoid rebuilding everything later
+let numCopy = 0
+function maybeCopy(src, dst) {
+    const srcBuf = fs.readFileSync(src)
+    dst = path.join(dst, path.basename(src))
+    try {
+        const dstBuf = fs.readFileSync(dst)
+        if (dstBuf.equals(srcBuf))
+            return
+    } catch (e) { }
+    numCopy++
+    console.log("cp " + src + " " + dst)
+    fs.writeFileSync(dst, srcBuf)
+}
+
+maybeCopy('node_modules/pxt-blockly/blocks_compressed.js', 'webapp/public/blockly/');
+maybeCopy('node_modules/pxt-blockly/blockly_compressed.js', 'webapp/public/blockly/');
+maybeCopy('node_modules/pxt-blockly/msg/js/en.js', 'webapp/public/blockly/msg/js/');
+maybeCopy('node_modules/pxt-blockly/msg/json/en.json', 'webapp/public/blockly/msg/json/');
+// assume the media files only change if the other files change
+if (numCopy > 0)
+    jake.cpR('node_modules/pxt-blockly/media', 'webapp/public/blockly/');
 
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
