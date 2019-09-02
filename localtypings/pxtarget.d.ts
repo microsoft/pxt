@@ -165,7 +165,6 @@ declare namespace pxt {
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
-        leanShare?: boolean;
     }
 
     interface TargetCompileService {
@@ -236,6 +235,7 @@ declare namespace pxt {
         accentColor?: string; // used in PWA manifest as theme color
         backgroundColor?: string; // use in PWA manifest as background color
         cardLogo?: string;
+        thumbLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
@@ -342,6 +342,7 @@ declare namespace pxt {
         experimentalHw?: boolean; // enable experimental hardware
         recipes?: boolean; // inlined tutorials
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
     }
 
     interface SocialOptions {

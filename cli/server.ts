@@ -771,8 +771,27 @@ function certificateTestAsync(): Promise<string> {
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
+            // if running against old cloud, infer 'thumb' field
+            // can be removed after new cloud deployment
+            if (info.thumb !== undefined)
+                return info
+            return Cloud.privateGetTextAsync(id + "/thumb")
+                .then(_ => {
+                    info.thumb = true
+                    return info
+                }, _ => {
+                    info.thumb = false
+                    return info
+                })
+        })
+        .then((info: Cloud.JsonScript) => {
+            let infoA = info as any
+            infoA.cardLogo = info.thumb
+                ? Cloud.apiRoot + id + "/thumb"
+                : pxt.appTarget.appTheme.thumbLogo || pxt.appTarget.appTheme.cardLogo
             let html = pxt.docs.renderMarkdown({
-                template: expandDocFileTemplate(pxt.appTarget.simulator.leanShare ? "leanscript.html" : "script.html"),
+                template: expandDocFileTemplate(pxt.appTarget.appTheme.leanShare
+                    ? "leanscript.html" : "script.html"),
                 markdown: "",
                 theme: pxt.appTarget.appTheme,
                 pubinfo: info as any,
