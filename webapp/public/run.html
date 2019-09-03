@@ -111,6 +111,7 @@
         var highContrast = !!/hc(?:[:=])1/i.exec(window.location.href);
         var light = !!/light(?:[:=])1/i.exec(window.location.href);
         var fullScreen = !!/fullscreen(?:[:=])1/i.exec(window.location.href);
+        var proxyMessages = !!/proxyMessages(?:[:=])1/i.exec(window.location.href);
         var deps = /deps(?:[:=])([^&?]+)/i.exec(window.location.href);
 
         var codeFromSrc = /code(?:[:=])([^&?]+)/i.exec(window.location.href);
@@ -119,7 +120,7 @@
             codeFromData = window.frameElement ? window.frameElement.getAttribute('data-code') : undefined;
         } catch (e) {
             /**
-             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking 
+             *  Internet Explorer 11 and Microsoft Edge throw an exception when checking
              *  if the frame element exists when the iframe is on a different origin
              */
         }
@@ -151,6 +152,27 @@
                 if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                     window.location.reload();
             });
+        }
+
+        function initMessageProxy() {
+            var simframe;
+
+            getSimframe();
+
+            window.addEventListener("message", function(ev) {
+                if (!simframe) getSimframe();
+
+                if (simframe && simframe.contentWindow && ev.source !== simframe.contentWindow) {
+                    simframe.contentWindow.postMessage(ev.data, simFrame.src);
+                }
+                else if (window.parent && ev.source !== window.parent) {
+                    window.parent.postMessage(ev.data, "*")
+                }
+            })
+
+            function getSimframe() {
+                simframe = document.getElementsByTagName("iframe");
+            }
         }
         initAppCache();
 
@@ -184,6 +206,8 @@
                 pxt.runner.simulateAsync(sims, options).done(function() {
                     console.log('simulator started...')
                     $(loading).remove();
+
+                    if (proxyMessages) initMessageProxy();
                 })
             }
             else {
@@ -191,7 +215,9 @@
                 if (localToken) {
                     pxt.Cloud.localToken = localToken[1];
                 }
-                pxt.runner.startDebuggerAsync(sims);
+                pxt.runner.startDebuggerAsync(sims).done(function() {
+                    if (proxyMessages) initMessageProxy();
+                });
             }
         })
 })()
