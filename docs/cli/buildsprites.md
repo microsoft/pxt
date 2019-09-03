@@ -100,8 +100,38 @@ You can add tags that describe your sprites in the `meta.json` file.
 
 These can be used to filter sprites into (or out of) galleries in the image editor.
 
+These tags should be separated by spaces.
+If you want a tag to only be used to include the sprite in a gallery and not to exclude it,
+you can start the tag with a question mark ``?``.
+For example, if you have a sprite that is a pretty flower,
+that can be used as a flower but also on it's own,
+you might set it to have the following tags:
+
+``flower ?tile``
+
+Note that tags are **case insensitive**.
+
 You can add tags per PNG file as well. If both the `meta.json` and
 the `json` file for the specific PNG contain tags, then **both** sets are included.
+
+### Filters
+
+Tags can be used to **include** or **exclude** images from galleries.
+In blocks, these can be used with a filter defined for the Sprite Editor.
+This filter is a string containing a space separated series of tags.
+When the first character of a tag is an exclamation mark ``!``,
+that tag will be excluded from the gallery.
+
+For example, if a sprite editor is set to have the following filter:
+
+``flower !tile``
+
+Then the gallery will contain **only** sprites with the ``flower`` tag,
+that do not contain the ``tile`` tag.
+
+Note that filters are **case insensitive**, and can partially match tags;
+if you have a filter to include only ``flower`` images,
+it will also show ``flowery`` images.
 
 ## See Also
 
