@@ -67,7 +67,7 @@ namespace pxt.editor {
 
         | "event"
         | "simevent"
-        | "info" // return info data
+        | "info" // return info data`
 
         // package extension messasges
         | ExtInitializeType
@@ -222,8 +222,10 @@ namespace pxt.editor {
         intervalSpeed?: number;
     }
 
-    export interface EditorMessageInfoResponse extends EditorMessageResponse {
+    export interface InfoMessage {
         versions: pxt.TargetVersions;
+        locale: string;
+        availableLocales?: string[];
     }
 
     export interface PackageExtensionData {
@@ -404,8 +406,10 @@ namespace pxt.editor {
                                 case "info": {
                                     return Promise.resolve()
                                         .then(() => {
-                                            resp = <editor.EditorMessageInfoResponse>{
-                                                versions: pxt.appTarget.versions
+                                            resp = <editor.InfoMessage>{
+                                                versions: pxt.appTarget.versions,                                                
+                                                locale: ts.pxtc.Util.userLanguage(),
+                                                availableLocales: pxt.appTarget.appTheme.availableLocales
                                             }
                                         });
                                 }
