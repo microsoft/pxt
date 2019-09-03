@@ -387,7 +387,7 @@ namespace pxt.editor {
                                     return Promise.resolve()
                                         .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
                                 }
-                                case "togglehighcontract": {
+                                case "togglehighcontrast": {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleHighContrast());
                                 }
