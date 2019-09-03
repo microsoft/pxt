@@ -52,7 +52,9 @@ namespace pxt.editor {
         | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
-        | "settracestate" // EditorMessageSetTraceStateRequest
+        | "settracestate" // 
+        
+        | "print" // print code
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -374,6 +376,10 @@ namespace pxt.editor {
                                     const trcmsg = data as EditorMessageSetTraceStateRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
+                                }
+                                case "print": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.printCode());
                                 }
                             }
                             return Promise.resolve();
