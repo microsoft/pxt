@@ -155,24 +155,11 @@
         }
 
         function initMessageProxy() {
-            var simframe;
-
-            getSimframe();
-
             window.addEventListener("message", function(ev) {
-                if (!simframe) getSimframe();
-
-                if (simframe && simframe.contentWindow && ev.source !== simframe.contentWindow) {
-                    simframe.contentWindow.postMessage(ev.data, simFrame.src);
-                }
-                else if (window.parent && ev.source !== window.parent) {
+                if (window.parent && ev.source !== window.parent) {
                     window.parent.postMessage(ev.data, "*")
                 }
             })
-
-            function getSimframe() {
-                simframe = document.getElementsByTagName("iframe");
-            }
         }
         initAppCache();
 
