@@ -52,6 +52,8 @@ namespace pxt.editor {
         | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
+        | "togglehighcontrast"
+        | "togglegreenscreen"
         | "settracestate" // 
         
         | "print" // print code
@@ -377,6 +379,14 @@ namespace pxt.editor {
                                     const trcmsg = data as EditorMessageSetTraceStateRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
+                                }
+                                case "togglehighcontract": {                                    
+                                    return Promise.resolve()
+                                        .then(() => projectView.toggleHighContrast());
+                                }
+                                case "togglegreenscreen": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.toggleGreenScreen());
                                 }
                                 case "print": {
                                     return Promise.resolve()
