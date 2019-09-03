@@ -55,6 +55,7 @@ namespace pxt.editor {
         | "settracestate" // 
         
         | "print" // print code
+        | "pair" // pair device
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -380,6 +381,10 @@ namespace pxt.editor {
                                 case "print": {
                                     return Promise.resolve()
                                         .then(() => projectView.printCode());
+                                }
+                                case "pair": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.pair());
                                 }
                             }
                             return Promise.resolve();
