@@ -407,7 +407,7 @@ namespace pxt.editor {
                                     return Promise.resolve()
                                         .then(() => {
                                             resp = <editor.InfoMessage>{
-                                                versions: pxt.appTarget.versions,                                                
+                                                versions: pxt.appTarget.versions,
                                                 locale: ts.pxtc.Util.userLanguage(),
                                                 availableLocales: pxt.appTarget.appTheme.availableLocales
                                             }
