@@ -891,7 +891,10 @@ export class ProjectView
     navigateToError(diag: pxtc.KsDiagnostic) {
         if (!diag) return;
         // find file
-        let f = pkg.mainEditorPkg().lookupFile("this/" + diag.fileName);
+        let fn = diag.fileName;
+        if (!/^pxt_modules\//.test(fn))
+            fn = "this/" + fn;
+        let f = pkg.mainEditorPkg().lookupFile(fn);
         if (!f) return;
 
         this.setSideFile(f, diag.line + 1);
