@@ -55,7 +55,7 @@ namespace pxt.editor {
         | "togglehighcontrast"
         | "togglegreenscreen"
         | "settracestate" // 
-        
+
         | "print" // print code
         | "pair" // pair device
 
@@ -67,6 +67,7 @@ namespace pxt.editor {
 
         | "event"
         | "simevent"
+        | "info" // return info data
 
         // package extension messasges
         | ExtInitializeType
@@ -221,6 +222,10 @@ namespace pxt.editor {
         intervalSpeed?: number;
     }
 
+    export interface EditorMessageInfoResponse extends EditorMessageResponse {
+        versions: pxt.TargetVersions;
+    }
+
     export interface PackageExtensionData {
         ts: string;
         json?: any;
@@ -255,7 +260,7 @@ namespace pxt.editor {
      */
     export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
         const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
-                                    && pxt.BrowserUtils.isIFrame();
+            && pxt.BrowserUtils.isIFrame();
         const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
         const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
@@ -380,7 +385,7 @@ namespace pxt.editor {
                                     return Promise.resolve()
                                         .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
                                 }
-                                case "togglehighcontract": {                                    
+                                case "togglehighcontract": {
                                     return Promise.resolve()
                                         .then(() => projectView.toggleHighContrast());
                                 }
@@ -395,6 +400,14 @@ namespace pxt.editor {
                                 case "pair": {
                                     return Promise.resolve()
                                         .then(() => projectView.pair());
+                                }
+                                case "info": {
+                                    return Promise.resolve()
+                                        .then(() => {
+                                            resp = <editor.EditorMessageInfoResponse>{
+                                                versions: pxt.appTarget.versions
+                                            }
+                                        });
                                 }
                             }
                             return Promise.resolve();
