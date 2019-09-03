@@ -2359,6 +2359,8 @@ export class ProjectView
     }
 
     printCode() {
+        if (!this.state.header) return; // no program loaded
+
         const p = pkg.mainEditorPkg();
         const files = p.getAllFiles();
         // render in sidedocs
