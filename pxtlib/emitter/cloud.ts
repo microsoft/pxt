@@ -219,5 +219,6 @@ namespace pxt.Cloud {
         target?: string;
         targetVersion?: string;
         meta?: JsonScriptMeta; // only in lite, bag of metadata
+        thumb?: boolean;
     }
 }

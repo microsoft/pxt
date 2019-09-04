@@ -13,13 +13,16 @@ namespace pxt {
             } else if (pxt.appTarget.bundledpkgs[module.id]) {
                 return pxt.appTarget.bundledpkgs[module.id][filename];
             } else {
-                console.log("file missing: " + module + " / " + filename)
+                console.log("file missing: " + module.id + " / " + filename)
                 return null;
             }
         }
 
         writeFile(module: pxt.Package, filename: string, contents: string) {
-            console.log("write file? " + module + " / " + filename)
+            if (module.id == "this" && filename == pxt.CONFIG_NAME)
+                this.packageFiles[pxt.CONFIG_NAME] = contents
+            else
+                console.log("write file? " + module.id + " / " + filename)
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -65,20 +68,36 @@ namespace pxt {
         }
     }
 
-    export function simpleCompileAsync(files: pxt.Map<string>, isNative: boolean) {
+    export interface CompileResultWithErrors extends pxtc.CompileResult {
+        errors?: string;
+    }
+
+    export interface SimpleCompileOptions {
+        native?: boolean;
+    }
+
+    export function simpleCompileAsync(files: pxt.Map<string>, optionsOrNative?: SimpleCompileOptions | boolean) {
+        const options: SimpleCompileOptions =
+            typeof optionsOrNative == "boolean" ? { native: optionsOrNative }
+                : optionsOrNative || {}
         const host = new SimpleHost(files)
         const mainPkg = new MainPackage(host)
         return mainPkg.loadAsync()
             .then(() => {
                 let target = mainPkg.getTargetOptions()
                 if (target.hasHex)
-                    target.isNative = isNative
+                    target.isNative = options.native
                 return mainPkg.getCompileOptionsAsync(target)
             })
             .then(opts => {
                 patchTS(mainPkg.targetVersion(), opts)
                 prepPythonOptions(opts)
                 return pxtc.compile(opts)
+            })
+            .then((r: CompileResultWithErrors) => {
+                if (!r.success)
+                    r.errors = r.diagnostics.map(ts.pxtc.getDiagnosticString).join("") || "Unknown error."
+                return r
             })
     }
 
@@ -96,5 +115,21 @@ namespace pxt {
                 }
             }
         }
+    }
+
+    declare var global: any;
+    declare var Buffer: any;
+    declare var pxtTargetBundle: TargetBundle;
+
+    export function setupSimpleCompile() {
+        if (typeof global != "undefined" && !global.btoa) {
+            global.btoa = function (str: string) { return new Buffer(str, "binary").toString("base64"); }
+            global.atob = function (str: string) { return new Buffer(str, "base64").toString("binary"); }
+        }
+        if (typeof pxtTargetBundle != "undefined") {
+            pxt.debug("setup app bundle")
+            pxt.setAppTarget(pxtTargetBundle)
+        }
+        pxt.debug("simple setup done")
     }
 }
