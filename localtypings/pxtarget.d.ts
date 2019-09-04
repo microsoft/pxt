@@ -341,6 +341,7 @@ declare namespace pxt {
         experimentalHw?: boolean; // enable experimental hardware
         recipes?: boolean; // inlined tutorials
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
     }
 
     interface SocialOptions {

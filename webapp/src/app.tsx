@@ -3062,7 +3062,11 @@ export class ProjectView
                 .then(() => {
                     let curr = pkg.mainEditorPkg().header;
                     return this.loadHeaderAsync(curr);
-                }).finally(() => core.hideLoading("leavingtutorial"));
+                }).finally(() => core.hideLoading("leavingtutorial"))
+                .then(() => {
+                    if (pxt.appTarget.appTheme.shareFinishedTutorials)
+                        this.showShareDialog();
+                })
         }
     }
 
