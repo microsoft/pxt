@@ -3066,8 +3066,10 @@ export class ProjectView
                 .then(() => {
                     if (pxt.appTarget.cloud &&
                         pxt.appTarget.cloud.sharing &&
-                        pxt.appTarget.appTheme.shareFinishedTutorials)
+                        pxt.appTarget.appTheme.shareFinishedTutorials) {
+                        pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
                         this.showShareDialog();
+                    }
                 })
         }
     }
