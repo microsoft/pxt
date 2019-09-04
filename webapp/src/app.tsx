@@ -3064,7 +3064,9 @@ export class ProjectView
                     return this.loadHeaderAsync(curr);
                 }).finally(() => core.hideLoading("leavingtutorial"))
                 .then(() => {
-                    if (pxt.appTarget.appTheme.shareFinishedTutorials)
+                    if (pxt.appTarget.cloud &&
+                        pxt.appTarget.cloud.sharing &&
+                        pxt.appTarget.appTheme.shareFinishedTutorials)
                         this.showShareDialog();
                 })
         }
