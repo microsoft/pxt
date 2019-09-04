@@ -278,7 +278,7 @@ namespace pxt.editor {
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(): void;
+        showShareDialog(title?: string): void;
         showAboutDialog(): void;
 
         showImportUrlDialog(): void;

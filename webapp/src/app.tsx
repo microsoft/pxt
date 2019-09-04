@@ -2793,10 +2793,10 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showShareDialog() {
+    showShareDialog(title?: string) {
         const header = this.state.header;
         if (header)
-            this.shareEditor.show(header);
+            this.shareEditor.show(header, title);
     }
 
     showLanguagePicker() {
@@ -3068,7 +3068,7 @@ export class ProjectView
                         pxt.appTarget.cloud.sharing &&
                         pxt.appTarget.appTheme.shareFinishedTutorials) {
                         pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
-                        this.showShareDialog();
+                        this.showShareDialog(lf("Well done, now share your game!"));
                     }
                 })
         }
