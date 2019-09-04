@@ -274,6 +274,7 @@ namespace pxsim {
                     else
                         this.start();
                 }
+                frame.focus()
                 return false;
             }
             wrapper.appendChild(i);
