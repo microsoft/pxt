@@ -2278,6 +2278,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
+                simulator.driver.focus()
                 break;
         }
     }
@@ -2448,6 +2449,7 @@ export class ProjectView
             simulator.driver.stopSound();
             simulator.driver.restart(); // fast restart
         }
+        simulator.driver.focus()
         if (!isDebug) {
             this.blocksEditor.clearBreakpoints();
         }
