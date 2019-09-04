@@ -4,9 +4,15 @@ This guide explains how users can publish their own [tutorials](/writing-docs/tu
 
 There are 2 ways of sharing a tutorial: use a shared script or publish it in a [GitHub](https://github.com) repository.
 
-For a quick introdution to writing and sharing a user tutorial, watch this video:
+## ~ hint
 
-![User tutorial video](#)
+#### Custom tutorial example
+
+For a quick introduction on writing and sharing a user tutorial, see this video:
+
+https://youtu.be/lZucrzDgoIE
+
+## ~
 
 ## Authoring
 
