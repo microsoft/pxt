@@ -95,6 +95,11 @@ namespace pxsim {
             this.setState(SimulatorState.Pending);
         }
 
+        focus() {
+            const frame = this.simFrames()[0];
+            if (frame) frame.focus();
+        }
+
         private setStarting() {
             this.setState(SimulatorState.Starting);
         }
@@ -274,6 +279,7 @@ namespace pxsim {
                     else
                         this.start();
                 }
+                frame.focus()
                 return false;
             }
             wrapper.appendChild(i);
