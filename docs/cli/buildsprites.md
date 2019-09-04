@@ -129,9 +129,7 @@ For example, if a sprite editor is set to have the following filter:
 Then the gallery will contain **only** sprites with the ``flower`` tag,
 that do not contain the ``tile`` tag.
 
-Note that filters are **case insensitive**, and can partially match tags;
-if you have a filter to include only ``flower`` images,
-it will also show ``flowery`` images.
+Note that filters are **case insensitive**.
 
 ## See Also
 

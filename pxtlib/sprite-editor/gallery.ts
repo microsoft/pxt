@@ -95,17 +95,17 @@ namespace pxtsprite {
             return target.filter(el => checkInclude(el) && checkExclude(el));
 
             function checkInclude(item: GalleryItem) {
-                return includeTags.every(filterTag =>
-                    item.tags.some(tag => {
-                        const ind = tag.indexOf(filterTag);
-                        return ind === 0 || ind === 1 && tag.charAt(0) === "?";
-                    })
-                );
+                return includeTags.every(filterTag => {
+                    const optFilterTag = `?${filterTag}`;
+                    return item.tags.some(tag =>
+                        tag === filterTag || tag === optFilterTag
+                    )
+                });
             }
 
             function checkExclude(item: GalleryItem) {
                 return excludeTags.every(filterTag =>
-                    !item.tags.some(tag => tag.indexOf(filterTag) === -1)
+                    !item.tags.some(tag => tag === filterTag)
                 );
             }
         }
