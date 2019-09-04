@@ -3068,7 +3068,7 @@ export class ProjectView
                         pxt.appTarget.cloud.sharing &&
                         pxt.appTarget.appTheme.shareFinishedTutorials) {
                         pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
-                        this.showShareDialog(lf("Well done, now share your project!"));
+                        this.showShareDialog(lf("Well done, would you like to share your project?"));
                     }
                 })
         }
