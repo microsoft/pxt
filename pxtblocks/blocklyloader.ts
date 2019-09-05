@@ -787,6 +787,8 @@ namespace pxt.blocks {
                                 }
                             } else if (pr.type == "any") {
                                 inputCheck = null;
+                            } else if (pr.type.indexOf("|") !== -1) {
+                                inputCheck = pr.type.split(/\s*\|\s*/);
                             } else {
                                 inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
                             }
