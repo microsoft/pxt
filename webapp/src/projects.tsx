@@ -916,9 +916,6 @@ export class NewProjectNameDialog extends ExitAndSaveDialog {
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
-        }, {
-            label: lf("Cancel"),
-            onclick: this.skip
         }]
     }
 
