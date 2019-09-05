@@ -624,8 +624,12 @@ export class ProjectView
                     if (this.state.autoRun) {
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
-                            && this.state.autoRun)
-                            this.autoRunBlocksSimulator();
+                            && this.state.autoRun) {
+                            if (this.isBlocksEditor())
+                                console.error('invalid autorun in non-blocks file')
+                            else
+                                this.autoRunBlocksSimulator();
+                        }
                     }
 
                     this.maybeShowPackageErrors();
@@ -1136,7 +1140,8 @@ export class ProjectView
                     projectName: h.name,
                     currFile: file,
                     sideDocsLoadUrl: '',
-                    debugging: false
+                    debugging: false,
+                    autoRun: this.autoRunOnStart() && pxt.editor.isBlocks(file)
                 })
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
@@ -2533,9 +2538,14 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             pxt.debug(`sim: run`)
-                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute,
-                                this.state.highContrast, pxt.options.light, opts.clickTrigger,
-                                pkg.mainEditorPkg().getSimState())
+                            simulator.run(pkg.mainPkg, opts.debug, resp, {
+                                mute: this.state.mute,
+                                highContrast: this.state.highContrast,
+                                light: pxt.options.light,
+                                clickTrigger: opts.clickTrigger,
+                                storedState: pkg.mainEditorPkg().getSimState(),
+                                autoRun: this.state.autoRun
+                            })
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints);
                             this.textEditor.setBreakpointsMap(resp.breakpoints);
                             if (!cancellationToken.isCancelled()) {

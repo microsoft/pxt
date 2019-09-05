@@ -14,7 +14,6 @@ namespace pxsim {
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
-        autoRun?: boolean;
     }
 
     export enum SimulatorState {
@@ -52,6 +51,7 @@ namespace pxsim {
         clickTrigger?: boolean;
         breakOnStart?: boolean;
         storedState?: Map<any>;
+        autoRun?: boolean;
     }
 
     export interface HwDebugger {
@@ -157,7 +157,7 @@ namespace pxsim {
                     break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    pxsim.U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.autoRun)
+                    pxsim.U.addClass(frame, (this.state == SimulatorState.Stopped || this.runOptions.autoRun)
                         ? this.stoppedClass : this.invalidatedClass);
                     if (!this.options.autoRun) {
                         icon.style.display = '';
@@ -449,7 +449,7 @@ namespace pxsim {
                 version: opts.version,
                 clickTrigger: opts.clickTrigger,
                 breakOnStart: opts.breakOnStart,
-                storedState: opts.storedState,
+                storedState: opts.storedState
             }
             this.start();
         }
