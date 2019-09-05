@@ -603,15 +603,6 @@ export class ProjectView
         },
         1000, true);
 
-    private autoRunSimulator = pxtc.Util.debounce(
-        () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
-                return;
-            this.runSimulator({ debug: !!this.state.debugging, background: true });
-        },
-        2000, true);
-
     _slowTypeCheck = 0;
     private typecheck = pxtc.Util.debounce(
         () => {
@@ -633,10 +624,8 @@ export class ProjectView
                     if (this.state.autoRun) {
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
-                            && this.state.autoRun) {
-                            if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
-                            else this.autoRunSimulator();
-                        }
+                            && this.state.autoRun)
+                            this.autoRunBlocksSimulator();
                     }
 
                     this.maybeShowPackageErrors();
@@ -865,7 +854,8 @@ export class ProjectView
         const state: IAppState = {
             currFile: fn,
             showBlocks: false,
-            embedSimView: false
+            embedSimView: false,
+            autoRun: this.autoRunOnStart() && this.isBlocksEditor()
         };
         if (line !== undefined)
             state.editorPosition = { lineNumber: line, column: 1, file: fn };
@@ -1093,7 +1083,10 @@ export class ProjectView
         this.firstRun = true
         // always start simulator once at least if autoRun is enabled
         // always disable tracing
-        this.setState({ autoRun: this.autoRunOnStart(), tracing: undefined });
+        this.setState({
+            autoRun: this.autoRunOnStart(),
+            tracing: undefined
+        });
 
         // Merge current and new state but only if the new state members are undefined
         const oldEditorState = this.state.editorState;
