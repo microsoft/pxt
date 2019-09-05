@@ -2131,8 +2131,11 @@ export class ProjectView
 
         let simRestart = this.state.simState != pxt.editor.SimState.Stopped;
         // if we're just waiting for empty code to run, don't force restart
-        if (simRestart && this.state.simState == pxt.editor.SimState.Pending && pxt.appTarget.simulator.emptyRunCode)
-            simRestart = false
+        if (simRestart
+            && this.state.simState == pxt.editor.SimState.Pending
+            && pxt.appTarget.simulator.emptyRunCode
+            && !this.isBlocksEditor())
+            simRestart = false;
         this.setState({ compiling: true });
         this.clearSerial();
         this.editor.beforeCompile();
@@ -2488,7 +2491,11 @@ export class ProjectView
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
-        const emptyRun = this.firstRun && opts.background && pxt.appTarget.simulator && !!pxt.appTarget.simulator.emptyRunCode
+        const emptyRun = this.firstRun
+            && opts.background
+            && pxt.appTarget.simulator
+            && !!pxt.appTarget.simulator.emptyRunCode
+            && !this.isBlocksEditor();
         this.firstRun = false
 
         pxt.debug(`sim: start run (autorun ${this.state.autoRun})`)
