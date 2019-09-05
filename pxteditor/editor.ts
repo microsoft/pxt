@@ -296,6 +296,8 @@ namespace pxt.editor {
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
+        askForProjectNameAsync(): Promise<string>;
+
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
     }
