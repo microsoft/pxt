@@ -773,16 +773,6 @@ namespace pxt.blocks {
                                 fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
                             } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
-                            } else if (pr.type.indexOf("|") !== -1) {
-                                const types = pr.type.split(/\s*\|\s*/);
-                                const intersectedTypes = types.map(type => getBlocklyCheckForType(type, info));
-
-                                if (intersectedTypes.some(type => !type)) {
-                                    // a member of the intersection was generic or any, allow any input
-                                    inputCheck = null;
-                                } else {
-                                    inputCheck = [].concat(...intersectedTypes);
-                                }
                             } else {
                                 inputCheck = getBlocklyCheckForType(pr.type, info);
                             }
@@ -914,36 +904,47 @@ namespace pxt.blocks {
      *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
      */
     function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
-        switch (type) {
-            // Blockly capitalizes primitive types for its builtin math/string/logic blocks
-            case "number": return ["Number"];
-            case "string": return ["String"];
-            case "boolean": return ["Boolean"];
-            case "any": return null;
-            case "void": return undefined
-            default:
-                if (type !== "T") {
-                    // We add "Array" to the front for array types so that they can be connected
-                    // to the blocks that accept any array (e.g. length, push, pop, etc)
-                    const opt_check = isArrayType(type) ? ["Array"] : [];
-
-                    // Blockly has no concept of inheritance, so we need to add all
-                    // super classes to the check array
-                    const si_r = info.apis.byQName[type];
-                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
-                        opt_check.push(...si_r.extendsTypes);
-                    } else {
-                        opt_check.push(type);
-                    }
-
-                    return opt_check;
-                } else {
+        const types = type.split(/\s*\|\s*/);
+        const output = [];
+        for (const subtype of types) {
+            switch (subtype) {
+                // Blockly capitalizes primitive types for its builtin math/string/logic blocks
+                case "number":
+                    output.push("Number");
+                    break;
+                case "string":
+                    output.push("String");
+                    break;
+                case "boolean":
+                    output.push("Boolean");
+                    break;
+                case "T":
                     // The type is generic, so accept any checks. This is mostly used with functions that
                     // get values from arrays. This could be improved if we ever add proper type
                     // inference for generic types
+                case "any":
                     return null;
-                }
+                case "void":
+                    return undefined;
+                default:
+                    // We add "Array" to the front for array types so that they can be connected
+                    // to the blocks that accept any array (e.g. length, push, pop, etc)
+                    if (isArrayType(subtype)) {
+                        output.push("Array");
+                    }
+
+                    // Blockly has no concept of inheritance, so we need to add all
+                    // super classes to the check array
+                    const si_r = info.apis.byQName[subtype];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        output.push(...si_r.extendsTypes);
+                    } else {
+                        output.push(subtype);
+                    }
+            }
         }
+
+        return output;
     }
 
     function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
