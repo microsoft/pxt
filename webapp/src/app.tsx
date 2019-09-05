@@ -2555,7 +2555,7 @@ export class ProjectView
                             this.textEditor.setBreakpointsMap(resp.breakpoints);
                             if (!cancellationToken.isCancelled()) {
                                 // running state is set by the simulator once the iframe is loaded
-                                this.setState({ showParts: simulator.driver.runOptions.parts.length > 0 })
+                                this.setState({ showParts: simulator.driver.hasParts() })
                             } else {
                                 pxt.debug(`sim: cancelled 2`)
                                 simulator.stop();
@@ -2588,7 +2588,7 @@ export class ProjectView
     hwDebug() {
         pxt.tickEvent("menu.debug.hw")
         let start = Promise.resolve()
-        if (this.state.simState != pxt.editor.SimState.Running || !simulator.driver.runOptions.debug)
+        if (this.state.simState != pxt.editor.SimState.Running || !simulator.driver.isDebug())
             start = this.runSimulator({ debug: true })
         return start.then(() => {
             simulator.driver.setHwDebugger({

@@ -67,7 +67,7 @@ namespace pxsim {
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
         private breakpointsSet = false;
-        public runOptions: SimulatorRunOptions = {};
+        private _runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
@@ -79,7 +79,11 @@ namespace pxsim {
         }
 
         isDebug() {
-            return this.runOptions && !!this.runOptions.debug;
+            return this._runOptions && !!this._runOptions.debug;
+        }
+
+        hasParts(): boolean {
+            return this._runOptions && this._runOptions.parts && !!this._runOptions.parts.length;
         }
 
         setDirty() {
@@ -157,9 +161,10 @@ namespace pxsim {
                     break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    pxsim.U.addClass(frame, (this.state == SimulatorState.Stopped || this.runOptions.autoRun)
+                    pxsim.U.addClass(frame, 
+                        (this.state == SimulatorState.Stopped || (this._runOptions && this._runOptions.autoRun))
                         ? this.stoppedClass : this.invalidatedClass);
-                    if (!this.runOptions.autoRun) {
+                    if (!this._runOptions || !this._runOptions.autoRun) {
                         icon.style.display = '';
                         icon.className = 'videoplay xicon icon';
                     } else
@@ -289,7 +294,7 @@ namespace pxsim {
             i.style.display = "none";
             wrapper.appendChild(l);
 
-            if (this.runOptions)
+            if (this._runOptions)
                 this.applyAspectRatioToFrame(frame);
 
             return wrapper;
@@ -320,7 +325,7 @@ namespace pxsim {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
-            this.runOptions = undefined; // forget about program
+            this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;
             this.runId = undefined;
         }
@@ -382,13 +387,13 @@ namespace pxsim {
         }
 
         private applyAspectRatio(ratio?: number) {
-            if (!ratio && !this.runOptions) return;
+            if (!ratio && !this._runOptions) return;
             const frames = this.simFrames();
             frames.forEach(frame => this.applyAspectRatioToFrame(frame, ratio));
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            const r = ratio || this.runOptions.aspectRatio;
+            const r = ratio || this._runOptions.aspectRatio;
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }
@@ -430,7 +435,7 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
-            this.runOptions = opts;
+            this._runOptions = opts;
             this.runId = this.nextId();
             // store information
             this._currentRuntime = {
@@ -476,7 +481,7 @@ namespace pxsim {
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this.runOptions && this.runOptions.light);
+                let wrapper = this.createFrame(this._runOptions && this._runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
