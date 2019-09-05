@@ -931,8 +931,9 @@ namespace pxt.blocks {
                     // to the blocks that accept any array (e.g. length, push, pop, etc)
                     if (isArrayType(subtype)) {
                         if (types.length > 1) {
-                            // type inference will potentially break non-trivial arrays until we have better
-                            // type handling in blocks, so escape and allow any block to be dropped in.
+                            // type inference will potentially break non-trivial arrays in intersections
+                            // until we have better type handling in blocks,
+                            // so escape and allow any block to be dropped in.
                             return null;
                         } else {
                             output.push("Array");
