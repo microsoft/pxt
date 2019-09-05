@@ -162,8 +162,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    isDropdownDivVisible() {
-        return typeof Blockly !== "undefined" && Blockly.DropDownDiv && Blockly.DropDownDiv.isVisible();
+    isDropdownDivVisible(): boolean {
+        return typeof Blockly !== "undefined"
+            && Blockly.DropDownDiv
+            && Blockly.DropDownDiv.isVisible();
     }
 
     private saveBlockly(): string {
