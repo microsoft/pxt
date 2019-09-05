@@ -625,10 +625,7 @@ export class ProjectView
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
                             && this.state.autoRun) {
-                            if (this.isBlocksEditor())
-                                console.error('invalid autorun in non-blocks file')
-                            else
-                                this.autoRunBlocksSimulator();
+                            this.autoRunBlocksSimulator();
                         }
                     }
 
