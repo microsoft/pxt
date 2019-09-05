@@ -331,7 +331,14 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject();
+        if (pxt.appTarget.appTheme.nameProjectFirst) {
+            this.props.parent.askForProjectNameAsync()
+                .then(name => {
+                    this.props.parent.newProject({ name });
+                })
+        } else {
+            this.props.parent.newProject({ name });
+        }
     }
 
     showScriptManager() {
@@ -424,7 +431,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         )}
                     </carousel.Carousel>
                     {selectedElement && <div ref="detailView" className={`detailview`}>
-                        <sui.CloseButton onClick={this.closeDetail}/>
+                        <sui.CloseButton onClick={this.closeDetail} />
                         <ProjectsDetail parent={this.props.parent}
                             name={selectedElement.name}
                             key={'detail' + selectedElement.name}
@@ -626,8 +633,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         </div>)}</div>}
                     {descriptions && descriptions.map((desc, index) => {
                         return <p key={`line${index}`} className="detail">
-                                {desc}
-                            </p>
+                            {desc}
+                        </p>
                     })}
                     <div className="actions">
                         <sui.Button
@@ -776,7 +783,6 @@ export interface ExitAndSaveDialogState {
 }
 
 export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSaveDialogState> {
-
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
@@ -823,9 +829,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     handleChange(name: string) {
         this.setState({ projectName: name });
         const untitled = lf("Untitled");
-        name = name || ""; // gard against null/undefined
+        name = name || ""; // guard against null/undefined
         if (!name || pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i + 1) == name)) {
-            this.setState({ emoji: "😞" });
+            // the frowny face here seemed a bit pessimistic - the user didn't to anything wrong
+            this.setState({ emoji: "" });
         } else {
             const emojis = ["😌", "😄", "😃", "😍"];
             let emoji = emojis[Math.min(name.length, emojis.length) - 1];
@@ -857,10 +864,12 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         })
     }
 
-    renderCore() {
-        const { visible, emoji, projectName } = this.state;
+    headerText() {
+        return lf("Project has no name {0}", this.state.emoji)
+    }
 
-        const actions: sui.ModalButton[] = [{
+    actions(): sui.ModalButton[] {
+        return [{
             label: lf("Save"),
             onclick: this.save,
             icon: 'check',
@@ -869,11 +878,15 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             label: lf("Skip"),
             onclick: this.skip
         }]
+    }
+
+    renderCore() {
+        const { visible, projectName } = this.state;
 
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
-                onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Project has no name {0}", emoji)}
+                onClose={this.hide} dimmer={true} buttons={this.actions()}
+                closeIcon={true} header={this.headerText()}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
@@ -887,6 +900,46 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 </div>
             </sui.Modal>
         )
+    }
+}
+
+export class NewProjectNameDialog extends ExitAndSaveDialog {
+    private nameCb: (name: string) => void;
+
+    headerText() {
+        return lf("Your project needs a name {0}", this.state.emoji)
+    }
+
+    actions(): sui.ModalButton[] {
+        return [{
+            label: lf("Create!"),
+            onclick: this.save,
+            icon: 'check',
+            className: 'approve positive'
+        }, {
+            label: lf("Cancel"),
+            onclick: this.skip
+        }]
+    }
+
+    askNameAsync() {
+        this.setState({ projectName: "", emoji: "" })
+        this.show()
+        return new Promise<string>(resolve => {
+            this.nameCb = resolve
+        })
+    }
+
+    skip() {
+        this.hide()
+    }
+
+    save() {
+        const { projectName: newName } = this.state;
+        this.hide();
+        if (this.nameCb)
+            this.nameCb(newName)
+        this.nameCb = null
     }
 }
 

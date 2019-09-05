@@ -343,6 +343,7 @@ declare namespace pxt {
         recipes?: boolean; // inlined tutorials
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
+        nameProjectFirst?: boolean;
     }
 
     interface SocialOptions {
