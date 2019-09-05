@@ -158,8 +158,12 @@ export class ProjectView
         this.hintManager.addHint(ProjectView.tutorialCardId, this.tutorialCardHintCallback.bind(this));
     }
 
-    private autoRunOnStart() {
-        return pxt.appTarget.simulator && (pxt.appTarget.simulator.autoRun || !!pxt.appTarget.simulator.emptyRunCode)
+    private autoRunOnStart(): boolean {
+        return pxt.appTarget.simulator
+            && ((pxt.options.light
+                ? !!pxt.appTarget.simulator.autoRunLight
+                : !!pxt.appTarget.simulator.autoRun)
+                || !!pxt.appTarget.simulator.emptyRunCode);
     }
 
     private initScreenshots() {
@@ -2524,10 +2528,7 @@ export class ProjectView
             this.syncPreferredEditor()
 
             simulator.stop(false, true);
-            const simAutoRun = pxt.appTarget.simulator && (pxt.options.light
-                ? !!pxt.appTarget.simulator.autoRunLight
-                : !!pxt.appTarget.simulator.autoRun);
-            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && simAutoRun;
+            const autoRun = (this.state.autoRun || !!opts.clickTrigger);
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
                 .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))

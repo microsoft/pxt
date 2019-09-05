@@ -159,7 +159,7 @@ namespace pxsim {
                 case SimulatorState.Suspended:
                     pxsim.U.addClass(frame, (this.state == SimulatorState.Stopped || this.runOptions.autoRun)
                         ? this.stoppedClass : this.invalidatedClass);
-                    if (!this.options.autoRun) {
+                    if (!this.runOptions.autoRun) {
                         icon.style.display = '';
                         icon.className = 'videoplay xicon icon';
                     } else
