@@ -930,7 +930,13 @@ namespace pxt.blocks {
                     // We add "Array" to the front for array types so that they can be connected
                     // to the blocks that accept any array (e.g. length, push, pop, etc)
                     if (isArrayType(subtype)) {
-                        output.push("Array");
+                        if (types.length > 1) {
+                            // type inference will potentially break non-trivial arrays until we have better
+                            // type handling in blocks, so escape and allow any block to be dropped in.
+                            return null;
+                        } else {
+                            output.push("Array");
+                        }
                     }
 
                     // Blockly has no concept of inheritance, so we need to add all
