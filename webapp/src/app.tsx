@@ -860,7 +860,7 @@ export class ProjectView
             currFile: fn,
             showBlocks: false,
             embedSimView: false,
-            autoRun: this.autoRunOnStart() && this.isBlocksFile(fn.name)
+            autoRun: this.autoRunOnStart() // restart autoRun is needed
         };
         if (line !== undefined)
             state.editorPosition = { lineNumber: line, column: 1, file: fn };
@@ -1141,8 +1141,7 @@ export class ProjectView
                     projectName: h.name,
                     currFile: file,
                     sideDocsLoadUrl: '',
-                    debugging: false,
-                    autoRun: this.autoRunOnStart() && pxt.editor.isBlocks(file)
+                    debugging: false
                 })
 
                 pkg.getEditorPkg(pkg.mainPkg).onupdate = () => {
@@ -2502,7 +2501,7 @@ export class ProjectView
             && !this.isBlocksEditor();
         this.firstRun = false
 
-        pxt.debug(`sim: start run (autorun ${this.state.autoRun})`)
+        pxt.debug(`sim: start run (autorun ${this.state.autoRun}, first ${this.firstRun})`)
 
         if (this.runToken) this.runToken.cancel()
         let cancellationToken = new pxt.Util.CancellationToken();
@@ -2528,7 +2527,7 @@ export class ProjectView
             this.syncPreferredEditor()
 
             simulator.stop(false, true);
-            const autoRun = (this.state.autoRun || !!opts.clickTrigger);
+            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && this.isBlocksEditor();
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
                 .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))
