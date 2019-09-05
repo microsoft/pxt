@@ -106,7 +106,7 @@
         fill: @HCblocklySvgColor !important;
         fill-opacity: 1 !important;
         stroke-width: 4px;
-        stroke: white;
+        stroke: @HCblocklyTreeLabelColor;
     }
     .monacoFlyout {
         background: @HCblocklySvgColor !important;
@@ -156,7 +156,7 @@
             color: @HCmainMenuTextColor;
         }
         .item.editor-menuitem .ui.grid {
-            border: 1px solid black !important;
+            border: 1px solid @HCbackground !important;
         }
     }
     #mainmenu.inverted, #homemenu.inverted {
@@ -174,13 +174,13 @@
 
     /* Editor switch toggle */
     .menubar .ui.menu.fixed .item.editor-menuitem .ui.grid {
-        background: black !important;
+        background: @HCbackground !important;
         .item:not(.active) {
             opacity: 1 !important;
             color: @HCmainMenuInverseTextColor !important;
         }
         .item.active {
-            background: white !important;
+            background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
         }
     }
@@ -190,7 +190,7 @@
         background: @HCeditorToolsBackground !important;
     }
     #editortools {
-        border-top: 4px solid white;
+        border-top: 4px solid @HCtextColor;
     }
 
     /* Buttons */
