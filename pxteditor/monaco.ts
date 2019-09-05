@@ -133,7 +133,7 @@ namespace pxt.vs {
             folding: hasFieldEditors,
             glyphMargin: hasFieldEditors,
             minimap: {
-                enabled: !pxt.options.light
+                enabled: false
             },
             autoIndent: true,
             useTabStops: true,
