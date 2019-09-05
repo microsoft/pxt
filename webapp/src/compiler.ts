@@ -23,8 +23,10 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
-    if (output) // helpful for debugging
-        pxt.debug(output);
+    // people often ask about where to look for errors, and many will look in the console
+    // the output.txt has usability issues
+    if (output)
+        pxt.log(output);
 
     if (!output)
         output = U.lf("Everything seems fine!\n")
