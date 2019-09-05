@@ -768,29 +768,23 @@ namespace pxt.blocks {
                             inputName = defName;
                             if (instance && part.name === "this") {
                                 inputCheck = pr.type;
-                            } else if (pr.type == "number") {
-                                if (pr.shadowBlockId && pr.shadowBlockId == "value") {
-                                    inputName = undefined;
-                                    fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
-                                }
-                                else {
-                                    inputCheck = "Number"
-                                }
-                            } else if (pr.type == "boolean") {
-                                inputCheck = "Boolean"
-                            } else if (pr.type == "string") {
-                                if (pr.shadowOptions && pr.shadowOptions.toString) {
-                                    inputCheck = undefined;
-                                }
-                                else {
-                                    inputCheck = "String"
-                                }
-                            } else if (pr.type == "any") {
+                            } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
+                                inputName = undefined;
+                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                            } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
                             } else if (pr.type.indexOf("|") !== -1) {
-                                inputCheck = pr.type.split(/\s*\|\s*/);
+                                const types = pr.type.split(/\s*\|\s*/);
+                                const intersectedTypes = types.map(type => getBlocklyCheckForType(type, info));
+
+                                if (intersectedTypes.some(type => !type)) {
+                                    // a member of the intersection was generic or any, allow any input
+                                    inputCheck = null;
+                                } else {
+                                    inputCheck = [].concat(...intersectedTypes);
+                                }
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
+                                inputCheck = getBlocklyCheckForType(pr.type, info);
                             }
                         }
                     }
