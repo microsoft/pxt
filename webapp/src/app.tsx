@@ -859,7 +859,7 @@ export class ProjectView
             currFile: fn,
             showBlocks: false,
             embedSimView: false,
-            autoRun: this.autoRunOnStart() && this.isBlocksEditor()
+            autoRun: this.autoRunOnStart() && this.isBlocksFile(fn.name)
         };
         if (line !== undefined)
             state.editorPosition = { lineNumber: line, column: 1, file: fn };
