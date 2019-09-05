@@ -1562,14 +1562,18 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function isGlobalConst(decl: Declaration) {
+            if (isGlobalVar(decl) && (decl.parent.flags & NodeFlags.Const))
+                return true
+            return false
+        }
+
         function isConstLiteral(decl: Declaration) {
-            if (isGlobalVar(decl)) {
-                if (decl.parent.flags & NodeFlags.Const) {
-                    let init = (decl as VariableDeclaration).initializer
-                    if (!init) return false
-                    if (init.kind == SK.ArrayLiteralExpression) return false
-                    return !isSideEffectfulInitializer(init)
-                }
+            if (isGlobalConst(decl)) {
+                let init = (decl as VariableDeclaration).initializer
+                if (!init) return false
+                if (init.kind == SK.ArrayLiteralExpression) return false
+                return !isSideEffectfulInitializer(init)
             }
             return false
         }
@@ -2579,8 +2583,8 @@ ${lbl}: .short 0xffff
                 }
                 if (/^e[14]/i.test(s) && node.parent && node.parent.kind == SK.CallExpression &&
                     (node.parent as CallExpression).expression.getText() == "image.ofBuffer") {
-                        const m = /^e([14])(..)(..)..(.*)/i.exec(s)
-                        s = `870${m[1]}${m[2]}00${m[3]}000000${m[4]}`
+                    const m = /^e([14])(..)(..)..(.*)/i.exec(s)
+                    s = `870${m[1]}${m[2]}00${m[3]}000000${m[4]}`
                 }
                 let res = ""
                 for (let i = 0; i < s.length; ++i) {
@@ -3599,13 +3603,13 @@ ${lbl}: .short 0xffff
                     throw userError(9269, lf("conflicting values for config.{0}", ent.name))
             }
 
-            if (node.declarationList.flags & NodeFlags.Const)
-                for (let decl of node.declarationList.declarations) {
-                    let nm = getDeclName(decl)
-                    let parname = node.parent && node.parent.kind == SK.ModuleBlock ?
-                        getName(node.parent.parent) : "?"
+            if (node.declarationList.flags & NodeFlags.Const) {
+                let parname = node.parent && node.parent.kind == SK.ModuleBlock ?
+                    getName(node.parent.parent) : "?"
+                if (parname == "config" || parname == "userconfig")
+                    for (let decl of node.declarationList.declarations) {
+                        let nm = getDeclName(decl)
 
-                    if (parname == "config" || parname == "userconfig") {
                         if (!decl.initializer) continue
                         let val = emitAsInt(decl.initializer)
                         let key = lookupDalConst(node, "CFG_" + nm) as number
@@ -3615,7 +3619,8 @@ ${lbl}: .short 0xffff
                             nm = "!" + nm
                         addConfigEntry({ name: nm, key: key, value: val })
                     }
-                }
+            }
+
             if (ts.isInAmbientContext(node))
                 return;
             checkForLetOrConst(node.declarationList);
