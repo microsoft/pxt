@@ -29,8 +29,8 @@
 @HCmainMenuTextColor: black;
 @HCmainMenuInverseTextColor: white;
 
-@HCblocklyToolboxColor: white;
-@HCblocklyTreeLabelColor: black;
+@HCblocklyToolboxColor: black;
+@HCblocklyTreeLabelColor: white;
 @HCblocklyTreeLabelSelectedColor: white;
 
 @HCeditorToolsBackground: black;
@@ -95,6 +95,10 @@
         .blocklyTreeSelected span.blocklyTreeLabel {
             color: @HCblocklyTreeLabelSelectedColor;
         }
+        .blocklyTreeRow:not(.blocklyTreeSelected):hover,
+        .blocklyTreeRow:not(.blocklyTreeSelected):focus {
+            background-color: lighten(@HCblocklyToolboxColor, 25.0);
+        }
     }
 
     /* Blockly flyout */
@@ -106,7 +110,7 @@
     }
     .monacoFlyout {
         background: @HCblocklySvgColor !important;
-        border-right: 4px solid white !important;
+        border-right: 4px solid @HCtextColor !important;
     }
 
     /* Main editor areas */
@@ -131,7 +135,7 @@
 
     .blocklyToolboxDiv, .monacoToolboxDiv {
         background: @HCblocklyToolboxColor !important;
-        border-right: 0px !important;
+        border-right: 1px solid @HCblocklyTreeLabelColor !important;
     }
     .blocklyPath {
         stroke-width: 3px;
