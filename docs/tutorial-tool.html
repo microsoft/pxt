@@ -1,32 +1,56 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
-	<link data-name="vs/editor/editor.main" rel="stylesheet" href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+	<link rel="stylesheet" href="/doccdn/semantic.css" type="text/css">
+	<link data-name="vs/editor/editor.main" rel="stylesheet"
+		href="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.css">
 	<link rel="stylesheet" href="/static/tutorial-tool/tutorial.css">
 </head>
+
 <body>
-
-<div class="content">
-	<h2>MakeCode Tutorial Tool</h2>
-	<div>
-		<button id="run-button">Run in MakeCode</button>
-		<select id="endpoint-select"></select>
-	</div>
-	<div class="editor-row">
-		<div id="monaco-editor">
-			<div id="container" style="border:1px solid grey"></div>
+	<nav class="ui menu inverted fixed borderless">
+		<div class="menu left">
+			<div class="ui item">
+				MakeCode Tutorial Editor
+			</div>
 		</div>
-		<div id="makecode-editor" style="border:1px solid grey"></div>
-	</div>
-</div>
 
-<script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
-<script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
-<script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
-<script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
-<script src="/static/tutorial-tool/tutorial.js"></script>
+		<div class="menu right">
+			<a href="/markdown" class="ui item">
+				Markdown syntax
+			</a>
+			<a href="/writing-docs/tutorials" class="ui item">
+				Tuytorials How to
+			</a>
+		</div>
+	</nav>
+
+	<div class="content">
+		<div>
+			<button class="ui button" id="run-button">Run in MakeCode</button>
+			<select id="endpoint-select"></select>
+		</div>
+		<div class="editor-row">
+			<div id="monaco-editor">
+				<div id="container" style="border:1px solid grey"></div>
+			</div>
+			<div id="makecode-editor" style="border:1px solid grey"></div>
+		</div>
+	</div>
+
+	<!-- @include thin-footer.html -->
+
+	<script>var require = { paths: { 'vs': 'https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs' } };</script>
+	<script src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/loader.js"></script>
+	<script
+		src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+	<script
+		src="https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+	<script src="/static/tutorial-tool/tutorial.js"></script>
 
 </body>
+
 </html>
