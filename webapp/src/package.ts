@@ -451,6 +451,9 @@ class Host
         let fromWorkspaceAsync = (arg: string) =>
             workspace.getTextAsync(arg)
                 .then(scr => {
+                    if (!scr) {
+                        return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
+                    }
                     epkg.setFiles(scr)
                     if (epkg.isTopLevel() && epkg.header)
                         return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
@@ -469,7 +472,9 @@ class Host
             return fromWorkspaceAsync(pkg.verArgument())
         } else if (proto == "file") {
             let arg = pkg.verArgument()
-            if (arg[0] == ".") arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            if (arg[0] == ".") {
+                arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            }
             return fromWorkspaceAsync(arg)
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
