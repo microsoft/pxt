@@ -32,10 +32,10 @@ export class DomObject {
 
     async dragAndDrop(criteria, criteria2) {
 
-        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
-        let element2 = await driver.wait(until.elementLocated(this.findBy(criteria2)), 10000);
+        let origin = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
+        let goal = await driver.wait(until.elementLocated(this.findBy(criteria2)), 10000);
 
-        return await actions.dragAndDrop(element, element2);
+        return await actions.dragAndDrop(origin, goal).perform();
     }
 
     async catchScreenShot(name) {
@@ -65,8 +65,9 @@ export class DomObject {
     }
 
 
-    async switchToIframe(iframe) {
-        let newIframe = await driver.switchTo().frame(iframe);
+    async switchToIframe(criteria) {
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
+        let newIframe = await driver.switchTo().frame(element);
         await driver.sleep(5000);
         return newIframe;
 
