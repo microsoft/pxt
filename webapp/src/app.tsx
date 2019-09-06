@@ -2801,10 +2801,10 @@ export class ProjectView
         dialogs.showAboutDialogAsync(this);
     }
 
-    showShareDialog() {
+    showShareDialog(title?: string) {
         const header = this.state.header;
         if (header)
-            this.shareEditor.show(header);
+            this.shareEditor.show(header, title);
     }
 
     showLanguagePicker() {
@@ -3074,7 +3074,15 @@ export class ProjectView
                 .then(() => {
                     let curr = pkg.mainEditorPkg().header;
                     return this.loadHeaderAsync(curr);
-                }).finally(() => core.hideLoading("leavingtutorial"));
+                }).finally(() => core.hideLoading("leavingtutorial"))
+                .then(() => {
+                    if (pxt.appTarget.cloud &&
+                        pxt.appTarget.cloud.sharing &&
+                        pxt.appTarget.appTheme.shareFinishedTutorials) {
+                        pxt.tickEvent("tutorial.share", undefined, { interactiveConsent: false });
+                        this.showShareDialog(lf("Well done! Would you like to share your project?"));
+                    }
+                })
         }
     }
 
