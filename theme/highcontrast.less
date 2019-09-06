@@ -369,6 +369,23 @@
     /* PxtJson */
     #maineditor {
         border-left: 1px solid @HCtextColor !important;
+        background: @HCbackground;
+
+        .ui.segment {
+            border: 1px solid @HCtextColor;
+            background: @HCbackground;
+            color: @HCtextColor;
+
+            .ui.toggle.checkbox {
+                label {
+                    color: @HCtextColor !important;
+                }
+
+                .box:before, label:before {
+                    border: 1px solid @HCtextColor;
+                }
+            }
+        }
     }
 
     /* Serial editor */
