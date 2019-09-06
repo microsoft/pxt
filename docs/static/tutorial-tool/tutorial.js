@@ -63,7 +63,8 @@ var targets = [
                 url: "https://makecode.microbit.org?controller=1"
             }
         ]
-    }, {
+    }/* not supported
+    , {
         name: "LEGO EV3",
         id: "ev3",
         endpoints: [
@@ -76,7 +77,7 @@ var targets = [
                 url: "https://makecode.mindstorms.com?controller=1"
             }
         ]
-    }
+    } */
 ];
 var selectedEndpoint;
 var selectedId;
