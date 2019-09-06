@@ -37,39 +37,6 @@ interface SnippetBuilderState {
     actions?: sui.ModalButton[];
 }
 
-// helper functions
-function findRootBlocks(xmlDOM: Element, type?: string): Element[] {
-    let blocks: Element[] = []
-    for (const child in xmlDOM.children) {
-        const xmlChild = xmlDOM.children[child];
-
-        if (xmlChild.tagName === 'block') {
-            if (type) {
-                const childType = xmlChild.getAttribute('type');
-
-                if (childType && childType === type) {
-                    blocks.push(xmlChild)
-                }
-            } else {
-                blocks.push(xmlChild)
-            }
-        } else {
-            const childChildren = findRootBlock(xmlChild);
-            if (childChildren) {
-                blocks = blocks.concat(childChildren)
-            }
-        }
-    }
-    return blocks;
-}
-
-function findRootBlock(xmlDOM: Element, type?: string): Element {
-    let blks = findRootBlocks(xmlDOM, type)
-    if (blks.length)
-        return blks[0]
-    return null
-}
-
 /**
  * Snippet builder takes a static config file and builds a modal with inputs and outputs based on config settings.
  * An output type is attached to the start of your markdown allowing you to define a number of markdown output. (blocks, lang)
@@ -303,7 +270,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             .then(resp => {
                 // get the root blocks (e.g. on_start) from the new code
                 const newXml = Blockly.Xml.textToDom(resp);
-                const newBlocksDom = findRootBlocks(newXml)
+                const newBlocksDom = pxt.blocks.findRootBlocks(newXml)
 
                 // get the existing root blocks
                 let existingBlocks = mainWorkspace.getTopBlocks(true);
@@ -337,7 +304,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 // merge them
                 function merge(pair: { newB: Element, exB: Blockly.Block }) {
                     let { newB, exB } = pair;
-                    const firstChild = findRootBlock(newB)
+                    const firstChild = pxt.blocks.findRootBlock(newB)
                     const toAttach = Blockly.Xml.domToBlock(firstChild, mainWorkspace);
                     exB.getInput("HANDLER").connection.connect(toAttach.previousConnection);
                 }
