@@ -12,7 +12,7 @@ class GetHelpList extends DomObject {
 
         await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Reference"]');
 
-        await this.switchToIframe('sidedocsframe');
+        await this.switchToIframe('#sidedocsframe');
 
         let referenceTitle = await this.getText('#reference');
 
@@ -30,7 +30,7 @@ class GetHelpList extends DomObject {
 
         await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Blocks"]');
 
-        await this.switchToIframe('sidedocsframe');
+        await this.switchToIframe('#sidedocsframe');
 
         let blocksTitle = await this.getText('#blocks-language');
 
@@ -44,7 +44,7 @@ class GetHelpList extends DomObject {
 
         await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="JavaScript"]');
 
-        await this.switchToIframe('sidedocsframe');
+        await this.switchToIframe('#sidedocsframe');
 
         let javascriptTitle = await this.getText('#javascript');
 
@@ -56,7 +56,7 @@ class GetHelpList extends DomObject {
 
         await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Hardware"]');
 
-        await this.switchToIframe('sidedocsframe');
+        await this.switchToIframe('#sidedocsframe');
 
         await this.click('#sidedocs-back-button');
 

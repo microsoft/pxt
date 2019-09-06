@@ -30,7 +30,7 @@ class ViewMenuBar extends DomObject {
 
         assert.equal(afterChange, 'UntitledProject');
 
-        await this.click('[title="Save]');
+        await this.click('[title="Save"]');
     }
 
     test() {
