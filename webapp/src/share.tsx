@@ -452,9 +452,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                     (screenshotUri && !screenshotMessage)
                                         ? <img className="ui small centered image" src={screenshotUri} alt={lf("Recorded gif")} />
                                         : <p className="no-select">{screenshotMessage}</p>}</div> : undefined}
+                            <p className="ui tiny message info">{disclaimer}</p>
                         </div>
                     </div> : undefined}
-                    {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
+                    {action && !this.loanedSimulator ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
                     {this.state.sharingError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
                         : undefined}
