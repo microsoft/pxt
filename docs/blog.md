@@ -4,7 +4,7 @@
 
 September 6th, 2019 by [pelikhan](https://github.com/pelikhan)
 
-A number of bug fixes and a few new blocks in this the LEGO editor update.
+A number of bug fixes and a few new blocks for the LEGO editor.
 
 ## [MakeCode Assignments in Teams](/blog/teams/teams-assignments)
  
