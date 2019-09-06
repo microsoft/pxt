@@ -771,8 +771,27 @@ function certificateTestAsync(): Promise<string> {
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
+            // if running against old cloud, infer 'thumb' field
+            // can be removed after new cloud deployment
+            if (info.thumb !== undefined)
+                return info
+            return Cloud.privateGetTextAsync(id + "/thumb")
+                .then(_ => {
+                    info.thumb = true
+                    return info
+                }, _ => {
+                    info.thumb = false
+                    return info
+                })
+        })
+        .then((info: Cloud.JsonScript) => {
+            let infoA = info as any
+            infoA.cardLogo = info.thumb
+                ? Cloud.apiRoot + id + "/thumb"
+                : pxt.appTarget.appTheme.thumbLogo || pxt.appTarget.appTheme.cardLogo
             let html = pxt.docs.renderMarkdown({
-                template: expandDocFileTemplate("script.html"),
+                template: expandDocFileTemplate(pxt.appTarget.appTheme.leanShare
+                    ? "leanscript.html" : "script.html"),
                 markdown: "",
                 theme: pxt.appTarget.appTheme,
                 pubinfo: info as any,
@@ -842,6 +861,21 @@ function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
     return undefined;
 }
 
+const compiledCache: pxt.Map<string> = {}
+export async function compileScriptAsync(id: string) {
+    if (compiledCache[id])
+        return compiledCache[id]
+    const scrText = await Cloud.privateGetAsync(id + "/text")
+    const res = await pxt.simpleCompileAsync(scrText, {})
+    let r = ""
+    if (res.errors)
+        r = `throw new Error(${JSON.stringify(res.errors)})`
+    else
+        r = res.outfiles["binary.js"]
+    compiledCache[id] = r
+    return r
+}
+
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
@@ -907,6 +941,17 @@ export function serveAsync(options: ServeOptions) {
                 res.setHeader("Location", trg)
                 error(302, "Redir: " + trg)
                 return
+            }
+
+            if (/^\d\d\d[\d\-]*$/.test(elts[1]) && elts[2] == "js") {
+                return compileScriptAsync(elts[1])
+                    .then(data => {
+                        res.writeHead(200, { 'Content-Type': 'application/javascript' })
+                        res.end(data)
+                    }, err => {
+                        error(500)
+                        console.log(err.stack)
+                    })
             }
 
             if (!isAuthorizedLocalRequest(req)) {

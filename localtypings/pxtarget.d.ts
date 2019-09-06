@@ -235,6 +235,7 @@ declare namespace pxt {
         accentColor?: string; // used in PWA manifest as theme color
         backgroundColor?: string; // use in PWA manifest as background color
         cardLogo?: string;
+        thumbLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
@@ -342,6 +343,8 @@ declare namespace pxt {
         recipes?: boolean; // inlined tutorials
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
+        leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
+        nameProjectFirst?: boolean;
     }
 
     interface SocialOptions {

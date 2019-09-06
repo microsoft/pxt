@@ -70,7 +70,19 @@ namespace pxt.runner {
         $btn.attr("title", label);
         $btn.find('i').attr("class", icon);
         $btn.find('span').text(label);
+
+        addFireClickOnEnter($btn);
         return $btn;
+    }
+
+    function addFireClickOnEnter(el: JQuery<HTMLElement>) {
+        el.keypress(e => {
+            const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+            if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+                e.preventDefault();
+                e.currentTarget.click();
+            }
+        });
     }
 
     function fillWithWidget(
