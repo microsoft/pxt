@@ -88,7 +88,7 @@ class GetMoreList extends DomObject {
 
         console.log(resetMessage);
 
-        await this.click('.actions .red', '.newprojectcard');
+        await this.click('.actions .red');
     }
 
     test() {
