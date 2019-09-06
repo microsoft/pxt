@@ -3141,6 +3141,66 @@ ${lbl}: .short 0xffff
             return rtcallMaskDirect(mapIntOpName(op), [left, right])
         }
 
+        function unaryOpConst(tok: SyntaxKind, a: any): any {
+            switch (tok) {
+                case SK.PlusToken: return +a
+                case SK.MinusToken: return -a
+                case SK.TildeToken: return ~a
+                case SK.ExclamationToken: return !a
+                default:
+                    return undefined
+            }
+        }
+        function binaryOpConst(tok: SyntaxKind, a: any, b: any): any {
+            switch (tok) {
+                case SK.PlusToken: return a + b
+                case SK.MinusToken: return a - b
+                case SK.SlashToken: return a / b
+                case SK.PercentToken: return a % b;
+                case SK.AsteriskToken: return a * b
+                case SK.AsteriskAsteriskToken: return a ** b
+                case SK.AmpersandToken: return a & b
+                case SK.BarToken: return a | b
+                case SK.CaretToken: return a ^ b
+                case SK.LessThanLessThanToken: return a << b
+                case SK.GreaterThanGreaterThanToken: return a >> b
+                case SK.GreaterThanGreaterThanGreaterThanToken: return a >>> b
+                case SK.LessThanEqualsToken: return a <= b
+                case SK.LessThanToken: return a < b
+                case SK.GreaterThanEqualsToken: return a >= b
+                case SK.GreaterThanToken: return a > b
+                case SK.EqualsEqualsToken: return a == b
+                case SK.EqualsEqualsEqualsToken: return a === b
+                case SK.ExclamationEqualsEqualsToken: return a !== b
+                case SK.ExclamationEqualsToken: return a != b
+                case SK.BarBarToken: return a || b
+                case SK.AmpersandAmpersandToken: return a && b
+                default:
+                    return undefined
+            }
+        }
+
+        function constantFold(e: Expression): any {
+            switch (e.kind) {
+                case SK.PrefixUnaryExpression: {
+                    const expr = e as PrefixUnaryExpression
+                    const inner = constantFold(expr.operand)
+                    if (inner == undefined)
+                        return undefined
+                    return unaryOpConst(expr.operator, inner)
+                }
+                case SK.BinaryExpression: {
+                    const expr = e as BinaryExpression
+                    const left = constantFold(expr.left)
+                    if (left == undefined) return undefined
+                    const right = constantFold(expr.right)
+                    if (right == undefined) return undefined
+                    return binaryOpConst(expr.operatorToken.kind, left, right)
+                }
+                case SK.NumericLiteral:
+            }
+        }
+
         function emitAsInt(e: Expression) {
             let prev = target.switches.boxDebug
             let expr: ir.Expr = null
