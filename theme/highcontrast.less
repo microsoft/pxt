@@ -243,9 +243,22 @@
         color: @HCtextColor !important;
         border: 1px solid @HCtextColor !important;
     }
-    input, .input {
-        ::placeholder {
+    .ui.form {
+        .field>label {
             color: @HCtextColor !important;
+        }
+        input, textarea {
+            background: @HCbackground !important;
+            color: @HCtextColor !important;
+            border: 1px solid @HCtextColor !important;
+        }
+    }
+
+    input,
+    .input,
+    .ui.form {
+        ::placeholder {
+            color: darken(@HCtextColor, 20.0) !important;
         }
 
         ::selection {
@@ -254,7 +267,9 @@
         }
     }
 
-
+    .ui.header {
+        color: @HCtextColor !important;
+    }
 
     /* Home screen */
     .projectsdialog, .projectsdialog .tabsegment {
@@ -306,10 +321,6 @@
             background: @disabled !important;
             border-color: @disabled !important;
             color: @HCbackground !important;
-        }
-
-        a, .link {
-            color: @selected !important;
         }
     }
 
