@@ -1574,45 +1574,25 @@ ${lbl}: .short 0xffff
             return false
         }
 
-        function isConstLiteral(decl: Declaration) {
-            if (isGlobalConst(decl)) {
-                let init = (decl as VariableDeclaration).initializer
-                if (!init) return false
-                if (init.kind == SK.ArrayLiteralExpression) return false
-                return !isSideEffectfulInitializer(init)
-            }
-            return false
-        }
-
         function isSideEffectfulInitializer(init: Expression): boolean {
             if (!init) return false;
             if (isStringLiteral(init)) return false;
             switch (init.kind) {
-                case SK.NullKeyword:
-                case SK.NumericLiteral:
-                case SK.TrueKeyword:
-                case SK.FalseKeyword:
-                case SK.UndefinedKeyword:
-                    return false;
-                case SK.Identifier:
-                    return !isConstLiteral(getDecl(init))
-                case SK.PropertyAccessExpression:
-                    let d = getDecl(init)
-                    return !d || d.kind != SK.EnumMember
                 case SK.ArrayLiteralExpression:
                     return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
                 default:
-                    return true;
+                    return constantFold(init) == null;
             }
         }
 
         function emitLocalLoad(decl: VarOrParam) {
+            const folded = constantFoldDecl(decl)
+            if (folded)
+                return emitLit(folded.val)
             if (isGlobalVar(decl)) {
-                let attrs = parseComments(decl)
+                const attrs = parseComments(decl)
                 if (attrs.shim)
                     return emitShim(decl, decl, [])
-                if (isConstLiteral(decl))
-                    return emitExpr(decl.initializer)
             }
             let l = lookupCell(decl)
             recordUse(decl)
@@ -1938,7 +1918,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function getDecl(node: Node): Declaration {
+        function getDeclCore(node: Node): Declaration {
             if (!node) return null
             const pinfo = pxtInfo(node)
             if (pinfo.declCache !== undefined)
@@ -1956,6 +1936,11 @@ ${lbl}: .short 0xffff
                     }
                 }
             }
+            return decl
+        }
+
+        function getDecl(node: Node): Declaration {
+            let decl = getDeclCore(node)
             markUsed(decl)
 
             if (!decl && node.kind == SK.PropertyAccessExpression) {
@@ -3296,7 +3281,9 @@ ${lbl}: .short 0xffff
                     return { val: undefined }
                 case SK.PropertyAccessExpression:
                 case SK.Identifier:
-                    return constantFoldDecl(getDecl(e))
+                    // regular getDecl() will mark symbols as used
+                    // if we succeed, we will not use any symbols, so no rason to mark them
+                    return constantFoldDecl(getDeclCore(e))
                 default:
                     return undefined
             }
@@ -4168,8 +4155,11 @@ ${lbl}: .short 0xffff
             if (!shouldEmitNow(node)) {
                 return null;
             }
-            if (isConstLiteral(node))
+
+            // skip emit of things, where access to them is emitted as literal
+            if (constantFoldDecl(node))
                 return null;
+
             let loc: ir.Cell
 
             if (isGlobalVar(node)) {
@@ -4346,7 +4336,7 @@ ${lbl}: .short 0xffff
                 currUsingContext = pinfo
                 currUsingContext.usedNodes = null
                 currUsingContext.usedActions = null
-                if (isGlobalVar(node)) emitGlobal(node)
+                if (isGlobalVar(node) && !constantFoldDecl(node)) emitGlobal(node)
                 emit(node)
                 needsUsingInfo = true
             } else {
