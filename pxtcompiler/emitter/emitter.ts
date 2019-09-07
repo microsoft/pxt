@@ -2823,6 +2823,14 @@ ${lbl}: .short 0xffff
 
             if (node.body.kind == SK.Block) {
                 emit(node.body);
+                if (funcHasReturn(proc.action)) {
+                    const last = proc.body[proc.body.length - 1]
+                    if (last && last.stmtKind == ir.SK.Jmp && last.jmpMode == ir.JmpMode.Always) {
+                        // skip final 'return undefined' as there was 'return something' just above
+                    } else {
+                        proc.emitJmp(getLabels(node).ret, emitLit(undefined), ir.JmpMode.Always)
+                    }
+                }
             } else {
                 let v = emitExpr(node.body)
                 proc.emitJmp(getLabels(node).ret, v, ir.JmpMode.Always)

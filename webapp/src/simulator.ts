@@ -210,9 +210,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        autoRun: pxt.appTarget.simulator && (pxt.options.light
-            ? !!pxt.appTarget.simulator.autoRunLight
-            : !!pxt.appTarget.simulator.autoRun)
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
@@ -247,15 +244,23 @@ export function setPending() {
     if (driver) driver.setPending();
 }
 
+export interface RunOptions {
+    mute?: boolean;
+    highContrast?: boolean;
+    light?: boolean;
+    clickTrigger?: boolean;
+    storedState?: pxt.Map<any>;
+    autoRun?: boolean;
+}
+
 export function run(pkg: pxt.MainPackage, debug: boolean,
-    res: pxtc.CompileResult, mute?: boolean,
-    highContrast?: boolean, light?: boolean,
-    clickTrigger?: boolean, storedState?: pxt.Map<any>) {
+    res: pxtc.CompileResult, options: RunOptions) {
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
     const fnArgs = res.usedArguments;
     lastCompileResult = res;
+    const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -274,6 +279,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         clickTrigger: clickTrigger,
         breakOnStart: debug,
         storedState: storedState,
+        autoRun
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))

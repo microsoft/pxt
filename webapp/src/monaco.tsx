@@ -493,8 +493,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     beforeCompile() {
-        if (this.editor)
-            this.editor.getAction('editor.action.formatDocument').run();
+        // this triggers a text change wich stops the simulator async
+        //if (this.editor)
+        //    this.editor.getAction('editor.action.formatDocument').run();
     }
 
     isIncomplete() {

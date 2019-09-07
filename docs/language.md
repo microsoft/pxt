@@ -8,6 +8,8 @@ Blocks is implemented using Google Blockly.
 Static TypeScript is a subset of [TypeScript](https://www.typescriptlang.org). 
 Currently, we are using TypeScript version 2.6.1. TypeScript itself is a superset of JavaScript, 
 and many MakeCode programs, especially at the beginner's level, are also just plain JavaScript.
+There are more technical details about the language and the compiler in 
+[this MPLR 2019 paper](https://www.microsoft.com/en-us/research/publication/static-typescript/).
 
 MakeCode is meant for teaching programming first, and JavaScript second. For this
 reason, we have stayed away from concepts that are specific to JavaScript (for
