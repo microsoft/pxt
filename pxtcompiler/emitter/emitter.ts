@@ -3316,6 +3316,8 @@ ${lbl}: .short 0xffff
                     // regular getDecl() will mark symbols as used
                     // if we succeed, we will not use any symbols, so no rason to mark them
                     return constantFoldDecl(getDeclCore(e))
+                case SK.AsExpression:
+                    return constantFold((e as AsExpression).expression)
                 default:
                     return undefined
             }
@@ -4775,18 +4777,6 @@ ${lbl}: .short 0xffff
 MAX_TIME_STEP = Fx8(100)
 MIN_MOVE_GAP = Fx8(0.1)
 oneHalfFx8 = Fx8(0.5)
-
-// casts
-oneFx8 = 1 as any as Fx8
-twoFx8 = 2 as any as Fx8
-zeroFx8 = 0 as any as Fx8
-
-// simple operators
-ON_PAINT_Z = -20
-SPRITE_CANNOT_COLLIDE = sprites.Flag.Ghost | sprites.Flag.Destroyed
-TILE_MAP_Z = -1
-NUM_ROWS = Math.ceil(NUM_LETTERS / NUMPAD_ROW_LENGTH)
-ratio = Math.PI / 180
 
 CONTENT_HEIGHT = screen.height - PADDING_VERTICAL * 2
 CONTENT_WIDTH = screen.width - PADDING * 2
