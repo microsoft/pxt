@@ -2905,6 +2905,10 @@ ${lbl}: .short 0xffff
         function emitVoidExpression(node: VoidExpression) { }
         function emitAwaitExpression(node: AwaitExpression) { }
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
+            const folded = constantFold(node)
+            if (folded)
+                return emitLit(folded.val)
+
             let tp = typeOf(node.operand)
             if (node.operator == SK.ExclamationToken) {
                 return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
@@ -3230,9 +3234,8 @@ ${lbl}: .short 0xffff
                 info.constantFolded = constantFold(pd.initializer)
             }
 
-            if (info.constantFolded) {
-                console.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
-            }
+            //if (info.constantFolded)
+            //    console.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
 
             return info.constantFolded
         }
@@ -3655,6 +3658,10 @@ ${lbl}: .short 0xffff
             if (node.operatorToken.kind == SK.EqualsToken) {
                 return handleAssignment(node);
             }
+
+            const folded = constantFold(node)
+            if (folded)
+                return emitLit(folded.val)
 
             let lt: Type = null
             let rt: Type = null
