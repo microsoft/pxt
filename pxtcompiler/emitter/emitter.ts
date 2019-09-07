@@ -3185,6 +3185,29 @@ ${lbl}: .short 0xffff
                     return null
             }
         }
+        function quickGetQualifiedName(expr: Expression): string {
+            if (expr.kind == SK.Identifier) {
+                return (expr as Identifier).text
+            } else if (expr.kind == SK.PropertyAccessExpression) {
+                const pa = expr as PropertyAccessExpression
+                const left = quickGetQualifiedName(pa.expression)
+                if (left)
+                    return left + "." + pa.name.text
+            }
+            return null
+        }
+
+        function fun1Const(expr: Expression, aa: Folded): Folded {
+            if (!aa)
+                return null
+            const a = aa.val
+            switch (quickGetQualifiedName(expr)) {
+                case "Math.floor": return { val: Math.floor(a) }
+                case "Math.ceil": return { val: Math.ceil(a) }
+                case "Math.round": return { val: Math.round(a) }
+            }
+            return null
+        }
 
         function enumValue(decl: EnumMember): string {
             const attrs = parseComments(decl);
@@ -3282,6 +3305,12 @@ ${lbl}: .short 0xffff
                     return { val: false }
                 case SK.UndefinedKeyword:
                     return { val: undefined }
+                case SK.CallExpression: {
+                    const expr = e as CallExpression
+                    if (expr.arguments.length == 1)
+                        return fun1Const(expr.expression, constantFold(expr.arguments[0]))
+                    return null
+                }
                 case SK.PropertyAccessExpression:
                 case SK.Identifier:
                     // regular getDecl() will mark symbols as used
