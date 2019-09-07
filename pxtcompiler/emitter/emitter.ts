@@ -26,6 +26,7 @@ namespace ts.pxtc {
         declCache: Declaration;
         commentAttrs: CommentAttrs;
         fullName: string;
+        constantFolded: { val: any };
 
         // compiler state
         functionInfo: FunctionAddInfo;
@@ -83,6 +84,7 @@ namespace ts.pxtc {
             this.valueOverride = null;
             this.declCache = undefined;
             this.fullName = null;
+            this.constantFolded = undefined;
         }
 
         resetAll() {
@@ -387,6 +389,10 @@ namespace ts.pxtc {
 
     export function isStatic(node: Declaration) {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
+    }
+
+    export function isReadOnly(node: Declaration) {
+        return node.modifiers && node.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
     }
 
     export function getExplicitDefault(attrs: CommentAttrs, name: string) {
@@ -1633,7 +1639,12 @@ ${lbl}: .short 0xffff
         }
 
         function emitIdentifier(node: Identifier): ir.Expr {
-            let decl = getDecl(node)
+            const decl = getDecl(node)
+
+            const fold = constantFoldDecl(decl)
+            if (fold)
+                return emitLit(fold.val)
+
             if (decl && (isVar(decl) || isParameter(decl))) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
@@ -1773,7 +1784,11 @@ ${lbl}: .short 0xffff
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
-            let decl = getDecl(node);
+            const decl = getDecl(node);
+
+            const fold = constantFoldDecl(decl)
+            if (fold)
+                return emitLit(fold.val)
 
             // we need to type check node.expression before committing code gen
             if ((decl.kind == SK.PropertyDeclaration && !isStatic(decl))
@@ -1783,25 +1798,8 @@ ${lbl}: .short 0xffff
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
-            let attrs = parseComments(decl);
             if (decl.kind == SK.EnumMember) {
-                let ev = attrs.enumval
-                if (!ev) {
-                    let val = checker.getConstantValue(decl as EnumMember)
-                    if (val == null) {
-                        if ((decl as EnumMember).initializer)
-                            return emitExpr((decl as EnumMember).initializer)
-                        userError(9210, lf("Cannot compute enum value"))
-                    }
-                    ev = val + ""
-                }
-                if (/^[+-]?\d+$/.test(ev))
-                    return emitLit(parseInt(ev));
-                if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
-                    return emitLit(parseInt(ev, 16));
-                U.userError("enumval only support number literals")
-                // TODO needs dealing with int conversions
-                return ir.rtcall(ev, [])
+                throw userError(9210, lf("Cannot compute enum value"))
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
             } else if (decl.kind == SK.PropertyDeclaration || decl.kind == SK.Parameter) {
@@ -3141,63 +3139,158 @@ ${lbl}: .short 0xffff
             return rtcallMaskDirect(mapIntOpName(op), [left, right])
         }
 
-        function unaryOpConst(tok: SyntaxKind, a: any): any {
+        interface Folded {
+            val: any;
+        }
+
+        function unaryOpConst(tok: SyntaxKind, aa: Folded): Folded {
+            if (!aa)
+                return null
+            const a = aa.val
             switch (tok) {
-                case SK.PlusToken: return +a
-                case SK.MinusToken: return -a
-                case SK.TildeToken: return ~a
-                case SK.ExclamationToken: return !a
+                case SK.PlusToken: return { val: +a }
+                case SK.MinusToken: return { val: -a }
+                case SK.TildeToken: return { val: ~a }
+                case SK.ExclamationToken: return { val: !a }
                 default:
-                    return undefined
+                    return null
             }
         }
-        function binaryOpConst(tok: SyntaxKind, a: any, b: any): any {
+        function binaryOpConst(tok: SyntaxKind, aa: Folded, bb: Folded): Folded {
+            if (!aa || !bb)
+                return null
+            const a = aa.val
+            const b = bb.val
             switch (tok) {
-                case SK.PlusToken: return a + b
-                case SK.MinusToken: return a - b
-                case SK.SlashToken: return a / b
-                case SK.PercentToken: return a % b;
-                case SK.AsteriskToken: return a * b
-                case SK.AsteriskAsteriskToken: return a ** b
-                case SK.AmpersandToken: return a & b
-                case SK.BarToken: return a | b
-                case SK.CaretToken: return a ^ b
-                case SK.LessThanLessThanToken: return a << b
-                case SK.GreaterThanGreaterThanToken: return a >> b
-                case SK.GreaterThanGreaterThanGreaterThanToken: return a >>> b
-                case SK.LessThanEqualsToken: return a <= b
-                case SK.LessThanToken: return a < b
-                case SK.GreaterThanEqualsToken: return a >= b
-                case SK.GreaterThanToken: return a > b
-                case SK.EqualsEqualsToken: return a == b
-                case SK.EqualsEqualsEqualsToken: return a === b
-                case SK.ExclamationEqualsEqualsToken: return a !== b
-                case SK.ExclamationEqualsToken: return a != b
-                case SK.BarBarToken: return a || b
-                case SK.AmpersandAmpersandToken: return a && b
+                case SK.PlusToken: return { val: a + b }
+                case SK.MinusToken: return { val: a - b }
+                case SK.SlashToken: return { val: a / b }
+                case SK.PercentToken: return { val: a % b }
+                case SK.AsteriskToken: return { val: a * b }
+                case SK.AsteriskAsteriskToken: return { val: a ** b }
+                case SK.AmpersandToken: return { val: a & b }
+                case SK.BarToken: return { val: a | b }
+                case SK.CaretToken: return { val: a ^ b }
+                case SK.LessThanLessThanToken: return { val: a << b }
+                case SK.GreaterThanGreaterThanToken: return { val: a >> b }
+                case SK.GreaterThanGreaterThanGreaterThanToken: return { val: a >>> b }
+                case SK.LessThanEqualsToken: return { val: a <= b }
+                case SK.LessThanToken: return { val: a < b }
+                case SK.GreaterThanEqualsToken: return { val: a >= b }
+                case SK.GreaterThanToken: return { val: a > b }
+                case SK.EqualsEqualsToken: return { val: a == b }
+                case SK.EqualsEqualsEqualsToken: return { val: a === b }
+                case SK.ExclamationEqualsEqualsToken: return { val: a !== b }
+                case SK.ExclamationEqualsToken: return { val: a != b }
+                case SK.BarBarToken: return { val: a || b }
+                case SK.AmpersandAmpersandToken: return { val: a && b }
                 default:
-                    return undefined
+                    return null
             }
         }
 
-        function constantFold(e: Expression): any {
+        function enumValue(decl: EnumMember): string {
+            const attrs = parseComments(decl);
+            let ev = attrs.enumval
+            if (!ev) {
+                let val = checker.getConstantValue(decl)
+                if (val == null)
+                    return null
+                ev = val + ""
+            }
+            if (/^[+-]?\d+$/.test(ev))
+                return ev;
+            if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
+                return ev;
+            U.userError("enumval only support number literals")
+            return "0"
+        }
+
+        function emitFolded(f: Folded) {
+            if (f)
+                return emitLit(f.val)
+            return null
+        }
+
+        function constantFoldDecl(decl: Declaration) {
+            if (!decl)
+                return null
+
+            const info = pxtInfo(decl)
+            if (info.constantFolded)
+                return info.constantFolded
+
+            if (isVar(decl) && (decl.parent.flags & NodeFlags.Const)) {
+                const vardecl = decl as VariableDeclaration
+                if (vardecl.initializer)
+                    info.constantFolded = constantFold(vardecl.initializer)
+            } else if (decl.kind == SK.EnumMember) {
+                const en = decl as EnumMember
+                const ev = enumValue(en)
+                if (ev == null)
+                    info.constantFolded = constantFold(en.initializer)
+                const v = parseInt(ev)
+                if (!isNaN(v))
+                    return { val: v }
+            } else if (decl.kind == SK.PropertyDeclaration && isStatic(decl) && isReadOnly(decl)) {
+                const pd = decl as PropertyDeclaration
+                info.constantFolded = constantFold(pd.initializer)
+            }
+
+            if (info.constantFolded) {
+                console.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
+            }
+
+            return info.constantFolded
+        }
+
+        function constantFold(e: Expression): Folded {
+            const info = pxtInfo(e)
+            if (info.constantFolded === undefined) {
+                info.constantFolded = null // make sure we don't come back here recursively
+                const res = constantFoldCore(e)
+                info.constantFolded = res
+            }
+            return info.constantFolded
+        }
+
+        function constantFoldCore(e: Expression): Folded {
+            if (!e)
+                return null
             switch (e.kind) {
                 case SK.PrefixUnaryExpression: {
                     const expr = e as PrefixUnaryExpression
                     const inner = constantFold(expr.operand)
-                    if (inner == undefined)
-                        return undefined
                     return unaryOpConst(expr.operator, inner)
                 }
                 case SK.BinaryExpression: {
                     const expr = e as BinaryExpression
                     const left = constantFold(expr.left)
-                    if (left == undefined) return undefined
+                    if (!left) return null
                     const right = constantFold(expr.right)
-                    if (right == undefined) return undefined
+                    if (!right) return null
                     return binaryOpConst(expr.operatorToken.kind, left, right)
                 }
-                case SK.NumericLiteral:
+                case SK.NumericLiteral: {
+                    const expr = e as NumericLiteral
+                    const v = parseFloat(expr.text)
+                    if (isNaN(v))
+                        return null
+                    return { val: v }
+                }
+                case SK.NullKeyword:
+                    return { val: null }
+                case SK.TrueKeyword:
+                    return { val: true }
+                case SK.FalseKeyword:
+                    return { val: false }
+                case SK.UndefinedKeyword:
+                    return { val: undefined }
+                case SK.PropertyAccessExpression:
+                case SK.Identifier:
+                    return constantFoldDecl(getDecl(e))
+                default:
+                    return undefined
             }
         }
 
@@ -4072,8 +4165,6 @@ ${lbl}: .short 0xffff
             let loc: ir.Cell
 
             if (isGlobalVar(node)) {
-                if (isGlobalConst(node))
-                    console.log(node.getText().replace(/\n[^]*/, ""), emitExpr(node.initializer).toString())
                 emitGlobal(node)
                 loc = lookupCell(node)
             } else {
