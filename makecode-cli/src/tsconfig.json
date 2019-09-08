@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "outDir": "../built",
+        "module": "commonjs",
+        "rootDir": ".",
+        "newLine": "LF",
+        "sourceMap": false,
+        "lib": ["es6"],
+        "types": ["node"]
+    }
+}
