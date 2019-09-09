@@ -219,8 +219,7 @@ namespace pxt.blocks {
         }
 
         export function mkParenthesizedExpression(expression: JsNode): JsNode {
-            const fnOutput = flattenNode([expression]).output;
-            return fnOutput.charAt(0) === "(" && fnOutput.charAt(fnOutput.length - 1) === ")" ? expression : mkGroup([mkText("("), expression, mkText(")")]);
+            return isParenthesized(flattenNode([expression]).output) ? expression : mkGroup([mkText("("), expression, mkText(")")]);
         }
     }
 
@@ -435,5 +434,25 @@ namespace pxt.blocks {
 
     export function isReservedWord(str: string) {
         return reservedWords.indexOf(str) !== -1;
+    }
+
+    export function isParenthesized(fnOutput: string): boolean {
+        if (fnOutput.charAt(0) !== "(") {
+            return false;
+        }
+        let unclosedParentheses = 1;
+        for (let i = 1; i < fnOutput.length; i++) {
+            const c = fnOutput.charAt(i);
+            if (c === "(") {
+                unclosedParentheses++;
+            }
+            else if (c === ")") {
+                unclosedParentheses--;
+                if (unclosedParentheses === 0) {
+                    return i === fnOutput.length - 1;
+                }
+            }
+        }
+        return false;
     }
 }
