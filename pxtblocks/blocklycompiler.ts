@@ -1158,7 +1158,7 @@ namespace pxt.blocks {
             }
 
             if (p.shadowOptions && p.shadowOptions.toString && returnType(e, target) !== pString) {
-                return H.mkSimpleCall("+", [H.mkStringLiteral(""), H.mkParenthesizedExpression(compileExpression(e, target, comments)]));
+                return H.mkSimpleCall("+", [H.mkStringLiteral(""), H.mkParenthesizedExpression(compileExpression(e, target, comments))]);
             }
 
             return compileExpression(e, target, comments)
