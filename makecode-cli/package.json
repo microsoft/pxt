@@ -19,7 +19,7 @@
   "homepage": "https://makecode.com/docs",
   "files": [
     "README.md",
-    "built/*.js",
+    "built/*",
     "makecode"
   ],
   "preferGlobal": true,

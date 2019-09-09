@@ -21,12 +21,13 @@ const descriptors: TargetDescriptor[] = [{
     corepkg: "circuit-playground",
 }]
 
-export function guessMkcJson(prj: pxt.PackageConfig, mkc: mkc.MkcJson) {
-    const ver = prj.targetVersions || { target: "" }
+export function guessMkcJson(prj: mkc.Project) {
+    const mkc = prj.mkcConfig
+    const ver = prj.config.targetVersions || { target: "" }
 
     const theTarget = descriptors.filter(d => d.id == ver.targetId)[0]
         || descriptors.filter(d => d.website == ver.targetWebsite)[0]
-        || descriptors.filter(d => !!prj.dependencies[d.corepkg])[0]
+        || descriptors.filter(d => !!prj.config.dependencies[d.corepkg])[0]
 
     if (!mkc.targetWebsite) {
         if (ver.targetWebsite) {

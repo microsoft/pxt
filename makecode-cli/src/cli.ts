@@ -8,7 +8,7 @@ async function mainCli() {
     const cache = files.mkHomeCache()
     const prjDir = files.findProjectDir()
     const prj = await files.readProjectAsync(prjDir)
-    loader.guessMkcJson(prj.config, prj.mkcConfig)
+    loader.guessMkcJson(prj)
     const ed = await downloader.downloadAsync(cache, prj.mkcConfig.targetWebsite)
     console.log("setup compiler")
     const ctx = new service.Ctx(ed)
