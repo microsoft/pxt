@@ -893,7 +893,7 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile(fn);
         if (!f) return;
 
-        this.setSideFile(f, diag.line + 1);
+        this.setSideFile(f, "built/output.txt" == fn ? undefined : diag.line + 1);
     }
 
     removeFile(fn: pkg.File, skipConfirm = false) {
