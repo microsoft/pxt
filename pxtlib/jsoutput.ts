@@ -437,12 +437,12 @@ namespace pxt.blocks {
     }
 
     export function isParenthesized(fnOutput: string): boolean {
-        if (fnOutput.charAt(0) !== "(") {
+        if (fnOutput[0] !== "(" || fnOutput[fnOutput.length - 1] !== ")") {
             return false;
         }
         let unclosedParentheses = 1;
         for (let i = 1; i < fnOutput.length; i++) {
-            const c = fnOutput.charAt(i);
+            const c = fnOutput[i];
             if (c === "(") {
                 unclosedParentheses++;
             }
