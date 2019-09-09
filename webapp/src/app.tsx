@@ -888,7 +888,7 @@ export class ProjectView
         if (!diag) return;
         // find file
         let fn = diag.fileName;
-        if (!/^pxt_modules\//.test(fn))
+        if (!/^(pxt_modules|built)\//.test(fn))
             fn = "this/" + fn;
         let f = pkg.mainEditorPkg().lookupFile(fn);
         if (!f) return;
