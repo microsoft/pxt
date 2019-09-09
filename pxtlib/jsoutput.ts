@@ -220,7 +220,7 @@ namespace pxt.blocks {
 
         export function mkParenthesizedExpression(expression: JsNode): JsNode {
             const fnOutput = flattenNode([expression]).output;
-            return fnOutput.startsWith("(") && fnOutput.endsWith(")") ? expression : mkGroup([mkText("("), expression, mkText(")")]);
+            return fnOutput.charAt(0) === "(" && fnOutput.charAt(fnOutput.length - 1) === ")" ? expression : mkGroup([mkText("("), expression, mkText(")")]);
         }
     }
 
