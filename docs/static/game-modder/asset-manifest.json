@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/@cdnUrl@/static/game-modder/static/css/main.d7cfe8e4.chunk.css",
+    "main.js": "/@cdnUrl@/static/game-modder/static/js/main.02035978.chunk.js",
+    "main.js.map": "/@cdnUrl@/static/game-modder/static/js/main.02035978.chunk.js.map",
+    "runtime~main.js": "/@cdnUrl@/static/game-modder/static/js/runtime~main.e71818fc.js",
+    "runtime~main.js.map": "/@cdnUrl@/static/game-modder/static/js/runtime~main.e71818fc.js.map",
+    "static/js/2.32b899f4.chunk.js": "/@cdnUrl@/static/game-modder/static/js/2.32b899f4.chunk.js",
+    "static/js/2.32b899f4.chunk.js.map": "/@cdnUrl@/static/game-modder/static/js/2.32b899f4.chunk.js.map",
+    "index.html": "/@cdnUrl@/static/game-modder/index.html",
+    "precache-manifest.d8fffe3740d7bbf4b871db6ede82abc0.js": "/@cdnUrl@/static/game-modder/precache-manifest.d8fffe3740d7bbf4b871db6ede82abc0.js",
+    "service-worker.js": "/@cdnUrl@/static/game-modder/service-worker.js",
+    "static/css/main.d7cfe8e4.chunk.css.map": "/@cdnUrl@/static/game-modder/static/css/main.d7cfe8e4.chunk.css.map"
+  }
+}
