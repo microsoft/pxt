@@ -10,6 +10,9 @@ async function mainCli() {
     const prj = await files.readProjectAsync(prjDir)
     loader.guessMkcJson(prj)
     const ed = await downloader.downloadAsync(cache, prj.mkcConfig.targetWebsite)
+    console.log("load gh pkgs")
+    await loader.loadDeps(ed, prj)
+
     console.log("setup compiler")
     const ctx = new service.Ctx(ed)
 

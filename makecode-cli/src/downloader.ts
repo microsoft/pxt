@@ -231,6 +231,7 @@ export async function downloadAsync(cache: mkc.Cache, webAppUrl: string) {
     async function loadFromCacheAsync() {
         await cache.setAsync(webAppUrl + "-info", Buffer.from(JSON.stringify(info), "utf8"))
         const res: mkc.DownloadedEditor = {
+            cache,
             website: webAppUrl,
             pxtWorkerJs: (await cache.getAsync(webAppUrl + "-pxtworker.js")).toString("utf8"),
             targetJson: JSON.parse((await cache.getAsync(webAppUrl + "-target.json")).toString("utf8")),

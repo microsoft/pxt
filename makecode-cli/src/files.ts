@@ -21,7 +21,7 @@ const writeAsync = util.promisify(fs.writeFile)
 
 export async function readProjectAsync(dir: string) {
     const pxtJson = await readAsync(path.join(dir, "pxt.json"), "utf8")
-    const res: mkc.Project = {
+    const res: mkc.Package = {
         config: JSON.parse(pxtJson),
         mkcConfig: JSON.parse(await readAsync(path.join(dir, "mkc.json"), "utf8").then(s => s, err => "{}")),
         files: {

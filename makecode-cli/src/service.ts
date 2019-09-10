@@ -120,14 +120,14 @@ export class Ctx {
         return normRes
     }
 
-    async simpleCompileAsync(prj: mkc.Project): Promise<CompileResult> {
+    async simpleCompileAsync(prj: mkc.Package): Promise<CompileResult> {
         const opts = await this.getOptions(prj)
         // opts.breakpoints = true
         this.serviceOp("reset", {})
         return this.serviceOp("compile", { options: opts })
     }
 
-    getOptions(prj: mkc.Project, simpleOpts: any = {}): Promise<CompileOptions> {
+    getOptions(prj: mkc.Package, simpleOpts: any = {}): Promise<CompileOptions> {
         this.sandbox._opts = simpleOpts
         this.sandbox._scriptText = prj.files
         return this.runAsync("simpleGetCompileOptionsAsync(_scriptText, _opts)")

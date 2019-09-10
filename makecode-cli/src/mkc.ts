@@ -10,13 +10,20 @@ export interface Cache {
 }
 
 export interface DownloadedEditor {
+    cache: Cache;
     website: string;
     pxtWorkerJs: string;
     targetJson: any;
 }
 
-export interface Project {
+export interface Package {
     config: pxt.PackageConfig;
     mkcConfig: MkcJson;
     files: pxt.Map<string>;
 }
+
+export interface Workspace {
+    packages: pxt.Map<Package>;
+}
+
+export let cloudRoot = "https://makecode.com/api/"
