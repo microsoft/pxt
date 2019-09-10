@@ -2,22 +2,11 @@ import vm = require("vm");
 import fs = require("fs");
 import mkc = require("./mkc");
 
+
+
+
 const prep = `
-function simpleGetCompileOptionsAsync(files, simpleOptions) {
-    const host = new pxt.SimpleHost(files);
-    const mainPkg = new pxt.MainPackage(host);
-    return mainPkg.loadAsync()
-    .then(function () {
-        const target = mainPkg.getTargetOptions();
-        if (target.hasHex)
-            target.isNative = simpleOptions.native;
-        return mainPkg.getCompileOptionsAsync(target);
-    }).then(function (opts) {
-        pxt.patchTS(mainPkg.targetVersion(), opts);
-        pxt.prepPythonOptions(opts);
-        return opts;
-    });
-}
+
 `
 
 export interface CompileOptions {
@@ -130,7 +119,7 @@ export class Ctx {
     getOptions(prj: mkc.Package, simpleOpts: any = {}): Promise<CompileOptions> {
         this.sandbox._opts = simpleOpts
         this.sandbox._scriptText = prj.files
-        return this.runAsync("simpleGetCompileOptionsAsync(_scriptText, _opts)")
+        return this.runAsync("pxt.simpleGetCompileOptionsAsync(_scriptText, _opts)")
     }
 
     serviceOp(op: string, data: any) {
