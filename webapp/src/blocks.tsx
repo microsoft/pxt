@@ -429,16 +429,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             if (ev.type == 'create') {
                 let blockId = ev.xml.getAttribute('type');
+                if (blockId == "variables_set") {
+                    // Need to bump suffix in flyout
+                    this.patchCachedBlockXml();
+                }
                 pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
-            else if (ev.type == 'var_create' || ev.type == "delete") {
-                // a new variable was created or blocks were removed,
-                // clear the toolbox caches as some blocks may need to be recomputed
-                this.clearFlyoutCaches();
+            else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {
+                // a variable was renamed or blocks were removed,
+                // patch the toolbox caches to recompute variable names as needed
+                this.patchCachedBlockXml();
             }
             else if (ev.type == 'ui') {
                 if (ev.element == 'category') {
@@ -512,6 +516,50 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const blocklyOptions = this.getBlocklyOptions(this.showCategories);
         if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `100%`;
+    }
+
+    protected patchCachedBlockXml() {
+        const variables = this.editor.getVariablesOfType("");
+        const flyoutKeys = Object.keys(this.flyoutBlockXmlCache);
+        const nameCache: pxt.Map<string> = {};
+
+        flyoutKeys.forEach(key => {
+            const flyout = this.flyoutBlockXmlCache[key];
+            flyout.forEach(el => {
+                patchBlockName(el, this.editor);
+            });
+        })
+
+        function patchBlockName(block: Element, editor: Blockly.WorkspaceSvg) {
+            if (block.getAttribute("type") !== "variables_set")
+                    return;
+                const nameField = getChildNode(block, "field", "name", "VAR");
+                if (!nameField)
+                    return;
+
+                // capture name without numeric suffix
+                const name = /(\D+)(\d*)/i.exec(nameField.textContent)[1];
+                const cached = nameCache[name];
+                let newName: string;
+                if (cached) {
+                    newName = cached;
+                } else {
+                    newName = getUniqueName(name, variables, editor);
+                    nameCache[name] = newName;
+                }
+
+                nameField.textContent = newName;
+        }
+
+        function getChildNode(parent: Element, nodeType: string, idAttribute: string, idValue: string) {
+            for (let i = 0; i < parent.children.length; i++) {
+                const child = parent.children.item(i);
+                if (child.tagName === nodeType && child.getAttribute(idAttribute) === idValue) {
+                    return child;
+                }
+            }
+            return undefined;
+        }
     }
 
     hasUndo() {
@@ -1492,12 +1540,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // since we are creating variable, generate a new name that does not
                     // clash with existing variable names
                     const variables = this.editor.getVariablesOfType("");
-                    let varNameUnique = varName;
-                    let index = 2;
-                    while (variableIsAssigned(varNameUnique, variables, this.editor)) {
-                        varNameUnique = varName + index++;
-                    }
-                    varName = varNameUnique;
+                    varName = getUniqueName(varName, variables, this.editor);
 
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
@@ -1542,15 +1585,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             return that.shouldShowBlock(fn.attributes.blockId, ns);
         }
-
-        function variableIsAssigned(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
-            return variables.some(v => {
-                if (v.name != name)
-                    return false;
-                const variableUsage = editor.getVariableUsesById(v.id_);
-                return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
-            });
-        }
     }
 
     private getButtonXml(button: toolbox.ButtonDefinition): Element[] {
@@ -1571,5 +1605,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
         this.editor.setDebugModeOption(debugging);
+    }
+}
+
+function getUniqueName(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
+    let varNameUnique = name;
+    let index = 2;
+    while (variableIsAssigned(varNameUnique)) {
+        varNameUnique = name + index++;
+    }
+    return varNameUnique;
+
+    function variableIsAssigned(name: string) {
+        return variables.some(v => {
+            if (v.name != name)
+                return false;
+            const variableUsage = editor.getVariableUsesById(v.id_);
+            return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
+        });
     }
 }
