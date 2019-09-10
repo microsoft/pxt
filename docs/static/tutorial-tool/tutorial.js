@@ -10,6 +10,7 @@ var targets = [
     {
         name: "Minecraft",
         id: "minecraft",
+        shareUrl: "https://minecraft.makecode.com/",
         endpoints: [
             {
                 name: "nether",
@@ -27,41 +28,42 @@ var targets = [
     }, {
         name: "Arcade",
         id: "arcade",
+        shareUrl: "https://arcade.makecode.com/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://arcade.makecode.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://arcade.makecode.com?controller=1"
             }
         ]
     }, {
-        name: "Adafruit",
+        name: "Adafruit Circuit Playground Express",
         id: "adafruit",
+        shareUrl: "https://makecode.adafruit.com/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://makecode.adafruit.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
             }
         ]
     }, {
-        name: "Micro:bit",
+        name: "micro:bit",
         id: "microbit",
+        shareUrl: "https://makecode.microbit.org/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://makecode.microbit.org/beta?controller=1"
-            } /*,
+            }
+        ]
+    }, {
+        name: "Maker",
+        id: "maker",
+        shareUrl: "https://maker.makecode.com/",
+        endpoints: [
             {
-                name: "released",
-                url: "https://makecode.microbit.org?controller=1"
-            }*/
+                name: "",
+                url: "https://maker.makecode.com/?controller=1"
+            }
         ]
     }/* not supported
     , {
@@ -170,9 +172,11 @@ document.getElementById("share-button").addEventListener("click", function () {
     var md = editor.getValue();
     shareScript(md, function(resp, err) {
         btn.className = btn.className.replace("loading", "");
-        if (resp && resp.json)
-            out.value = "https://makecode.com/#tutorial:" + resp.json.id;
-        else if (err)
+        if (resp && resp.json) {
+            out.value = selectedTarget.shareUrl +  "#tutorial:" + resp.json.id;
+            out.focus();
+            out.select();
+        } else if (err)
             out.value = err.message;
         else
             out.value = "Oops, something went wrong.";
