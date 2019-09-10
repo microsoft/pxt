@@ -79,8 +79,62 @@ var targets = [
         ]
     } */
 ];
+
+function shareScriptAsync(md) {
+    function requestAsync(url, data) {
+        var client = new XMLHttpRequest();
+        client.onreadystatechange = () => {
+            if (resolved) return // Safari/iOS likes to call this thing more than once
+            if (client.readyState == 4) {
+                var resp = {
+                    statusCode: client.status,
+                    headers: {},
+                    buffer: client.responseBody || client.response,
+                    text: client.responseText,
+                }
+                const allHeaders = client.getAllResponseHeaders();
+                allHeaders.split(/\r?\n/).forEach(l => {
+                    var m = /^\s*([^:]+): (.*)/.exec(l)
+                    if (m) resp.headers[m[1].toLowerCase()] = m[2]
+                })
+
+                // resolve
+                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
+                    var msg = `Bad HTTP status code: ${resp.statusCode} at ${options.url}; message: ${(resp.text || "").slice(0, 500)}`;
+                    var err = new Error(msg)
+                    err.statusCode = resp.statusCode
+                    return Promise.reject(err)
+                }
+                if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
+                    resp.json = JSON.parse(resp.text)
+                return resp
+            }
+        }
+        var buf = JSON.stringify(data)
+        headers["content-type"] = "application/json; charset=utf8"
+        client.open("POST", url);
+        client.send(buf);
+    }
+
+    return requestAsync("https://arcade.makecode.com/api/scripts", {
+        name: "Tutorial",
+        target: selectedTarget.id,
+        description: "Made with ❤️ in Microsoft MakeCode Arcade.",
+        editor: "blocksprj",
+        text: {
+            "README.md": md,
+            "main.blocks": "",
+            "main.ts": "",
+            "pxt.json": "{\n    \"name\": \"My First Game\",\n    \"dependencies\": {\n        \"device\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"tsprj\",\n    \"targetVersions\": {\n        \"branch\": \"v0.12.17\",\n        \"tag\": \"v0.12.17\",\n        \"commits\": \"https://github.com/microsoft/pxt-arcade/commits/bbca8732cef11a27ce09394ba07a49d406ab792c\",\n        \"target\": \"0.12.17\",\n        \"pxt\": \"5.17.29\"\n    }\n}"
+        },
+        meta: { }
+    });
+}
+
+
 var selectedEndpoint;
 var selectedId;
+var selectedTarget;
 editor.onDidChangeModelContent(debounce(function () {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
 }, 500));
@@ -190,6 +244,7 @@ function loadIframe(selected) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = target.name + "-" + endpoint.name;
                 selectedId = target.id;
+                selectedTarget = target;
                 return;
             }
         }
