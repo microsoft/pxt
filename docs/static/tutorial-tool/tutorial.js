@@ -116,7 +116,7 @@ function shareScriptAsync(md) {
         client.send(buf);
     }
 
-    return requestAsync("https://arcade.makecode.com/api/scripts", {
+    return requestAsync("https://makecode.com/api/scripts", {
         name: "Tutorial",
         target: selectedTarget.id,
         description: "Made with ❤️ in Microsoft MakeCode Arcade.",
