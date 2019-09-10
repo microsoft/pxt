@@ -8,8 +8,10 @@ namespace pxt {
         }
 
         readFile(module: pxt.Package, filename: string): string {
-            if (module.id == "this") {
-                return this.packageFiles[filename]
+            const fid = module.id == "this" ? filename :
+                "pxt_modules/" + module.id + "/" + filename
+            if (this.packageFiles[fid] !== undefined) {
+                return this.packageFiles[fid]
             } else if (pxt.appTarget.bundledpkgs[module.id]) {
                 return pxt.appTarget.bundledpkgs[module.id][filename];
             } else {
