@@ -96,7 +96,7 @@ namespace pxsim {
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart" | "reload" | "setstate"
+        command: "modal" | "restart" | "reload" | "setstate" | "focus" | "blur"
         stateKey?: string;
         stateValue?: any;
         header?: string;
@@ -106,6 +106,7 @@ namespace pxsim {
         linkButtonLabel?: string;
         displayOnceId?: string; // An id for the modal command, if the sim wants the modal to be displayed only once in the session
         modalContext?: string; // Modal context of where to show the modal
+        timestamp?: number;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorBroadcastMessage {
         type: "radiopacket";
@@ -269,6 +270,16 @@ namespace pxsim {
                     if (runtime)
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
                     break;
+                case 'simulator':
+                    let simData = data as SimulatorCommandMessage;
+                    switch (simData.command) {
+                        case "focus":
+                            tickEvent("simulator.focus", {timestamp: simData.timestamp});
+                            break;
+                        case "blur":
+                            tickEvent("simulator.blur", {timestamp: simData.timestamp});
+                            break;
+                    }
                 default: queue(data); break;
             }
         }
