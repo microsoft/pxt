@@ -80,12 +80,14 @@ var targets = [
     } */
 ];
 
-function shareScriptAsync(md) {
-    function requestAsync(url, data) {
+function shareScript(md, done) {
+    function request(url, data) {
         var client = new XMLHttpRequest();
+        var resolved = false;
         client.onreadystatechange = () => {
             if (resolved) return // Safari/iOS likes to call this thing more than once
             if (client.readyState == 4) {
+                resolved = true;
                 var resp = {
                     statusCode: client.status,
                     headers: {},
@@ -103,21 +105,25 @@ function shareScriptAsync(md) {
                     var msg = `Bad HTTP status code: ${resp.statusCode} at ${options.url}; message: ${(resp.text || "").slice(0, 500)}`;
                     var err = new Error(msg)
                     err.statusCode = resp.statusCode
-                    return Promise.reject(err)
+                    done(undefined, err);
+                } else {
+                    if (resp.text && /application\/json/.test(resp.headers["content-type"]))
+                    resp.json = JSON.parse(resp.text)                
+                    // show dialog
+                    done(resp);
                 }
-                if (resp.text && /application\/json/.test(resp.headers["content-type"] as string))
-                    resp.json = JSON.parse(resp.text)
-                return resp
             }
         }
         var buf = JSON.stringify(data)
-        headers["content-type"] = "application/json; charset=utf8"
         client.open("POST", url);
+        client.setRequestHeader("content-type", "application/json; charset=utf8")
         client.send(buf);
     }
 
-    return requestAsync("https://makecode.com/api/scripts", {
-        name: "Tutorial",
+    const title = /^#\s([\s\w]*)$/m.exec(md);
+    const name = title ? title[1] : "Tutorial";
+    request("https://makecode.com/api/scripts", {
+        name: name,
         target: selectedTarget.id,
         description: "Made with ❤️ in Microsoft MakeCode Arcade.",
         editor: "blocksprj",
@@ -125,7 +131,18 @@ function shareScriptAsync(md) {
             "README.md": md,
             "main.blocks": "",
             "main.ts": "",
-            "pxt.json": "{\n    \"name\": \"My First Game\",\n    \"dependencies\": {\n        \"device\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"tsprj\",\n    \"targetVersions\": {\n        \"branch\": \"v0.12.17\",\n        \"tag\": \"v0.12.17\",\n        \"commits\": \"https://github.com/microsoft/pxt-arcade/commits/bbca8732cef11a27ce09394ba07a49d406ab792c\",\n        \"target\": \"0.12.17\",\n        \"pxt\": \"5.17.29\"\n    }\n}"
+            "pxt.json": JSON.stringify({
+                    name: name,
+                    dependencies: {
+                        "core": "*"
+                    },
+                    description: "",
+                    files: [
+                        "main.blocks",
+                        "main.ts",
+                        "README.md"
+                    ]
+                })
         },
         meta: { }
     });
@@ -145,6 +162,21 @@ initDropdown();
 document.getElementById("run-button").addEventListener("click", function () {
     var md = editor.getValue();
     sendMessage("importtutorial", md);
+});
+document.getElementById("share-button").addEventListener("click", function () {
+    var btn = document.getElementById("share-button");
+    var out = document.getElementById("share-output");
+    btn.className += " loading";
+    var md = editor.getValue();
+    shareScript(md, function(resp, err) {
+        btn.className = btn.className.replace("loading", "");
+        if (resp && resp.json)
+            out.value = "https://makecode.com/#tutorial:" + resp.json.id;
+        else if (err)
+            out.value = err.message;
+        else
+            out.value = "Oops, something went wrong.";
+    });
 });
 window.addEventListener("message", receiveMessage, false);
 var pendingMsgs = {};

@@ -27,8 +27,14 @@
 
 	<div class="content">
 		<div>
-			<button class="ui small primary button" id="run-button">Run in MakeCode</button>
-			<select id="endpoint-select"></select>
+			<div class="ui input">
+				<select id="endpoint-select" class="ui dropdown"></select>
+			</div>
+			<button class="ui small primary button" id="run-button">Run</button>
+			<button class="ui small button" id="share-button">Share</button>
+			<div class="ui input">
+				<input readonly id="share-output" placeholder="shared url..." />
+			</div>
 		</div>
 		<div class="editor-row">
 			<div id="monaco-editor">
