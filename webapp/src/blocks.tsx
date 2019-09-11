@@ -519,46 +519,61 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected patchCachedBlockXml() {
-        const variables = this.editor.getVariablesOfType("");
         const flyoutKeys = Object.keys(this.flyoutBlockXmlCache);
         const nameCache: pxt.Map<string> = {};
 
         flyoutKeys.forEach(key => {
             const flyout = this.flyoutBlockXmlCache[key];
             flyout.forEach(el => {
-                patchBlockName(el, this.editor);
+                this.patchBlockName(el, nameCache);
             });
         })
+    }
 
-        function patchBlockName(block: Element, editor: Blockly.WorkspaceSvg) {
-            if (block.getAttribute("type") !== "variables_set")
-                    return;
-                const nameField = getChildNode(block, "field", "name", "VAR");
-                if (!nameField)
-                    return;
+    protected patchBlockName(block: Element, nameCache: pxt.Map<string>) {
+        if (block.getAttribute("type") !== "variables_set")
+                return;
+            const nameField = getChildNode(block, "field", "name", "VAR");
+            if (!nameField)
+                return;
 
-                // capture name without numeric suffix
-                const name = /(\D+)(\d*)/i.exec(nameField.textContent)[1];
-                const cached = nameCache[name];
-                let newName: string;
-                if (cached) {
-                    newName = cached;
-                } else {
-                    newName = getUniqueName(name, variables, editor);
-                    nameCache[name] = newName;
-                }
-
-                nameField.textContent = newName;
-        }
-
-        function getChildNode(parent: Element, nodeType: string, idAttribute: string, idValue: string) {
-            for (let i = 0; i < parent.children.length; i++) {
-                const child = parent.children.item(i);
-                if (child.tagName === nodeType && child.getAttribute(idAttribute) === idValue) {
-                    return child;
-                }
+            // capture name without numeric suffix
+            const name = /(\D+)(\d*)/i.exec(nameField.textContent)[1];
+            const cached = nameCache[name];
+            let newName: string;
+            if (cached) {
+                newName = cached;
+            } else {
+                newName = this.getUniqueName(name);
+                nameCache[name] = newName;
             }
-            return undefined;
+
+            nameField.textContent = newName;
+
+            function getChildNode(parent: Element, nodeType: string, idAttribute: string, idValue: string) {
+                for (let i = 0; i < parent.children.length; i++) {
+                    const child = parent.children.item(i);
+                    if (child.tagName === nodeType && child.getAttribute(idAttribute) === idValue) {
+                        return child;
+                    }
+                }
+                return undefined;
+            }
+    }
+
+    protected getUniqueName(name: string) {
+        let varNameUnique = name;
+        let index = 2;
+        while (variableIsAssigned(varNameUnique, this.editor)) {
+            varNameUnique = name + index++;
+        }
+        return varNameUnique;
+
+        function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {
+            const b = editor.getVariable(name);
+            if (!b) return false;
+            const variableUsage = editor.getVariableUsesById(b.getId());
+            return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
         }
     }
 
@@ -1539,8 +1554,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     // since we are creating variable, generate a new name that does not
                     // clash with existing variable names
-                    const variables = this.editor.getVariablesOfType("");
-                    varName = getUniqueName(varName, variables, this.editor);
+                    varName = this.getUniqueName(varName);
 
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
@@ -1605,23 +1619,5 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         });
         this.editor.setDebugModeOption(debugging);
-    }
-}
-
-function getUniqueName(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
-    let varNameUnique = name;
-    let index = 2;
-    while (variableIsAssigned(varNameUnique)) {
-        varNameUnique = name + index++;
-    }
-    return varNameUnique;
-
-    function variableIsAssigned(name: string) {
-        return variables.some(v => {
-            if (v.name != name)
-                return false;
-            const variableUsage = editor.getVariableUsesById(v.id_);
-            return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
-        });
     }
 }
