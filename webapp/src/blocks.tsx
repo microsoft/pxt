@@ -440,7 +440,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {
-                // a variable was renamed or blocks were removed,
+                // a new variable name is used or blocks were removed,
                 // patch the toolbox caches to recompute variable names as needed
                 this.patchCachedBlockXml();
             }
