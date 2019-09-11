@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/static/game-modder/precache-manifest.1d9d0cdb8b3adf1a340e122a3500a852.js"
+  "/static/game-modder/precache-manifest.74948865e3e7ebb8eb8d95b836e5b7bd.js"
 );
 
 self.addEventListener('message', (event) => {
