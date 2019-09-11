@@ -527,53 +527,52 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             flyout.forEach(el => {
                 this.patchBlockName(el, nameCache);
             });
-        })
+        });
     }
 
     protected patchBlockName(block: Element, nameCache: pxt.Map<string>) {
         if (block.getAttribute("type") !== "variables_set")
-                return;
-            const nameField = getChildNode(block, "field", "name", "VAR");
-            if (!nameField)
-                return;
+            return;
+        const nameField = getChildNode(block, "field", "name", "VAR");
+        if (!nameField)
+            return;
 
-            // capture name without numeric suffix
-            const name = /(\D+)(\d*)/i.exec(nameField.textContent)[1];
-            const cached = nameCache[name];
-            let newName: string;
-            if (cached) {
-                newName = cached;
-            } else {
-                newName = this.getUniqueName(name);
-                nameCache[name] = newName;
-            }
+        // capture name without numeric suffix
+        const name = /(\D+)(\d*)/i.exec(nameField.textContent)[1];
+        const cached = nameCache[name];
+        let newName: string;
+        if (cached) {
+            newName = cached;
+        } else {
+            newName = this.getUniqueName(name);
+            nameCache[name] = newName;
+        }
 
-            nameField.textContent = newName;
+        nameField.textContent = newName;
 
-            function getChildNode(parent: Element, nodeType: string, idAttribute: string, idValue: string) {
-                for (let i = 0; i < parent.children.length; i++) {
-                    const child = parent.children.item(i);
-                    if (child.tagName === nodeType && child.getAttribute(idAttribute) === idValue) {
-                        return child;
-                    }
+        function getChildNode(parent: Element, nodeType: string, idAttribute: string, idValue: string) {
+            for (let i = 0; i < parent.children.length; i++) {
+                const child = parent.children.item(i);
+                if (child.tagName === nodeType && child.getAttribute(idAttribute) === idValue) {
+                    return child;
                 }
-                return undefined;
             }
+            return undefined;
+        }
     }
 
     protected getUniqueName(name: string) {
-        let varNameUnique = name;
+        let uniqueName = name;
         let index = 2;
-        while (variableIsAssigned(varNameUnique, this.editor)) {
-            varNameUnique = name + index++;
+        while (variableIsAssigned(uniqueName, this.editor)) {
+            uniqueName = name + index++;
         }
-        return varNameUnique;
+        return uniqueName;
 
         function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {
-            const b = editor.getVariable(name);
-            if (!b) return false;
-            const variableUsage = editor.getVariableUsesById(b.getId());
-            return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
+            const varModel = editor.getVariable(name);
+            return varModel && editor.getVariableUsesById(varModel.getId())
+                .some(b => b.type == 'variables_set' || b.type == 'variables_change');
         }
     }
 
