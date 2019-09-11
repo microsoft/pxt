@@ -217,6 +217,8 @@ export async function downloadAsync(cache: mkc.Cache, webAppUrl: string) {
 
     log("Download new webapp")
     const cfg = await parseWebConfigAsync(webAppUrl)
+    if (!cfg.manifestUrl)
+        cfg.manifestUrl = webAppUrl // use index.html if no manifest
     if (info.manifestUrl != cfg.manifestUrl) {
         info.manifestUrl = cfg.manifestUrl
         info.manifestEtag = null

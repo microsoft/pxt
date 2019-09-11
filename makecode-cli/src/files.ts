@@ -57,15 +57,32 @@ export function mkHomeCache(): mkc.Cache {
     }
 }
 
-export async function saveBuiltFilesAsync(dir: string, res: any) {
-    const outfiles: pxt.Map<string> = res.outfiles || {}
-    const built = path.join(dir, "built")
-    if (!fs.existsSync(built))
-        fs.mkdirSync(built)
+function mkdirp(dirname: string) {
+    if (!fs.existsSync(dirname))
+        fs.mkdirSync(dirname)
+}
+
+async function writeFilesAsync(built: string, outfiles: pxt.Map<string>, log = false) {
+    mkdirp(built)
     for (let fn of Object.keys(outfiles)) {
         if (fn.indexOf("/") >= 0)
             continue
-        console.log(`write built/${fn}`)
+        if (log)
+            console.log(`write ${built}/${fn}`)
         await writeAsync(path.join(built, fn), outfiles[fn])
+    }
+}
+
+export async function saveBuiltFilesAsync(dir: string, res: any) {
+    await writeFilesAsync(path.join(dir, "built"), res.outfiles || {}, true)
+}
+
+export async function savePxtModulesAsync(dir: string, ws: mkc.Workspace) {
+    const pxtmod = path.join(dir, "pxt_modules")
+    mkdirp(pxtmod)
+    for (let k of Object.keys(ws.packages)) {
+        if (k == "this")
+            continue
+        await writeFilesAsync(path.join(pxtmod, k), ws.packages[k].files)
     }
 }

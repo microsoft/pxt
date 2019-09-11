@@ -6,32 +6,12 @@ import * as files from "./files"
 import * as downloader from "./downloader"
 import * as service from "./service"
 
+
 async function mainCli() {
-    const cache = files.mkHomeCache()
-    const prjDir = files.findProjectDir()
-    const prj = await files.readProjectAsync(prjDir)
-    loader.guessMkcJson(prj)
+    const prj = new mkc.Project(files.findProjectDir())
 
-    // TODO handle require("lzma") in worker
-    prj.config.binaryonly = true
-    prj.files["pxt.json"] = JSON.stringify(prj.config, null, 4)
-
-    const ed = await downloader.downloadAsync(cache, prj.mkcConfig.targetWebsite)
-    ed.hwVariant = "samd51"
-    console.log("load gh pkgs")
-    await loader.loadDeps(ed, prj)
-
-    console.log("setup compiler")
-    const ctx = new service.Ctx(ed)
-
-    console.log("compile...")
-    const res = await ctx.simpleCompileAsync(prj)
-
-    await files.saveBuiltFilesAsync(prjDir, res)
-    delete res.outfiles
-    delete (res as any).procDebugInfo
-    console.log(res)
-
+    await prj.buildAsync()
+    
     console.log("all done")
 }
 
@@ -47,7 +27,7 @@ async function downloadProjectAsync(id: string) {
     console.log("downloaded.")
 }
 
-if(process.argv[2])
+if (process.argv[2])
     downloadProjectAsync(process.argv[2])
 else
     mainCli()
