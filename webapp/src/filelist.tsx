@@ -288,7 +288,11 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
-        if (this.props.onErrorClick && this.props.meta && this.props.meta.numErrors)
+        if (this.props.onErrorClick
+            && this.props.meta
+            && this.props.meta.numErrors
+            && this.props.meta.diagnostics
+            && this.props.meta.diagnostics[0])
             this.props.onErrorClick(this.props.meta);
         else
             this.props.onItemClick(this.props.file);
@@ -322,7 +326,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} /> : ''}
-            {meta &&  meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
+            {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
         </a>
     }
 }

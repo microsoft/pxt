@@ -10,6 +10,7 @@ var targets = [
     {
         name: "Minecraft",
         id: "minecraft",
+        shareUrl: "https://minecraft.makecode.com/",
         endpoints: [
             {
                 name: "nether",
@@ -27,41 +28,42 @@ var targets = [
     }, {
         name: "Arcade",
         id: "arcade",
+        shareUrl: "https://arcade.makecode.com/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://arcade.makecode.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://arcade.makecode.com?controller=1"
             }
         ]
     }, {
-        name: "Adafruit",
+        name: "Adafruit Circuit Playground Express",
         id: "adafruit",
+        shareUrl: "https://makecode.adafruit.com/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://makecode.adafruit.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
             }
         ]
     }, {
-        name: "Micro:bit",
+        name: "micro:bit",
         id: "microbit",
+        shareUrl: "https://makecode.microbit.org/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://makecode.microbit.org/beta?controller=1"
-            } /*,
+            }
+        ]
+    }, {
+        name: "Maker",
+        id: "maker",
+        shareUrl: "https://maker.makecode.com/",
+        endpoints: [
             {
-                name: "released",
-                url: "https://makecode.microbit.org?controller=1"
-            }*/
+                name: "",
+                url: "https://maker.makecode.com/?controller=1"
+            }
         ]
     }/* not supported
     , {
@@ -79,8 +81,79 @@ var targets = [
         ]
     } */
 ];
+
+function shareScript(md, done) {
+    function request(url, data) {
+        var client = new XMLHttpRequest();
+        var resolved = false;
+        client.onreadystatechange = () => {
+            if (resolved) return // Safari/iOS likes to call this thing more than once
+            if (client.readyState == 4) {
+                resolved = true;
+                var resp = {
+                    statusCode: client.status,
+                    headers: {},
+                    buffer: client.responseBody || client.response,
+                    text: client.responseText,
+                }
+                const allHeaders = client.getAllResponseHeaders();
+                allHeaders.split(/\r?\n/).forEach(l => {
+                    var m = /^\s*([^:]+): (.*)/.exec(l)
+                    if (m) resp.headers[m[1].toLowerCase()] = m[2]
+                })
+
+                // resolve
+                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
+                    var msg = `Bad HTTP status code: ${resp.statusCode} at ${options.url}; message: ${(resp.text || "").slice(0, 500)}`;
+                    var err = new Error(msg)
+                    err.statusCode = resp.statusCode
+                    done(undefined, err);
+                } else {
+                    if (resp.text && /application\/json/.test(resp.headers["content-type"]))
+                    resp.json = JSON.parse(resp.text)                
+                    // show dialog
+                    done(resp);
+                }
+            }
+        }
+        var buf = JSON.stringify(data)
+        client.open("POST", url);
+        client.setRequestHeader("content-type", "application/json; charset=utf8")
+        client.send(buf);
+    }
+
+    const title = /^#\s([\s\w]*)$/m.exec(md);
+    const name = title ? title[1] : "Tutorial";
+    request("https://makecode.com/api/scripts", {
+        name: name,
+        target: selectedTarget.id,
+        description: "Made with ❤️ in Microsoft MakeCode Arcade.",
+        editor: "blocksprj",
+        text: {
+            "README.md": md,
+            "main.blocks": "",
+            "main.ts": "",
+            "pxt.json": JSON.stringify({
+                    name: name,
+                    dependencies: {
+                        "core": "*"
+                    },
+                    description: "",
+                    files: [
+                        "main.blocks",
+                        "main.ts",
+                        "README.md"
+                    ]
+                })
+        },
+        meta: { }
+    });
+}
+
+
 var selectedEndpoint;
 var selectedId;
+var selectedTarget;
 editor.onDidChangeModelContent(debounce(function () {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
 }, 500));
@@ -91,6 +164,23 @@ initDropdown();
 document.getElementById("run-button").addEventListener("click", function () {
     var md = editor.getValue();
     sendMessage("importtutorial", md);
+});
+document.getElementById("share-button").addEventListener("click", function () {
+    var btn = document.getElementById("share-button");
+    var out = document.getElementById("share-output");
+    btn.className += " loading";
+    var md = editor.getValue();
+    shareScript(md, function(resp, err) {
+        btn.className = btn.className.replace("loading", "");
+        if (resp && resp.json) {
+            out.value = selectedTarget.shareUrl +  "#tutorial:" + resp.json.id;
+            out.focus();
+            out.select();
+        } else if (err)
+            out.value = err.message;
+        else
+            out.value = "Oops, something went wrong.";
+    });
 });
 window.addEventListener("message", receiveMessage, false);
 var pendingMsgs = {};
@@ -190,6 +280,7 @@ function loadIframe(selected) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = target.name + "-" + endpoint.name;
                 selectedId = target.id;
+                selectedTarget = target;
                 return;
             }
         }
