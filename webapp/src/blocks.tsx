@@ -431,7 +431,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let blockId = ev.xml.getAttribute('type');
                 if (blockId == "variables_set") {
                     // Need to bump suffix in flyout
-                    this.patchCachedBlockXml();
+                    this.patchCachedVariableNames();
                 }
                 pxt.tickActivity("blocks.create", "blocks.create." + blockId);
                 if (ev.xml.tagName == 'SHADOW')
@@ -442,7 +442,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {
                 // a new variable name is used or blocks were removed,
                 // patch the toolbox caches to recompute variable names as needed
-                this.patchCachedBlockXml();
+                this.patchCachedVariableNames();
             }
             else if (ev.type == 'ui') {
                 if (ev.element == 'category') {
@@ -518,7 +518,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `100%`;
     }
 
-    protected patchCachedBlockXml() {
+    protected patchCachedVariableNames() {
         Object.keys(this.flyoutBlockXmlCache).forEach(key => {
             const flyout = this.flyoutBlockXmlCache[key];
             flyout.forEach(block => {
@@ -534,12 +534,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!nameField)
             return;
 
+        const currentName = nameField.textContent.trim()
         // capture name without numeric suffix
-        const match = /(\D+)(\d*)/i.exec(nameField.textContent);
-        const name = ((match && match[1]) || nameField.textContent).trim();
-        let newName = this.getUniqueName(name);
+        const match = /(\D+)(\d*)/i.exec(currentName);
+        const name = (match && match[1]) || currentName;
+        const newName = this.getUnassignedName(name);
 
-        nameField.textContent = newName;
+        if (currentName !== newName) {
+            nameField.textContent = newName;
+        }
 
         function getChildNode(parent: Element, nodeType: string, idAttribute: string, idValue: string) {
             for (let i = 0; i < parent.children.length; i++) {
@@ -552,11 +555,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    protected getUniqueName(name: string) {
+    protected getUnassignedName(name: string) {
         let uniqueName = name;
-        let index = 2;
+        let nextIndex = 2;
         while (variableIsAssigned(uniqueName, this.editor)) {
-            uniqueName = name + index++;
+            uniqueName = name + nextIndex++;
         }
         return uniqueName;
 
@@ -1546,7 +1549,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     // since we are creating variable, generate a new name that does not
                     // clash with existing variable names
-                    varName = this.getUniqueName(varName);
+                    varName = this.getUnassignedName(varName);
 
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
