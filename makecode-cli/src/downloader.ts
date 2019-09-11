@@ -125,7 +125,7 @@ function nodeHttpRequestAsync(options: HttpRequestOptions): Promise<HttpResponse
 export function requestAsync(options: HttpRequestOptions): Promise<HttpResponse> {
     log("Download " + options.url)
     return nodeHttpRequestAsync(options)
-        .then(resp => {
+        .then<HttpResponse>(resp => {
             if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
                 let msg = `Bad HTTP status code: ${resp.statusCode} at ${options.url}; message: ${(resp.text || "").slice(0, 500)}`
                 let err: any = new Error(msg)

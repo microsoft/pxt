@@ -1,9 +1,7 @@
 import vm = require("vm");
 import fs = require("fs");
 import mkc = require("./mkc");
-
-
-
+import downloader = require("./downloader");
 
 const prep = `
 
@@ -115,12 +113,17 @@ export class Ctx {
     async simpleCompileAsync(prj: mkc.Package): Promise<CompileResult> {
         const opts = await this.getOptions(prj, { native: !!this.editor.hwVariant })
 
-        this.editor.cdnUrl + "/compile/" + 
-        return getCdnUrlAsync()
-                    .then(url => {
-                        hexurl = url +  + extInfo.sha
-                        return U.httpGetTextAsync(hexurl + ".hex")
-                    })
+        const cppsha: string = (opts as any).extinfo ? (opts as any).extinfo.sha : null
+        if (cppsha) {
+            let existing = await this.editor.cache.getAsync("cpp-" + cppsha)
+            if (!existing) {
+                const url = this.editor.cdnUrl + "/compile/" + (opts as any).extinfo.sha + ".hex"
+                const resp = await downloader.requestAsync({ url })
+                existing = resp.buffer
+                await this.editor.cache.setAsync("cpp-" + cppsha, existing)
+            }
+            (opts as any).hexinfo = { hex: existing.toString("utf8").split(/\r?\n/) }
+        }
 
         // opts.breakpoints = true
         this.serviceOp("reset", {})

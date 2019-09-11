@@ -1,3 +1,5 @@
+import * as fs from "fs"
+
 import * as mkc from "./mkc"
 import * as loader from "./loader"
 import * as files from "./files"
@@ -9,7 +11,7 @@ async function mainCli() {
     const prjDir = files.findProjectDir()
     const prj = await files.readProjectAsync(prjDir)
     loader.guessMkcJson(prj)
-    
+
     // TODO handle require("lzma") in worker
     prj.config.binaryonly = true
     prj.files["pxt.json"] = JSON.stringify(prj.config, null, 4)
@@ -27,9 +29,25 @@ async function mainCli() {
 
     await files.saveBuiltFilesAsync(prjDir, res)
     delete res.outfiles
+    delete (res as any).procDebugInfo
     console.log(res)
 
     console.log("all done")
 }
 
-mainCli()
+async function downloadProjectAsync(id: string) {
+    id = id.replace(/.*\//, '')
+    const url = mkc.cloudRoot + id + "/text"
+    const files = await downloader.httpGetJsonAsync(url)
+    for (let fn of Object.keys(files)) {
+        if (/\//.test(fn))
+            continue
+        fs.writeFileSync(fn, files[fn])
+    }
+    console.log("downloaded.")
+}
+
+if(process.argv[2])
+    downloadProjectAsync(process.argv[2])
+else
+    mainCli()
