@@ -519,18 +519,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected patchCachedBlockXml() {
-        const flyoutKeys = Object.keys(this.flyoutBlockXmlCache);
-        const nameCache: pxt.Map<string> = {};
-
-        flyoutKeys.forEach(key => {
+        Object.keys(this.flyoutBlockXmlCache).forEach(key => {
             const flyout = this.flyoutBlockXmlCache[key];
-            flyout.forEach(el => {
-                this.patchBlockName(el, nameCache);
+            flyout.forEach(block => {
+                this.patchBlockName(block);
             });
         });
     }
 
-    protected patchBlockName(block: Element, nameCache: pxt.Map<string>) {
+    protected patchBlockName(block: Element) {
         if (block.getAttribute("type") !== "variables_set")
             return;
         const nameField = getChildNode(block, "field", "name", "VAR");
@@ -540,14 +537,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // capture name without numeric suffix
         const match = /(\D+)(\d*)/i.exec(nameField.textContent);
         const name = ((match && match[1]) || nameField.textContent).trim();
-        const cached = nameCache[name];
-        let newName: string;
-        if (cached) {
-            newName = cached;
-        } else {
-            newName = this.getUniqueName(name);
-            nameCache[name] = newName;
-        }
+        let newName = this.getUniqueName(name);
 
         nameField.textContent = newName;
 
