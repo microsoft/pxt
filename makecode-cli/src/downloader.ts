@@ -201,6 +201,7 @@ export interface DownloadInfo {
     manifestUrl?: string;
     manifest?: string;
     manifestEtag?: string;
+    cdnUrl?: string;
 }
 
 function log(msg: string) {
@@ -219,6 +220,7 @@ export async function downloadAsync(cache: mkc.Cache, webAppUrl: string) {
     if (info.manifestUrl != cfg.manifestUrl) {
         info.manifestUrl = cfg.manifestUrl
         info.manifestEtag = null
+        info.cdnUrl = cfg.cdnUrl
         await hasNewManifestAsync()
     }
 
@@ -232,6 +234,7 @@ export async function downloadAsync(cache: mkc.Cache, webAppUrl: string) {
         await cache.setAsync(webAppUrl + "-info", Buffer.from(JSON.stringify(info), "utf8"))
         const res: mkc.DownloadedEditor = {
             cache,
+            cdnUrl: info.cdnUrl,
             website: webAppUrl,
             pxtWorkerJs: (await cache.getAsync(webAppUrl + "-pxtworker.js")).toString("utf8"),
             targetJson: JSON.parse((await cache.getAsync(webAppUrl + "-target.json")).toString("utf8")),

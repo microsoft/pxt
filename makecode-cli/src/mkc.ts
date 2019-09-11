@@ -11,9 +11,11 @@ export interface Cache {
 
 export interface DownloadedEditor {
     cache: Cache;
+    cdnUrl: string;
     website: string;
     pxtWorkerJs: string;
     targetJson: any;
+    hwVariant?: string;
 }
 
 export interface Package {

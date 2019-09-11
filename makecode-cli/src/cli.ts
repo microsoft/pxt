@@ -9,7 +9,13 @@ async function mainCli() {
     const prjDir = files.findProjectDir()
     const prj = await files.readProjectAsync(prjDir)
     loader.guessMkcJson(prj)
+    
+    // TODO handle require("lzma") in worker
+    prj.config.binaryonly = true
+    prj.files["pxt.json"] = JSON.stringify(prj.config, null, 4)
+
     const ed = await downloader.downloadAsync(cache, prj.mkcConfig.targetWebsite)
+    ed.hwVariant = "samd51"
     console.log("load gh pkgs")
     await loader.loadDeps(ed, prj)
 
@@ -21,7 +27,7 @@ async function mainCli() {
 
     await files.saveBuiltFilesAsync(prjDir, res)
     delete res.outfiles
-    console.log(res.success)
+    console.log(res)
 
     console.log("all done")
 }

@@ -71,10 +71,13 @@ export class Ctx {
         });
 
         const ed = this.editor
+        ed.targetJson.compile.keepCppFiles = true
         this.sandbox.pxtTargetBundle = ed.targetJson
         this.runScript(ed.pxtWorkerJs, ed.website + "/pxtworker.js")
         this.runScript(prep, "prep")
         this.runSync("pxt.setupSimpleCompile()")
+        if (ed.hwVariant)
+            this.runSync(`pxt.setHwVariant(${JSON.stringify(ed.hwVariant)})`)
     }
 
     runScript(content: string, filename: string) {
@@ -110,7 +113,15 @@ export class Ctx {
     }
 
     async simpleCompileAsync(prj: mkc.Package): Promise<CompileResult> {
-        const opts = await this.getOptions(prj)
+        const opts = await this.getOptions(prj, { native: !!this.editor.hwVariant })
+
+        this.editor.cdnUrl + "/compile/" + 
+        return getCdnUrlAsync()
+                    .then(url => {
+                        hexurl = url +  + extInfo.sha
+                        return U.httpGetTextAsync(hexurl + ".hex")
+                    })
+
         // opts.breakpoints = true
         this.serviceOp("reset", {})
         return this.serviceOp("compile", { options: opts })
