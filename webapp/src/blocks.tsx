@@ -538,7 +538,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
 
         // capture name without numeric suffix
-        const name = /(\D+)(\d*)/i.exec(nameField.textContent)[1];
+        const match = /(\D+)(\d*)/i.exec(nameField.textContent);
+        const name = ((match && match[1]) || nameField.textContent).trim();
         const cached = nameCache[name];
         let newName: string;
         if (cached) {
@@ -777,6 +778,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.delayLoadXml = file.content;
                 pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
+                // clear flyouts cache when loading a new project to prevent errors from persisting
+                this.flyouts = {};
 
                 this.filterToolbox();
                 if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
