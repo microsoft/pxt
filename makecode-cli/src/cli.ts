@@ -11,7 +11,9 @@ async function mainCli() {
     const prj = new mkc.Project(files.findProjectDir())
 
     await prj.buildAsync()
-    
+
+    //mkc.simserver.startSimServer(prj.editor)
+
     console.log("all done")
 }
 
@@ -26,6 +28,7 @@ async function downloadProjectAsync(id: string) {
     }
     console.log("downloaded.")
 }
+
 
 if (process.argv[2])
     downloadProjectAsync(process.argv[2])
