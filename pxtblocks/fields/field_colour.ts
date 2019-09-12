@@ -72,7 +72,7 @@ namespace pxtblockly {
          * Set the colour.
          * @param {string} colour The new colour in '#rrggbb' format.
          */
-        doValueUpdate_(colour: string) {
+        setValue(colour: string) {
             colour = parseColour(colour, this.getColours_());
 
             if (!colour) return;

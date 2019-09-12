@@ -1142,6 +1142,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1229,6 +1230,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**

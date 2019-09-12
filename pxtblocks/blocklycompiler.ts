@@ -716,7 +716,7 @@ namespace pxt.blocks {
     }
 
     function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             return `${escapeVarName(a.name, e)}: ${a.type}`;
@@ -742,7 +742,7 @@ namespace pxt.blocks {
     }
 
     function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const externalInputs = !b.getInputsInline();
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
             return {
@@ -1551,7 +1551,7 @@ namespace pxt.blocks {
 
             w.getTopBlocks(false).filter(isFunctionDefinition).forEach(b => {
                 // Add functions to the rename map to prevent name collisions with variables
-                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getFieldValue("function_name");
+                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getField("function_name").getText();
                 escapeVarName(name, e, true);
             });
         }
