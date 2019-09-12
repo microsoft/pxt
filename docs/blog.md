@@ -1,5 +1,11 @@
 # Microsoft MakeCode Blog
 
+## [Arcade Game Jam](/blog/arcade/game-jam)
+
+September 12th, 2019 by [shakao](https://github.com/shakao)
+
+We’re super excited to announce the first-ever MakeCode Arcade game jam!
+
 ## [LEGO MINDSTORMS update](/blog/lego/09-06-2019)
 
 September 6th, 2019 by [pelikhan](https://github.com/pelikhan)
