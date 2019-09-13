@@ -345,6 +345,7 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
+        alwaysGithubItem?: boolean; // show Github item; even when token is not available
     }
 
     interface SocialOptions {

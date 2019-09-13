@@ -101,7 +101,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
-                    {meta.isSaved ? "" : "*" /* this seems unused */ }
+                    {meta.isSaved ? "" : "*" /* this seems unused */}
                     {meta.isGitModified ? " ↑" : ""}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                 </FileTreeItem>);
@@ -251,8 +251,7 @@ namespace custom {
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const plus = show && !mainPkg.files[customFile]
-        const ghstatus = show && !!mainPkg.header.githubId
-        const sync = show && pxt.github.token && !!mainPkg.header.githubId
+        const showGithub = show && (pxt.github.token || targetTheme.alwaysGithubItem);
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
@@ -261,7 +260,7 @@ namespace custom {
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {show ? <GithubTreeItem parent={this.props.parent} githubId={mainPkg.header.githubId} /> : undefined}
+            {showGithub ? <GithubTreeItem parent={this.props.parent} githubId={mainPkg.header.githubId} /> : undefined}
             {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
     }
@@ -301,7 +300,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
     private async createRepositoryAsync() {
         if (!pxt.github.token) await dialogs.showGithubLoginAsync();
         if (!pxt.github.token) return;
-        
+
         const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
         if (!repoid) return;
 
