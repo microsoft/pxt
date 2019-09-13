@@ -514,7 +514,6 @@ namespace pxt.github {
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
-            shortName: r.name,
             tag: tag,
             updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000)
         }

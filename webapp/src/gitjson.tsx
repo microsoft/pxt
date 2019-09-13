@@ -33,6 +33,7 @@ export class Editor extends srceditor.Editor {
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         this.goBack = this.goBack.bind(this);
+        this.handleSyncClick = this.handleSyncClick.bind(this);
     }
 
     goBack() {
@@ -40,7 +41,13 @@ export class Editor extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
+    private handleSyncClick(e: React.MouseEvent<HTMLElement>) {
+        this.parent.pushPullAsync();
+    }
+
     display() {
+        const gihutId = pxt.github.parseRepoId(pkg.mainEditorPkg().header.githubId);
+
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -50,9 +57,15 @@ export class Editor extends srceditor.Editor {
                                 <sui.Icon icon="arrow left" />
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
+                            <span>
+                                <i className="github icon" />
+                                {gihutId.fullName}
+                            </span>
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Button className="ui icon button" icon="down arrow" text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handleSyncClick} onKeyDown={sui.fireClickOnEnter}/>
+
                     </div>
                 </div>
             </div>

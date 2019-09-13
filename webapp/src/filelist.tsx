@@ -276,16 +276,10 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
         super(props);
         this.state = {};
         this.handleClick = this.handleClick.bind(this);
-        this.handleSyncClick = this.handleSyncClick.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
     }
 
     private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
-        e.stopPropagation();
-    }
-
-    private handleSyncClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.parent.pushPullAsync();
         e.stopPropagation();
     }
 
@@ -322,7 +316,6 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
             onKeyDown={sui.fireClickOnEnter}>
             <i className="github icon" />
             {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("sync with GitHub")}
-            {ghid ? <sui.Button className="primary label" icon="down arrow" title={lf("Pull changes")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
         </a>
     }
 }
