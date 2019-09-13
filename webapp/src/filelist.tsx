@@ -294,7 +294,8 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
         if (!githubId) {
             // TODO: connect
         } else {
-            // open github view
+            const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
+            this.props.parent.setSideFile(gitf);
         }
         e.stopPropagation();
     }

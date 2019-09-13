@@ -339,7 +339,7 @@ export class EditorPackage {
         }, 5000)
     }
 
-    getAllFiles() {
+    getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
         return r
@@ -360,7 +360,7 @@ export class EditorPackage {
             .then(() => immediate ? this.savePkgAsync() : this.scheduleSave())
     }
 
-    sortedFiles() {
+    sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
             lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON)
