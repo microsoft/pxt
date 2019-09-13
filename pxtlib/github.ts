@@ -25,6 +25,7 @@ namespace pxt.github {
         mode: string; // "100644",
         type: "blob" | "tree";
         size?: number; // 126,
+        blobContent?: string; // this is added for caching
     }
 
     export interface Tree extends SHAObject {
