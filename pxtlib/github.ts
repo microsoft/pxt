@@ -781,7 +781,6 @@ namespace pxt.github {
 
         const diff: string[] = []
         let k = endpoint
-        let alen = 0, blen = 0
         for (let D = trace.length - 1; D >= 0; D--) {
             const V = trace[D]
             let x = 0
@@ -795,37 +794,65 @@ namespace pxt.github {
             }
             let y = x - k
             const snakeLen = V[MAX + k] - x
-            if (snakeLen > context * 2) {
-                const top = snakeLen - context
-                for (let i = snakeLen - 1; i >= top; --i)
-                    diff.push(" " + a[x + i])
-                alen += context
-                blen += context
-                diff.push(`@@ -${x + top + 1},${alen} +${y + top + 1},${blen} @@`)
-                for (let i = context - 1; i >= 0; --i) {
-                    diff.push(" " + a[x + i])
-                }
-                alen = blen = context
-            } else {
-                for (let i = snakeLen - 1; i >= 0; --i) {
-                    diff.push(" " + a[x + i])
-                    alen++
-                    blen++
-                }
-            }
+            for (let i = snakeLen - 1; i >= 0; --i)
+                diff.push("  " + a[x + i])
+
             if (nextK == k - 1) {
-                diff.push("-" + a[x - 1])
-                alen++
+                diff.push("- " + a[x - 1])
             } else {
-                if (y > 0) {
-                    diff.push("+" + b[y - 1])
-                    blen++
-                }
+                if (y > 0)
+                    diff.push("+ " + b[y - 1])
             }
             k = nextK
         }
         diff.reverse()
-        return diff
+
+        let aline = 1, bline = 1, idx = 0
+        const shortDiff: string[] = []
+        while (idx < diff.length) {
+            let nextIdx = idx
+            while (nextIdx < diff.length && diff[nextIdx][0] == " ")
+                nextIdx++
+            const startIdx = nextIdx - context
+            const skip = startIdx - idx
+            if (skip > 0) {
+                aline += skip
+                bline += skip
+                idx = startIdx
+            }
+            const hdPos = shortDiff.length
+            const aline0 = aline, bline0 = bline
+            shortDiff.push("@@")
+
+            let endIdx = idx
+            let numCtx = 0
+            while (endIdx < diff.length) {
+                if (diff[endIdx][0] == " ") {
+                    numCtx++
+                    if (numCtx > context * 2) {
+                        endIdx -= context
+                        break
+                    }
+                } else {
+                    numCtx = 0
+                }
+                endIdx++
+            }
+
+            while (idx < endIdx) {
+                shortDiff.push(diff[idx])
+                const c = diff[idx][0]
+                switch (c) {
+                    case "-": aline++; break;
+                    case "+": bline++; break;
+                    case " ": aline++; bline++; break;
+                }
+                idx++
+            }
+            shortDiff[hdPos] = `@@ -${aline},${aline - aline0} +${bline},${bline - bline0} @@`
+        }
+
+        return shortDiff
 
         function computeFor(D: number, V: UArray) {
             for (let k = -D; k <= D; k += 2) {
