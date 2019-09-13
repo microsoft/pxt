@@ -123,6 +123,7 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Button className="ui icon button" icon="external alternate" text={lf("GitHub")} textClass={lf("landscape only")} title={lf("Open repository page in GitHub")} onKeyDown={sui.fireClickOnEnter} />
                         <sui.Button className="ui icon button" icon="down arrow" text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>

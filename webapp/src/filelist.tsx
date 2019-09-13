@@ -303,7 +303,12 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
         const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
         if (!repoid) return;
 
-        await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
+        core.showLoading("creategithub", lf("Creating GitHub repo..."))
+        try {
+            await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
+        } finally {
+            core.hideLoading("creategithub");
+        }
         await this.props.parent.reloadHeaderAsync();
     }
 

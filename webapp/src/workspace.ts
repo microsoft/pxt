@@ -492,7 +492,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     if (!filenames)
         filenames = pxt.allPkgFiles(cfg)
     for (let path of filenames) {
-        if (path == GIT_JSON)
+        if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
             continue
         let sha = gitsha(files[path])
         let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
@@ -602,9 +602,14 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     const pfiles = pxt.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
     const files = await getTextAsync(hd.id)
-    await githubUpdateToAsync(hd, repoid, sha, files)
+    files[GIT_JSON] = JSON.stringify({
+        repo: repoid,
+        commit
+    })
     await initializeGithubRepoAsync(hd, repoid, true);
+    await pullAsync(hd);
 }
 
 
