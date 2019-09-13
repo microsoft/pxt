@@ -5,6 +5,7 @@ import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as data from "./data";
 import * as workspace from "./workspace";
+import * as dialogs from "./dialogs";
 
 import Util = pxt.Util
 
@@ -51,14 +52,14 @@ export class Editor extends srceditor.Editor {
     }
 
     private handleCommitClick(e: React.MouseEvent<HTMLElement>) {
-        this.parent.pushPullAsync();
+        this.commitAsync().done();
     }
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
         this.pullAsync().done();
     }
 
-    async pullAsync() {
+    private async pullAsync() {
         core.showLoading("loadingheader", lf("syncing with github..."));
         try {
             let status = await workspace.pullAsync(this.parent.state.header)
@@ -74,6 +75,32 @@ export class Editor extends srceditor.Editor {
                     await this.parent.reloadHeaderAsync()
                     break
             }
+        } finally {
+            core.hideLoading("loadingheader")
+        }
+    }
+
+    private async commitAsync() {
+        const repo = this.parent.state.header.githubId;
+        const header = this.parent.state.header;
+        const msg = "TODO"
+        core.showLoading("loadingheader", lf("syncing with github..."));
+        try {
+            let commitId = await workspace.commitAsync(header, msg)
+            if (commitId) {
+                // merge failure; do a PR
+                // we could ask the user, but it's unlikely they can do anything else to fix it
+                let prURL = await workspace.prAsync(header, commitId, msg)
+                await dialogs.showPRDialogAsync(repo, prURL)
+                // when the dialog finishes, we pull again - it's possible the user
+                // has resolved the conflict in the meantime
+                await workspace.pullAsync(header)
+                // skip bump in this case - we don't know if it was merged
+            } else {
+                if (this.bump)
+                    await workspace.bumpAsync(header)
+            }
+            await this.parent.reloadHeaderAsync()
         } finally {
             core.hideLoading("loadingheader")
         }
@@ -98,7 +125,6 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
                 {this.needsCommit ? <div className="ui warning message">
-                    <i className="down arrow icon"></i>
                     <div className="content">
                         {lf("You need to commit your changes in order to pull changes from GitHub.")}
                     </div>
