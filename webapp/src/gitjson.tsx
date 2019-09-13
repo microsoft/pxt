@@ -108,7 +108,7 @@ export class Editor extends srceditor.Editor {
 
     display() {
         const header = this.parent.state.header;
-        if (!header) return undefined;
+        if (!header || !header.githubId) return undefined;
         this.needsCommit = true; // todo remove
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push

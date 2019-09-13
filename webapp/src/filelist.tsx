@@ -5,6 +5,8 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as dialogs from "./dialogs";
+import * as workspace from "./workspace";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -288,12 +290,23 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
     private handleClick(e: React.MouseEvent<HTMLElement>) {
         const { githubId } = this.props;
         if (!githubId) {
-            // TODO: connect
+            this.createRepositoryAsync().done();
         } else {
             const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
             this.props.parent.setSideFile(gitf);
         }
         e.stopPropagation();
+    }
+
+    private async createRepositoryAsync() {
+        if (!pxt.github.token) await dialogs.showGithubLoginAsync();
+        if (!pxt.github.token) return;
+        
+        const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
+        if (!repoid) return;
+
+        await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
+        await this.props.parent.reloadHeaderAsync();
     }
 
     renderCore() {
@@ -309,7 +322,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
 
         return <a
             key="github-status"
-            className="header item"
+            className="item"
             onClick={this.handleClick}
             tabIndex={0}
             role="treeitem"
@@ -317,7 +330,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
             aria-label="github status"
             onKeyDown={sui.fireClickOnEnter}>
             <i className="github icon" />
-            {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("sync with GitHub")}
+            {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("create GitHub repository")}
         </a>
     }
 }
