@@ -3679,7 +3679,7 @@ async function importGithubProject(id: string) {
                 await workspace.saveAsync(hd)
                 return
             }
-            await workspace.initializeGithubRepoAsync(hd, id)
+            await workspace.initializeGithubRepoAsync(hd, id, true)
         }
         await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {

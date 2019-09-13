@@ -621,7 +621,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
         repo: repoid,
         commit
     })
-    await initializeGithubRepoAsync(hd, repoid, true);
+    await initializeGithubRepoAsync(hd, repoid, false);
     await pullAsync(hd);
 }
 
@@ -665,23 +665,22 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
         await githubUpdateToAsync(h, gitjson.repo, gitjson.commit.sha, files, null, true)
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, addDefaultFiles?: boolean) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
-    let files = pxt.packageFiles(name);
-    pxt.packageFilesFixup(files, true)
 
     let currFiles = await getTextAsync(hd.id);
 
-    if (addDefaultFiles) {
-        const initFiles = pxt.packageFiles(parsed.fullName.replace('/', '-'));
-        pxt.packageFilesFixup(initFiles);
-        // don't override existing files
-        Object.keys(currFiles).forEach(fn => delete initFiles[fn]);
-        U.jsonMergeFrom(currFiles, initFiles);
-    }
+    const templateFiles = pxt.packageFiles(name);
+    pxt.packageFilesFixup(templateFiles, true);
 
-    U.jsonMergeFrom(currFiles, files);
+    if (forceTemplateFiles) {
+        U.jsonMergeFrom(currFiles, templateFiles);
+    } else {
+        // current files override defaults
+        U.jsonMergeFrom(templateFiles, currFiles);
+        currFiles = templateFiles;
+    }
 
     await saveAsync(hd, currFiles)
     await commitAsync(hd, "Auto-initialized.", "", Object.keys(currFiles))
@@ -690,7 +689,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, addD
     currFiles = await getTextAsync(hd.id)
     let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
     for (let k of Object.keys(currFiles)) {
-        if (k == GIT_JSON)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON)
             continue
         if (allfiles.indexOf(k) < 0)
             delete currFiles[k]
