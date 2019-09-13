@@ -597,6 +597,16 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     return hd
 }
 
+export async function exportToGithubAsync(hd: Header, repoid: string) {
+    const parsed = pxt.github.parseRepoId(repoid);
+    const pfiles = pxt.packageFiles(hd.name);
+    await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
+    const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    const files = await getTextAsync(hd.id)
+    await githubUpdateToAsync(hd, repoid, sha, files)
+    await initializeGithubRepoAsync(hd, repoid, true);
+}
+
 
 // to be called after loading header in a editor
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
@@ -636,6 +646,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, addD
     if (addDefaultFiles) {
         const initFiles = pxt.packageFiles(parsed.fullName.replace('/', '-'));
         pxt.packageFilesFixup(initFiles);
+        // don't override existing files
+        Object.keys(currFiles).forEach(fn => delete initFiles[fn]);
         U.jsonMergeFrom(currFiles, initFiles);
     }
 

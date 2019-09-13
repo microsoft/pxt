@@ -49,7 +49,7 @@ export function showGithubLoginAsync() {
             if (url.length != 40 || !/^[a-f0-9]+$/.test(url)) {
                 core.errorNotification(lf("Invalid token format"))
             } else {
-                core.infoNotification(lf("Token stored. Check out Import on home screen now!"))
+                core.infoNotification(lf("Token stored."))
                 pxt.storage.setLocal("githubtoken", url)
                 pxt.github.token = url
             }
@@ -527,7 +527,7 @@ export function showImportUrlDialogAsync() {
 }
 
 
-export function showCreateGithubRepoDialogAsync() {
+export function showCreateGithubRepoDialogAsync(name?: string) {
     let inputName: HTMLInputElement;
     let inputDesc: HTMLInputElement;
     return core.confirmAsync({
@@ -535,6 +535,14 @@ export function showCreateGithubRepoDialogAsync() {
         onLoaded: (el) => {
             inputName = el.querySelectorAll('input')[0] as HTMLInputElement;
             inputDesc = el.querySelectorAll('input')[1] as HTMLInputElement;
+
+
+            if (name) {
+                name = name.toLocaleLowerCase().replace(/\s+/g, '-');
+                name = name.replace(/[^\w\-]/g, '');
+                if (!/^pxt-/.test(name)) name = 'pxt-' + name;
+                inputName.value = name;
+            }
         },
         jsx: <div className="ui form">
             <div className="ui field">
