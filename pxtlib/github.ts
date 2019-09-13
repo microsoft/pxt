@@ -464,7 +464,9 @@ namespace pxt.github {
 
     export interface ParsedRepo {
         owner?: string;
+        project?: string;
         fullName: string;
+        shortName: string;
         tag?: string;
     }
 
@@ -642,11 +644,23 @@ namespace pxt.github {
         repo = repo.replace(/^https:\/\/github.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
         let m = /([^#]+)(#(.*))?/.exec(repo)
-        let owner = m ? m[1].split('/')[0].toLowerCase() : undefined;
+        const fullName = m ? m[1].toLowerCase() : repo.toLowerCase();
+        const tag = m ? m[3] : null;
+        let shortName = fullName;
+        let owner: string;
+        let project: string;
+        if (m) {
+            const parts = m[1].toLowerCase().split('/');
+            owner = parts[0];
+            project = parts[1];
+            shortName = `${project}#${tag}`;
+        }
         return {
             owner,
-            fullName: m ? m[1].toLowerCase() : repo.toLowerCase(),
-            tag: m ? m[3] : null
+            project,
+            shortName,
+            fullName,
+            tag
         }
     }
 

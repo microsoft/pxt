@@ -24,7 +24,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.handleCustomBlocksClick = this.handleCustomBlocksClick.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
-        this.handleSyncClick = this.handleSyncClick.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
@@ -146,11 +145,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
-    private handleSyncClick(e: React.MouseEvent<any>) {
-        this.props.parent.pushPullAsync();
-        e.stopPropagation();
-    }
-
     private handleCustomBlocksClick(e: React.MouseEvent<any>) {
         this.addCustomBlocksFile();
         e.stopPropagation();
@@ -253,18 +247,82 @@ namespace custom {
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const plus = show && !mainPkg.files[customFile]
+        const ghstatus = show && !!mainPkg.header.githubId
         const sync = show && pxt.github.token && !!mainPkg.header.githubId
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
-                {sync ? <sui.Button className="primary label" icon="github" title={lf("Sync with github")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
+            {show ? <GithubTreeItem parent={this.props.parent} githubId={mainPkg.header.githubId} /> : undefined}
             {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
+    }
+}
+
+interface GithubTreeItemProps extends ISettingsProps {
+    githubId: string;
+}
+
+interface GithubTreeItemState {
+    pushPulling?: boolean;
+}
+
+class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemState> {
+    constructor(props: GithubTreeItemProps) {
+        super(props);
+        this.state = {};
+        this.handleClick = this.handleClick.bind(this);
+        this.handleSyncClick = this.handleSyncClick.bind(this);
+        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+    }
+
+    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        e.stopPropagation();
+    }
+
+    private handleSyncClick(e: React.MouseEvent<HTMLElement>) {
+        this.props.parent.pushPullAsync();
+        e.stopPropagation();
+    }
+
+    private handleClick(e: React.MouseEvent<HTMLElement>) {
+        const { githubId } = this.props;
+        if (!githubId) {
+            // TODO: connect
+        } else {
+            // open github view
+        }
+        e.stopPropagation();
+    }
+
+    renderCore() {
+        const { githubId } = this.props;
+
+        // TODO: aria-selected, aria-label
+        //aria-selected={isActive}
+        //aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
+
+
+        // todo: current branch
+        const ghid = pxt.github.parseRepoId(githubId);
+
+        return <a
+            key="github-status"
+            className="header item"
+            onClick={this.handleClick}
+            tabIndex={0}
+            role="treeitem"
+            aria-selected="false"
+            aria-label="github status"
+            onKeyDown={sui.fireClickOnEnter}>
+            <i className="github icon" />
+            {ghid ? ghid.shortName : lf("sync with GitHub")}
+            {ghid ? <sui.Button className="primary label" icon="down arrow" title={lf("Pull changes")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+        </a>
     }
 }
 
