@@ -134,7 +134,7 @@ export class Editor extends srceditor.Editor {
                 <div className="ui form">
                     <h4 className="header">
                         <i className="large github icon" />
-                        {githubId.fullName}#{githubId.tag}
+                        {githubId ? githubId.fullName + "#" + githubId.tag : ""}
                     </h4>
                     <div className="ui field">
                         <input type="url" tabIndex={0} autoFocus placeholder={lf("Updates to the code.")} className="ui blue fluid"></input>
