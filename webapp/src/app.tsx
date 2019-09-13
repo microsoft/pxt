@@ -422,7 +422,13 @@ export class ProjectView
             this.blocksEditor.openTypeScript();
         } else if (this.isPythonActive()) {
             this.openTypeScriptAsync().done()
-        } else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+        } else {
+            const files = pkg.mainEditorPkg().files;
+            let f = files["main.ts"];
+            if (!f) // find first .ts file
+                f = files[Object.keys(files).filter(fn => /\.ts$/.test(fn), 1)[0]];
+            this.setFile(f)
+        }
 
         pxt.Util.setEditorLanguagePref("js");
     }
@@ -484,6 +490,16 @@ export class ProjectView
     }
 
     openPreviousEditor() {
+        // try history first!
+        const hist = this.settings.fileHistory[this.settings.fileHistory.length - 1];
+        if (hist) {
+            const f = pkg.mainEditorPkg().lookupFile(hist.name);
+            if (f)
+                this.setSideFile(f);
+                return;
+        }
+
+        // default logic
         const hasBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
         if (this.prevEditorId == "monacoEditor" || !hasBlocks) {
             this.openJavaScript(false);
