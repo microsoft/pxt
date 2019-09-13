@@ -33,11 +33,16 @@ export class Editor extends srceditor.Editor {
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
         this.goBack = this.goBack.bind(this);
+        this.handleSyncClick = this.handleSyncClick.bind(this);
     }
 
     goBack() {
         pxt.tickEvent("github.backButton", undefined, { interactiveConsent: true })
         this.parent.openPreviousEditor()
+    }
+
+    private handleSyncClick(e: React.MouseEvent<HTMLElement>) {
+        this.parent.pushPullAsync();
     }
 
     display() {
@@ -59,6 +64,8 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Button className="ui icon button" icon="down arrow" text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handleSyncClick} onKeyDown={sui.fireClickOnEnter}/>
+
                     </div>
                 </div>
             </div>
