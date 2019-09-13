@@ -726,4 +726,105 @@ namespace pxt.github {
     }
 
     export const GIT_JSON = ".git.json"
+
+    /*
+    Constant MAX ∈ [0,M+N]
+    Var V: Array [− MAX .. MAX] of Integer
+    V[1]←0
+    For D←0 to MAX Do
+        For k ← −D to D in steps of 2 Do 
+            If k=−D or k≠D and V[k−1]<V[k+1] Then
+                x ← V[k+1] 
+            Else
+                x ← V[k−1]+1 
+            y←x−k
+            While x<N and y<M and a[x+1] =b[y+1] Do 
+                (x,y)←(x+1,y+1) 
+            V[k]←x
+            If x≥N and y≥M Then
+                Length of an SES is D
+                Stop
+    */
+
+    type UArray = Uint32Array | Uint16Array
+
+    export function testdiff(fileA: string, fileB: string) {
+        console.log("test", fileA, fileB)
+        const res = diff(fileA.replace(/./g, x => x + "\n"), fileB.replace(/./g, x => x + "\n"))
+        console.log(res ? res.join("\n") : "null")
+    }
+
+    // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
+    export function diff(fileA: string, fileB: string, MAX = 1024) {
+        const a = fileA.split(/\r?\n/)
+        const b = fileB.split(/\r?\n/)
+        MAX = Math.min(MAX, a.length + b.length)
+        const ctor = a.length > 0xffff ? Uint32Array : Uint16Array
+
+        const V = new ctor(2 * MAX + 1)
+        let diffLen = -1
+        for (let D = 0; D <= MAX; D++) {
+            if (computeFor(D, V) != null) {
+                diffLen = D
+            }
+        }
+
+        if (diffLen == -1)
+            return null // diffLen > MAX
+
+        const trace: UArray[] = []
+        let endpoint: number = null
+        for (let D = 0; D <= diffLen; D++) {
+            const V = trace.length ? trace[trace.length - 1].slice(0) : new ctor(2 * diffLen + 1)
+            trace.push(V)
+            endpoint = computeFor(D, V)
+            if (endpoint != null)
+                break
+        }
+
+        const diff: string[] = []
+        let k = endpoint
+        for (let D = trace.length - 1; D >= 0; D--) {
+            const V = trace[D]
+            let x = 0
+            let isLeft = false
+            if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1])) {
+                x = V[MAX + k + 1]
+                isLeft = true
+            } else {
+                x = V[MAX + k - 1] + 1
+                isLeft = false
+            }
+            let y = x - k
+            const snakeLen = V[MAX + k] - x
+            for (let i = snakeLen - 1; i >= 0; --i)
+                diff.push(" " + a[x + i])
+            if (isLeft)
+                diff.push("-" + a[x])
+            else
+                diff.push("+" + b[y])
+        }
+        diff.reverse()
+        return diff
+
+        function computeFor(D: number, V: UArray) {
+            for (let k = -D; k <= D; k += 2) {
+                let x = 0
+                if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1]))
+                    x = V[MAX + k + 1]
+                else
+                    x = V[MAX + k - 1] + 1
+                let y = x - k
+                while (x < a.length && y < b.length && a[x] == b[y]) {
+                    x++
+                    y++
+                }
+                V[MAX + k] = x
+                if (x >= a.length && y >= b.length) {
+                    return k
+                }
+            }
+            return null
+        }
+    }
 }
