@@ -1337,3 +1337,39 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
         </div>
     }
 }
+
+///////////////////////////////////////////////////////////
+////////////             Plain checkbox       /////////////
+///////////////////////////////////////////////////////////
+
+export interface PlainCheckboxProps {
+    label: string;
+    onChange: (v: boolean) => void;
+}
+
+export interface PlainCheckboxState {
+    isChecked: boolean;
+}
+
+export class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
+    constructor(props: PlainCheckboxProps) {
+        super(props);
+        this.state = {
+            isChecked: false
+        }
+        this.setCheckedBit = this.setCheckedBit.bind(this);
+    }
+
+    setCheckedBit() {
+        let val = !this.state.isChecked
+        this.props.onChange(val)
+        this.setState({ isChecked: val })
+    }
+
+    renderCore() {
+        return <Checkbox
+            inputLabel={this.props.label}
+            checked={this.state.isChecked}
+            onChange={this.setCheckedBit} />
+    }
+}

@@ -11,39 +11,6 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-
-interface PlainCheckboxProps {
-    label: string;
-    onChange: (v: boolean) => void;
-}
-
-interface PlainCheckboxState {
-    isChecked: boolean;
-}
-
-class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
-    constructor(props: PlainCheckboxProps) {
-        super(props);
-        this.state = {
-            isChecked: false
-        }
-        this.setCheckedBit = this.setCheckedBit.bind(this);
-    }
-
-    setCheckedBit() {
-        let val = !this.state.isChecked
-        this.props.onChange(val)
-        this.setState({ isChecked: val })
-    }
-
-    renderCore() {
-        return <sui.Checkbox
-            inputLabel={this.props.label}
-            checked={this.state.isChecked}
-            onChange={this.setCheckedBit} />
-    }
-}
-
 export function showGithubLoginAsync() {
     let input: HTMLInputElement;
     return core.confirmAsync({
@@ -475,7 +442,7 @@ export function showCommitDialogAsync(repo: string) {
                 <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
             </div>
             <div className="ui field">
-                <PlainCheckbox
+                <sui.PlainCheckbox
                     label={lf("Publish to users (bump)")}
                     onChange={setBump} />
             </div>
