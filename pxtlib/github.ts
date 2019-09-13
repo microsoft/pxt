@@ -515,6 +515,7 @@ namespace pxt.github {
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
+            shortName: r.name,
             tag: tag,
             updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000)
         }
@@ -755,7 +756,7 @@ namespace pxt.github {
     }
 
     // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
-    export function diff(fileA: string, fileB: string, MAX = 1024) {
+    export function diff(fileA: string, fileB: string, MAX = 1024, context = 2) {
         const a = fileA.split(/\r?\n/)
         const b = fileB.split(/\r?\n/)
         MAX = Math.min(MAX, a.length + b.length)
@@ -784,25 +785,48 @@ namespace pxt.github {
 
         const diff: string[] = []
         let k = endpoint
+        let alen = 0, blen = 0
         for (let D = trace.length - 1; D >= 0; D--) {
             const V = trace[D]
             let x = 0
-            let isLeft = false
+            let nextK = 0
             if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1])) {
-                x = V[MAX + k + 1]
-                isLeft = true
+                nextK = k + 1
+                x = V[MAX + nextK]
             } else {
-                x = V[MAX + k - 1] + 1
-                isLeft = false
+                nextK = k - 1
+                x = V[MAX + nextK] + 1
             }
             let y = x - k
             const snakeLen = V[MAX + k] - x
-            for (let i = snakeLen - 1; i >= 0; --i)
-                diff.push(" " + a[x + i])
-            if (isLeft)
-                diff.push("-" + a[x])
-            else
-                diff.push("+" + b[y])
+            if (snakeLen > context * 2) {
+                const top = snakeLen - context
+                for (let i = snakeLen - 1; i >= top; --i)
+                    diff.push(" " + a[x + i])
+                alen += context
+                blen += context
+                diff.push(`@@ -${x + top + 1},${alen} +${y + top + 1},${blen} @@`)
+                for (let i = context - 1; i >= 0; --i) {
+                    diff.push(" " + a[x + i])
+                }
+                alen = blen = context
+            } else {
+                for (let i = snakeLen - 1; i >= 0; --i) {
+                    diff.push(" " + a[x + i])
+                    alen++
+                    blen++
+                }
+            }
+            if (nextK == k - 1) {
+                diff.push("-" + a[x - 1])
+                alen++
+            } else {
+                if (y > 0) {
+                    diff.push("+" + b[y - 1])
+                    blen++
+                }
+            }
+            k = nextK
         }
         diff.reverse()
         return diff
