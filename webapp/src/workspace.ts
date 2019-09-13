@@ -477,6 +477,12 @@ export async function bumpAsync(hd: Header) {
     return await commitAsync(hd, cfg.version, "v" + cfg.version)
 }
 
+export function lookupFile(commit: pxt.github.Commit, path: string) {
+    if (!commit)
+        return null
+    return commit.tree.tree.filter(e => e.path == path)[0]
+}
+
 export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -495,7 +501,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
         if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
             continue
         let sha = gitsha(files[path])
-        let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
+        let ex = lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
@@ -537,7 +543,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     }
 }
 
-async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, tag?: string) {
+async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, tag?: string, justJSON = false) {
     let parsed = pxt.github.parseRepoId(repoid)
     let commit = await pxt.github.getCommitAsync(parsed.fullName, commitid)
     let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -550,26 +556,33 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     }
 
     let downloadAsync = async (path: string) => {
-        let treeEnt = commit.tree.tree.filter(e => e.path == path)[0]
+        let treeEnt = lookupFile(commit, path)
         if (!treeEnt) {
-            files[path] = ""
-            return
+            if (!justJSON)
+                files[path] = ""
+            return ""
         }
-        if (files[path] && gitsha(files[path]) == treeEnt.sha)
-            return
+        if (files[path] && gitsha(files[path]) == treeEnt.sha) {
+            treeEnt.blobContent = files[path]
+            return treeEnt.blobContent
+        }
         let text = await pxt.github.downloadTextAsync(parsed.fullName, commitid, path)
-        files[path] = text
-        if (gitsha(files[path]) != treeEnt.sha)
-            U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        if (!justJSON) {
+            files[path] = text
+            if (gitsha(files[path]) != treeEnt.sha)
+                U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        }
+        treeEnt.blobContent = text
+        return treeEnt.blobContent
     }
 
-    await downloadAsync(pxt.CONFIG_NAME)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME] || "{}") as pxt.PackageConfig
+    const cfgText = await downloadAsync(pxt.CONFIG_NAME)
+    const cfg = JSON.parse(cfgText || "{}") as pxt.PackageConfig
     for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
         await downloadAsync(fn)
     }
 
-    if (!cfg.name) {
+    if (!justJSON && !cfg.name) {
         cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     }
@@ -627,17 +640,29 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     if (!gitjson.commit || !gitjson.commit.tree)
         return
 
+    let isCurrent = true
+    let needsBlobs = false
     for (let k of Object.keys(files)) {
         if (k == GIT_JSON)
             continue
-        let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
-        if (!treeEnt || treeEnt.type != "blob")
-            return
-        if (files[k] && treeEnt.sha != gitsha(files[k]))
-            return
+        let treeEnt = lookupFile(gitjson.commit, k)
+        if (!treeEnt || treeEnt.type != "blob") {
+            isCurrent = false
+            continue
+        }
+        if (treeEnt.blobContent == null)
+            needsBlobs = true
+        if (files[k] && treeEnt.sha != gitsha(files[k])) {
+            isCurrent = false
+            continue
+        }
     }
 
-    h.githubCurrent = true
+    h.githubCurrent = isCurrent
+
+    // this happens for older projects
+    if (needsBlobs)
+        await githubUpdateToAsync(h, gitjson.repo, gitjson.commit.sha, files, null, true)
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, addDefaultFiles?: boolean) {
