@@ -494,9 +494,10 @@ export class ProjectView
         const hist = this.settings.fileHistory[this.settings.fileHistory.length - 1];
         if (hist) {
             const f = pkg.mainEditorPkg().lookupFile(hist.name);
-            if (f)
+            if (f) {
                 this.setSideFile(f);
                 return;
+            }
         }
 
         // default logic
