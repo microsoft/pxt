@@ -466,7 +466,6 @@ namespace pxt.github {
         owner?: string;
         project?: string;
         fullName: string;
-        shortName: string;
         tag?: string;
     }
 
@@ -647,19 +646,16 @@ namespace pxt.github {
         let m = /([^#]+)(#(.*))?/.exec(repo)
         const fullName = m ? m[1].toLowerCase() : repo.toLowerCase();
         const tag = m ? m[3] : null;
-        let shortName = fullName;
         let owner: string;
         let project: string;
         if (m) {
             const parts = m[1].toLowerCase().split('/');
             owner = parts[0];
             project = parts[1];
-            shortName = tag ? `${project}#${tag}` : project;
         }
         return {
             owner,
             project,
-            shortName,
             fullName,
             tag
         }

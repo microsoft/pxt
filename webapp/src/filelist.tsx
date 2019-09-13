@@ -321,7 +321,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
             aria-label="github status"
             onKeyDown={sui.fireClickOnEnter}>
             <i className="github icon" />
-            {ghid ? ghid.shortName : lf("sync with GitHub")}
+            {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("sync with GitHub")}
             {ghid ? <sui.Button className="primary label" icon="down arrow" title={lf("Pull changes")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
         </a>
     }
