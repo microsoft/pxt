@@ -44,6 +44,7 @@ import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
+import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
@@ -94,6 +95,7 @@ export class ProjectView
     pxtJsonEditor: pxtjson.Editor;
     serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
+    gitjsonEditor: gitjson.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -420,7 +422,13 @@ export class ProjectView
             this.blocksEditor.openTypeScript();
         } else if (this.isPythonActive()) {
             this.openTypeScriptAsync().done()
-        } else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+        } else {
+            const files = pkg.mainEditorPkg().files;
+            let f = files["main.ts"];
+            if (!f) // find first .ts file
+                f = files[Object.keys(files).filter(fn => /\.ts$/.test(fn), 1)[0]];
+            this.setFile(f)
+        }
 
         pxt.Util.setEditorLanguagePref("js");
     }
@@ -482,6 +490,16 @@ export class ProjectView
     }
 
     openPreviousEditor() {
+        // try history first!
+        const hist = this.settings.fileHistory[this.settings.fileHistory.length - 1];
+        if (hist) {
+            const f = pkg.mainEditorPkg().lookupFile(hist.name);
+            if (f)
+                this.setSideFile(f);
+                return;
+        }
+
+        // default logic
         const hasBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
         if (this.prevEditorId == "monacoEditor" || !hasBlocks) {
             this.openJavaScript(false);
@@ -653,6 +671,7 @@ export class ProjectView
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
+        this.gitjsonEditor = new gitjson.Editor(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -666,7 +685,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }

@@ -653,7 +653,7 @@ namespace pxt.github {
             const parts = m[1].toLowerCase().split('/');
             owner = parts[0];
             project = parts[1];
-            shortName = `${project}#${tag}`;
+            shortName = tag ? `${project}#${tag}` : project;
         }
         return {
             owner,
