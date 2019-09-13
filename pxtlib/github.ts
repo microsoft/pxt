@@ -750,12 +750,41 @@ namespace pxt.github {
         console.log(res ? res.join("\n") : "null")
     }
 
+    export interface DiffOptions {
+        context?: number; // lines of context; defaults to 3
+        ignoreWhitespace?: boolean;
+        maxDiffSize?: number; // defaults to 1024
+    }
+
     // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
-    export function diff(fileA: string, fileB: string, MAX = 1024, context = 2) {
+    export function diff(fileA: string, fileB: string, options: DiffOptions = {}) {
         const a = fileA.split(/\r?\n/)
         const b = fileB.split(/\r?\n/)
-        MAX = Math.min(MAX, a.length + b.length)
-        const ctor = a.length > 0xffff ? Uint32Array : Uint16Array
+
+        const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
+        const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array
+
+        const idxmap: pxt.Map<number> = {}
+        let curridx = 0
+        const aidx = mkidx(a), bidx = mkidx(b)
+
+        function mkidx(strings: string[]) {
+            const idxarr = new ctor(strings.length)
+            let i = 0
+            for (let e of strings) {
+                if (options.ignoreWhitespace)
+                    e = e.replace(/\s+/g, "")
+                if (idxmap.hasOwnProperty(e))
+                    idxarr[i] = idxmap[e]
+                else {
+                    ++curridx
+                    idxarr[i] = curridx
+                    idxmap[e] = curridx
+                }
+                i++
+            }
+            return idxarr
+        }
 
         const V = new ctor(2 * MAX + 1)
         let diffLen = -1
@@ -808,10 +837,13 @@ namespace pxt.github {
 
         let aline = 1, bline = 1, idx = 0
         const shortDiff: string[] = []
+        const context = options.context || 3
         while (idx < diff.length) {
             let nextIdx = idx
             while (nextIdx < diff.length && diff[nextIdx][0] == " ")
                 nextIdx++
+            if (nextIdx == diff.length)
+                break
             const startIdx = nextIdx - context
             const skip = startIdx - idx
             if (skip > 0) {
@@ -821,15 +853,15 @@ namespace pxt.github {
             }
             const hdPos = shortDiff.length
             const aline0 = aline, bline0 = bline
-            shortDiff.push("@@")
+            shortDiff.push("@@") // patched below
 
             let endIdx = idx
             let numCtx = 0
             while (endIdx < diff.length) {
                 if (diff[endIdx][0] == " ") {
                     numCtx++
-                    if (numCtx > context * 2) {
-                        endIdx -= context
+                    if (numCtx > context * 2 + 2) {
+                        endIdx -= context + 2
                         break
                     }
                 } else {
@@ -848,7 +880,7 @@ namespace pxt.github {
                 }
                 idx++
             }
-            shortDiff[hdPos] = `@@ -${aline},${aline - aline0} +${bline},${bline - bline0} @@`
+            shortDiff[hdPos] = `@@ -${aline0},${aline - aline0} +${bline0},${bline - bline0} @@`
         }
 
         return shortDiff
@@ -861,12 +893,12 @@ namespace pxt.github {
                 else
                     x = V[MAX + k - 1] + 1
                 let y = x - k
-                while (x < a.length && y < b.length && a[x] == b[y]) {
+                while (x < aidx.length && y < bidx.length && aidx[x] == bidx[y]) {
                     x++
                     y++
                 }
                 V[MAX + k] = x
-                if (x >= a.length && y >= b.length) {
+                if (x >= aidx.length && y >= bidx.length) {
                     return k
                 }
             }
