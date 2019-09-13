@@ -41,6 +41,8 @@ export class Editor extends srceditor.Editor {
     }
 
     display() {
+        const gihutId = pxt.github.parseRepoId(pkg.mainEditorPkg().header.githubId);
+
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -50,6 +52,10 @@ export class Editor extends srceditor.Editor {
                                 <sui.Icon icon="arrow left" />
                                 <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
+                            <span>
+                                <i className="github icon" />
+                                {gihutId.fullName}
+                            </span>
                         </div>
                     </div>
                     <div className="rightHeader">
