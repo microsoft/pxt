@@ -98,7 +98,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
-                    {file.name} {meta.isSaved ? "" : "*"}
+                    {file.name}
+                    {meta.isSaved ? "" : "*" /* this seems unused */ }
+                    {meta.isGitModified ? " ↑" : ""}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                 </FileTreeItem>);
         })

@@ -477,6 +477,12 @@ export async function bumpAsync(hd: Header) {
     return await commitAsync(hd, cfg.version, "v" + cfg.version)
 }
 
+export function lookupFile(commit: pxt.github.Commit, path: string) {
+    if (!commit)
+        return null
+    return commit.tree.tree.filter(e => e.path == path)[0]
+}
+
 export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -495,7 +501,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
         if (path == GIT_JSON)
             continue
         let sha = gitsha(files[path])
-        let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
+        let ex = lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
@@ -550,7 +556,7 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     }
 
     let downloadAsync = async (path: string) => {
-        let treeEnt = commit.tree.tree.filter(e => e.path == path)[0]
+        let treeEnt = lookupFile(commit, path)
         if (!treeEnt) {
             if (!justJSON)
                 files[path] = ""
@@ -624,7 +630,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     for (let k of Object.keys(files)) {
         if (k == GIT_JSON)
             continue
-        let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
+        let treeEnt = lookupFile(gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
             isCurrent = false
             continue

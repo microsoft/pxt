@@ -27,6 +27,7 @@ export class File implements pxt.editor.IFile {
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
     virtual: boolean;
+    baseGitContent: string;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
@@ -85,6 +86,13 @@ export class File implements pxt.editor.IFile {
         data.invalidate("open-meta:" + this.getName())
     }
 
+    setBaseGitContent(newContent: string) {
+        if (newContent != this.baseGitContent) {
+            this.baseGitContent = newContent
+            this.updateStatus()
+        }
+    }
+
     setContentAsync(newContent: string, force?: boolean) {
         Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
@@ -100,6 +108,8 @@ export class File implements pxt.editor.IFile {
                         this.updateStatus();
                     }
                     if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
+                    if (this.name == pxt.github.GIT_JSON)
+                        this.epkg.updateGitJsonCache()
                 })
         } else {
             this.updateStatus();
@@ -308,9 +318,24 @@ export class EditorPackage {
         return p.then(() => f.setContentAsync(v));
     }
 
+    updateGitJsonCache() {
+        const gj = this.files[pxt.github.GIT_JSON]
+        if (gj) {
+            const gjc: pxt.github.GitJson = JSON.parse(gj.content)
+            if (gjc.commit) {
+                for (let treeEnt of gjc.commit.tree.tree) {
+                    const f = this.files[treeEnt.path]
+                    if (f && treeEnt.blobContent != null)
+                        f.setBaseGitContent(treeEnt.blobContent)
+                }
+            }
+        }
+    }
+
     setFiles(files: pxt.Map<string>) {
         this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
+        this.updateGitJsonCache()
     }
 
     private updateStatus() {
@@ -451,14 +476,15 @@ class Host
         let fromWorkspaceAsync = (arg: string) =>
             workspace.getTextAsync(arg)
                 .then(scr => {
-                    if (!scr) {
+                    if (!scr)
                         return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
-                    }
-                    epkg.setFiles(scr)
                     if (epkg.isTopLevel() && epkg.header)
                         return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
-                    else
+                            .then(() => epkg.setFiles(scr))
+                    else {
+                        epkg.setFiles(scr)
                         return Promise.resolve()
+                    }
                 })
 
         if (proto == "pub") {
@@ -570,6 +596,7 @@ export interface FileMeta {
     isReadonly: boolean;
     isSaved: boolean;
     numErrors: number;
+    isGitModified: boolean;
     diagnostics?: pxtc.KsDiagnostic[];
 }
 
@@ -585,7 +612,8 @@ data.mountVirtualApi("open-meta", {
         let fs: FileMeta = {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
-            numErrors: f.numDiagnosticsOverride
+            numErrors: f.numDiagnosticsOverride,
+            isGitModified: f.baseGitContent != null && f.baseGitContent != f.content
         }
 
         if (fs.numErrors == null) {
