@@ -88,9 +88,13 @@ export class Editor extends srceditor.Editor {
         this.description = v;
     }
 
-    private handleGithubError(e: Error) {
+    private handleGithubError(e: any) {
         pxt.reportException(e);
-        core.warningNotification(lf("Oops, something went wrong. Please try again."))
+        const statusCode = parseInt(e.statusCode);
+        if (e.isOffline || statusCode === 0)
+            core.warningNotification(lf("Please connect to internet and try again."));
+        else
+            core.warningNotification(lf("Oops, something went wrong. Please try again."))
     }
 
     private async bumpAsync() {
