@@ -132,6 +132,11 @@ namespace pxt.editor.experiments {
                 id: "checkForHwVariantWebUSB",
                 name: lf("Detect Hardware with WebUSB"),
                 description: lf("When compiling, use WebUSB to detect hardware configuration.")
+            },
+            {
+                id: "alwaysGithubItem",
+                name: lf("Always GitHub"),
+                descript: lf("Always show GitHub item in Explorer view, even if token is not available.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
