@@ -1,0 +1,79 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*-------------------
+   Github view and diffs
+--------------------*/
+
+
+.diffview {
+    border: 0px;
+    border-spacing: 0px;
+    width: 100%;
+
+    pre {
+        margin: 0;
+    }
+    .diff-added {
+        background:#e6ffed;
+    }
+    .diff-removed {
+        background:#ffeef0;
+    }
+    .diff-marker {
+        background: #f1f8ff;
+        color: rgba(27,31,35,.7)        
+    }
+
+    .diff-marker td {
+        padding-left: 1em;
+    }
+
+    .line-a, .line-b {
+        width: 3em;
+        text-align: right;
+        color: rgba(27,31,35,.3);
+    }
+    .marker {
+        width: 2.5em;
+        text-align: center;
+    }
+    .change {
+        text-align: left;
+    }
+
+    .diff-added .line-b:before,
+    .diff-removed .line-a:before,
+    .diff-unchanged .line-a:before,
+    .diff-unchanged .line-b:before
+    {
+        content: attr(data-content);
+    }
+
+    .marker:before {
+        content: attr(data-content);
+    }
+}
+
+
+#githubArea {
+    height: 90%;
+    padding: 1rem;
+
+    .ui.divider {
+        margin-bottom: 5px;
+    }
+
+    .ui.segment.diff {
+        padding: 0;
+    }
+
+    .ui.segments {
+        margin: 1rem 0;
+    }
+}
+

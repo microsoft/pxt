@@ -106,16 +106,68 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private showDiff(f: pkg.File) {
+        const classes: pxt.Map<string> = {
+            "@": "diff-marker",
+            " ": "diff-unchanged",
+            "+": "diff-added",
+            "-": "diff-removed",
+        }
+        const diffLines = pxt.github.diff(f.baseGitContent, f.content, { ignoreWhitespace: true })
+        let lnA = 0, lnB = 0
+        const diffJSX = diffLines.map(ln => {
+            const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
+            if (m) {
+                lnA = parseInt(m[1]) - 1
+                lnB = parseInt(m[2]) - 1
+            } else {
+                if (ln[0] != "+")
+                    lnA++
+                if (ln[0] != "-")
+                    lnB++
+            }
+            return (
+                <tr className={classes[ln[0]]}>
+                    <td className="line-a" data-content={lnA}></td>
+                    <td className="line-b" data-content={lnB}></td>
+                    {ln[0] == "@" ?
+                        <td colSpan={2} className="change"><pre>{ln}</pre></td>
+                        :
+                        [
+                            <td className="marker" data-content={ln[0]}></td>,
+                            <td className="change"><pre>{ln.slice(2)}</pre></td>
+                        ]
+                    }
+                </tr>)
+        })
+
+        return (
+            <div className="ui segments filediff">
+                <div className="ui segment header">
+                    <p>{f.name}</p>
+                </div>
+                <div className="ui segment diff">
+                    <table className="diffview">
+                        <tbody>
+                            {diffJSX}
+                        </tbody>
+                    </table>
+                </div>
+            </div>)
+    }
+
     display() {
         const header = this.parent.state.header;
         if (!header || !header.githubId) return undefined;
-        this.needsCommit = true; // todo remove
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push
 
+        const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != null && p.baseGitContent != p.content)
+        this.needsCommit = diffFiles.length > 0
+
         const githubId = pxt.github.parseRepoId(header.githubId);
         return (
-            <div id="serialArea">
+            <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
@@ -132,7 +184,7 @@ export class Editor extends srceditor.Editor {
                         {lf("You need to commit your changes in order to pull changes from GitHub.")}
                     </div>
                 </div> : undefined}
-                <div className="ui form">
+                {this.needsCommit ? <div className="ui form">
                     <h4 className="header">
                         <i className="large github icon" />
                         {githubId ? githubId.fullName + "#" + githubId.tag : ""}
@@ -148,7 +200,10 @@ export class Editor extends srceditor.Editor {
                     <div className="ui field">
                         <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
-                </div>
+                    <div className="ui">
+                        {diffFiles.map(df => this.showDiff(df))}
+                    </div>
+                </div> : undefined}
             </div>
         )
     }
