@@ -307,20 +307,22 @@ namespace pxt.github {
         })
     }
 
-    export async function createPRAsync(repopath: string, branch: string, commitid: string, msg: string) {
-        let branchName = "pr-" + commitid.slice(0, 8)
-        await ghPostAsync(repopath + "/git/refs", {
-            ref: "refs/heads/" + branchName,
-            sha: commitid
-        })
-        let res = await ghPostAsync(repopath + "/pulls", {
+    export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
+        headBranch: string, msg: string) {
+        const res = await ghPostAsync(repopath + "/pulls", {
             title: msg,
             body: lf("Automatically created from MakeCode."),
-            head: branchName,
-            base: "master",
+            head: headBranch,
+            base: baseBranch,
             maintainer_can_modify: true
         })
         return res.html_url as string
+    }
+
+    export async function createPRAsync(repopath: string, branch: string, commitid: string, msg: string) {
+        const branchName = await createNewPrBranchAsync(repopath, commitid)
+        const url = await createPRFromBranchAsync(repopath, branch, branchName, msg)
+        return { url, branch: branchName }
     }
 
     export function mergeAsync(repopath: string, branch: string, commitid: string) {
@@ -346,6 +348,19 @@ namespace pxt.github {
     export function getRefAsync(repopath: string, branch: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
+    }
+
+    export async function createNewPrBranchAsync(repopath: string, commitid: string, pref = "pr-") {
+        const res = await listRefsExtAsync(repopath, "heads")
+        let n = 1
+        while (res.refs[pref + n])
+            n++
+        const branchName = pref + n
+        await ghPostAsync(repopath + "/git/refs", {
+            ref: "refs/heads/" + branchName,
+            sha: commitid
+        })
+        return branchName
     }
 
     export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
@@ -719,6 +734,7 @@ namespace pxt.github {
 
     export interface GitJson {
         repo: string;
+        prUrl?: string; // if any
         commit: pxt.github.Commit;
     }
 

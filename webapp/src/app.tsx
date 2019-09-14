@@ -1735,8 +1735,8 @@ export class ProjectView
             if (commitId) {
                 // merge failure; do a PR
                 // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prURL = await workspace.prAsync(this.state.header, commitId, info.msg)
-                await dialogs.showPRDialogAsync(repo, prURL)
+                let prInfo = await workspace.prAsync(this.state.header, commitId, info.msg)
+                await dialogs.showPRDialogAsync(repo, prInfo.url)
                 // when the dialog finishes, we pull again - it's possible the user
                 // has resolved the conflict in the meantime
                 await workspace.pullAsync(this.state.header)

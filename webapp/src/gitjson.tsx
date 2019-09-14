@@ -161,18 +161,27 @@ export class Editor extends srceditor.Editor {
     }
 
     private async pullRequestAsync() {
+        core.showLoading("loadingheader", lf("create PR..."));
         // create a new PR branch
         const header = this.parent.state.header;
         const parsed = pxt.github.parseRepoId(header.githubId);
-        const msg = this.description || lf("Updates")
         const gs = this.getGitJson();
         const commitId = gs.commit.sha;
-        const prUrl = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg);
+        const baseBranch = parsed.tag
+        const newBranch = await pxt.github.createNewPrBranchAsync(parsed.fullName, commitId)
 
-        // TODO store prurl, update .git.json?
+        header.githubId = parsed.fullName + "#" + newBranch
+        gs.repo = header.githubId
 
-        // commit current changes
-        await this.commitAsync();
+        const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
+        await f.setContentAsync(JSON.stringify(gs, null, 4))
+
+        const msg = this.description || lf("Updates")
+        await this.commitAsync(); // commit current changes into the new branch
+        const prUrl = await pxt.github.createPRFromBranchAsync(parsed.fullName, baseBranch, newBranch, msg);
+
+        gs.prUrl = prUrl
+        await f.setContentAsync(JSON.stringify(gs, null, 4))
     }
 
     private async commitAsync() {
@@ -185,8 +194,8 @@ export class Editor extends srceditor.Editor {
             if (commitId) {
                 // merge failure; do a PR
                 // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prURL = await workspace.prAsync(header, commitId, msg)
-                await dialogs.showPRDialogAsync(repo, prURL)
+                let prInfo = await workspace.prAsync(header, commitId, msg)
+                await dialogs.showPRDialogAsync(repo, prInfo.url)
                 // when the dialog finishes, we pull again - it's possible the user
                 // has resolved the conflict in the meantime
                 await workspace.pullAsync(header)
