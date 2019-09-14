@@ -167,7 +167,7 @@ export class Editor extends srceditor.Editor {
         const revert = () => {
             f.setContentAsync(f.baseGitContent)
                 .then(() => {
-                    this.parent.setState({ })
+                    this.parent.setState({})
                 })
         }
         cache.diff = (
@@ -220,26 +220,33 @@ export class Editor extends srceditor.Editor {
                         {lf("You need to commit your changes in order to pull changes from GitHub.")}
                     </div>
                 </div> : undefined}
-                {this.needsCommit ? <div className="ui form">
+
+                <div className="ui form">
                     <h4 className="header">
                         <i className="large github icon" />
                         {githubId ? githubId.fullName + "#" + githubId.tag : ""}
                     </h4>
-                    <div className="ui field">
-                        <input type="url" tabIndex={0} autoFocus placeholder={lf("Updates to the code.")} className="ui blue fluid"></input>
-                    </div>
-                    <div className="ui field">
-                        <sui.PlainCheckbox
-                            label={lf("Publish to users (increment version)")}
-                            onChange={this.setBump} />
-                    </div>
-                    <div className="ui field">
-                        <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
-                    </div>
+                    {this.needsCommit ?
+                        <div>
+                            <div className="ui field">
+                                <input type="url" tabIndex={0} autoFocus placeholder={lf("Updates to the code.")} className="ui blue fluid"></input>
+                            </div>
+                            <div className="ui field">
+                                <sui.PlainCheckbox
+                                    label={lf("Publish to users (increment version)")}
+                                    onChange={this.setBump} />
+                            </div>
+                            <div className="ui field">
+                                <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                            </div>
+                        </div>
+                        :
+                        <p>{lf("Nothing to commit.")}</p>
+                    }
                     <div className="ui">
                         {diffFiles.map(df => this.showDiff(df))}
                     </div>
-                </div> : undefined}
+                </div>
             </div>
         )
     }
