@@ -136,8 +136,25 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private getGitJson(): pxt.github.GitJson {
+        const gitJsonText = pkg.mainEditorPkg().getAllFiles()[pxt.github.GIT_JSON]
+        const gitJson = JSON.parse(gitJsonText || "{}") as pxt.github.GitJson
+        return gitJson;
+    }
+
     private async pullRequestAsync() {
-        // TODO
+        // create a new PR branch
+        const header = this.parent.state.header;
+        const parsed = pxt.github.parseRepoId(header.githubId);
+        const msg = this.description || lf("Updates")
+        const gs = this.getGitJson();
+        const commitId = gs.commit.sha;
+        const prUrl = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg);
+
+        // TODO store prurl, update .git.json?
+
+        // commit current changes
+        await this.commitAsync();
     }
 
     private async commitAsync() {
