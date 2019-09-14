@@ -673,7 +673,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     let currFiles = await getTextAsync(hd.id);
 
     const templateFiles = pxt.packageFiles(name);
-    pxt.packageFilesFixup(templateFiles, true);
+    pxt.packageFilesFixup(templateFiles, false);
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
