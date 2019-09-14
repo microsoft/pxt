@@ -18,7 +18,10 @@ interface DiffCache {
 
 export class Editor extends srceditor.Editor {
     private bump = false;
+    private description: string = undefined;
+    private commitMaster = true;
     private needsCommit = false;
+    private needsCommitMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
 
     constructor(public parent: pxt.editor.IProjectView) {
@@ -26,6 +29,8 @@ export class Editor extends srceditor.Editor {
         this.goBack = this.goBack.bind(this);
         this.handleCommitClick = this.handleCommitClick.bind(this);
         this.handlePullClick = this.handlePullClick.bind(this);
+        this.handleRadioClick = this.handleRadioClick.bind(this);
+        this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
         this.setBump = this.setBump.bind(this);
     }
 
@@ -62,11 +67,26 @@ export class Editor extends srceditor.Editor {
     }
 
     private handleCommitClick(e: React.MouseEvent<HTMLElement>) {
-        this.commitAsync().done();
+        const gid = pxt.github.parseRepoId(this.parent.state.header.githubId);
+        this.needsCommitMessage = false;
+        if (this.commitMaster || gid.tag != "master")
+            this.commitAsync().done();
+        else
+            this.pullRequestAsync().done();
     }
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
         this.pullAsync().done();
+    }
+
+    private handleRadioClick(e: React.ChangeEvent<HTMLInputElement>) {
+        this.commitMaster = e.currentTarget.name == "commit"
+        e.stopPropagation();
+        this.parent.setState({});
+    }
+
+    private handleDescriptionChange(v: string) {
+        this.description = v;
     }
 
     private async pullAsync() {
@@ -79,7 +99,8 @@ export class Editor extends srceditor.Editor {
                 case workspace.PullStatus.UpToDate:
                     break
                 case workspace.PullStatus.NeedsCommit:
-                    this.needsCommit = true;
+                    this.needsCommitMessage = true;
+                    this.parent.setState({});
                     break
                 case workspace.PullStatus.GotChanges:
                     await this.parent.reloadHeaderAsync()
@@ -90,17 +111,20 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private async pullRequestAsync() {
+        // TODO
+    }
+
     private async commitAsync() {
         const repo = this.parent.state.header.githubId;
         const header = this.parent.state.header;
-        const msg = "TODO"
         core.showLoading("loadingheader", lf("syncing with github..."));
         try {
-            let commitId = await workspace.commitAsync(header, msg)
+            let commitId = await workspace.commitAsync(header, this.description)
             if (commitId) {
                 // merge failure; do a PR
                 // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prURL = await workspace.prAsync(header, commitId, msg)
+                let prURL = await workspace.prAsync(header, commitId, this.description)
                 await dialogs.showPRDialogAsync(repo, prURL)
                 // when the dialog finishes, we pull again - it's possible the user
                 // has resolved the conflict in the meantime
@@ -202,6 +226,7 @@ export class Editor extends srceditor.Editor {
         return cache.diff
     }
 
+
     display() {
         if (!this.isVisible)
             return undefined;
@@ -214,6 +239,12 @@ export class Editor extends srceditor.Editor {
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != null && p.baseGitContent != p.content)
         this.needsCommit = diffFiles.length > 0
 
+        /**
+         *                                     <sui.PlainCheckbox
+                                        label={lf("Publish to users (increment version)")}
+                                        onChange={this.setBump} />
+
+         */
         const githubId = pxt.github.parseRepoId(header.githubId);
         return (
             <div id="githubArea">
@@ -224,11 +255,10 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button className="ui icon button" icon="external alternate" text={lf("GitHub")} textClass={lf("landscape only")} title={lf("Open repository page in GitHub")} onKeyDown={sui.fireClickOnEnter} />
                         <sui.Button className="ui icon button" icon="down arrow" text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                {this.needsCommit ? <div className="ui warning message">
+                {this.needsCommitMessage ? <div className="ui warning message">
                     <div className="content">
                         {lf("You need to commit your changes in order to pull changes from GitHub.")}
                     </div>
@@ -236,19 +266,35 @@ export class Editor extends srceditor.Editor {
 
                 <div className="ui form">
                     <h4 className="header">
-                        <i className="large github icon" />
-                        {githubId ? githubId.fullName + "#" + githubId.tag : ""}
+                        <a href={`https://github.com/${githubId.fullName}/tree/${githubId.tag}`} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
+                            <i className="large github icon" />
+                        </a>
+                        {githubId.fullName + "#" + githubId.tag}
                     </h4>
                     {this.needsCommit ?
                         <div>
                             <div className="ui field">
-                                <input type="url" tabIndex={0} autoFocus placeholder={lf("Updates to the code.")} className="ui blue fluid"></input>
+                                <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.description} onChange={this.handleDescriptionChange} />
                             </div>
-                            <div className="ui field">
-                                <sui.PlainCheckbox
-                                    label={lf("Publish to users (increment version)")}
-                                    onChange={this.setBump} />
-                            </div>
+                            {githubId.tag == "master" ?
+                                <div className="grouped fields">
+                                    <div className="field">
+                                        <div className="ui radio checkbox">
+                                            <input type="radio" name="commit" onChange={this.handleRadioClick} aria-checked={this.commitMaster} checked={this.commitMaster} />
+                                            <label>{lf("Commit directly to the {0} branch.", githubId.tag || "master")}</label>
+                                        </div>
+                                    </div>
+                                    <div className="field">
+                                        <div className="ui radio checkbox">
+                                            <input type="radio" name="pullrequest" onChange={this.handleRadioClick} aria-checked={!this.commitMaster} checked={!this.commitMaster} />
+                                            <label>{lf(" Create a new branch for this commit and start a pull request.")}
+                                                <a rel="noopener noreferrer" href="/github/pull-request" target="_blank">{lf("Learn more about pull requests.")}</a>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div> : <div className="field">
+                                    <p>{lf("Commit directly to the {0} branch.", githubId.tag || "master")}</p>
+                                </div>}
                             <div className="ui field">
                                 <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                             </div>
