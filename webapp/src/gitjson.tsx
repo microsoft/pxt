@@ -9,9 +9,16 @@ import * as dialogs from "./dialogs";
 
 import Util = pxt.Util
 
+interface DiffCache {
+    gitFile: string;
+    editorFile: string;
+    diff: JSX.Element;
+}
+
 export class Editor extends srceditor.Editor {
     private bump = false;
     private needsCommit = false;
+    private diffCache: pxt.Map<DiffCache> = {};
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
@@ -33,6 +40,8 @@ export class Editor extends srceditor.Editor {
 
     setVisible(b: boolean) {
         this.isVisible = b
+        if (!b)
+            this.diffCache = {}
     }
 
     setHighContrast(hc: boolean) {
@@ -107,6 +116,18 @@ export class Editor extends srceditor.Editor {
     }
 
     private showDiff(f: pkg.File) {
+        let cache = this.diffCache[f.name]
+        if (!cache) {
+            cache = {
+                gitFile: null,
+                editorFile: null,
+                diff: null
+            }
+            this.diffCache[f.name] = cache
+        }
+        if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
+            return cache.diff
+
         const classes: pxt.Map<string> = {
             "@": "diff-marker",
             " ": "diff-unchanged",
@@ -127,22 +148,24 @@ export class Editor extends srceditor.Editor {
                     lnB++
             }
             return (
-                <tr className={classes[ln[0]]}>
+                <tr key={lnA + lnB} className={classes[ln[0]]}>
                     <td className="line-a" data-content={lnA}></td>
                     <td className="line-b" data-content={lnB}></td>
-                    {ln[0] == "@" ?
-                        <td colSpan={2} className="change"><pre>{ln}</pre></td>
-                        :
-                        [
-                            <td className="marker" data-content={ln[0]}></td>,
-                            <td className="change"><pre>{ln.slice(2)}</pre></td>
-                        ]
+                    {ln[0] == "@"
+                        ? <td colSpan={2} className="change"><pre>{ln}</pre></td>
+                        : <td className="marker" data-content={ln[0]}></td>
+                    }
+                    {ln[0] == "@"
+                        ? undefined
+                        : <td className="change"><pre>{ln.slice(2)}</pre></td>
                     }
                 </tr>)
         })
 
-        return (
-            <div className="ui segments filediff">
+        cache.gitFile = f.baseGitContent
+        cache.editorFile = f.content
+        cache.diff = (
+            <div key={f.name} className="ui segments filediff">
                 <div className="ui segment header">
                     <p>{f.name}</p>
                 </div>
@@ -154,9 +177,13 @@ export class Editor extends srceditor.Editor {
                     </table>
                 </div>
             </div>)
+        return cache.diff
     }
 
     display() {
+        if (!this.isVisible)
+            return undefined;
+
         const header = this.parent.state.header;
         if (!header || !header.githubId) return undefined;
         // TODO: disable commit changes if no changes available
