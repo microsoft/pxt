@@ -17,7 +17,6 @@ interface DiffCache {
 }
 
 export class Editor extends srceditor.Editor {
-    private bump = false;
     private description: string = undefined;
     private commitMaster = true;
     private needsCommit = false;
@@ -31,7 +30,7 @@ export class Editor extends srceditor.Editor {
         this.handlePullClick = this.handlePullClick.bind(this);
         this.handleRadioClick = this.handleRadioClick.bind(this);
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
-        this.setBump = this.setBump.bind(this);
+        this.handleBumpClick = this.handleBumpClick.bind(this);
     }
 
     getId() {
@@ -57,8 +56,15 @@ export class Editor extends srceditor.Editor {
         return file.name === pxt.github.GIT_JSON;
     }
 
-    private setBump(v: boolean) {
-        this.bump = !!v;
+    private async handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+        core.showLoading("loadingheader", lf("pulling changes..."));
+        try {
+            const header = this.parent.state.header;
+            await workspace.bumpAsync(header)
+            await this.parent.reloadHeaderAsync()
+        } finally {
+            core.hideLoading("loadingheader")
+        }
     }
 
     private goBack() {
@@ -66,12 +72,13 @@ export class Editor extends srceditor.Editor {
         this.parent.openPreviousEditor()
     }
 
-    private handleCommitClick(e: React.MouseEvent<HTMLElement>) {
+    private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         const gid = pxt.github.parseRepoId(this.parent.state.header.githubId);
         this.needsCommitMessage = false;
-        if (this.commitMaster || gid.tag != "master")
-            this.commitAsync().done();
-        else
+        if (this.commitMaster || gid.tag != "master") {
+            await this.commitAsync();
+            this.goBack();
+        } else
             this.pullRequestAsync().done();
     }
 
@@ -90,7 +97,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private async pullAsync() {
-        core.showLoading("loadingheader", lf("syncing with github..."));
+        core.showLoading("loadingheader", lf("pulling changes..."));
         try {
             let status = await workspace.pullAsync(this.parent.state.header)
                 .catch(core.handleNetworkError)
@@ -131,9 +138,6 @@ export class Editor extends srceditor.Editor {
                 // has resolved the conflict in the meantime
                 await workspace.pullAsync(header)
                 // skip bump in this case - we don't know if it was merged
-            } else {
-                if (this.bump)
-                    await workspace.bumpAsync(header)
             }
             await this.parent.reloadHeaderAsync()
         } finally {
@@ -304,7 +308,12 @@ export class Editor extends srceditor.Editor {
                             </div>
                         </div>
                         :
-                        <p>{lf("Nothing to commit.")}</p>
+                        <div>
+                            <p>{lf("No changes found.")}</p>
+                            <div className="ui field">
+                                <sui.Button className="primary" text={lf("Bump version")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                            </div>
+                        </div>
                     }
                     <div className="ui">
                         {diffFiles.map(df => this.showDiff(df))}
