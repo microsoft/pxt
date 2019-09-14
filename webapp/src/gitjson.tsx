@@ -293,10 +293,10 @@ export class Editor extends srceditor.Editor {
 
                 <div className="ui form">
                     <h4 className="header">
-                        <a href={`https://github.com/${githubId.fullName}/tree/${githubId.tag}`} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
+                        <a href={`https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
                             <i className="large github icon" />
                         </a>
-                        {githubId.fullName + "#" + githubId.tag}
+                        {githubId.fullName + "#" + githubId.tag}}
                     </h4>
                     {needsCommit ?
                         <div>
