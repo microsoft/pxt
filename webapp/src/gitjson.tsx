@@ -18,6 +18,7 @@ export class Editor extends srceditor.Editor {
     private commitMaster = true;
     private needsCommitMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
+    private needsPull: boolean = null;
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
@@ -44,6 +45,7 @@ export class Editor extends srceditor.Editor {
         if (!b) {
             this.needsCommitMessage = false;
             this.diffCache = {}
+            this.needsPull = null;
         }
     }
 
@@ -282,6 +284,18 @@ export class Editor extends srceditor.Editor {
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != null && p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0
 
+        if (this.needsPull == null) {
+            this.needsPull = true
+            workspace.hasPullAsync(this.parent.state.header)
+                .then(v => {
+                    if (v != this.needsPull) {
+                        this.needsPull = v
+                        this.parent.setState({})
+                    }
+                })
+                .catch(core.handleNetworkError)
+        }
+
         /**
          *                                     <sui.PlainCheckbox
                                         label={lf("Publish to users (increment version)")}
@@ -299,7 +313,8 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button className="ui icon button" icon="down arrow" text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                        <sui.Button className="ui icon button" icon="down arrow" 
+                        text={this.needsPull ? lf("Pull changes") : lf("Up to date")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 {this.needsCommitMessage ? <div className="ui warning message">
@@ -313,7 +328,9 @@ export class Editor extends srceditor.Editor {
                         <a href={`https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
                             <i className="large github icon" />
                         </a>
-                        {githubId.fullName + "#" + githubId.tag}}
+                        <span className="repo-name">{githubId.fullName}</span>
+                        {githubId.tag == "master" ? undefined : 
+                        <span className="repo-branch">{"#" + githubId.tag}</span>}
                     </h4>
                     {needsCommit ?
                         <div>
@@ -348,7 +365,7 @@ export class Editor extends srceditor.Editor {
                         </div>
                         :
                         <div>
-                            <p>{lf("No changes found.")}</p>
+                            <p>{lf("No local changes found.")}</p>
                             {master ? <div className="ui divider"></div> : undefined}
                             {master ?
                                 <div className="ui field">

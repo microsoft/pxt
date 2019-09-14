@@ -438,20 +438,26 @@ export enum PullStatus {
 const GIT_JSON = pxt.github.GIT_JSON
 type GitJson = pxt.github.GitJson
 
-export async function pullAsync(hd: Header) {
+export async function hasPullAsync(hd: Header) {
+    return (await pullAsync(hd, true)) == PullStatus.GotChanges
+}
+
+export async function pullAsync(hd: Header, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         return PullStatus.NoSourceControl
-    if (!hd.githubCurrent)
+    if (!hd.githubCurrent && !checkOnly)
         return PullStatus.NeedsCommit
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
-    let res = await githubUpdateToAsync(hd, gitjson.repo, sha, files)
+    if (checkOnly)
+        return PullStatus.GotChanges
+    await githubUpdateToAsync(hd, gitjson.repo, sha, files)
     return PullStatus.GotChanges
 }
 
@@ -644,7 +650,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     let isCurrent = true
     let needsBlobs = false
     for (let k of Object.keys(files)) {
-        if (k == GIT_JSON)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON)
             continue
         let treeEnt = lookupFile(gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
