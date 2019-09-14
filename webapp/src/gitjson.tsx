@@ -165,26 +165,42 @@ export class Editor extends srceditor.Editor {
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
         const revert = () => {
-            f.setContentAsync(f.baseGitContent)
-                .then(() => {
-                    this.parent.setState({})
-                })
+            core.confirmAsync({
+                header: lf("Would you like to revert changes to {0}?", f.name),
+                body: lf("Changes will be lost for good. No undo."),
+                agreeLbl: lf("Revert"),
+                agreeClass: "red",
+                agreeIcon: "trash",
+            }).then(res => {
+                if (res) {
+                    f.setContentAsync(f.baseGitContent)
+                        .then(() => {
+                            // force refresh of ourselves
+                            this.parent.setState({})
+                        })
+                }
+            }).done()
         }
+
         cache.diff = (
             <div key={f.name} className="ui segments filediff">
-                <div className="ui segment header">
+                <div className="ui segment diffheader">
                     <span>{f.name}</span>
-                    <sui.Button text={lf("Revert")} className="small" ariaLabel={lf("Revert file")} onClick={revert}>
-                        <sui.Icon icon="undo" />
-                    </sui.Button>
+                    <sui.Button icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} onClick={revert} />
                 </div>
-                <div className="ui segment diff">
-                    <table className="diffview">
-                        <tbody>
-                            {diffJSX}
-                        </tbody>
-                    </table>
-                </div>
+                {diffJSX.length ?
+                    <div className="ui segment diff">
+                        <table className="diffview">
+                            <tbody>
+                                {diffJSX}
+                            </tbody>
+                        </table>
+                    </div>
+                    :
+                    <div className="ui segment">
+                        <p>{lf("Whitespace changes only.")}</p>
+                    </div>
+                }
             </div>)
         return cache.diff
     }
