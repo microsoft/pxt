@@ -16,7 +16,6 @@ interface DiffCache {
 export class Editor extends srceditor.Editor {
     private description: string = undefined;
     private commitMaster = true;
-    private needsCommit = false;
     private needsCommitMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
 
@@ -41,9 +40,11 @@ export class Editor extends srceditor.Editor {
     }
 
     setVisible(b: boolean) {
-        this.isVisible = b
-        if (!b)
+        this.isVisible = b;
+        if (!b) {
+            this.needsCommitMessage = false;
             this.diffCache = {}
+        }
     }
 
     setHighContrast(hc: boolean) {
@@ -258,7 +259,7 @@ export class Editor extends srceditor.Editor {
         // TODO: commitAsync handle missing token or failed push
 
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != null && p.baseGitContent != p.content)
-        this.needsCommit = diffFiles.length > 0
+        const needsCommit = diffFiles.length > 0
 
         /**
          *                                     <sui.PlainCheckbox
@@ -293,7 +294,7 @@ export class Editor extends srceditor.Editor {
                         </a>
                         {githubId.fullName + "#" + githubId.tag}
                     </h4>
-                    {this.needsCommit ?
+                    {needsCommit ?
                         <div>
                             <div className="ui field">
                                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.description} onChange={this.handleDescriptionChange} />
