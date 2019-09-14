@@ -472,12 +472,16 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
     return url
 }
 
-export async function bumpAsync(hd: Header) {
-    let files = await getTextAsync(hd.id)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+export function bumpedVersion(cfg: pxt.PackageConfig) {
     let v = pxt.semver.parse(cfg.version || "0.0.0")
     v.patch++
-    cfg.version = pxt.semver.stringify(v)
+    return pxt.semver.stringify(v)
+}
+
+export async function bumpAsync(hd: Header, newVer = "") {
+    let files = await getTextAsync(hd.id)
+    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    cfg.version = newVer || bumpedVersion(cfg)
     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     await saveAsync(hd, files)
     return await commitAsync(hd, cfg.version, "v" + cfg.version)

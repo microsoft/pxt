@@ -100,6 +100,22 @@ export class Editor extends srceditor.Editor {
     }
 
     private async bumpAsync() {
+        const newVer = await core.promptAsync({
+            header: lf("Release version?"),
+            body: lf("Please specify version for your new release. You can leave it at default."),
+            initialValue: workspace.bumpedVersion(pkg.mainPkg.config),
+            agreeLbl: lf("Create release"),
+            disagreeLbl: lf("Cancel")
+        })
+
+        if (!newVer)
+            return
+
+        if (!pxt.semver.tryParse(newVer)) {
+            core.warningNotification(lf("Invalid version number"))
+            return
+        }
+
         core.showLoading("bumpheader", lf("creating release..."));
         try {
             const header = this.parent.state.header;
@@ -313,8 +329,8 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button className="ui icon button" icon="down arrow" 
-                        text={this.needsPull ? lf("Pull changes") : lf("Up to date")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                        <sui.Button className="ui icon button" icon="down arrow"
+                            text={this.needsPull ? lf("Pull changes") : lf("Up to date")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 {this.needsCommitMessage ? <div className="ui warning message">
@@ -329,8 +345,8 @@ export class Editor extends srceditor.Editor {
                             <i className="large github icon" />
                         </a>
                         <span className="repo-name">{githubId.fullName}</span>
-                        {githubId.tag == "master" ? undefined : 
-                        <span className="repo-branch">{"#" + githubId.tag}</span>}
+                        {githubId.tag == "master" ? undefined :
+                            <span className="repo-branch">{"#" + githubId.tag}</span>}
                     </h4>
                     {needsCommit ?
                         <div>
