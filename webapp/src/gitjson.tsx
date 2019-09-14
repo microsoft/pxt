@@ -164,10 +164,19 @@ export class Editor extends srceditor.Editor {
 
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
+        const revert = () => {
+            f.setContentAsync(f.baseGitContent)
+                .then(() => {
+                    this.parent.setState({ })
+                })
+        }
         cache.diff = (
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment header">
-                    <p>{f.name}</p>
+                    <span>{f.name}</span>
+                    <sui.Button text={lf("Revert")} className="small" ariaLabel={lf("Revert file")} onClick={revert}>
+                        <sui.Icon icon="undo" />
+                    </sui.Button>
                 </div>
                 <div className="ui segment diff">
                     <table className="diffview">
