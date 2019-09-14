@@ -13,6 +13,7 @@ interface DiffCache {
     gitFile: string;
     editorFile: string;
     diff: JSX.Element;
+    revert: () => void;
 }
 
 export class Editor extends srceditor.Editor {
@@ -118,11 +119,7 @@ export class Editor extends srceditor.Editor {
     private showDiff(f: pkg.File) {
         let cache = this.diffCache[f.name]
         if (!cache) {
-            cache = {
-                gitFile: null,
-                editorFile: null,
-                diff: null
-            }
+            cache = {} as any
             this.diffCache[f.name] = cache
         }
         if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
@@ -164,7 +161,7 @@ export class Editor extends srceditor.Editor {
 
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
-        const revert = () => {
+        cache.revert = () => {
             core.confirmAsync({
                 header: lf("Would you like to revert changes to {0}?", f.name),
                 body: lf("Changes will be lost for good. No undo."),
@@ -186,7 +183,7 @@ export class Editor extends srceditor.Editor {
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     <span>{f.name}</span>
-                    <sui.Button icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} onClick={revert} />
+                    <sui.Button icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} onClick={cache.revert} />
                 </div>
                 {diffJSX.length ?
                     <div className="ui segment diff">
