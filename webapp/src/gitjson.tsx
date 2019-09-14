@@ -169,6 +169,7 @@ export class Editor extends srceditor.Editor {
         if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
             return cache.diff
 
+        const isBlocks = /\.blocks$/.test(f.name)
         const classes: pxt.Map<string> = {
             "@": "diff-marker",
             " ": "diff-unchanged",
@@ -177,7 +178,7 @@ export class Editor extends srceditor.Editor {
         }
         const diffLines = pxt.github.diff(f.baseGitContent, f.content, { ignoreWhitespace: true })
         let lnA = 0, lnB = 0
-        const diffJSX = diffLines.map(ln => {
+        const diffJSX = isBlocks ? [] : diffLines.map(ln => {
             const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
             if (m) {
                 lnA = parseInt(m[1]) - 1
@@ -229,7 +230,7 @@ export class Editor extends srceditor.Editor {
                     <span>{f.name}</span>
                     <sui.Button className="small" icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} title={lf("Revert file")} textClass={"landscape only"} onClick={cache.revert} />
                 </div>
-                {diffJSX.length ?
+                {isBlocks ? <div className="ui segment"><p>{lf("Some blocks changed")}</p></div> : diffJSX.length ?
                     <div className="ui segment diff">
                         <table className="diffview">
                             <tbody>
