@@ -118,13 +118,14 @@ export class Editor extends srceditor.Editor {
     private async commitAsync() {
         const repo = this.parent.state.header.githubId;
         const header = this.parent.state.header;
+        const msg = this.description || lf("Updates")
         core.showLoading("loadingheader", lf("syncing with github..."));
         try {
-            let commitId = await workspace.commitAsync(header, this.description)
+            let commitId = await workspace.commitAsync(header, msg)
             if (commitId) {
                 // merge failure; do a PR
                 // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prURL = await workspace.prAsync(header, commitId, this.description)
+                let prURL = await workspace.prAsync(header, commitId, msg)
                 await dialogs.showPRDialogAsync(repo, prURL)
                 // when the dialog finishes, we pull again - it's possible the user
                 // has resolved the conflict in the meantime
@@ -207,7 +208,7 @@ export class Editor extends srceditor.Editor {
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     <span>{f.name}</span>
-                    <sui.Button icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} onClick={cache.revert} />
+                    <sui.Button className="small" icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} title={lf("Revert file")} textClass={"landscape only"} onClick={cache.revert} />
                 </div>
                 {diffJSX.length ?
                     <div className="ui segment diff">
@@ -281,14 +282,17 @@ export class Editor extends srceditor.Editor {
                                     <div className="field">
                                         <div className="ui radio checkbox">
                                             <input type="radio" name="commit" onChange={this.handleRadioClick} aria-checked={this.commitMaster} checked={this.commitMaster} />
-                                            <label>{lf("Commit directly to the {0} branch.", githubId.tag || "master")}</label>
+                                            <label>
+                                                {lf("Commit directly to the {0} branch.", githubId.tag || "master")}
+                                                <sui.Link href="/github/commit" icon="help circle" target="_blank" role="button" title={lf("A commit is a snapshot of your code stored in GitHub.")} />
+                                            </label>
                                         </div>
                                     </div>
                                     <div className="field">
                                         <div className="ui radio checkbox">
                                             <input type="radio" name="pullrequest" onChange={this.handleRadioClick} aria-checked={!this.commitMaster} checked={!this.commitMaster} />
-                                            <label>{lf(" Create a new branch for this commit and start a pull request.")}
-                                                <a rel="noopener noreferrer" href="/github/pull-request" target="_blank">{lf("Learn more about pull requests.")}</a>
+                                            <label>{lf("Create a new branch for this commit and start a pull request.")}
+                                                <sui.Link href="/github/pull-request" icon="help circle" target="_blank" role="button" title={lf("A pull request allows to package and review a set of changes (commits).")} />
                                             </label>
                                         </div>
                                     </div>
