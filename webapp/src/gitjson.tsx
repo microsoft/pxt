@@ -3,11 +3,8 @@ import * as pkg from "./package"
 import * as core from "./core"
 import * as srceditor from "./srceditor"
 import * as sui from "./sui"
-import * as data from "./data";
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
-
-import Util = pxt.Util
 
 interface DiffCache {
     gitFile: string;
@@ -56,15 +53,9 @@ export class Editor extends srceditor.Editor {
         return file.name === pxt.github.GIT_JSON;
     }
 
-    private async handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        core.showLoading("loadingheader", lf("pulling changes..."));
-        try {
-            const header = this.parent.state.header;
-            await workspace.bumpAsync(header)
-            await this.parent.reloadHeaderAsync()
-        } finally {
-            core.hideLoading("loadingheader")
-        }
+    private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        this.bumpAsync().done();
     }
 
     private goBack() {
@@ -87,13 +78,33 @@ export class Editor extends srceditor.Editor {
     }
 
     private handleRadioClick(e: React.ChangeEvent<HTMLInputElement>) {
-        this.commitMaster = e.currentTarget.name == "commit"
         e.stopPropagation();
+        this.commitMaster = e.currentTarget.name == "commit"
         this.parent.setState({});
     }
 
     private handleDescriptionChange(v: string) {
         this.description = v;
+    }
+
+    private handleGithubError(e: Error) {
+        pxt.reportException(e);
+        core.warningNotification(lf("Oops, something went wrong. Please try again."))
+    }
+
+    private async bumpAsync() {
+        core.showLoading("bumpheader", lf("creating release..."));
+        try {
+            const header = this.parent.state.header;
+            await workspace.bumpAsync(header)
+            await this.parent.reloadHeaderAsync();
+            core.hideLoading("bumpheader");
+            core.infoNotification(lf("GitHub release created."))
+        } catch (e) {
+            this.handleGithubError(e);
+        } finally {
+            core.hideLoading("bumpheader");
+        }
     }
 
     private async pullAsync() {
@@ -113,6 +124,8 @@ export class Editor extends srceditor.Editor {
                     await this.parent.reloadHeaderAsync()
                     break
             }
+        } catch (e) {
+            this.handleGithubError(e);
         } finally {
             core.hideLoading("loadingheader")
         }
@@ -126,7 +139,7 @@ export class Editor extends srceditor.Editor {
         const repo = this.parent.state.header.githubId;
         const header = this.parent.state.header;
         const msg = this.description || lf("Updates")
-        core.showLoading("loadingheader", lf("syncing with github..."));
+        core.showLoading("loadingheader", lf("commit and push..."));
         try {
             let commitId = await workspace.commitAsync(header, msg)
             if (commitId) {
@@ -140,6 +153,8 @@ export class Editor extends srceditor.Editor {
                 // skip bump in this case - we don't know if it was merged
             }
             await this.parent.reloadHeaderAsync()
+        } catch (e) {
+            this.handleGithubError(e);
         } finally {
             core.hideLoading("loadingheader")
         }
@@ -248,9 +263,10 @@ export class Editor extends srceditor.Editor {
          *                                     <sui.PlainCheckbox
                                         label={lf("Publish to users (increment version)")}
                                         onChange={this.setBump} />
-
+    
          */
         const githubId = pxt.github.parseRepoId(header.githubId);
+        const master = githubId.tag == "master";
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -281,7 +297,7 @@ export class Editor extends srceditor.Editor {
                             <div className="ui field">
                                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.description} onChange={this.handleDescriptionChange} />
                             </div>
-                            {githubId.tag == "master" ?
+                            {master ?
                                 <div className="grouped fields">
                                     <div className="field">
                                         <div className="ui radio checkbox">
@@ -310,9 +326,15 @@ export class Editor extends srceditor.Editor {
                         :
                         <div>
                             <p>{lf("No changes found.")}</p>
-                            <div className="ui field">
-                                <sui.Button className="primary" text={lf("Bump version")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
-                            </div>
+                            {master ? <div className="ui divider"></div> : undefined}
+                            {master ?
+                                <div className="ui field">
+                                    <p>
+                                        {lf("Bump up the version number and create a release on GitHub.")}
+                                        <sui.Link href="/github/releases" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
+                                    </p>
+                                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                                </div> : undefined}
                         </div>
                     }
                     <div className="ui">

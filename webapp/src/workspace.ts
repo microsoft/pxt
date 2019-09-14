@@ -469,7 +469,7 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
 export async function bumpAsync(hd: Header) {
     let files = await getTextAsync(hd.id)
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-    let v = pxt.semver.parse(cfg.version)
+    let v = pxt.semver.parse(cfg.version || "0.0.0")
     v.patch++
     cfg.version = pxt.semver.stringify(v)
     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
@@ -621,6 +621,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
         repo: repoid,
         commit
     })
+    await saveAsync(hd, files);
     await initializeGithubRepoAsync(hd, repoid, false);
     await pullAsync(hd);
 }
