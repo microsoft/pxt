@@ -332,7 +332,7 @@ export class Editor extends srceditor.Editor {
                                 <div className="ui field">
                                     <p>
                                         {lf("Bump up the version number and create a release on GitHub.")}
-                                        <sui.Link href="/github/releases" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
+                                        <sui.Link href="/github/release" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
                                     </p>
                                     <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                                 </div> : undefined}
