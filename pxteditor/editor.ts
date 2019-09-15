@@ -189,7 +189,6 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
-        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;

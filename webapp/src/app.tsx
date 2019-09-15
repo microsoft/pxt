@@ -1724,60 +1724,6 @@ export class ProjectView
             })
     }
 
-    async commitAsync() {
-        try {
-            let repo = this.state.header.githubId
-            let info = await dialogs.showCommitDialogAsync(repo)
-            if (!info)
-                return
-
-            let commitId = await workspace.commitAsync(this.state.header, info.msg)
-            if (commitId) {
-                // merge failure; do a PR
-                // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prInfo = await workspace.prAsync(this.state.header, commitId, info.msg)
-                await dialogs.showPRDialogAsync(repo, prInfo.url)
-                // when the dialog finishes, we pull again - it's possible the user
-                // has resolved the conflict in the meantime
-                await workspace.pullAsync(this.state.header)
-                // skip bump in this case - we don't know if it was merged
-            } else {
-                if (info.bump)
-                    await workspace.bumpAsync(this.state.header)
-            }
-            await this.reloadHeaderAsync()
-        } finally {
-            core.hideLoading("loadingheader")
-        }
-    }
-
-    async pushPullAsync() {
-        core.showLoading("loadingheader", lf("syncing with github..."));
-        let needsHide = true
-        try {
-            let status = await workspace.pullAsync(this.state.header)
-                .catch(core.handleNetworkError)
-
-            switch (status) {
-                case workspace.PullStatus.NoSourceControl:
-                case workspace.PullStatus.UpToDate:
-                    break
-
-                case workspace.PullStatus.NeedsCommit:
-                    needsHide = false
-                    await this.commitAsync()
-                    break
-
-                case workspace.PullStatus.GotChanges:
-                    await this.reloadHeaderAsync()
-                    break
-            }
-        } finally {
-            if (needsHide)
-                core.hideLoading("loadingheader")
-        }
-    }
-
     ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
