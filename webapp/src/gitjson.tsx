@@ -18,7 +18,6 @@ export class Editor extends srceditor.Editor {
     private needsCommitMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
     private needsPull: boolean = null;
-    private pullOK = false;
     private previousCfgKey = "";
 
     constructor(public parent: pxt.editor.IProjectView) {
@@ -64,7 +63,6 @@ export class Editor extends srceditor.Editor {
             this.needsCommitMessage = false;
             this.diffCache = {}
             this.needsPull = null;
-            this.pullOK = false;
         }
     }
 
@@ -215,8 +213,8 @@ export class Editor extends srceditor.Editor {
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (statusCode == 401)
             core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
-        else if (this.pullOK && e.needsWritePermission)
-            core.warningNotification(lf("You don't have write permission (or your token is missing 'repo' scope)."));
+        else if (e.needsWritePermission)
+            core.warningNotification(lf("You don't have write permission."));
         else
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
     }
@@ -470,7 +468,6 @@ export class Editor extends srceditor.Editor {
             this.needsPull = true
             workspace.hasPullAsync(this.parent.state.header)
                 .then(v => {
-                    this.pullOK = true
                     if (v != this.needsPull) {
                         this.needsPull = v
                         this.parent.setState({})
