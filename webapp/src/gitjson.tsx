@@ -377,7 +377,7 @@ export class Editor extends srceditor.Editor {
             "+": "diff-added",
             "-": "diff-removed",
         }
-        const diffLines = pxt.github.diff(f.baseGitContent, f.content, { ignoreWhitespace: true })
+        const diffLines = pxt.github.diff(f.baseGitContent || "", f.content, { ignoreWhitespace: true })
         let lnA = 0, lnB = 0
         const diffJSX = isBlocks ? [] : diffLines.map(ln => {
             const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
@@ -427,12 +427,17 @@ export class Editor extends srceditor.Editor {
                 }
             }).done()
         }
+        if (f.baseGitContent == null)
+            cache.revert = null
 
         cache.diff = (
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     <span>{f.name}</span>
-                    <sui.Button className="small" icon="undo" text={lf("Revert")} ariaLabel={lf("Revert file")} title={lf("Revert file")} textClass={"landscape only"} onClick={cache.revert} />
+                    {!cache.revert ? undefined :
+                        <sui.Button className="small" icon="undo" text={lf("Revert")}
+                            ariaLabel={lf("Revert file")} title={lf("Revert file")}
+                            textClass={"landscape only"} onClick={cache.revert} />}
                 </div>
                 {isBlocks ? <div className="ui segment"><p>{lf("Some blocks changed")}</p></div> : diffJSX.length ?
                     <div className="ui segment diff">
@@ -461,7 +466,7 @@ export class Editor extends srceditor.Editor {
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push
 
-        const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != null && p.baseGitContent != p.content)
+        const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0
 
         if (this.needsPull == null) {
