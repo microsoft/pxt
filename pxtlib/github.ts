@@ -647,7 +647,7 @@ namespace pxt.github {
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
         if (!url) return undefined;
 
-        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)(#(\w+))?$/i.exec(url.trim());
+        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)\/?(#(\w+))?$/i.exec(url.trim());
         if (!m) return undefined;
 
         let r: { repo: string; tag?: string; path?: string; } = {
@@ -693,7 +693,9 @@ namespace pxt.github {
     }
 
     export function noramlizeRepoId(id: string) {
-        return stringifyRepo(parseRepoId(id))
+        const gid = parseRepoId(id);
+        gid.tag = gid.tag || "master";
+        return stringifyRepo(gid);
     }
 
     export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
