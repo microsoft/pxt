@@ -49,15 +49,29 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
         path: h.path,
         isDeleted: text === delText
     }
-    if (!prevVersion) prevVersion = {}
-    for (let fn of Object.keys(text || {})) {
-        if (text[fn] !== prevVersion[fn])
-            pkg.files.push({
-                name: fn,
-                mtime: null,
-                content: text[fn],
-                prevContent: prevVersion[fn]
-            })
+
+    if (text) {
+        if (!prevVersion) prevVersion = {}
+        for (let fn of Object.keys(text)) {
+            if (text[fn] !== prevVersion[fn])
+                pkg.files.push({
+                    name: fn,
+                    mtime: null,
+                    content: text[fn],
+                    prevContent: prevVersion[fn]
+                })
+        }
+
+        // delete files that are missing now
+        for (let fn of Object.keys(prevVersion)) {
+            if (text[fn] === undefined)
+                pkg.files.push({
+                    name: fn,
+                    mtime: null,
+                    content: null,
+                    prevContent: prevVersion[fn]
+                })
+        }
     }
 
     let savedText = U.flatClone(text || {})

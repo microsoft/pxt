@@ -567,7 +567,10 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         }
     }
 
+    const downloadedFiles: pxt.Map<boolean> = {}
+
     let downloadAsync = async (path: string) => {
+        downloadedFiles[path] = true
         let treeEnt = lookupFile(commit, path)
         if (!treeEnt) {
             if (!justJSON)
@@ -594,9 +597,15 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         await downloadAsync(fn)
     }
 
-    if (!justJSON && !cfg.name) {
-        cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
-        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    if (!justJSON) {
+        for (let k of Object.keys(files)) {
+            if (k[0] != "." && !downloadedFiles[k])
+                delete files[k]
+        }
+        if (!cfg.name) {
+            cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
+            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+        }
     }
 
     commit.tag = tag
