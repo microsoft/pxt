@@ -77,7 +77,34 @@ export class Editor extends srceditor.Editor {
         const parsed = this.parsedRepoId()
         header.githubId = parsed.fullName + "#" + newBranch
         gs.repo = header.githubId
+        gs.prUrl = null
         await this.saveGitJsonAsync(gs)
+    }
+
+    private async newBranchAsync() {
+        const gid = this.parsedRepoId()
+        const initialBranchName = await pxt.github.getNewBranchNameAsync(gid.fullName, "patch-")
+        const branchName = await core.promptAsync({
+            header: lf("New branch name"),
+            body: lf("Name cannot have spaces or special characters. Examples: {0}",
+                "my_feature, add-colors, fix_something"),
+            agreeLbl: lf("Create"),
+            initialValue: initialBranchName
+        })
+        if (!branchName)
+            return
+
+        core.showLoading("branchheader", lf("creating branch..."));
+        try {
+            const gs = this.getGitJson()
+            await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
+            await this.switchToBranchAsync(branchName)
+            this.parent.setState({});
+        } catch (e) {
+            this.handleGithubError(e);
+        } finally {
+            core.hideLoading("branchheader")
+        }
     }
 
     private async switchBranchAsync() {
@@ -85,7 +112,7 @@ export class Editor extends srceditor.Editor {
         const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
         const branchList = Object.keys(branches.refs).map(r => ({
             name: r,
-            sha: branches.refs[r],
+            description: branches.refs[r],
             onClick: async () => {
                 core.hideDialog()
                 this.needsCommitMessage = false
@@ -96,12 +123,20 @@ export class Editor extends srceditor.Editor {
                     this.parent.setState({});
                 } finally {
                     if (this.needsCommitMessage) {
-                        console.log("going back to " + prevBranch)
                         await this.switchToBranchAsync(prevBranch)
                     }
                 }
             }
         }))
+
+        branchList.unshift({
+            name: lf("Create new branch"),
+            description: lf("Based on {0}", gid.tag),
+            onClick: () => {
+                core.hideDialog()
+                return this.newBranchAsync()
+            }
+        })
 
         await core.confirmAsync({
             header: lf("Switch to a different branch"),
@@ -115,7 +150,7 @@ export class Editor extends srceditor.Editor {
                             <div className="content">
                                 <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
                                 <div className="description">
-                                    {r.sha}
+                                    {r.description}
                                 </div>
                             </div>
                         </div>)}
@@ -243,6 +278,7 @@ export class Editor extends srceditor.Editor {
         return pxt.github.parseRepoId(header.githubId);
     }
 
+    /*
     private async pullRequestAsync() {
         try {
             core.showLoading("loadingheader", lf("creating pull request..."));
@@ -270,6 +306,7 @@ export class Editor extends srceditor.Editor {
             core.hideLoading("loadingheader")
         }
     }
+    */
 
     private async commitCoreAsync() {
         const repo = this.parent.state.header.githubId;
@@ -279,8 +316,8 @@ export class Editor extends srceditor.Editor {
         if (commitId) {
             // merge failure; do a PR
             // we could ask the user, but it's unlikely they can do anything else to fix it
-            let prInfo = await workspace.prAsync(header, commitId, msg)
-            await dialogs.showPRDialogAsync(repo, prInfo.url)
+            let prUrl = await workspace.prAsync(header, commitId, msg)
+            await dialogs.showPRDialogAsync(repo, prUrl)
             // when the dialog finishes, we pull again - it's possible the user
             // has resolved the conflict in the meantime
             await workspace.pullAsync(header)
@@ -423,8 +460,12 @@ export class Editor extends srceditor.Editor {
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const gs = this.getGitJson();
-        const url = gs.prUrl || `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
+        // don't use gs.prUrl, as it gets cleared often
+        const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
+        // this will show existing PR if any
+        const prUrl = !gs.isFork && master ? null :
+            `https://github.com/${githubId.fullName}/compare/${githubId.tag}?expand=1`
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -452,6 +493,11 @@ export class Editor extends srceditor.Editor {
                 </div> : undefined}
 
                 <div className="ui form">
+                    {!prUrl ? undefined :
+                        <a href={prUrl} role="button" className="ui link create-pr"
+                            target="_blank" rel="noopener noreferrer">
+                            {lf("Pull request")}
+                        </a>}
                     <h4 className="header">
                         <a href={url} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
                             <i className="large github icon" />

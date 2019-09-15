@@ -464,7 +464,9 @@ export async function pullAsync(hd: Header, checkOnly = false) {
 export async function prAsync(hd: Header, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
-    let url = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg)
+    const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
+    await pxt.github.createNewBranchAsync(parsed.fullName, branchName, commitId)
+    const url = await pxt.github.createPRFromBranchAsync(parsed.fullName, parsed.tag, branchName, msg)
     // force user back to master - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
     let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
@@ -674,6 +676,14 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     // this happens for older projects
     if (needsBlobs)
         await githubUpdateToAsync(h, gitjson.repo, gitjson.commit.sha, files, null, true)
+
+    if (gitjson.isFork == null) {
+        const p = pxt.github.parseRepoId(gitjson.repo)
+        const r = await pxt.github.repoAsync(p.fullName, null)
+        gitjson.isFork = !!r.fork
+        files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
+        await saveAsync(h, files)
+    }
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {

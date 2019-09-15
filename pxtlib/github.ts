@@ -325,12 +325,6 @@ namespace pxt.github {
         return res.html_url as string
     }
 
-    export async function createPRAsync(repopath: string, branch: string, commitid: string, msg: string) {
-        const branchName = await createNewPrBranchAsync(repopath, commitid)
-        const url = await createPRFromBranchAsync(repopath, branch, branchName, msg)
-        return { url, branch: branchName }
-    }
-
     export function mergeAsync(repopath: string, branch: string, commitid: string) {
         return ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/merges",
@@ -356,12 +350,15 @@ namespace pxt.github {
             .then(resolveRefAsync)
     }
 
-    export async function createNewPrBranchAsync(repopath: string, commitid: string, pref = "pr-") {
+    export async function getNewBranchNameAsync(repopath: string, pref = "patch-") {
         const res = await listRefsExtAsync(repopath, "heads")
         let n = 1
         while (res.refs[pref + n])
             n++
-        const branchName = pref + n
+        return pref + n
+    }
+
+    export async function createNewBranchAsync(repopath: string, branchName: string, commitid: string) {
         await ghPostAsync(repopath + "/git/refs", {
             ref: "refs/heads/" + branchName,
             sha: commitid
@@ -503,6 +500,8 @@ namespace pxt.github {
         defaultBranch: string;
         status?: GitRepoStatus;
         updatedAt?: number;
+        private?: boolean;
+        fork?: boolean;
     }
 
     export function listUserReposAsync() {
@@ -537,7 +536,9 @@ namespace pxt.github {
             description: r.description,
             defaultBranch: r.default_branch,
             tag: tag,
-            updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000)
+            updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000),
+            fork: r.fork,
+            private: r.private,
         }
         rr.status = repoStatus(rr, config);
         return rr;
@@ -744,6 +745,7 @@ namespace pxt.github {
         repo: string;
         prUrl?: string; // if any
         commit: pxt.github.Commit;
+        isFork?: boolean;
     }
 
     export const GIT_JSON = ".git.json"
