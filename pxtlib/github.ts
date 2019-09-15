@@ -662,7 +662,7 @@ namespace pxt.github {
         if (!repo) return undefined;
 
         repo = repo.replace(/^github:/i, "")
-        repo = repo.replace(/^https:\/\/github.com\//i, "")
+        repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
         let m = /([^#]+)(#(.*))?/.exec(repo)
         const fullName = m ? m[1].toLowerCase() : repo.toLowerCase();

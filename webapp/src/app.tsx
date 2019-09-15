@@ -3573,7 +3573,10 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "edit": // load a published proj, eg: #pub:27750-32291-62442-22749
             pxt.tickEvent("hash." + hash.cmd);
             pxt.BrowserUtils.changeHash("");
-            loadHeaderBySharedId(hash.arg);
+            if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
+                importGithubProject(hash.arg);
+            else
+                loadHeaderBySharedId(hash.arg);
             return true;
         case "sandboxproject":
         case "project":

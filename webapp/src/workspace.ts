@@ -712,9 +712,9 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 }
 
 export async function importGithubAsync(id: string) {
-    let parsed = pxt.github.parseRepoId(id)
     let sha = ""
     let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
+    let parsed = pxt.github.parseRepoId(repoid)
     let isEmpty = false
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)

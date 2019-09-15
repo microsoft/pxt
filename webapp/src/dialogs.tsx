@@ -508,7 +508,7 @@ export function showImportUrlDialogAsync() {
             pxt.tickEvent("app.open.url");
             const url = input.value;
             let projectId: string;
-            if (/^(github:|https:\/\/github.com\/)/.test(url)) {
+            if (/^(github:|https:\/\/github\.com\/)/.test(url)) {
                 projectId = pxt.github.noramlizeRepoId(url)
             } else {
                 projectId = pxt.Cloud.parseScriptId(url);
@@ -679,7 +679,7 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
 
 export function showReportAbuseAsync(pubId?: string) {
     // send users to github directly for unwanted repoes
-    const ghid = /^https:\/\/github.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
+    const ghid = /^https:\/\/github\.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
     if (ghid) {
         pxt.tickEvent("reportabuse.github");
         window.open("https://github.com/contact/report-content", "_blank");
