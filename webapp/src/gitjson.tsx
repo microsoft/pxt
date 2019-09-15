@@ -15,7 +15,6 @@ interface DiffCache {
 
 export class Editor extends srceditor.Editor {
     private description: string = undefined;
-    private commitMaster = true;
     private needsCommitMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
     private needsPull: boolean = null;
@@ -26,7 +25,6 @@ export class Editor extends srceditor.Editor {
         this.goBack = this.goBack.bind(this);
         this.handleCommitClick = this.handleCommitClick.bind(this);
         this.handlePullClick = this.handlePullClick.bind(this);
-        this.handleRadioClick = this.handleRadioClick.bind(this);
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
         this.handleBumpClick = this.handleBumpClick.bind(this);
         this.handleBranchClick = this.handleBranchClick.bind(this);
@@ -144,25 +142,14 @@ export class Editor extends srceditor.Editor {
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.commit");
-        const gid = this.parsedRepoId()
         this.needsCommitMessage = false;
-        if (this.commitMaster || gid.tag != "master") {
-            await this.commitAsync();
-            this.goBack();
-        } else
-            this.pullRequestAsync().done();
+        await this.commitAsync();
+        this.goBack();
     }
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.pull");
         this.pullAsync().done();
-    }
-
-    private handleRadioClick(e: React.ChangeEvent<HTMLInputElement>) {
-        e.stopPropagation();
-        pxt.tickEvent(`github.radio.${e.currentTarget.name}`);
-        this.commitMaster = e.currentTarget.name == "commit"
-        this.parent.setState({});
     }
 
     private handleDescriptionChange(v: string) {
@@ -461,28 +448,10 @@ export class Editor extends srceditor.Editor {
                             <div className="ui field">
                                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.description} onChange={this.handleDescriptionChange} />
                             </div>
-                            {master ?
-                                <div className="grouped fields">
-                                    <div className="field">
-                                        <div className="ui radio checkbox">
-                                            <input type="radio" name="commit" onChange={this.handleRadioClick} aria-checked={this.commitMaster} checked={this.commitMaster} />
-                                            <label>
-                                                {lf("Commit directly to the {0} branch.", githubId.tag || "master")}
-                                                <sui.Link href="/github/commit" icon="help circle" target="_blank" role="button" title={lf("A commit is a snapshot of your code stored in GitHub.")} />
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div className="field">
-                                        <div className="ui radio checkbox">
-                                            <input type="radio" name="pullrequest" onChange={this.handleRadioClick} aria-checked={!this.commitMaster} checked={!this.commitMaster} />
-                                            <label>{lf("Create a new branch for this commit and start a pull request.")}
-                                                <sui.Link href="/github/pull-request" icon="help circle" target="_blank" role="button" title={lf("A pull request allows to package and review a set of changes (commits).")} />
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div> : <div className="field">
-                                    <p>{lf("Commit directly to the {0} branch.", githubId.tag || "master")}</p>
-                                </div>}
+                            {<div className="field">
+                                <p>{lf("Commit directly to the {0} branch.", githubId.tag || "master")}
+                                    <sui.Link href="/github/commit" icon="help circle" target="_blank" role="button" title={lf("A commit is a snapshot of your code stored in GitHub.")} /></p>
+                            </div>}
                             <div className="ui field">
                                 <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                             </div>
