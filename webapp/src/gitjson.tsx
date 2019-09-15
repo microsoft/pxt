@@ -19,6 +19,7 @@ export class Editor extends srceditor.Editor {
     private diffCache: pxt.Map<DiffCache> = {};
     private needsPull: boolean = null;
     private pullOK = false;
+    private previousCfgKey = "";
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
@@ -49,9 +50,17 @@ export class Editor extends srceditor.Editor {
         return false
     }
 
+    private pkgConfigKey(cfgtxt: string) {
+        const cfg = JSON.parse(cfgtxt) as pxt.PackageConfig
+        delete cfg.version
+        return JSON.stringify(cfg)
+    }
+
     setVisible(b: boolean) {
         this.isVisible = b;
-        if (!b) {
+        if (b) {
+            this.previousCfgKey = this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
+        } else {
             this.needsCommitMessage = false;
             this.diffCache = {}
             this.needsPull = null;
@@ -233,13 +242,29 @@ export class Editor extends srceditor.Editor {
         try {
             const header = this.parent.state.header;
             await workspace.bumpAsync(header)
-            await this.parent.reloadHeaderAsync();
+            await this.maybeReloadAsync()
             core.hideLoading("bumpheader");
             core.infoNotification(lf("GitHub release created."))
         } catch (e) {
             this.handleGithubError(e);
         } finally {
             core.hideLoading("bumpheader");
+        }
+    }
+
+    private async maybeReloadAsync() {
+        // here, the true state of files is stored in workspace
+        const header = this.parent.state.header;
+        const files = await workspace.getTextAsync(header.id);
+        // save file content from workspace, so they won't get overridden
+        pkg.mainEditorPkg().setFiles(files);
+        // check if we need to reload header
+        const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
+        if (newKey == this.previousCfgKey) {
+            return
+        } else {
+            this.previousCfgKey = newKey
+            await this.parent.reloadHeaderAsync();
         }
     }
 
@@ -257,7 +282,7 @@ export class Editor extends srceditor.Editor {
                     this.parent.setState({});
                     break
                 case workspace.PullStatus.GotChanges:
-                    await this.parent.reloadHeaderAsync()
+                    await this.maybeReloadAsync()
                     break
             }
         } catch (e) {
@@ -330,7 +355,7 @@ export class Editor extends srceditor.Editor {
         core.showLoading("loadingheader", lf("commit and push..."));
         try {
             await this.commitCoreAsync()
-            await this.parent.reloadHeaderAsync()
+            await this.maybeReloadAsync()
         } catch (e) {
             this.handleGithubError(e);
         } finally {
@@ -395,8 +420,11 @@ export class Editor extends srceditor.Editor {
                 if (res) {
                     f.setContentAsync(f.baseGitContent)
                         .then(() => {
-                            // force refresh of ourselves
-                            this.parent.setState({})
+                            if (f.name == pxt.CONFIG_NAME)
+                                this.parent.reloadHeaderAsync()
+                            else
+                                // force refresh of ourselves
+                                this.parent.setState({})
                         })
                 }
             }).done()
