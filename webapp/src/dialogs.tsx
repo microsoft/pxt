@@ -45,25 +45,51 @@ export function showGithubLoginAsync() {
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.github.token");
-            const url = input.value.trim()
-            if (url.length != 40 || !/^[a-f0-9]+$/.test(url)) {
+            const hextoken = input.value.trim()
+            if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
                 core.errorNotification(lf("Invalid token format"))
             } else {
-                core.infoNotification(lf("Token stored."))
-                pxt.storage.setLocal("githubtoken", url)
-                pxt.github.token = url
+                pxt.github.token = hextoken
+                // try to create a bogus repo - it will fail with
+                // 401 - invalid token, 404 - when token doesn't have repo permission,
+                // 422 - because the request is bogus, but token OK
+                // Don't put any string in repo name - github seems to normalize these
+                return pxt.github.createRepoAsync(undefined, "")
+                    .then(r => {
+                        // what?!
+                        pxt.reportError("github", "Succeeded creating undefined repo!")
+                        core.infoNotification(lf("Something went wrong with validation; token stored"))
+                        pxt.storage.setLocal("githubtoken", hextoken)
+                    }, err => {
+                        pxt.github.token = ""
+                        if (err.statusCode == 401) {
+                            core.errorNotification(lf("GitHub didn't accept token"))
+                        } else if (err.statusCode == 404) {
+                            core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
+                        } else if (err.statusCode == 422) {
+                            if (err.statusCode == 422)
+                                core.infoNotification(lf("Token validated and stored"))
+                            else
+                                core.infoNotification(lf("Token stored but not validated"))
+                            pxt.github.token = hextoken
+                            pxt.storage.setLocal("githubtoken", hextoken)
+                        }
+                    })
             }
         }
+        return Promise.resolve()
     })
 }
 
 export function githubFooter(msg: string, close: () => void) {
-    function githubLogin() {
+    function githubLogin(e: React.MouseEvent<HTMLElement>) {
+        e.preventDefault()
         close()
         showGithubLoginAsync()
     }
 
-    function githubLogout() {
+    function githubLogout(e: React.MouseEvent<HTMLElement>) {
+        e.preventDefault()
         close()
         pxt.storage.removeLocal("githubtoken")
         pxt.github.token = ""
