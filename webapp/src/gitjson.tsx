@@ -126,11 +126,13 @@ export class Editor extends srceditor.Editor {
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.bump");
         e.stopPropagation();
         this.bumpAsync().done();
     }
 
     private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.branch");
         e.stopPropagation();
         this.switchBranchAsync().done();
     }
@@ -141,6 +143,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.commit");
         const gid = this.parsedRepoId()
         this.needsCommitMessage = false;
         if (this.commitMaster || gid.tag != "master") {
@@ -151,11 +154,13 @@ export class Editor extends srceditor.Editor {
     }
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.pull");
         this.pullAsync().done();
     }
 
     private handleRadioClick(e: React.ChangeEvent<HTMLInputElement>) {
         e.stopPropagation();
+        pxt.tickEvent(`github.radio.${e.currentTarget.name}`);
         this.commitMaster = e.currentTarget.name == "commit"
         this.parent.setState({});
     }

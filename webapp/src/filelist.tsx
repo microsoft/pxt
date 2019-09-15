@@ -298,12 +298,17 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
     }
 
     private async createRepositoryAsync() {
+        pxt.tickEvent("github.filelist.create.start");
         if (!pxt.github.token) await dialogs.showGithubLoginAsync();
-        if (!pxt.github.token) return;
+        if (!pxt.github.token) {
+            pxt.tickEvent("github.filelist.create.notoken");
+            return;
+        }
 
         const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
         if (!repoid) return;
 
+        pxt.tickEvent("github.filelist.create.export");
         core.showLoading("creategithub", lf("Creating GitHub repo..."))
         try {
             await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
