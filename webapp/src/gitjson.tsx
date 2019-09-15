@@ -29,6 +29,7 @@ export class Editor extends srceditor.Editor {
         this.handleBumpClick = this.handleBumpClick.bind(this);
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
+        this.handleSignInClick = this.handleSignInClick.bind(this);
     }
 
     getId() {
@@ -133,6 +134,13 @@ export class Editor extends srceditor.Editor {
         pxt.tickEvent("github.branch");
         e.stopPropagation();
         this.switchBranchAsync().done();
+    }
+
+    private handleSignInClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.signin");
+        e.stopPropagation();
+        dialogs.showGithubLoginAsync()
+            .done(() => this.parent.setState({}));
     }
 
     private goBack() {
@@ -416,6 +424,7 @@ export class Editor extends srceditor.Editor {
         const master = githubId.tag == "master";
         const gs = this.getGitJson();
         const url = gs.prUrl || `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
+        const needsToken = !pxt.github.token;
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -429,6 +438,13 @@ export class Editor extends srceditor.Editor {
                             text={this.needsPull ? lf("Pull changes") : lf("Up to date")} textClass={lf("landscape only")} title={lf("Pull changes")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
+                {!pxt.github.token ? <div className="ui info message join">
+                    <div className="header">
+                        {lf("Join GitHub today")}
+                    </div>
+                    <p>{lf("Host your code on GitHub and work together on projects.")}</p>
+                    <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
+                </div> : undefined}
                 {this.needsCommitMessage ? <div className="ui warning message">
                     <div className="content">
                         {lf("You need to commit your changes in order to pull changes from GitHub.")}
@@ -453,7 +469,7 @@ export class Editor extends srceditor.Editor {
                                     <sui.Link href="/github/commit" icon="help circle" target="_blank" role="button" title={lf("A commit is a snapshot of your code stored in GitHub.")} /></p>
                             </div>}
                             <div className="ui field">
-                                <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                                <sui.Button className="primary" text={lf("Commit changes")} disabled={needsToken} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
                             </div>
                         </div>
                         :
@@ -466,7 +482,7 @@ export class Editor extends srceditor.Editor {
                                         {lf("Bump up the version number and create a release on GitHub.")}
                                         <sui.Link href="/github/release" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
                                     </p>
-                                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                                    <sui.Button className="primary" text={lf("Create release")} disabled={needsToken} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                                 </div> : undefined}
                         </div>
                     }
@@ -474,7 +490,7 @@ export class Editor extends srceditor.Editor {
                         {diffFiles.map(df => this.showDiff(df))}
                     </div>
 
-                    {dialogs.githubFooter("", () => this.parent.setState({}))}
+                    {pxt.github.token ? dialogs.githubFooter("", () => this.parent.setState({})) : undefined}
                 </div>
             </div>
         )
