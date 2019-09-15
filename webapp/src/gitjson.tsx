@@ -245,7 +245,7 @@ export class Editor extends srceditor.Editor {
 
     private async pullRequestAsync() {
         try {
-            core.showLoading("loadingheader", lf("create PR..."));
+            core.showLoading("loadingheader", lf("creating pull request..."));
             // create a new PR branch
             const header = this.parent.state.header;
             const parsed = this.parsedRepoId()
@@ -447,7 +447,7 @@ export class Editor extends srceditor.Editor {
                             <i className="large github icon" />
                         </a>
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} className="repo-branch">{"#" + githubId.tag}</span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}</span>
                     </h4>
                     {needsCommit ?
                         <div>
