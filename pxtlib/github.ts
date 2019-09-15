@@ -261,8 +261,14 @@ namespace pxt.github {
         }).then(resp => {
             if (resp.statusCode == 200 || resp.statusCode == 201 || resp.statusCode == 204)
                 return resp.json
-            throw U.userError(lf("Cannot create object at github.com/{0}; code: {1}",
-                path, resp.statusCode))
+
+            let e = new Error(lf("Cannot create object at github.com/{0}; code: {1}",
+                path, resp.statusCode));
+            (<any>e).statusCode = resp.statusCode;
+            (<any>e).isUserError = true;
+            if (resp.statusCode == 404)
+                (<any>e).needsWritePermission = true;
+            throw e
         })
     }
 

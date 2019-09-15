@@ -19,6 +19,7 @@ export class Editor extends srceditor.Editor {
     private needsCommitMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
     private needsPull: boolean = null;
+    private pullOK = false;
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
@@ -29,6 +30,7 @@ export class Editor extends srceditor.Editor {
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
         this.handleBumpClick = this.handleBumpClick.bind(this);
         this.handleBranchClick = this.handleBranchClick.bind(this);
+        this.handleGithubError = this.handleGithubError.bind(this);
     }
 
     getId() {
@@ -54,6 +56,7 @@ export class Editor extends srceditor.Editor {
             this.needsCommitMessage = false;
             this.diffCache = {}
             this.needsPull = null;
+            this.pullOK = false;
         }
     }
 
@@ -166,6 +169,10 @@ export class Editor extends srceditor.Editor {
         const statusCode = parseInt(e.statusCode);
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
+        else if (statusCode == 401)
+            core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
+        else if (this.pullOK && e.needsWritePermission)
+            core.warningNotification(lf("You don't have write permission (or your token is missing 'repo' scope)."));
         else
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
     }
@@ -205,7 +212,7 @@ export class Editor extends srceditor.Editor {
         core.showLoading("loadingheader", lf("pulling changes..."));
         try {
             let status = await workspace.pullAsync(this.parent.state.header)
-                .catch(core.handleNetworkError)
+                .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
@@ -237,44 +244,55 @@ export class Editor extends srceditor.Editor {
     }
 
     private async pullRequestAsync() {
-        core.showLoading("loadingheader", lf("create PR..."));
-        // create a new PR branch
-        const header = this.parent.state.header;
-        const parsed = this.parsedRepoId()
-        let gs = this.getGitJson();
-        const commitId = gs.commit.sha;
-        const baseBranch = parsed.tag
-        const newBranch = await pxt.github.createNewPrBranchAsync(parsed.fullName, commitId)
+        try {
+            core.showLoading("loadingheader", lf("create PR..."));
+            // create a new PR branch
+            const header = this.parent.state.header;
+            const parsed = this.parsedRepoId()
+            let gs = this.getGitJson();
+            const commitId = gs.commit.sha;
+            const baseBranch = parsed.tag
+            const newBranch = await pxt.github.createNewPrBranchAsync(parsed.fullName, commitId)
 
-        await this.switchToBranchAsync(newBranch)
+            await this.switchToBranchAsync(newBranch)
 
-        const msg = this.description || lf("Updates")
-        await this.commitAsync(); // commit current changes into the new branch
-        const prUrl = await pxt.github.createPRFromBranchAsync(parsed.fullName, baseBranch, newBranch, msg);
+            const msg = this.description || lf("Updates")
+            await this.commitCoreAsync(); // commit current changes into the new branch
+            const prUrl = await pxt.github.createPRFromBranchAsync(parsed.fullName, baseBranch, newBranch, msg);
 
-        gs = this.getGitJson()
-        gs.prUrl = prUrl
-        await this.saveGitJsonAsync(gs)
+            gs = this.getGitJson()
+            gs.prUrl = prUrl
+            await this.saveGitJsonAsync(gs)
+            await this.parent.reloadHeaderAsync()
+        } catch (e) {
+            this.handleGithubError(e)
+        } finally {
+            core.hideLoading("loadingheader")
+        }
     }
 
-    private async commitAsync() {
+    private async commitCoreAsync() {
         const repo = this.parent.state.header.githubId;
         const header = this.parent.state.header;
         const msg = this.description || lf("Updates")
+        let commitId = await workspace.commitAsync(header, msg)
+        if (commitId) {
+            // merge failure; do a PR
+            // we could ask the user, but it's unlikely they can do anything else to fix it
+            let prInfo = await workspace.prAsync(header, commitId, msg)
+            await dialogs.showPRDialogAsync(repo, prInfo.url)
+            // when the dialog finishes, we pull again - it's possible the user
+            // has resolved the conflict in the meantime
+            await workspace.pullAsync(header)
+            // skip bump in this case - we don't know if it was merged
+        }
+        this.description = ""
+    }
+
+    private async commitAsync() {
         core.showLoading("loadingheader", lf("commit and push..."));
         try {
-            let commitId = await workspace.commitAsync(header, msg)
-            if (commitId) {
-                // merge failure; do a PR
-                // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prInfo = await workspace.prAsync(header, commitId, msg)
-                await dialogs.showPRDialogAsync(repo, prInfo.url)
-                // when the dialog finishes, we pull again - it's possible the user
-                // has resolved the conflict in the meantime
-                await workspace.pullAsync(header)
-                // skip bump in this case - we don't know if it was merged
-            }
-            this.description = ""
+            await this.commitCoreAsync()
             await this.parent.reloadHeaderAsync()
         } catch (e) {
             this.handleGithubError(e);
@@ -387,12 +405,13 @@ export class Editor extends srceditor.Editor {
             this.needsPull = true
             workspace.hasPullAsync(this.parent.state.header)
                 .then(v => {
+                    this.pullOK = true
                     if (v != this.needsPull) {
                         this.needsPull = v
                         this.parent.setState({})
                     }
                 })
-                .catch(core.handleNetworkError)
+                .catch(this.handleGithubError)
         }
 
         /**
@@ -478,6 +497,8 @@ export class Editor extends srceditor.Editor {
                     <div className="ui">
                         {diffFiles.map(df => this.showDiff(df))}
                     </div>
+
+                    {dialogs.githubFooter("", () => this.parent.setState({}))}
                 </div>
             </div>
         )
