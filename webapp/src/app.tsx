@@ -855,6 +855,7 @@ export class ProjectView
         }
 
         const header = this.state.header;
+        let isCodeFile = false;
         if (header) {
             const pkgId = fn.epkg && fn.epkg.getPkgId();
 
@@ -863,16 +864,22 @@ export class ProjectView
                 if (this.isBlocksFile(fn.name)) {
                     header.editor = pxt.BLOCKS_PROJECT_NAME;
                     header.pubCurrent = false
+                    isCodeFile = true;
                 }
                 else if (this.isTypescriptFile(fn.name)) {
                     header.editor = pxt.JAVASCRIPT_PROJECT_NAME
                     header.pubCurrent = false
+                    isCodeFile = true;
                 }
                 else if (this.isPythonFile(fn.name)) {
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
+                    isCodeFile = true;
+                } else {
+                    // some other file type
                 }
-                pkg.mainPkg.setPreferredEditor(header.editor)
+                if (isCodeFile)
+                    pkg.mainPkg.setPreferredEditor(header.editor)
             }
         }
 
@@ -880,7 +887,7 @@ export class ProjectView
             currFile: fn,
             showBlocks: false,
             embedSimView: false,
-            autoRun: this.autoRunOnStart() // restart autoRun is needed
+            autoRun: isCodeFile && this.autoRunOnStart() // restart autoRun is needed
         };
         if (line !== undefined)
             state.editorPosition = { lineNumber: line, column: 1, file: fn };
