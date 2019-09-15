@@ -28,10 +28,18 @@ export class Editor extends srceditor.Editor {
         this.handleRadioClick = this.handleRadioClick.bind(this);
         this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
         this.handleBumpClick = this.handleBumpClick.bind(this);
+        this.handleBranchClick = this.handleBranchClick.bind(this);
     }
 
     getId() {
         return "githubEditor"
+    }
+
+    getCurrentSource(): string {
+        // modifications are done on the EditorFile object, so make sure
+        // we don't store some cached data in this.currSource
+        const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
+        return f.content
     }
 
     hasHistory() { return false; }
@@ -56,9 +64,72 @@ export class Editor extends srceditor.Editor {
         return file.name === pxt.github.GIT_JSON;
     }
 
+    private async saveGitJsonAsync(gs: pxt.github.GitJson) {
+        const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
+        await f.setContentAsync(JSON.stringify(gs, null, 4))
+    }
+
+    private async switchToBranchAsync(newBranch: string) {
+        const header = this.parent.state.header;
+        const gs = this.getGitJson();
+        const parsed = this.parsedRepoId()
+        header.githubId = parsed.fullName + "#" + newBranch
+        gs.repo = header.githubId
+        await this.saveGitJsonAsync(gs)
+    }
+
+    private async switchBranchAsync() {
+        const gid = this.parsedRepoId()
+        const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
+        const branchList = Object.keys(branches.refs).map(r => ({
+            name: r,
+            sha: branches.refs[r],
+            onClick: async () => {
+                core.hideDialog()
+                this.needsCommitMessage = false
+                const prevBranch = this.parsedRepoId().tag
+                try {
+                    await this.switchToBranchAsync(r)
+                    await this.pullAsync()
+                    this.parent.setState({});
+                } finally {
+                    if (this.needsCommitMessage) {
+                        console.log("going back to " + prevBranch)
+                        await this.switchToBranchAsync(prevBranch)
+                    }
+                }
+            }
+        }))
+
+        await core.confirmAsync({
+            header: lf("Switch to a different branch"),
+            hideAgree: true,
+            /* tslint:disable:react-a11y-anchors */
+            jsx: <div className="ui form">
+                <div className="ui relaxed divided list" role="menu">
+                    {branchList.map(r =>
+                        <div key={r.name} className="item">
+                            <i className="large github middle aligned icon"></i>
+                            <div className="content">
+                                <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
+                                <div className="description">
+                                    {r.sha}
+                                </div>
+                            </div>
+                        </div>)}
+                </div>
+            </div>,
+        })
+    }
+
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         e.stopPropagation();
         this.bumpAsync().done();
+    }
+
+    private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        this.switchBranchAsync().done();
     }
 
     private goBack() {
@@ -67,7 +138,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
-        const gid = pxt.github.parseRepoId(this.parent.state.header.githubId);
+        const gid = this.parsedRepoId()
         this.needsCommitMessage = false;
         if (this.commitMaster || gid.tag != "master") {
             await this.commitAsync();
@@ -160,28 +231,30 @@ export class Editor extends srceditor.Editor {
         return gitJson;
     }
 
+    private parsedRepoId() {
+        const header = this.parent.state.header;
+        return pxt.github.parseRepoId(header.githubId);
+    }
+
     private async pullRequestAsync() {
         core.showLoading("loadingheader", lf("create PR..."));
         // create a new PR branch
         const header = this.parent.state.header;
-        const parsed = pxt.github.parseRepoId(header.githubId);
-        const gs = this.getGitJson();
+        const parsed = this.parsedRepoId()
+        let gs = this.getGitJson();
         const commitId = gs.commit.sha;
         const baseBranch = parsed.tag
         const newBranch = await pxt.github.createNewPrBranchAsync(parsed.fullName, commitId)
 
-        header.githubId = parsed.fullName + "#" + newBranch
-        gs.repo = header.githubId
-
-        const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
-        await f.setContentAsync(JSON.stringify(gs, null, 4))
+        await this.switchToBranchAsync(newBranch)
 
         const msg = this.description || lf("Updates")
         await this.commitAsync(); // commit current changes into the new branch
         const prUrl = await pxt.github.createPRFromBranchAsync(parsed.fullName, baseBranch, newBranch, msg);
 
+        gs = this.getGitJson()
         gs.prUrl = prUrl
-        await f.setContentAsync(JSON.stringify(gs, null, 4))
+        await this.saveGitJsonAsync(gs)
     }
 
     private async commitAsync() {
@@ -201,6 +274,7 @@ export class Editor extends srceditor.Editor {
                 await workspace.pullAsync(header)
                 // skip bump in this case - we don't know if it was merged
             }
+            this.description = ""
             await this.parent.reloadHeaderAsync()
         } catch (e) {
             this.handleGithubError(e);
@@ -327,7 +401,7 @@ export class Editor extends srceditor.Editor {
                                         onChange={this.setBump} />
     
          */
-        const githubId = pxt.github.parseRepoId(header.githubId);
+        const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         return (
             <div id="githubArea">
@@ -354,8 +428,7 @@ export class Editor extends srceditor.Editor {
                             <i className="large github icon" />
                         </a>
                         <span className="repo-name">{githubId.fullName}</span>
-                        {githubId.tag == "master" ? undefined :
-                            <span className="repo-branch">{"#" + githubId.tag}</span>}
+                        <span onClick={this.handleBranchClick} className="repo-branch">{"#" + githubId.tag}</span>
                     </h4>
                     {needsCommit ?
                         <div>
