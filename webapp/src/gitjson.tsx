@@ -422,6 +422,8 @@ export class Editor extends srceditor.Editor {
          */
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
+        const gs = this.getGitJson();
+        const url = gs.prUrl || `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -443,7 +445,7 @@ export class Editor extends srceditor.Editor {
 
                 <div className="ui form">
                     <h4 className="header">
-                        <a href={`https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
+                        <a href={url} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
                             <i className="large github icon" />
                         </a>
                         <span className="repo-name">{githubId.fullName}</span>
