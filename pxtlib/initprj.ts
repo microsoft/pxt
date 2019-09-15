@@ -31,21 +31,10 @@ test:
 
 @DESCRIPTION@
 
-## TODO
-
-- [ ] Add a reference for your blocks here
-- [ ] Add "icon.png" image (300x200) in the root folder
-- [ ] Add "- beta" to the GitHub project description if you are still iterating it.
-- [ ] Turn on your automated builds with GitHub Actions or Travis-CI https://travis-ci.org
-- [ ] Use "pxt bump" to create a tagged release on GitHub
-- [ ] On GitHub, create a new file named LICENSE. Select the MIT License template.
-- [ ] Get your package reviewed and approved @DOCS@extensions/approval
-
-Read more at @DOCS@extensions
-
 ## Supported targets
 
 * for PXT/@TARGET@
+* for PXT/@PLATFORM@
 (The metadata above is needed for package search.)
 
 `,
@@ -227,7 +216,8 @@ cache:
 
     export function packageFilesFixup(files: Map<string>, removeSubdirs = false) {
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
-        configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
+        configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
+        configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
 
         if (removeSubdirs)
