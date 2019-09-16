@@ -12,7 +12,7 @@ Hey, this year MakeCode Arcade is available! Try out some of these game coding i
 
 ### ~ hint
 
-#### Make a game in 20 minutes
+#### Make a game in 20 minutes!
 
 If you haven't used MakeCode Arcade before, take a look at this video and see how a complete single player game is made in just 20 minutes:
 
