@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-# [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
+## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
 
 September 16th, 2019 by [Jaqster](https://github.com/jaqster)
 
