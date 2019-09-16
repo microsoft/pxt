@@ -604,17 +604,16 @@ export class Editor extends srceditor.Editor {
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
+                            <sui.Link className="ui button" icon="github" href={url} text="GitHub" textClass="landscape only" title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
+                            {!needsToken ? <sui.Link className="ui button" icon="users" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button className="ui icon button" icon={`${this.needsPull ? "down arrow" : "check"} ${this.needsPull ? "positive" : ""}`}
+                        <sui.Button icon={`${this.needsPull !== false ? "down arrow" : "check"} ${this.needsPull !== false ? "positive" : ""}`}
                             text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 {!pxt.github.token ? <div className="ui info message join">
-                    <div className="header">
-                        {lf("Join GitHub today")}
-                    </div>
                     <p>{lf("Host your code on GitHub and work together on projects.")}</p>
                     <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
                 </div> : undefined}
@@ -630,13 +629,10 @@ export class Editor extends srceditor.Editor {
                             target="_blank" rel="noopener noreferrer">
                             {lf("Pull request")}
                         </a>}
-                    <h4 className="header">
-                        <a href={url} role="button" className="ui link" target="_blank" rel="noopener noreferrer">
-                            <i className="large github icon" />
-                        </a>
+                    <h3 className="header">
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}</span>
-                    </h4>
+                    </h3>
                     {needsCommit ?
                         <div>
                             <div className="ui field">

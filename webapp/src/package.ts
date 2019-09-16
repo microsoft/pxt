@@ -634,6 +634,7 @@ data.mountVirtualApi("open-meta", {
 export interface PackageMeta {
     numErrors: number;
     diagnostics?: pxtc.KsDiagnostic[];
+    numFilesGitModified?: number;
 }
 
 /*
@@ -660,6 +661,9 @@ data.mountVirtualApi("open-pkg-meta", {
             r.diagnostics = [];
             files.filter(f => !!f.diagnostics).forEach(f => r.diagnostics.concat(f.diagnostics));
         }
+        const hasGit = f.getPkgId() == "this" && !!(f.header && f.header.githubId)
+        if (hasGit)
+            r.numFilesGitModified = files.filter(f => f.baseGitContent != f.content).length;
         return r;
     }
 })
