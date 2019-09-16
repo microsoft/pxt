@@ -554,41 +554,60 @@ export function showImportUrlDialogAsync() {
 
 
 export function showCreateGithubRepoDialogAsync(name?: string) {
-    let inputName: HTMLInputElement;
-    let inputDesc: HTMLInputElement;
+    if (name) {
+        name = name.toLocaleLowerCase().replace(/\s+/g, '-');
+        name = name.replace(/[^\w\-]/g, '');
+        if (!/^pxt-/.test(name)) name = 'pxt-' + name;
+    }
+
+    let repoName: string = name || "";
+    let repoDescription: string = "";
+
+    function repoNameError(): string {
+        if (repoName == "pxt-" + lf("Untitled").toLocaleLowerCase()
+            || repoName == "pxt-untitled")
+            return lf("Please pick a different name.")
+        const repoNameRx = /^[\w\-]{1,64}$/;
+        if (!repoNameRx.test(repoName))
+            return lf("Avoid spaces or special characters. Less than 64 characters.");
+        return undefined;
+    }
+
+    function onNameChanged(v: string) {
+        v = v.trim();
+        if (repoName != v) {
+            repoName = v;
+            coretsx.forceRender();
+        }
+    }
+
+    function onDescriptionChanged(v: string) {
+        if (repoDescription != v) {
+            repoDescription = v;
+            coretsx.forceRender();
+        }
+    }
+
     return core.confirmAsync({
-        header: lf("Create GitHub repo"),
-        onLoaded: (el) => {
-            inputName = el.querySelectorAll('input')[0] as HTMLInputElement;
-            inputDesc = el.querySelectorAll('input')[1] as HTMLInputElement;
-
-
-            if (name) {
-                name = name.toLocaleLowerCase().replace(/\s+/g, '-');
-                name = name.replace(/[^\w\-]/g, '');
-                if (!/^pxt-/.test(name)) name = 'pxt-' + name;
-                inputName.value = name;
-            }
+        header: lf("Create GitHub repository"),
+        jsxd: () => {
+            const nameErr = repoNameError();
+            return <div className="ui form">
+                <div className="ui field">
+                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name.")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                </div>
+                <div className="ui field">
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description.")} class="fluid" />
+                </div>
+            </div>
         },
-        jsx: <div className="ui form">
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Repo name.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
-            </div>
-            <div className="ui field">
-                <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
-            </div>
-        </div>,
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.github.create");
-            const name = inputName.value.trim()
-            const desc = inputDesc.value.trim()
 
-            if (/^[\w\-]+$/.test(inputName.value)) {
-                core.showLoading("creategithub", lf("Creating GitHub repo..."))
-                return pxt.github.createRepoAsync(name, desc)
+            if (!repoNameError()) {
+                core.showLoading("creategithub", lf("creating {0} repository...", repoName))
+                return pxt.github.createRepoAsync(repoName, repoDescription.trim())
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)

@@ -532,6 +532,7 @@ export interface InputProps {
     inputLabel?: string;
     class?: string;
     value?: string;
+    error?: string;
     type?: string;
     placeholder?: string;
     disabled?: boolean;
@@ -547,7 +548,11 @@ export interface InputProps {
     selectOnMount?: boolean;
 }
 
-export class Input extends data.Component<InputProps, { value: string }> {
+export interface InputState {
+    value: string;
+}
+
+export class Input extends data.Component<InputProps, InputState> {
     constructor(props: InputProps) {
         super(props);
         this.state = {
@@ -617,6 +622,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
         let copyBtn = p.copy && document.queryCommandSupported('copy')
             ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
+        const { error } = this.props;
         const { value } = this.state;
 
         return (
@@ -636,7 +642,8 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         autoComplete={p.autoComplete ? "" : "off"}
                         autoCorrect={p.autoComplete ? "" : "off"}
                         autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete} />
+                        spellCheck={p.autoComplete}
+                    />
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
@@ -649,6 +656,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         </textarea>}
                     {copyBtn}
                 </div>
+                {error ? <div className="ui yellow message">{error}</div> : undefined}
             </Field>
         );
     }
@@ -1314,7 +1322,7 @@ export interface ProgressCircleProps {
 export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
     protected radius: number = 100 / (2 * Math.PI); // 100 steps in circle
     protected view: number;
-    constructor (props: ProgressCircleProps) {
+    constructor(props: ProgressCircleProps) {
         super(props);
         this.view = this.radius * 2 + this.props.stroke;
     }
