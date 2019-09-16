@@ -62,11 +62,7 @@ export function showGithubLoginAsync() {
                         pxt.storage.setLocal("githubtoken", hextoken)
                     }, err => {
                         pxt.github.token = ""
-                        if (err.statusCode == 401) {
-                            core.errorNotification(lf("GitHub didn't accept token"))
-                        } else if (err.statusCode == 404) {
-                            core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
-                        } else if (err.statusCode == 422) {
+                        if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
                                 core.infoNotification(lf("Token validated and stored"))
                             else
@@ -79,6 +75,18 @@ export function showGithubLoginAsync() {
         }
         return Promise.resolve()
     })
+}
+
+export function showGithubTokenError(err: any) {
+    if (err.statusCode == 401) {
+        core.errorNotification(lf("GitHub didn't accept token"))
+        return true
+    } else if (err.statusCode == 404) {
+        core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
+        return true
+    } else {
+        return false
+    }
 }
 
 export function githubFooter(msg: string, close: () => void) {
@@ -572,12 +580,12 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         },
         jsx: <div className="ui form">
             <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Repo name.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
+                <label id="repoName">{lf("Repo name.")}</label>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="repoName" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
             </div>
             <div className="ui field">
-                <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
+                <label id="repoDesc">{lf("Repo description.")}</label>
+                <input type="url" tabIndex={1} aria-labelledby="repoDesc" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -586,12 +594,20 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             const name = inputName.value.trim()
             const desc = inputDesc.value.trim()
 
-            if (/^[\w\-]+$/.test(inputName.value)) {
+            if (/^[\w\-]+$/.test(name)) {
                 core.showLoading("creategithub", lf("Creating GitHub repo..."))
                 return pxt.github.createRepoAsync(name, desc)
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                    }, err => {
+                        if (!showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.errorNotification(lf("Repo '{0}' already exists.", name))
+                            else
+                                core.errorNotification(err.message)
+                        }
+                        return "";
                     })
             } else {
                 core.errorNotification(lf("Invalid repo name."))
