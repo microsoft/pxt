@@ -606,14 +606,16 @@ export interface FileMeta {
 data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = getEditorPkg(mainPkg).lookupFile(p)
+        const pk = mainEditorPkg()
+        const hasGit = !!(pk.header && pk.header.githubId)
+        const f = pk.lookupFile(p)
         if (!f) return {}
 
-        let fs: FileMeta = {
+        const fs: FileMeta = {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
             numErrors: f.numDiagnosticsOverride,
-            isGitModified: f.baseGitContent != null && f.baseGitContent != f.content
+            isGitModified: hasGit && f.baseGitContent != f.content
         }
 
         if (fs.numErrors == null) {

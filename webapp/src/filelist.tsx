@@ -91,7 +91,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             // we keep this disabled, until implemented for cloud syncing
             // makse no sense for local saves - the star just blinks for half second after every change
-            const showStar = false // meta.isSaved
+            const showStar = false // !meta.isSaved
             return (
                 <FileTreeItem key={file.getName()}
                     file={file}
@@ -104,7 +104,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
                     {file.name}
-                    {showStar ? "" : "*"}
+                    {showStar ? "*" : ""}
                     {meta.isGitModified ? " ↑" : ""}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                 </FileTreeItem>);
