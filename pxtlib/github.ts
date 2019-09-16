@@ -90,6 +90,7 @@ namespace pxt.github {
             else
                 opts.url += "?"
             opts.url += "access_token=" + token
+            opts.url += "&anti_cache=" + Math.random()
             // Token in headers doesn't work with CORS, especially for githubusercontent.com
             //if (!opts.headers) opts.headers = {}
             //opts.headers['Authorization'] = `token ${token}`
