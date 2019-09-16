@@ -17,18 +17,23 @@
     pre {
         margin: 0;
     }
+
     .diff-added {
         background: @diffAddedBackground;
+
         pre:hover {
             background: @diffAddedHoverBackground;
         }
     }
+
     .diff-removed {
         background: @diffRemovedBackground;
+
         pre:hover {
             background: @diffRemovedHoverBackground;
         }
     }
+
     .diff-marker {
         background: @diffMarkerBackground;
         color: @diffMarkerColor
@@ -38,15 +43,18 @@
         padding-left: 1em;
     }
 
-    .line-a, .line-b {
+    .line-a,
+    .line-b {
         width: 3em;
         text-align: right;
-        color: rgba(27,31,35,.3);
+        color: rgba(27, 31, 35, .3);
     }
+
     .marker {
         width: 2.5em;
         text-align: center;
     }
+
     .change {
         text-align: left;
     }
@@ -54,8 +62,7 @@
     .diff-added .line-b:before,
     .diff-removed .line-a:before,
     .diff-unchanged .line-a:before,
-    .diff-unchanged .line-b:before
-    {
+    .diff-unchanged .line-b:before {
         content: attr(data-content);
     }
 
@@ -86,7 +93,7 @@
         margin: 1rem 0;
     }
 
-    .diffheader > span {
+    .diffheader>span {
         font-weight: bold;
         font-size: 1.2em;
     }
@@ -108,5 +115,14 @@
     .create-pr {
         float: right;
     }
-}
 
+    .files-to-delete {
+        background: @diffRemovedBackground;
+        font-weight: bold;
+    }
+
+    .files-to-restore {
+        background: @diffAddedBackground;
+        font-weight: bold;
+    }
+}

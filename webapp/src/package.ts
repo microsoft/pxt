@@ -304,7 +304,11 @@ export class EditorPackage {
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
-        return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
+        return this.updateConfigAsync(cfg => {
+            cfg.files = cfg.files.filter(f => f != n)
+            if (cfg.testFiles)
+                cfg.testFiles = cfg.testFiles.filter(f => f != n)
+        })
     }
 
     setContentAsync(n: string, v: string): Promise<void> {
