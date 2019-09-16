@@ -710,7 +710,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     } else {
         // special case override README.md if empty
         let templateREADME = templateFiles["README.md"];
-        if (currFiles["README.md"])
+        if (currFiles["README.md"] && currFiles["README.md"].trim())
             templateREADME = undefined;
         // current files override defaults
         U.jsonMergeFrom(templateFiles, currFiles);
