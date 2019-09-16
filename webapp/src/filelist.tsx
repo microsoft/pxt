@@ -312,7 +312,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
         if (!repoid) return;
 
         pxt.tickEvent("github.filelist.create.export");
-        core.showLoading("creategithub", lf("creating {0} repository...", repoid))
+        core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
         try {
             await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
         } finally {

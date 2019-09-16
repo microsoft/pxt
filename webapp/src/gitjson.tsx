@@ -567,13 +567,13 @@ export class Editor extends srceditor.Editor {
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
                             <sui.Button title={lf("Go back")} icon="arrow left" text={lf("Go back")} textClass="landscape only" tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter} />
-                            <sui.Link className="ui button" icon="github" href={url} text="GitHub" textClass="landscape only" title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
-                            {!needsToken ? <sui.Link className="ui button" icon="users" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         </div>
                     </div>
                     <div className="rightHeader">
                         <sui.Button icon={`${this.needsPull !== false ? "down arrow" : "check"} ${this.needsPull !== false ? "positive" : ""}`}
                             text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
+                        {!needsToken ? <sui.Link className="ui button" icon="users" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 {!pxt.github.token ? <div className="ui info message join">
