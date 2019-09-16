@@ -608,8 +608,8 @@ data.mountVirtualApi("open-meta", {
         p = data.stripProtocol(p)
         const pk = mainEditorPkg()
         const f = pk.lookupFile(p)
-        const hasGit = !!(pk.header && pk.header.githubId && f.epkg == pk)
         if (!f) return {}
+        const hasGit = !!(pk.header && pk.header.githubId && f.epkg == pk)
 
         const fs: FileMeta = {
             isReadonly: f.isReadonly(),
