@@ -12,7 +12,7 @@ Computer Science Education week is happening again this year and it's coming soo
 September 12th, 2019 by [shakao](https://github.com/shakao)
 
 We’re super excited to announce the first-ever MakeCode Arcade game jam!
-**[Continue reading this blog post](/blog//arcade/game-jam)**
+**[Continue reading this blog post](/blog/arcade/game-jam)**
 
 ## [LEGO MINDSTORMS update](/blog/lego/09-06-2019)
 
