@@ -2,7 +2,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as core from "./core";
-import { InputHandler } from "./snippetBuilderInputHandler";
 
 interface CoreDialogState {
     visible?: boolean;
