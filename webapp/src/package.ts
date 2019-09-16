@@ -304,7 +304,11 @@ export class EditorPackage {
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
-        return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
+        return this.updateConfigAsync(cfg => {
+            cfg.files = cfg.files.filter(f => f != n)
+            if (cfg.testFiles)
+                cfg.testFiles = cfg.testFiles.filter(f => f != n)
+        })
     }
 
     setContentAsync(n: string, v: string): Promise<void> {
@@ -606,14 +610,16 @@ export interface FileMeta {
 data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = getEditorPkg(mainPkg).lookupFile(p)
+        const pk = mainEditorPkg()
+        const f = pk.lookupFile(p)
         if (!f) return {}
+        const hasGit = !!(pk.header && pk.header.githubId && f.epkg == pk)
 
-        let fs: FileMeta = {
+        const fs: FileMeta = {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
             numErrors: f.numDiagnosticsOverride,
-            isGitModified: f.baseGitContent != null && f.baseGitContent != f.content
+            isGitModified: hasGit && f.baseGitContent != f.content
         }
 
         if (fs.numErrors == null) {

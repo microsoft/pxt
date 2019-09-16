@@ -6051,17 +6051,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         argString: "<target-directory>"
     }, exportCppAsync);
 
-    p.defineCommand({
-        name: "testdiff",
-        help: "Test diff",
-        advanced: true,
-        argString: "<stringA> <stringB>"
-    }, (parsed) => {
-        pxt.github.testdiff(parsed.args[0], parsed.args[1])
-        return Promise.resolve()
-    });
-
-
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
     }

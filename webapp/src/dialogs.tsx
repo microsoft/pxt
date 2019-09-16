@@ -62,11 +62,7 @@ export function showGithubLoginAsync() {
                         pxt.storage.setLocal("githubtoken", hextoken)
                     }, err => {
                         pxt.github.token = ""
-                        if (err.statusCode == 401) {
-                            core.errorNotification(lf("GitHub didn't accept token"))
-                        } else if (err.statusCode == 404) {
-                            core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
-                        } else if (err.statusCode == 422) {
+                        if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
                                 core.infoNotification(lf("Token validated and stored"))
                             else
@@ -79,6 +75,18 @@ export function showGithubLoginAsync() {
         }
         return Promise.resolve()
     })
+}
+
+export function showGithubTokenError(err: any) {
+    if (err.statusCode == 401) {
+        core.errorNotification(lf("GitHub didn't accept token"))
+        return true
+    } else if (err.statusCode == 404) {
+        core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
+        return true
+    } else {
+        return false
+    }
 }
 
 export function githubFooter(msg: string, close: () => void) {
@@ -597,7 +605,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name.")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
-                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description.")} class="fluid" />
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description.")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
             </div>
         },
@@ -611,6 +619,14 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                    }, err => {
+                        if (!showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.errorNotification(lf("Repo '{0}' already exists.", name))
+                            else
+                                core.errorNotification(err.message)
+                        }
+                        return "";
                     })
             } else {
                 core.errorNotification(lf("Invalid repo name."))

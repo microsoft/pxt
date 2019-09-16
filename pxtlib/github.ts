@@ -771,12 +771,6 @@ namespace pxt.github {
 
     type UArray = Uint32Array | Uint16Array
 
-    export function testdiff(fileA: string, fileB: string) {
-        console.log("test", fileA, fileB)
-        const res = diff(fileA.replace(/./g, x => x + "\n"), fileB.replace(/./g, x => x + "\n"))
-        console.log(res ? res.join("\n") : "null")
-    }
-
     export interface DiffOptions {
         context?: number; // lines of context; defaults to 3
         ignoreWhitespace?: boolean;
@@ -785,8 +779,13 @@ namespace pxt.github {
 
     // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
     export function diff(fileA: string, fileB: string, options: DiffOptions = {}) {
-        const a = fileA.split(/\r?\n/)
-        const b = fileB.split(/\r?\n/)
+        if (options.ignoreWhitespace) {
+            fileA = fileA.replace(/[\r\n]+$/, "")
+            fileB = fileB.replace(/[\r\n]+$/, "")
+        }
+
+        const a = fileA ? fileA.split(/\r?\n/) : []
+        const b = fileB ? fileB.split(/\r?\n/) : []
 
         const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
         const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array

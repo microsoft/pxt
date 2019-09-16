@@ -440,39 +440,69 @@ export class Editor extends srceditor.Editor {
                 </tr>)
         })
 
+        let deletedFiles: string[] = []
+        let addedFiles: string[] = []
+        if (f.name == pxt.CONFIG_NAME) {
+            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
+            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
+            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
+            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+        }
+
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
-        cache.revert = () => {
-            core.confirmAsync({
+        cache.revert = async () => {
+            const res = await core.confirmAsync({
                 header: lf("Would you like to revert changes to {0}?", f.name),
                 body: lf("Changes will be lost for good. No undo."),
                 agreeLbl: lf("Revert"),
                 agreeClass: "red",
                 agreeIcon: "trash",
-            }).then(res => {
-                if (res) {
-                    f.setContentAsync(f.baseGitContent)
-                        .then(() => {
-                            if (f.name == pxt.CONFIG_NAME)
-                                this.parent.reloadHeaderAsync()
-                            else
-                                // force refresh of ourselves
-                                this.parent.setState({})
-                        })
+            })
+
+            if (!res)
+                return
+
+            if (f.baseGitContent == null) {
+                await pkg.mainEditorPkg().removeFileAsync(f.name)
+                await this.parent.reloadHeaderAsync()
+            } else if (f.name == pxt.CONFIG_NAME) {
+                const gs = this.getGitJson()
+                for (let d of deletedFiles) {
+                    const prev = workspace.lookupFile(gs.commit, d)
+                    pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
                 }
-            }).done()
+                for (let d of addedFiles) {
+                    delete pkg.mainEditorPkg().files[d]
+                }
+                await f.setContentAsync(f.baseGitContent)
+                await this.parent.reloadHeaderAsync()
+            } else {
+                await f.setContentAsync(f.baseGitContent)
+                // force refresh of ourselves
+                this.parent.setState({})
+            }
         }
-        if (f.baseGitContent == null)
-            cache.revert = null
 
         cache.diff = (
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     <span>{f.name}</span>
-                    {!cache.revert ? undefined :
-                        <sui.Button className="small" icon="undo" text={lf("Revert")}
-                            ariaLabel={lf("Revert file")} title={lf("Revert file")}
-                            textClass={"landscape only"} onClick={cache.revert} />}
+                    <sui.Button className="small" icon="undo" text={lf("Revert")}
+                        ariaLabel={lf("Revert file")} title={lf("Revert file")}
+                        textClass={"landscape only"} onClick={cache.revert} />
+                    {deletedFiles.length == 0 ? undefined :
+                        <p>
+                            {lf("Reverting this file will also restore:")}
+                            {" "}
+                            <span className="files-to-restore">{deletedFiles.join(", ")}</span>
+                        </p>}
+                    {addedFiles.length == 0 ? undefined :
+                        <p>
+                            {lf("Reverting this file will also remove:")}
+                            {" "}
+                            <span className="files-to-delete">{addedFiles.join(", ")}</span>
+                        </p>}
                 </div>
                 {isBlocks ? <div className="ui segment"><p>{lf("Some blocks changed")}</p></div> : diffJSX.length ?
                     <div className="ui segment diff">
@@ -553,7 +583,7 @@ export class Editor extends srceditor.Editor {
                 </div> : undefined}
                 {this.needsCommitMessage ? <div className="ui warning message">
                     <div className="content">
-                        {lf("You need to commit your changes in order to pull changes from GitHub.")}
+                        {lf("You need to commit your changes first, before you can pull from GitHub.")}
                     </div>
                 </div> : undefined}
 
