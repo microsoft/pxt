@@ -46,7 +46,7 @@ export class Editor extends srceditor.Editor {
         return f.content
     }
 
-    hasHistory() { return false; }
+    hasHistory() { return true; }
 
     hasEditorToolbar() {
         return false
@@ -197,7 +197,6 @@ export class Editor extends srceditor.Editor {
         pxt.tickEvent("github.commit");
         this.needsCommitMessage = false;
         await this.commitAsync();
-        this.goBack();
     }
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
@@ -275,7 +274,7 @@ export class Editor extends srceditor.Editor {
             disagreeLbl: lf("Cancel"),
             jsxd: () => <div className="grouped fields">
                 <label>{lf("Choose a release version that describes the changes you made to the code.")}
-                    <sui.Link href="/github/semver" icon="help circle" target="_blank" role="button" title={lf("Learn about version numbers.")} />
+                    <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn about version numbers.")} />
                 </label>
                 <div className="field">
                     <div className="ui radio checkbox">
@@ -655,8 +654,7 @@ export class Editor extends srceditor.Editor {
                                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.description} onChange={this.handleDescriptionChange} />
                             </div>
                             {<div className="field">
-                                <p>{lf("Commit directly to the {0} branch.", githubId.tag || "master")}
-                                    <sui.Link href="/github/commit" icon="help circle" target="_blank" role="button" title={lf("A commit is a snapshot of your code stored in GitHub.")} /></p>
+                                <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
                             </div>}
                             <div className="ui field">
                                 <sui.Button className="primary" text={lf("Commit changes")} disabled={needsToken} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
@@ -670,7 +668,7 @@ export class Editor extends srceditor.Editor {
                                 <div className="ui field">
                                     <p>
                                         {lf("Bump up the version number and create a release on GitHub.")}
-                                        <sui.Link href="/github/release" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
+                                        <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
                                     </p>
                                     <sui.Button className="primary" text={lf("Create release")} disabled={needsToken} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                                 </div> : undefined}

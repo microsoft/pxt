@@ -48,7 +48,7 @@ You can invite users to become collaborators to this repository. This will allow
 To edit this repository in MakeCode,
 
 * open @HOMEURL@
-* click on **Import** then click on **Import URL*
+* click on **Import** then click on **Import URL**
 * paste the repository URL and click import
 
 ## Supported targets
@@ -239,6 +239,7 @@ cache:
         configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+        configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
 
         if (removeSubdirs)
             for (let k of Object.keys(files)) {
