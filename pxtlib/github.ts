@@ -259,7 +259,7 @@ namespace pxt.github {
             allowHttpErrors: true,
             data: data
         }).then(resp => {
-            if (resp.statusCode == 200 || resp.statusCode == 201 || resp.statusCode == 204)
+            if (resp.statusCode == 200 || resp.statusCode == 202 || resp.statusCode == 201 || resp.statusCode == 204)
                 return resp.json
 
             let e = new Error(lf("Cannot create object at github.com/{0}; code: {1}",
@@ -364,6 +364,30 @@ namespace pxt.github {
             sha: commitid
         })
         return branchName
+    }
+
+    export async function forkRepoAsync(repopath: string, commitid: string, pref = "pr-") {
+        const res = await ghPostAsync(repopath + "/forks", {})
+        const repoInfo = mkRepo(res, null)
+        const endTm = Date.now() + 5 * 60 * 1000
+        let refs: RefsResult = null
+        while (!refs && Date.now() < endTm) {
+            await Promise.delay(1000)
+            await listRefsExtAsync(repoInfo.fullName, "heads")
+                .then(r => {
+                    refs = r
+                }, err => {
+                    // not created
+                })
+        }
+        if (!refs)
+            throw new Error(lf("Timeout waiting for fork"))
+        let n = 1
+        while (refs.refs[pref + n])
+            n++
+        const branchName = pref + n
+        await createNewBranchAsync(repoInfo.fullName, branchName, commitid)
+        return repoInfo.fullName + "#" + branchName
     }
 
     export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
