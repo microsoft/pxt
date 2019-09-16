@@ -17,6 +17,7 @@ interface DiffCache {
 export class Editor extends srceditor.Editor {
     private description: string = undefined;
     private needsCommitMessage = false;
+    private needsLicenseMessage = false;
     private diffCache: pxt.Map<DiffCache> = {};
     private needsPull: boolean = null;
     private previousCfgKey = "";
@@ -500,6 +501,8 @@ export class Editor extends srceditor.Editor {
             if (!res)
                 return
 
+            this.needsCommitMessage = false; // maybe we no longer do
+
             if (f.baseGitContent == null) {
                 await pkg.mainEditorPkg().removeFileAsync(f.name)
                 await this.parent.reloadHeaderAsync()
@@ -598,6 +601,8 @@ export class Editor extends srceditor.Editor {
         // this will show existing PR if any
         const prUrl = !gs.isFork && master ? null :
             `https://github.com/${githubId.fullName}/compare/${githubId.tag}?expand=1`
+        this.needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
+            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -620,6 +625,17 @@ export class Editor extends srceditor.Editor {
                 {this.needsCommitMessage ? <div className="ui warning message">
                     <div className="content">
                         {lf("You need to commit your changes first, before you can pull from GitHub.")}
+                    </div>
+                </div> : undefined}
+                {this.needsLicenseMessage ? <div className="ui warning message">
+                    <div className="content">
+                        {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
+                        {" "}
+                        <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}`}
+                            role="button" className="ui link create-pr"
+                            target="_blank" rel="noopener noreferrer">
+                            {lf("Add license")}
+                        </a>
                     </div>
                 </div> : undefined}
 
