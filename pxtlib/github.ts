@@ -538,7 +538,10 @@ namespace pxt.github {
         return ghPostAsync("https://api.github.com/user/repos", {
             name,
             description,
-            private: false,
+            private: false, // default
+            has_issues: true, // default
+            has_projects: false,
+            has_wiki: false,
         }).then(v => mkRepo(v, null))
     }
 
