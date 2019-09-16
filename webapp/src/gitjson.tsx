@@ -630,7 +630,7 @@ export class Editor extends srceditor.Editor {
                     <div className="content">
                         {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
                         {" "}
-                        <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}`}
+                        <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
                             role="button" className="ui link create-pr"
                             target="_blank" rel="noopener noreferrer">
                             {lf("Add license")}
