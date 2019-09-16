@@ -45,7 +45,7 @@ export class Editor extends srceditor.Editor {
         return f.content
     }
 
-    hasHistory() { return false; }
+    hasHistory() { return true; }
 
     hasEditorToolbar() {
         return false
