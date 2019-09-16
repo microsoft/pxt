@@ -331,6 +331,8 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
 
         // todo: current branch
         const ghid = pxt.github.parseRepoId(githubId);
+        const mainPkg = pkg.mainEditorPkg()
+        const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
 
         return <a
             key="github-status"
@@ -343,6 +345,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
             onKeyDown={sui.fireClickOnEnter}>
             <i className="github icon" />
             {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("create GitHub repository")}
+            {meta && meta.numFilesGitModified ? ` ${meta.numFilesGitModified}↑` : ''}
         </a>
     }
 }
