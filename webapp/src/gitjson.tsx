@@ -553,7 +553,7 @@ export class Editor extends srceditor.Editor {
                 </div> : undefined}
                 {this.needsCommitMessage ? <div className="ui warning message">
                     <div className="content">
-                        {lf("You need to commit your changes in order to pull changes from GitHub.")}
+                        {lf("You need to commit your changes first, before you can pull from GitHub.")}
                     </div>
                 </div> : undefined}
 
