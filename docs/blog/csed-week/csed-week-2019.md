@@ -24,11 +24,11 @@ Easy to follow, quick reference cards for game design and coding concepts -
 
 ### 2. Tutorials
 
-* [Eat the Doughnut](https://arcade.makecode.com/#tutorial:tutorials/eat-the-doughnut)
-* [Simple Maze](https://arcade.makecode.com/#tutorial:tutorials/simple-maze)
-* [Happy Flower](https://arcade.makecode.com/#tutorial:tutorials/happy-flower)
-* [Lemon Leak](https://arcade.makecode.com/#tutorial:tutorials/lemon-leak)
-* [Galga](https://arcade.makecode.com/#tutorial:tutorials/galga)
+* [Chase the Pizza](https://arcade.makecode.com/#tutorial:/tutorials/chase-the-pizza)
+* [Simple Maze](https://arcade.makecode.com/#tutorial:/tutorials/simple-maze)
+* [Happy Flower](https://arcade.makecode.com/#tutorial:/tutorials/happy-flower)
+* [Lemon Leak](https://arcade.makecode.com/#tutorial:/tutorials/lemon-leak)
+* [Galga](https://arcade.makecode.com/#tutorial:/tutorials/galga)
 
 ### 3. Games coded with blocks
 
@@ -72,11 +72,11 @@ Guides to introduce students to the micro:bit hardware -
 
 Short, step-by-step tutorials for students to go through on their own -
 
-* [Flashing Heart](https://makecode.microbit.org/#tutorial:projects/flashing-heart) – create a simple flashing heart animation on your micro:bit
-* [Name Tag](https://makecode.microbit.org/#tutorial:projects/name-tag) – display your name on the micro:bit to use it as a name tag
-* [Smiley Buttons](https://makecode.microbit.org/#tutorial:projects/smiley-buttons) – program the buttons on the micro:bit to display a smiley or sad face
-* [Dice](https://makecode.microbit.org/#tutorial:projects/dice) – shake the micro:bit and display a random number
-* [Rock Paper Scissors](https://makecode.microbit.org/#tutorial:projects/rock-paper-scissors) – create this fun game using a micro:bit and play with friends!
+* [Flashing Heart](https://makecode.microbit.org/#tutorial:/projects/flashing-heart) – create a simple flashing heart animation on your micro:bit
+* [Name Tag](https://makecode.microbit.org/#tutorial:/projects/name-tag) – display your name on the micro:bit to use it as a name tag
+* [Smiley Buttons](https://makecode.microbit.org/#tutorial:/projects/smiley-buttons) – program the buttons on the micro:bit to display a smiley or sad face
+* [Dice](https://makecode.microbit.org/#tutorial:/projects/dice) – shake the micro:bit and display a random number
+* [Rock Paper Scissors](https://makecode.microbit.org/#tutorial:/projects/rock-paper-scissors) – create this fun game using a micro:bit and play with friends!
 
 ### 3. Projects
 
@@ -104,11 +104,11 @@ Guides to introduce students to the Circuit Playground Express -
 
 Short, step-by-step tutorials for students to go through on their own -
 
-* [Siren](https://makecode.adafruit.com/#tutorial:tutorials/siren) – turn your Circuit Playground Express into a police siren complete with sound and flashing lights!
-* [Magic Wand](https://makecode.adafruit.com/#tutorial:tutorials/magic-wand) – create an animation and sound effect when you cast a magic spell
-* [Clap Lights](https://makecode.adafruit.com/#tutorial:tutorials/clap-lights) – turn on the lights with a clap!
-* [Loudness Necklace](https://makecode.adafruit.com/#tutorial:tutorials/loudness-necklace) – create a necklace with your Circuit Playground Express that triggers lights when you talk
-* [Nightlight](https://makecode.adafruit.com/#tutorial:tutorials/night-light) – turn your Circuit Playground Express into a softly glowing nightlight
+* [Siren](https://makecode.adafruit.com/#tutorial:/tutorials/siren) – turn your Circuit Playground Express into a police siren complete with sound and flashing lights!
+* [Magic Wand](https://makecode.adafruit.com/#tutorial:/tutorials/magic-wand) – create an animation and sound effect when you cast a magic spell
+* [Clap Lights](https://makecode.adafruit.com/#tutorial:/tutorials/clap-lights) – turn on the lights with a clap!
+* [Loudness Necklace](https://makecode.adafruit.com/#tutorial:/tutorials/loudness-necklace) – create a necklace with your Circuit Playground Express that triggers lights when you talk
+* [Nightlight](https://makecode.adafruit.com/#tutorial:/tutorials/night-light) – turn your Circuit Playground Express into a softly glowing nightlight
 
 ### 3. Projects
 
@@ -128,11 +128,11 @@ Facilitated making and coding activities for students -
 
 Short, step-by-step tutorials for students to go through on their own -
 
-* [Chicken Rain](https://minecraft.makecode.com/#tutorial:tutorials/chicken-rain) – make it rain chickens in Minecraft!
-* [Flower Trail](https://minecraft.makecode.com/#tutorial:tutorials/flower-trail) – make a trail of flowers follow you wherever you go
-* [Agent Move](https://minecraft.makecode.com/#tutorial:tutorials/agent-moves) – get your little Agent robot to follow your commands
-* [Agent Build](https://minecraft.makecode.com/#tutorial:tutorials/agent-build) – have your Agent build you a house!
-* [Mega Jump](https://minecraft.makecode.com/#tutorial:tutorials/mega-jump) – give yourself super powers to jump super high!
+* [Chicken Rain](https://minecraft.makecode.com/#tutorial:/tutorials/chicken-rain) – make it rain chickens in Minecraft!
+* [Flower Trail](https://minecraft.makecode.com/#tutorial:/tutorials/flower-trail) – make a trail of flowers follow you wherever you go
+* [Agent Move](https://minecraft.makecode.com/#tutorial:/tutorials/agent-moves) – get your little Agent robot to follow your commands
+* [Agent Build](https://minecraft.makecode.com/#tutorial:/tutorials/agent-build) – have your Agent build you a house!
+* [Mega Jump](https://minecraft.makecode.com/#tutorial:/tutorials/mega-jump) – give yourself super powers to jump super high!
 
 ### 2. Code Samples
 
@@ -153,12 +153,12 @@ Examples of different programs and game mods students can run and customize -
 
 Short, step-by-step tutorials for students to go through on their own -
 
-* [Wake Up!](https://makecode.mindstorms.com/#tutorial:tutorials/wake-up) – show your EV3 brick waking up
-* [Animation](https://makecode.mindstorms.com/#tutorial:tutorials/make-an-animation) – create a custom animation to show
-* [Music Brick](https://makecode.mindstorms.com/#tutorial:tutorials/music-brick) – transform your EV3 into a musical instrument
-* [Run Motors](https://makecode.mindstorms.com/#tutorial:tutorials/run-motors) – control the motors of your robot
-* [Red Light, Green Light](https://makecode.mindstorms.com/#tutorial:tutorials/redlight-greenlight) – play red light, green light with the color sensor
-* [Line Following](https://makecode.mindstorms.com/#tutorial:tutorials/line-following) – have your robot follow a line
+* [Wake Up!](https://makecode.mindstorms.com/#tutorial:/tutorials/wake-up) – show your EV3 brick waking up
+* [Animation](https://makecode.mindstorms.com/#tutorial:/tutorials/make-an-animation) – create a custom animation to show
+* [Music Brick](https://makecode.mindstorms.com/#tutorial:/tutorials/music-brick) – transform your EV3 into a musical instrument
+* [Run Motors](https://makecode.mindstorms.com/#tutorial:/tutorials/run-motors) – control the motors of your robot
+* [Red Light, Green Light](https://makecode.mindstorms.com/#tutorial:/tutorials/redlight-greenlight) – play red light, green light with the color sensor
+* [Line Following](https://makecode.mindstorms.com/#tutorial:/tutorials/line-following) – have your robot follow a line
 
 **Note:** you will need to make sure your LEGO MINDSTORMS EV3 brick is updated with the latest firmware. Instructions on how to do this is posted [here](https://makecode.mindstorms.com/troubleshoot).
 
