@@ -622,14 +622,14 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
-                                core.errorNotification(lf("Repo '{0}' already exists.", name))
+                                core.errorNotification(lf("Repository '{0}' already exists.", repoName))
                             else
                                 core.errorNotification(err.message)
                         }
                         return "";
                     })
             } else {
-                core.errorNotification(lf("Invalid repo name."))
+                core.errorNotification(lf("Invalid repository name."))
             }
         }
         return "";
