@@ -570,14 +570,11 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button className="ui icon button" icon={`${this.needsPull ? "down arrow" : "check"} ${this.needsPull ? "positive" : ""}`}
+                        <sui.Button className="ui icon button" icon={`${this.needsPull !== false ? "down arrow" : "check"} ${this.needsPull !== false ? "positive" : ""}`}
                             text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
                 {!pxt.github.token ? <div className="ui info message join">
-                    <div className="header">
-                        {lf("Join GitHub today")}
-                    </div>
                     <p>{lf("Host your code on GitHub and work together on projects.")}</p>
                     <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
                 </div> : undefined}
