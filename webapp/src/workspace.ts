@@ -712,6 +712,17 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         currFiles = templateFiles;
     }
 
+    // special case, add test.ts in tests if needed
+    if (currFiles["test.ts"]) {
+        const pxtjson = JSON.parse(currFiles[pxt.CONFIG_NAME]);
+        const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
+        if (testFiles.indexOf("test.ts") < 0) {
+            testFiles.push("test.ts");
+            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 2);
+        }
+    }
+
+    // save
     await saveAsync(hd, currFiles)
     await commitAsync(hd, "Auto-initialized.", "", Object.keys(currFiles))
 
@@ -722,7 +733,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         if (k == GIT_JSON || k == pxt.SIMSTATE_JSON)
             continue
         if (allfiles.indexOf(k) < 0)
-            delete currFiles[k]
+            delete currFiles[k];
     }
 
     await saveAsync(hd, currFiles)
