@@ -644,7 +644,8 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     })
     await saveAsync(hd, files);
     await initializeGithubRepoAsync(hd, repoid, false);
-    await pullAsync(hd);
+    // race condition, don't pull right away 
+    // await pullAsync(hd);
 }
 
 
@@ -718,7 +719,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
         if (testFiles.indexOf("test.ts") < 0) {
             testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 2);
+            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 4);
         }
     }
 
