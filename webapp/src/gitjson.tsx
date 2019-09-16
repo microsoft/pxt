@@ -20,6 +20,7 @@ export class Editor extends srceditor.Editor {
     private diffCache: pxt.Map<DiffCache> = {};
     private needsPull: boolean = null;
     private previousCfgKey = "";
+    private triedFork = false;
 
     constructor(public parent: pxt.editor.IProjectView) {
         super(parent)
@@ -207,17 +208,53 @@ export class Editor extends srceditor.Editor {
         this.description = v;
     }
 
+    private async forkAsync(fromError: boolean) {
+        const parsed = this.parsedRepoId()
+        const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
+        const res = await core.confirmAsync({
+            header: lf("Do you want to fork {0}?", parsed.fullName),
+            body: pref +
+                lf("Forking repo creates a copy under your account. You can later ask {0} to include your changes via a pull request.",
+                    parsed.owner),
+            agreeLbl: "Fork",
+            agreeIcon: "copy outline"
+        })
+        if (!res)
+            return
+
+        core.showLoading("fork", lf("forking repo (this may take a minute or two)..."))
+        try {
+            const gs = this.getGitJson();
+            const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
+            const header = this.parent.state.header
+            header.githubId = newGithubId
+            gs.repo = header.githubId
+            await this.saveGitJsonAsync(gs)
+        } catch (e) {
+            this.handleGithubError(e)
+        } finally {
+            core.hideLoading("fork")
+        }
+        this.parent.setState({})
+    }
+
     private handleGithubError(e: any) {
-        pxt.reportException(e);
         const statusCode = parseInt(e.statusCode);
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (statusCode == 401)
             core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
-        else if (e.needsWritePermission)
-            core.warningNotification(lf("You don't have write permission."));
-        else
+        else if (e.needsWritePermission) {
+            if (this.triedFork) {
+                core.warningNotification(lf("You don't have write permission."));
+            } else {
+                core.hideDialog()
+                this.forkAsync(true).done()
+            }
+        } else {
+            pxt.reportException(e);
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
+        }
     }
 
     private async bumpAsync() {
