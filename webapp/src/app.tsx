@@ -2791,7 +2791,7 @@ export class ProjectView
                     if (pxt.github.isGithubId(id))
                         importGithubProject(id);
                     else
-                        loadHeaderBySharedId(id);
+                        loadHeaderBySharedIdAsync(id).done();
                 }
             }, (e) => {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -3576,7 +3576,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
                 importGithubProject(hash.arg);
             else
-                loadHeaderBySharedId(hash.arg);
+                loadHeaderBySharedIdAsync(hash.arg).done();
             return true;
         case "sandboxproject":
         case "project":
@@ -3622,7 +3622,10 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 async function importGithubProject(id: string) {
     core.showLoading("loadingheader", lf("importing github project..."));
     try {
-        let hd = await workspace.importGithubAsync(id)
+        // try to find project with same id
+        let hd = workspace.getHeaders().filter(h => h.githubId == id, 1)[0];
+        if (!hd)
+            hd = await workspace.importGithubAsync(id)
         let text = await workspace.getTextAsync(hd.id)
         if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
             let ok = await core.confirmAsync({
@@ -3645,12 +3648,17 @@ async function importGithubProject(id: string) {
     }
 }
 
-function loadHeaderBySharedId(id: string) {
+function loadHeaderBySharedIdAsync(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
-    workspace.installByIdAsync(id)
-        .then(hd => theEditor.loadHeaderAsync(hd, null))
+
+    // try to find project with same id
+    const hdid = workspace.getHeaders().filter(h => h.pubId == id, 1)[0];
+
+    let p = hdid ? Promise.resolve(hdid) : workspace.installByIdAsync(id);
+    p.then(hd => theEditor.loadHeaderAsync(hd, null))
         .catch(core.handleNetworkError)
         .finally(() => core.hideLoading("loadingheader"));
+    return p;
 }
 
 const handleHashChange = (e: HashChangeEvent) => {

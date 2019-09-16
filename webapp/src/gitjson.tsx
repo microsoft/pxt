@@ -196,7 +196,6 @@ export class Editor extends srceditor.Editor {
         pxt.tickEvent("github.commit");
         this.needsCommitMessage = false;
         await this.commitAsync();
-        this.goBack();
     }
 
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
