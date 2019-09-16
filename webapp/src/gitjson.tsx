@@ -5,6 +5,7 @@ import * as srceditor from "./srceditor"
 import * as sui from "./sui"
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
+import * as coretsx from "./coretsx";
 
 interface DiffCache {
     gitFile: string;
@@ -220,26 +221,58 @@ export class Editor extends srceditor.Editor {
     }
 
     private async bumpAsync() {
-        const newVer = await core.promptAsync({
-            header: lf("Release version?"),
-            body: lf("Please specify version for your new release. You can leave it at default."),
-            initialValue: workspace.bumpedVersion(pkg.mainPkg.config),
+        const v = pxt.semver.parse(pkg.mainPkg.config.version || "0.0.0")
+        const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
+        const vminor = pxt.semver.parse(pxt.semver.stringify(v)); vminor.minor++; vminor.patch = 0;
+        const vpatch = pxt.semver.parse(pxt.semver.stringify(v)); vpatch.patch++;
+
+        let bumpType: string = "patch";
+        function onBumpChange(e: React.ChangeEvent<HTMLInputElement>) {
+            bumpType = e.currentTarget.name;
+            coretsx.forceRender();
+        }
+        const ok = await core.confirmAsync({
+            header: lf("Pick a release version"),
             agreeLbl: lf("Create release"),
-            disagreeLbl: lf("Cancel")
+            disagreeLbl: lf("Cancel"),
+            jsxd: () => <div className="grouped fields">
+                <label>{lf("Choose a release version that describes the changes you made to the code.")}
+                    <sui.Link href="/github/semver" icon="help circle" target="_blank" role="button" title={lf("Learn about version numbers.")} />
+                </label>
+                <div className="field">
+                    <div className="ui radio checkbox">
+                        <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
+                        <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
+                    </div>
+                </div>
+                <div className="field">
+                    <div className="ui radio checkbox">
+                        <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
+                        <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
+                    </div>
+                </div>
+                <div className="field">
+                    <div className="ui radio checkbox">
+                        <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
+                        <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
+                    </div>
+                </div>
+            </div>
         })
 
-        if (!newVer)
+        if (!ok)
             return
 
-        if (!pxt.semver.tryParse(newVer)) {
-            core.warningNotification(lf("Invalid version number"))
-            return
-        }
-
-        core.showLoading("bumpheader", lf("creating release..."));
+        let newv = vpatch;
+        if (bumpType == "major")
+            newv = vmajor;
+        else if (bumpType == "minor")
+            newv = vminor;
+        const newVer = pxt.semver.stringify(newv)
+        core.showLoading("bumpheader", lf("creating release {0}...", newVer));
         try {
             const header = this.parent.state.header;
-            await workspace.bumpAsync(header)
+            await workspace.bumpAsync(header, newVer)
             await this.maybeReloadAsync()
             core.hideLoading("bumpheader");
             core.infoNotification(lf("GitHub release created."))
