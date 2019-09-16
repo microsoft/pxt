@@ -613,7 +613,7 @@ export class Editor extends srceditor.Editor {
                     <div className="rightHeader">
                         <sui.Button icon={`${this.needsPull !== false ? "down arrow" : "check"} ${this.needsPull !== false ? "positive" : ""}`}
                             text={lf("Pull changes")} textClass={lf("landscape only")} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
-                        {!needsToken ? <sui.Link className="ui button" icon="users" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
