@@ -76,6 +76,12 @@ export class Editor extends srceditor.Editor {
         return file.name === pxt.github.GIT_JSON;
     }
 
+    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
+        // force refresh
+        return super.loadFileAsync(file, hc)
+            .then(() => this.parent.setState({}));
+    }
+
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
         const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
         await f.setContentAsync(JSON.stringify(gs, null, 4))

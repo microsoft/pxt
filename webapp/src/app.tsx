@@ -492,7 +492,7 @@ export class ProjectView
 
     openPreviousEditor() {
         // try history first!
-        const hist = this.settings.fileHistory[this.settings.fileHistory.length - 1];
+        const hist = this.settings.fileHistory[1];
         if (hist) {
             const f = pkg.mainEditorPkg().lookupFile(hist.name);
             if (f) {
@@ -774,7 +774,7 @@ export class ProjectView
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
-        return this.allEditors.filter(e => e.acceptsFile(f))[0]
+        return this.allEditors.filter(e => e.acceptsFile(f), 1)[0]
     }
 
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
