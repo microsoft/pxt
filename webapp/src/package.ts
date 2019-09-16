@@ -607,8 +607,8 @@ data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
         const pk = mainEditorPkg()
-        const hasGit = !!(pk.header && pk.header.githubId)
         const f = pk.lookupFile(p)
+        const hasGit = !!(pk.header && pk.header.githubId && f.epkg == pk)
         if (!f) return {}
 
         const fs: FileMeta = {
