@@ -10,6 +10,16 @@ We’ve organized this list by product:
 
 Hey, this year MakeCode Arcade is available! Try out some of these game coding ideas!
 
+### ~ hint
+
+#### Make a game in 20 minutes
+
+If you haven't used MakeCode Arcade before, take a look at this video and see how a complete single player game is made in just 20 minutes:
+
+https://www.youtube.com/watch?v=7mv43zXzJkY
+
+### ~
+
 ### 1. Quick start game coding cards
 
 Easy to follow, quick reference cards for game design and coding concepts -
