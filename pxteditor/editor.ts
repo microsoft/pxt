@@ -74,7 +74,6 @@ namespace pxt.editor {
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
-        updatingEditorFile?: boolean;
         pokeUserComponent?: string;
 
         highContrast?: boolean;

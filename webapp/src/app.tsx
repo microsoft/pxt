@@ -118,6 +118,7 @@ export class ProjectView
     private firstRun: boolean;
 
     private runToken: pxt.Util.CancellationToken;
+    private updatingEditorFile: boolean;
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -371,7 +372,7 @@ export class ProjectView
     }
 
     openPython(giveFocusOnLoading = true) {
-        if (this.state.updatingEditorFile) return; // already transitioning
+        if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isPythonActive()) {
             if (this.state.embedSimView) {
@@ -404,7 +405,7 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        if (this.state.updatingEditorFile) return; // already transitioning
+        if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
@@ -434,7 +435,7 @@ export class ProjectView
     }
 
     openBlocks() {
-        if (this.state.updatingEditorFile) return; // already transitioning
+        if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -778,7 +779,7 @@ export class ProjectView
 
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
         if (!this.state.active
-            || this.state.updatingEditorFile
+            || this.updatingEditorFile
             || this.state.currFile == this.editorFile && !editorOverride) {
             if (this.state.editorPosition && this.editorFile == this.state.editorPosition.file) {
                 this.editor.setViewState(this.state.editorPosition)
@@ -788,7 +789,8 @@ export class ProjectView
         }
 
         let simRunning = false;
-        return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
+        this.updatingEditorFile = true;
+        return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), Promise.resolve())
             .then(() => {
                 simRunning = this.state.simState != pxt.editor.SimState.Stopped;
                 if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
@@ -832,13 +834,13 @@ export class ProjectView
 
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
             })
-            .finally(() => this.setStateAsync({ updatingEditorFile: false }))
+            .finally(() => this.updatingEditorFile = false)
             .then(() => {
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-            }));
+            });
     }
 
     /**
