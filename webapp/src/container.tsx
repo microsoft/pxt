@@ -617,6 +617,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
+        this.collapse();
     }
 
     private setUrl(url: string) {
