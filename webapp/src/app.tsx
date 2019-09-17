@@ -427,7 +427,7 @@ export class ProjectView
             const files = pkg.mainEditorPkg().files;
             let f = files["main.ts"];
             if (!f) // find first .ts file
-                f = files[Object.keys(files).filter(fn => /\.ts$/.test(fn), 1)[0]];
+                f = files[Object.keys(files).filter(fn => /\.ts$/.test(fn))[0]];
             this.setFile(f)
         }
 
@@ -774,7 +774,7 @@ export class ProjectView
     }
 
     private pickEditorFor(f: pkg.File): srceditor.Editor {
-        return this.allEditors.filter(e => e.acceptsFile(f), 1)[0]
+        return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
 
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
@@ -3625,7 +3625,7 @@ async function importGithubProject(id: string) {
     core.showLoading("loadingheader", lf("importing github project..."));
     try {
         // try to find project with same id
-        let hd = workspace.getHeaders().filter(h => h.githubId == id, 1)[0];
+        let hd = workspace.getHeaders().filter(h => h.githubId == id)[0];
         if (!hd)
             hd = await workspace.importGithubAsync(id)
         let text = await workspace.getTextAsync(hd.id)
@@ -3654,7 +3654,7 @@ function loadHeaderBySharedIdAsync(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
 
     // try to find project with same id
-    const hdid = workspace.getHeaders().filter(h => h.pubId == id, 1)[0];
+    const hdid = workspace.getHeaders().filter(h => h.pubId == id)[0];
 
     let p = hdid ? Promise.resolve(hdid) : workspace.installByIdAsync(id);
     p.then(hd => theEditor.loadHeaderAsync(hd, null))
