@@ -1029,6 +1029,15 @@ ${output}</xml>`;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
                         break;
+                    case SK.BreakStatement:
+                        stmt = getBreakStatementBlock(node);
+                        break;
+                    case SK.ContinueStatement:
+                        stmt = getContinueStatementBlock(node);
+                        break;
+                    case SK.EmptyStatement:
+                        stmt = undefined; // don't generate blocks for empty statements
+                        break;
                     case SK.EnumDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
                         return getNext();
@@ -1135,6 +1144,16 @@ ${output}</xml>`;
                 r.mutation[`line${i}`] = U.htmlEscape(p);
             });
 
+            return r;
+        }
+
+        function getContinueStatementBlock(node: ts.Node): StatementNode {
+            const r = mkStmt(pxtc.TS_CONTINUE_TYPE);
+            return r;
+        }
+
+        function getBreakStatementBlock(node: ts.Node): StatementNode {
+            const r = mkStmt(pxtc.TS_BREAK_TYPE);
             return r;
         }
 
@@ -1952,6 +1971,8 @@ ${output}</xml>`;
                 return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
+            case SK.BreakStatement:
+            case SK.ContinueStatement:
             case SK.DebuggerStatement:
                 return undefined;
         }
