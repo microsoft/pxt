@@ -598,6 +598,22 @@ namespace pxt.runner {
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_for_of"></block></xml>'
                             });
                             break;
+                        case ts.SyntaxKind.BreakStatement:
+                            addItem({
+                                name: ns ? "Loops" : "break",
+                                url: "blocks/loops" + (ns ? "" : "/break"),
+                                description: ns ? lf("Loops and repetition") : lf("Break out of the current loop."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="break_keyword"></block></xml>'
+                            });
+                            break;
+                        case ts.SyntaxKind.ContinueStatement:
+                            addItem({
+                                name: ns ? "Loops" : "continue",
+                                url: "blocks/loops" + (ns ? "" : "/continue"),
+                                description: ns ? lf("Loops and repetition") : lf("Skip iteration and continue the current loop."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="continue_keyboard"></block></xml>'
+                            });
+                            break;
                         case ts.SyntaxKind.ForStatement:
                             let fs = stmt as ts.ForStatement;
                             // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)

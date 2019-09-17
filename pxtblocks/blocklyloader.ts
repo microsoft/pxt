@@ -1250,6 +1250,48 @@ namespace pxt.blocks {
                 }
             }
         };
+
+        // break statement
+        Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+            init: function () {
+                let that: Blockly.Block = this;
+                that.setColour(pxt.toolbox.getNamespaceColor('loops'))
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+                that.setInputsInline(false);
+                that.appendDummyInput()
+                    .appendField(new Blockly.FieldLabel(lf("break"), undefined))
+
+                setHelpResources(this,
+                    pxtc.TS_BREAK_TYPE,
+                    lf("Break statement"),
+                    lf("Break out of the current loop or switch"),
+                    '/blocks/loops/break',
+                    pxt.toolbox.getNamespaceColor('loops')
+                );
+            }
+        };
+
+        // loops statement
+        Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+            init: function () {
+                let that: Blockly.Block = this;
+                that.setColour(pxt.toolbox.getNamespaceColor('loops'))
+                that.setPreviousStatement(true);
+                that.setNextStatement(true);
+                that.setInputsInline(false);
+                that.appendDummyInput()
+                    .appendField(new Blockly.FieldLabel(lf("continue"), undefined))
+
+                setHelpResources(this,
+                    pxtc.TS_CONTINUE_TYPE,
+                    lf("Continue statement"),
+                    lf("The continue statement breaks one iteration (in the loop) and continues with the next iteration in the loop."),
+                    '/blocks/loops/continue',
+                    pxt.toolbox.getNamespaceColor('loops')
+                );
+            }
+        };
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
