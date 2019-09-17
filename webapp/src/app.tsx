@@ -3643,7 +3643,7 @@ async function importGithubProject(id: string) {
     core.showLoading("loadingheader", lf("importing github project..."));
     try {
         // try to find project with same id
-        let hd = workspace.getHeaders().filter(h => h.githubId == id)[0];
+        let hd = workspace.getHeaders().find(h => h.githubId == id);
         if (!hd)
             hd = await workspace.importGithubAsync(id)
         let text = await workspace.getTextAsync(hd.id)
