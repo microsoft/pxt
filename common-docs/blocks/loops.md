@@ -16,6 +16,6 @@ continue;
 [for](/blocks/loops/for), 
 [while](/blocks/loops/while), 
 [repeat](/blocks/loops/repeat), 
-[for of](/blocks/for-of),
-[break](/blocks/break),
-[continue](/blocks/continue)
+[for of](/blocks/loops/for-of),
+[break](/blocks/loops/break),
+[continue](/blocks/loops/continue)
