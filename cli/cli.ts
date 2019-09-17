@@ -2587,7 +2587,7 @@ class Host
             pxt.debug("trying " + cachedPath)
             try {
                 const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
-                pxt.log(`Using hexcache: ${extInfo.sha}`)
+                pxt.debug(`Using hexcache: ${extInfo.sha}`)
                 return Promise.resolve({ hex: lines })
             } catch (e) { }
         }
