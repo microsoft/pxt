@@ -72,7 +72,23 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                         </shadow>
                     </value>
                 </block>`
-                }
+                },
+                {
+                    name: "pxt_break",
+                    attributes: {
+                        blockId: "break_keyword",
+                        weight: 30
+                    },
+                    blockXml: `<block type="break_keyword"></block>`
+                },
+                {
+                    name: "pxt_continue",
+                    attributes: {
+                        blockId: "continue_keyword",
+                        weight: 29
+                    },
+                    blockXml: `<block type="continue_keyword"></block>`
+                },
             ],
             attributes: {
                 callingConvention: ts.pxtc.ir.CallingConvention.Plain,
