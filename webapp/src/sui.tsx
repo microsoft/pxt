@@ -477,6 +477,7 @@ export interface LinkProps extends ButtonProps {
     href?: string;
     download?: string;
     target?: string;
+    rel?: string;
 }
 
 export class Link extends StatelessUIElement<LinkProps> {
@@ -486,6 +487,7 @@ export class Link extends StatelessUIElement<LinkProps> {
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}
+                rel={this.props.rel || (this.props.target ? "noopener noreferrer" : "")}
                 download={this.props.download}
                 role={this.props.role}
                 title={this.props.title}
