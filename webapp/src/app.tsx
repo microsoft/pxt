@@ -831,7 +831,7 @@ export class ProjectView
                     this.editor.setViewState(this.state.editorPosition);
                     this.setState({ editorPosition: undefined })
                 } else {
-                    const e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+                    const e = this.settings.fileHistory.find(e => e.id == this.state.header.id && e.name == this.editorFile.getName())
                     if (e)
                         this.editor.setViewState(e.pos)
                 }
