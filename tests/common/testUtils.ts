@@ -33,6 +33,8 @@ export const testAppTarget: pxt.TargetBundle = {
     blocksprj: undefined,
     runtime: {
         pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
+        breakBlock: {},
+        continueBlock: {},
         bannedCategories: ["banned"]
     },
     corepkg: undefined
