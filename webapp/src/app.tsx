@@ -430,7 +430,7 @@ export class ProjectView
             const files = pkg.mainEditorPkg().files;
             let f = files["main.ts"];
             if (!f) // find first .ts file
-                f = files[Object.keys(files).filter(fn => /\.ts$/.test(fn))[0]];
+                f = files[Object.keys(files).find(fn => /\.ts$/.test(fn))];
             this.setFile(f)
         }
 
