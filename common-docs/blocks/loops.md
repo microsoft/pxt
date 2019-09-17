@@ -5,10 +5,17 @@ for(let i = 0; i <= 5; i++) {}
 while(true) {}
 for(let i= 0; i < 5; i++) {}
 for(let value of [""]) {}
+break;
+continue;
 ```
 
 ### #specific
 
 ## See also #seealso
 
-[for](/blocks/loops/for), [while](/blocks/loops/while), [repeat](/blocks/loops/repeat), [for of](/blocks/for-of)
+[for](/blocks/loops/for), 
+[while](/blocks/loops/while), 
+[repeat](/blocks/loops/repeat), 
+[for of](/blocks/for-of),
+[break](/blocks/break),
+[continue](/blocks/continue)
