@@ -492,7 +492,7 @@ export async function bumpAsync(hd: Header, newVer = "") {
 export function lookupFile(commit: pxt.github.Commit, path: string) {
     if (!commit)
         return null
-    return commit.tree.tree.filter(e => e.path == path)[0]
+    return commit.tree.tree.find(e => e.path == path)
 }
 
 export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
