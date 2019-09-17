@@ -845,7 +845,10 @@ export class ProjectView
 
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
             })
-            .finally(() => this.updatingEditorFile = false)
+            .finally(() => {
+                this.updatingEditorFile = false
+                this.setState({}); // force any kind of state changes that is not tracked by react
+            })
             .then(() => {
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again

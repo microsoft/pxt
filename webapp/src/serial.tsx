@@ -450,8 +450,6 @@ export class Editor extends srceditor.Editor {
     }
 
     display() {
-        if (!this.isVisible)
-            return undefined
         return (
             <div id="serialArea">
                 <div id="serialHeader" className="ui serialHeader">

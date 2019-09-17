@@ -666,7 +666,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     let isCurrent = true
     let needsBlobs = false
     for (let k of Object.keys(files)) {
-        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
         let treeEnt = lookupFile(gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
@@ -738,7 +738,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     currFiles = await getTextAsync(hd.id)
     let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
     for (let k of Object.keys(currFiles)) {
-        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
         if (allfiles.indexOf(k) < 0)
             delete currFiles[k];
