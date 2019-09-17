@@ -4,7 +4,7 @@ Skip the rest of the code in a loop and start the loop again.
 
 ```block
 while(true) {
-    if (Math.random() > 0.5) {
+    if (Math.randomRange(0, 10) > 5) {
         // skip the rest of the loop
         continue;
     }

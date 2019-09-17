@@ -2272,7 +2272,9 @@ ${output}</xml>`;
             case SK.ModuleDeclaration:
                 return checkNamespaceDeclaration(node as ts.NamespaceDeclaration);
             case SK.BreakStatement:
+                return pxt.appTarget.runtime && !!pxt.appTarget.runtime.breakBlock ? undefined : lf("Unsupported in blocks.");
             case SK.ContinueStatement:
+                return pxt.appTarget.runtime && !!pxt.appTarget.runtime.continueBlock ? undefined : lf("Unsupported in blocks.");
             case SK.DebuggerStatement:
             case SK.EmptyStatement:
                 return undefined;
