@@ -355,7 +355,6 @@ export class Editor extends srceditor.Editor {
                     break
                 case workspace.PullStatus.NeedsCommit:
                     this.needsCommitMessage = true;
-                    this.parent.setState({});
                     break
                 case workspace.PullStatus.GotChanges:
                     await this.maybeReloadAsync()
