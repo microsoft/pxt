@@ -1265,8 +1265,8 @@ namespace pxt.blocks {
                 setHelpResources(this,
                     pxtc.TS_BREAK_TYPE,
                     lf("Break statement"),
-                    lf("The break statement exits a switch statement or a loop "),
-                    '/blocks/break',
+                    lf("Break out of the current loop or switch"),
+                    '/blocks/loops/break',
                     pxt.toolbox.getNamespaceColor('loops')
                 );
             }
@@ -1287,7 +1287,7 @@ namespace pxt.blocks {
                     pxtc.TS_CONTINUE_TYPE,
                     lf("Continue statement"),
                     lf("The continue statement breaks one iteration (in the loop) and continues with the next iteration in the loop."),
-                    '/blocks/continue',
+                    '/blocks/loops/continue',
                     pxt.toolbox.getNamespaceColor('loops')
                 );
             }
