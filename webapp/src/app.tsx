@@ -129,7 +129,6 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
-        const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
         const isHighContrast = /hc=(\w+)/.test(window.location.href);
         if (isHighContrast) core.setHighContrast(true);
 
@@ -620,7 +619,7 @@ export class ProjectView
         return false;
     }
 
-    private autoRunBlocksSimulator = pxtc.Util.debounce(
+    private autoRunSimulatorDebounced = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) {
                 pxt.debug(`sim: skip auto, debounced`)
@@ -660,7 +659,7 @@ export class ProjectView
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
                             && this.state.autoRun) {
-                            this.autoRunBlocksSimulator();
+                            this.autoRunSimulatorDebounced();
                         }
                     }
 
@@ -854,6 +853,8 @@ export class ProjectView
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
+                else
+                    this.typecheck(); // trigger at least 1 auto-run in non-code editors
             });
     }
 
@@ -903,7 +904,7 @@ export class ProjectView
             currFile: fn,
             showBlocks: false,
             embedSimView: false,
-            autoRun: isCodeFile && this.autoRunOnStart() // restart autoRun is needed
+            autoRun: this.autoRunOnStart() // restart autoRun is needed
         };
         if (line !== undefined)
             state.editorPosition = { lineNumber: line, column: 1, file: fn };
