@@ -703,5 +703,23 @@ namespace pxt.blocks {
                 message0: Util.lf("pause until %1")
             }
         };
+        _blockDefinitions[pxtc.TS_BREAK_TYPE] = {
+            name: Util.lf("break"),
+            tooltip: Util.lf("Break out of the current loop or switch"),
+            url: '/blocks/loops/break',
+            category: 'loops',
+            block: {
+                message0: Util.lf("break")
+            }
+        }
+        _blockDefinitions[pxtc.TS_CONTINUE_TYPE] = {
+            name: Util.lf("continue"),
+            tooltip: Util.lf("Skip current iteration and continues with the next iteration in the loop"),
+            url: '/blocks/loops/continue',
+            category: 'loops',
+            block: {
+                message0: Util.lf("continue")
+            }
+        }
     }
 }
