@@ -502,7 +502,7 @@ export class ProjectView
         }
 
         // try to find a history entry within this header
-        const hist = this.settings.fileHistory.filter(f => f.id == id)[0]
+        const hist = this.settings.fileHistory.find(f => f.id == id)
         if (hist) {
             const f = pkg.mainEditorPkg().lookupFile(hist.name);
             if (f) {
