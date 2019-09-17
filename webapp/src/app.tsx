@@ -264,6 +264,10 @@ export class ProjectView
         sett.fileHistory.unshift(n)
     }
 
+    private popFileHistory() {
+        this.settings.fileHistory.shift();
+    }
+
     openProjectInLegacyEditor(majorVersion: number) {
         if (!this.editorFile || !this.editorFile.epkg || !this.editorFile.epkg.getTopHeader()) return Promise.resolve();
 
@@ -491,8 +495,15 @@ export class ProjectView
     }
 
     openPreviousEditor() {
-        // try history first!
-        const hist = this.settings.fileHistory[1];
+        const id = this.state.header.id;
+        // pop any entry matching this editor
+        const e = this.settings.fileHistory[0];
+        if (this.editorFile && e.id == id && e.name == this.editorFile.getName()) {
+            this.popFileHistory();
+        }
+
+        // try to find a history entry within this header
+        const hist = this.settings.fileHistory.filter(f => f.id == id)[0]
         if (hist) {
             const f = pkg.mainEditorPkg().lookupFile(hist.name);
             if (f) {
@@ -821,7 +832,7 @@ export class ProjectView
                     this.editor.setViewState(this.state.editorPosition);
                     this.setState({ editorPosition: undefined })
                 } else {
-                    let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+                    const e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
                     if (e)
                         this.editor.setViewState(e.pos)
                 }
@@ -1745,6 +1756,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
+        this.editorFile = undefined;
         this.setStateAsync({
             home: true,
             tracing: undefined,
@@ -1752,7 +1764,9 @@ export class ProjectView
             tutorialOptions: undefined,
             editorState: undefined,
             debugging: undefined,
-            header: undefined
+            header: undefined,
+            currFile: undefined,
+            fileState: undefined
         }).then(() => {
             this.allEditors.forEach(e => e.setVisible(false));
             this.homeLoaded();
