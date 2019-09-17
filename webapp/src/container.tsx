@@ -422,7 +422,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
 
     renderCore () {
         const pythonEnabled = this.props.python;
-        const dropdownActive = pythonEnabled &&  (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
+        const dropdownActive = pythonEnabled && (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
 
         return (<div>
             <div id="editortoggle" className="ui grid padded">

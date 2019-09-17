@@ -3672,7 +3672,7 @@ function loadHeaderBySharedIdAsync(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
 
     // try to find project with same id
-    const hdid = workspace.getHeaders().filter(h => h.pubId == id)[0];
+    const hdid = workspace.getHeaders().find(h => h.pubId == id);
 
     let p = hdid ? Promise.resolve(hdid) : workspace.installByIdAsync(id);
     p.then(hd => theEditor.loadHeaderAsync(hd, null))
