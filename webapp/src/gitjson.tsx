@@ -335,6 +335,8 @@ export class Editor extends srceditor.Editor {
         // check if we need to reload header
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
         if (newKey == this.previousCfgKey) {
+            // force render
+            this.parent.setState({});
             return
         } else {
             this.previousCfgKey = newKey
