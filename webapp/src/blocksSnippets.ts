@@ -72,23 +72,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                         </shadow>
                     </value>
                 </block>`
-                },
-                {
-                    name: "pxt_break",
-                    attributes: {
-                        blockId: "break_keyword",
-                        weight: 30
-                    },
-                    blockXml: `<block type="break_keyword"></block>`
-                },
-                {
-                    name: "pxt_continue",
-                    attributes: {
-                        blockId: "continue_keyword",
-                        weight: 29
-                    },
-                    blockXml: `<block type="continue_keyword"></block>`
-                },
+                }
             ],
             attributes: {
                 callingConvention: ts.pxtc.ir.CallingConvention.Plain,
@@ -97,6 +81,26 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 paramDefl: {}
             }
         };
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.breakBlock) {
+            _cachedBuiltinCategories[CategoryNameID.Loops].blocks.push({
+                name: "pxt_break",
+                attributes: {
+                    blockId: "break_keyword",
+                    weight: 30
+                },
+                blockXml: `<block type="break_keyword"></block>`
+            });
+        }
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.continueBlock) {
+            _cachedBuiltinCategories[CategoryNameID.Loops].blocks.push({
+                name: "pxt_continue",
+                attributes: {
+                    blockId: "continue_keyword",
+                    weight: 29
+                },
+                blockXml: `<block type="continue_keyword"></block>`
+            });
+        }
         _cachedBuiltinCategories[CategoryNameID.Logic] = {
             name: lf("{id:category}Logic"),
             nameid: CategoryNameID.Logic,
