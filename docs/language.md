@@ -103,6 +103,32 @@ unlikely to miss it):
 * `arguments` keyword; `.apply` method
 * JSX (HTML fragments as part of JavaScript)
 
+Static TypeScript has somewhat stricter ideas of scoping than regular TypeScript.
+In particular `var` is not allowed (`let` and `const` are supported),
+and identifiers defined with `function` can only be used after all variables
+from outer scopes have been defined.
+(The closure objects for functions that are used before definition
+is constructed right after last used variable have been defined.
+For functions defined before usage, the closure is constructed at the
+point of definition.)
+Both of the following examples will yield a compile error.
+```typescript
+function foo1() {
+    bar()
+    let x = 1
+    function bar() {
+        let y = x // runtime error in JavaScript
+    } 
+}
+function foo1() {
+    const tmp = bar
+    let x = 1
+    tmp() // no runtime error in JavaScript
+    function bar() { let y = x } 
+}
+```
+
+
 For JS-only targets we may implement the following:
 
 * regular expressions
