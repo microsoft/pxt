@@ -597,8 +597,8 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         }
     }
 
-    function onPublicChanged(k: string) {
-        const v = k == "checked";
+    function onPublicChanged(v: boolean) {
+        v = !!v;
         if (repoPublic != v) {
             repoPublic = v;
             coretsx.forceUpdate();
@@ -612,16 +612,17 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         jsxd: () => {
             const nameErr = repoNameError();
             return <div className="ui form">
-                <div className="ui message">
+                <p>
                     {lf("Host your code on GitHub and work together with friends on projects.")}
-                </div>
+                    <sui.Link href="https://github.com/about" target="_blank" icon="question circle" />
+                </p>
                 <div className="ui field">
                     <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
                 <div className="ui field">
                     <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
                 </div>
-                <sui.Checkbox checked={repoPublic} label={repoPublic ? lf("Public repository, anyone can look at your code.") : lf("Private repository, your code is only visible to you.")} onChange={onPublicChanged} />
+                <sui.Checkbox checked={repoPublic} inputLabel={repoPublic ? lf("Public repository, anyone can look at your code.") : lf("Private repository, your code is only visible to you.")} onChange={onPublicChanged} />
             </div>
         },
     }).then(res => {

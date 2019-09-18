@@ -330,14 +330,14 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div
                 key="github-status"
-                className={`item`}
+                className="item link"
                 onClick={this.handleClick}
                 tabIndex={0}
                 role="button"
                 onKeyDown={sui.fireClickOnEnter}>
-                <i className="github icon" />
                 {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
-                {meta && meta.numFilesGitModified ? ` ${meta.numFilesGitModified}↑` : ''}
+                <i className="github icon" />
+                {ghid && meta && meta.numFilesGitModified ? <span className='ui label' title={lf("{0} modified files", meta.numFilesGitModified)}>{meta.numFilesGitModified}</span> : undefined }
             </div>
         </div>;
     }
