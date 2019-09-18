@@ -35,13 +35,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     constructor(props: GithubProps) {
         super(props);
         this.goBack = this.goBack.bind(this);
-        this.handleCommitClick = this.handleCommitClick.bind(this);
         this.handlePullClick = this.handlePullClick.bind(this);
-        this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
-        this.handleBumpClick = this.handleBumpClick.bind(this);
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
-        this.handleSignInClick = this.handleSignInClick.bind(this);
     }
 
     private clearCache() {
@@ -140,23 +136,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         })
     }
 
-    private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.bump");
-        e.stopPropagation();
-        this.bumpAsync().done();
-    }
-
     private handleBranchClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.branch");
         e.stopPropagation();
         this.switchBranchAsync().done();
-    }
-
-    private handleSignInClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.signin");
-        e.stopPropagation();
-        dialogs.showGithubLoginAsync()
-            .done(() => this.forceUpdate());
     }
 
     private goBack() {
@@ -164,19 +147,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.props.parent.openPreviousEditor()
     }
 
-    private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.commit");
-        this.setState({ needsCommitMessage: false });
-        await this.commitAsync();
-    }
-
     private handlePullClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.pull");
         this.pullAsync().done();
-    }
-
-    private handleDescriptionChange(v: string) {
-        this.setState({ description: v });
     }
 
     private async forkAsync(fromError: boolean) {
@@ -227,7 +200,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async bumpAsync() {
+    async bumpAsync() {
         const v = pxt.semver.parse(pkg.mainPkg.config.version || "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
         const vminor = pxt.semver.parse(pxt.semver.stringify(v)); vminor.minor++; vminor.patch = 0;
@@ -357,7 +330,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         return gitJson;
     }
 
-    private parsedRepoId() {
+    parsedRepoId() {
         const header = this.props.parent.state.header;
         return pxt.github.parseRepoId(header.githubId);
     }
@@ -380,7 +353,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.setState({ description: "" });
     }
 
-    private async commitAsync() {
+    async commitAsync() {
+        this.setState({ needsCommitMessage: false });
         this.showLoading(lf("commit and push..."));
         try {
             await this.commitCoreAsync()
@@ -553,7 +527,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0
 
-        const { needsCommitMessage, needsPull, description } = this.state;
+        const { needsPull } = this.state;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const gs = this.getGitJson();
@@ -563,8 +537,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // this will show existing PR if any
         const prUrl = !gs.isFork && master ? null :
             `https://github.com/${githubId.fullName}/compare/${githubId.tag}?expand=1`
-        const needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
-            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -581,26 +553,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                {!pxt.github.token ? <div className="ui info message join">
-                    <p>{lf("Host your code on GitHub and work together on projects.")}</p>
-                    <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
-                </div> : undefined}
-                {needsCommitMessage ? <div className="ui warning message">
-                    <div className="content">
-                        {lf("You need to commit your changes first, before you can pull from GitHub.")}
-                    </div>
-                </div> : undefined}
-                {needsLicenseMessage ? <div className="ui warning message">
-                    <div className="content">
-                        <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
-                        <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                            role="button" className="ui basic button"
-                            target="_blank" rel="noopener noreferrer">
-                            {lf("Add license")}
-                        </a>
-                    </div>
-                </div> : undefined}
-
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -612,30 +565,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}</span>
                     </h3>
                     {needsCommit ?
-                        <div>
-                            <div className="ui field">
-                                <sui.Input type="url" placeholder={lf("Describe your changes.")} value={description} onChange={this.handleDescriptionChange} />
-                            </div>
-                            {<div className="field">
-                                <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
-                            </div>}
-                            <div className="ui field">
-                                <sui.Button className="primary" text={lf("Commit changes")} disabled={needsToken} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
-                            </div>
-                        </div>
-                        :
-                        <div>
-                            <p>{lf("No local changes found.")}</p>
-                            {master ? <div className="ui divider"></div> : undefined}
-                            {master ?
-                                <div className="ui field">
-                                    <p>
-                                        {lf("Bump up the version number and create a release on GitHub.")}
-                                        <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
-                                    </p>
-                                    <sui.Button className="primary" text={lf("Create release")} disabled={needsToken} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
-                                </div> : undefined}
-                        </div>
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
+                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
                     }
                     <div className="ui">
                         {diffFiles.map(df => this.showDiff(df))}
@@ -646,7 +577,117 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             </div>
         )
     }
+}
 
+interface GitHubViewProps {
+    githubId: pxt.github.ParsedRepo;
+    needsToken: boolean;
+    master: boolean;
+    parent: GithubComponent;
+    gs: pxt.github.GitJson;
+}
+
+class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
+    constructor(props: GitHubViewProps) {
+        super(props)
+        this.handleSignInClick = this.handleSignInClick.bind(this);
+    }
+
+    private handleSignInClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.signin");
+        e.stopPropagation();
+        dialogs.showGithubLoginAsync()
+            .done(() => this.props.parent.forceUpdate());
+    }
+
+    renderCore() {
+        const { needsCommitMessage } = this.props.parent.state;
+        const { gs, githubId } = this.props;
+        const needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
+            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
+
+        return <div>
+            {!pxt.github.token ? <div className="ui info message join">
+                <p>{lf("Host your code on GitHub and work together on projects.")}</p>
+                <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
+            </div> : undefined}
+            {needsCommitMessage ? <div className="ui warning message">
+                <div className="content">
+                    {lf("You need to commit your changes first, before you can pull from GitHub.")}
+                </div>
+            </div> : undefined}
+            {needsLicenseMessage ? <div className="ui warning message">
+                <div className="content">
+                    <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
+                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                        role="button" className="ui basic button"
+                        target="_blank" rel="noopener noreferrer">
+                        {lf("Add license")}
+                    </a>
+                </div>
+            </div> : undefined}
+        </div>
+    }
+}
+
+class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
+    constructor(props: GitHubViewProps) {
+        super(props)
+        this.handleDescriptionChange = this.handleDescriptionChange.bind(this);
+        this.handleCommitClick = this.handleCommitClick.bind(this);
+    }
+
+    private handleDescriptionChange(v: string) {
+        this.props.parent.setState({ description: v });
+    }
+
+    private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.commit");
+        await this.props.parent.commitAsync();
+    }
+
+    renderCore() {
+        const { needsToken, githubId } = this.props;
+        return <div>
+            <div className="ui field">
+                <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
+            </div>
+            {<div className="field">
+                <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
+            </div>}
+            <div className="ui field">
+                <sui.Button className="primary" text={lf("Commit changes")} disabled={needsToken} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+            </div>
+        </div>
+    }
+}
+class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
+    constructor(props: GitHubViewProps) {
+        super(props);
+        this.handleBumpClick = this.handleBumpClick.bind(this);
+    }
+
+    private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.bump");
+        e.stopPropagation();
+        this.props.parent.bumpAsync().done();
+    }
+
+    renderCore() {
+        const { needsToken, githubId, master } = this.props;
+        return <div>
+            <p>{lf("No local changes found.")}</p>
+            {master ? <div className="ui divider"></div> : undefined}
+            {master ?
+                <div className="ui field">
+                    <p>
+                        {lf("Bump up the version number and create a release on GitHub.")}
+                        <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
+                    </p>
+                    <sui.Button className="primary" text={lf("Create release")} disabled={needsToken} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                </div> : undefined}
+        </div>
+    }
 }
 
 export class Editor extends srceditor.Editor {
