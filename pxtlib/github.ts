@@ -351,12 +351,16 @@ namespace pxt.github {
             .then(resolveRefAsync)
     }
 
-    export async function getNewBranchNameAsync(repopath: string, pref = "patch-") {
-        const res = await listRefsExtAsync(repopath, "heads")
+    function generateNextRefName(res: RefsResult, pref: string): string {
         let n = 1
         while (res.refs[pref + n])
             n++
         return pref + n
+    }
+
+    export async function getNewBranchNameAsync(repopath: string, pref = "patch-") {
+        const res = await listRefsExtAsync(repopath, "heads")
+        return generateNextRefName(res, pref);
     }
 
     export async function createNewBranchAsync(repopath: string, branchName: string, commitid: string) {
@@ -374,19 +378,16 @@ namespace pxt.github {
         let refs: RefsResult = null
         while (!refs && Date.now() < endTm) {
             await Promise.delay(1000)
-            await listRefsExtAsync(repoInfo.fullName, "heads")
-                .then(r => {
-                    refs = r
-                }, err => {
-                    // not created
-                })
+            try {
+                refs = await listRefsExtAsync(repoInfo.fullName, "heads");
+            } catch (err) {
+                // not created
+            }
         }
         if (!refs)
             throw new Error(lf("Timeout waiting for fork"))
-        let n = 1
-        while (refs.refs[pref + n])
-            n++
-        const branchName = pref + n
+
+        const branchName = generateNextRefName(refs, pref);
         await createNewBranchAsync(repoInfo.fullName, branchName, commitid)
         return repoInfo.fullName + "#" + branchName
     }
