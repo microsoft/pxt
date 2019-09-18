@@ -52,7 +52,7 @@ export function readResAsync(g: events.EventEmitter) {
         let bufs: Buffer[] = []
         g.on('data', (c: any) => {
             if (typeof c === "string")
-                bufs.push(new Buffer(c, "utf8"))
+                bufs.push(Buffer.from(c, "utf8"))
             else
                 bufs.push(c)
         });
@@ -200,11 +200,11 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
         if (Buffer.isBuffer(data)) {
             buf = data;
         } else if (typeof data == "object") {
-            buf = new Buffer(JSON.stringify(data), "utf8")
+            buf = Buffer.from(JSON.stringify(data), "utf8")
             u.headers["content-type"] = "application/json; charset=utf8"
             if (options.allowGzipPost) gzipContent = true
         } else if (typeof data == "string") {
-            buf = new Buffer(data, "utf8")
+            buf = Buffer.from(data, "utf8")
             if (options.allowGzipPost) gzipContent = true
         } else {
             Util.oops("bad data")
@@ -277,8 +277,8 @@ function init() {
             buf[i] = tmp[i]
     }
 
-    (global as any).btoa = (str: string) => new Buffer(str, "binary").toString("base64");
-    (global as any).atob = (str: string) => new Buffer(str, "base64").toString("binary");
+    (global as any).btoa = (str: string) => Buffer.from(str, "binary").toString("base64");
+    (global as any).atob = (str: string) => Buffer.from(str, "base64").toString("binary");
 }
 
 export function sanitizePath(path: string) {
