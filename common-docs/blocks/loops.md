@@ -5,8 +5,6 @@ for(let i = 0; i <= 5; i++) {}
 while(true) {}
 for(let i= 0; i < 5; i++) {}
 for(let value of [""]) {}
-break;
-continue;
 ```
 
 ### #specific
@@ -17,5 +15,3 @@ continue;
 [while](/blocks/loops/while), 
 [repeat](/blocks/loops/repeat), 
 [for of](/blocks/loops/for-of),
-[break](/blocks/loops/break),
-[continue](/blocks/loops/continue)
