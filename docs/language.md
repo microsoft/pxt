@@ -67,6 +67,7 @@ and might not be available in your editor.
 * class inheritance for generic classes and methods
 * `delete` statement (on object created with `{...}`)
 * object destructuring with initializers
+* shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
 
 ## Unsupported language features
 
@@ -80,7 +81,6 @@ Static TypeScript has *nominal typing* for classes, rather than the *structural 
 
 Things you may miss and we may implement:
 
-* shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays
 * `new` on non-class types

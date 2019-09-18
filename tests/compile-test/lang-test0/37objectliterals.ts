@@ -23,6 +23,25 @@ namespace ObjLit {
         glb1 += o.width - o.height + o.msg.length
     }
 
+    function str(o: any) {
+        let r = ""
+        for (let k of Object.keys(o)) {
+            if (r) r += ","
+            r += k + ":" + o[k]
+        }
+        return r
+    }
+
+    function shorthandTest() {
+        msg("shorthandTest")
+        const x = 12
+        const y = "foo"
+        const o = { x, y, z: 33 }
+        assert(str(o) == "x:12,y:foo,z:33")
+        const o2 = { x }
+        assert(str(o2) == "x:12")
+    }
+
     function deleteTest() {
         msg("deleteTest")
         const o: any = {
@@ -32,29 +51,16 @@ namespace ObjLit {
         }
 
         delete o.b
-        let keys = Object.keys(o)
-        assert(keys.length == 2)
-        assert(keys[0] == "a")
-        assert(keys[1] == "c")
-        assert(o.a == 1 && o.c == "3")
+        assert(str(o) == "a:1,c:3")
 
         delete o["a"]
-        keys = Object.keys(o)
-        assert(keys.length == 1, "l1")
-        assert(keys[0] == "c", "0c")
-        assert(o.c == "3", "c3")
+        assert(str(o) == "c:3")
 
         o.a = 17
-        keys = Object.keys(o)
-        assert(keys.length == 2)
-        assert(keys[0] == "c")
-        assert(keys[1] == "a")
-        assert(o.a == 17 && o.c == "3")
+        assert(str(o) == "c:3,a:17")
 
         delete o["XaX".slice(1, 2)]
-        keys = Object.keys(o)
-        assert(keys.length == 1)
-        assert(keys[0] == "c")
+        assert(str(o) == "c:3")
     }
 
     export function run() {
@@ -84,6 +90,7 @@ namespace ObjLit {
         assert(glb1 == 9)
 
         deleteTest()
+        shorthandTest()
 
         msg("Objlit done")
     }
