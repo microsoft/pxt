@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "889534fe49df3ce6e11b6399b8e77917",
+    "revision": "6bc48835c0e1ea034af2e2eac1163e53",
     "url": "/static/game-modder/index.html"
   },
   {
-    "revision": "d400115101155ebfcf20",
+    "revision": "fcd78c1db7a21d0d7f9b",
     "url": "/static/game-modder/static/css/main.fc7dafb9.chunk.css"
   },
   {
@@ -12,8 +12,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/static/game-modder/static/js/2.7b15abf0.chunk.js"
   },
   {
-    "revision": "d400115101155ebfcf20",
-    "url": "/static/game-modder/static/js/main.fb78f39c.chunk.js"
+    "revision": "fcd78c1db7a21d0d7f9b",
+    "url": "/static/game-modder/static/js/main.7d0abef7.chunk.js"
   },
   {
     "revision": "21fc42b4348f8b2bfd43",
