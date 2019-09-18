@@ -1615,8 +1615,6 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(f);
             if (attrs.shim)
                 userError(9207, lf("built-in functions cannot be yet used as values; did you forget ()?"))
-            if (isGenericFunction(f))
-                userError(9232, lf("generic functions cannot be yet used as values; did you forget ()?"))
             let info = getFunctionInfo(f)
             if (info.location) {
                 return info.location.load()
