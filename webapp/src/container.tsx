@@ -421,15 +421,15 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
     }
 
     renderCore () {
-        const blockActive = this.props.parent.isBlocksActive();
         const pythonEnabled = this.props.python;
+        const dropdownActive = pythonEnabled && (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
 
         return (<div>
             <div id="editortoggle" className="ui grid padded">
                 {this.props.sandbox && <SandboxMenuItem parent={this.props.parent} />}
                 <BlocksMenuItem parent={this.props.parent} />
                 {pxt.Util.isPyLangPref() && pythonEnabled ? <PythonMenuItem parent={this.props.parent} /> : <JavascriptMenuItem parent={this.props.parent} />}
-                {pythonEnabled && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${!blockActive ? "active" : ""}`}>
+                {pythonEnabled && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
                     <JavascriptMenuItem parent={this.props.parent} />
                     <PythonMenuItem parent={this.props.parent} />
                 </sui.DropdownMenu>}
@@ -617,6 +617,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
+        this.collapse();
     }
 
     private setUrl(url: string) {

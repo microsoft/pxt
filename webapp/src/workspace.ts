@@ -438,27 +438,35 @@ export enum PullStatus {
 const GIT_JSON = pxt.github.GIT_JSON
 type GitJson = pxt.github.GitJson
 
-export async function pullAsync(hd: Header) {
+export async function hasPullAsync(hd: Header) {
+    return (await pullAsync(hd, true)) == PullStatus.GotChanges
+}
+
+export async function pullAsync(hd: Header, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         return PullStatus.NoSourceControl
-    if (!hd.githubCurrent)
+    if (!hd.githubCurrent && !checkOnly)
         return PullStatus.NeedsCommit
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
-    let res = await githubUpdateToAsync(hd, gitjson.repo, sha, files)
+    if (checkOnly)
+        return PullStatus.GotChanges
+    await githubUpdateToAsync(hd, gitjson.repo, sha, files)
     return PullStatus.GotChanges
 }
 
 export async function prAsync(hd: Header, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
-    let url = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg)
+    const branchName = await pxt.github.getNewBranchNameAsync(parsed.fullName, "merge-")
+    await pxt.github.createNewBranchAsync(parsed.fullName, branchName, commitId)
+    const url = await pxt.github.createPRFromBranchAsync(parsed.fullName, parsed.tag, branchName, msg)
     // force user back to master - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
     let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
@@ -466,15 +474,25 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
     return url
 }
 
-export async function bumpAsync(hd: Header) {
+export function bumpedVersion(cfg: pxt.PackageConfig) {
+    let v = pxt.semver.parse(cfg.version || "0.0.0")
+    v.patch++
+    return pxt.semver.stringify(v)
+}
+
+export async function bumpAsync(hd: Header, newVer = "") {
     let files = await getTextAsync(hd.id)
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-    let v = pxt.semver.parse(cfg.version)
-    v.patch++
-    cfg.version = pxt.semver.stringify(v)
+    cfg.version = newVer || bumpedVersion(cfg)
     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     await saveAsync(hd, files)
     return await commitAsync(hd, cfg.version, "v" + cfg.version)
+}
+
+export function lookupFile(commit: pxt.github.Commit, path: string) {
+    if (!commit)
+        return null
+    return commit.tree.tree.find(e => e.path == path)
 }
 
 export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
@@ -492,10 +510,10 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     if (!filenames)
         filenames = pxt.allPkgFiles(cfg)
     for (let path of filenames) {
-        if (path == GIT_JSON)
+        if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
             continue
         let sha = gitsha(files[path])
-        let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
+        let ex = lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
@@ -537,7 +555,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     }
 }
 
-async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, tag?: string) {
+async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, tag?: string, justJSON = false) {
     let parsed = pxt.github.parseRepoId(repoid)
     let commit = await pxt.github.getCommitAsync(parsed.fullName, commitid)
     let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -549,29 +567,47 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         }
     }
 
+    const downloadedFiles: pxt.Map<boolean> = {}
+
     let downloadAsync = async (path: string) => {
-        let treeEnt = commit.tree.tree.filter(e => e.path == path)[0]
+        downloadedFiles[path] = true
+        let treeEnt = lookupFile(commit, path)
         if (!treeEnt) {
-            files[path] = ""
-            return
+            if (!justJSON)
+                files[path] = ""
+            return ""
         }
-        if (files[path] && gitsha(files[path]) == treeEnt.sha)
-            return
+        if (files[path] && gitsha(files[path]) == treeEnt.sha) {
+            treeEnt.blobContent = files[path]
+            return treeEnt.blobContent
+        }
         let text = await pxt.github.downloadTextAsync(parsed.fullName, commitid, path)
-        files[path] = text
-        if (gitsha(files[path]) != treeEnt.sha)
-            U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        if (!justJSON) {
+            files[path] = text
+            if (gitsha(files[path]) != treeEnt.sha)
+                U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        }
+        treeEnt.blobContent = text
+        return treeEnt.blobContent
     }
 
-    await downloadAsync(pxt.CONFIG_NAME)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME] || "{}") as pxt.PackageConfig
+    const cfgText = await downloadAsync(pxt.CONFIG_NAME)
+    const cfg = pxt.Util.jsonTryParse(cfgText || "{}") as pxt.PackageConfig
+    if (!cfg)
+        U.userError(lf("Invalid pxt.json file."));
     for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
         await downloadAsync(fn)
     }
 
-    if (!cfg.name) {
-        cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
-        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    if (!justJSON) {
+        for (let k of Object.keys(files)) {
+            if (k[0] != "." && !downloadedFiles[k])
+                delete files[k]
+        }
+        if (!cfg.name) {
+            cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
+            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+        }
     }
 
     commit.tag = tag
@@ -597,6 +633,23 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     return hd
 }
 
+export async function exportToGithubAsync(hd: Header, repoid: string) {
+    const parsed = pxt.github.parseRepoId(repoid);
+    const pfiles = pxt.packageFiles(hd.name);
+    await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
+    const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
+    const files = await getTextAsync(hd.id)
+    files[GIT_JSON] = JSON.stringify({
+        repo: repoid,
+        commit
+    })
+    await saveAsync(hd, files);
+    await initializeGithubRepoAsync(hd, repoid, false);
+    // race condition, don't pull right away 
+    // await pullAsync(hd);
+}
+
 
 // to be called after loading header in a editor
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
@@ -612,35 +665,74 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     if (!gitjson.commit || !gitjson.commit.tree)
         return
 
+    let isCurrent = true
+    let needsBlobs = false
     for (let k of Object.keys(files)) {
-        if (k == GIT_JSON)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
-        let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
-        if (!treeEnt || treeEnt.type != "blob")
-            return
-        if (files[k] && treeEnt.sha != gitsha(files[k]))
-            return
+        let treeEnt = lookupFile(gitjson.commit, k)
+        if (!treeEnt || treeEnt.type != "blob") {
+            isCurrent = false
+            continue
+        }
+        if (treeEnt.blobContent == null)
+            needsBlobs = true
+        if (files[k] && treeEnt.sha != gitsha(files[k])) {
+            isCurrent = false
+            continue
+        }
     }
 
-    h.githubCurrent = true
+    h.githubCurrent = isCurrent
+
+    // this happens for older projects
+    if (needsBlobs)
+        await githubUpdateToAsync(h, gitjson.repo, gitjson.commit.sha, files, null, true)
+
+    if (gitjson.isFork == null) {
+        const p = pxt.github.parseRepoId(gitjson.repo)
+        const r = await pxt.github.repoAsync(p.fullName, null)
+        gitjson.isFork = !!r.fork
+        files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
+        await saveAsync(h, files)
+    }
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, addDefaultFiles?: boolean) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
-    let files = pxt.packageFiles(name);
-    pxt.packageFilesFixup(files, true)
 
     let currFiles = await getTextAsync(hd.id);
 
-    if (addDefaultFiles) {
-        const initFiles = pxt.packageFiles(parsed.fullName.replace('/', '-'));
-        pxt.packageFilesFixup(initFiles);
-        U.jsonMergeFrom(currFiles, initFiles);
+    const templateFiles = pxt.packageFiles(name);
+    pxt.packageFilesFixup(templateFiles, false);
+
+    if (forceTemplateFiles) {
+        U.jsonMergeFrom(currFiles, templateFiles);
+    } else {
+        // special case override README.md if empty
+        let templateREADME = templateFiles["README.md"];
+        if (currFiles["README.md"] && currFiles["README.md"].trim())
+            templateREADME = undefined;
+        // current files override defaults
+        U.jsonMergeFrom(templateFiles, currFiles);
+        currFiles = templateFiles;
+
+        if (templateREADME)
+            currFiles["README.md"] = templateREADME;
     }
 
-    U.jsonMergeFrom(currFiles, files);
+    // special case, add test.ts in tests if needed
+    if (currFiles["test.ts"]) {
+        const pxtjson = JSON.parse(currFiles[pxt.CONFIG_NAME]);
+        const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
+        if (testFiles.indexOf("test.ts") < 0) {
+            testFiles.push("test.ts");
+            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 4);
+        }
+    }
 
+    // save
     await saveAsync(hd, currFiles)
     await commitAsync(hd, "Auto-initialized.", "", Object.keys(currFiles))
 
@@ -648,10 +740,10 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, addD
     currFiles = await getTextAsync(hd.id)
     let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
     for (let k of Object.keys(currFiles)) {
-        if (k == GIT_JSON)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
         if (allfiles.indexOf(k) < 0)
-            delete currFiles[k]
+            delete currFiles[k];
     }
 
     await saveAsync(hd, currFiles)
@@ -660,9 +752,9 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, addD
 }
 
 export async function importGithubAsync(id: string) {
-    let parsed = pxt.github.parseRepoId(id)
     let sha = ""
     let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
+    let parsed = pxt.github.parseRepoId(repoid)
     let isEmpty = false
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)

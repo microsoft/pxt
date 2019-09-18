@@ -62,6 +62,7 @@ const statAsync = Promise.promisify(fs.stat)
 const readdirAsync = Promise.promisify(fs.readdir)
 const readFileAsync = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const unlinkAsync: any = Promise.promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -215,7 +216,8 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
-            return writeFileAsync(path.join(dirname, f.name), f.content)
+            const fn = path.join(dirname, f.name)
+            return f.content == null ? unlinkAsync(fn) : writeFileAsync(fn, f.content)
         }))
         .then(() => {
             if (data.header)

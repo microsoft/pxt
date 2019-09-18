@@ -2587,7 +2587,7 @@ class Host
             pxt.debug("trying " + cachedPath)
             try {
                 const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
-                pxt.log(`Using hexcache: ${extInfo.sha}`)
+                pxt.debug(`Using hexcache: ${extInfo.sha}`)
                 return Promise.resolve({ hex: lines })
             } catch (e) { }
         }
@@ -6050,7 +6050,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
         argString: "<target-directory>"
     }, exportCppAsync);
-
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

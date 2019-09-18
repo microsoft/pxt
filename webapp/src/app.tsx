@@ -44,6 +44,7 @@ import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
 import * as blocks from "./blocks"
+import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
@@ -94,6 +95,7 @@ export class ProjectView
     pxtJsonEditor: pxtjson.Editor;
     serialEditor: serial.Editor;
     blocksEditor: blocks.Editor;
+    gitjsonEditor: gitjson.Editor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -116,6 +118,7 @@ export class ProjectView
     private firstRun: boolean;
 
     private runToken: pxt.Util.CancellationToken;
+    private updatingEditorFile: boolean;
 
     // component ID strings
     static readonly tutorialCardId = "tutorialcard";
@@ -126,7 +129,6 @@ export class ProjectView
         this.reload = false; //set to true in case of reset of the project where we are going to reload the page.
         this.settings = JSON.parse(pxt.storage.getLocal("editorSettings") || "{}")
         const shouldShowHomeScreen = this.shouldShowHomeScreen();
-        const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
         const isHighContrast = /hc=(\w+)/.test(window.location.href);
         if (isHighContrast) core.setHighContrast(true);
 
@@ -261,6 +263,10 @@ export class ProjectView
         sett.fileHistory.unshift(n)
     }
 
+    private popFileHistory() {
+        this.settings.fileHistory.shift();
+    }
+
     openProjectInLegacyEditor(majorVersion: number) {
         if (!this.editorFile || !this.editorFile.epkg || !this.editorFile.epkg.getTopHeader()) return Promise.resolve();
 
@@ -369,7 +375,7 @@ export class ProjectView
     }
 
     openPython(giveFocusOnLoading = true) {
-        if (this.state.updatingEditorFile) return; // already transitioning
+        if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isPythonActive()) {
             if (this.state.embedSimView) {
@@ -402,7 +408,7 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        if (this.state.updatingEditorFile) return; // already transitioning
+        if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
@@ -420,13 +426,19 @@ export class ProjectView
             this.blocksEditor.openTypeScript();
         } else if (this.isPythonActive()) {
             this.openTypeScriptAsync().done()
-        } else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+        } else {
+            const files = pkg.mainEditorPkg().files;
+            let f = files["main.ts"];
+            if (!f) // find first .ts file
+                f = files[Object.keys(files).find(fn => /\.ts$/.test(fn))];
+            this.setFile(f)
+        }
 
         pxt.Util.setEditorLanguagePref("js");
     }
 
     openBlocks() {
-        if (this.state.updatingEditorFile) return; // already transitioning
+        if (this.updatingEditorFile) return; // already transitioning
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -482,6 +494,24 @@ export class ProjectView
     }
 
     openPreviousEditor() {
+        const id = this.state.header.id;
+        // pop any entry matching this editor
+        const e = this.settings.fileHistory[0];
+        if (this.editorFile && e.id == id && e.name == this.editorFile.getName()) {
+            this.popFileHistory();
+        }
+
+        // try to find a history entry within this header
+        const hist = this.settings.fileHistory.find(f => f.id == id)
+        if (hist) {
+            const f = pkg.mainEditorPkg().lookupFile(hist.name);
+            if (f) {
+                this.setSideFile(f);
+                return;
+            }
+        }
+
+        // default logic
         const hasBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
         if (this.prevEditorId == "monacoEditor" || !hasBlocks) {
             this.openJavaScript(false);
@@ -589,7 +619,7 @@ export class ProjectView
         return false;
     }
 
-    private autoRunBlocksSimulator = pxtc.Util.debounce(
+    private autoRunSimulatorDebounced = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) {
                 pxt.debug(`sim: skip auto, debounced`)
@@ -629,7 +659,7 @@ export class ProjectView
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
                             && this.state.autoRun) {
-                            this.autoRunBlocksSimulator();
+                            this.autoRunSimulatorDebounced();
                         }
                     }
 
@@ -653,6 +683,7 @@ export class ProjectView
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.serialEditor = new serial.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
+        this.gitjsonEditor = new gitjson.Editor(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -666,7 +697,7 @@ export class ProjectView
                 this.stopSimulator();
             this.editorChangeHandler();
         }
-        this.allEditors = [this.pxtJsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -758,7 +789,7 @@ export class ProjectView
 
     private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
         if (!this.state.active
-            || this.state.updatingEditorFile
+            || this.updatingEditorFile
             || this.state.currFile == this.editorFile && !editorOverride) {
             if (this.state.editorPosition && this.editorFile == this.state.editorPosition.file) {
                 this.editor.setViewState(this.state.editorPosition)
@@ -768,7 +799,8 @@ export class ProjectView
         }
 
         let simRunning = false;
-        return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
+        this.updatingEditorFile = true;
+        return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), Promise.resolve())
             .then(() => {
                 simRunning = this.state.simState != pxt.editor.SimState.Stopped;
                 if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
@@ -799,7 +831,7 @@ export class ProjectView
                     this.editor.setViewState(this.state.editorPosition);
                     this.setState({ editorPosition: undefined })
                 } else {
-                    let e = this.settings.fileHistory.filter(e => e.id == this.state.header.id && e.name == this.editorFile.getName())[0]
+                    const e = this.settings.fileHistory.find(e => e.id == this.state.header.id && e.name == this.editorFile.getName())
                     if (e)
                         this.editor.setViewState(e.pos)
                 }
@@ -812,13 +844,20 @@ export class ProjectView
 
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
             })
-            .finally(() => this.setStateAsync({ updatingEditorFile: false }))
+            .finally(() => {
+                this.updatingEditorFile = false
+                // not all editor views are really "React compliant"
+                // so force an update to ensure a proper first rendering
+                this.forceUpdate();
+            })
             .then(() => {
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-            }));
+                else
+                    this.typecheck(); // trigger at least 1 auto-run in non-code editors
+            });
     }
 
     /**
@@ -835,6 +874,7 @@ export class ProjectView
         }
 
         const header = this.state.header;
+        let isCodeFile = false;
         if (header) {
             const pkgId = fn.epkg && fn.epkg.getPkgId();
 
@@ -843,16 +883,22 @@ export class ProjectView
                 if (this.isBlocksFile(fn.name)) {
                     header.editor = pxt.BLOCKS_PROJECT_NAME;
                     header.pubCurrent = false
+                    isCodeFile = true;
                 }
                 else if (this.isTypescriptFile(fn.name)) {
                     header.editor = pxt.JAVASCRIPT_PROJECT_NAME
                     header.pubCurrent = false
+                    isCodeFile = true;
                 }
                 else if (this.isPythonFile(fn.name)) {
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
+                    isCodeFile = true;
+                } else {
+                    // some other file type
                 }
-                pkg.mainPkg.setPreferredEditor(header.editor)
+                if (isCodeFile)
+                    pkg.mainPkg.setPreferredEditor(header.editor)
             }
         }
 
@@ -1704,60 +1750,6 @@ export class ProjectView
             })
     }
 
-    async commitAsync() {
-        try {
-            let repo = this.state.header.githubId
-            let info = await dialogs.showCommitDialogAsync(repo)
-            if (!info)
-                return
-
-            let commitId = await workspace.commitAsync(this.state.header, info.msg)
-            if (commitId) {
-                // merge failure; do a PR
-                // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prURL = await workspace.prAsync(this.state.header, commitId, info.msg)
-                await dialogs.showPRDialogAsync(repo, prURL)
-                // when the dialog finishes, we pull again - it's possible the user
-                // has resolved the conflict in the meantime
-                await workspace.pullAsync(this.state.header)
-                // skip bump in this case - we don't know if it was merged
-            } else {
-                if (info.bump)
-                    await workspace.bumpAsync(this.state.header)
-            }
-            await this.reloadHeaderAsync()
-        } finally {
-            core.hideLoading("loadingheader")
-        }
-    }
-
-    async pushPullAsync() {
-        core.showLoading("loadingheader", lf("syncing with github..."));
-        let needsHide = true
-        try {
-            let status = await workspace.pullAsync(this.state.header)
-                .catch(core.handleNetworkError)
-
-            switch (status) {
-                case workspace.PullStatus.NoSourceControl:
-                case workspace.PullStatus.UpToDate:
-                    break
-
-                case workspace.PullStatus.NeedsCommit:
-                    needsHide = false
-                    await this.commitAsync()
-                    break
-
-                case workspace.PullStatus.GotChanges:
-                    await this.reloadHeaderAsync()
-                    break
-            }
-        } finally {
-            if (needsHide)
-                core.hideLoading("loadingheader")
-        }
-    }
-
     ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
@@ -1770,6 +1762,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
+        this.editorFile = undefined;
         this.setStateAsync({
             home: true,
             tracing: undefined,
@@ -1777,7 +1770,9 @@ export class ProjectView
             tutorialOptions: undefined,
             editorState: undefined,
             debugging: undefined,
-            header: undefined
+            header: undefined,
+            currFile: undefined,
+            fileState: undefined
         }).then(() => {
             this.allEditors.forEach(e => e.setVisible(false));
             this.homeLoaded();
@@ -2818,7 +2813,7 @@ export class ProjectView
                     if (pxt.github.isGithubId(id))
                         importGithubProject(id);
                     else
-                        loadHeaderBySharedId(id);
+                        loadHeaderBySharedIdAsync(id).done();
                 }
             }, (e) => {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -3600,7 +3595,10 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "edit": // load a published proj, eg: #pub:27750-32291-62442-22749
             pxt.tickEvent("hash." + hash.cmd);
             pxt.BrowserUtils.changeHash("");
-            loadHeaderBySharedId(hash.arg);
+            if (/^(github:|https:\/\/github\.com\/)/.test(hash.arg))
+                importGithubProject(hash.arg);
+            else
+                loadHeaderBySharedIdAsync(hash.arg).done();
             return true;
         case "sandboxproject":
         case "project":
@@ -3646,7 +3644,10 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 async function importGithubProject(id: string) {
     core.showLoading("loadingheader", lf("importing github project..."));
     try {
-        let hd = await workspace.importGithubAsync(id)
+        // try to find project with same id
+        let hd = workspace.getHeaders().find(h => h.githubId == id);
+        if (!hd)
+            hd = await workspace.importGithubAsync(id)
         let text = await workspace.getTextAsync(hd.id)
         if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
             let ok = await core.confirmAsync({
@@ -3659,7 +3660,7 @@ async function importGithubProject(id: string) {
                 await workspace.saveAsync(hd)
                 return
             }
-            await workspace.initializeGithubRepoAsync(hd, id)
+            await workspace.initializeGithubRepoAsync(hd, id, true)
         }
         await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
@@ -3669,12 +3670,17 @@ async function importGithubProject(id: string) {
     }
 }
 
-function loadHeaderBySharedId(id: string) {
+function loadHeaderBySharedIdAsync(id: string) {
     core.showLoading("loadingheader", lf("loading project..."));
-    workspace.installByIdAsync(id)
-        .then(hd => theEditor.loadHeaderAsync(hd, null))
+
+    // try to find project with same id
+    const hdid = workspace.getHeaders().find(h => h.pubId == id);
+
+    let p = hdid ? Promise.resolve(hdid) : workspace.installByIdAsync(id);
+    p.then(hd => theEditor.loadHeaderAsync(hd, null))
         .catch(core.handleNetworkError)
         .finally(() => core.hideLoading("loadingheader"));
+    return p;
 }
 
 const handleHashChange = (e: HashChangeEvent) => {

@@ -141,6 +141,7 @@ export interface PromptOptions extends ConfirmOptions {
     initialValue?: string;
     placeholder?: string;
     onInputChanged?: (newValue?: string) => void;
+    onInputValidation?: (newValue?: string) => string; // return error if any
 }
 
 export interface DialogOptions {
@@ -154,6 +155,7 @@ export interface DialogOptions {
     header: string;
     body?: string;
     jsx?: JSX.Element;
+    jsxd?: () => JSX.Element; // dynamic-er version of jsx
     copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
