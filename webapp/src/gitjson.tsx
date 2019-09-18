@@ -317,11 +317,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // check if we need to reload header
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
         if (newKey == this.state.previousCfgKey) {
-            // force render
-            this.forceUpdate();
-            return
+            // refresh pull status
+            await this.refreshPullAsync();
         } else {
-            await this.setStateAsync({ previousCfgKey: newKey });
+            await this.setStateAsync({ needsPull: undefined, previousCfgKey: newKey });
             await this.props.parent.reloadHeaderAsync();
         }
     }
@@ -329,17 +328,19 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private async pullAsync() {
         this.showLoading(lf("pulling changes..."));
         try {
-            let status = await workspace.pullAsync(this.props.parent.state.header)
+            this.setState({ needsPull: undefined });
+            const status = await workspace.pullAsync(this.props.parent.state.header)
                 .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
+                    this.setState({ needsPull: false });
                     break
                 case workspace.PullStatus.NeedsCommit:
-                    this.setState({ needsCommitMessage: true });
+                    this.setState({ needsPull: true, needsCommitMessage: true });
                     break
                 case workspace.PullStatus.GotChanges:
-                    await this.maybeReloadAsync()
+                    await this.maybeReloadAsync();
                     break
             }
         } catch (e) {
@@ -520,6 +521,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 const statusCode = parseInt(e.statusCode);
                 if (e.isOffline || statusCode === 0) {
                     // don't report offline on this one
+                    this.setState({ needsPull: undefined });
                     return;
                 }
                 this.handleGithubError(e);
@@ -571,7 +573,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button icon={`${needsPull !== false ? "down arrow" : "check"}`}
+                        <sui.Button icon={`${needsPull === true ? "down arrow" : needsPull === false ? "check" : ""}`}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
