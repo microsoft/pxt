@@ -3247,11 +3247,13 @@ ${lbl}: .short 0xffff
             } else if (decl.kind == SK.EnumMember) {
                 const en = decl as EnumMember
                 const ev = enumValue(en)
-                if (ev == null)
+                if (ev == null) {
                     info.constantFolded = constantFold(en.initializer)
-                const v = parseInt(ev)
-                if (!isNaN(v))
-                    return { val: v }
+                } else {
+                    const v = parseInt(ev)
+                    if (!isNaN(v))
+                        info.constantFolded = { val: v }
+                }
             } else if (decl.kind == SK.PropertyDeclaration && isStatic(decl) && isReadOnly(decl)) {
                 const pd = decl as PropertyDeclaration
                 info.constantFolded = constantFold(pd.initializer)
@@ -3319,7 +3321,7 @@ ${lbl}: .short 0xffff
                 case SK.AsExpression:
                     return constantFold((e as AsExpression).expression)
                 default:
-                    return undefined
+                    return null
             }
         }
 
