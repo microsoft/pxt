@@ -37,5 +37,47 @@ function testLambdaDecrCapture() {
     b("fo0" + "bAr")
 }
 
+function testNested() {
+    glb1 = 0
+
+    const x = 7
+    let y = 1
+    bar(1)
+    y++
+    bar(2)
+    bar2()
+    assert(glb1 == 12)
+    glb1 = 0
+    const arr = [1,20,300]
+    for (let k of arr) {
+        qux()
+        function qux() {
+            glb1 += k
+        }
+    }
+    assert(glb1 == 321)
+
+    const fns: any[] = []
+    for (let k of arr) {
+        const kk = k
+        fns.push(qux2)
+        function qux2() {
+            glb1 += kk
+        }
+    }
+    glb1 = 0
+    for (let f of fns) f()
+    assert(glb1 == 321)
+
+    function bar(v: number) {
+        assert(x == 7 && y == v)
+        glb1++
+    }
+    function bar2() {
+        glb1 += 10
+    }
+}
+
 testLambdas();
 testLambdaDecrCapture();
+testNested()
