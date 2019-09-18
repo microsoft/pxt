@@ -496,6 +496,15 @@ namespace pxsim {
             return (map.data[i].val);
         }
 
+        export function mapDeleteByString(map: RefMap, key: string) {
+            if (!(map instanceof RefMap))
+                pxtrt.panic(923)
+            let i = map.findIdx(key);
+            if (i >= 0)
+                map.data.splice(i, 1)
+            return true
+        }
+
         export const mapSetGeneric = mapSetByString
         export const mapGetGeneric = mapGetByString
 

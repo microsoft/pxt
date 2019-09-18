@@ -59,6 +59,7 @@ and might not be available in your editor.
 * using generic functions as values and nested generic functions
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * exceptions (`throw`, `try ... catch`, `try ... finally`)
+* `delete` statement (on object literals)
 
 The following used to be disallowed, but should be supported now,
 though they require testing:
@@ -84,7 +85,6 @@ We generally stay away from the more dynamic parts of JavaScript.  Things you ma
 
 * object destructuring with initializers
 * shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
-* `delete` statement (on object literals)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays
 * `new` on non-class types
@@ -135,6 +135,15 @@ monkey-patch these.
 
 Finally, classes are currently not extensible with arbitrary fields.
 We might lift this in future.
+
+`Object.keys(x)` is not yet supported when `x` is dynamically a class type.
+It is supported when `x` was created with an object literal (eg., `{}` or `{ a: 1, b: "foo" }`).
+The order in which properties are returned is order of insertion with no
+special regard for keys that looks like integer (JavaScript has 
+[really counter-intuitive behavior](https://www.stefanjudis.com/today-i-learned/property-order-is-predictable-in-javascript-objects-since-es2015/)
+here).
+When we support `Object.keys()` on class types, the order will be the static order of
+field definition.
 
 ## Execution environments
 

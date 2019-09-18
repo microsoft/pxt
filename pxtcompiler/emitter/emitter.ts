@@ -242,7 +242,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9276
+    // next free error 9278
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -2911,7 +2911,29 @@ ${lbl}: .short 0xffff
             return lit
         }
 
-        function emitDeleteExpression(node: DeleteExpression) { }
+        function emitDeleteExpression(node: DeleteExpression) {
+            let objExpr: Expression
+            let keyExpr: () => ir.Expr
+            if (node.expression.kind == SK.PropertyAccessExpression) {
+                const inner = node.expression as PropertyAccessExpression
+                objExpr = inner.expression
+                keyExpr = () => emitStringLiteral(inner.name.text)
+            } else if (node.expression.kind == SK.ElementAccessExpression) {
+                const inner = node.expression as ElementAccessExpression
+                objExpr = inner.expression
+                keyExpr = () => emitExpr(inner.argumentExpression)
+            } else {
+                throw userError(9276, lf("expression not supported as argument to 'delete'"))
+            }
+            // we know this would just fail at runtime
+            if (isClassType(typeOf(objExpr)))
+                throw userError(9277, lf("'delete' not supported on class types"))
+            const args = [
+                emitExpr(objExpr),
+                keyExpr()
+            ]
+            return rtcallMaskDirect("pxtrt::mapDeleteByString", args)
+        }
         function emitTypeOfExpression(node: TypeOfExpression) {
             return rtcallMask("pxt::typeOf", [node.expression], null)
         }
@@ -4337,6 +4359,8 @@ ${lbl}: .short 0xffff
                     return emitObjectLiteral(<ObjectLiteralExpression>node);
                 case SK.TypeOfExpression:
                     return emitTypeOfExpression(<TypeOfExpression>node);
+                case SyntaxKind.DeleteExpression:
+                    return emitDeleteExpression(<DeleteExpression>node);
                 default:
                     unhandled(node);
                     return null
@@ -4370,8 +4394,6 @@ ${lbl}: .short 0xffff
                     return emitComputedPropertyName(<ComputedPropertyName>node);
                 case SyntaxKind.TaggedTemplateExpression:
                     return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
-                case SyntaxKind.DeleteExpression:
-                    return emitDeleteExpression(<DeleteExpression>node);
                 case SyntaxKind.VoidExpression:
                     return emitVoidExpression(<VoidExpression>node);
                 case SyntaxKind.AwaitExpression:

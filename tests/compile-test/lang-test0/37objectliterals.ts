@@ -23,6 +23,40 @@ namespace ObjLit {
         glb1 += o.width - o.height + o.msg.length
     }
 
+    function deleteTest() {
+        msg("deleteTest")
+        const o: any = {
+            a: 1,
+            b: 2,
+            c: "3"
+        }
+
+        delete o.b
+        let keys = Object.keys(o)
+        assert(keys.length == 2)
+        assert(keys[0] == "a")
+        assert(keys[1] == "c")
+        assert(o.a == 1 && o.c == "3")
+
+        delete o["a"]
+        keys = Object.keys(o)
+        assert(keys.length == 1, "l1")
+        assert(keys[0] == "c", "0c")
+        assert(o.c == "3", "c3")
+
+        o.a = 17
+        keys = Object.keys(o)
+        assert(keys.length == 2)
+        assert(keys[0] == "c")
+        assert(keys[1] == "a")
+        assert(o.a == 17 && o.c == "3")
+
+        delete o["XaX".slice(1, 2)]
+        keys = Object.keys(o)
+        assert(keys.length == 1)
+        assert(keys[0] == "c")
+    }
+
     export function run() {
         msg("Objlit")
         glb1 = 0
@@ -48,6 +82,9 @@ namespace ObjLit {
         v.width = 34
         foo(v)
         assert(glb1 == 9)
+
+        deleteTest()
+
         msg("Objlit done")
     }
 }
