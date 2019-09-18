@@ -125,10 +125,12 @@ Short, step-by-step tutorials for students to go through on their own -
 
 Facilitated making and coding activities for students -
 
+* [Cartoon Network Projects](http://aka.ms/MakeCodeCN) - try one of these fun Cartoon Network themed projects
 * [Magic Wand](https://makecode.adafruit.com/projects/magic-wand) – using a wooden stick and decorations, create your own custom magic wand!
 * [Dandelion](https://makecode.adafruit.com/projects/dandelion) – blow on your Circuit Playground Express flower to see the lights glow
 * [Guitar](https://makecode.adafruit.com/projects/guitar) – make an air guitar from cardboard and Circuit Playground Express
 * [Headlamp](https://makecode.adafruit.com/projects/headlamp) – turn the lights on automatically in the dark
+
 * Downloadable, Printable PDF’s and PPT’s for some activities posted [here](https://1drv.ms/f/s!AmMIW5Hxi0RtgP4zW7aGra5-jta-fA)
 
 ## MakeCode for Minecraft
@@ -143,6 +145,7 @@ Short, step-by-step tutorials for students to go through on their own -
 * [Flower Trail](https://minecraft.makecode.com/#tutorial:/tutorials/flower-trail) – make a trail of flowers follow you wherever you go
 * [Agent Move](https://minecraft.makecode.com/#tutorial:/tutorials/agent-moves) – get your little Agent robot to follow your commands
 * [Agent Build](https://minecraft.makecode.com/#tutorial:/tutorials/agent-build) – have your Agent build you a house!
+* [Aquarium](https://minecraft.makecode.com/#tutorial:/tutorials/aquarium) - build your own aquarium and fill it with fish!
 * [Mega Jump](https://minecraft.makecode.com/#tutorial:/tutorials/mega-jump) – give yourself super powers to jump super high!
 
 ### 2. Code Samples
