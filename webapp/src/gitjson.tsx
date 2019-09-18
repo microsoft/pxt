@@ -608,7 +608,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
         return <div>
             {!pxt.github.token ? <div className="ui info message join">
-                <p>{lf("Host your code on GitHub and work together on projects.")}</p>
+                <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
             </div> : undefined}
             {needsCommitMessage ? <div className="ui warning message">

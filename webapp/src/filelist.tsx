@@ -251,11 +251,9 @@ namespace custom {
 
     renderCore() {
         const showFiles = !!this.props.parent.state.showFiles;
-        const { currentFile } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const plus = showFiles && !mainPkg.files[customFile]
-        const showGithub = showFiles && (pxt.github.token || targetTheme.alwaysGithubItem);
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
@@ -264,27 +262,17 @@ namespace custom {
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {showGithub ? <GithubTreeItem
-                parent={this.props.parent}
-                githubId={mainPkg.header.githubId}
-                isActive={currentFile && currentFile.name == pxt.github.GIT_JSON}
-            /> : undefined}
             {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
     }
-}
-
-interface GithubTreeItemProps extends ISettingsProps {
-    githubId: string;
-    isActive: boolean;
 }
 
 interface GithubTreeItemState {
     pushPulling?: boolean;
 }
 
-class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemState> {
-    constructor(props: GithubTreeItemProps) {
+export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItemState> {
+    constructor(props: ISettingsProps) {
         super(props);
         this.state = {};
         this.handleClick = this.handleClick.bind(this);
@@ -296,7 +284,7 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
     }
 
     private handleClick(e: React.MouseEvent<HTMLElement>) {
-        const { githubId } = this.props;
+        const { githubId } = this.props.parent.state.header;
         if (!githubId) {
             this.createRepositoryAsync().done();
         } else {
@@ -328,24 +316,29 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
     }
 
     renderCore() {
-        const { githubId, isActive } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
+        const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
+        if (!showGithub) return undefined;
+
+
+        const { githubId } = this.props;
         const ghid = pxt.github.parseRepoId(githubId);
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
 
-        return <a
-            key="github-status"
-            className={`${isActive ? "active " : ""}item`}
-            onClick={this.handleClick}
-            tabIndex={0}
-            role="treeitem"
-            aria-selected={isActive}
-            aria-label={isActive ? lf("GitHub view, currently opened") : lf("GitHub view")}
-            onKeyDown={sui.fireClickOnEnter}>
-            <i className="github icon" />
-            {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("create GitHub repository")}
-            {meta && meta.numFilesGitModified ? ` ${meta.numFilesGitModified}↑` : ''}
-        </a>
+        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
+            <div
+                key="github-status"
+                className={`item`}
+                onClick={this.handleClick}
+                tabIndex={0}
+                role="button"
+                onKeyDown={sui.fireClickOnEnter}>
+                <i className="github icon" />
+                {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
+                {meta && meta.numFilesGitModified ? ` ${meta.numFilesGitModified}↑` : ''}
+            </div>
+        </div>;
     }
 }
 

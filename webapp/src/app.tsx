@@ -3328,6 +3328,8 @@ export class ProjectView
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or show if github always or don't show in blocks/serial
         const showFileList = !sandbox && (!!pxt.github.token || !(isBlocks || this.editor == this.serialEditor));
+        // show github if token or if always vis
+        const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3353,6 +3355,7 @@ export class ProjectView
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
+                        {showGithub ? <filelist.GithubTreeItem parent={this} /> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
                         {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
