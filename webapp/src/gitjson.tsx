@@ -573,7 +573,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button icon={`${needsPull === true ? "down arrow" : needsPull === false ? "check" : ""}`}
+                        <sui.Button icon={`${needsPull === true ? "down arrow" : needsPull === false ? "check" : "sync"}`}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
