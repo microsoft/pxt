@@ -811,7 +811,7 @@ ${output}</xml>`;
             if (op === "&&" || op === "||") {
                 leftValue = getConditionalInput(leftName, n.left);
                 rightValue = getConditionalInput(rightName, n.right);
-            } else  {
+            } else {
                 leftValue = getValue(leftName, n.left, numberType);
                 rightValue = getValue(rightName, n.right, numberType);
             }
@@ -1187,6 +1187,12 @@ ${output}</xml>`;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
                         break;
+                    case SK.BreakStatement:
+                        stmt = getBreakStatementBlock(node);
+                        break;
+                    case SK.ContinueStatement:
+                        stmt = getContinueStatementBlock(node);
+                        break;
                     case SK.EmptyStatement:
                         stmt = undefined; // don't generate blocks for empty statements
                         break;
@@ -1297,6 +1303,16 @@ ${output}</xml>`;
                 r.mutation[`line${i}`] = U.htmlEscape(p);
             });
 
+            return r;
+        }
+
+        function getContinueStatementBlock(node: ts.Node): StatementNode {
+            const r = mkStmt(pxtc.TS_CONTINUE_TYPE);
+            return r;
+        }
+
+        function getBreakStatementBlock(node: ts.Node): StatementNode {
+            const r = mkStmt(pxtc.TS_BREAK_TYPE);
             return r;
         }
 
@@ -2255,6 +2271,10 @@ ${output}</xml>`;
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.ModuleDeclaration:
                 return checkNamespaceDeclaration(node as ts.NamespaceDeclaration);
+            case SK.BreakStatement:
+                return pxt.appTarget.runtime && !!pxt.appTarget.runtime.breakBlock ? undefined : lf("Unsupported in blocks.");
+            case SK.ContinueStatement:
+                return pxt.appTarget.runtime && !!pxt.appTarget.runtime.continueBlock ? undefined : lf("Unsupported in blocks.");
             case SK.DebuggerStatement:
             case SK.EmptyStatement:
                 return undefined;
@@ -3100,7 +3120,7 @@ ${output}</xml>`;
     }
 
     function isDeclaredElsewhere(node: ts.Identifier) {
-        return !! (pxtInfo(node).flags & PxtNodeFlags.IsGlobalIdentifier)
+        return !!(pxtInfo(node).flags & PxtNodeFlags.IsGlobalIdentifier)
     }
 
     function hasStatementInput(info: CallInfo, attributes: CommentAttrs): boolean {

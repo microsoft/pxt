@@ -165,7 +165,7 @@ export function connectSerial(w: HF2.Wrapper) {
         w.sendSerialAsync(new Uint8Array(buf)).done()
     })
     w.onSerial = (arr, iserr) => {
-        let buf = new Buffer(arr)
+        let buf = Buffer.from(arr)
         if (iserr) process.stderr.write(buf)
         else process.stdout.write(buf)
     }
@@ -210,7 +210,7 @@ export class HidIO implements HF2.PacketIO {
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
-        //console.log("SEND: " + new Buffer(pkt).toString("hex"))
+        //console.log("SEND: " + Buffer.from(pkt).toString("hex"))
         return Promise.resolve()
             .then(() => {
                 let lst = [0]

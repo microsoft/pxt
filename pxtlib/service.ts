@@ -11,6 +11,8 @@ namespace ts.pxtc {
     export const HANDLER_COMMENT = "code goes here"; // TODO: Localize? (adding lf doesn't work because this is run before translations are downloaded)
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_DEBUGGER_TYPE = "debugger_keyword";
+    export const TS_BREAK_TYPE = "break_keyword";
+    export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const BINARY_JS = "binary.js";

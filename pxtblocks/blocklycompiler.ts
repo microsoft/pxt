@@ -747,7 +747,7 @@ namespace pxt.blocks {
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
             return {
                 actualName: a.name,
-                definitionName: a .id
+                definitionName: a.id
             };
         });
 
@@ -1384,6 +1384,12 @@ namespace pxt.blocks {
             case pxtc.TS_DEBUGGER_TYPE:
                 r = compileDebuggeStatementBlock(e, b);
                 break;
+            case pxtc.TS_BREAK_TYPE:
+                r = compileBreakStatementBlock(e, b);
+                break;
+            case pxtc.TS_CONTINUE_TYPE:
+                r = compileContinueStatementBlock(e, b);
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1449,6 +1455,14 @@ namespace pxt.blocks {
             ]
         }
         return [];
+    }
+
+    function compileBreakStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("break;\n")]
+    }
+
+    function compileContinueStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("continue;\n")]
     }
 
     function prefixWithSemicolon(n: JsNode) {

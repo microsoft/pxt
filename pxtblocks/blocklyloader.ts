@@ -612,7 +612,7 @@ namespace pxt.blocks {
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip( /^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
+        block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
@@ -919,9 +919,9 @@ namespace pxt.blocks {
                     output.push("Boolean");
                     break;
                 case "T":
-                    // The type is generic, so accept any checks. This is mostly used with functions that
-                    // get values from arrays. This could be improved if we ever add proper type
-                    // inference for generic types
+                // The type is generic, so accept any checks. This is mostly used with functions that
+                // get values from arrays. This could be improved if we ever add proper type
+                // inference for generic types
                 case "any":
                     return null;
                 case "void":
@@ -1250,6 +1250,66 @@ namespace pxt.blocks {
                 }
             }
         };
+
+        // break statement
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.breakBlock) {
+            const blockOptions = pxt.appTarget.runtime.breakBlock;
+            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
+            Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+                init: function () {
+                    const color = blockOptions.color || pxt.toolbox.getNamespaceColor('loops');
+
+                    this.jsonInit({
+                        "message0": blockDef.block["message0"],
+                        "inputsInline": true,
+                        "previousStatement": null,
+                        "nextStatement": null,
+                        "colour": color
+                    });
+
+                    setHelpResources(this,
+                        ts.pxtc.TS_BREAK_TYPE,
+                        blockDef.name,
+                        blockDef.tooltip,
+                        blockDef.url,
+                        color,
+                        undefined/*colourSecondary*/,
+                        undefined/*colourTertiary*/,
+                        false/*undeletable*/
+                    );
+                }
+            }
+        }
+
+        // continue statement
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.continueBlock) {
+            const blockOptions = pxt.appTarget.runtime.continueBlock;
+            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
+            Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+                init: function () {
+                    const color = blockOptions.color || pxt.toolbox.getNamespaceColor('loops');
+
+                    this.jsonInit({
+                        "message0": blockDef.block["message0"],
+                        "inputsInline": true,
+                        "previousStatement": null,
+                        "nextStatement": null,
+                        "colour": color
+                    });
+
+                    setHelpResources(this,
+                        ts.pxtc.TS_BREAK_TYPE,
+                        blockDef.name,
+                        blockDef.tooltip,
+                        blockDef.url,
+                        color,
+                        undefined/*colourSecondary*/,
+                        undefined/*colourTertiary*/,
+                        false/*undeletable*/
+                    );
+                }
+            }
+        }
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
@@ -2360,7 +2420,7 @@ namespace pxt.blocks {
             // The logic for setting the output check relies on the internals of PXT
             // too much to be refactored into pxt-blockly, so we need to monkey patch
             // it here
-            Blockly.Blocks["argument_reporter_custom"].domToMutation = function(xmlElement: Element) {
+            Blockly.Blocks["argument_reporter_custom"].domToMutation = function (xmlElement: Element) {
                 const typeName = xmlElement.getAttribute('typename');
                 this.typeName_ = typeName;
 

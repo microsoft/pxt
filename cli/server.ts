@@ -167,7 +167,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         const data = m[2];
         const fn = path.join(dirname, name + "." + ext);
         console.log(`writing ${fn}`)
-        return writeFileAsync(fn, new Buffer(data, 'base64'));
+        return writeFileAsync(fn, Buffer.from(data, 'base64'));
     }
 
     return Promise.all([
@@ -180,7 +180,7 @@ function writePkgAssetAsync(logicalDirname: string, data: any) {
     const dirname = path.join(userProjectsDir, logicalDirname, "assets")
 
     nodeutil.mkdirP(dirname)
-    return writeFileAsync(dirname + "/" + data.name, new Buffer(data.data, data.encoding || "base64"))
+    return writeFileAsync(dirname + "/" + data.name, Buffer.from(data.data, data.encoding || "base64"))
         .then(() => ({
             name: data.name
         }))
@@ -604,7 +604,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 })
 
                             case "send":
-                                sock.write(new Buffer(msg.arg.data, msg.arg.encoding || "utf8"))
+                                sock.write(Buffer.from(msg.arg.data, msg.arg.encoding || "utf8"))
                                 return {}
                             default: // unknown message
                                 pxt.log(`unknown tcp message ${msg.op}`)
