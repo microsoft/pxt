@@ -539,15 +539,11 @@ export class Editor extends srceditor.Editor {
                         textClass={"landscape only"} onClick={cache.revert} />
                     {deletedFiles.length == 0 ? undefined :
                         <p>
-                            {lf("Reverting this file will also restore:")}
-                            {" "}
-                            <span className="files-to-restore">{deletedFiles.join(", ")}</span>
+                            {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
                         </p>}
                     {addedFiles.length == 0 ? undefined :
                         <p>
-                            {lf("Reverting this file will also remove:")}
-                            {" "}
-                            <span className="files-to-delete">{addedFiles.join(", ")}</span>
+                            {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
                 </div>
                 {isBlocks ? <div className="ui segment"><p>{lf("Some blocks changed")}</p></div> : diffJSX.length ?
