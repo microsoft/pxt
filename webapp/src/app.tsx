@@ -1638,7 +1638,9 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     syncPreferredEditor() {
-        pkg.mainPkg.setPreferredEditor(this.getPreferredEditor())
+        const pe = this.getPreferredEditor();
+        if (pe)
+            pkg.mainPkg.setPreferredEditor(pe);
     }
 
     exportProjectToFileAsync(): Promise<Uint8Array> {
@@ -1815,15 +1817,17 @@ export class ProjectView
         if (this.editor == this.blocksEditor)
             return pxt.BLOCKS_PROJECT_NAME
 
-        if (this.editor == this.textEditor)
+        if (this.editor == this.textEditor) {
             switch (this.textEditor.fileType) {
                 case pxt.editor.FileType.Python:
                     return pxt.PYTHON_PROJECT_NAME;
                 default:
                     return pxt.JAVASCRIPT_PROJECT_NAME;
             }
-        else
-            return pxt.JAVASCRIPT_PROJECT_NAME;
+        }
+
+        // no preferred editor
+        return undefined;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3257,7 +3261,7 @@ export class ProjectView
         const simOpts = pxt.appTarget.simulator;
         const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !pxt.shell.isControllerMode();
         const sandbox = pxt.shell.isSandboxMode();
-        const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const isBlocks = !this.editor.isVisible || this.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
