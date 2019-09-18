@@ -3326,7 +3326,8 @@ export class ProjectView
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
-        const showFileList = !!pxt.github.token || !(sandbox || isBlocks || this.editor == this.serialEditor);
+        // don't show in sandbox or show if github always or don't show in blocks/serial
+        const showFileList = !sandbox && (!!pxt.github.token || !(isBlocks || this.editor == this.serialEditor));
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
