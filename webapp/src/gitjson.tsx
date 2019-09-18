@@ -20,6 +20,7 @@ interface GithubProps {
 }
 
 interface GithubState {
+    isVisible?: boolean;
     description?: string;
     needsCommitMessage?: boolean;
     needsPull?: boolean;
@@ -43,7 +44,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleSignInClick = this.handleSignInClick.bind(this);
     }
 
-    clearCache() {
+    private clearCache() {
         this.diffCache = {};
     }
 
@@ -301,7 +302,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    pkgConfigKey(cfgtxt: string) {
+    private pkgConfigKey(cfgtxt: string) {
         const cfg = JSON.parse(cfgtxt) as pxt.PackageConfig
         delete cfg.version
         return JSON.stringify(cfg)
@@ -512,12 +513,35 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private refreshPullAsync() {
-        return this.setStateAsync({ needsPull: true })
+        return this.setStateAsync({ needsPull: undefined })
             .then(() => workspace.hasPullAsync(this.props.parent.state.header))
             .then(v => this.setStateAsync({ needsPull: v }))
-            .catch(this.handleGithubError);
+            .catch(e => {
+                const statusCode = parseInt(e.statusCode);
+                if (e.isOffline || statusCode === 0) {
+                    // don't report offline on this one
+                    return;
+                }
+                this.handleGithubError(e);
+            });
     }
 
+    setVisible(b: boolean) {
+        if (b === this.state.isVisible) return;
+
+        if (b) {
+            this.setState({
+                previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
+            });
+            this.refreshPullAsync().done();
+        } else {
+            this.clearCache();
+            this.setState({
+                needsCommitMessage: false,
+                needsPull: undefined
+            });
+        }
+    }
 
     renderCore(): JSX.Element {
         // TODO: disable commit changes if no changes available
@@ -525,10 +549,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0
-
-        if (this.state.needsPull === undefined) {
-            Promise.delay(1).then(() => this.refreshPullAsync());
-        }
 
         const { needsCommitMessage, needsPull, description } = this.state;
         const githubId = this.parsedRepoId()
@@ -652,18 +672,7 @@ export class Editor extends srceditor.Editor {
 
     setVisible(b: boolean) {
         this.isVisible = b;
-        if (!this.view) return;
-        if (b) {
-            this.view.setState({
-                previousCfgKey: this.view.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
-            });
-        } else {
-            this.view.clearCache();
-            this.view.setState({
-                needsCommitMessage: false,
-                needsPull: undefined
-            });
-        }
+        if (this.view) this.view.setVisible(b);
     }
 
     setHighContrast(hc: boolean) {
@@ -681,6 +690,8 @@ export class Editor extends srceditor.Editor {
 
     handleViewRef = (c: GithubComponent) => {
         this.view = c;
+        if (this.view)
+            this.view.setVisible(this.isVisible);
     }
 
     display() {
