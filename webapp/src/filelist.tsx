@@ -263,7 +263,11 @@ namespace custom {
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {showGithub ? <GithubTreeItem parent={this.props.parent} githubId={mainPkg.header.githubId} /> : undefined}
+            {showGithub ? <GithubTreeItem
+                parent={this.props.parent}
+                githubId={mainPkg.header.githubId}
+                isActive={this.state.currentFile && this.state.currentFile.name == pxt.github.GIT_JSON}
+            /> : undefined}
             {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
     }
@@ -271,6 +275,7 @@ namespace custom {
 
 interface GithubTreeItemProps extends ISettingsProps {
     githubId: string;
+    isActive: boolean;
 }
 
 interface GithubTreeItemState {
@@ -322,26 +327,19 @@ class GithubTreeItem extends sui.UIElement<GithubTreeItemProps, GithubTreeItemSt
     }
 
     renderCore() {
-        const { githubId } = this.props;
-
-        // TODO: aria-selected, aria-label
-        //aria-selected={isActive}
-        //aria-label={isActive ? lf("{0}, it is the current opened file in the JavaScript editor", file.name) : file.name}
-
-
-        // todo: current branch
+        const { githubId, isActive } = this.props;
         const ghid = pxt.github.parseRepoId(githubId);
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
 
         return <a
             key="github-status"
-            className="item"
+            className={`${isActive ? "active " : ""}item`}
             onClick={this.handleClick}
             tabIndex={0}
             role="treeitem"
-            aria-selected="false"
-            aria-label="github status"
+            aria-selected={isActive}
+            aria-label={isActive ? lf("GitHub view, currently opened") : lf("GitHub view")}
             onKeyDown={sui.fireClickOnEnter}>
             <i className="github icon" />
             {ghid ? (ghid.project && ghid.tag ? `${ghid.project}#${ghid.tag}` : ghid.fullName) : lf("create GitHub repository")}
