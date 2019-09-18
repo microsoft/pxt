@@ -59,17 +59,13 @@ and might not be available in your editor.
 * using generic functions as values and nested generic functions
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * exceptions (`throw`, `try ... catch`, `try ... finally`)
-* `delete` statement (on object literals)
-
-The following used to be disallowed, but should be supported now,
-though they require testing:
-
 * downcasts of a superclass to a subclass
 * function parameter bi-variance
 * explicit or implicit use of the `any` type
 * `union` or `intersection` types
 * using a generic function as a value
 * class inheritance for generic classes and methods
+* `delete` statement (on object created with `{...}`)
 
 ## Unsupported language features
 
@@ -81,7 +77,7 @@ Static TypeScript has *nominal typing* for classes, rather than the *structural 
 * `this` used outside of a method
 * function overloading
 
-We generally stay away from the more dynamic parts of JavaScript.  Things you may miss and we may implement:
+Things you may miss and we may implement:
 
 * object destructuring with initializers
 * shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
@@ -97,7 +93,8 @@ unlikely to miss it):
 * file-based modules (`import * from ...`, `module.exports` etc); we do support namespaces
 * `yield` expression and ``function*``
 * `await` expression and `async function`
-* tagged templates ``tag `text ${expression} more text` ``; regular templates are supported
+* tagged templates ``tag `text ${expression} more text` `` are limited to special compiler features
+  like image literals; regular templates are supported
 * `with` statement
 * `eval`
 * `for ... in` statements (`for ... of` is supported)
@@ -255,6 +252,4 @@ and dynamic maps.
   we could make it equivalent to JavaScript's `x.foo.bind(x)`
 * `Object.keys()` is currently not implemented for classes; when it will be
   the order of fields will be static declaration order
-* the `delete` statement is currently disallowed; it can be implemented
-  rather easily, though on classes it will just assign `undefined`
 * how to validate types of C++ classes (Pin mostly)?
