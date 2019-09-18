@@ -592,7 +592,9 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     }
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    const cfg = JSON.parse(cfgText || "{}") as pxt.PackageConfig
+    const cfg = pxt.Util.jsonTryParse(cfgText || "{}") as pxt.PackageConfig
+    if (!cfg)
+        U.userError(lf("Invalid pxt.json file."));
     for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
         await downloadAsync(fn)
     }
