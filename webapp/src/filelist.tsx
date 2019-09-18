@@ -250,25 +250,26 @@ namespace custom {
     }
 
     renderCore() {
-        const show = !!this.props.parent.state.showFiles;
+        const showFiles = !!this.props.parent.state.showFiles;
+        const { currentFile } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
-        const plus = show && !mainPkg.files[customFile]
-        const showGithub = show && (pxt.github.token || targetTheme.alwaysGithubItem);
+        const plus = showFiles && !mainPkg.files[customFile]
+        const showGithub = showFiles && (pxt.github.token || targetTheme.alwaysGithubItem);
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
-                <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
+                <sui.Icon icon={`chevron ${showFiles ? "down" : "right"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
             {showGithub ? <GithubTreeItem
                 parent={this.props.parent}
                 githubId={mainPkg.header.githubId}
-                isActive={this.state.currentFile && this.state.currentFile.name == pxt.github.GIT_JSON}
+                isActive={currentFile && currentFile.name == pxt.github.GIT_JSON}
             /> : undefined}
-            {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
+            {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
     }
 }
