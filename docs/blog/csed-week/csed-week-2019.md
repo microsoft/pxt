@@ -1,6 +1,6 @@
 # MakeCode Tutorials and Projects for CS Ed Week
 
-[Computer Science Education week](https://csedweek.org/) is happening again this year and it's coming soon! We are excited about it and want to provide some quick and easy MakeCode activities for students to use. So, we've updated last year's [list](/blog/csed-week/csed-week-2018) of some of our favorite tutorials, guides, and projects that you can do in under an hour. 
+[Computer Science Education week](https://csedweek.org/) is coming up, and Educators can start planning for it now!  We've updated last year's [list](/blog/csed-week/csed-week-2018) of some of our favorite tutorials, guides, and projects that you can do in under an hour. 
 
 We’ve organized this list by product:
 
@@ -8,7 +8,7 @@ We’ve organized this list by product:
 
 ![Arcade card](/static/blog/csed-week/arcade-badge.png)
 
-Hey, this year MakeCode Arcade is available! Try out some of these game coding ideas!
+Hey, this year MakeCode Arcade is available! Your students will love coding their own games!
 
 ### ~ hint
 
@@ -77,6 +77,7 @@ Guides to introduce students to the micro:bit hardware -
 * [Micro:bit hardware components](https://microbit.org/guide/features/)
 * [Quick Start guide](https://microbit.org/guide/quick/)
 * [The micro:bit is a mini-computer](https://makecode.microbit.org/courses/csintro/algorithms/overview)
+* [Behind the MakeCode Hardware video series](https://www.youtube.com/playlist?list=PLMMBk9hE-SeqDYtw9pGNPsQ10V_EGMyGe)
 
 ### 2. Tutorials
 
