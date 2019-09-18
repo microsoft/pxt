@@ -643,7 +643,10 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.commit");
-        await this.props.parent.commitAsync();
+        if (!pxt.github.token)
+            await dialogs.showGithubLoginAsync();
+        if (pxt.github.token)
+            await this.props.parent.commitAsync();
     }
 
     renderCore() {
@@ -656,7 +659,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
             </div>}
             <div className="ui field">
-                <sui.Button className="primary" text={lf("Commit changes")} disabled={needsToken} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
             </div>
         </div>
     }
@@ -667,10 +670,14 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
         this.handleBumpClick = this.handleBumpClick.bind(this);
     }
 
-    private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+    private async handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.bump");
         e.stopPropagation();
-        this.props.parent.bumpAsync().done();
+
+        if (!pxt.github.token)
+            await dialogs.showGithubLoginAsync();
+        if (pxt.github.token)
+            this.props.parent.bumpAsync();
     }
 
     renderCore() {
@@ -684,7 +691,7 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                         {lf("Bump up the version number and create a release on GitHub.")}
                         <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
                     </p>
-                    <sui.Button className="primary" text={lf("Create release")} disabled={needsToken} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                 </div> : undefined}
         </div>
     }
