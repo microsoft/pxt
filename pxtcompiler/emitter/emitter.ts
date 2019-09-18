@@ -2717,13 +2717,6 @@ ${lbl}: .short 0xffff
                 return l;
             })
 
-            // forbid: let x = function<T>(a:T) { }
-            if (isExpression && isGenericFunction(node))
-                userError(9233, lf("function expressions cannot be generic"))
-
-            if (caps.length > 0 && isGenericFunction(node))
-                userError(9234, lf("nested functions cannot be generic yet"))
-
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
