@@ -32,6 +32,13 @@ namespace ObjLit {
         return r
     }
 
+    function computedPropNames() {
+        msg("computedPropNames")
+        const f = 10
+        const o = { f, ["c" + "x"]: 12, 1: "x", [1 + 2]: "b123" }
+        assert(str(o) == "f:10,cx:12,1:x,3:b123")
+    }
+
     function shorthandTest() {
         msg("shorthandTest")
         const x = 12
@@ -91,6 +98,7 @@ namespace ObjLit {
 
         deleteTest()
         shorthandTest()
+        computedPropNames()
 
         msg("Objlit done")
     }

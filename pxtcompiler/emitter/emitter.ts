@@ -1738,9 +1738,6 @@ ${lbl}: .short 0xffff
             node.properties.forEach((p: PropertyAssignment | ShorthandPropertyAssignment) => {
                 assert(!p.questionToken) // should be disallowed by TS grammar checker
 
-                if (p.name.kind == SK.ComputedPropertyName)
-                    throw unhandled(p)
-
                 let keyName: string
                 let init: ir.Expr
                 if (p.kind == SK.ShorthandPropertyAssignment) {
@@ -1755,6 +1752,15 @@ ${lbl}: .short 0xffff
                         init = emitIdentifier(vname)
                     else
                         throw unhandled(p) // not sure what happened
+                } else if (p.name.kind == SK.ComputedPropertyName) {
+                    const keyExpr = (p.name as ComputedPropertyName).expression
+                    // need to use rtcallMask, so keyExpr gets converted to string
+                    proc.emitExpr(rtcallMask("pxtrt::mapSetByString", [
+                        irToNode(expr, true),
+                        keyExpr,
+                        p.initializer
+                    ], null))
+                    return
                 } else {
                     keyName = p.name.kind == SK.StringLiteral ?
                         (p.name as StringLiteral).text : p.name.getText();

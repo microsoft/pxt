@@ -68,6 +68,7 @@ and might not be available in your editor.
 * `delete` statement (on object created with `{...}`)
 * object destructuring with initializers
 * shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
+* computed property names (`{[foo()]: 1, bar: 2}`)
 
 ## Unsupported language features
 
