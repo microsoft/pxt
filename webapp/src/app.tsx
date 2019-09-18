@@ -846,7 +846,9 @@ export class ProjectView
             })
             .finally(() => {
                 this.updatingEditorFile = false
-                this.setState({}); // force any kind of state changes that is not tracked by react
+                // not all editor views are really "React compliant"
+                // so force an update to ensure a proper first rendering
+                this.forceUpdate();
             })
             .then(() => {
                 // if auto-run is not enable, restart the sim
