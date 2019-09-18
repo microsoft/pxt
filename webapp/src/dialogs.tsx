@@ -570,6 +570,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
 
     let repoName: string = name || "";
     let repoDescription: string = "";
+    let repoPublic: boolean = true;
 
     function repoNameError(): string {
         if (repoName == "pxt-" + lf("Untitled").toLocaleLowerCase()
@@ -596,17 +597,31 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         }
     }
 
+    function onPublicChanged(k: string) {
+        const v = k == "checked";
+        if (repoPublic != v) {
+            repoPublic = v;
+            coretsx.forceUpdate();
+        }
+    }
+
     return core.confirmAsync({
+        hideCancel: true,
+        hasCloseIcon: true,
         header: lf("Create GitHub repository"),
         jsxd: () => {
             const nameErr = repoNameError();
             return <div className="ui form">
-                <div className="ui field">
-                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name.")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                <div className="ui message">
+                    {lf("Host your code on GitHub and work together with friends on projects.")}
                 </div>
                 <div className="ui field">
-                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description.")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
                 </div>
+                <div className="ui field">
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                </div>
+                <sui.Checkbox checked={repoPublic} label={repoPublic ? lf("Public repository, anyone can look at your code.") : lf("Private repository, your code is only visible to you.")} onChange={onPublicChanged} />
             </div>
         },
     }).then(res => {
@@ -615,7 +630,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
 
             if (!repoNameError()) {
                 core.showLoading("creategithub", lf("creating {0} repository...", repoName))
-                return pxt.github.createRepoAsync(repoName, repoDescription.trim())
+                return pxt.github.createRepoAsync(repoName, repoDescription.trim(), !repoPublic)
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
