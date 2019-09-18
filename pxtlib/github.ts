@@ -694,14 +694,17 @@ namespace pxt.github {
         repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
         let m = /([^#]+)(#(.*))?/.exec(repo)
-        const fullName = m ? m[1].toLowerCase() : repo.toLowerCase();
         const tag = m ? m[3] : null;
         let owner: string;
         let project: string;
+        let fullName: string;
         if (m) {
-            const parts = m[1].toLowerCase().split('/');
+            fullName = m[1].toLowerCase();
+            const parts = fullName.split('/');
             owner = parts[0];
             project = parts[1];
+        } else {
+            fullName = repo.toLowerCase();
         }
         return {
             owner,
