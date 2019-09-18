@@ -318,10 +318,11 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
         const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
-        if (!showGithub) return undefined;
+        const header = this.props.parent.state.header;
+        if (!showGithub || !header) return undefined;
 
 
-        const { githubId } = this.props;
+        const { githubId } = header;
         const ghid = pxt.github.parseRepoId(githubId);
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;

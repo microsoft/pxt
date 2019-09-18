@@ -535,7 +535,7 @@ namespace pxt.github {
             .then((res: Repo[]) => res.map(r => mkRepo(r, null)))
     }
 
-    export function createRepoAsync(name: string, description: string, priv: boolean) {
+    export function createRepoAsync(name: string, description: string, priv?: boolean) {
         return ghPostAsync("https://api.github.com/user/repos", {
             name,
             description,
