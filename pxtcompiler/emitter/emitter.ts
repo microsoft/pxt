@@ -1756,8 +1756,6 @@ ${lbl}: .short 0xffff
                     const sp = p as ShorthandPropertyAssignment
                     assert(!sp.equalsToken && !sp.objectAssignmentInitializer) // disallowed by TS grammar checker
                     keyName = p.name.text;
-                    (p.name as any).flowNode.node
-
                     const vsym = checker.getShorthandAssignmentValueSymbol(p)
                     const vname: Identifier = vsym && vsym.valueDeclaration && (vsym.valueDeclaration as any).name
                     if (vname && vname.kind == SK.Identifier)
