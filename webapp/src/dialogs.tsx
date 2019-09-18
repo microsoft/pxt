@@ -577,7 +577,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             return lf("Please pick a different name.")
         const repoNameRx = /^[\w\-]{1,64}$/;
         if (!repoNameRx.test(repoName))
-            return lf("Avoid spaces or special characters. Less than 64 characters.");
+            return lf("Repository names must be less than 64 characters and cannot include spaces or special characters.");
         return undefined;
     }
 
