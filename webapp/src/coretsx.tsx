@@ -148,9 +148,9 @@ export function dialogIsShowing() {
     return !!currentDialog;
 }
 
-export function forceRender() {
+export function forceUpdate() {
     if (currentDialog)
-        currentDialog.setState({});
+        currentDialog.forceUpdate();
 }
 
 export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<void> {

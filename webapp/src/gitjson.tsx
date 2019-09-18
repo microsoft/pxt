@@ -272,7 +272,7 @@ export class Editor extends srceditor.Editor {
         let bumpType: string = "patch";
         function onBumpChange(e: React.ChangeEvent<HTMLInputElement>) {
             bumpType = e.currentTarget.name;
-            coretsx.forceRender();
+            coretsx.forceUpdate();
         }
         const ok = await core.confirmAsync({
             header: lf("Pick a release version"),

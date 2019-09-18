@@ -585,14 +585,14 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
         v = v.trim();
         if (repoName != v) {
             repoName = v;
-            coretsx.forceRender();
+            coretsx.forceUpdate();
         }
     }
 
     function onDescriptionChanged(v: string) {
         if (repoDescription != v) {
             repoDescription = v;
-            coretsx.forceRender();
+            coretsx.forceUpdate();
         }
     }
 
