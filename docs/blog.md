@@ -4,7 +4,7 @@
 
 September 16th, 2019 by [Jaqster](https://github.com/jaqster)
 
-Computer Science Education week is happening again this year and it's coming soon! We are excited about it and want to provide some quick and easy MakeCode activities for students to use...
+Computer Science Education week is coming up in December, and Educators can start planning some fun MakeCode activities for it now. Here's a list of some quick and easy MakeCode tutorials and projects you can do for Hour of Code, or really anytime...
 **[Continue reading this blog post](/blog/csed-week/csed-week-2019)**
 
 ## [Arcade Game Jam](/blog/arcade/game-jam)
