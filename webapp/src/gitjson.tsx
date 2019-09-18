@@ -337,7 +337,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     this.setState({ needsPull: false });
                     break
                 case workspace.PullStatus.NeedsCommit:
-                    this.setState({ needsPull: true, needsCommitMessage: true });
+                    this.setState({ needsCommitMessage: true });
+                    await this.refreshPullAsync();
                     break
                 case workspace.PullStatus.GotChanges:
                     await this.maybeReloadAsync();
