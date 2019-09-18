@@ -79,7 +79,7 @@ export class Editor extends srceditor.Editor {
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         // force refresh
         return super.loadFileAsync(file, hc)
-            .then(() => this.parent.setState({}));
+            .then(() => this.parent.forceUpdate());
     }
 
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
@@ -115,7 +115,7 @@ export class Editor extends srceditor.Editor {
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
             await this.switchToBranchAsync(branchName)
-            this.parent.setState({});
+            this.parent.forceUpdate();
         } catch (e) {
             this.handleGithubError(e);
         } finally {
@@ -136,7 +136,7 @@ export class Editor extends srceditor.Editor {
                 try {
                     await this.switchToBranchAsync(r)
                     await this.pullAsync()
-                    this.parent.setState({});
+                    this.parent.forceUpdate();
                 } finally {
                     if (this.needsCommitMessage) {
                         await this.switchToBranchAsync(prevBranch)
@@ -191,7 +191,7 @@ export class Editor extends srceditor.Editor {
         pxt.tickEvent("github.signin");
         e.stopPropagation();
         dialogs.showGithubLoginAsync()
-            .done(() => this.parent.setState({}));
+            .done(() => this.parent.forceUpdate());
     }
 
     private goBack() {
