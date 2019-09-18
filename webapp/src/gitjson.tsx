@@ -6,6 +6,7 @@ import * as sui from "./sui"
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
 import * as coretsx from "./coretsx";
+import * as data from "./data";
 
 interface DiffCache {
     gitFile: string;
@@ -14,16 +15,24 @@ interface DiffCache {
     revert: () => void;
 }
 
-export class Editor extends srceditor.Editor {
-    private description: string = undefined;
-    private needsCommitMessage = false;
-    private diffCache: pxt.Map<DiffCache> = {};
-    private needsPull: boolean = null;
-    private previousCfgKey = "";
-    private triedFork = false;
+interface GithubProps {
+    parent: pxt.editor.IProjectView;
+}
 
-    constructor(public parent: pxt.editor.IProjectView) {
-        super(parent)
+interface GithubState {
+    description?: string;
+    needsCommitMessage?: boolean;
+    needsPull?: boolean;
+    triedFork?: boolean;
+    previousCfgKey?: string;
+    loadingMessage?: string;
+}
+
+class GithubComponent extends data.Component<GithubProps, GithubState> {
+    private diffCache: pxt.Map<DiffCache> = {};
+
+    constructor(props: GithubProps) {
+        super(props);
         this.goBack = this.goBack.bind(this);
         this.handleCommitClick = this.handleCommitClick.bind(this);
         this.handlePullClick = this.handlePullClick.bind(this);
@@ -34,51 +43,8 @@ export class Editor extends srceditor.Editor {
         this.handleSignInClick = this.handleSignInClick.bind(this);
     }
 
-    getId() {
-        return "githubEditor"
-    }
-
-    getCurrentSource(): string {
-        // modifications are done on the EditorFile object, so make sure
-        // we don't store some cached data in this.currSource
-        const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
-        return f.content
-    }
-
-    hasHistory() { return true; }
-
-    hasEditorToolbar() {
-        return false
-    }
-
-    private pkgConfigKey(cfgtxt: string) {
-        const cfg = JSON.parse(cfgtxt) as pxt.PackageConfig
-        delete cfg.version
-        return JSON.stringify(cfg)
-    }
-
-    setVisible(b: boolean) {
-        this.isVisible = b;
-        if (b) {
-            this.previousCfgKey = this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
-        } else {
-            this.needsCommitMessage = false;
-            this.diffCache = {}
-            this.needsPull = null;
-        }
-    }
-
-    setHighContrast(hc: boolean) {
-    }
-
-    acceptsFile(file: pkg.File) {
-        return file.name === pxt.github.GIT_JSON;
-    }
-
-    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
-        // force refresh
-        return super.loadFileAsync(file, hc)
-            .then(() => this.parent.forceUpdate());
+    clearCache() {
+        this.diffCache = {};
     }
 
     private async saveGitJsonAsync(gs: pxt.github.GitJson) {
@@ -87,7 +53,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private async switchToBranchAsync(newBranch: string) {
-        const header = this.parent.state.header;
+        const { header } = this.props.parent.state;
         const gs = this.getGitJson();
         const parsed = this.parsedRepoId()
         header.githubId = parsed.fullName + "#" + newBranch
@@ -109,16 +75,16 @@ export class Editor extends srceditor.Editor {
         if (!branchName)
             return
 
-        core.showLoading("branchheader", lf("creating branch..."));
+        this.showLoading(lf("creating branch..."));
         try {
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
             await this.switchToBranchAsync(branchName)
-            this.parent.forceUpdate();
+            this.forceUpdate();
         } catch (e) {
             this.handleGithubError(e);
         } finally {
-            core.hideLoading("branchheader")
+            this.hideLoading();
         }
     }
 
@@ -130,14 +96,13 @@ export class Editor extends srceditor.Editor {
             description: branches.refs[r],
             onClick: async () => {
                 core.hideDialog()
-                this.needsCommitMessage = false
+                await this.setStateAsync({ needsCommitMessage: false });
                 const prevBranch = this.parsedRepoId().tag
                 try {
                     await this.switchToBranchAsync(r)
                     await this.pullAsync()
-                    this.parent.forceUpdate();
                 } finally {
-                    if (this.needsCommitMessage) {
+                    if (this.state.needsCommitMessage) {
                         await this.switchToBranchAsync(prevBranch)
                     }
                 }
@@ -190,17 +155,17 @@ export class Editor extends srceditor.Editor {
         pxt.tickEvent("github.signin");
         e.stopPropagation();
         dialogs.showGithubLoginAsync()
-            .done(() => this.parent.forceUpdate());
+            .done(() => this.forceUpdate());
     }
 
     private goBack() {
         pxt.tickEvent("github.backButton", undefined, { interactiveConsent: true })
-        this.parent.openPreviousEditor()
+        this.props.parent.openPreviousEditor()
     }
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.commit");
-        this.needsCommitMessage = false;
+        this.setState({ needsCommitMessage: false });
         await this.commitAsync();
     }
 
@@ -210,7 +175,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private handleDescriptionChange(v: string) {
-        this.description = v;
+        this.setState({ description: v });
     }
 
     private async forkAsync(fromError: boolean) {
@@ -227,20 +192,19 @@ export class Editor extends srceditor.Editor {
         if (!res)
             return
 
-        core.showLoading("fork", lf("forking repo (this may take a minute or two)..."))
+        this.showLoading(lf("forking repo (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
-            const header = this.parent.state.header
+            const { header } = this.props.parent.state;
             header.githubId = newGithubId
             gs.repo = header.githubId
             await this.saveGitJsonAsync(gs)
         } catch (e) {
             this.handleGithubError(e)
         } finally {
-            core.hideLoading("fork")
+            this.hideLoading();
         }
-        this.parent.forceUpdate();
     }
 
     private handleGithubError(e: any) {
@@ -250,7 +214,7 @@ export class Editor extends srceditor.Editor {
         else if (statusCode == 401)
             core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
         else if (e.needsWritePermission) {
-            if (this.triedFork) {
+            if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
             } else {
                 core.hideDialog()
@@ -311,49 +275,67 @@ export class Editor extends srceditor.Editor {
         else if (bumpType == "minor")
             newv = vminor;
         const newVer = pxt.semver.stringify(newv)
-        core.showLoading("bumpheader", lf("creating release {0}...", newVer));
+        this.showLoading(lf("creating release..."));
         try {
-            const header = this.parent.state.header;
+            const { header } = this.props.parent.state;
             await workspace.bumpAsync(header, newVer)
             await this.maybeReloadAsync()
-            core.hideLoading("bumpheader");
+            this.hideLoading();
             core.infoNotification(lf("GitHub release created."))
         } catch (e) {
             this.handleGithubError(e);
         } finally {
-            core.hideLoading("bumpheader");
+            this.hideLoading();
         }
+    }
+
+    private async showLoading(msg: string) {
+        await this.setStateAsync({ loadingMessage: msg });
+        core.showLoading("githubjson", msg);
+    }
+
+    private hideLoading() {
+        if (this.state.loadingMessage) {
+            core.hideLoading("githubjson");
+            this.setState({ loadingMessage: undefined });
+        }
+    }
+
+    pkgConfigKey(cfgtxt: string) {
+        const cfg = JSON.parse(cfgtxt) as pxt.PackageConfig
+        delete cfg.version
+        return JSON.stringify(cfg)
     }
 
     private async maybeReloadAsync() {
         // here, the true state of files is stored in workspace
-        const header = this.parent.state.header;
+        const { header } = this.props.parent.state;
         const files = await workspace.getTextAsync(header.id);
         // save file content from workspace, so they won't get overridden
         pkg.mainEditorPkg().setFiles(files);
         // check if we need to reload header
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
-        if (newKey == this.previousCfgKey) {
+        if (newKey == this.state.previousCfgKey) {
             // force render
-            this.parent.forceUpdate();
+            this.forceUpdate();
             return
         } else {
-            this.previousCfgKey = newKey
-            await this.parent.reloadHeaderAsync();
+            await this.setStateAsync({ previousCfgKey: newKey });
+            await this.props.parent.reloadHeaderAsync();
         }
     }
 
     private async pullAsync() {
-        core.showLoading("loadingheader", lf("pulling changes..."));
+        this.showLoading(lf("pulling changes..."));
         try {
-            let status = await workspace.pullAsync(this.parent.state.header)
+            let status = await workspace.pullAsync(this.props.parent.state.header)
                 .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
                     break
                 case workspace.PullStatus.NeedsCommit:
-                    this.needsCommitMessage = true;
+                    this.setState({ needsCommitMessage: true });
                     break
                 case workspace.PullStatus.GotChanges:
                     await this.maybeReloadAsync()
@@ -362,9 +344,7 @@ export class Editor extends srceditor.Editor {
         } catch (e) {
             this.handleGithubError(e);
         } finally {
-            this.needsPull = null; // refresh pull state
-            core.hideLoading("loadingheader");
-            this.parent.forceUpdate();
+            this.hideLoading();
         }
     }
 
@@ -375,44 +355,14 @@ export class Editor extends srceditor.Editor {
     }
 
     private parsedRepoId() {
-        const header = this.parent.state.header;
+        const header = this.props.parent.state.header;
         return pxt.github.parseRepoId(header.githubId);
     }
 
-    /*
-    private async pullRequestAsync() {
-        try {
-            core.showLoading("loadingheader", lf("creating pull request..."));
-            // create a new PR branch
-            const header = this.parent.state.header;
-            const parsed = this.parsedRepoId()
-            let gs = this.getGitJson();
-            const commitId = gs.commit.sha;
-            const baseBranch = parsed.tag
-            const newBranch = await pxt.github.createNewPrBranchAsync(parsed.fullName, commitId)
-
-            await this.switchToBranchAsync(newBranch)
-
-            const msg = this.description || lf("Updates")
-            await this.commitCoreAsync(); // commit current changes into the new branch
-            const prUrl = await pxt.github.createPRFromBranchAsync(parsed.fullName, baseBranch, newBranch, msg);
-
-            gs = this.getGitJson()
-            gs.prUrl = prUrl
-            await this.saveGitJsonAsync(gs)
-            await this.parent.reloadHeaderAsync()
-        } catch (e) {
-            this.handleGithubError(e)
-        } finally {
-            core.hideLoading("loadingheader")
-        }
-    }
-    */
-
     private async commitCoreAsync() {
-        const repo = this.parent.state.header.githubId;
-        const header = this.parent.state.header;
-        const msg = this.description || lf("Updates")
+        const { header } = this.props.parent.state;
+        const repo = header.githubId;
+        const msg = this.state.description || lf("Updates")
         let commitId = await workspace.commitAsync(header, msg)
         if (commitId) {
             // merge failure; do a PR
@@ -424,18 +374,18 @@ export class Editor extends srceditor.Editor {
             await workspace.pullAsync(header)
             // skip bump in this case - we don't know if it was merged
         }
-        this.description = ""
+        this.setState({ description: "" });
     }
 
     private async commitAsync() {
-        core.showLoading("loadingheader", lf("commit and push..."));
+        this.showLoading(lf("commit and push..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
         } catch (e) {
             this.handleGithubError(e);
         } finally {
-            core.hideLoading("loadingheader")
+            this.hideLoading()
         }
     }
 
@@ -506,11 +456,11 @@ export class Editor extends srceditor.Editor {
             if (!res)
                 return
 
-            this.needsCommitMessage = false; // maybe we no longer do
+            this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
             if (f.baseGitContent == null) {
                 await pkg.mainEditorPkg().removeFileAsync(f.name)
-                await this.parent.reloadHeaderAsync()
+                await this.props.parent.reloadHeaderAsync()
             } else if (f.name == pxt.CONFIG_NAME) {
                 const gs = this.getGitJson()
                 for (let d of deletedFiles) {
@@ -521,10 +471,10 @@ export class Editor extends srceditor.Editor {
                     delete pkg.mainEditorPkg().files[d]
                 }
                 await f.setContentAsync(f.baseGitContent)
-                await this.parent.reloadHeaderAsync()
+                await this.props.parent.reloadHeaderAsync()
             } else {
                 await f.setContentAsync(f.baseGitContent)
-                this.parent.forceUpdate();
+                this.forceUpdate();
             }
         }
 
@@ -561,37 +511,26 @@ export class Editor extends srceditor.Editor {
         return cache.diff
     }
 
+    private refreshPullAsync() {
+        return this.setStateAsync({ needsPull: true })
+            .then(() => workspace.hasPullAsync(this.props.parent.state.header))
+            .then(v => this.setStateAsync({ needsPull: v }))
+            .catch(this.handleGithubError);
+    }
 
-    display() {
-        if (!this.isVisible)
-            return undefined;
 
-        const header = this.parent.state.header;
-        if (!header || !header.githubId) return undefined;
+    renderCore(): JSX.Element {
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push
 
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0
 
-        if (this.needsPull == null) {
-            this.needsPull = true
-            workspace.hasPullAsync(this.parent.state.header)
-                .then(v => {
-                    if (v != this.needsPull) {
-                        this.needsPull = v;
-                        this.parent.forceUpdate();
-                    }
-                })
-                .catch(this.handleGithubError)
+        if (this.state.needsPull === undefined) {
+            Promise.delay(1).then(() => this.refreshPullAsync());
         }
 
-        /**
-         *                                     <sui.PlainCheckbox
-                                        label={lf("Publish to users (increment version)")}
-                                        onChange={this.setBump} />
-    
-         */
+        const { needsCommitMessage, needsPull, description } = this.state;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const gs = this.getGitJson();
@@ -612,7 +551,7 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button icon={`${this.needsPull !== false ? "down arrow" : "check"} ${this.needsPull !== false ? "positive" : ""}`}
+                        <sui.Button icon={`${needsPull !== false ? "down arrow" : "check"} ${needsPull !== false ? "positive" : ""}`}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
@@ -622,17 +561,16 @@ export class Editor extends srceditor.Editor {
                     <p>{lf("Host your code on GitHub and work together on projects.")}</p>
                     <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
                 </div> : undefined}
-                {this.needsCommitMessage ? <div className="ui warning message">
+                {needsCommitMessage ? <div className="ui warning message">
                     <div className="content">
                         {lf("You need to commit your changes first, before you can pull from GitHub.")}
                     </div>
                 </div> : undefined}
                 {needsLicenseMessage ? <div className="ui warning message">
                     <div className="content">
-                        {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
-                        {" "}
+                        <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
                         <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                            role="button" className="ui link create-pr"
+                            role="button" className="ui basic button"
                             target="_blank" rel="noopener noreferrer">
                             {lf("Add license")}
                         </a>
@@ -652,7 +590,7 @@ export class Editor extends srceditor.Editor {
                     {needsCommit ?
                         <div>
                             <div className="ui field">
-                                <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.description} onChange={this.handleDescriptionChange} />
+                                <sui.Input type="url" placeholder={lf("Describe your changes.")} value={description} onChange={this.handleDescriptionChange} />
                             </div>
                             {<div className="field">
                                 <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
@@ -679,9 +617,79 @@ export class Editor extends srceditor.Editor {
                         {diffFiles.map(df => this.showDiff(df))}
                     </div>
 
-                    {pxt.github.token ? dialogs.githubFooter("", () => this.parent.forceUpdate()) : undefined}
+                    {pxt.github.token ? dialogs.githubFooter("", () => this.props.parent.forceUpdate()) : undefined}
                 </div>
             </div>
         )
+    }
+
+}
+
+export class Editor extends srceditor.Editor {
+    private view: GithubComponent;
+
+    constructor(public parent: pxt.editor.IProjectView) {
+        super(parent)
+        this.handleViewRef = this.handleViewRef.bind(this);
+    }
+
+    getId() {
+        return "githubEditor"
+    }
+
+    getCurrentSource(): string {
+        // modifications are done on the EditorFile object, so make sure
+        // we don't store some cached data in this.currSource
+        const f = pkg.mainEditorPkg().files[pxt.github.GIT_JSON]
+        return f.content
+    }
+
+    hasHistory() { return true; }
+
+    hasEditorToolbar() {
+        return false
+    }
+
+    setVisible(b: boolean) {
+        this.isVisible = b;
+        if (!this.view) return;
+        if (b) {
+            this.view.setState({
+                previousCfgKey: this.view.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
+            });
+        } else {
+            this.view.clearCache();
+            this.view.setState({
+                needsCommitMessage: false,
+                needsPull: undefined
+            });
+        }
+    }
+
+    setHighContrast(hc: boolean) {
+    }
+
+    acceptsFile(file: pkg.File) {
+        return file.name === pxt.github.GIT_JSON;
+    }
+
+    loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
+        // force refresh to ensure we have a view
+        return super.loadFileAsync(file, hc)
+            .then(() => this.parent.forceUpdate());
+    }
+
+    handleViewRef = (c: GithubComponent) => {
+        this.view = c;
+    }
+
+    display() {
+        if (!this.isVisible)
+            return undefined;
+
+        const header = this.parent.state.header;
+        if (!header || !header.githubId) return undefined;
+
+        return <GithubComponent ref={this.handleViewRef} parent={this.parent} />
     }
 }
