@@ -241,7 +241,7 @@ export class Editor extends srceditor.Editor {
         } finally {
             core.hideLoading("fork")
         }
-        this.parent.setState({})
+        this.parent.forceUpdate();
     }
 
     private handleGithubError(e: any) {
@@ -336,7 +336,7 @@ export class Editor extends srceditor.Editor {
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
         if (newKey == this.previousCfgKey) {
             // force render
-            this.parent.setState({});
+            this.parent.forceUpdate();
             return
         } else {
             this.previousCfgKey = newKey
@@ -364,8 +364,8 @@ export class Editor extends srceditor.Editor {
             this.handleGithubError(e);
         } finally {
             this.needsPull = null; // refresh pull state
-            core.hideLoading("loadingheader")
-            this.parent.setState({});
+            core.hideLoading("loadingheader");
+            this.parent.forceUpdate();
         }
     }
 
@@ -525,8 +525,7 @@ export class Editor extends srceditor.Editor {
                 await this.parent.reloadHeaderAsync()
             } else {
                 await f.setContentAsync(f.baseGitContent)
-                // force refresh of ourselves
-                this.parent.setState({})
+                this.parent.forceUpdate();
             }
         }
 
@@ -581,8 +580,8 @@ export class Editor extends srceditor.Editor {
             workspace.hasPullAsync(this.parent.state.header)
                 .then(v => {
                     if (v != this.needsPull) {
-                        this.needsPull = v
-                        this.parent.setState({})
+                        this.needsPull = v;
+                        this.parent.forceUpdate();
                     }
                 })
                 .catch(this.handleGithubError)
@@ -681,7 +680,7 @@ export class Editor extends srceditor.Editor {
                         {diffFiles.map(df => this.showDiff(df))}
                     </div>
 
-                    {pxt.github.token ? dialogs.githubFooter("", () => this.parent.setState({})) : undefined}
+                    {pxt.github.token ? dialogs.githubFooter("", () => this.parent.forceUpdate()) : undefined}
                 </div>
             </div>
         )
