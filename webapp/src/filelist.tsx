@@ -337,7 +337,7 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
                 onKeyDown={sui.fireClickOnEnter}>
                 {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
                 <i className="github icon" />
-                {ghid && meta && meta.numFilesGitModified ? <span className='ui label' title={lf("{0} modified files", meta.numFilesGitModified)}>{meta.numFilesGitModified}</span> : undefined }
+                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined }
             </div>
         </div>;
     }

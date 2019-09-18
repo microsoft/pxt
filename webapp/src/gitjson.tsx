@@ -659,7 +659,7 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
             </div>}
             <div className="ui field">
-                <sui.Button className="primary" text={lf("Commit changes")} onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
             </div>
         </div>
     }
