@@ -1,0 +1,53 @@
+@import 'bottomBar';
+@import 'button';
+@import 'cursorSizes';
+@import 'fabric-icons-inline';
+@import 'imageCanvas';
+@import 'sideBar';
+@import 'timeline';
+@import 'topBar';
+
+:root {
+    --editor-bg-color: #1e1e1e;
+
+    --sidebar-bg-color: #252526;
+    --sidebar-header-bg-color: #3c3c3c;
+    --sidebar-header-text-color: #cccccc;
+
+    --editing-tools-bg-color: #333333;
+    --sidebar-icon-inactive-color: #ffffff4a;
+    --sidebar-icon-active-color: #ffffff;
+    --sidebar-label-color: #ffffffaa;
+
+    --navigator-viewport-color: #ff0000;
+
+    --map-button-bg-color: #3c3c3c;
+    --map-button-icon-color: #cccccc;
+  }
+
+.image-editor {
+    position: absolute;
+    width: 600px;
+    top: 200px;
+
+    display: flex;
+    flex-direction: column;
+
+    background-color: var(--editor-bg-color);
+}
+
+.image-editor-content {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    height: var(--editor-height);
+}
+
+.image-editor-label {
+    color: var(--sidebar-label-color);
+    font-family: "Roboto Mono", monospace;
+}
+
+:root {
+    --editor-height: 31rem;
+}
