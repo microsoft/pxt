@@ -971,6 +971,7 @@ namespace pxt.github {
         }
     }
 
+    // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
     export function diff3(fileA: string, fileO: string, fileB: string) {
         const ma = computeMatch(fileA)
         const mb = computeMatch(fileB)
