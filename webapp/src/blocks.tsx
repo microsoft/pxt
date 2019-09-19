@@ -1548,8 +1548,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {
             const varModel = editor.getVariable(name);
-            return varModel && editor.getVariableUsesById(varModel.getId())
-                .some(b => b.type == 'variables_set' || b.type == 'variables_change');
+            const varUses = varModel && editor.getVariableUsesById(varModel.getId());
+            return varUses && varUses.some(b => b.type == "variables_set" || b.type == "variables_change");
         }
     }
 
