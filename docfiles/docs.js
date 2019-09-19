@@ -194,7 +194,7 @@ function setupSemantic() {
         
             switch (value) {
                 case 'color': 
-                document.querySelector('body').classList.add("print-color");                      
+                    document.querySelector('body').classList.add("print-color"); 
                     break;
                 case 'bw':
                 document.querySelector('body').classList.remove("print-color");
