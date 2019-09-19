@@ -442,6 +442,10 @@ export async function hasPullAsync(hd: Header) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
+async function tryMergeAsync(hd: Header, files: ScriptText) {
+
+}
+
 export async function pullAsync(hd: Header, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
@@ -486,7 +490,10 @@ export async function bumpAsync(hd: Header, newVer = "") {
     cfg.version = newVer || bumpedVersion(cfg)
     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     await saveAsync(hd, files)
-    return await commitAsync(hd, cfg.version, "v" + cfg.version)
+    return await commitAsync(hd, {
+        message: cfg.version,
+        createTag: "v" + cfg.version
+    })
 }
 
 export function lookupFile(commit: pxt.github.Commit, path: string) {
@@ -495,7 +502,13 @@ export function lookupFile(commit: pxt.github.Commit, path: string) {
     return commit.tree.tree.find(e => e.path == path)
 }
 
-export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
+export interface CommitOptions {
+    message?: string;
+    createTag?: string;
+    filenamesToCommit?: string[];
+}
+
+export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
@@ -507,8 +520,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
         base_tree: gitjson.commit.tree.sha,
         tree: []
     }
-    if (!filenames)
-        filenames = pxt.allPkgFiles(cfg)
+    const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
     for (let path of filenames) {
         if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
             continue
@@ -535,7 +547,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
-        message: msg,
+        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).join(", ")),
         parents: [gitjson.commit.sha],
         tree: treeId
     }
@@ -549,13 +561,13 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
         return commitId
     } else {
         await githubUpdateToAsync(hd, gitjson.repo, newCommit, files, parsed.tag)
-        if (tag)
-            await pxt.github.createTagAsync(parsed.fullName, tag, newCommit)
+        if (options.createTag)
+            await pxt.github.createTagAsync(parsed.fullName, options.createTag, newCommit)
         return ""
     }
 }
 
-async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, tag?: string, justJSON = false) {
+async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, branch?: string, justJSON = false) {
     let parsed = pxt.github.parseRepoId(repoid)
     let commit = await pxt.github.getCommitAsync(parsed.fullName, commitid)
     let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -610,7 +622,7 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         }
     }
 
-    commit.tag = tag
+    commit.tag = branch
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
@@ -734,7 +746,10 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // save
     await saveAsync(hd, currFiles)
-    await commitAsync(hd, "Auto-initialized.", "", Object.keys(currFiles))
+    await commitAsync(hd, {
+        message: "Auto-initialized.",
+        filenamesToCommit: Object.keys(currFiles)
+    })
 
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)

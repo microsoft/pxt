@@ -338,12 +338,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private async commitCoreAsync() {
         const { header } = this.props.parent.state;
         const repo = header.githubId;
-        const msg = this.state.description || lf("Updates")
-        let commitId = await workspace.commitAsync(header, msg)
+        let commitId = await workspace.commitAsync(header, {
+            message: this.state.description
+        })
         if (commitId) {
             // merge failure; do a PR
             // we could ask the user, but it's unlikely they can do anything else to fix it
-            let prUrl = await workspace.prAsync(header, commitId, msg)
+            let prUrl = await workspace.prAsync(header, commitId,
+                this.state.description || lf("Commit conflict"))
             await dialogs.showPRDialogAsync(repo, prUrl)
             // when the dialog finishes, we pull again - it's possible the user
             // has resolved the conflict in the meantime
