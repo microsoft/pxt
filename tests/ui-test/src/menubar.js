@@ -4,6 +4,7 @@ import assert from 'assert';
 class ViewMenuBar extends DomObject {
 
     async menuBar() {
+        
         await this.click('[role="treeitem"]:nth-child(11) .blocklyTreeRow', '.collapse-button:nth-child(1)');
 
         await this.click('#downloadArea .download-button');
@@ -30,7 +31,7 @@ class ViewMenuBar extends DomObject {
 
         assert.equal(afterChange, 'UntitledProject');
 
-        await this.click('[title="Save"]');
+        await this.click('#projectNameArea [title="Save"]');
     }
 
     test() {
