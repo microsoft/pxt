@@ -103,8 +103,8 @@ declare namespace pxt {
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
-        breakBlock?: BlockOptions;
-        continueBlock?: BlockOptions;
+        breakBlock?: boolean;
+        continueBlock?: boolean;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
