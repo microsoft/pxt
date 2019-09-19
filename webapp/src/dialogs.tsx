@@ -598,7 +598,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
     }
 
     function onPublicChanged(e: React.ChangeEvent<HTMLSelectElement>) {
-        let v = e.currentTarget.selectedIndex == 0;
+        const v = e.currentTarget.selectedIndex == 0;
         if (repoPublic != v) {
             repoPublic = v;
             coretsx.forceUpdate();
