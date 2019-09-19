@@ -604,8 +604,6 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const { needsCommitMessage } = this.props.parent.state;
         const { gs, githubId } = this.props;
         const needsToken = !pxt.github.token;
-        const needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
-            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
 
         return <div>
             {needsToken ? <div className="ui info message join">
@@ -615,16 +613,6 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
             {!needsToken && needsCommitMessage ? <div className="ui warning message">
                 <div className="content">
                     {lf("You need to commit your changes first, before you can pull from GitHub.")}
-                </div>
-            </div> : undefined}
-            {!needsToken && needsLicenseMessage ? <div className="ui warning message">
-                <div className="content">
-                    <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
-                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                        role="button" className="ui link"
-                        target="_blank" rel="noopener noreferrer">
-                        {lf("Add license")}
-                    </a>
                 </div>
             </div> : undefined}
         </div>
@@ -682,7 +670,9 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId, master } = this.props;
+        const { needsToken, githubId, master, gs } = this.props;
+        const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
+            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
@@ -694,6 +684,16 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     </p>
                     <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                 </div> : undefined}
+            {master && needsLicenseMessage ? <div className="ui warning message">
+                <div className="content">
+                    <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
+                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                        role="button" className="ui link"
+                        target="_blank" rel="noopener noreferrer">
+                        {lf("Add license")}
+                    </a>
+                </div>
+            </div> : undefined}
         </div>
     }
 }
