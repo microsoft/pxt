@@ -603,7 +603,6 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { gs, githubId } = this.props;
         const needsToken = !pxt.github.token;
 
         return <div>
