@@ -1252,62 +1252,56 @@ namespace pxt.blocks {
         };
 
         // break statement
-        if (pxt.appTarget.runtime && pxt.appTarget.runtime.breakBlock) {
-            const blockOptions = pxt.appTarget.runtime.breakBlock;
-            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
-            Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
-                init: function () {
-                    const color = blockOptions.color || pxt.toolbox.getNamespaceColor('loops');
+        const breakBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
+        Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
 
-                    this.jsonInit({
-                        "message0": blockDef.block["message0"],
-                        "inputsInline": true,
-                        "previousStatement": null,
-                        "nextStatement": null,
-                        "colour": color
-                    });
+                this.jsonInit({
+                    "message0": breakBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
 
-                    setHelpResources(this,
-                        ts.pxtc.TS_BREAK_TYPE,
-                        blockDef.name,
-                        blockDef.tooltip,
-                        blockDef.url,
-                        color,
-                        undefined/*colourSecondary*/,
-                        undefined/*colourTertiary*/,
-                        false/*undeletable*/
-                    );
-                }
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    breakBlockDef.name,
+                    breakBlockDef.tooltip,
+                    breakBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
             }
         }
 
         // continue statement
-        if (pxt.appTarget.runtime && pxt.appTarget.runtime.continueBlock) {
-            const blockOptions = pxt.appTarget.runtime.continueBlock;
-            const blockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
-            Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
-                init: function () {
-                    const color = blockOptions.color || pxt.toolbox.getNamespaceColor('loops');
+        const continueBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
+        Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
 
-                    this.jsonInit({
-                        "message0": blockDef.block["message0"],
-                        "inputsInline": true,
-                        "previousStatement": null,
-                        "nextStatement": null,
-                        "colour": color
-                    });
+                this.jsonInit({
+                    "message0": continueBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
 
-                    setHelpResources(this,
-                        ts.pxtc.TS_BREAK_TYPE,
-                        blockDef.name,
-                        blockDef.tooltip,
-                        blockDef.url,
-                        color,
-                        undefined/*colourSecondary*/,
-                        undefined/*colourTertiary*/,
-                        false/*undeletable*/
-                    );
-                }
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    continueBlockDef.name,
+                    continueBlockDef.tooltip,
+                    continueBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
             }
         }
     }
