@@ -548,7 +548,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     if (newCommit == null) {
         return commitId
     } else {
-        await githubUpdateToAsync(hd, gitjson.repo, newCommit, files, tag)
+        await githubUpdateToAsync(hd, gitjson.repo, newCommit, files, parsed.tag)
         if (tag)
             await pxt.github.createTagAsync(parsed.fullName, tag, newCommit)
         return ""
