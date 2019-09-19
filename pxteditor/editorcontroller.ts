@@ -52,7 +52,12 @@ namespace pxt.editor {
         | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
-        | "settracestate" // EditorMessageSetTraceStateRequest
+        | "togglehighcontrast"
+        | "togglegreenscreen"
+        | "settracestate" // 
+
+        | "print" // print code
+        | "pair" // pair device
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -62,6 +67,7 @@ namespace pxt.editor {
 
         | "event"
         | "simevent"
+        | "info" // return info data`
 
         // package extension messasges
         | ExtInitializeType
@@ -216,6 +222,12 @@ namespace pxt.editor {
         intervalSpeed?: number;
     }
 
+    export interface InfoMessage {
+        versions: pxt.TargetVersions;
+        locale: string;
+        availableLocales?: string[];
+    }
+
     export interface PackageExtensionData {
         ts: string;
         json?: any;
@@ -250,7 +262,7 @@ namespace pxt.editor {
      */
     export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
         const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
-                                    && pxt.BrowserUtils.isIFrame();
+            && pxt.BrowserUtils.isIFrame();
         const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
         const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
@@ -374,6 +386,32 @@ namespace pxt.editor {
                                     const trcmsg = data as EditorMessageSetTraceStateRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
+                                }
+                                case "togglehighcontrast": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.toggleHighContrast());
+                                }
+                                case "togglegreenscreen": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.toggleGreenScreen());
+                                }
+                                case "print": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.printCode());
+                                }
+                                case "pair": {
+                                    return Promise.resolve()
+                                        .then(() => projectView.pair());
+                                }
+                                case "info": {
+                                    return Promise.resolve()
+                                        .then(() => {
+                                            resp = <editor.InfoMessage>{
+                                                versions: pxt.appTarget.versions,
+                                                locale: ts.pxtc.Util.userLanguage(),
+                                                availableLocales: pxt.appTarget.appTheme.availableLocales
+                                            }
+                                        });
                                 }
                             }
                             return Promise.resolve();

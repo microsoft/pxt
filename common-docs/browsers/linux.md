@@ -7,7 +7,6 @@ Please see [here][technical] for technical information on which browsers are
 supported, or [here][versions] to check which version you are using.
 
 [edge]: https://www.microsoft.com/en-us/windows/microsoft-edge
-[ie]: https://www.microsoft.com/en-us/download/internet-explorer.aspx
 [firefox]: https://www.mozilla.org/en-US/firefox/new/
 [chrome]: https://www.google.com/chrome/
 [opera]: https://www.opera.com

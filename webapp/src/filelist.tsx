@@ -5,6 +5,8 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as dialogs from "./dialogs";
+import * as workspace from "./workspace";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -24,7 +26,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.handleCustomBlocksClick = this.handleCustomBlocksClick.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
-        this.handleSyncClick = this.handleSyncClick.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
@@ -88,6 +89,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const deleteFiles = pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            // we keep this disabled, until implemented for cloud syncing
+            // makse no sense for local saves - the star just blinks for half second after every change
+            const showStar = false // !meta.isSaved
             return (
                 <FileTreeItem key={file.getName()}
                     file={file}
@@ -99,7 +103,9 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
-                    {file.name} {meta.isSaved ? "" : "*"}
+                    {file.name}
+                    {showStar ? "*" : ""}
+                    {meta.isGitModified ? " ↑" : ""}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
                 </FileTreeItem>);
         })
@@ -144,11 +150,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private toggleVisibility() {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
-    }
-
-    private handleSyncClick(e: React.MouseEvent<any>) {
-        this.props.parent.pushPullAsync();
-        e.stopPropagation();
     }
 
     private handleCustomBlocksClick(e: React.MouseEvent<any>) {
@@ -249,21 +250,95 @@ namespace custom {
     }
 
     renderCore() {
-        const show = !!this.props.parent.state.showFiles;
+        const showFiles = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
-        const plus = show && !mainPkg.files[customFile]
-        const sync = show && pxt.github.token && !!mainPkg.header.githubId
+        const plus = showFiles && !mainPkg.files[customFile]
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
-                <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
-                {sync ? <sui.Button className="primary label" icon="github" title={lf("Sync with github")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+                <sui.Icon icon={`chevron ${showFiles ? "down" : "right"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
+            {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
+        </div>;
+    }
+}
+
+interface GithubTreeItemState {
+    pushPulling?: boolean;
+}
+
+export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItemState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {};
+        this.handleClick = this.handleClick.bind(this);
+        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+    }
+
+    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        e.stopPropagation();
+    }
+
+    private handleClick(e: React.MouseEvent<HTMLElement>) {
+        const { githubId } = this.props.parent.state.header;
+        if (!githubId) {
+            this.createRepositoryAsync().done();
+        } else {
+            const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
+            this.props.parent.setSideFile(gitf);
+        }
+        e.stopPropagation();
+    }
+
+    private async createRepositoryAsync() {
+        pxt.tickEvent("github.filelist.create.start");
+        if (!pxt.github.token) await dialogs.showGithubLoginAsync();
+        if (!pxt.github.token) {
+            pxt.tickEvent("github.filelist.create.notoken");
+            return;
+        }
+
+        const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
+        if (!repoid) return;
+
+        pxt.tickEvent("github.filelist.create.export");
+        core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
+        try {
+            await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
+        } finally {
+            core.hideLoading("creategithub");
+        }
+        await this.props.parent.reloadHeaderAsync();
+    }
+
+    renderCore() {
+        const targetTheme = pxt.appTarget.appTheme;
+        const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
+        const header = this.props.parent.state.header;
+        if (!showGithub || !header) return <div/>;
+
+
+        const { githubId } = header;
+        const ghid = pxt.github.parseRepoId(githubId);
+        const mainPkg = pkg.mainEditorPkg()
+        const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
+
+        return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
+            <div
+                key="github-status"
+                className="item link"
+                onClick={this.handleClick}
+                tabIndex={0}
+                role="button"
+                onKeyDown={sui.fireClickOnEnter}>
+                {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
+                <i className="github icon" />
+                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined }
+            </div>
         </div>;
     }
 }
@@ -273,7 +348,7 @@ interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttr
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
-    onErrorClick: (meta: pkg.FileMeta) => void;
+    onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
 }
@@ -283,18 +358,19 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
-        this.handleErrorClick = this.handleErrorClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onItemClick(this.props.file);
-        e.stopPropagation();
-    }
-
-    handleErrorClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onErrorClick(this.props.meta);
+        if (this.props.onErrorClick
+            && this.props.meta
+            && this.props.meta.numErrors
+            && this.props.meta.diagnostics
+            && this.props.meta.diagnostics[0])
+            this.props.onErrorClick(this.props.meta);
+        else
+            this.props.onItemClick(this.props.file);
         e.stopPropagation();
     }
 
@@ -308,7 +384,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, meta, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
+            isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -324,7 +401,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} /> : ''}
-            {meta &&  meta.numErrors ? <a className='ui label red button' role="button" title={lf("Go to error")} onClick={this.handleErrorClick}>{meta.numErrors}</a> : undefined}
+            {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
         </a>
     }
 }
@@ -369,7 +446,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { onItemClick, onItemRemove, onItemRefresh, version,
+        const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"

@@ -13,20 +13,87 @@ namespace ts.pxtc {
         IsBogusFunction = 0x0002,
         IsGlobalIdentifier = 0x0004,
         IsUsed = 0x0008,
+        InPxtModules = 0x0010,
+        FromPreviousCompile = 0x0020,
     }
+    export type EmitAction = (bin: Binary) => void;
     export class PxtNode {
-        flags = PxtNodeFlags.None;
-        typeCache: Type = null;
-        symbolCache: Symbol = null;
-        functionInfo: FunctionAddInfo = null;
-        variableInfo: VariableAddInfo = null;
-        callInfo: CallInfo = null;
-        proc: ir.Procedure = null;
-        commentAttrs: CommentAttrs = null;
-        exprInfo: BinaryExpressionInfo = null;
-        valueOverride: ir.Expr = null;
-        declCache: Declaration = undefined;
-        constructor(public wave: number, public id: number) { }
+        flags: PxtNodeFlags;
+
+        // TSC interface cache
+        typeCache: Type;
+        symbolCache: Symbol;
+        declCache: Declaration;
+        commentAttrs: CommentAttrs;
+        fullName: string;
+
+        // compiler state
+        functionInfo: FunctionAddInfo;
+        variableInfo: VariableAddInfo;
+        classInfo: ClassInfo;
+        proc: ir.Procedure;
+        cell: ir.Cell;
+
+        // set of nodes pulled in by the current node
+        usedNodes: pxt.Map<Declaration>;
+        // when the current node is pulled in, the actions listed will be run
+        usedActions: EmitAction[];
+
+        // exported to clients
+        callInfo: CallInfo;
+        exprInfo: BinaryExpressionInfo;
+
+        // for wrapping ir.Expr inside of TS Expression
+        valueOverride: ir.Expr;
+
+        refresh() {
+            // clear IsUsed flag
+            this.flags &= ~PxtNodeFlags.IsUsed
+            // this happens for top-level function expression - we just re-emit them
+            if (this.proc && !this.usedActions && !getEnclosingFunction(this.proc.action))
+                this.resetEmit()
+            else if (this.proc && !this.proc.cachedJS)
+                this.resetEmit()
+            else if (this.usedNodes)
+                this.flags |= PxtNodeFlags.FromPreviousCompile
+            if (this.classInfo)
+                this.classInfo.reset()
+        }
+
+        resetEmit() {
+            // clear IsUsed flag
+            this.flags &= ~(PxtNodeFlags.IsUsed | PxtNodeFlags.FromPreviousCompile)
+            this.functionInfo = null;
+            this.variableInfo = null;
+            this.classInfo = null;
+            this.callInfo = null;
+            this.proc = null;
+            this.cell = null;
+            this.exprInfo = null;
+            this.usedNodes = null;
+            this.usedActions = null;
+        }
+
+        resetTSC() {
+            // clear all flags except for InPxtModules
+            this.flags &= PxtNodeFlags.InPxtModules;
+            this.typeCache = null;
+            this.symbolCache = null;
+            this.commentAttrs = null;
+            this.valueOverride = null;
+            this.declCache = undefined;
+            this.fullName = null;
+        }
+
+        resetAll() {
+            this.resetTSC()
+            this.resetEmit()
+        }
+
+        constructor(public wave: number, public id: number) {
+            this.flags = PxtNodeFlags.None;
+            this.resetAll()
+        }
     }
 
     enum HasLiteralType {
@@ -123,11 +190,38 @@ namespace ts.pxtc {
     let lastNodeId = 0
     let currNodeWave = 1
 
+    export function isInPxtModules(node: Node) {
+        if (node.pxt)
+            return !!(node.pxt.flags & PxtNodeFlags.InPxtModules)
+        const src = getSourceFileOfNode(node)
+        return src ? isPxtModulesFilename(src.fileName) : false
+    }
+
     export function pxtInfo(n: Node) {
-        if (!n.pxt || n.pxt.wave != currNodeWave) {
-            n.pxt = new PxtNode(currNodeWave, ++lastNodeId)
+        if (!n.pxt) {
+            const info = new PxtNode(currNodeWave, ++lastNodeId)
+            if (isInPxtModules(n))
+                info.flags |= PxtNodeFlags.InPxtModules
+            n.pxt = info
+            return info
+        } else {
+            const info = n.pxt
+            if (info.wave != currNodeWave) {
+                info.wave = currNodeWave
+                if (!compileOptions || !compileOptions.skipPxtModulesTSC)
+                    info.resetAll()
+                else {
+                    if (info.flags & PxtNodeFlags.InPxtModules) {
+                        if (compileOptions.skipPxtModulesEmit)
+                            info.refresh()
+                        else
+                            info.resetEmit()
+                    } else
+                        info.resetAll()
+                }
+            }
+            return info
         }
-        return n.pxt
     }
 
     export function getNodeId(n: Node) {
@@ -148,7 +242,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9276
+    // next free error 9279
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -417,21 +511,53 @@ namespace ts.pxtc {
         setProc?: ir.Procedure;
     }
 
-    export interface ClassInfo {
-        id: string;
+    export class ClassInfo {
         derivedClasses?: ClassInfo[];
         classNo?: number;
         lastSubtypeNo?: number;
-        baseClassInfo: ClassInfo;
-        decl: ClassDeclaration;
-        allfields: FieldWithAddInfo[];
-        methods: FunctionLikeDeclaration[];
+        baseClassInfo: ClassInfo = null;
+        allfields: FieldWithAddInfo[] = [];
+        // indexed by getName(node)
+        methods: pxt.Map<FunctionLikeDeclaration[]> = {};
         attrs: CommentAttrs;
-        isUsed?: boolean;
         vtable?: ir.Procedure[];
         itable?: ITableEntry[];
         ctor?: ir.Procedure;
         toStringMethod?: ir.Procedure;
+
+        constructor(public id: string, public decl: ClassDeclaration) {
+            this.attrs = parseComments(decl)
+            this.reset()
+        }
+
+        reset() {
+            this.vtable = null
+            this.itable = null
+        }
+
+        get isUsed() {
+            return !!(pxtInfo(this.decl).flags & PxtNodeFlags.IsUsed)
+        }
+
+        allMethods() {
+            const r: FunctionLikeDeclaration[] = []
+            for (let k of Object.keys(this.methods))
+                for (let m of this.methods[k]) {
+                    r.push(m)
+                }
+            return r
+        }
+
+        usedMethods() {
+            const r: FunctionLikeDeclaration[] = []
+            for (let k of Object.keys(this.methods))
+                for (let m of this.methods[k]) {
+                    const info = pxtInfo(m)
+                    if (info.flags & PxtNodeFlags.IsUsed)
+                        r.push(m)
+                }
+            return r
+        }
     }
 
     export interface BinaryExpressionInfo {
@@ -442,9 +568,17 @@ namespace ts.pxtc {
     let lf = assembler.lf;
     let checker: TypeChecker;
     export let target: CompileTarget;
+    export let compileOptions: CompileOptions;
     let lastSecondaryError: string
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
+
+    export function getNodeFullName(checker: TypeChecker, node: Node) {
+        const pinfo = pxtInfo(node)
+        if (pinfo.fullName == null)
+            pinfo.fullName = getFullName(checker, node.symbol)
+        return pinfo.fullName
+    }
 
     export function getComments(node: Node) {
         if (node.kind == SK.VariableDeclaration)
@@ -653,12 +787,15 @@ namespace ts.pxtc {
         return false;
     }
 
-    function checkInterfaceDeclaration(decl: InterfaceDeclaration, classes: pxt.Map<ClassInfo>) {
-        for (let cl in classes) {
-            if (classes[cl].decl.symbol == decl.symbol) {
+    function checkInterfaceDeclaration(bin: Binary, decl: InterfaceDeclaration) {
+        const check = (d: Declaration) => {
+            if (d && d.kind == SK.ClassDeclaration)
                 userError(9261, lf("Interface with same name as a class not supported"))
-            }
         }
+        check(decl.symbol.valueDeclaration)
+        if (decl.symbol.declarations)
+            decl.symbol.declarations.forEach(check)
+
         if (decl.heritageClauses)
             for (let h of decl.heritageClauses) {
                 switch (h.token) {
@@ -701,14 +838,25 @@ namespace ts.pxtc {
         return !!(node && (node as NamedDeclaration).name);
     }
 
+    function parentPrefix(node: Node): string {
+        if (!node)
+            return ""
+        switch (node.kind) {
+            case SK.ModuleBlock:
+                return parentPrefix(node.parent)
+            case SK.ClassDeclaration:
+            case SK.ModuleDeclaration:
+                return parentPrefix(node.parent) + (node as ModuleDeclaration).name.text + "."
+            default:
+                return ""
+        }
+    }
+
     export function getDeclName(node: Declaration) {
         let text = isNamedDeclaration(node) ? (<Identifier>node.name).text : null
-        if (!text && node.kind == SK.Constructor)
-            text = "constructor"
-        if (node && node.parent && node.parent.kind == SK.ClassDeclaration)
-            text = (<ClassDeclaration>node.parent).name.text + "." + text
-        text = text || "inline"
-        return text;
+        if (!text)
+            text = node.kind == SK.Constructor ? "constructor" : "inline"
+        return parentPrefix(node.parent) + text;
     }
 
     function safeName(node: Declaration) {
@@ -735,43 +883,49 @@ namespace ts.pxtc {
     export interface VariableAddInfo {
         captured?: boolean;
         written?: boolean;
+        functionsToDefine?: FunctionDeclaration[];
     }
 
-    export interface FunctionAddInfo {
-        capturedVars: VarOrParam[];
-        decl: EmittableAsCall;
+    export class FunctionAddInfo {
+        capturedVars: VarOrParam[] = [];
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
         virtualParent?: FunctionAddInfo;
-        virtualInstances?: FunctionAddInfo[];
         virtualIndex?: number;
-        isUsed?: boolean;
         parentClassInfo?: ClassInfo;
+        usedBeforeDecl?: boolean;
+        // these two are only used in native backend
         usedAsValue?: boolean;
         usedAsIface?: boolean;
+        alreadyEmitted?: boolean;
+
+        constructor(public decl: EmittableAsCall) { }
+
+        get isUsed() {
+            return !!(pxtInfo(this.decl).flags & PxtNodeFlags.IsUsed)
+        }
     }
 
     export function compileBinary(
         program: Program,
-        host: CompilerHost,
         opts: CompileOptions,
         res: CompileResult,
         entryPoint: string): EmitResult {
         target = opts.target
+        compileOptions = opts
+        target.debugMode = !!opts.breakpoints
         const diagnostics = createDiagnosticCollection();
         checker = program.getTypeChecker();
         let startTime = U.cpuUs();
-        let classInfos: pxt.Map<ClassInfo> = {}
         let usedWorkList: Declaration[] = []
-        let functionInfos: FunctionAddInfo[] = [];
         let irCachesToClear: NodeWithCache[] = []
-        let ifaceMembers: pxt.Map<number> = {}
-        let explicitlyUsedIfaceMembers: pxt.Map<number> = {}
-        let autoCreateFunctions: pxt.Map<boolean> = {}
+        let autoCreateFunctions: pxt.Map<boolean> = {} // INCTODO
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
+        let currUsingContext: PxtNode = null
+        let needsUsingInfo = false
+        let pendingFunctionDefinitions: FunctionDeclaration[] = []
 
-        lastNodeId = 0
         currNodeWave++
 
         if (opts.target.isNative) {
@@ -855,17 +1009,29 @@ namespace ts.pxtc {
         usedWorkList = [];
 
         reset();
-        emit(rootFunction)
+        needsUsingInfo = true
+        emitTopLevel(rootFunction)
+
+        for (; ;) {
+            flushWorkQueue()
+            if (fixpointVTables())
+                break
+        }
+
         layOutGlobals()
-        pruneMethodsAndRecompute()
+        needsUsingInfo = false
         emitVTables()
+
         let pass0 = U.cpuUs()
         res.times["pass0"] = pass0 - startTime
 
         if (diagnostics.getModificationCount() == 0) {
             reset();
+            needsUsingInfo = false
             bin.finalPass = true
             emit(rootFunction)
+
+            U.assert(usedWorkList.length == 0)
 
             res.configData = []
             for (let k of Object.keys(configEntries)) {
@@ -893,6 +1059,8 @@ namespace ts.pxtc {
 
         // 12k for decent arcade game
         // res.times["numnodes"] = lastNodeId
+
+        compileOptions = null
 
         return {
             diagnostics: diagnostics.getDiagnostics(),
@@ -996,13 +1164,8 @@ namespace ts.pxtc {
 
         function getFunctionInfo(f: EmittableAsCall) {
             const info = pxtInfo(f)
-            if (!info.functionInfo) {
-                info.functionInfo = {
-                    decl: f,
-                    capturedVars: []
-                }
-                functionInfos.push(info.functionInfo)
-            }
+            if (!info.functionInfo)
+                info.functionInfo = new FunctionAddInfo(f)
             return info.functionInfo
         }
 
@@ -1033,41 +1196,46 @@ namespace ts.pxtc {
             }
         }
 
-        function scope(f: () => void) {
-            let prevProc = proc;
-            try {
-                f();
-            } finally {
-                proc = prevProc;
-            }
+        function recordAction<T>(f: (bin: Binary) => T): T {
+            const r = f(bin)
+            if (needsUsingInfo)
+                bin.recordAction(currUsingContext, f)
+            return r
         }
 
         function getIfaceMemberId(name: string, markUsed = false) {
-            if (markUsed && !U.lookup(explicitlyUsedIfaceMembers, name)) {
-                U.assert(!bin.finalPass)
-                explicitlyUsedIfaceMembers[name] = 1
-                for (let inf of bin.usedClassInfos) {
-                    for (let m of inf.methods) {
-                        if (getName(m) == name)
-                            markFunctionUsed(m)
+            return recordAction(bin => {
+                if (markUsed) {
+                    if (!U.lookup(bin.explicitlyUsedIfaceMembers, name)) {
+                        U.assert(!bin.finalPass)
+                        bin.explicitlyUsedIfaceMembers[name] = true
                     }
                 }
-            }
-            let v = U.lookup(ifaceMembers, name)
-            if (v != null) return v
-            U.assert(!bin.finalPass)
-            // this gets renumbered before the final pass
-            v = ifaceMembers[name] = -1;
-            bin.emitString(name)
-            return v
+
+                let v = U.lookup(bin.ifaceMemberMap, name)
+                if (v != null) return v
+                U.assert(!bin.finalPass)
+                // this gets renumbered before the final pass
+                v = bin.ifaceMemberMap[name] = -1;
+                bin.emitString(name)
+                return v
+            })
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit || !host)
+            if (diagnostics.getModificationCount() || opts.noEmit)
                 return;
 
-            bin.writeFile = (fn: string, data: string) =>
-                host.writeFile(fn, data, false, null, program.getSourceFiles());
+            bin.writeFile = (fn: string, data: string) => {
+                res.outfiles[fn] = data
+            }
+
+            for (let proc of bin.procs)
+                if (!proc.cachedJS || proc.inlineBody)
+                    proc.resolve()
+
+            if (target.isNative)
+                bin.procs = bin.procs.filter(p => p.inlineBody && !p.info.usedAsIface && !p.info.usedAsValue ? false : true)
 
             if (opts.target.isNative) {
                 if (opts.extinfo.yotta)
@@ -1089,16 +1257,22 @@ namespace ts.pxtc {
             }
         }
 
+        function emitGlobal(decl: Declaration) {
+            const pinfo = pxtInfo(decl)
+            typeCheckVar(typeOf(decl))
+            if (!pinfo.cell)
+                pinfo.cell = new ir.Cell(null, decl, getVarInfo(decl))
+            if (bin.globals.indexOf(pinfo.cell) < 0)
+                bin.globals.push(pinfo.cell)
+        }
+
         function lookupCell(decl: Declaration): ir.Cell {
             if (isGlobalVar(decl)) {
                 markUsed(decl)
-                let ex = bin.globals.filter(l => l.def == decl)[0]
-                if (!ex) {
-                    typeCheckVar(typeOf(decl))
-                    ex = new ir.Cell(null, decl, getVarInfo(decl))
-                    bin.globals.push(ex)
-                }
-                return ex
+                const pinfo = pxtInfo(decl)
+                if (!pinfo.cell)
+                    emitGlobal(decl)
+                return pinfo.cell
             } else {
                 let res = proc.localIndex(decl)
                 if (!res) {
@@ -1151,6 +1325,38 @@ namespace ts.pxtc {
                 getName(m) == "toString"
         }
 
+        function fixpointVTables() {
+            needsUsingInfo = false
+            const prevLen = bin.usedClassInfos.length
+            for (let ci of bin.usedClassInfos) {
+                for (let m of ci.allMethods()) {
+                    const pinfo = pxtInfo(m)
+                    const info = getFunctionInfo(m)
+                    if (pinfo.flags & PxtNodeFlags.IsUsed) {
+                        // we need to mark the parent as used, otherwise vtable layout fails, see #3740
+                        if (info.virtualParent)
+                            markFunctionUsed(info.virtualParent.decl)
+                    } else if (info.virtualParent && info.virtualParent.isUsed) {
+                        // if our parent method is used, and our vtable is used,
+                        // we are also used
+                        markFunctionUsed(m)
+                    } else if (isToString(m) || isIfaceMemberUsed(getName(m))) {
+                        // if the name is used in interface context, also mark as used
+                        markFunctionUsed(m)
+                    }
+                }
+
+                const ctor = getCtor(ci.decl)
+                if (ctor) {
+                    markFunctionUsed(ctor)
+                }
+            }
+            needsUsingInfo = true
+            if (usedWorkList.length == 0 && prevLen == bin.usedClassInfos.length)
+                return true
+            return false
+        }
+
         function getVTable(inf: ClassInfo) {
             assert(inf.isUsed, "inf.isUsed")
             if (inf.vtable)
@@ -1160,8 +1366,7 @@ namespace ts.pxtc {
             if (inf.baseClassInfo)
                 inf.baseClassInfo.derivedClasses.push(inf)
 
-
-            for (let m of inf.methods) {
+            for (let m of inf.usedMethods()) {
                 bin.numMethods++
                 let minf = getFunctionInfo(m)
                 const attrs = parseComments(m)
@@ -1203,35 +1408,32 @@ namespace ts.pxtc {
             }
 
             for (let curr = inf; curr; curr = curr.baseClassInfo) {
-                for (let m of curr.methods) {
+                for (let m of curr.usedMethods()) {
                     const n = getName(m)
-                    if (isIfaceMemberUsed(n) || isUsed(m)) {
-                        const attrs = parseComments(m);
-                        if (attrs.shim) continue;
+                    const attrs = parseComments(m);
+                    if (attrs.shim) continue;
 
-                        const proc = lookupProc(m)
-                        const ex = inf.itable.find(e => e.name == n)
-                        const isSet = m.kind == SK.SetAccessor
-                        const isGet = m.kind == SK.GetAccessor
-                        if (ex) {
-                            if (isSet && !ex.setProc)
-                                ex.setProc = proc
-                            else if (isGet && !ex.proc)
-                                ex.proc = proc
-                        } else {
-                            inf.itable.push({
-                                name: n,
-                                info: 0,
-                                idx: getIfaceMemberId(n),
-                                proc: !isSet ? proc : null,
-                                setProc: isSet ? proc : null
-                            })
-                        }
-                        proc.info.usedAsIface = true
+                    const proc = lookupProc(m)
+                    const ex = inf.itable.find(e => e.name == n)
+                    const isSet = m.kind == SK.SetAccessor
+                    const isGet = m.kind == SK.GetAccessor
+                    if (ex) {
+                        if (isSet && !ex.setProc)
+                            ex.setProc = proc
+                        else if (isGet && !ex.proc)
+                            ex.proc = proc
+                    } else {
+                        inf.itable.push({
+                            name: n,
+                            info: 0,
+                            idx: getIfaceMemberId(n),
+                            proc: !isSet ? proc : null,
+                            setProc: isSet ? proc : null
+                        })
                     }
+                    proc.info.usedAsIface = true
                 }
             }
-
 
             return inf.vtable
         }
@@ -1239,69 +1441,45 @@ namespace ts.pxtc {
         // this code determines if we will need a vtable entry
         // by checking if we are overriding a method in a super class
         function computeVtableInfo(info: ClassInfo) {
-            // walk up the inheritance chain to collect any methods
-            // we may be overriding in this class
-            let nameMap: pxt.Map<FunctionLikeDeclaration> = {}
-            for (let curr = info.baseClassInfo; !!curr; curr = curr.baseClassInfo) {
-                for (let m of curr.methods) {
-                    nameMap[classFunctionKey(m)] = m
+            for (let currMethod of info.allMethods()) {
+                let baseMethod: FunctionLikeDeclaration = null
+                const key = classFunctionKey(currMethod)
+                const k = getName(currMethod)
+                for (let base = info.baseClassInfo; !!base; base = base.baseClassInfo) {
+                    if (base.methods.hasOwnProperty(k))
+                        for (let m2 of base.methods[k])
+                            if (classFunctionKey(m2) == key) {
+                                baseMethod = m2
+                                // note thare's no 'break' here - we'll go to uppermost
+                                // matching method
+                            }
                 }
-            }
-            for (let m of info.methods) {
-                let prev = U.lookup(nameMap, classFunctionKey(m))
-                if (prev) {
-                    let minf = getFunctionInfo(m)
-                    let pinf = getFunctionInfo(prev)
-                    if (prev.parameters.length != m.parameters.length)
-                        error(m, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
-                    // pinf is just the parent (why not transitive?)
+                if (baseMethod) {
+                    let minf = getFunctionInfo(currMethod)
+                    let pinf = getFunctionInfo(baseMethod)
+                    // TODO we can probably drop this check
+                    if (baseMethod.parameters.length != currMethod.parameters.length)
+                        error(currMethod, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
+                    // pinf is the transitive parent
                     minf.virtualParent = pinf
                     if (!pinf.virtualParent)
                         pinf.virtualParent = pinf
                     assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
-                    if (!pinf.virtualInstances)
-                        pinf.virtualInstances = []
-                    pinf.virtualInstances.push(minf)
                 }
-            }
-        }
-
-        function pruneMethodsAndRecompute() {
-            // reset the virtual info
-            for (let fi of functionInfos) {
-                fi.virtualParent = undefined
-                fi.virtualIndex = undefined
-                fi.virtualInstances = undefined
-            }
-            // remove methods that are not used
-            for (let ci in classInfos) {
-                classInfos[ci].methods = classInfos[ci].methods.filter((m) => getFunctionInfo(m).isUsed)
-            }
-            // recompute vtable info
-            for (let ci in classInfos) {
-                if (classInfos[ci].baseClassInfo)
-                    computeVtableInfo(classInfos[ci])
             }
         }
 
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let id = safeName(decl) + "__C" + getNodeId(decl)
-            let info: ClassInfo = classInfos[id]
-            if (!info) {
-                info = {
-                    id: id,
-                    allfields: [],
-                    attrs: parseComments(decl),
-                    decl: decl,
-                    baseClassInfo: null,
-                    methods: [],
-                }
+            const pinfo = pxtInfo(decl)
+            if (!pinfo.classInfo) {
+                const id = safeName(decl) + "__C" + getNodeId(decl)
+                const info = new ClassInfo(id, decl)
+                pinfo.classInfo = info
                 if (info.attrs.autoCreate)
                     autoCreateFunctions[info.attrs.autoCreate] = true
-                classInfos[id] = info;
-                // only do it after storing our in case we run into cycles (which should be errors)
+                // only do it after storing ours in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
                 for (let mem of decl.members) {
                     if (mem.kind == SK.PropertyDeclaration) {
@@ -1316,7 +1494,10 @@ namespace ts.pxtc {
                     } else if (isClassFunction(mem)) {
                         let minf = getFunctionInfo(mem as any)
                         minf.parentClassInfo = info
-                        info.methods.push(mem as any)
+                        const key = getName(mem)
+                        if (!info.methods.hasOwnProperty(key))
+                            info.methods[key] = []
+                        info.methods[key].push(mem as FunctionLikeDeclaration)
                     }
                 }
                 if (info.baseClassInfo) {
@@ -1325,7 +1506,7 @@ namespace ts.pxtc {
                 }
 
             }
-            return info;
+            return pinfo.classInfo;
         }
 
         function emitImageLiteral(s: string): LiteralExpression {
@@ -1438,15 +1619,24 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(f);
             if (attrs.shim)
                 userError(9207, lf("built-in functions cannot be yet used as values; did you forget ()?"))
-            if (isGenericFunction(f))
-                userError(9232, lf("generic functions cannot be yet used as values; did you forget ()?"))
             let info = getFunctionInfo(f)
+            markUsageOrder(info);
             if (info.location) {
                 return info.location.load()
             } else {
                 assert(!bin.finalPass || info.capturedVars.length == 0, "!bin.finalPass || info.capturedVars.length == 0")
                 info.usedAsValue = true
+                markFunctionUsed(f)
                 return emitFunLitCore(f)
+            }
+        }
+
+        function markUsageOrder(info: FunctionAddInfo) {
+            if (info.usedBeforeDecl === undefined)
+                info.usedBeforeDecl = true;
+            else if (bin.finalPass && info.usedBeforeDecl && info.capturedVars.length) {
+                if (getEnclosingFunction(info.decl) && !info.alreadyEmitted)
+                    userError(9278, lf("function referenced before all variables it uses are defined"))
             }
         }
 
@@ -1486,7 +1676,7 @@ ${lbl}: .short 0xffff
             if (str == "") {
                 r = ir.rtcall("String_::mkEmpty", [])
             } else {
-                let lbl = bin.emitString(str)
+                let lbl = emitAndMarkString(str)
                 r = ir.ptrlit(lbl, JSON.stringify(str))
             }
             r.isStringLiteral = true
@@ -1558,18 +1748,43 @@ ${lbl}: .short 0xffff
         function emitObjectLiteral(node: ObjectLiteralExpression) {
             let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment | ShorthandPropertyAssignment) => {
+                assert(!p.questionToken) // should be disallowed by TS grammar checker
+
+                let keyName: string
+                let init: ir.Expr
                 if (p.kind == SK.ShorthandPropertyAssignment) {
-                    userError(9264, "Shorthand properties not supported.")
-                    return;
+                    const sp = p as ShorthandPropertyAssignment
+                    assert(!sp.equalsToken && !sp.objectAssignmentInitializer) // disallowed by TS grammar checker
+                    keyName = p.name.text;
+                    const vsym = checker.getShorthandAssignmentValueSymbol(p)
+                    const vname: Identifier = vsym && vsym.valueDeclaration && (vsym.valueDeclaration as any).name
+                    if (vname && vname.kind == SK.Identifier)
+                        init = emitIdentifier(vname)
+                    else
+                        throw unhandled(p) // not sure what happened
+                } else if (p.name.kind == SK.ComputedPropertyName) {
+                    const keyExpr = (p.name as ComputedPropertyName).expression
+                    // need to use rtcallMask, so keyExpr gets converted to string
+                    proc.emitExpr(rtcallMask("pxtrt::mapSetByString", [
+                        irToNode(expr, true),
+                        keyExpr,
+                        p.initializer
+                    ], null))
+                    return
+                } else {
+                    keyName = p.name.kind == SK.StringLiteral ?
+                        (p.name as StringLiteral).text : p.name.getText();
+                    init = emitExpr(p.initializer)
                 }
-                const keyName = p.name.kind == SK.StringLiteral ?
-                    (p.name as StringLiteral).text : p.name.getText();
+                const fieldId = target.isNative
+                    ? ir.numlit(getIfaceMemberId(keyName))
+                    : ir.ptrlit(null, JSON.stringify(keyName))
                 const args = [
                     expr,
-                    ir.numlit(getIfaceMemberId(keyName)),
-                    emitExpr(p.initializer)
+                    fieldId,
+                    init
                 ];
-                proc.emitExpr(ir.rtcall("pxtrt::mapSet", args))
+                proc.emitExpr(ir.rtcall(target.isNative ? "pxtrt::mapSet" : "pxtrt::mapSetByString", args))
             })
             return expr
         }
@@ -1589,12 +1804,6 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
-
-            // we need to type check node.expression before committing code gen
-            if ((decl.kind == SK.PropertyDeclaration && !isStatic(decl))
-                || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
-                emitExpr(node.expression, false)
-            }
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
@@ -1690,38 +1899,68 @@ ${lbl}: .short 0xffff
         }
 
         function isOnDemandDecl(decl: Declaration) {
-            let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl)
+            let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl) || isClassDeclaration(decl)
             if (target.switches.noTreeShake)
                 return false
             if (opts.testMode && res) {
-                if (!U.startsWith(getSourceFileOfNode(decl).fileName, "pxt_modules"))
+                if (!isInPxtModules(decl))
                     return false
             }
             return res
         }
 
-        function isUsed(decl: Declaration) {
-            if (isOnDemandDecl(decl)) {
-                return !!(pxtInfo(decl).flags & PxtNodeFlags.IsUsed)
-            } else {
+        function shouldEmitNow(node: Declaration) {
+            if (!isOnDemandDecl(node))
                 return true
+            const info = pxtInfo(node)
+            if (bin.finalPass)
+                return !!(info.flags & PxtNodeFlags.IsUsed)
+            else
+                return info == currUsingContext
+        }
+
+        function markUsed(decl: Declaration) {
+            if (!decl)
+                return
+
+            const pinfo = pxtInfo(decl)
+            if (pinfo.classInfo) {
+                markVTableUsed(pinfo.classInfo)
+                return
+            }
+
+            if (opts.computeUsedSymbols && decl.symbol)
+                res.usedSymbols[getNodeFullName(checker, decl)] = null
+
+            if (isStackMachine() && isClassFunction(decl))
+                getIfaceMemberId(getName(decl), true)
+
+            recordUsage(decl)
+
+            if (!(pinfo.flags & PxtNodeFlags.IsUsed)) {
+                pinfo.flags |= PxtNodeFlags.IsUsed
+                if (isOnDemandDecl(decl))
+                    usedWorkList.push(decl)
             }
         }
 
         function markFunctionUsed(decl: EmittableAsCall) {
-            if (isStackMachine() && isClassFunction(decl))
-                getIfaceMemberId(getName(decl), true)
-            getFunctionInfo(decl).isUsed = true
             markUsed(decl)
         }
 
-        function markUsed(decl: Declaration) {
-            if (opts.computeUsedSymbols && decl && decl.symbol)
-                res.usedSymbols[getFullName(checker, decl.symbol)] = null
+        function emitAndMarkString(str: string) {
+            return recordAction(bin => {
+                return bin.emitString(str)
+            })
+        }
 
-            if (decl && !isUsed(decl)) {
-                pxtInfo(decl).flags |= PxtNodeFlags.IsUsed
-                usedWorkList.push(decl)
+        function recordUsage(decl: Declaration) {
+            if (!needsUsingInfo)
+                return
+            if (!currUsingContext) {
+                U.oops("no using ctx for: " + getName(decl))
+            } else {
+                currUsingContext.usedNodes[nodeKey(decl)] = decl
             }
         }
 
@@ -1968,12 +2207,12 @@ ${lbl}: .short 0xffff
                 let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
-                        return getFullName(checker, d.symbol)
+                        return getNodeFullName(checker, d)
                     else if (e && e.kind == SK.StringLiteral)
                         return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
-                let fn = getFullName(checker, decl.symbol)
+                let fn = getNodeFullName(checker, decl)
                 let lst = res.usedArguments[fn]
                 if (!lst) {
                     lst = res.usedArguments[fn] = []
@@ -2028,21 +2267,8 @@ ${lbl}: .short 0xffff
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
                 if (info.parentClassInfo)
-                    markClassUsed(info.parentClassInfo)
-                // if we call a method and it overrides then
-                // mark the virtual root class and all its overrides as used,
-                // if their classes are used
-                if (info.virtualParent) info = info.virtualParent
-                if (!info.isUsed) {
-                    info.isUsed = true
-                    for (let vinst of info.virtualInstances || []) {
-                        if (vinst.parentClassInfo.isUsed)
-                            markFunctionUsed(vinst.decl)
-                    }
-                    // we need to mark the parent as used, otherwise vtable layout fails, see #3740
-                    if (info.decl.kind == SK.MethodDeclaration)
-                        markFunctionUsed(info.decl)
-                }
+                    markVTableUsed(info.parentClassInfo)
+                markFunctionUsed(decl)
 
                 const needsVCall = info.virtualParent && !isSuper
                 const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
@@ -2104,7 +2330,6 @@ ${lbl}: .short 0xffff
                     let name = getName(decl)
                     return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {
-                    markFunctionUsed(decl)
                     return emitPlain();
                 }
             }
@@ -2123,6 +2348,7 @@ ${lbl}: .short 0xffff
         }
 
         function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
+            U.assert(!bin.finalPass || !!proc)
             let data: ir.ProcId = {
                 proc: proc,
                 virtualIndex: null,
@@ -2133,7 +2359,7 @@ ${lbl}: .short 0xffff
 
         function mkMethodCall(ci: ClassInfo, vidx: number, ifaceIdx: number, args: ir.Expr[]) {
             let data: ir.ProcId = {
-                proc: proc,
+                proc: null,
                 virtualIndex: vidx,
                 ifaceIndex: ifaceIdx,
                 classInfo: ci
@@ -2146,7 +2372,11 @@ ${lbl}: .short 0xffff
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
-            let proc = lookupProc(decl)
+            const proc = lookupProc(decl)
+            if (decl.kind == SK.FunctionDeclaration) {
+                const info = getFunctionInfo(decl as FunctionDeclaration)
+                markUsageOrder(info)
+            }
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
             return mkProcCallCore(proc, args)
         }
@@ -2181,15 +2411,15 @@ ${lbl}: .short 0xffff
                 getVTable(info) // gets cached
             }
 
-            let keys = Object.keys(ifaceMembers)
+            let keys = Object.keys(bin.ifaceMemberMap)
             keys.sort(U.strcmp)
             keys.unshift("") // make sure idx=0 is invalid
             bin.emitString("")
             bin.ifaceMembers = keys
-            ifaceMembers = {}
+            bin.ifaceMemberMap = {}
             let idx = 0
             for (let k of keys) {
-                ifaceMembers[k] = idx++
+                bin.ifaceMemberMap[k] = idx++
             }
 
             for (let info of bin.usedClassInfos) {
@@ -2198,11 +2428,18 @@ ${lbl}: .short 0xffff
                 }
             }
 
+            for (let info of bin.usedClassInfos) {
+                info.lastSubtypeNo = undefined
+                info.classNo = undefined
+            }
+
             let classNo = pxt.BuiltInType.User0
             const numberClasses = (i: ClassInfo) => {
                 U.assert(!i.classNo)
                 i.classNo = classNo++
-                i.derivedClasses.forEach(numberClasses)
+                for (let subt of i.derivedClasses)
+                    if (subt.isUsed)
+                        numberClasses(subt)
                 i.lastSubtypeNo = classNo - 1
             }
             for (let info of bin.usedClassInfos) {
@@ -2219,26 +2456,16 @@ ${lbl}: .short 0xffff
         }
 
         function isIfaceMemberUsed(name: string) {
-            return U.lookup(explicitlyUsedIfaceMembers, name) != null
+            return U.lookup(bin.explicitlyUsedIfaceMembers, name) != null
         }
 
-        function markClassUsed(info: ClassInfo) {
+        function markVTableUsed(info: ClassInfo) {
+            recordUsage(info.decl)
             if (info.isUsed) return
-            info.isUsed = true
-            if (info.baseClassInfo) markClassUsed(info.baseClassInfo)
+            const pinfo = pxtInfo(info.decl)
+            pinfo.flags |= PxtNodeFlags.IsUsed
+            if (info.baseClassInfo) markVTableUsed(info.baseClassInfo)
             bin.usedClassInfos.push(info)
-            for (let m of info.methods) {
-                let minf = getFunctionInfo(m)
-                if (isToString(m) ||
-                    isIfaceMemberUsed(getName(m)) ||
-                    (minf.virtualParent && minf.virtualParent.isUsed))
-                    markFunctionUsed(m)
-            }
-
-            let ctor = getCtor(info.decl)
-            if (ctor) {
-                markFunctionUsed(ctor)
-            }
         }
 
         function emitNewExpression(node: NewExpression) {
@@ -2259,7 +2486,7 @@ ${lbl}: .short 0xffff
                     if (ctor) break
                 }
 
-                markClassUsed(info)
+                markVTableUsed(info)
 
                 let lbl = info.id + "_VT"
                 let obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
@@ -2347,7 +2574,7 @@ ${lbl}: .short 0xffff
                 return f4EncodeImg(maxLen, matrix.length, bpp, (x, y) => matrix[y][x] || 0)
             }
 
-            function parseHexLiteral(s: string) {
+            function parseHexLiteral(node: Node, s: string) {
                 let thisJres = currJres
                 if (s[0] == '_' && s[1] == '_' && opts.jres[s]) {
                     thisJres = opts.jres[s]
@@ -2382,6 +2609,11 @@ ${lbl}: .short 0xffff
                             thisJres.dataEncoding, thisJres.id))
                     }
                 }
+                if (/^e[14]/i.test(s) && node.parent && node.parent.kind == SK.CallExpression &&
+                    (node.parent as CallExpression).expression.getText() == "image.ofBuffer") {
+                    const m = /^e([14])(..)(..)..(.*)/i.exec(s)
+                    s = `870${m[1]}${m[2]}00${m[3]}000000${m[4]}`
+                }
                 let res = ""
                 for (let i = 0; i < s.length; ++i) {
                     let c = s[i]
@@ -2395,8 +2627,13 @@ ${lbl}: .short 0xffff
                     else
                         throw unhandled(node, lf("invalid character in hex literal '{0}'", c), 9265)
                 }
-                let lbl = bin.emitHexLiteral(res.toLowerCase())
-                return ir.ptrlit(lbl, lbl)
+                if (target.isNative) {
+                    const lbl = bin.emitHexLiteral(res.toLowerCase())
+                    return ir.ptrlit(lbl, lbl)
+                } else {
+                    const lbl = "_hex" + nodeKey(node)
+                    return ir.ptrlit(lbl, { hexlit: res.toLowerCase() } as any)
+                }
             }
             let decl = getDecl(node.tag) as FunctionLikeDeclaration
             if (!decl)
@@ -2406,7 +2643,7 @@ ${lbl}: .short 0xffff
 
             let callInfo: CallInfo = {
                 decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
+                qName: decl ? getNodeFullName(checker, decl) : "?",
                 args: [node.template],
                 isExpression: true
             };
@@ -2415,7 +2652,7 @@ ${lbl}: .short 0xffff
             function handleHexLike(pp: (s: string) => string) {
                 if (node.template.kind != SK.NoSubstitutionTemplateLiteral)
                     throw unhandled(node, lf("substitution not supported in hex literal", attrs.shim), 9265);
-                res = parseHexLiteral(pp((node.template as ts.LiteralExpression).text))
+                res = parseHexLiteral(node, pp((node.template as ts.LiteralExpression).text))
             }
 
             switch (attrs.shim) {
@@ -2467,9 +2704,47 @@ ${lbl}: .short 0xffff
             return ir.ptrlit(lbl + "_Lit", lbl)
         }
 
+        function flushWorkQueue() {
+            proc = lookupProc(rootFunction)
+            // we emit everything that's left, but only at top level
+            // to avoid unbounded stack
+            while (usedWorkList.length > 0) {
+                let f = usedWorkList.pop()
+                emitTopLevel(f)
+            }
+        }
+
+        function flushHoistedFunctionDefinitions() {
+            const curr = pendingFunctionDefinitions
+            if (curr.length > 0) {
+                pendingFunctionDefinitions = []
+                for (let node of curr) {
+                    const prevProc = proc;
+                    try {
+                        emitFuncCore(node);
+                    } finally {
+                        proc = prevProc;
+                    }
+                }
+            }
+        }
+        function markVariableDefinition(vi: VariableAddInfo) {
+            if (bin.finalPass && vi.functionsToDefine) {
+                U.pushRange(pendingFunctionDefinitions, vi.functionsToDefine)
+            }
+        }
+
         function emitFuncCore(node: FunctionLikeDeclaration) {
             const info = getFunctionInfo(node)
             let lit: ir.Expr = null
+
+            if (bin.finalPass) {
+                if (info.alreadyEmitted) {
+                    U.assert(info.usedBeforeDecl)
+                    return null
+                }
+                info.alreadyEmitted = true
+            }
 
             let isExpression = node.kind == SK.ArrowFunction || node.kind == SK.FunctionExpression
 
@@ -2480,12 +2755,8 @@ ${lbl}: .short 0xffff
                 return l;
             })
 
-            // forbid: let x = function<T>(a:T) { }
-            if (isExpression && isGenericFunction(node))
-                userError(9233, lf("function expressions cannot be generic"))
-
-            if (caps.length > 0 && isGenericFunction(node))
-                userError(9234, lf("nested functions cannot be generic yet"))
+            if (info.usedBeforeDecl === undefined)
+                info.usedBeforeDecl = false
 
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
@@ -2521,12 +2792,14 @@ ${lbl}: .short 0xffff
             } else {
                 assert(!bin.finalPass, "!bin.finalPass")
                 const pinfo = pxtInfo(node)
-                proc = new ir.Procedure();
-                proc.isRoot = !!(pinfo.flags & PxtNodeFlags.IsRootFunction)
-                proc.action = node;
-                proc.info = info;
-                pinfo.proc = proc;
-                bin.addProc(proc);
+                const myProc = new ir.Procedure()
+                myProc.isRoot = !!(pinfo.flags & PxtNodeFlags.IsRootFunction)
+                myProc.action = node;
+                myProc.info = info;
+                pinfo.proc = myProc;
+                myProc.usingCtx = currUsingContext;
+                proc = myProc
+                recordAction(bin => bin.addProc(myProc));
             }
 
             proc.captured = locals;
@@ -2571,6 +2844,7 @@ ${lbl}: .short 0xffff
                     fieldAssignmentParameters.push(p)
                 }
                 let l = new ir.Cell(i, p, getVarInfo(p))
+                markVariableDefinition(l.info)
                 l.isarg = true
                 return l
             })
@@ -2602,8 +2876,18 @@ ${lbl}: .short 0xffff
                 proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(f.initializer)]))
             }
 
+            flushHoistedFunctionDefinitions()
+
             if (node.body.kind == SK.Block) {
                 emit(node.body);
+                if (funcHasReturn(proc.action)) {
+                    const last = proc.body[proc.body.length - 1]
+                    if (last && last.stmtKind == ir.SK.Jmp && last.jmpMode == ir.JmpMode.Always) {
+                        // skip final 'return undefined' as there was 'return something' just above
+                    } else {
+                        proc.emitJmp(getLabels(node).ret, emitLit(undefined), ir.JmpMode.Always)
+                    }
+                }
             } else {
                 let v = emitExpr(node.body)
                 proc.emitJmp(getLabels(node).ret, v, ir.JmpMode.Always)
@@ -2614,26 +2898,26 @@ ${lbl}: .short 0xffff
             proc.stackEmpty();
 
             let lbl = proc.mkLabel("final")
-            let hasRet = funcHasReturn(proc.action)
-            if (hasRet) {
-                let v = captureJmpValue()
-                proc.emitJmp(lbl, v, ir.JmpMode.Always)
+            if (funcHasReturn(proc.action)) {
+                // the jmp will take R0 with it as the return value
+                proc.emitJmp(lbl)
             } else {
-                // TODO emit 'return undefined'
+                proc.emitJmp(lbl, emitLit(undefined))
             }
-            if (hasRet || isStackMachine())
-                proc.emitLbl(lbl)
+            proc.emitLbl(lbl)
+
+            if (info.capturedVars.length &&
+                info.usedBeforeDecl &&
+                node.kind == SK.FunctionDeclaration && !bin.finalPass) {
+                info.capturedVars.sort((a, b) => b.pos - a.pos)
+                const vinfo = getVarInfo(info.capturedVars[0])
+                if (!vinfo.functionsToDefine)
+                    vinfo.functionsToDefine = []
+                vinfo.functionsToDefine.push(node)
+            }
 
             // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
-
-            // otherwise, we emit everything that's left, but only at top level
-            // to avoid unbounded stack
-            if (proc.isRoot)
-                while (usedWorkList.length > 0) {
-                    let f = usedWorkList.pop()
-                    emit(f)
-                }
 
             return lit
         }
@@ -2657,7 +2941,10 @@ ${lbl}: .short 0xffff
         }
 
         function emitFunctionDeclaration(node: FunctionLikeDeclaration) {
-            if (!isUsed(node))
+            if (!shouldEmitNow(node))
+                return undefined;
+
+            if (pxtInfo(node).flags & PxtNodeFlags.FromPreviousCompile)
                 return undefined;
 
             let attrs = parseComments(node)
@@ -2693,7 +2980,29 @@ ${lbl}: .short 0xffff
             return lit
         }
 
-        function emitDeleteExpression(node: DeleteExpression) { }
+        function emitDeleteExpression(node: DeleteExpression) {
+            let objExpr: Expression
+            let keyExpr: () => ir.Expr
+            if (node.expression.kind == SK.PropertyAccessExpression) {
+                const inner = node.expression as PropertyAccessExpression
+                objExpr = inner.expression
+                keyExpr = () => emitStringLiteral(inner.name.text)
+            } else if (node.expression.kind == SK.ElementAccessExpression) {
+                const inner = node.expression as ElementAccessExpression
+                objExpr = inner.expression
+                keyExpr = () => emitExpr(inner.argumentExpression)
+            } else {
+                throw userError(9276, lf("expression not supported as argument to 'delete'"))
+            }
+            // we know this would just fail at runtime
+            if (isClassType(typeOf(objExpr)))
+                throw userError(9277, lf("'delete' not supported on class types"))
+            const args = [
+                emitExpr(objExpr),
+                keyExpr()
+            ]
+            return rtcallMaskDirect("pxtrt::mapDeleteByString", args)
+        }
         function emitTypeOfExpression(node: TypeOfExpression) {
             return rtcallMask("pxt::typeOf", [node.expression], null)
         }
@@ -2881,7 +3190,7 @@ ${lbl}: .short 0xffff
                     // unfortunately, this uses completely different syntax tree nodes to the patters in const/let...
                     const bindingExpr = ir.shared(emitExpr(src));
                     (trg as ArrayLiteralExpression).elements.forEach((e, idx) => {
-                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, emitLit(idx)])))
+                        emitStore(e, irToNode(rtcallMaskDirect("Array_::getAt", [bindingExpr, ir.numlit(idx)])))
                     })
                 }
             } else {
@@ -3037,17 +3346,18 @@ ${lbl}: .short 0xffff
         function isNumberLike(e: Expression) {
             if (e.kind == SK.NullKeyword) {
                 let vo: ir.Expr = pxtInfo(e).valueOverride
-                if (vo !== undefined) {
+                if (vo != null) {
                     if (vo.exprKind == EK.NumberLiteral) {
                         if (opts.target.isNative)
                             return !!((vo.data as number) & 1)
                         return true
                     } else if (vo.exprKind == EK.RuntimeCall && vo.data == "pxt::ptrOfLiteral") {
                         if (vo.args[0].exprKind == EK.PointerLiteral &&
-                            !isNaN(parseFloat(vo.args[0].jsInfo)))
+                            !isNaN(parseFloat(vo.args[0].jsInfo as string)))
                             return true
                         return false
-                    } else if (vo.exprKind == EK.PointerLiteral && !isNaN(parseFloat(vo.jsInfo))) {
+                    } else if (vo.exprKind == EK.PointerLiteral &&
+                        !isNaN(parseFloat(vo.jsInfo as string))) {
                         return true
                     } else
                         return false
@@ -3099,7 +3409,8 @@ ${lbl}: .short 0xffff
                         convInfos.push({
                             argIdx: i,
                             method: "_validate",
-                            refTag: t
+                            refTag: t,
+                            refTagNullable: !!attrs.argsNullable
                         })
                     }
                     return r
@@ -3178,7 +3489,7 @@ ${lbl}: .short 0xffff
                 userError(9275, lf("unsupported instanceof expression"))
             }
             let info = getClassInfo(tp, classDecl)
-            markClassUsed(info)
+            markVTableUsed(info)
             let r = ir.op(ir.EK.InstanceOf, [emitExpr(node.left)], info)
             r.jsInfo = "bool"
             return r
@@ -3230,7 +3541,7 @@ ${lbl}: .short 0xffff
             if (!opts.breakpoints)
                 return
             let src = getSourceFileOfNode(node)
-            if (opts.justMyCode && U.startsWith(src.fileName, "pxt_modules"))
+            if (opts.justMyCode && isInPxtModules(src))
                 return;
             let pos = node.pos
             while (/^\s$/.exec(src.text[pos]))
@@ -3551,9 +3862,13 @@ ${lbl}: .short 0xffff
 
             //As the iterator isn't declared in the usual fashion we must mark it as used, otherwise no cell will be allocated for it
             markUsed(declList.declarations[0])
-            let iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            const iterVar = emitVariableDeclaration(declList.declarations[0]) // c
+            U.assert(!!iterVar || !bin.finalPass)
             //Start with undefined
-            proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
+            if (iterVar) {
+                proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
+                recordUse(declList.declarations[0], true)
+            }
             proc.stackEmpty()
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
@@ -3565,6 +3880,8 @@ ${lbl}: .short 0xffff
             let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
+
+            flushHoistedFunctionDefinitions()
 
             emitBrk(node);
 
@@ -3584,7 +3901,8 @@ ${lbl}: .short 0xffff
             }
 
             // c = a[i]
-            proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
+            if (iterVar)
+                proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);
@@ -3735,6 +4053,7 @@ ${lbl}: .short 0xffff
                     const loc = lookupCell(decl)
                     proc.emitExpr(loc.storeByRef(rtcallMaskDirect("pxt::getThrownValue", [])))
                 }
+                flushHoistedFunctionDefinitions()
                 emitBlock(node.catchClause.block)
                 proc.emitLbl(skip)
             }
@@ -3785,13 +4104,22 @@ ${lbl}: .short 0xffff
             }
 
 
-            if (!isUsed(node)) {
+            if (!shouldEmitNow(node)) {
                 return null;
             }
             if (isConstLiteral(node))
                 return null;
-            let loc = isGlobalVar(node) ?
-                lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
+            let loc: ir.Cell
+
+            if (isGlobalVar(node)) {
+                emitGlobal(node)
+                loc = lookupCell(node)
+            } else {
+                loc = proc.mkLocal(node, getVarInfo(node))
+            }
+
+            markVariableDefinition(loc.info)
+
             if (loc.isByRefLocal()) {
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
             }
@@ -3809,7 +4137,7 @@ ${lbl}: .short 0xffff
                     let jrname = attrs.jres
                     if (jrname) {
                         if (jrname == "true") {
-                            jrname = getFullName(checker, node.symbol)
+                            jrname = getNodeFullName(checker, node)
                         }
                         let jr = U.lookup(opts.jres || {}, jrname)
                         if (!jr)
@@ -3868,7 +4196,7 @@ ${lbl}: .short 0xffff
                     userError(9203, lf("spread operator not supported yet"))
                 const myType = arrayElementType(parentType, idx)
                 return [
-                    rtcallMaskDirect("Array_::getAt", [parentAccess, emitLit(idx)]),
+                    rtcallMaskDirect("Array_::getAt", [parentAccess, ir.numlit(idx)]),
                     myType
                 ]
             } else {
@@ -3878,11 +4206,13 @@ ${lbl}: .short 0xffff
         }
 
         function emitClassDeclaration(node: ClassDeclaration) {
-            getClassInfo(null, node)
+            const info = getClassInfo(null, node)
+            if (info.isUsed && bin.usedClassInfos.indexOf(info) < 0)
+                bin.usedClassInfos.push(info)
             node.members.forEach(emit)
         }
         function emitInterfaceDeclaration(node: InterfaceDeclaration) {
-            checkInterfaceDeclaration(node, classInfos)
+            checkInterfaceDeclaration(bin, node)
             let attrs = parseComments(node)
             if (attrs.autoCreate)
                 autoCreateFunctions[attrs.autoCreate] = true
@@ -3943,6 +4273,32 @@ ${lbl}: .short 0xffff
             throw new Error("expecting expression")
         }
 
+        function emitTopLevel(node: Declaration): void {
+            const pinfo = pxtInfo(node)
+            if (pinfo.usedNodes) {
+                needsUsingInfo = false
+                for (let node of U.values(pinfo.usedNodes))
+                    markUsed(node)
+                for (let fn of pinfo.usedActions)
+                    fn(bin)
+                needsUsingInfo = true
+            } else if (isGlobalVar(node) || isClassDeclaration(node)) {
+                needsUsingInfo = false
+                currUsingContext = pinfo
+                currUsingContext.usedNodes = null
+                currUsingContext.usedActions = null
+                if (isGlobalVar(node)) emitGlobal(node)
+                emit(node)
+                needsUsingInfo = true
+            } else {
+                currUsingContext = pinfo
+                currUsingContext.usedNodes = {}
+                currUsingContext.usedActions = []
+                emit(node)
+                currUsingContext = null
+            }
+        }
+
         function emit(node: Node): void {
             catchErrors(node, emitNodeCore)
         }
@@ -3972,6 +4328,7 @@ ${lbl}: .short 0xffff
                     return emitBlock(<Block>node);
                 case SK.VariableDeclaration:
                     emitVariableDeclaration(<VariableDeclaration>node);
+                    flushHoistedFunctionDefinitions()
                     return
                 case SK.IfStatement:
                     return emitIfStatement(<IfStatement>node);
@@ -4079,6 +4436,8 @@ ${lbl}: .short 0xffff
                     return emitObjectLiteral(<ObjectLiteralExpression>node);
                 case SK.TypeOfExpression:
                     return emitTypeOfExpression(<TypeOfExpression>node);
+                case SyntaxKind.DeleteExpression:
+                    return emitDeleteExpression(<DeleteExpression>node);
                 default:
                     unhandled(node);
                     return null
@@ -4112,8 +4471,6 @@ ${lbl}: .short 0xffff
                     return emitComputedPropertyName(<ComputedPropertyName>node);
                 case SyntaxKind.TaggedTemplateExpression:
                     return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
-                case SyntaxKind.DeleteExpression:
-                    return emitDeleteExpression(<DeleteExpression>node);
                 case SyntaxKind.VoidExpression:
                     return emitVoidExpression(<VoidExpression>node);
                 case SyntaxKind.AwaitExpression:
@@ -4213,6 +4570,8 @@ ${lbl}: .short 0xffff
         numVirtMethods = 0;
         usedChars = new Uint32Array(0x10000 / 32);
 
+        explicitlyUsedIfaceMembers: pxt.Map<boolean> = {};
+        ifaceMemberMap: pxt.Map<number> = {};
         ifaceMembers: string[];
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
@@ -4230,11 +4589,36 @@ ${lbl}: .short 0xffff
             this.numStmts = 0
         }
 
+        getTitle() {
+            const title = this.options.name || U.lf("Untitled")
+            if (title.length >= 90)
+                return title.slice(0, 87) + "..."
+            else
+                return title
+        }
+
         addProc(proc: ir.Procedure) {
             assert(!this.finalPass, "!this.finalPass")
             this.procs.push(proc)
             proc.seqNo = this.procs.length
             //proc.binary = this
+        }
+
+        recordHelper(usingCtx: PxtNode, id: string, gen: (bin: Binary) => string) {
+            const act = (bin: Binary) => {
+                if (!bin.codeHelpers[id])
+                    bin.codeHelpers[id] = gen(bin)
+            }
+            act(this)
+            this.recordAction(usingCtx, act)
+        }
+
+        recordAction<T>(usingCtx: PxtNode, f: (bin: Binary) => T) {
+            if (usingCtx) {
+                if (usingCtx.usedActions)
+                    usingCtx.usedActions.push(f as EmitAction)
+            } else
+                U.oops("no using ctx!")
         }
 
         private emitLabelled(v: string, hash: pxt.Map<string>, lblpref: string) {

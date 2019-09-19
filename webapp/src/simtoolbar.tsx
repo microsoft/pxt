@@ -72,7 +72,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     renderCore() {
         const parentState = this.props.parent.state;
-        if (!parentState.currFile) return <div />
+        if (!parentState.currFile || parentState.home) return <div />
 
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
@@ -87,7 +87,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
 
-        const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
+        const run = true;
         const restart = run && !simOpts.hideRestart;
         const trace = !!targetTheme.enableTrace;
         // We hide debug button in Monaco because it's not implemented yet.

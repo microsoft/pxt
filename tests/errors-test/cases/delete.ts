@@ -3,4 +3,4 @@ class A {
 }
 
 let a = new A()
-delete a.x //TS9202
+delete a.x //TS9277

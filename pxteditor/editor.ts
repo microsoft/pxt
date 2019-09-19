@@ -74,7 +74,6 @@ namespace pxt.editor {
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
-        updatingEditorFile?: boolean;
         pokeUserComponent?: string;
 
         highContrast?: boolean;
@@ -189,7 +188,6 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
-        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -278,7 +276,7 @@ namespace pxt.editor {
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(): void;
+        showShareDialog(title?: string): void;
         showAboutDialog(): void;
 
         showImportUrlDialog(): void;
@@ -295,6 +293,8 @@ namespace pxt.editor {
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
+
+        askForProjectNameAsync(): Promise<string>;
 
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;

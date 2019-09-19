@@ -563,8 +563,7 @@ namespace pxt {
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
-                        let addPackagesPromise = Promise.resolve();
-                        Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
+                        return Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
                                 .then((conflicts) => {

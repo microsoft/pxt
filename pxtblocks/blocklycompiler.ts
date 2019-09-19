@@ -85,14 +85,27 @@ namespace pxt.blocks {
         children: Scope[];
     }
 
+    export enum BlockDeclarationType {
+        None = 0,
+        Argument,
+        Assigned,
+        Implicit
+    }
+
+    export interface BlockDiagnostic {
+        blockId: string;
+        message: string;
+    }
+
     export interface VarInfo {
         name: string;
         id: number;
 
         escapedName?: string;
         type?: Point;
-        alreadyDeclared?: boolean;
+        alreadyDeclared?: BlockDeclarationType;
         firstReference?: Blockly.Block;
+        isAssigned?: boolean;
     }
 
     function find(p: Point): Point {
@@ -734,7 +747,7 @@ namespace pxt.blocks {
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
             return {
                 actualName: a.name,
-                definitionName: a .id
+                definitionName: a.id
             };
         });
 
@@ -1079,8 +1092,10 @@ namespace pxt.blocks {
 
         let bindString = binding.escapedName + " = ";
 
+        binding.isAssigned = true;
+
         if (isDef) {
-            binding.alreadyDeclared = true;
+            binding.alreadyDeclared = BlockDeclarationType.Assigned;
             const declaredType = getConcreteType(binding.type);
 
             bindString = `let ${binding.escapedName} = `;
@@ -1143,7 +1158,7 @@ namespace pxt.blocks {
             }
 
             if (p.shadowOptions && p.shadowOptions.toString && returnType(e, target) !== pString) {
-                return H.mkSimpleCall("+", [H.mkStringLiteral(""), compileExpression(e, target, comments)]);
+                return H.mkSimpleCall("+", [H.mkStringLiteral(""), H.mkParenthesizedExpression(compileExpression(e, target, comments))]);
             }
 
             return compileExpression(e, target, comments)
@@ -1369,6 +1384,12 @@ namespace pxt.blocks {
             case pxtc.TS_DEBUGGER_TYPE:
                 r = compileDebuggeStatementBlock(e, b);
                 break;
+            case pxtc.TS_BREAK_TYPE:
+                r = compileBreakStatementBlock(e, b);
+                break;
+            case pxtc.TS_CONTINUE_TYPE:
+                r = compileContinueStatementBlock(e, b);
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1402,7 +1423,7 @@ namespace pxt.blocks {
         if (firstBlock && e.blockDeclarations[firstBlock.id]) {
             e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
                 stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
-                varInfo.alreadyDeclared = true;
+                varInfo.alreadyDeclared = BlockDeclarationType.Implicit;
             });
         }
         return mkBlock(stmts);
@@ -1434,6 +1455,14 @@ namespace pxt.blocks {
             ]
         }
         return [];
+    }
+
+    function compileBreakStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("break;\n")]
+    }
+
+    function compileContinueStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("continue;\n")]
     }
 
     function prefixWithSemicolon(n: JsNode) {
@@ -1552,7 +1581,7 @@ namespace pxt.blocks {
         }
     }
 
-    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
+    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
         try {
             // all compiled top level blocks are events
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
@@ -1655,7 +1684,22 @@ namespace pxt.blocks {
             });
 
             const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
-            return stmtsEnums.concat(leftoverVars.concat(stmtsMain));
+
+            const diags: BlockDiagnostic[] = [];
+
+            e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
+                const t = getConcreteType(v.type);
+
+                // The primitive types all get initializers set to default values, other types are set to null
+                if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
+
+                diags.push({
+                    blockId: v.firstReference && v.firstReference.id,
+                    message: lf("Variable '{0}' is never assigned", v.name)
+                });
+            });
+
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1669,7 +1713,7 @@ namespace pxt.blocks {
             removeAllPlaceholders();
         }
 
-        return [] // unreachable
+        return [null, null] // unreachable
     }
 
     export function callKey(e: Environment, b: Blockly.Block): string {
@@ -1733,6 +1777,7 @@ namespace pxt.blocks {
         source: string;
         sourceMap: SourceInterval[];
         stats: pxt.Map<number>;
+        diagnostics: BlockDiagnostic[];
     }
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
@@ -1754,12 +1799,12 @@ namespace pxt.blocks {
 
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
-        const nodes = compileWorkspace(e, b, blockInfo);
-        const result = tdASTtoTS(e, nodes);
+        const [nodes, diags] = compileWorkspace(e, b, blockInfo);
+        const result = tdASTtoTS(e, nodes, diags);
         return result;
     }
 
-    function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
         let res = flattenNode(app)
 
         // Note: the result of format is not used!
@@ -1768,7 +1813,8 @@ namespace pxt.blocks {
             return {
                 source: res.output,
                 sourceMap: res.sourceMap,
-                stats: env.stats
+                stats: env.stats,
+                diagnostics: diags || []
             };
         })
 
@@ -2157,7 +2203,7 @@ namespace pxt.blocks {
                     const varNames = declaredVars.split(",");
                     varNames.forEach(vName => {
                         const info = findOrDeclareVariable(vName, currentScope);
-                        info.alreadyDeclared = true;
+                        info.alreadyDeclared = BlockDeclarationType.Argument;
                     });
                 }
             }
@@ -2187,7 +2233,7 @@ namespace pxt.blocks {
                     };
 
                     vars.forEach(v => {
-                        v.alreadyDeclared = true;
+                        v.alreadyDeclared = BlockDeclarationType.Assigned;
                         parentScope.declaredVars[v.name] = v;
                     });
 

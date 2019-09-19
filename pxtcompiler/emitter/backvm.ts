@@ -274,10 +274,6 @@ _start_${name}:
 
         const immMax = (1 << 23) - 1
 
-        //console.log(proc.toString())
-        proc.resolve()
-        // console.log("OPT", proc.toString())
-
         emitAll()
         resText = ""
         for (let t of alltmps) t.currUses = 0
@@ -384,7 +380,7 @@ _start_${name}:
         function emitInstanceOf(info: ClassInfo, tp: string) {
             if (tp == "bool") {
                 write(`checkinst ${info.id}_VT`)
-            } else if (tp == "validate" || tp == "validateDecr") {
+            } else if (tp == "validate") {
                 U.oops()
             } else {
                 U.oops()
@@ -459,7 +455,7 @@ _start_${name}:
                     return
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    emitInstanceOf(e.data, e.jsInfo)
+                    emitInstanceOf(e.data, e.jsInfo as string)
                     break
 
                 default: throw oops("kind: " + e.exprKind);
@@ -591,6 +587,9 @@ _start_${name}:
         function emitProcCall(topExpr: ir.Expr) {
             let calledProcId = topExpr.data as ir.ProcId
             let calledProc = calledProcId.proc
+
+            if (calledProc && calledProc.inlineBody)
+                return emitExpr(calledProc.inlineSelf(topExpr.args))
 
             let numPush = 0
             const args = topExpr.args.slice()

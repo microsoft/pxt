@@ -107,6 +107,7 @@ namespace pxsim {
         numFields: number;
         toStringMethod?: LabelFn;
         classNo: number;
+        lastSubtypeNo: number;
         iface?: Map<any>;
     }
 
@@ -153,6 +154,10 @@ namespace pxsim {
     }
 
     export namespace pxtcore {
+        export function seedAddRandom(num: number) {
+            // nothing yet
+        }
+
         export function mkAction(len: number, fn: LabelFn) {
             let r = new RefAction();
             r.len = len
@@ -172,14 +177,83 @@ namespace pxsim {
             }
         }
 
+        interface PerfCntInfo {
+            stops: number;
+            us: number;
+            meds: number[];
+        }
+        let counters: any = {}
+
+        // TODO move this somewhere else, so it can be invoked also on data coming from hardware
+        function processPerfCounters(msg: string) {
+            let r = ""
+            const addfmtr = (s: string, len: number) => {
+                r += s.length >= len ? s : ("              " + s).slice(-len)
+            }
+            const addfmtl = (s: string, len: number) => {
+                r += s.length >= len ? s : (s + "                         ").slice(0, len)
+            }
+            const addnum = (n: number) => addfmtr("" + Math.round(n), 6)
+            const addstats = (numstops: number, us: number) => {
+                addfmtr(Math.round(us) + "", 8)
+                r += " /"
+                addnum(numstops)
+                r += " ="
+                addnum(us / numstops)
+            }
+            for (let line of msg.split(/\n/)) {
+                if (!line) continue
+                if (!/^\d/.test(line)) continue
+                const fields = line.split(/,/)
+                let pi: PerfCntInfo = counters[fields[2]]
+                if (!pi)
+                    counters[fields[2]] = pi = { stops: 0, us: 0, meds: [] }
+
+                addfmtl(fields[2], 25)
+
+                const numstops = parseInt(fields[0])
+                const us = parseInt(fields[1])
+                addstats(numstops, us)
+
+                r += " |"
+
+                addstats(numstops - pi.stops, us - pi.us)
+
+                r += " ~"
+                const med = parseInt(fields[3])
+                addnum(med)
+
+                if (pi.meds.length > 10)
+                    pi.meds.shift()
+                pi.meds.push(med)
+                const mm = pi.meds.slice()
+                mm.sort((a, b) => a - b)
+                const ubermed = mm[mm.length >> 1]
+
+                r += " ~~"
+                addnum(ubermed)
+
+                pi.stops = numstops
+                pi.us = us
+
+                r += "\n"
+            }
+
+            console.log(r)
+        }
+
+
         export function dumpPerfCounters() {
             if (!runtime || !runtime.perfCounters)
                 return
             let csv = "calls,us,name\n"
             for (let p of runtime.perfCounters) {
-                csv += `${p.numstops},${p.value},${p.name}\n`
+                p.lastFew.sort()
+                const median = p.lastFew[p.lastFew.length >> 1]
+                csv += `${p.numstops},${p.value},${p.name},${median}\n`
             }
-            console.log(csv)
+            processPerfCounters(csv)
+            // console.log(csv)
         }
     }
 
@@ -201,7 +275,7 @@ namespace pxsim {
     }
 
     export class RefMap extends RefObject {
-        vtable = 42;
+        vtable = mkMapVTable();
         data: MapEntry[] = [];
 
         findIdx(key: string) {
@@ -283,6 +357,10 @@ namespace pxsim {
 
         export function programHash() {
             return 0;
+        }
+
+        export function programName() {
+            return pxsim.title;
         }
 
         export function programSize() {
@@ -407,6 +485,7 @@ namespace pxsim {
         }
 
         export function mapGetByString(map: RefMap, key: string) {
+            key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
                 return r.fields[key]
@@ -418,10 +497,20 @@ namespace pxsim {
             return (map.data[i].val);
         }
 
+        export function mapDeleteByString(map: RefMap, key: string) {
+            if (!(map instanceof RefMap))
+                pxtrt.panic(923)
+            let i = map.findIdx(key);
+            if (i >= 0)
+                map.data.splice(i, 1)
+            return true
+        }
+
         export const mapSetGeneric = mapSetByString
         export const mapGetGeneric = mapGetByString
 
         export function mapSetByString(map: RefMap, key: string, val: any) {
+            key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
                 r.fields[key] = val

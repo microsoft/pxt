@@ -419,6 +419,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     labelPosition?: "left" | "right";
     color?: string;
     size?: SIZES;
+    autoFocus?: boolean;
 }
 
 export class Button extends StatelessUIElement<ButtonProps> {
@@ -439,13 +440,32 @@ export class Button extends StatelessUIElement<ButtonProps> {
             aria-label={this.props.ariaLabel}
             aria-expanded={this.props.ariaExpanded}
             onClick={this.props.onClick}
-            onKeyDown={this.props.onKeyDown}>
+            onKeyDown={this.props.onKeyDown}
+            autoFocus={this.props.autoFocus}
+        >
             {genericContent(this.props)}
             {this.props.children}
         </button>;
         // Tooltips don't work great on IOS, disabling them
         return this.props.tooltipId && !pxt.BrowserUtils.isIOS() ? <Tooltip id={this.props.tooltipId} content={this.props.tooltip || this.props.title}
             place={this.props.tooltipPlace} delayShow={this.props.tooltipDelayShow}>{button}</Tooltip> : button;
+    }
+}
+
+
+export interface CloseButtonProps extends UiProps, TooltipUIProps {
+    onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+}
+export class CloseButton extends StatelessUIElement<CloseButtonProps> {
+    renderCore() {
+        const { onClick } = this.props;
+        return <div role="button" className="closeIcon" tabIndex={0}
+            onClick={onClick}
+            onKeyDown={fireClickOnEnter}
+            aria-label={lf("Close")}
+        >
+            <Icon icon="close remove circle" />
+        </div>
     }
 }
 
@@ -457,6 +477,7 @@ export interface LinkProps extends ButtonProps {
     href?: string;
     download?: string;
     target?: string;
+    rel?: string;
 }
 
 export class Link extends StatelessUIElement<LinkProps> {
@@ -466,6 +487,7 @@ export class Link extends StatelessUIElement<LinkProps> {
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}
+                rel={this.props.rel || (this.props.target ? "noopener noreferrer" : "")}
                 download={this.props.download}
                 role={this.props.role}
                 title={this.props.title}
@@ -473,7 +495,8 @@ export class Link extends StatelessUIElement<LinkProps> {
                 aria-label={this.props.ariaLabel}
                 aria-expanded={this.props.ariaExpanded}
                 onClick={this.props.onClick}
-                onKeyDown={this.props.onKeyDown || fireClickOnEnter}>
+                onKeyDown={this.props.onKeyDown || fireClickOnEnter}
+            >
                 {genericContent(this.props)}
                 {this.props.children}
             </a>
@@ -511,6 +534,7 @@ export interface InputProps {
     inputLabel?: string;
     class?: string;
     value?: string;
+    error?: string;
     type?: string;
     placeholder?: string;
     disabled?: boolean;
@@ -522,10 +546,15 @@ export interface InputProps {
     id?: string;
     ariaLabel?: string;
     autoFocus?: boolean;
-    autoComplete?: boolean
+    autoComplete?: boolean;
+    selectOnMount?: boolean;
 }
 
-export class Input extends data.Component<InputProps, { value: string }> {
+export interface InputState {
+    value: string;
+}
+
+export class Input extends data.Component<InputProps, InputState> {
     constructor(props: InputProps) {
         super(props);
         this.state = {
@@ -535,6 +564,14 @@ export class Input extends data.Component<InputProps, { value: string }> {
         this.copy = this.copy.bind(this);
         this.handleClick = this.handleClick.bind(this);
         this.handleChange = this.handleChange.bind(this);
+    }
+
+    componentDidMount() {
+        const { selectOnMount, autoFocus } = this.props;
+        if (selectOnMount && autoFocus) {
+            const input = this.refs['inputField'] as HTMLInputElement;
+            input.select();
+        }
     }
 
     componentWillReceiveProps(newProps: InputProps) {
@@ -587,6 +624,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
         let copyBtn = p.copy && document.queryCommandSupported('copy')
             ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
+        const { error } = this.props;
         const { value } = this.state;
 
         return (
@@ -594,6 +632,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (p.copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {p.inputLabel ? (<div className="ui label">{p.inputLabel}</div>) : ""}
                     {!p.lines || p.lines == 1 ? <input
+                        ref='inputField'
                         autoFocus={p.autoFocus}
                         id={p.id}
                         className={p.class || ""}
@@ -605,7 +644,8 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         autoComplete={p.autoComplete ? "" : "off"}
                         autoCorrect={p.autoComplete ? "" : "off"}
                         autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete} />
+                        spellCheck={p.autoComplete}
+                    />
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
@@ -618,6 +658,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         </textarea>}
                     {copyBtn}
                 </div>
+                {error ? <div className="ui yellow message">{error}</div> : undefined}
             </Field>
         );
     }
@@ -632,7 +673,7 @@ export interface CheckBoxProps {
     inputLabel?: string;
     class?: string;
     checked?: boolean;
-    onChange: (v: string) => void;
+    onChange: (v: boolean) => void;
 }
 
 export class Checkbox extends data.Component<CheckBoxProps, {}> {
@@ -645,7 +686,7 @@ export class Checkbox extends data.Component<CheckBoxProps, {}> {
     }
 
     handleChange(v: React.ChangeEvent<any>) {
-        this.props.onChange(v.target.value)
+        this.props.onChange(v.currentTarget.checked);
     }
 
     renderCore() {
@@ -942,6 +983,7 @@ export interface ModalProps extends ReactModal.Props {
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
     modalDidOpen?: (ref: HTMLElement) => void;
+    overlayClassName?: string;
 }
 
 interface ModalState {
@@ -1040,7 +1082,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             onClose, closeIcon, children, onKeyDown,
             header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
-            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
+            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, overlayClassName, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
         const showBack = isFullscreen && !!closeIcon;
@@ -1059,10 +1101,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             core.highContrast ? 'hc' : '',
             mountClasses
         ])
-        const closeIconName = closeIcon === true ? 'close' : closeIcon as string;
         const aria = {
             labelledby: header ? this.id + 'title' : undefined,
-            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc'
+            describedby: (!isFullscreen && description) ? this.id + 'description' : this.id + 'desc',
+            modal: 'true'
         }
         const customStyles = {
             content: {
@@ -1076,7 +1118,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             shouldCloseOnEsc={shouldCloseOnEsc || closeOnEscape}
             shouldCloseOnOverlayClick={shouldCloseOnOverlayClick || (closeOnDocumentClick || closeOnDimmerClick)}
             portalClassName={portalClassName}
-            overlayClassName={`ui page modals dimmer transition ${isOpen ? 'visible active' : ''}`}
+            overlayClassName={`ui page modals dimmer transition ${overlayClassName} ${isOpen ? 'visible active' : ''}`}
             className={classes}
             style={customStyles}
             aria={aria} {...rest}>
@@ -1119,11 +1161,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 {...action} labelPosition={action.labelPosition} />
                     )}
                 </div> : undefined}
-            {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
-                onClick={onClose}
-                onKeyDown={fireClickOnEnter}
-                aria-label={lf("Close")}
-            ><Icon icon="close remove circle" /> </div> : undefined}
+            {!isFullscreen && closeIcon && <CloseButton onClick={onClose} />}
         </ReactModal>
     }
 }
@@ -1286,7 +1324,7 @@ export interface ProgressCircleProps {
 export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
     protected radius: number = 100 / (2 * Math.PI); // 100 steps in circle
     protected view: number;
-    constructor (props: ProgressCircleProps) {
+    constructor(props: ProgressCircleProps) {
         super(props);
         this.view = this.radius * 2 + this.props.stroke;
     }
@@ -1300,11 +1338,48 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
         let r = this.radius;
 
         return <div className="progresscircle">
-            <svg viewBox={`0 0 ${this.view} ${this.view}`}>
+            <svg viewBox={`0 0 ${this.view} ${this.view}`} aria-labelledby="circletitle" role="img">
+                <title id="circletitle">Currently on step {props.progress} of {props.steps}</title>
                 <path style={this.getPathStyle()}
                     strokeDasharray={`${Math.round(100 * props.progress / props.steps)}, 100`}
                     d={`M${this.view / 2} ${props.stroke / 2} a ${r} ${r} 0 0 1 0 ${r * 2} a ${r} ${r} 0 0 1 0 -${r * 2}`} />
             </svg>
         </div>
+    }
+}
+
+///////////////////////////////////////////////////////////
+////////////             Plain checkbox       /////////////
+///////////////////////////////////////////////////////////
+
+export interface PlainCheckboxProps {
+    label: string;
+    onChange: (v: boolean) => void;
+}
+
+export interface PlainCheckboxState {
+    isChecked: boolean;
+}
+
+export class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
+    constructor(props: PlainCheckboxProps) {
+        super(props);
+        this.state = {
+            isChecked: false
+        }
+        this.setCheckedBit = this.setCheckedBit.bind(this);
+    }
+
+    setCheckedBit() {
+        let val = !this.state.isChecked
+        this.props.onChange(val)
+        this.setState({ isChecked: val })
+    }
+
+    renderCore() {
+        return <Checkbox
+            inputLabel={this.props.label}
+            checked={this.state.isChecked}
+            onChange={this.setCheckedBit} />
     }
 }

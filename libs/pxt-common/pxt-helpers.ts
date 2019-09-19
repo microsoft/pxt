@@ -122,11 +122,23 @@ namespace helpers {
     }
 
     export function arraySort<T>(arr: T[], callbackfn?: (value1: T, value2: T) => number): T[] {
-        if (!callbackfn) {
-            //TODO: support native strings and number sorting
-            /* callbackfn = function (value1: string, value2: string) : number {
-                return value1.compare(value2);
-                }*/
+        if (!callbackfn && arr.length > 1) {
+            callbackfn = (a, b) => {
+                // default is sort as if the element were a string, with null < undefined
+                const aIsUndef = a === undefined;
+                const bIsUndef = b === undefined;
+                if (aIsUndef && bIsUndef) return 0;
+                else if (aIsUndef) return 1;
+                else if (bIsUndef) return -1;
+
+                const aIsNull = a === null;
+                const bIsNull = b === null;
+                if (aIsNull && bIsNull) return 0;
+                else if (aIsNull) return 1;
+                else if (bIsNull) return -1;
+
+                return (a + "").compare(b + "");
+            }
         }
         return sortHelper(arr, callbackfn);
     }
@@ -541,7 +553,7 @@ namespace __internal {
     //% blockHidden=true shim=TD_ID
     //% colorSecondary="#FFFFFF"
     //% ms.fieldEditor="numberdropdown" ms.fieldOptions.decompileLiterals=true
-    //% ms.fieldOptions.data='[["100 ms", 100], ["200 ms", 200], ["500 ms", 500], ["1 second", 1000], ["2 seconds", 2000]]'
+    //% ms.fieldOptions.data='[["100 ms", 100], ["200 ms", 200], ["500 ms", 500], ["1 second", 1000], ["2 seconds", 2000], ["5 seconds", 5000]]'
     export function __timePicker(ms: number): number {
         return ms;
     }

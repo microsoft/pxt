@@ -1,0 +1,118 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*-------------------
+   Github view and diffs
+--------------------*/
+
+.diffview {
+    border: 0px;
+    border-spacing: 0px;
+    width: 100%;
+
+    pre {
+        margin: 0;
+    }
+
+    .diff-added {
+        background: @diffAddedBackground;
+
+        pre:hover {
+            background: @diffAddedHoverBackground;
+        }
+    }
+
+    .diff-removed {
+        background: @diffRemovedBackground;
+
+        pre:hover {
+            background: @diffRemovedHoverBackground;
+        }
+    }
+
+    .diff-marker {
+        background: @diffMarkerBackground;
+        color: @diffMarkerColor
+    }
+
+    .diff-marker td {
+        padding-left: 1em;
+    }
+
+    .line-a,
+    .line-b {
+        width: 3em;
+        text-align: right;
+        color: rgba(27, 31, 35, .3);
+    }
+
+    .marker {
+        width: 2.5em;
+        text-align: center;
+    }
+
+    .change {
+        text-align: left;
+    }
+
+    .diff-added .line-b:before,
+    .diff-removed .line-a:before,
+    .diff-unchanged .line-a:before,
+    .diff-unchanged .line-b:before {
+        content: attr(data-content);
+    }
+
+    .marker:before {
+        content: attr(data-content);
+    }
+}
+
+#githubEditor {
+    background-color: @githubBackgroundColor;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#githubArea {
+    height: 90%;
+    padding: 1rem;
+
+    .ui.divider {
+        margin-bottom: 5px;
+    }
+
+    .ui.segment.diff {
+        padding: 0;
+    }
+
+    .ui.segments {
+        margin: 1rem 0;
+    }
+
+    .diffheader>span {
+        font-weight: bold;
+        font-size: 1.2em;
+    }
+
+    .diffheader .ui.button {
+        float: right;
+        margin-top: -0.5em;
+    }
+
+    .repo-branch {
+        opacity: 0.4;
+        cursor: pointer;
+    }
+
+    .join {
+        text-align: center;
+    }
+
+    .create-pr {
+        float: right;
+    }
+}

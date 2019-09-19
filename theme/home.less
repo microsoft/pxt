@@ -163,7 +163,7 @@
         }            
     }
 
-    .detailview.visible {
+    .detailview {
         margin-top: -2rem;
         transition: height 0.5s;
         z-index: @homeDetailViewZIndex;
@@ -210,14 +210,14 @@
             position: absolute;
             bottom: 0;
         }
-        > .close {
+        > .closeIcon {
             margin: 1.5rem;
             position: absolute;
             top: 0;
             right: 0;
             z-index: 1;
         }
-        >.close .remove.icon {
+        >.closeIcon .remove.icon {
             font-size: 2.15rem;
             line-height: 2.15rem;
             cursor: pointer;
@@ -229,7 +229,7 @@
             border-radius: 50%;
             background-color: @homeDetailCloseBackground;
         }
-        > .close .remove.icon:hover, > .close .remove.icon:focus {
+        > .closeIcon .remove.icon:hover, > .closeIcon .remove.icon:focus {
             opacity: 1;
             transform: scale(1.1, 1.1);
             box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
@@ -323,11 +323,6 @@
 .carouselarrow.right {
     right: 0rem;
 }
-
-.carouselarrow.arrowdisabled {
-    opacity: 0;
-}
-
 
 /* <= Tablet (Mobile + Tablet) */
 

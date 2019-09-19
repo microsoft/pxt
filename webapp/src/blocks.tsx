@@ -162,6 +162,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    isDropdownDivVisible(): boolean {
+        return typeof Blockly !== "undefined"
+            && Blockly.DropDownDiv
+            && Blockly.DropDownDiv.isVisible();
+    }
+
     private saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
@@ -412,6 +418,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
         (Blockly as any).Colours = blocklyColors;
+
+        let shouldRestartSim = false;
+
         this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui' || this.markIncomplete) {
@@ -426,8 +435,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
-            else if (ev.type == 'var_create') {
-                // a new variable was created,
+            else if (ev.type == 'var_create' || ev.type == "delete") {
+                // a new variable was created or blocks were removed,
                 // clear the toolbox caches as some blocks may need to be recomputed
                 this.clearFlyoutCaches();
             }
@@ -450,6 +459,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // } else {
                     //     this.removeBreakpointFromEvent(ev.blockId);
                     // }
+                }
+                else if (ev.element == 'melody-editor') {
+                    if (ev.newValue) {
+                        shouldRestartSim = this.parent.state.simState != pxt.editor.SimState.Stopped;
+                        this.parent.stopSimulator();
+                    }
+                    else {
+                        if (shouldRestartSim) {
+                            this.parent.startSimulator();
+                        }
+                    }
                 }
             }
 
@@ -766,6 +786,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
+                    b.setHighlightWarning(true);
+                }
+            }
+        })
+        this.compilationResult.diagnostics.forEach(d => {
+            if (d.blockId) {
+                let b = this.editor.getBlockById(d.blockId) as Blockly.BlockSvg;
+                if (b) {
+                    b.setWarningText(d.message);
                     b.setHighlightWarning(true);
                 }
             }
@@ -1465,7 +1494,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const variables = this.editor.getVariablesOfType("");
                     let varNameUnique = varName;
                     let index = 2;
-                    while (variables.some(v => v.name == varNameUnique)) {
+                    while (variableIsAssigned(varNameUnique, variables, this.editor)) {
                         varNameUnique = varName + index++;
                     }
                     varName = varNameUnique;
@@ -1512,6 +1541,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
             return that.shouldShowBlock(fn.attributes.blockId, ns);
+        }
+
+        function variableIsAssigned(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
+            return variables.some(v => {
+                if (v.name != name)
+                    return false;
+                const variableUsage = editor.getVariableUsesById(v.id_);
+                return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
+            });
         }
     }
 

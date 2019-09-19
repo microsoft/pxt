@@ -15,7 +15,8 @@ You will need to get a [GitHub](https://github.com) account and create a GitHub 
 
 From the main editor screen, go to the gear wheel and **Extensions**. Click on **GitHub login**
 at the bottom of the list
-and follow prompts to generate a personal access token. Once logged in, the Import dialog 
+and follow prompts to generate a personal access token (make sure to select the **repo** checkbox). 
+Once logged in, the Import dialog 
 on the home screen should have an option to create
 a new GitHub repository or clone an existing one. Follow it.
 

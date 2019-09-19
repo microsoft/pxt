@@ -143,34 +143,29 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        // if an array of booleans, numbers, or strings
-        if (isArray && typeInfo && !shadowId) {
-            const mut = document.createElement('mutation');
-            mut.setAttribute("items", "3");
-            shadow.appendChild(mut);
-            for (let i = 0; i < 3; i++) {
-                const innerValue = document.createElement("value");
-                innerValue.setAttribute("name", "ADD" + i);
-                const innerShadow = document.createElement("shadow");
-                innerShadow.setAttribute("type", typeInfo.block);
-                const field = document.createElement("field");
-                field.setAttribute("name", typeInfo.field);
+        if (isArray) {
+            // if an array of booleans, numbers, or strings
+            if (typeInfo && !shadowId) {
+                let fieldValues: string[];
+
                 switch (isArray) {
                     case "number":
-                        field.appendChild(document.createTextNode("" + (i + 1)));
+                        fieldValues = ["1", "2", "3"];
                         break;
                     case "string":
-                        field.appendChild(document.createTextNode(String.fromCharCode('a'.charCodeAt(0) + i)));
+                        fieldValues = ["a", "b", "c"];
                         break;
                     case "boolean":
-                        field.appendChild(document.createTextNode("FALSE"));
+                        fieldValues = ["FALSE", "FALSE", "FALSE"];
                         break;
                 }
-                innerShadow.appendChild(field);
-                innerValue.appendChild(innerShadow);
-                shadow.appendChild(innerValue);
+                buildArrayShadow(shadow, typeInfo.block, typeInfo.field, fieldValues);
+                return value;
             }
-            return value;
+            else if (shadowId && defaultValue) {
+                buildArrayShadow(shadow, defaultValue);
+                return value;
+            }
         }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
@@ -243,6 +238,30 @@ namespace pxt.blocks {
         }
 
         return value;
+    }
+
+    function buildArrayShadow(shadow: Element, blockType: string, fieldName?: string, fieldValues?: string[]) {
+        const itemCount = fieldValues ? fieldValues.length : 2;
+        const mut = document.createElement('mutation');
+        mut.setAttribute("items", "" + itemCount);
+        shadow.appendChild(mut);
+
+        for (let i = 0; i < itemCount; i++) {
+            const innerValue = document.createElement("value");
+            innerValue.setAttribute("name", "ADD" + i);
+            const innerShadow = document.createElement("shadow");
+            innerShadow.setAttribute("type", blockType);
+            if (fieldName) {
+                const field = document.createElement("field");
+                field.setAttribute("name", fieldName);
+                if (fieldValues) {
+                    field.appendChild(document.createTextNode(fieldValues[i]));
+                }
+                innerShadow.appendChild(field);
+            }
+            innerValue.appendChild(innerShadow);
+            shadow.appendChild(innerValue);
+        }
     }
 
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
@@ -593,7 +612,7 @@ namespace pxt.blocks {
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip( /^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
+        block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
@@ -749,27 +768,13 @@ namespace pxt.blocks {
                             inputName = defName;
                             if (instance && part.name === "this") {
                                 inputCheck = pr.type;
-                            } else if (pr.type == "number") {
-                                if (pr.shadowBlockId && pr.shadowBlockId == "value") {
-                                    inputName = undefined;
-                                    fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
-                                }
-                                else {
-                                    inputCheck = "Number"
-                                }
-                            } else if (pr.type == "boolean") {
-                                inputCheck = "Boolean"
-                            } else if (pr.type == "string") {
-                                if (pr.shadowOptions && pr.shadowOptions.toString) {
-                                    inputCheck = undefined;
-                                }
-                                else {
-                                    inputCheck = "String"
-                                }
-                            } else if (pr.type == "any") {
+                            } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
+                                inputName = undefined;
+                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                            } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
+                                inputCheck = getBlocklyCheckForType(pr.type, info);
                             }
                         }
                     }
@@ -899,36 +904,54 @@ namespace pxt.blocks {
      *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
      */
     function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
-        switch (type) {
-            // Blockly capitalizes primitive types for its builtin math/string/logic blocks
-            case "number": return ["Number"];
-            case "string": return ["String"];
-            case "boolean": return ["Boolean"];
-            case "any": return null;
-            case "void": return undefined
-            default:
-                if (type !== "T") {
+        const types = type.split(/\s*\|\s*/);
+        const output = [];
+        for (const subtype of types) {
+            switch (subtype) {
+                // Blockly capitalizes primitive types for its builtin math/string/logic blocks
+                case "number":
+                    output.push("Number");
+                    break;
+                case "string":
+                    output.push("String");
+                    break;
+                case "boolean":
+                    output.push("Boolean");
+                    break;
+                case "T":
+                // The type is generic, so accept any checks. This is mostly used with functions that
+                // get values from arrays. This could be improved if we ever add proper type
+                // inference for generic types
+                case "any":
+                    return null;
+                case "void":
+                    return undefined;
+                default:
                     // We add "Array" to the front for array types so that they can be connected
                     // to the blocks that accept any array (e.g. length, push, pop, etc)
-                    const opt_check = isArrayType(type) ? ["Array"] : [];
+                    if (isArrayType(subtype)) {
+                        if (types.length > 1) {
+                            // type inference will potentially break non-trivial arrays in intersections
+                            // until we have better type handling in blocks,
+                            // so escape and allow any block to be dropped in.
+                            return null;
+                        } else {
+                            output.push("Array");
+                        }
+                    }
 
                     // Blockly has no concept of inheritance, so we need to add all
                     // super classes to the check array
-                    const si_r = info.apis.byQName[type];
+                    const si_r = info.apis.byQName[subtype];
                     if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
-                        opt_check.push(...si_r.extendsTypes);
+                        output.push(...si_r.extendsTypes);
                     } else {
-                        opt_check.push(type);
+                        output.push(subtype);
                     }
-
-                    return opt_check;
-                } else {
-                    // The type is generic, so accept any checks. This is mostly used with functions that
-                    // get values from arrays. This could be improved if we ever add proper type
-                    // inference for generic types
-                    return null;
-                }
+            }
         }
+
+        return output;
     }
 
     function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
@@ -1227,6 +1250,60 @@ namespace pxt.blocks {
                 }
             }
         };
+
+        // break statement
+        const breakBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
+        Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": breakBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    breakBlockDef.name,
+                    breakBlockDef.tooltip,
+                    breakBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        // continue statement
+        const continueBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
+        Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": continueBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    continueBlockDef.name,
+                    continueBlockDef.tooltip,
+                    continueBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
@@ -2337,7 +2414,7 @@ namespace pxt.blocks {
             // The logic for setting the output check relies on the internals of PXT
             // too much to be refactored into pxt-blockly, so we need to monkey patch
             // it here
-            Blockly.Blocks["argument_reporter_custom"].domToMutation = function(xmlElement: Element) {
+            Blockly.Blocks["argument_reporter_custom"].domToMutation = function (xmlElement: Element) {
                 const typeName = xmlElement.getAttribute('typename');
                 this.typeName_ = typeName;
 

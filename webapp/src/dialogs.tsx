@@ -11,39 +11,6 @@ import * as pkg from "./package";
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
-
-interface PlainCheckboxProps {
-    label: string;
-    onChange: (v: boolean) => void;
-}
-
-interface PlainCheckboxState {
-    isChecked: boolean;
-}
-
-class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
-    constructor(props: PlainCheckboxProps) {
-        super(props);
-        this.state = {
-            isChecked: false
-        }
-        this.setCheckedBit = this.setCheckedBit.bind(this);
-    }
-
-    setCheckedBit() {
-        let val = !this.state.isChecked
-        this.props.onChange(val)
-        this.setState({ isChecked: val })
-    }
-
-    renderCore() {
-        return <sui.Checkbox
-            inputLabel={this.props.label}
-            checked={this.state.isChecked}
-            onChange={this.setCheckedBit} />
-    }
-}
-
 export function showGithubLoginAsync() {
     let input: HTMLInputElement;
     return core.confirmAsync({
@@ -78,25 +45,59 @@ export function showGithubLoginAsync() {
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.github.token");
-            const url = input.value.trim()
-            if (url.length != 40 || !/^[a-f0-9]+$/.test(url)) {
+            const hextoken = input.value.trim()
+            if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
                 core.errorNotification(lf("Invalid token format"))
             } else {
-                core.infoNotification(lf("Token stored. Check out Import on home screen now!"))
-                pxt.storage.setLocal("githubtoken", url)
-                pxt.github.token = url
+                pxt.github.token = hextoken
+                // try to create a bogus repo - it will fail with
+                // 401 - invalid token, 404 - when token doesn't have repo permission,
+                // 422 - because the request is bogus, but token OK
+                // Don't put any string in repo name - github seems to normalize these
+                return pxt.github.createRepoAsync(undefined, "")
+                    .then(r => {
+                        // what?!
+                        pxt.reportError("github", "Succeeded creating undefined repo!")
+                        core.infoNotification(lf("Something went wrong with validation; token stored"))
+                        pxt.storage.setLocal("githubtoken", hextoken)
+                    }, err => {
+                        pxt.github.token = ""
+                        if (!showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.infoNotification(lf("Token validated and stored"))
+                            else
+                                core.infoNotification(lf("Token stored but not validated"))
+                            pxt.github.token = hextoken
+                            pxt.storage.setLocal("githubtoken", hextoken)
+                        }
+                    })
             }
         }
+        return Promise.resolve()
     })
 }
 
+export function showGithubTokenError(err: any) {
+    if (err.statusCode == 401) {
+        core.errorNotification(lf("GitHub didn't accept token"))
+        return true
+    } else if (err.statusCode == 404) {
+        core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
+        return true
+    } else {
+        return false
+    }
+}
+
 export function githubFooter(msg: string, close: () => void) {
-    function githubLogin() {
+    function githubLogin(e: React.MouseEvent<HTMLElement>) {
+        e.preventDefault()
         close()
         showGithubLoginAsync()
     }
 
-    function githubLogout() {
+    function githubLogout(e: React.MouseEvent<HTMLElement>) {
+        e.preventDefault()
         close()
         pxt.storage.removeLocal("githubtoken")
         pxt.github.token = ""
@@ -112,7 +113,7 @@ export function githubFooter(msg: string, close: () => void) {
             <p>
                 <br />
                 <br />
-                <a href="#github" role="button" onClick={githubLogout}>
+                <a href="#github" onClick={githubLogout}>
                     {lf("Logout from GitHub")}
                 </a>
                 <br />
@@ -125,7 +126,7 @@ export function githubFooter(msg: string, close: () => void) {
                 <br />
                 {msg}
                 {" "}
-                <a href="#github" role="button" onClick={githubLogin}>
+                <a href="#github" onClick={githubLogin}>
                     {lf("Login to GitHub")}
                 </a>
                 <br />
@@ -475,7 +476,7 @@ export function showCommitDialogAsync(repo: string) {
                 <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
             </div>
             <div className="ui field">
-                <PlainCheckbox
+                <sui.PlainCheckbox
                     label={lf("Publish to users (bump)")}
                     onChange={setBump} />
             </div>
@@ -519,7 +520,7 @@ export function showImportUrlDialogAsync() {
         },
         jsx: <div className="ui form">
             <div className="ui icon violet message">
-                <i className="user icon"></i>
+                <i className="user icon" aria-hidden={true}></i>
                 <div className="content">
                     <h3 className="header">
                         {lf("User-provided content")}
@@ -541,7 +542,7 @@ export function showImportUrlDialogAsync() {
             pxt.tickEvent("app.open.url");
             const url = input.value;
             let projectId: string;
-            if (/^(github:|https:\/\/github.com\/)/.test(url)) {
+            if (/^(github:|https:\/\/github\.com\/)/.test(url)) {
                 projectId = pxt.github.noramlizeRepoId(url)
             } else {
                 projectId = pxt.Cloud.parseScriptId(url);
@@ -560,40 +561,96 @@ export function showImportUrlDialogAsync() {
 }
 
 
-export function showCreateGithubRepoDialogAsync() {
-    let inputName: HTMLInputElement;
-    let inputDesc: HTMLInputElement;
+export function showCreateGithubRepoDialogAsync(name?: string) {
+    if (name) {
+        name = name.toLocaleLowerCase().replace(/\s+/g, '-');
+        name = name.replace(/[^\w\-]/g, '');
+        if (!/^pxt-/.test(name)) name = 'pxt-' + name;
+    }
+
+    let repoName: string = name || "";
+    let repoDescription: string = "";
+    let repoPublic: boolean = true;
+
+    function repoNameError(): string {
+        if (repoName == "pxt-" + lf("Untitled").toLocaleLowerCase()
+            || repoName == "pxt-untitled")
+            return lf("Please pick a different name.")
+        const repoNameRx = /^[\w\-]{1,64}$/;
+        if (!repoNameRx.test(repoName))
+            return lf("Repository names must be less than 64 characters and cannot include spaces or special characters.");
+        return undefined;
+    }
+
+    function onNameChanged(v: string) {
+        v = v.trim();
+        if (repoName != v) {
+            repoName = v;
+            coretsx.forceUpdate();
+        }
+    }
+
+    function onDescriptionChanged(v: string) {
+        if (repoDescription != v) {
+            repoDescription = v;
+            coretsx.forceUpdate();
+        }
+    }
+
+    function onPublicChanged(e: React.ChangeEvent<HTMLSelectElement>) {
+        const v = e.currentTarget.selectedIndex == 0;
+        if (repoPublic != v) {
+            repoPublic = v;
+            coretsx.forceUpdate();
+        }
+    }
+
     return core.confirmAsync({
-        header: lf("Create GitHub repo"),
-        onLoaded: (el) => {
-            inputName = el.querySelectorAll('input')[0] as HTMLInputElement;
-            inputDesc = el.querySelectorAll('input')[1] as HTMLInputElement;
+        hideCancel: true,
+        hasCloseIcon: true,
+        header: lf("Create GitHub repository"),
+        jsxd: () => {
+            const nameErr = repoNameError();
+            return <div className="ui form">
+                <p>
+                    {lf("Host your code on GitHub and work together with friends.")}
+                    <sui.Link href="https://github.com/about" target="_blank" icon="question circle" />
+                </p>
+                <div className="ui field">
+                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                </div>
+                <div className="ui field">
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                </div>
+                <div className="ui field">
+                    <select className="ui dropdown" onChange={onPublicChanged}>
+                        <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
+                        <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
+                    </select>
+                </div>
+            </div>
         },
-        jsx: <div className="ui form">
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Repo name.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
-            </div>
-            <div className="ui field">
-                <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
-            </div>
-        </div>,
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.github.create");
-            const name = inputName.value.trim()
-            const desc = inputDesc.value.trim()
 
-            if (/^[\w\-]+$/.test(inputName.value)) {
-                core.showLoading("creategithub", lf("Creating GitHub repo..."))
-                return pxt.github.createRepoAsync(name, desc)
+            if (!repoNameError()) {
+                core.showLoading("creategithub", lf("creating {0} repository...", repoName))
+                return pxt.github.createRepoAsync(repoName, repoDescription.trim(), !repoPublic)
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                    }, err => {
+                        if (!showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.errorNotification(lf("Repository '{0}' already exists.", repoName))
+                            else
+                                core.errorNotification(err.message)
+                        }
+                        return "";
                     })
             } else {
-                core.errorNotification(lf("Invalid repo name."))
+                core.errorNotification(lf("Invalid repository name."))
             }
         }
         return "";
@@ -704,7 +761,7 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
 
 export function showReportAbuseAsync(pubId?: string) {
     // send users to github directly for unwanted repoes
-    const ghid = /^https:\/\/github.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
+    const ghid = /^https:\/\/github\.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
     if (ghid) {
         pxt.tickEvent("reportabuse.github");
         window.open("https://github.com/contact/report-content", "_blank");
@@ -726,12 +783,12 @@ export function showReportAbuseAsync(pubId?: string) {
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">
             <div className="ui field">
-                <label>{lf("What is the URL of the offensive project?")}</label>
-                <input type="url" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
+                <label id="abuseUrlLabel">{lf("What is the URL of the offensive project?")}</label>
+                <input type="url" aria-labelledby="abuseUrlLabel" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
             </div>
             <div className="ui field">
-                <label>{lf("Why do you find it offensive?")}</label>
-                <textarea></textarea>
+                <label id="abuseDescriptionLabel">{lf("Why do you find it offensive?")}</label>
+                <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
     }).done(res => {

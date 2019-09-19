@@ -18,7 +18,9 @@ namespace pxt.docs {
     let stdsettings: Map<string> = {
         "parent": stdSetting,
         "short": stdSetting,
-        "description": "<!-- desc -->"
+        "description": "<!-- desc -->",
+        "activities": "<!-- activities -->",
+        "explicitHints": "<!-- hints -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {

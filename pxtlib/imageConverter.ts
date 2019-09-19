@@ -15,10 +15,19 @@ namespace pxt {
         convert(jresURL: string): string {
             if (!this.start)
                 this.start = Date.now()
-            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
-            const magic = data.charCodeAt(0)
-            const w = data.charCodeAt(1)
-            const h = data.charCodeAt(2)
+
+            let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            let magic = data.charCodeAt(0);
+            let w = data.charCodeAt(1);
+            let h = data.charCodeAt(2);
+
+            if (magic === 0x87) {
+                magic = 0xe0 | data.charCodeAt(1);
+                w = data.charCodeAt(2) | (data.charCodeAt(3) << 8);
+                h = data.charCodeAt(4) | (data.charCodeAt(5) << 8);
+                data = data.slice(4);
+            }
+
             if (magic != 0xe1 && magic != 0xe4)
                 return null
 
@@ -137,7 +146,7 @@ namespace pxt {
                 let v = data.charCodeAt(inP++);
                 let colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
 
-                for (let y = 0; y < h; y ++) {
+                for (let y = 0; y < h; y++) {
                     bmp[outP] = this.palette[colorStart]
                     bmp[outP + 1] = this.palette[colorStart + 1]
                     bmp[outP + 2] = this.palette[colorStart + 2]
@@ -154,7 +163,7 @@ namespace pxt {
                     }
                 }
 
-                if (x % intScale === intScale - 1)  {
+                if (x % intScale === intScale - 1) {
                     if (!(height % 2)) --inP;
                     while (inP & 3) inP++
                 }

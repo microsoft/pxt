@@ -70,7 +70,19 @@ namespace pxt.runner {
         $btn.attr("title", label);
         $btn.find('i').attr("class", icon);
         $btn.find('span').text(label);
+
+        addFireClickOnEnter($btn);
         return $btn;
+    }
+
+    function addFireClickOnEnter(el: JQuery<HTMLElement>) {
+        el.keypress(e => {
+            const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+            if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+                e.preventDefault();
+                e.currentTarget.click();
+            }
+        });
     }
 
     function fillWithWidget(
@@ -237,9 +249,6 @@ namespace pxt.runner {
         if (!options.emPixels) options.emPixels = 18;
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
-
-        // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-        $el.text(pxt.tutorial.patchArcadeSnippets($el.text()));
 
         renderQueue.push({ el: $el, source: $el.text(), options, render });
         $el.addClass("lang-shadow");
@@ -589,6 +598,22 @@ namespace pxt.runner {
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_for_of"></block></xml>'
                             });
                             break;
+                        case ts.SyntaxKind.BreakStatement:
+                            addItem({
+                                name: ns ? "Loops" : "break",
+                                url: "blocks/loops" + (ns ? "" : "/break"),
+                                description: ns ? lf("Loops and repetition") : lf("Break out of the current loop."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="break_keyword"></block></xml>'
+                            });
+                            break;
+                        case ts.SyntaxKind.ContinueStatement:
+                            addItem({
+                                name: ns ? "Loops" : "continue",
+                                url: "blocks/loops" + (ns ? "" : "/continue"),
+                                description: ns ? lf("Loops and repetition") : lf("Skip iteration and continue the current loop."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="continue_keyboard"></block></xml>'
+                            });
+                            break;
                         case ts.SyntaxKind.ForStatement:
                             let fs = stmt as ts.ForStatement;
                             // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)
@@ -739,8 +764,7 @@ namespace pxt.runner {
 
         function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
-                // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-                $(e).text(pxt.tutorial.patchArcadeSnippets($(e).text().replace(/^\s*\r?\n/, '')))
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
             const opts = pxt.U.clone(woptions);

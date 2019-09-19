@@ -288,7 +288,11 @@ namespace ts.pxtc.thumb {
                         }
                     }
                     let reg = line.words[1]
-                    let v = line.words[3]
+                    // make sure the key in values[] below doesn't look like integer
+                    // we rely on Object.keys() returning stuff in insertion order, and integers mess with it
+                    // see https://www.ecma-international.org/ecma-262/6.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
+                    // or possibly https://www.stefanjudis.com/today-i-learned/property-order-is-predictable-in-javascript-objects-since-es2015/
+                    let v = "#" + line.words[3]
                     let lbl = U.lookup(values, v)
                     if (!lbl) {
                         lbl = "_ldlit_" + ++seq
@@ -305,7 +309,7 @@ namespace ts.pxtc.thumb {
                     txtLines.push(".balign 4")
                     for (let v of Object.keys(values)) {
                         let lbl = values[v]
-                        txtLines.push(lbl + ": .word " + v)
+                        txtLines.push(lbl + ": .word " + v.slice(1))
                     }
                     if (needsJumpOver)
                         txtLines.push(jmplbl + ":")

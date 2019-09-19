@@ -23,8 +23,10 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
-    if (output) // helpful for debugging
-        pxt.debug(output);
+    // people often ask about where to look for errors, and many will look in the console
+    // the output.txt has usability issues
+    if (output)
+        pxt.log(output);
 
     if (!output)
         output = U.lf("Everything seems fine!\n")
@@ -78,14 +80,16 @@ export interface CompileOptions {
 }
 
 export let emptyProgram =
-    `'use strict';
-__this.setupPerfCounters([]);
-entryPoint = function (s) {
+    `(function (ectx) {
+'use strict';
+ectx.runtime.setupPerfCounters([]);
+ectx.setupDebugger(1)
+return function (s) {
     // START
-    __this.kill()
-    return leave(s, s.r0)
+    ectx.runtime.kill()
+    return ectx.leave(s, s.r0)
 }
-setupDebugger(1)
+})
 `
 
 export function emptyCompileResult(): pxtc.CompileResult {

@@ -11,6 +11,8 @@ namespace pxtmelody {
         protected visible = false;
         protected pending: (res: string) => void;
 
+        protected buttons: HTMLElement[];
+
         private timeouts: number[] = []; // keep track of timeout
         private numSamples: number = pxtmelody.SampleMelodies.length;
 
@@ -79,6 +81,8 @@ namespace pxtmelody {
             const buttonWidth = "255px";
             const buttonHeight = "45px";
             const samples = pxtmelody.SampleMelodies;
+
+            this.buttons = [];
             for (let i = 0; i < samples.length; i++) {
                 this.mkButton(samples[i], i, buttonWidth, buttonHeight);
             }
@@ -124,55 +128,53 @@ namespace pxtmelody {
         }
 
         protected mkButton(sample: pxtmelody.MelodyInfo, i: number, width: string, height: string) {
-            let galleryItem = document.createElement('div');
-            galleryItem.setAttribute('id', ':' + i); // For aria-activedescendant
-            galleryItem.setAttribute('role', 'menuitem');
-            galleryItem.style.width = width;
-            galleryItem.style.height = height;
-            galleryItem.style.backgroundColor = this.itemBackgroundColor;
-            galleryItem.style.borderColor = this.itemBorderColor;
-            pxt.BrowserUtils.addClass(galleryItem, "melody-gallery-button melody-editor-card");
-
-            const parentDiv = this.contentDiv;
-
-            galleryItem.addEventListener(pxt.BrowserUtils.pointerEvents.move, () => {
-                pxt.BrowserUtils.addClass(galleryItem, "melody-gallery-button-hover");
-                parentDiv.setAttribute('aria-activedescendant', galleryItem.id);
-            });
-            galleryItem.addEventListener(pxt.BrowserUtils.pointerEvents.leave, () => {
-                pxt.BrowserUtils.removeClass(galleryItem, "melody-gallery-button-hover");
-                parentDiv.removeAttribute('aria-activedescendant');
+            const outer = mkElement("div", {
+                className: "melody-gallery-button melody-editor-card",
+                role: "menuitem",
+                id: `:${i}`
             });
 
-            // create clickable area on gallery item for selecting the item
-            // clickable area is separate from preview button for listening to the melody 
-            let clickableArea = document.createElement('div');
-            clickableArea.addEventListener("click", () => this.handleSelection(sample));
-            clickableArea.setAttribute('data-value', sample.notes);
-            clickableArea.title = sample.name;
-            pxt.BrowserUtils.addClass(clickableArea, "melody-gallery-row");
-            clickableArea.style.width = "200px";
+            const icon = mkElement("i", {
+                className: "music icon melody-icon"
+            });
 
-            let melodyName = document.createElement('div');
-            melodyName.innerText = sample.name;
-            pxt.BrowserUtils.addClass(melodyName, "melody-editor-text");
+            const label = mkElement("div", {
+                className: "melody-editor-text"
+            });
 
-            let musicIcon = document.createElement('i');
-            pxt.BrowserUtils.addClass(musicIcon, "music icon melody-icon");
+            label.innerText = sample.name;
 
-            let colorBlock = this.createColorBlock(sample);
+            const preview = this.createColorBlock(sample);
 
-            clickableArea.appendChild(musicIcon);
-            clickableArea.appendChild(melodyName);
-            clickableArea.appendChild(colorBlock);
+            const leftButton = mkElement("div", {
+                className: "melody-editor-button left-button",
+                role: "button",
+                title: sample.name
+            }, () => this.handleSelection(sample))
 
-            galleryItem.appendChild(clickableArea);
+            leftButton.appendChild(icon);
+            leftButton.appendChild(label);
+            leftButton.appendChild(preview);
 
-            // preview button to hear the melody
-            let preview = this.createPreviewButton(sample, i);
-            galleryItem.appendChild(preview);
 
-            this.contentDiv.appendChild(galleryItem);
+            outer.appendChild(leftButton);
+
+            const rightButton = mkElement("div", {
+                className: "melody-editor-button right-button",
+                role: "button",
+                title: lf("Preview {0}", sample.name)
+            }, () => this.togglePlay(sample, i));
+
+            const playIcon = mkElement("i", {
+                className: "play icon"
+            });
+
+            this.buttons[i] = playIcon;
+
+            rightButton.appendChild(playIcon);
+            outer.appendChild(rightButton);
+
+            this.contentDiv.appendChild(outer);
         }
 
         protected handleSelection(sample: pxtmelody.MelodyInfo) {
@@ -194,7 +196,7 @@ namespace pxtmelody {
                 case "F": tone = 349; break; // Middle F
                 case "E": tone = 330; break; // Middle E
                 case "D": tone = 294; break; // Middle D
-                case "C": tone = 262; break; // Middle C 
+                case "C": tone = 262; break; // Middle C
             }
 
             // start note
@@ -222,7 +224,8 @@ namespace pxtmelody {
         }
 
         private togglePlay(sample: pxtmelody.MelodyInfo, i: number) {
-            let button = document.getElementById("play-button-" + i);
+            let button = this.buttons[i];
+
             if (pxt.BrowserUtils.containsClass(button, "play icon")) {
                 // check for other stop icons and toggle back to play
                 this.resetPlayIcons();
@@ -248,7 +251,7 @@ namespace pxtmelody {
 
         private resetPlayIcons(): void {
             for (let i = 0; i < this.numSamples; i++) {
-                let button = document.getElementById("play-button-" + i);
+                let button = this.buttons[i];
                 if (pxt.BrowserUtils.containsClass(button, "stop icon")) {
                     pxt.BrowserUtils.removeClass(button, "stop icon");
                     pxt.BrowserUtils.addClass(button, "play icon");
@@ -278,20 +281,26 @@ namespace pxtmelody {
             }
             return colorBlock;
         }
+    }
 
-        private createPreviewButton(sample: pxtmelody.MelodyInfo, i: number): HTMLDivElement {
-            let preview = document.createElement("div");
-            preview.title = lf("Preview");
-            pxt.BrowserUtils.addClass(preview, "circular mini ui icon button melody-preview-button");
 
-            let playButton = document.createElement("i");
-            playButton.id = "play-button-" + i;
-            pxt.BrowserUtils.addClass(playButton, "play icon");
-            pxt.BrowserUtils.addClass(playButton, "melody-gallery-play-icon");
+    function mkElement(tag: string, props?: {[index: string]: string | number}, onClick?: () => void): HTMLElement {
+        const el = document.createElement(tag);
+        return initElement(el, props, onClick);
+    }
 
-            preview.appendChild(playButton);
-            preview.addEventListener("click", () => this.togglePlay(sample, i));
-            return preview;
+    function initElement(el: HTMLElement, props?: {[index: string]: string | number}, onClick?: () => void) {
+        if (props) {
+            for (const key of Object.keys(props)) {
+                if (key === "className") el.setAttribute("class", props[key] + "")
+                else el.setAttribute(key, props[key] + "");
+            }
         }
+
+        if (onClick) {
+            el.addEventListener("click", onClick);
+        }
+
+        return el;
     }
 }

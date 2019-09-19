@@ -287,9 +287,27 @@ namespace pxsim {
             this.messageListeners.push(listener);
         }
 
+        get storedState(): Map<any> {
+            if (!this.runOptions) return {}
+            if (!this.runOptions.storedState)
+                this.runOptions.storedState = {}
+            return this.runOptions.storedState
+        }
         public initAsync(msg: SimulatorRunMessage): Promise<void> {
             this.runOptions = msg;
             return Promise.resolve()
+        }
+        public setStoredState(k: string, value: any) {
+            if (value == null)
+                delete this.storedState[k]
+            else
+                this.storedState[k] = value
+            Runtime.postMessage({
+                type: "simulator",
+                command: "setstate",
+                stateKey: k,
+                stateValue: value
+            } as SimulatorCommandMessage)
         }
         public onDebuggerResume() { }
         public screenshotAsync(width?: number): Promise<ImageData> {
@@ -521,6 +539,23 @@ namespace pxsim {
         constructor(public fn: Function, public timeRemaining: number) { }
     }
 
+    export function mkVTable(src: VTable): VTable {
+        return {
+            name: src.name,
+            numFields: src.numFields,
+            classNo: src.classNo,
+            methods: src.methods,
+            iface: src.iface,
+            lastSubtypeNo: src.lastSubtypeNo,
+            toStringMethod: src.toStringMethod
+        };
+    }
+
+    let mapVTable: VTable = null
+    export function mkMapVTable() {
+        if (!mapVTable) mapVTable = mkVTable({ name: "_Map", numFields: 0, classNo: 0, lastSubtypeNo: 0, methods: null })
+        return mapVTable
+    }
 
     export class Runtime {
         public board: BaseBoard;
@@ -746,34 +781,46 @@ namespace pxsim {
             this.id = msg.id
             this.refCountingDebug = !!msg.refCountingDebug;
 
-            let yieldMaxSteps = 100
-
-            // These variables are used by the generated code as well
-            // ---
-            let entryPoint: LabelFn;
-            let pxtrt = pxsim.pxtrt
             let breakpoints: Uint8Array = null
-            let breakAlways = !!msg.breakOnStart;
-            let globals = this.globals
-            let yieldSteps = yieldMaxSteps
-            // ---
-
             let currResume: ResumeFn;
             let dbgHeap: Map<any>;
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
             let userGlobals: string[];
-            let __this = this
+            let __this = this // ex
+
+            // this is passed to generated code
+            const evalIface = {
+                runtime: this, // __this
+                oops,
+                doNothing,
+                pxsim,
+                globals: this.globals,
+                setupYield,
+                maybeYield,
+                setupDebugger,
+                isBreakFrame,
+                breakpoint,
+                trace,
+                checkStack,
+                leave: _leave,
+                checkResumeConsumed,
+                setupResume,
+                setupLambda,
+                checkSubtype,
+                failedCast,
+                buildResume,
+                mkVTable,
+            }
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
             }
 
-            // referenced from eval()ed code
             function doNothing(s: StackFrame) {
                 s.pc = -1;
-                return leave(s, s.parent.retval)
+                return _leave(s, s.parent.retval)
             }
 
             function flushLoopLock() {
@@ -783,13 +830,21 @@ namespace pxsim {
                 }
             }
 
+            // Date.now() - 100ns on Chrome mac, 60ns on Safari iPhone XS
+            // yield-- - 7ns on Chrome
+
+            let yieldReset = () => { }
+            function setupYield(reset: () => void) {
+                yieldReset = reset
+            }
+
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
                 // If code is running on a breakpoint, it's because we are evaluating getters;
                 // no need to yield in that case.
                 if (__this.pausedOnBreakpoint) return false;
 
                 __this.cleanScheduledExpired()
-                yieldSteps = yieldMaxSteps;
+                yieldReset();
                 let now = Date.now()
                 if (now - lastYield >= 20) {
                     lastYield = now
@@ -815,8 +870,9 @@ namespace pxsim {
             function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
                 breakpoints = new Uint8Array(numBreakpoints)
                 // start running and let user put a breakpoint on start
-                // breakAlways = true
+                breakpoints[0] = msg.breakOnStart ? 1 : 0;
                 userGlobals = userCodeGlobals;
+                return breakpoints
             }
 
             function isBreakFrame(s: StackFrame) {
@@ -839,7 +895,7 @@ namespace pxsim {
                 const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
                 Runtime.postMessage(msg)
-                breakAlways = false;
+                breakpoints[0] = 0;
                 breakFrame = null;
                 __this.pauseScheduled();
                 dbgResume = (m: DebuggerMessage) => {
@@ -851,21 +907,21 @@ namespace pxsim {
                     runtime = __this;
                     U.assert(s.pc == retPC);
 
-                    breakAlways = false
+                    breakpoints[0] = 0
                     breakFrame = null
 
                     switch (m.subtype) {
                         case "resume":
                             break;
                         case "stepover":
-                            breakAlways = true;
+                            breakpoints[0] = 1;
                             breakFrame = s;
                             break;
                         case "stepinto":
-                            breakAlways = true;
+                            breakpoints[0] = 1;
                             break;
                         case "stepout":
-                            breakAlways = true;
+                            breakpoints[0] = 1;
                             breakFrame = s.parent || s;
                             break;
                     }
@@ -909,7 +965,7 @@ namespace pxsim {
                         tracePauseMs = trc.interval;
                         break;
                     case "pause":
-                        breakAlways = true
+                        breakpoints[0] = 1
                         breakFrame = null
                         break
                     case "resume":
@@ -977,16 +1033,17 @@ namespace pxsim {
                 }
             }
 
-            function actionCall(s: StackFrame): StackFrame {
-                s.depth = s.parent.depth + 1
-                if (s.depth > 1000) {
+            function checkStack(d: number) {
+                if (d > 100)
                     U.userError("Stack overflow")
-                }
-                s.pc = 0
-                return s;
             }
 
-            const leave = _leave
+            function actionCall(s: StackFrame): StackFrame {
+                s.depth = s.parent.depth + 1
+                checkStack(s.depth)
+                s.pc = 0;
+                return s;
+            }
 
             function setupTop(cb: ResumeFn) {
                 let s = setupTopCore(cb)
@@ -1038,8 +1095,13 @@ namespace pxsim {
                 }
             }
 
-            function checkSubtype(v: RefRecord, low: number, high: number) {
-                return v && v.vtable && low <= v.vtable.classNo && v.vtable.classNo <= high;
+            function checkSubtype(v: RefRecord, vt: VTable) {
+                if (!v)
+                    return false
+                const vt2 = v.vtable
+                if (vt === vt2)
+                    return true
+                return vt2 && vt.classNo <= vt2.classNo && vt2.classNo <= vt.lastSubtypeNo;
             }
 
             function failedCast(v: any) {
@@ -1092,7 +1154,7 @@ namespace pxsim {
             }
 
             // tslint:disable-next-line
-            eval(msg.code)
+            const entryPoint = eval(msg.code)(evalIface);
 
             this.run = (cb) => topCall(entryPoint, cb)
             this.getResume = () => {
@@ -1157,9 +1219,20 @@ namespace pxsim {
                 return
             const c = this.perfCounters[n]
             if (!c.start) U.userError("stopPerf")
-            c.value += this.perfNow() - c.start;
+            const curr = this.perfNow() - c.start;
             c.start = 0;
+            // skip outliers
+            // if (c.numstops > 30 && curr > 1.2 * c.value / c.numstops)
+            //    return
+            c.value += curr;
             c.numstops++;
+
+            let p = c.lastFewPtr++
+            if (p >= c.lastFew.length) {
+                p = 0
+                c.lastFewPtr = 1
+            }
+            c.lastFew[p] = curr
         }
 
         startIdle() {
@@ -1246,6 +1319,8 @@ namespace pxsim {
         start = 0;
         numstops = 0;
         value = 0;
+        lastFew = new Uint32Array(32);
+        lastFewPtr = 0;
         constructor(public name: string) { }
     }
 
