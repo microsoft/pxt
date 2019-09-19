@@ -88,59 +88,63 @@ namespace pxtblockly {
         showEditor_() {
             const { sizes, initColor, filter} = this.params;
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
-            Blockly.DropDownDiv.hideWithoutAnimation();
-            Blockly.DropDownDiv.clearContent();
+            // Blockly.DropDownDiv.hideWithoutAnimation();
+            // Blockly.DropDownDiv.clearContent();
 
-            let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
+            // let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
-            this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
+            const fv = pxt.react.getFieldEditorView("image-editor", "", null);
+            fv.show();
 
-            this.editor.render(contentDiv);
-            this.editor.rePaint();
+            // this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
+            // this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
 
-            this.editor.onClose(() => {
-                this.undoStack = this.editor.getUndoStack();
-                this.redoStack = this.editor.getRedoStack();
-                Blockly.DropDownDiv.hideIfOwner(this);
-            });
+            // this.editor.render(contentDiv);
+            // this.editor.rePaint();
 
-            this.editor.setActiveColor(initColor, true);
-            if (!sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
-                sizes.push([this.state.width, this.state.height]);
-            }
-            this.editor.setSizePresets(sizes);
+            // this.editor.onClose(() => {
+            //     this.undoStack = this.editor.getUndoStack();
+            //     this.redoStack = this.editor.getRedoStack();
+            //     Blockly.DropDownDiv.hideIfOwner(this);
+            // });
 
-            if (filter) {
-                this.editor.setGalleryFilter(filter);
-            }
+            // this.editor.setActiveColor(initColor, true);
+            // if (!sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
+            //     sizes.push([this.state.width, this.state.height]);
+            // }
+            // this.editor.setSizePresets(sizes);
 
-            goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
-            goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
-            goog.style.setStyle(contentDiv, "overflow", "hidden");
-            goog.style.setStyle(contentDiv, "max-height", "500px");
-            pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown")
+            // if (filter) {
+            //     this.editor.setGalleryFilter(filter);
+            // }
 
-            Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
-            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.editor.closeEditor();
-                this.state = this.editor.bitmap().image;
-                this.redrawPreview();
-                if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                    Blockly.Events.fire(new Blockly.Events.BlockChange(
-                        this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
-                }
+            // goog.style.setHeight(contentDiv, "600px");
+            // goog.style.setWidth(contentDiv, "600px");
+            // goog.style.setStyle(contentDiv, "overflow", "hidden");
+            // goog.style.setStyle(contentDiv, "max-height", "600px");
+            // pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown")
 
-                goog.style.setHeight(contentDiv, null);
-                goog.style.setWidth(contentDiv, null);
-                goog.style.setStyle(contentDiv, "overflow", null);
-                goog.style.setStyle(contentDiv, "max-height", null);
-                pxt.BrowserUtils.removeClass(contentDiv.parentElement, "sprite-editor-dropdown");
-                this.editor.removeKeyListeners();
-            });
+            // // Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
+            // Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
+            //     // this.editor.closeEditor();
+            //     // this.state = this.editor.bitmap().image;
+            //     // this.redrawPreview();
+            //     // if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+            //     //     Blockly.Events.fire(new Blockly.Events.BlockChange(
+            //     //         this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
+            //     // }
 
-            this.editor.addKeyListeners();
-            this.editor.layout();
+            //     goog.style.setHeight(contentDiv, null);
+            //     goog.style.setWidth(contentDiv, null);
+            //     goog.style.setStyle(contentDiv, "overflow", null);
+            //     goog.style.setStyle(contentDiv, "max-height", null);
+            //     pxt.BrowserUtils.removeClass(contentDiv.parentElement, "sprite-editor-dropdown");
+            //     // this.editor.removeKeyListeners();
+            //     component.dispose();
+            // });
+
+            // this.editor.addKeyListeners();
+            // this.editor.layout();
         }
 
         private isInFlyout() {

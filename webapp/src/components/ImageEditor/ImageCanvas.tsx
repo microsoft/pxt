@@ -44,15 +44,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
 
         return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={ev => ev.preventDefault()}>
-            <div className="image-editor-canvas-spacer" />
-            <div className="image-editor-canvas-inner">
-                <div className="image-editor-canvas-spacer" />
+            <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
-                <div className="image-editor-canvas-spacer" />
+                <div ref="floating-layer-border" className="image-editor-floating-layer" />
             </div>
-            <div className="image-editor-canvas-spacer" />
-            <div ref="floating-layer-border" className="image-editor-floating-layer" />
         </div>
     }
 
@@ -404,8 +400,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.canvas.style.position = "fixed"
             this.canvas.style.width = `${newWidth}px`;
             this.canvas.style.height = `${newHeight}px`;
-            this.canvas.style.left = `${bounds.left - this.panX}px`
-            this.canvas.style.top = `${bounds.top - this.panY}px`
+            this.canvas.style.left = `${-this.panX}px`
+            this.canvas.style.top = `${-this.panY}px`
 
             this.canvas.style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
             // this.canvas.style.imageRendering = "pixelated"

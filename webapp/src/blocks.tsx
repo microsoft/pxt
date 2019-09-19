@@ -10,6 +10,7 @@ import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
+import * as blocklyFieldView from "./blocklyFieldView";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
@@ -499,6 +500,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             blocklyDiv.style.height = blocklyArea.offsetHeight + 'px';
             Blockly.svgResize(this.editor);
             this.resizeToolbox();
+            this.resizeFieldEditorView();
         }
     }
 
@@ -512,6 +514,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const blocklyOptions = this.getBlocklyOptions(this.showCategories);
         if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `100%`;
+    }
+
+    protected resizeFieldEditorView() {
+        const blocklyDiv = this.getBlocksEditorDiv();
+        if (!blocklyDiv) return;
+
+        const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
+        if (!blocklyToolboxDiv) return;
+
+        const workspaceRect = blocklyDiv.getBoundingClientRect();
+        const toolboxRect = blocklyToolboxDiv.getBoundingClientRect();
+
+        blocklyFieldView.setEditorBounds({
+            top: workspaceRect.top,
+            left: toolboxRect.right,
+            width: workspaceRect.width - toolboxRect.width,
+            height: workspaceRect.height
+        });
     }
 
     hasUndo() {

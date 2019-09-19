@@ -49,6 +49,7 @@ import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
+import * as blocklyFieldView from "./blocklyFieldView";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -3798,6 +3799,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initLogin();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
+    blocklyFieldView.init();
 
     pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
