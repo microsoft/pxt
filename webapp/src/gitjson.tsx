@@ -561,8 +561,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             {lf("Pull request")}
                         </a>}
                     <h3 className="header">
+                        <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}</span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
                     </h3>
                     {needsCommit ?
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
