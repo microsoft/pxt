@@ -448,13 +448,13 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         return PullStatus.NoSourceControl
-    if (!hd.githubCurrent && !checkOnly)
-        return PullStatus.NeedsCommit
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
+    if (!hd.githubCurrent && !checkOnly)
+        return PullStatus.NeedsCommit
     if (checkOnly)
         return PullStatus.GotChanges
     await githubUpdateToAsync(hd, gitjson.repo, sha, files)
