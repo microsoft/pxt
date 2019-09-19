@@ -864,6 +864,7 @@ namespace pxsim {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
+                    /* tslint:disable:no-string-based-set-timeout */
                     setTimeout(loopForSchedule(s), 5)
                     return true
                 }
