@@ -684,9 +684,10 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     </p>
                     <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                 </div> : undefined}
-            {master && needsLicenseMessage ? <div className="ui warning message">
+            {master && needsLicenseMessage ? <div className="ui message">
                 <div className="content">
-                    <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
+                    {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
+                    {" "}
                     <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
                         role="button" className="ui link"
                         target="_blank" rel="noopener noreferrer">
