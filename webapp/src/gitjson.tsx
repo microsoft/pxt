@@ -603,24 +603,25 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
         const { gs, githubId } = this.props;
+        const needsToken = !pxt.github.token;
         const needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
 
         return <div>
-            {!pxt.github.token ? <div className="ui info message join">
+            {needsToken ? <div className="ui info message join">
                 <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
             </div> : undefined}
-            {needsCommitMessage ? <div className="ui warning message">
+            {!needsToken && needsCommitMessage ? <div className="ui warning message">
                 <div className="content">
                     {lf("You need to commit your changes first, before you can pull from GitHub.")}
                 </div>
             </div> : undefined}
-            {needsLicenseMessage ? <div className="ui warning message">
+            {!needsToken && needsLicenseMessage ? <div className="ui warning message">
                 <div className="content">
                     <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
                     <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                        role="button" className="ui basic button"
+                        role="button" className="ui link"
                         target="_blank" rel="noopener noreferrer">
                         {lf("Add license")}
                     </a>
