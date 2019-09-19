@@ -30,12 +30,27 @@ export class DomObject {
         return criteria;
     }
 
-    async dragAndDrop(criteria, criteria2) {
+    async getRect(criteria){
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
+        return await element.getRect();
+    }
+    async contextClick(criteria){
+        let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
+        return await actions.contextClick(element).perform();
+    }
+
+    async dragAndDropByElement(criteria, criteria2) {
 
         let origin = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         let goal = await driver.wait(until.elementLocated(this.findBy(criteria2)), 10000);
 
         return await actions.dragAndDrop(origin, goal).perform();
+    }
+
+    async dragAndDropByCoordinate(criteria, xoffset,yoffset) {
+
+        let origin = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
+        return await actions.dragAndDrop(origin, {x:xoffset,y:yoffset}).perform();
     }
 
     async catchScreenShot(name) {
