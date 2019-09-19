@@ -613,7 +613,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
             </div> : undefined}
             {!needsToken && needsCommitMessage ? <div className="ui warning message">
                 <div className="content">
-                    {lf("You need to commit your changes first, before you can pull from GitHub.")}
+                    {lf("You need to commit your changes before you can pull from GitHub.")}
                 </div>
             </div> : undefined}
         </div>
