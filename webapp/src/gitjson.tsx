@@ -540,8 +540,10 @@ ${content}
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push
 
+        const isBlocks = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
-        const needsCommit = diffFiles.length > 0
+        const needsCommit = diffFiles.length > 0;
+        const displayDiffFiles = isBlocks ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const { needsPull } = this.state;
         const githubId = this.parsedRepoId()
@@ -569,7 +571,7 @@ ${content}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -582,11 +584,11 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
-                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
+                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
                     }
                     <div className="ui">
-                        {diffFiles.map(df => this.showDiff(df))}
+                        {displayDiffFiles.map(df => this.showDiff(df))}
                     </div>
 
                     {pxt.github.token ? dialogs.githubFooter("", () => this.props.parent.forceUpdate()) : undefined}
@@ -602,6 +604,7 @@ interface GitHubViewProps {
     master: boolean;
     parent: GithubComponent;
     gs: pxt.github.GitJson;
+    isBlocks: boolean;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
