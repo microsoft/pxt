@@ -19,7 +19,7 @@ namespace pxt.blocks {
         try {
             return diffNoEvents(oldWs, newWs);
         }
-        catch(e) {
+        catch (e) {
             pxt.reportException(e);
             return {
                 ws: undefined,
@@ -72,6 +72,7 @@ namespace pxt.blocks {
             console.log(`deleted top ${b.id}`)
             done(b);
             const b2 = cloneIntoDiff(b);
+            done(b2);
             b2.inputList[0].insertFieldAt(0, new Blockly.FieldImage(REMOVE_IMAGE_DATAURI, 24, 24, false));
             b2.setDisabled(true);
         });
@@ -93,6 +94,7 @@ namespace pxt.blocks {
         Util.values(todoBlocks).filter(b => moved(b)).forEach(b => {
             console.log(`moved ${b.id}`)
             delete todoBlocks[b.id]
+            markUsed(b);
             modified++;
         })
         log('moved')
@@ -100,13 +102,25 @@ namespace pxt.blocks {
         // 5. blocks with field properties that changed
         Util.values(todoBlocks).filter(b => changed(b)).forEach(b => {
             console.log(`changed ${b.id}`)
-            delete todoBlocks[b.id]
+            delete todoBlocks[b.id];
+            markUsed(b);
             modified++;
         })
         log('changed')
 
+        // delete unmodified top blocks
+        /*
+        ws.getTopBlocks(false)
+            .filter(b => !find(b, c => isUsed(c)))
+            .forEach(b => {
+                console.log(`unmodified ${b.id}`)
+                ws.removeTopBlock(b);
+            });
+        log('cleaned')
+        */
+
         // all unmodifed blocks are greyed out
-        Util.values(todoBlocks).forEach(b => b.setColour("#c0c0c0"));
+        Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => b.setColour("#c0c0c0"));
 
         // make sure everything is rendered
         ws.getAllBlocks().forEach(forceRender);
@@ -126,6 +140,14 @@ namespace pxt.blocks {
             modified: modified
         }
 
+        function markUsed(b: Blockly.Block) {
+            (<any>b).___used = true;
+        }
+
+        function isUsed(b: Blockly.Block) {
+            return !!(<any>b).___used;
+        }
+
         function cloneIntoDiff(b: Blockly.Block): Blockly.Block {
             const bdom = Blockly.Xml.blockToDom(b, false);
             const b2 = Blockly.Xml.domToBlock(bdom, ws);
@@ -143,7 +165,7 @@ namespace pxt.blocks {
         }
 
         function done(b: Blockly.Block) {
-            vis(b, t => { delete todoBlocks[t.id]; });
+            vis(b, t => { delete todoBlocks[t.id]; markUsed(t); });
         }
 
         function vis(b: Blockly.Block, f: (b: Blockly.Block) => void) {
@@ -152,6 +174,15 @@ namespace pxt.blocks {
                 f(t);
                 t = t.getNextBlock();
             }
+        }
+
+        function find(b: Blockly.Block, f: (b: Blockly.Block) => boolean) {
+            let t = b;
+            while (t) {
+                if (f(b)) return b;
+                t = t.getNextBlock();
+            }
+            return false;
         }
 
         function log(msg: string) {

@@ -389,7 +389,7 @@ ${baseContent}
 ${content}
 \`\`\`
 `;
-            return <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            diffJSX = [<markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />]
         } else {
             const classes: pxt.Map<string> = {
                 "@": "diff-marker",
@@ -655,13 +655,13 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId } = this.props;
+        const { githubId } = this.props;
         return <div>
             <div className="ui field">
                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
             </div>
             {<div className="field">
-                <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
+                <p>{lf("Save your changes in GitHub.", githubId.tag || "master")}</p>
             </div>}
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
