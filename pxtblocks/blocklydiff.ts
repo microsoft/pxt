@@ -50,11 +50,9 @@ namespace pxt.blocks {
         deletedTopBlocks.forEach(b => {
             console.log(`deleted top ${b.id}`)
             done(b);
-            const bdom = Blockly.Xml.blockToDom(b, false);
-            const b2 = Blockly.Xml.domToBlock(bdom, ws);
+            const b2 = cloneIntoDiff(b);
             b2.inputList[0].insertFieldAt(0, new Blockly.FieldImage(REMOVE_IMAGE_DATAURI, 24, 24, false));
             b2.setDisabled(true);
-          //  col(b2, "#aa0000");
         });
         log('deleted top')
 
@@ -63,18 +61,16 @@ namespace pxt.blocks {
             console.log(`added top ${b.id}`)
             b.inputList[0].insertFieldAt(0, new Blockly.FieldImage(ADD_IMAGE_DATAURI, 24, 24, false));
             done(b);
-           // col(b, "#00aa00");
         });
         log('added top')
 
         // 3. delete statement blocks
-        
+        // TODO
 
         // 4. moved blocks
         let modified = 0;
         Util.values(todoBlocks).filter(b => moved(b)).forEach(b => {
             console.log(`moved ${b.id}`)
-          //  b.setColour("#0000aa");
             delete todoBlocks[b.id]
             modified++;
         })
@@ -83,7 +79,6 @@ namespace pxt.blocks {
         // 5. blocks with field properties that changed
         Util.values(todoBlocks).filter(b => changed(b)).forEach(b => {
             console.log(`changed ${b.id}`)
-          //  b.setColour("#aa00aa");
             delete todoBlocks[b.id]
             modified++;
         })
@@ -110,6 +105,12 @@ namespace pxt.blocks {
             modified: modified
         }
 
+        function cloneIntoDiff(b: Blockly.Block): Blockly.Block {
+            const bdom = Blockly.Xml.blockToDom(b, false);
+            const b2 = Blockly.Xml.domToBlock(bdom, ws);
+            return b2;
+        }
+
         function forceRender(b: Blockly.Block) {
             const a = <any>b;
             a.rendered = false;
@@ -118,10 +119,6 @@ namespace pxt.blocks {
                 delete (<any>f).backgroundColour_;
                 delete (<any>f).borderColour_;
             }));
-        }
-
-        function col(b: Blockly.Block, c: string) {
-            vis(b, t => t.setColour(c));
         }
 
         function done(b: Blockly.Block) {
