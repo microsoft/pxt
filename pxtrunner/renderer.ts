@@ -404,7 +404,7 @@ namespace pxt.runner {
                     try {
                         const oldWs = pxt.blocks.loadWorkspaceXml(oldXml);
                         const newWs = pxt.blocks.loadWorkspaceXml(newXml);
-                        const diff = pxt.blocks.diff(oldWs, newWs, options);
+                        const diff = pxt.blocks.diff(oldWs, newWs);
                         if (!diff)
                             $el.text("no changes");
                         else {
