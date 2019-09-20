@@ -163,7 +163,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         } else {
                             // An error occured, show alternate message
                             const textDiv = document.createElement('span');
-                            textDiv.textContent = diff.error ? lf("Oops, something went wrong.") : lf("No changes.");
+                            textDiv.textContent = diff.error ? lf("Some blocks changed.") : lf("No changes.");
                             wrapperDiv.appendChild(textDiv);
                             pxsim.U.removeClass(wrapperDiv, 'loading');
                         }
