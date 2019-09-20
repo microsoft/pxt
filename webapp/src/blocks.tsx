@@ -376,13 +376,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         for (const block in deprecatedMap) {
-            if (deprecatedMap[block] === 0) {
-                delete deprecatedMap[block];
+            if (deprecatedMap[block] !== 0) {
+                pxt.tickEvent("blocks.usingDeprecated", {block : block, count : deprecatedMap[block] });
             }
-        }
-
-        if (deprecatedBlocksFound) {
-            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
         }
     }
 
@@ -417,7 +413,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             if (ev.type == 'create') {
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickActivity("blocks.create", "blocks.create." + blockId);
+                pxt.tickEvent("blocks.create", {"block": blockId});
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
