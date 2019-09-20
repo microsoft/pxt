@@ -402,9 +402,7 @@ namespace pxt.runner {
                 .then(r => {
                     $el.removeClass(cls);
                     try {
-                        const oldWs = pxt.blocks.loadWorkspaceXml(oldXml);
-                        const newWs = pxt.blocks.loadWorkspaceXml(newXml);
-                        const diff = pxt.blocks.diff(oldWs, newWs);
+                        const diff = pxt.blocks.diffXml(oldXml, newXml);
                         if (!diff)
                             $el.text("no changes");
                         else {

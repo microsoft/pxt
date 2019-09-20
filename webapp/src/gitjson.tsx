@@ -7,6 +7,7 @@ import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
 import * as coretsx from "./coretsx";
 import * as data from "./data";
+import * as markedui from "./marked";
 
 interface DiffCache {
     gitFile: string;
@@ -376,39 +377,54 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
-        const classes: pxt.Map<string> = {
-            "@": "diff-marker",
-            " ": "diff-unchanged",
-            "+": "diff-added",
-            "-": "diff-removed",
-        }
-        const diffLines = pxt.github.diff(f.baseGitContent || "", f.content, { ignoreWhitespace: true })
-        let lnA = 0, lnB = 0
-        const diffJSX = isBlocks ? [] : diffLines.map(ln => {
-            const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
-            if (m) {
-                lnA = parseInt(m[1]) - 1
-                lnB = parseInt(m[2]) - 1
-            } else {
-                if (ln[0] != "+")
-                    lnA++
-                if (ln[0] != "-")
-                    lnB++
+        const baseContent = f.baseGitContent || "";
+        const content = f.content;
+        let diffJSX: JSX.Element[];
+        if (isBlocks) {
+            const markdown =
+                `
+\`\`\`diffblocksxml
+${baseContent}
+---------------------
+${content}
+\`\`\`
+`;
+            return <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+        } else {
+            const classes: pxt.Map<string> = {
+                "@": "diff-marker",
+                " ": "diff-unchanged",
+                "+": "diff-added",
+                "-": "diff-removed",
             }
-            return (
-                <tr key={lnA + lnB} className={classes[ln[0]]}>
-                    <td className="line-a" data-content={lnA}></td>
-                    <td className="line-b" data-content={lnB}></td>
-                    {ln[0] == "@"
-                        ? <td colSpan={2} className="change"><pre>{ln}</pre></td>
-                        : <td className="marker" data-content={ln[0]}></td>
-                    }
-                    {ln[0] == "@"
-                        ? undefined
-                        : <td className="change"><pre>{ln.slice(2)}</pre></td>
-                    }
-                </tr>)
-        })
+            let lnA = 0, lnB = 0
+            const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
+            diffJSX = diffLines.map(ln => {
+                const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
+                if (m) {
+                    lnA = parseInt(m[1]) - 1
+                    lnB = parseInt(m[2]) - 1
+                } else {
+                    if (ln[0] != "+")
+                        lnA++
+                    if (ln[0] != "-")
+                        lnB++
+                }
+                return (
+                    <tr key={lnA + lnB} className={classes[ln[0]]}>
+                        <td className="line-a" data-content={lnA}></td>
+                        <td className="line-b" data-content={lnB}></td>
+                        {ln[0] == "@"
+                            ? <td colSpan={2} className="change"><pre>{ln}</pre></td>
+                            : <td className="marker" data-content={ln[0]}></td>
+                        }
+                        {ln[0] == "@"
+                            ? undefined
+                            : <td className="change"><pre>{ln.slice(2)}</pre></td>
+                        }
+                    </tr>)
+            })
+        }
 
         let deletedFiles: string[] = []
         let addedFiles: string[] = []
@@ -471,7 +487,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
                 </div>
-                {isBlocks ? <div className="ui segment"><p>{lf("Some blocks changed")}</p></div> : diffJSX.length ?
+                {diffJSX.length ?
                     <div className="ui segment diff">
                         <table className="diffview">
                             <tbody>

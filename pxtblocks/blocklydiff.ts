@@ -7,6 +7,12 @@ namespace pxt.blocks {
         modified: number;
     }
 
+    export function diffXml(oldXml: string, newXml: string): DiffResult {
+        const oldWs = pxt.blocks.loadWorkspaceXml(oldXml, true);
+        const newWs = pxt.blocks.loadWorkspaceXml(newXml, true);
+        return diff(oldWs, newWs);
+    }
+
     export function diff(oldWs: Blockly.Workspace, newWs: Blockly.Workspace): DiffResult {
         Blockly.Events.disable();
         try {
@@ -25,9 +31,13 @@ namespace pxt.blocks {
         const newXml = pxt.blocks.saveWorkspaceXml(newWs, true);
 
         if (oldXml == newXml) {
-            return undefined; // no changes
+            return {
+                ws: undefined,
+                added: 0,
+                deleted: 0,
+                modified: 0
+            }; // no changes
         }
-
         const trashWs = new Blockly.Workspace();
         const oldBlocks = oldWs.getAllBlocks();
         const oldTopBlocks = oldWs.getTopBlocks(false);
