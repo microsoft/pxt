@@ -738,6 +738,7 @@ interface UploadOptions {
     legacyLabel?: boolean;
     target?: string;
     localDir?: string;
+    localBackend?: string;
     githubOnly?: boolean;
     builtPackaged?: string;
     minify?: boolean;
@@ -979,6 +980,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         "/sim/sim.webmanifest": "@relprefix@webmanifest",
         "/embed.js": "@targetUrl@@relprefix@embed",
         "/cdn/": "@commitCdnUrl@",
+        // TODO(dz):
         "/doccdn/": "@commitCdnUrl@",
         "/sim/": "@commitCdnUrl@",
         "/blb/": "@blobCdnUrl@",
@@ -1036,6 +1038,11 @@ function uploadCoreAsync(opts: UploadOptions) {
         if (!opts.noAppCache) {
             replacements["data-manifest=\"\""] = `manifest="${opts.localDir}release.manifest"`;
         }
+    }
+
+    // TODO(dz): CLI flag
+    if (true) {
+        replacements["/doccdn/"] = "localhost:5502/"
     }
 
     let replFiles = [
@@ -4253,7 +4260,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
     const localDir = !label ? "./" : `${U.startsWith(label, ".") || U.startsWith(label, "/") ? "" : "/"}${label}${U.endsWith(label, "/") ? "" : "/"}`;
-    return uploadCoreAsync({
+    let opts: UploadOptions = {
         label: label || "main",
         pkgversion: "0.0.0",
         fileList: pxtFileList("node_modules/pxt-core/")
@@ -4265,7 +4272,8 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
         builtPackaged,
         minify,
         noAppCache
-    }).then(() => renderDocs(builtPackaged, localDir))
+    }
+    return uploadCoreAsync(opts).then(() => renderDocs(builtPackaged, localDir))
 }
 
 export function cleanAsync(parsed?: commandParser.ParsedCommand) {
