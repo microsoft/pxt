@@ -120,10 +120,12 @@ namespace pxt.blocks {
         */
 
         // all unmodifed blocks are greyed out
-        Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => b.setColour("#c0c0c0"));
+        Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => {
+            b.setColour("#c0c0c0")
+            forceRender(b);
+        });
 
         // make sure everything is rendered
-        ws.getAllBlocks().forEach(forceRender);
         ws.resize();
         Blockly.svgResize(ws);
 
@@ -158,9 +160,11 @@ namespace pxt.blocks {
             const a = <any>b;
             a.rendered = false;
             b.inputList.forEach(i => i.fieldRow.forEach(f => {
-                delete f.fieldGroup_; // force field rendering
-                delete (<any>f).backgroundColour_;
-                delete (<any>f).borderColour_;
+                f.init();
+                if (f.box_) {
+                    f.box_.setAttribute('fill', b.getColour())
+                    f.box_.setAttribute('stroke', b.getColourTertiary())
+                }
             }));
         }
 
