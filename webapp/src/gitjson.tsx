@@ -619,8 +619,6 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
         const { gs, githubId } = this.props;
-        const needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
-            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
 
         return <div>
             {!pxt.github.token ? <div className="ui info message join">
@@ -698,6 +696,7 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsToken, githubId, master } = this.props;
+
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}

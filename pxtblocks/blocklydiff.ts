@@ -1,6 +1,7 @@
 namespace pxt.blocks {
     export interface DiffResult {
         ws?: Blockly.WorkspaceSvg;
+        error?: any;
         svg?: Element;
         deleted: number;
         added: number;
@@ -17,6 +18,16 @@ namespace pxt.blocks {
         Blockly.Events.disable();
         try {
             return diffNoEvents(oldWs, newWs);
+        }
+        catch(e) {
+            pxt.reportException(e);
+            return {
+                ws: undefined,
+                error: e,
+                deleted: 0,
+                added: 0,
+                modified: 0
+            }
         } finally {
             Blockly.Events.enable();
         }
@@ -199,9 +210,6 @@ namespace pxt.blocks {
         function normalize(b: Blockly.Block): Blockly.Block {
             const dom = Blockly.Xml.blockToDom(b);
             let sb = Blockly.Xml.domToBlock(dom, trashWs);
-            // disconnect childs
-            const conn = sb.getFirstStatementConnection();
-            if (conn) conn.disconnect();
             // disconnect is broken.. patch up the dom later on
             return sb;
         }
