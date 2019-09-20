@@ -379,7 +379,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const isBlocks = /\.blocks$/.test(f.name)
         const baseContent = f.baseGitContent || "";
         const content = f.content;
-        let diffJSX: JSX.Element[];
+        let diffJSX: JSX.Element;
         if (isBlocks) {
             const markdown =
                 `
@@ -389,7 +389,7 @@ ${baseContent}
 ${content}
 \`\`\`
 `;
-            diffJSX = [<markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />]
+            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
         } else {
             const classes: pxt.Map<string> = {
                 "@": "diff-marker",
@@ -399,7 +399,7 @@ ${content}
             }
             let lnA = 0, lnB = 0
             const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
-            diffJSX = diffLines.map(ln => {
+            const linesTSX = diffLines.map(ln => {
                 const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
                 if (m) {
                     lnA = parseInt(m[1]) - 1
@@ -424,6 +424,11 @@ ${content}
                         }
                     </tr>)
             })
+            diffJSX = linesTSX.length ? <table className="diffview">
+                <tbody>
+                    {linesTSX}
+                </tbody>
+            </table> : undefined;
         }
 
         let deletedFiles: string[] = []
@@ -487,13 +492,9 @@ ${content}
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
                 </div>
-                {diffJSX.length ?
+                {diffJSX ?
                     <div className="ui segment diff">
-                        <table className="diffview">
-                            <tbody>
-                                {diffJSX}
-                            </tbody>
-                        </table>
+                        {diffJSX}
                     </div>
                     :
                     <div className="ui segment">
@@ -581,7 +582,7 @@ ${content}
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
