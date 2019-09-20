@@ -3330,8 +3330,10 @@ export class ProjectView
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
-        // don't show in sandbox or show if github always or don't show in blocks/serial
-        const showFileList = !sandbox && !(isBlocks || this.editor == this.serialEditor);
+        // don't show in sandbox or is blocks editor or previous editor is blocks
+        const showFileList = !sandbox
+            && !(isBlocks
+                || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         // show github if token or if always vis
         const showGithub = !!pxt.github.token || (isBlocks && targetTheme.alwaysGithubItemBlocks) || (!isBlocks && targetTheme.alwaysGithubItem);
         return (
