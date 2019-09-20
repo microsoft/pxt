@@ -382,7 +382,7 @@ namespace pxt.runner {
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
-function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
+    function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.diffBlocksXmlClass) return Promise.resolve();
         const cls = opts.diffBlocksXmlClass;
         function renderNextXmlAsync(cls: string,
@@ -403,11 +403,11 @@ function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
                     try {
                         const oldWs = pxt.blocks.loadWorkspaceXml(oldXml);
                         const newWs = pxt.blocks.loadWorkspaceXml(newXml);
-                        const diff = pxt.blocks.diff(oldWs, newWs);
+                        const diff = pxt.blocks.diff(oldWs, newWs, options);
                         if (!diff)
                             $el.text("no changes");
                         else {
-                            r.blocksSvg = pxt.blocks.render(pxt.blocks.saveWorkspaceXml(diff.ws), options);
+                            r.blocksSvg = diff.svg;
                             render($el, r);
                         }
                     } catch (e) {
