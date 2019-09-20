@@ -17,6 +17,9 @@
         @import "./semantic.css";
         @import "./blockly.css";
         
+        svg {
+            margin: 1rem;
+        }
         pre {
             white-space: pre-wrap;
         }
@@ -134,6 +137,62 @@
         })
     </script>
 <pre>
+        <pre>
+                <code class='lang-diffblocksxml'>
+&lt;xml xmlns="http://www.w3.org/1999/xhtml"&gt;
+    &lt;variables&gt;&lt;/variables&gt;
+    &lt;block type="pxt-on-start" id="*4QBkG)M++w@sh9lije," x="0" y="0"&gt;
+      &lt;statement name="HANDLER"&gt;
+        &lt;block type="device_show_number" id="8nbFJ|:hH/1y_Cr;d}M#"&gt;
+          &lt;value name="number"&gt;
+            &lt;shadow type="math_number" id="a!R]IvOT0kzgXLk50G=#"&gt;
+              &lt;field name="NUM"&gt;0&lt;/field&gt;
+            &lt;/shadow&gt;
+          &lt;/value&gt;
+          &lt;next&gt;
+            &lt;block type="device_show_leds" id="F@h.?Rr{~|0Bj)rVx3CR"&gt;
+              &lt;field name="LEDS"&gt;`
+          . . . . . 
+          . . . . . 
+          . . . . . 
+          . . . . . 
+          . . . . .
+          `
+              &lt;/field&gt;
+            &lt;/block&gt;
+          &lt;/next&gt;
+        &lt;/block&gt;
+      &lt;/statement&gt;
+    &lt;/block&gt;
+    &lt;block type="device_button_event" id="NNb]HquRBJB3@vW;aV!t" x="212" y="439"&gt;
+      &lt;field name="NAME"&gt;Button.A&lt;/field&gt;
+    &lt;/block&gt;
+  &lt;/xml&gt;
+-------------------
+&lt;xml xmlns="http://www.w3.org/1999/xhtml"&gt;
+    &lt;variables&gt;&lt;/variables&gt;
+    &lt;block type="pxt-on-start" id="*4QBkG)M++w@sh9lije," x="0" y="0"&gt;
+      &lt;statement name="HANDLER"&gt;
+        &lt;block type="basic_show_icon" id="tvOl-pm28k6+sBVy+NJQ"&gt;
+          &lt;field name="i"&gt;IconNames.Heart&lt;/field&gt;
+          &lt;next&gt;
+            &lt;block type="device_show_number" id="8nbFJ|:hH/1y_Cr;d}M#"&gt;
+              &lt;value name="number"&gt;
+                &lt;shadow type="math_number" id="a!R]IvOT0kzgXLk50G=#"&gt;
+                  &lt;field name="NUM"&gt;0&lt;/field&gt;
+                &lt;/shadow&gt;
+              &lt;/value&gt;
+            &lt;/block&gt;
+          &lt;/next&gt;
+        &lt;/block&gt;
+      &lt;/statement&gt;
+    &lt;/block&gt;
+    &lt;block type="device_forever" id="*W(2xTa~){o01lawwRrE" x="214" y="231"&gt;&lt;/block&gt;
+  &lt;/xml&gt;
+                <code>
+                </pre>    
+                
+<!--       
 <code class='lang-project'>
 tqnxfpkndd
 </code>
@@ -143,7 +202,7 @@ tqnxfpkndd
 https://makecode.microbit.org/tqnxfpkndd
 <code>
 </pre>    
-<!--   <pre class='lang-sig'>
+<pre class='lang-sig'>
 images.createImage(`
 . . # . .
 . # # # .

@@ -28,15 +28,20 @@ namespace pxt.blocks {
         // clone new workspace
         const ws = pxt.blocks.loadWorkspaceXml(pxt.blocks.saveWorkspaceXml(newWs), true);
 
+        // all blocks are disabled
+        ws.getAllBlocks().forEach(b => b.setDisabled(true));
+
         // 1. topblocks
         // add deleted top blocks and disable them
         deletedTopBlocks.forEach(b => {
             ws.addTopBlock(b);
-            b.setDisabled(true);
+            b.setDisabled(false);
+            b.setColour("#ff0000");
         });
         // find added top blocks and mark them as added: TODO better marking
-        addedTopBlocks.forEach(b => {
-            ws.highlightBlock(b.id)
+        addedTopBlocks.map(b => ws.getBlockById(b.id)).forEach(b => {
+            b.setDisabled(false);
+            b.setColour("#00ff00");
         });
 
         // and we're done

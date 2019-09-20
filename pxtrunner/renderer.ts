@@ -382,7 +382,7 @@ namespace pxt.runner {
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
-    function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
+function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
         if (!opts.diffBlocksXmlClass) return Promise.resolve();
         const cls = opts.diffBlocksXmlClass;
         function renderNextXmlAsync(cls: string,
