@@ -2994,9 +2994,14 @@ ${lbl}: .short 0xffff
             } else {
                 throw userError(9276, lf("expression not supported as argument to 'delete'"))
             }
-            // we know this would just fail at runtime
-            if (isClassType(typeOf(objExpr)))
+
+            // we know these would just fail at runtime
+            const objExprType = typeOf(objExpr)
+            if (isClassType(objExprType))
                 throw userError(9277, lf("'delete' not supported on class types"))
+            if (isArrayType(objExprType))
+                throw userError(9277, lf("'delete' not supported on array"))
+
             const args = [
                 emitExpr(objExpr),
                 keyExpr()
