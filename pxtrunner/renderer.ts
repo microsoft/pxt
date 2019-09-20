@@ -400,6 +400,7 @@ namespace pxt.runner {
 
             return pxt.runner.compileBlocksAsync("", options) // force loading blocks
                 .then(r => {
+                    $el.removeClass(cls);
                     try {
                         const oldWs = pxt.blocks.loadWorkspaceXml(oldXml);
                         const newWs = pxt.blocks.loadWorkspaceXml(newXml);
@@ -414,7 +415,6 @@ namespace pxt.runner {
                         pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
-                    $el.removeClass(cls);
                     return Promise.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }

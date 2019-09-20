@@ -8,6 +8,15 @@ namespace pxt.blocks {
     }
 
     export function diff(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, options?: BlocksRenderOptions): DiffResult {
+        Blockly.Events.disable();
+        try {
+            return diffNoEvents(oldWs, newWs, options);
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
+    function diffNoEvents(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, options?: BlocksRenderOptions): DiffResult {
         const oldXml = pxt.blocks.saveWorkspaceXml(oldWs, true);
         const newXml = pxt.blocks.saveWorkspaceXml(newWs, true);
 
@@ -15,6 +24,7 @@ namespace pxt.blocks {
             return undefined; // no changes
         }
 
+        const trashWs = new Blockly.Workspace();
         const oldBlocks = oldWs.getAllBlocks();
         const oldTopBlocks = oldWs.getTopBlocks(false);
         const newBlocks = newWs.getAllBlocks();
@@ -39,6 +49,7 @@ namespace pxt.blocks {
             console.log(`deleted top ${b.id}`)
             done(b);
             const bdom = Blockly.Xml.blockToDom(b, false);
+            b.inputList[0].insertFieldAt(0, new Blockly.FieldImage((b as any).REMOVE_IMAGE_DATAURI, 24, 24, false));
             const b2 = Blockly.Xml.domToBlock(bdom, ws);
             col(b2, "#aa0000");
         });
@@ -47,43 +58,30 @@ namespace pxt.blocks {
         // 2. added top blocks
         addedTopBlocks.map(b => ws.getBlockById(b.id)).forEach(b => {
             console.log(`added top ${b.id}`)
+            b.inputList[0].insertFieldAt(0, new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false));
             done(b);
             col(b, "#00aa00");
         });
         log('added top')
 
         // 3. moved blocks
-        Util.values(todoBlocks).filter(b => {
-            const oldb = oldWs.getBlockById(b.id); // extra block created in added step
-            if (!oldb)
-                return false;
-
-            const newPrevious = b.getPreviousBlock();
-            // connection already already processed
-            if (newPrevious && !todoBlocks[newPrevious.id])
-                return false;
-            const newNext = b.getNextBlock();
-            // already processed
-            if (newNext && !todoBlocks[newNext.id])
-                return false;
-
-            const oldPrevious = oldb.getPreviousBlock();
-            if (!oldPrevious && !newPrevious) return false; // no connection
-            if (!!oldPrevious != !!newPrevious // new connection
-                || oldPrevious.id != newPrevious.id) // new connected blocks
-                return true;
-            const oldNext = oldb.getNextBlock();
-            if (!oldNext && !newNext) return false; // no connection
-            if (!!oldNext != !!newNext // new connection
-                || oldNext.id != newNext.id) // new connected blocks
-                return true;
-            return false;
-        }).forEach(b => {
+        let modified = 0;
+        Util.values(todoBlocks).filter(b => moved(b)).forEach(b => {
             console.log(`moved ${b.id}`)
             b.setColour("#0000aa");
             delete todoBlocks[b.id]
+            modified++;
         })
         log('moved')
+
+        // 4. blocks with field properties that changed
+        Util.values(todoBlocks).filter(b => changed(b)).forEach(b => {
+            console.log(`changed ${b.id}`)
+            b.setColour("#aa00aa");
+            delete todoBlocks[b.id]
+            modified++;
+        })
+        log('changed')
 
         // all unmodifed blocks are greyed out
         Util.values(todoBlocks).forEach(b => b.setColour("#c0c0c0"));
@@ -100,7 +98,7 @@ namespace pxt.blocks {
             svg: svg,
             deleted: deletedBlocks.length,
             added: addedBlocks.length,
-            modified: 0
+            modified: modified
         }
 
         function forceRender(b: Blockly.Block) {
@@ -131,6 +129,74 @@ namespace pxt.blocks {
 
         function log(msg: string) {
             console.log(`${msg}:`, Object.keys(todoBlocks))
+        }
+
+        function moved(b: Blockly.Block) {
+            const oldb = oldWs.getBlockById(b.id); // extra block created in added step
+            if (!oldb)
+                return false;
+
+            const newPrevious = b.getPreviousBlock();
+            // connection already already processed
+            if (newPrevious && !todoBlocks[newPrevious.id])
+                return false;
+            const newNext = b.getNextBlock();
+            // already processed
+            if (newNext && !todoBlocks[newNext.id])
+                return false;
+
+            const oldPrevious = oldb.getPreviousBlock();
+            if (!oldPrevious && !newPrevious) return false; // no connection
+            if (!!oldPrevious != !!newPrevious // new connection
+                || oldPrevious.id != newPrevious.id) // new connected blocks
+                return true;
+            const oldNext = oldb.getNextBlock();
+            if (!oldNext && !newNext) return false; // no connection
+            if (!!oldNext != !!newNext // new connection
+                || oldNext.id != newNext.id) // new connected blocks
+                return true;
+            return false;
+        }
+
+        function changed(b: Blockly.Block) {
+            let oldb = oldWs.getBlockById(b.id); // extra block created in added step
+            if (!oldb)
+                return false;
+
+            // normalize
+            oldb = normalize(oldb);
+            b = normalize(b);
+
+            //diff
+            const oldText = normalizedDom(oldb);
+            const newText = normalizedDom(b);
+
+            return oldText != newText;
+        }
+
+        function normalize(b: Blockly.Block): Blockly.Block {
+            const dom = Blockly.Xml.blockToDom(b);
+            let sb = Blockly.Xml.domToBlock(dom, trashWs);
+            const conn = sb.getFirstStatementConnection();
+            if (conn) conn.disconnect();
+            return sb;
+        }
+
+        function normalizedDom(b: Blockly.Block): string {
+            const dom = Blockly.Xml.blockToDom(b, true);
+            visDom(dom, (e) => {
+                e.removeAttribute("deletable");
+                e.removeAttribute("editable");
+                e.removeAttribute("movable")
+            })
+            return Blockly.Xml.domToText(dom);
+        }
+
+        function visDom(el: Element, f: (e: Element) => void) {
+            if (!el) return;
+            f(el);
+            for (const child of Util.toArray(el.children))
+                visDom(child, f);
         }
     }
 }
