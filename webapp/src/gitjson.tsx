@@ -9,6 +9,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 
 interface DiffCache {
+    file: pkg.File;
     gitFile: string;
     editorFile: string;
     diff: JSX.Element;
@@ -370,8 +371,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private showDiff(f: pkg.File) {
         let cache = this.diffCache[f.name]
-        if (!cache) {
-            cache = {} as any
+        if (!cache || cache.file !== f) {
+            cache = { file: f } as any
             this.diffCache[f.name] = cache
         }
         if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
