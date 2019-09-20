@@ -1,6 +1,5 @@
 import { DomObject } from './lib/dom-object';
 import assert from "assert";
-import By from 'selenium-webdriver';
 class BlocklyToolBox extends DomObject {
 
     async searchBox() {
@@ -16,15 +15,19 @@ class BlocklyToolBox extends DomObject {
 
     }
     async dragBlocks() {
-        await this.dragAndDrop('g.blocklyDraggable:nth-child(4)', 'g.blocklyDraggable:nth-child(1)');
+
+        let target = await this.getRect('g.blocklyDraggable:nth-child(1)');
+        console.info(`This is the target location:${target}`);
+        console.log(target.x);
+        console.log(target.y);
+
+        await this.dragAndDropByCoordinate('g.blocklyDraggable:nth-child(4)',-30,-150);
 
         await this.click('[role="treeitem"]:nth-child(2) .blocklyTreeRow');
+//有点问题
+        // await this.dragAndDropByElement('g.blocklyDraggable:nth-child(6)', 'div.blocklyTreeRoot');
 
-        await this.dragAndDrop('g.blocklyDraggable:nth-child(8)', '.blocklyToolboxDiv');
-        
-        await this.click('#blocksEditorToolbox > div.blocklyTreeRoot > div > div:nth-child(2) > div.blocklyTreeRow');
-
-        await this.contextClick('#blocksEditor > div > svg:nth-child(7) > g > g.blocklyBlockCanvas > g:nth-child(2) > path.blocklyPath.blocklyBlockBackground');
+        await this.contextClick('g.blocklyDraggable:nth-child(2) g.blocklyDraggable');
 
         await this.click('div.goog-menuitem');
 
