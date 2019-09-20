@@ -3863,7 +3863,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         lang.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
-                        pxt.tickEvent("unavailablelocale", {lang : useLang,  force : (force? "true" : "false")});
+                        pxt.tickEvent("unavailablelocale", {lang : useLang,  force : (force ? "true" : "false")});
                     }
                     pxt.tickEvent("locale", {lang : pxt.Util.userLanguage(), live : (live ? "true" : "false")});
                     // Download sim translations and save them in the sim
