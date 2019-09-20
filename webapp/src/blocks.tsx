@@ -386,7 +386,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         for (const block in deprecatedMap) {
             if (deprecatedMap[block] !== 0) {
-                pxt.tickEvent("blocks.usingDeprecated", {block : block});
+                pxt.tickEvent("blocks.usingDeprecated", {block : block, count : deprecatedMap[block] });
             }
         }
     }
