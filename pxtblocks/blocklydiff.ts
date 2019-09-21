@@ -124,7 +124,11 @@ namespace pxt.blocks {
         // 3. delete statement blocks
         // inject deleted blocks in new workspace
         const dids: Map<string> = {};
-        const deletedStatementBlocks = deletedBlocks.filter(b => !todoBlocks[b.id] && (!b.outputConnection || !b.outputConnection.isConnected()));
+        const deletedStatementBlocks = deletedBlocks
+            .filter(b => !todoBlocks[b.id]
+                && !isUsed(b)
+                && (!b.outputConnection || !b.outputConnection.isConnected())
+            );
         deletedStatementBlocks
             .forEach(b => {
                 const b2 = cloneIntoDiff(b);
