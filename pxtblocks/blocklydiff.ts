@@ -1,5 +1,6 @@
 namespace pxt.blocks {
     export interface DiffOptions {
+        hideDeletedTopBlocks?: boolean;
         hideUnmodifiedTopBlocks?: boolean;
     }
 
@@ -80,14 +81,16 @@ namespace pxt.blocks {
         log('start')
 
         // 1. deleted top blocks
-        deletedTopBlocks.forEach(b => {
-            console.log(`deleted top ${b.id}`)
-            done(b);
-            const b2 = cloneIntoDiff(b);
-            done(b2);
-            b2.setDisabled(true);
-        });
-        log('deleted top')
+        if (!options.hideDeletedTopBlocks) {
+            deletedTopBlocks.forEach(b => {
+                console.log(`deleted top ${b.id}`)
+                done(b);
+                const b2 = cloneIntoDiff(b);
+                done(b2);
+                b2.setDisabled(true);
+            });
+            log('deleted top')
+        }
 
         // 2. added blocks
         addedBlocks.map(b => ws.getBlockById(b.id)).forEach(b => {
