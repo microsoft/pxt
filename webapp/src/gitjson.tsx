@@ -367,7 +367,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private showDiff(f: pkg.File) {
+    private showDiff(isBlocksMode: boolean, f: pkg.File) {
         let cache = this.diffCache[f.name]
         if (!cache) {
             cache = {} as any
@@ -381,15 +381,19 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const content = f.content;
         let diffJSX: JSX.Element;
         if (isBlocks) {
-            const markdown =
-                `
+            if (!pxt.appTarget.appTheme.githubBlocksDiff)
+                diffJSX = <p className="ui basic segment">{lf("Some blocks were changed.")}</p>
+            else {
+                const markdown =
+                    `
 \`\`\`diffblocksxml
 ${baseContent}
 ---------------------
 ${content}
 \`\`\`
 `;
-            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+                diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            }
         } else {
             const classes: pxt.Map<string> = {
                 "@": "diff-marker",
@@ -440,7 +444,7 @@ ${content}
             addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
         }
         // backing .ts for .blocks/.py files
-        let virtualF = pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (virtualF == f) virtualF = undefined;
 
         cache.gitFile = f.baseGitContent
@@ -552,10 +556,10 @@ ${content}
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push
 
-        const isBlocks = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
+        const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0;
-        const displayDiffFiles = isBlocks ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
+        const displayDiffFiles = isBlocksMode ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const { needsPull } = this.state;
         const githubId = this.parsedRepoId()
@@ -583,7 +587,7 @@ ${content}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -596,11 +600,11 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
-                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocks} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
+                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
                     }
                     <div className="ui">
-                        {displayDiffFiles.map(df => this.showDiff(df))}
+                        {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div>
 
                     {pxt.github.token ? dialogs.githubFooter("", () => this.props.parent.forceUpdate()) : undefined}

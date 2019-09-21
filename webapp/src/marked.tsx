@@ -162,7 +162,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                             pxsim.U.removeClass(wrapperDiv, 'loading');
                         } else {
                             // An error occured, show alternate message
-                            const textDiv = document.createElement('span');
+                            const textDiv = document.createElement('div');
+                            textDiv.className = "ui basic segment";
                             textDiv.textContent = diff.message || lf("No changes.");
                             wrapperDiv.appendChild(textDiv);
                             pxsim.U.removeClass(wrapperDiv, 'loading');

@@ -349,6 +349,7 @@ declare namespace pxt {
         nameProjectFirst?: boolean;
         alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
         alwaysGithubItem?: boolean; // show Github item; even when token is not available
+        githubBlocksDiff?: boolean; // show a visual diff of the blocks in the gitview
     }
 
     interface SocialOptions {
