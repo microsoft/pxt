@@ -972,11 +972,19 @@ namespace pxt.github {
     }
 
     // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
-    export function diff3(fileA: string, fileO: string, fileB: string) {
+    export function diff3(fileA: string, fileO: string, fileB: string,
+        lblA?: string, lblB?: string) {
+        // we're not showing these to users (yet anyways)
+        if (!lblA)
+            lblA = lf("Yours") // ours/HEAD
+        if (!lblB)
+            lblB = lf("Incoming") // theirs/upstream/origin
+
         const ma = computeMatch(fileA)
         const mb = computeMatch(fileB)
         const fa = toLines(fileA)
         const fb = toLines(fileB)
+        let numConflicts = 0
 
         let r: string[] = []
         let la = 0, lb = 0
@@ -1011,13 +1019,14 @@ namespace pxt.github {
                     while (la < ma[j])
                         r.push(fa[la++])
                 } else {
-                    r.push("<<<<<<<")
+                    numConflicts++
+                    r.push("<<<<<<< " + lblA)
                     while (la < ma[j])
                         r.push(fa[la++])
                     r.push("=======")
                     while (lb < mb[j])
                         r.push(fb[lb++])
-                    r.push(">>>>>>>")
+                    r.push(">>>>>>> " + lblB)
                 }
                 i = j
                 la = ma[j]
@@ -1025,7 +1034,7 @@ namespace pxt.github {
             }
         }
 
-        return r
+        return { merged: r.join("\n"), numConflicts }
 
         function computeMatch(fileA: string) {
             const da = pxt.github.diff(fileO, fileA, { context: Infinity })

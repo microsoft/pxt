@@ -442,10 +442,6 @@ export async function hasPullAsync(hd: Header) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
-async function tryMergeAsync(hd: Header, files: ScriptText) {
-
-}
-
 export async function pullAsync(hd: Header, checkOnly = false) {
     let files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
@@ -457,12 +453,21 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
-    if (!hd.githubCurrent && !checkOnly)
-        return PullStatus.NeedsCommit
     if (checkOnly)
         return PullStatus.GotChanges
-    await githubUpdateToAsync(hd, gitjson.repo, sha, files)
-    return PullStatus.GotChanges
+    if (hd.githubCurrent) {
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files })
+        return PullStatus.GotChanges
+    } else {
+        try {
+            await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
+            return PullStatus.GotChanges
+        } catch (e) {
+            if (e.isMergeError)
+                return PullStatus.NeedsCommit
+            else throw e
+        }
+    }
 }
 
 export async function prAsync(hd: Header, commitId: string, msg: string) {
@@ -474,7 +479,11 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
     // force user back to master - we will instruct them to merge PR in github.com website
     // and sync here to get the changes
     let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    await githubUpdateToAsync(hd, hd.githubId, headCommit, {})
+    await githubUpdateToAsync(hd, {
+        repo: hd.githubId,
+        sha: headCommit,
+        files: {}
+    })
     return url
 }
 
@@ -560,47 +569,86 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
-        await githubUpdateToAsync(hd, gitjson.repo, newCommit, files, parsed.tag)
+        await githubUpdateToAsync(hd, {
+            repo: gitjson.repo,
+            sha: newCommit,
+            files,
+            saveTag: options.createTag
+        })
         if (options.createTag)
             await pxt.github.createTagAsync(parsed.fullName, options.createTag, newCommit)
         return ""
     }
 }
 
-async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, branch?: string, justJSON = false) {
-    let parsed = pxt.github.parseRepoId(repoid)
-    let commit = await pxt.github.getCommitAsync(parsed.fullName, commitid)
+interface UpdateOptions {
+    repo: string;
+    sha: string;
+    files: pxt.Map<string>;
+    saveTag?: string;
+    justJSON?: boolean;
+    tryDiff3?: boolean;
+}
+
+function mergeError() {
+    const e = new Error("Merge error");
+    (e as any).isMergeError = true
+    return e
+}
+
+async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
+    const { repo, sha, files, justJSON } = options
+    const parsed = pxt.github.parseRepoId(repo)
+    const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
     let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
 
     if (!gitjson.commit) {
         gitjson = {
-            repo: repoid,
+            repo: repo,
             commit: null
         }
     }
 
     const downloadedFiles: pxt.Map<boolean> = {}
 
-    let downloadAsync = async (path: string) => {
+    const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
-        let treeEnt = lookupFile(commit, path)
+        const treeEnt = lookupFile(commit, path)
+        const oldEnt = lookupFile(gitjson.commit, path)
+        const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
+            // strange: file in pxt.json but not in git
+            if (options.tryDiff3 && hasChanges) throw mergeError()
             if (!justJSON)
                 files[path] = ""
             return ""
         }
-        if (files[path] && gitsha(files[path]) == treeEnt.sha) {
-            treeEnt.blobContent = files[path]
-            return treeEnt.blobContent
+        let text = oldEnt ? oldEnt.blobContent : files[path]
+        if (text != null && gitsha(text) == treeEnt.sha) {
+            treeEnt.blobContent = text
+            if (!options.tryDiff3 && !options.justJSON)
+                files[path] = text
+            return text
         }
-        let text = await pxt.github.downloadTextAsync(parsed.fullName, commitid, path)
-        if (!justJSON) {
-            files[path] = text
-            if (gitsha(files[path]) != treeEnt.sha)
-                U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
-        }
+        text = await pxt.github.downloadTextAsync(parsed.fullName, sha, path)
         treeEnt.blobContent = text
-        return treeEnt.blobContent
+        if (gitsha(text) != treeEnt.sha)
+            U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+        if (options.tryDiff3 && hasChanges) {
+            const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent)
+            if (d3.numConflicts) throw mergeError()
+            text = d3.merged
+            if (path == pxt.CONFIG_NAME) {
+                try {
+                    JSON.parse(text)
+                } catch {
+                    throw mergeError()
+                }
+            }
+        }
+        if (!justJSON)
+            files[path] = text
+        return text
     }
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
@@ -622,14 +670,14 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         }
     }
 
-    commit.tag = branch
+    commit.tag = options.saveTag
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
     if (!hd) {
         hd = await installAsync({
             name: cfg.name,
-            githubId: repoid,
+            githubId: repo,
             pubId: "",
             pubCurrent: false,
             meta: {},
@@ -699,7 +747,12 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
     // this happens for older projects
     if (needsBlobs)
-        await githubUpdateToAsync(h, gitjson.repo, gitjson.commit.sha, files, null, true)
+        await githubUpdateToAsync(h, {
+            repo: gitjson.repo,
+            sha: gitjson.commit.sha,
+            files,
+            justJSON: true
+        })
 
     if (gitjson.isFork == null) {
         const p = pxt.github.parseRepoId(gitjson.repo)
@@ -786,7 +839,7 @@ export async function importGithubAsync(id: string) {
             U.userError(lf("No such repository or branch."));
         }
     }
-    return await githubUpdateToAsync(null, repoid, sha, {})
+    return await githubUpdateToAsync(null, { repo: repoid, sha, files: {} })
         .then(hd => {
             if (isEmpty)
                 return initializeGithubRepoAsync(hd, repoid, true);
