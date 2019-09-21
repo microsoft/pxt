@@ -250,7 +250,7 @@ namespace pxt.BrowserUtils {
         if (!hasLoggedBrowser) {
             pxt.log(`Browser: ${browser()} ${versionString} on ${os()}`)
             if (!isSupported) {
-                pxt.tickEvent(`browser.unsupported.${navigator.userAgent}`)
+                pxt.tickEvent("browser.unsupported", {useragent : navigator.userAgent})
             }
             hasLoggedBrowser = true
         }
