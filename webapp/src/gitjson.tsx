@@ -684,11 +684,13 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId, master } = this.props;
+        const { needsToken, githubId, gs, master } = this.props;
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
-            {master ?
+            {master ? gs.commit && gs.commit.tag ?
+                <p>{lf("Current release: {0}", gs.commit.tag)}</p>
+                :
                 <div className="ui field">
                     <p>
                         {lf("Bump up the version number and create a release on GitHub.")}
