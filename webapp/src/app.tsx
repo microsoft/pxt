@@ -1513,7 +1513,7 @@ export class ProjectView
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
-            pxt.tickEvent("import." + importer.id);
+            pxt.tickEvent("import",{ id : importer.id });
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             pxt.editor.initEditorExtensionsAsync()
@@ -3330,8 +3330,10 @@ export class ProjectView
         }
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
-        // don't show in sandbox or show if github always or don't show in blocks/serial
-        const showFileList = !sandbox && !(isBlocks || this.editor == this.serialEditor);
+        // don't show in sandbox or is blocks editor or previous editor is blocks
+        const showFileList = !sandbox
+            && !(isBlocks
+                || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         // show github if token or if always vis
         const showGithub = !!pxt.github.token || (isBlocks && targetTheme.alwaysGithubItemBlocks) || (!isBlocks && targetTheme.alwaysGithubItem);
         return (
@@ -3861,10 +3863,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         lang.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
-                        pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
+                        pxt.tickEvent("unavailablelocale", {lang : useLang,  force : (force ? "true" : "false")});
                     }
-                    pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""));
-
+                    pxt.tickEvent("locale", {lang : pxt.Util.userLanguage(), live : (live ? "true" : "false")});
                     // Download sim translations and save them in the sim
                     // don't wait!
                     ts.pxtc.Util.downloadTranslationsAsync(

@@ -564,8 +564,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                             {lf("Pull request")}
                         </a>}
                     <h3 className="header">
+                        <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}</span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
                     </h3>
                     {needsCommit ?
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
@@ -605,28 +606,16 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { gs, githubId } = this.props;
-        const needsLicenseMessage = gs.commit && !gs.commit.tree.tree.some(f =>
-            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
+        const needsToken = !pxt.github.token;
 
         return <div>
-            {!pxt.github.token ? <div className="ui info message join">
+            {needsToken ? <div className="ui info message join">
                 <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
             </div> : undefined}
-            {needsCommitMessage ? <div className="ui warning message">
+            {!needsToken && needsCommitMessage ? <div className="ui warning message">
                 <div className="content">
-                    {lf("You need to commit your changes first, before you can pull from GitHub.")}
-                </div>
-            </div> : undefined}
-            {needsLicenseMessage ? <div className="ui warning message">
-                <div className="content">
-                    <span>{lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}</span>
-                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                        role="button" className="ui basic button"
-                        target="_blank" rel="noopener noreferrer">
-                        {lf("Add license")}
-                    </a>
+                    {lf("You need to commit your changes before you can pull from GitHub.")}
                 </div>
             </div> : undefined}
         </div>
@@ -684,7 +673,9 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId, gs, master } = this.props;
+        const { needsToken, githubId, master, gs } = this.props;
+        const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
+            /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
@@ -698,6 +689,17 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     </p>
                     <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                 </div> : undefined}
+            {master && needsLicenseMessage ? <div className="ui message">
+                <div className="content">
+                    {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
+                    {" "}
+                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                        role="button" className="ui link"
+                        target="_blank" rel="noopener noreferrer">
+                        {lf("Add license")}
+                    </a>
+                </div>
+            </div> : undefined}
         </div>
     }
 }

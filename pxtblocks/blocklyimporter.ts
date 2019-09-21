@@ -49,7 +49,7 @@ namespace pxt.blocks {
 
     export function saveWorkspaceXml(ws: Blockly.Workspace): string {
         let xml = Blockly.Xml.workspaceToDom(ws, true);
-        let text = Blockly.Xml.domToPrettyText(xml);
+        let text = Blockly.Xml.domToText(xml);
         return text;
     }
 
