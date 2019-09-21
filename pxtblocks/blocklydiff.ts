@@ -2,10 +2,12 @@ namespace pxt.blocks {
     export interface DiffOptions {
         hideDeletedTopBlocks?: boolean;
         hideUnmodifiedTopBlocks?: boolean;
+        renderOptions?: BlocksRenderOptions;
     }
 
     export interface DiffResult {
         ws?: Blockly.WorkspaceSvg;
+        message?: string;
         error?: any;
         svg?: Element;
         deleted: number;
@@ -28,6 +30,7 @@ namespace pxt.blocks {
             pxt.reportException(e);
             return {
                 ws: undefined,
+                message: lf("Oops, we could not diff those blocks."),
                 error: e,
                 deleted: 0,
                 added: 0,
@@ -140,13 +143,22 @@ namespace pxt.blocks {
             forceRender(b);
         });
 
+        // if nothing is left in the workspace, we "missed" change
+        if (!ws.getAllBlocks().length)
+            return {
+                ws,
+                message: lf("Some blocks were changed."),
+                deleted: deletedBlocks.length,
+                added: addedBlocks.length,
+                modified: modified
+            }
+
         // make sure everything is rendered
         ws.resize();
         Blockly.svgResize(ws);
 
         // final render
-        const svg = pxt.blocks.renderWorkspace({
-        });
+        const svg = pxt.blocks.renderWorkspace(options.renderOptions);
 
         // and we're done
         return {
