@@ -9,6 +9,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 
 interface DiffCache {
+    file: pkg.File;
     gitFile: string;
     editorFile: string;
     diff: JSX.Element;
@@ -338,12 +339,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private async commitCoreAsync() {
         const { header } = this.props.parent.state;
         const repo = header.githubId;
-        const msg = this.state.description || lf("Updates")
-        let commitId = await workspace.commitAsync(header, msg)
+        let commitId = await workspace.commitAsync(header, {
+            message: this.state.description
+        })
         if (commitId) {
             // merge failure; do a PR
             // we could ask the user, but it's unlikely they can do anything else to fix it
-            let prUrl = await workspace.prAsync(header, commitId, msg)
+            let prUrl = await workspace.prAsync(header, commitId,
+                this.state.description || lf("Commit conflict"))
             await dialogs.showPRDialogAsync(repo, prUrl)
             // when the dialog finishes, we pull again - it's possible the user
             // has resolved the conflict in the meantime
@@ -368,8 +371,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private showDiff(f: pkg.File) {
         let cache = this.diffCache[f.name]
-        if (!cache) {
-            cache = {} as any
+        if (!cache || cache.file !== f) {
+            cache = { file: f } as any
             this.diffCache[f.name] = cache
         }
         if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
@@ -563,7 +566,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
@@ -676,7 +679,11 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
-            {master ?
+            {master ? gs.commit && gs.commit.tag ?
+                <div className="ui field">
+                    <p>{lf("Current release: {0}", gs.commit.tag)}</p>
+                </div>
+                :
                 <div className="ui field">
                     <p>
                         {lf("Bump up the version number and create a release on GitHub.")}
