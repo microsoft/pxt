@@ -216,7 +216,7 @@ namespace pxt.blocks {
         Blockly.svgResize(ws);
 
         // final render
-        const svg = pxt.blocks.renderWorkspace(options.renderOptions || { emPixels: 18, splitSvg: true});
+        const svg = pxt.blocks.renderWorkspace(options.renderOptions);
 
         // and we're done
         const r: DiffResult = {
