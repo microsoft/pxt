@@ -141,7 +141,8 @@ namespace pxt.editor.experiments {
             {
                 id: "githubBlocksDiff",
                 name: lf("Blocks Diff"),
-                descript: lf("Display a visual representation of the changes made ot the blocks.")
+                descript: lf("Display a visual representation of the changes made ot the blocks."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5936"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
