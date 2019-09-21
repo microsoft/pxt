@@ -439,10 +439,14 @@ ${content}
             deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
             addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
         }
+        // backing .ts for .blocks/.py files
+        let virtualF = pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        if (virtualF == f) virtualF = undefined;
 
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
         cache.revert = async () => {
+            pxt.tickEvent("github.revert", { start: 1 })
             const res = await core.confirmAsync({
                 header: lf("Would you like to revert changes to {0}?", f.name),
                 body: lf("Changes will be lost for good. No undo."),
@@ -454,6 +458,7 @@ ${content}
             if (!res)
                 return
 
+            pxt.tickEvent("github.revert", { ok: 1 })
             this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
             if (f.baseGitContent == null) {
@@ -472,6 +477,9 @@ ${content}
                 await this.props.parent.reloadHeaderAsync()
             } else {
                 await f.setContentAsync(f.baseGitContent)
+                // revert generated .ts file as well
+                if (virtualF)
+                    await virtualF.setContentAsync(virtualF.baseGitContent);
                 this.forceUpdate();
             }
         }
@@ -491,6 +499,9 @@ ${content}
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
+                    {virtualF ? <p>
+                        {lf("Reverting this file will also remove: {0}", virtualF.name)}
+                    </p> : undefined}
                 </div>
                 {diffJSX ?
                     <div className="ui segment diff">
