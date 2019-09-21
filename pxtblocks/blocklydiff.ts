@@ -112,11 +112,13 @@ namespace pxt.blocks {
         }
 
         // 2. added blocks
-        addedBlocks.map(b => ws.getBlockById(b.id)).forEach(b => {
-            console.log(`added top ${b.id}`)
-            b.inputList[0].insertFieldAt(0, new Blockly.FieldImage(ADD_IMAGE_DATAURI, 24, 24, false));
-            done(b);
-        });
+        addedBlocks.map(b => ws.getBlockById(b.id))
+            .filter(b => !!b) // ignore disabled
+            .forEach(b => {
+                console.log(`added top ${b.id}`)
+                b.inputList[0].insertFieldAt(0, new Blockly.FieldImage(ADD_IMAGE_DATAURI, 24, 24, false));
+                done(b);
+            });
         log('added top')
 
         // 3. delete statement blocks
