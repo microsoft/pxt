@@ -730,14 +730,6 @@ export function uploadTargetRefsAsync(repoPath: string) {
         })
 }
 
-export async function diff3Async(pc: commandParser.ParsedCommand): Promise<void> {
-    const a = await readFileAsync(pc.args[0], "utf8")
-    const o = await readFileAsync(pc.args[1], "utf8")
-    const b = await readFileAsync(pc.args[2], "utf8")
-    const r = pxt.github.diff3(a, o, b)
-    console.log(r)
-}
-
 interface UploadOptions {
     fileList: string[];
     pkgversion: string;
@@ -5848,13 +5840,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     }, pc => uploadTargetRefsAsync(pc.args[0]));
     advancedCommand("uploadtt", "upload tagged release", uploadTaggedTargetAsync, "");
     advancedCommand("downloadtrgtranslations", "download translations from bundled projects", downloadTargetTranslationsAsync, "<package>");
-
-    p.defineCommand({
-        name: "diff3",
-        help: "compute merge a<-o->b",
-        argString: "<a> <o> <b>",
-        advanced: true
-    }, diff3Async)
 
     p.defineCommand({
         name: "checkdocs",
