@@ -566,7 +566,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
@@ -680,7 +680,9 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
             {master ? gs.commit && gs.commit.tag ?
-                <p>{lf("Current release: {0}", gs.commit.tag)}</p>
+                <div className="ui field">
+                    <p>{lf("Current release: {0}", gs.commit.tag)}</p>
+                </div>
                 :
                 <div className="ui field">
                     <p>
