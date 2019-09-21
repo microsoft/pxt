@@ -104,7 +104,41 @@ namespace pxt.blocks {
         log('added top')
 
         // 3. delete statement blocks
-        // TODO
+        // inject deleted blocks in new workspace
+        const dids: Map<string> = {};
+        const deletedStatementBlocks = deletedBlocks.filter(b => !todoBlocks[b.id] && (!b.outputConnection || !b.outputConnection.isConnected()));
+        deletedStatementBlocks
+            .forEach(b => {
+                const b2 = cloneIntoDiff(b);
+                dids[b.id] = b2.id;
+                console.log(`deleted block ${b.id}->${b2.id}`)
+            })
+        // connect deleted blocks together
+        deletedStatementBlocks
+            .forEach(b => {
+                console.log(`stiching ${b.id}->${dids[b.id]}`)
+                const wb = ws.getBlockById(dids[b.id]);
+                wb.setDisabled(true);
+                done(wb);
+                // connect previous connection to delted or existing block
+                const previous = b.getPreviousBlock();
+                if (previous) {
+                    const previousw = ws.getBlockById(dids[previous.id]) || ws.getBlockById(previous.id);
+                    console.log(`previous ${b.id}->${wb.id}: ${previousw.id}`)
+                    if (previousw) {
+                        wb.previousConnection.connect(previousw.nextConnection);
+                    }
+                }
+                // connect next connection to delete or existing block
+                const next = b.getNextBlock();
+                if (next) {
+                    const nextw = ws.getBlockById(dids[next.id]) || ws.getBlockById(next.id);
+                    if (nextw) {
+                        console.log(`next ${b.id}->${wb.id}: ${nextw.id}`)
+                        wb.nextConnection.connect(nextw.previousConnection);
+                    }
+                }
+            });
 
         // 4. moved blocks
         let modified = 0;
