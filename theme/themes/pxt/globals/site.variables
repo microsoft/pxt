@@ -224,9 +224,9 @@ default semantic
 @diffAddedBackground: #e6ffed;
 @diffMarkerBackground: #f1f8ff;
 @diffMarkerColor: rgba(27,31,35,.7);
-@diffHoverDarkenRatio: 10%;
-@diffRemovedHoverBackground:darken(@diffRemovedBackground, @diffHoverDarkenRatio);;
-@diffAddedHoverBackground: darken(@diffAddedBackground, @diffHoverDarkenRatio);;
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);;
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);;
 
 
 /*-------------------
