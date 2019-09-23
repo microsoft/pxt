@@ -47,6 +47,9 @@ namespace pxt.blocks {
         pxt.tickEvent("blocks.diff", { started: 1 })
         options = options || {};
 
+        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href)) 
+            ? console.log : (message?: any, ...args: any[]) => {};
+
         // remove all unmodified topblocks
         newWs.getTopBlocks(false)
             .forEach(newb => {
@@ -55,7 +58,7 @@ namespace pxt.blocks {
                     const newn = normalizedDom(newb, true);
                     const oldn = normalizedDom(oldb, true);
                     if (newn == oldn) {
-                        console.log(`unmodified: `, newb.id);
+                        log(`unmodified: `, newb.id);
                         newb.dispose();
                         oldb.dispose();
                     }
@@ -67,8 +70,8 @@ namespace pxt.blocks {
         const oldBlocks = oldWs.getAllBlocks().filter(b => !b.disabled);
         const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => !b.disabled);
         const newBlocks = newWs.getAllBlocks().filter(b => !b.disabled);
-        console.log(`blocks`, newBlocks.map(b => b.id));
-        console.log(newBlocks);
+        log(`blocks`, newBlocks.map(b => b.id));
+        log(newBlocks);
 
         if (oldBlocks.length == 0 && newBlocks.length == 0) {
             pxt.tickEvent("blocks.diff", { moves: 1 })
@@ -96,33 +99,33 @@ namespace pxt.blocks {
 
         // delete disabled blocks from final workspace
         ws.getAllBlocks().filter(b => b.disabled).forEach(b => {
-            console.log('disabled:', b.id)
+            log('disabled:', b.id)
             b.dispose(false)
         })
         const todoBlocks = Util.toDictionary(ws.getAllBlocks(), b => b.id);
-        log('start')
+        logTodo('start')
 
         // 1. deleted top blocks
         if (!options.hideDeletedTopBlocks) {
             deletedTopBlocks.forEach(b => {
-                console.log(`deleted top ${b.id}`)
+                log(`deleted top ${b.id}`)
                 done(b);
                 const b2 = cloneIntoDiff(b);
                 done(b2);
                 b2.setDisabled(true);
             });
-            log('deleted top')
+            logTodo('deleted top')
         }
 
         // 2. added blocks
         addedBlocks.map(b => ws.getBlockById(b.id))
             .filter(b => !!b) // ignore disabled
             .forEach(b => {
-                console.log(`added top ${b.id}`)
+                log(`added top ${b.id}`)
                 b.inputList[0].insertFieldAt(0, new Blockly.FieldImage(ADD_IMAGE_DATAURI, 24, 24, false));
                 done(b);
             });
-        log('added top')
+        logTodo('added top')
 
         // 3. delete statement blocks
         // inject deleted blocks in new workspace
@@ -136,12 +139,12 @@ namespace pxt.blocks {
             .forEach(b => {
                 const b2 = cloneIntoDiff(b);
                 dids[b.id] = b2.id;
-                console.log(`deleted block ${b.id}->${b2.id}`)
+                log(`deleted block ${b.id}->${b2.id}`)
             })
         // connect deleted blocks together
         deletedStatementBlocks
             .forEach(b => {
-                console.log(`stiching ${b.id}->${dids[b.id]}`)
+                log(`stiching ${b.id}->${dids[b.id]}`)
                 const wb = ws.getBlockById(dids[b.id]);
                 wb.setDisabled(true);
                 done(wb);
@@ -149,7 +152,7 @@ namespace pxt.blocks {
                 const previous = b.getPreviousBlock();
                 if (previous) {
                     const previousw = ws.getBlockById(dids[previous.id]) || ws.getBlockById(previous.id);
-                    console.log(`previous ${b.id}->${wb.id}: ${previousw.id}`)
+                    log(`previous ${b.id}->${wb.id}: ${previousw.id}`)
                     if (previousw) {
                         wb.previousConnection.connect(previousw.nextConnection);
                     }
@@ -159,7 +162,7 @@ namespace pxt.blocks {
                 if (next) {
                     const nextw = ws.getBlockById(dids[next.id]) || ws.getBlockById(next.id);
                     if (nextw) {
-                        console.log(`next ${b.id}->${wb.id}: ${nextw.id}`)
+                        log(`next ${b.id}->${wb.id}: ${nextw.id}`)
                         wb.nextConnection.connect(nextw.previousConnection);
                     }
                 }
@@ -168,31 +171,31 @@ namespace pxt.blocks {
         // 4. moved blocks
         let modified = 0;
         Util.values(todoBlocks).filter(b => moved(b)).forEach(b => {
-            console.log(`moved ${b.id}`)
+            log(`moved ${b.id}`)
             delete todoBlocks[b.id]
             markUsed(b);
             modified++;
         })
-        log('moved')
+        logTodo('moved')
 
         // 5. blocks with field properties that changed
         Util.values(todoBlocks).filter(b => changed(b)).forEach(b => {
-            console.log(`changed ${b.id}`)
+            log(`changed ${b.id}`)
             delete todoBlocks[b.id];
             markUsed(b);
             modified++;
         })
-        log('changed')
+        logTodo('changed')
 
         // delete unmodified top blocks
         ws.getTopBlocks(false)
             .filter(b => !find(b, c => isUsed(c)))
             .forEach(b => {
-                console.log(`unmodified ${b.id}`)
+                log(`unmodified ${b.id}`)
                 delete todoBlocks[b.id];
                 b.dispose(false)
             });
-        log('cleaned')
+        logTodo('cleaned')
 
         // all unmodifed blocks are greyed out
         Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => {
@@ -279,8 +282,8 @@ namespace pxt.blocks {
             return false;
         }
 
-        function log(msg: string) {
-            console.log(`${msg}:`, Object.keys(todoBlocks))
+        function logTodo(msg: string) {
+            log(`${msg}:`, Object.keys(todoBlocks))
         }
 
         function moved(b: Blockly.Block) {
@@ -324,8 +327,8 @@ namespace pxt.blocks {
             const newText = normalizedDom(b);
 
             if (oldText != newText) {
-                console.log(`old`, oldText)
-                console.log(`new`, newText)
+                log(`old`, oldText)
+                log(`new`, newText)
                 return true;
             }
             // not changed!
