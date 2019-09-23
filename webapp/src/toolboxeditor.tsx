@@ -14,19 +14,20 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
 
-    protected shouldShowBlock(blockId: string, ns: string) {
+    protected shouldShowBlock(blockId: string, ns: string, shadow?: boolean) {
         const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
         if (filters) {
+            // block-level filters should not apply to shadow blocks (nested)
             const blockFilter = filters.blocks && filters.blocks[blockId];
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
             // First try block filters
-            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden) return false;
+            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
             if (blockFilter != undefined) return true;
             // Check if category is hidden
             if (categoryFilter != undefined && categoryFilter == pxt.editor.FilterState.Hidden) return false;
             if (categoryFilter != undefined) return true;
             // Check default filter state
-            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden) return false;
+            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden && !shadow) return false;
         }
         return true;
     }
