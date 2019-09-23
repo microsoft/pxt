@@ -370,7 +370,37 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private showDiff(isBlocksMode: boolean, f: pkg.File) {
+    private lineDiff(lineA: string, lineB: string) {
+        const df = pxt.github.diff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+            context: Infinity
+        })
+        const ja: JSX.Element[] = []
+        const jb: JSX.Element[] = []
+        for (let i = 0; i < df.length;) {
+            let j = i
+            const mark = df[i][0]
+            while (df[j] && df[j][0] == mark)
+                j++
+            const chunk = df.slice(i, j).map(s => s.slice(2)).join("")
+            if (mark == " ") {
+                ja.push(<code key={i} className="ch-common">{chunk}</code>)
+                jb.push(<code key={i} className="ch-common">{chunk}</code>)
+            } else if (mark == "-") {
+                ja.push(<code key={i} className="ch-removed">{chunk}</code>)
+            } else if (mark == "+") {
+                jb.push(<code key={i} className="ch-added">{chunk}</code>)
+            } else {
+                pxt.Util.oops()
+            }
+            i = j
+        }
+        return {
+            a: <div className="inline-diff">{ja}</div>,
+            b: <div className="inline-diff">{jb}</div>
+        }
+    }
+
+    private showDiff(f: pkg.File) {
         let cache = this.diffCache[f.name]
         if (!cache || cache.file !== f) {
             cache = { file: f } as any
@@ -404,9 +434,11 @@ ${content}
                 "+": "diff-added",
                 "-": "diff-removed",
             }
+            const diffLines = pxt.github.diff(f.baseGitContent || "", f.content, { ignoreWhitespace: true })
             let lnA = 0, lnB = 0
-            const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
-            const linesTSX = diffLines.map(ln => {
+            let lastMark = ""
+            let savedDiff: JSX.Element = null
+            const linesTSX = diffLines.map((ln, idx) => {
                 const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
                 if (m) {
                     lnA = parseInt(m[1]) - 1
@@ -417,17 +449,31 @@ ${content}
                     if (ln[0] != "-")
                         lnB++
                 }
+                const nextMark = diffLines[idx + 1] ? diffLines[idx + 1][0] : ""
+                const next2Mark = diffLines[idx + 2] ? diffLines[idx + 2][0] : ""
+                let currDiff = <code>{ln.slice(2)}</code>
+
+                if (savedDiff) {
+                    currDiff = savedDiff
+                    savedDiff = null
+                } else if (ln[0] == "-" && (lastMark == " " || lastMark == "@") && nextMark == "+"
+                    && (next2Mark == " " || next2Mark == "@" || next2Mark == "")) {
+                    const r = this.lineDiff(ln.slice(2), diffLines[idx + 1].slice(2))
+                    currDiff = r.a
+                    savedDiff = r.b
+                }
+                lastMark = ln[0]
                 return (
                     <tr key={lnA + lnB} className={classes[ln[0]]}>
                         <td className="line-a" data-content={lnA}></td>
                         <td className="line-b" data-content={lnB}></td>
                         {ln[0] == "@"
-                            ? <td colSpan={2} className="change"><pre>{ln}</pre></td>
+                            ? <td colSpan={2} className="change"><code>{ln}</code></td>
                             : <td className="marker" data-content={ln[0]}></td>
                         }
                         {ln[0] == "@"
                             ? undefined
-                            : <td className="change"><pre>{ln.slice(2)}</pre></td>
+                            : <td className="change">{currDiff}</td>
                         }
                     </tr>)
             })
