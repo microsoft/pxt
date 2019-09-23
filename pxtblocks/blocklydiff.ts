@@ -77,7 +77,7 @@ namespace pxt.blocks {
             pxt.tickEvent("blocks.diff", { moves: 1 })
             return {
                 ws: undefined,
-                message: lf("Some blocks were moved."),
+                message: lf("Some blocks were moved or changed."),
                 added: 0,
                 deleted: 0,
                 modified: 1
@@ -232,10 +232,6 @@ namespace pxt.blocks {
         }
         pxt.tickEvent("blocks.diff", { deleted: r.deleted, added: r.added, modified: r.modified })
         return r;
-
-        function normalizeXml(xml: string) {
-            return xml.replace(/(x|y|id)="[^"]*"/g, '');
-        }
 
         function markUsed(b: Blockly.Block) {
             (<any>b).___used = true;
