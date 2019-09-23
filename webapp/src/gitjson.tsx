@@ -400,7 +400,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private showDiff(f: pkg.File) {
+    private showDiff(isBlocksMode: boolean, f: pkg.File) {
         let cache = this.diffCache[f.name]
         if (!cache || cache.file !== f) {
             cache = { file: f } as any
