@@ -143,7 +143,7 @@ namespace pxt.blocks {
             })
         // connect deleted blocks together
         deletedStatementBlocks
-            .forEach(b => stich(b));
+            .forEach(b => stitch(b));
 
         // 4. moved blocks
         let modified = 0;
@@ -171,8 +171,6 @@ namespace pxt.blocks {
                     log(`unmodified top ${b.toDevString()}`)
                     delete todoBlocks[b.id];
                     b.dispose(false)
-                } else {
-                    collapse(b);
                 }
             });
         logTodo('cleaned')
@@ -213,39 +211,8 @@ namespace pxt.blocks {
         pxt.tickEvent("blocks.diff", { deleted: r.deleted, added: r.added, modified: r.modified })
         return r;
 
-        function collapse(b: Blockly.Block) {
-            const DIFFLENGTH = 3;
-            const children = b.getDescendants(false, true);
-            if (children.length > DIFFLENGTH) {
-                let start = -1;
-                for (let i = 1; i < children.length; ++i) {
-                    const c = children[i];
-                    if (start < 0) start = i;
-                    if (!findUsed(c)) continue;
-                    else if (i - start > DIFFLENGTH) {
-                        // delete the inner blocks and inject ... block
-                        const s = children[start];
-                        log(`collapsing ${b.id} ${start}:${s.toDevString()}->${i}:${c.toDevString()}`)
-                        children.slice(start + 1, i - 1)
-                            .forEach(dc => dc.dispose(true));
-                        const cb = ws.newBlock(ts.pxtc.COLLAPSED_BLOCK);
-                        markUsed(cb);
-                        // insert ... block
-                        s.nextConnection.connect(cb.previousConnection);
-                        cb.nextConnection.connect(c.previousConnection);
-                        // patch i
-                        i = children.indexOf(c);
-                        start = -1;
-                    }
-                }
-            }
-
-            // collapse children too
-            children.forEach(c => collapse(c));
-        }
-
-        function stich(b: Blockly.Block) {
-            log(`stiching ${b.toDevString()}->${dids[b.id]}`)
+        function stitch(b: Blockly.Block) {
+            log(`stitching ${b.toDevString()}->${dids[b.id]}`)
             const wb = ws.getBlockById(dids[b.id]);
             wb.setDisabled(true);
             markUsed(wb);
@@ -290,6 +257,11 @@ namespace pxt.blocks {
         function cloneIntoDiff(b: Blockly.Block): Blockly.Block {
             const bdom = Blockly.Xml.blockToDom(b, false);
             const b2 = Blockly.Xml.domToBlock(bdom, ws);
+            // disconnect
+            if (b2.nextConnection && b2.nextConnection.targetConnection)
+                b2.nextConnection.disconnect();
+            if (b2.previousConnection && b2.previousConnection.targetConnection)
+                b2.previousConnection.disconnect();
             return b2;
         }
 
