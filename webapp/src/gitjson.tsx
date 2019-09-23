@@ -8,6 +8,7 @@ import * as dialogs from "./dialogs";
 import * as coretsx from "./coretsx";
 import * as data from "./data";
 import * as markedui from "./marked";
+import * as compiler from "./compiler";
 
 interface DiffCache {
     file: pkg.File;
@@ -827,6 +828,7 @@ export class Editor extends srceditor.Editor {
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         // force refresh to ensure we have a view
         return super.loadFileAsync(file, hc)
+            .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
             .then(() => this.parent.forceUpdate());
     }
 
