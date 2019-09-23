@@ -143,38 +143,7 @@ namespace pxt.blocks {
             })
         // connect deleted blocks together
         deletedStatementBlocks
-            .forEach(b => {
-                log(`stiching ${b.toDevString()}->${dids[b.id]}`)
-                const wb = ws.getBlockById(dids[b.id]);
-                wb.setDisabled(true);
-                markUsed(wb);
-                done(wb);
-                // connect previous connection to delted or existing block
-                const previous = b.getPreviousBlock();
-                if (previous) {
-                    const previousw = ws.getBlockById(dids[previous.id]) || ws.getBlockById(previous.id);
-                    log(`previous ${b.id}->${wb.toDevString()}: ${previousw.toDevString()}`)
-                    if (previousw) {
-                        // either connected under or in the block
-                        if (previousw.nextConnection)
-                            wb.previousConnection.connect(previousw.nextConnection);
-                        else {
-                            const ic = previousw.inputList.map(input => input.connection).find(c => !!c);
-                            if (ic)
-                                wb.previousConnection.connect(ic);
-                        }
-                    }
-                }
-                // connect next connection to delete or existing block
-                const next = b.getNextBlock();
-                if (next) {
-                    const nextw = ws.getBlockById(dids[next.id]) || ws.getBlockById(next.id);
-                    if (nextw) {
-                        log(`next ${b.id}->${wb.toDevString()}: ${nextw.toDevString()}`)
-                        wb.nextConnection.connect(nextw.previousConnection);
-                    }
-                }
-            });
+            .forEach(b => stich(b));
 
         // 4. moved blocks
         let modified = 0;
@@ -246,32 +215,68 @@ namespace pxt.blocks {
 
         function collapse(b: Blockly.Block) {
             const DIFFLENGTH = 3;
-            const children = b.childBlocks_ || [];
-            let start = -1;
-            for (let i = 1; i < children.length; ++i) {
-                const c = children[i];
-                if (!findUsed(c)) continue;
-                else if (start < 0) start = i;
-                else if (i - start > DIFFLENGTH) {
-                    // delete the inner blocks and inject ... block
-                    const s = children[start];
-                    for (let j = start + 1; j < i; ++j) {
-                        children[j].dispose(true);
+            const children = b.getDescendants(false, true);
+            if (children.length > DIFFLENGTH) {
+                let start = -1;
+                for (let i = 1; i < children.length; ++i) {
+                    const c = children[i];
+                    if (start < 0) start = i;
+                    if (!findUsed(c)) continue;
+                    else if (i - start > DIFFLENGTH) {
+                        // delete the inner blocks and inject ... block
+                        const s = children[start];
+                        log(`collapsing ${b.id} ${start}:${s.toDevString()}->${i}:${c.toDevString()}`)
+                        children.slice(start + 1, i - 1)
+                            .forEach(dc => dc.dispose(true));
+                        const cb = ws.newBlock(ts.pxtc.COLLAPSED_BLOCK);
+                        markUsed(cb);
+                        // insert ... block
+                        s.nextConnection.connect(cb.previousConnection);
+                        cb.nextConnection.connect(c.previousConnection);
+                        // patch i
+                        i = children.indexOf(c);
+                        start = -1;
                     }
-                    log(`collapsing ${b.id} ${start}:${s.id}->${i}:${c.id}`)
-                    const cb = ws.newBlock(ts.pxtc.COLLAPSED_BLOCK);
-                    markUsed(cb);
-                    // insert ... block
-                    s.nextConnection.connect(cb.previousConnection);
-                    cb.nextConnection.connect(c.previousConnection);
-                    // patch i
-                    i = children.indexOf(c);
-                    start = -1;
                 }
             }
 
             // collapse children too
             children.forEach(c => collapse(c));
+        }
+
+        function stich(b: Blockly.Block) {
+            log(`stiching ${b.toDevString()}->${dids[b.id]}`)
+            const wb = ws.getBlockById(dids[b.id]);
+            wb.setDisabled(true);
+            markUsed(wb);
+            done(wb);
+            // connect previous connection to delted or existing block
+            const previous = b.getPreviousBlock();
+            if (previous) {
+                const previousw = ws.getBlockById(dids[previous.id]) || ws.getBlockById(previous.id);
+                log(`previous ${b.id}->${wb.toDevString()}: ${previousw.toDevString()}`)
+                if (previousw) {
+                    // either connected under or in the block
+                    if (previousw.nextConnection)
+                        wb.previousConnection.connect(previousw.nextConnection);
+                    else {
+                        const ic = previousw.inputList.slice()
+                            .reverse()
+                            .find(input => input.connection && input.connection.type == Blockly.NEXT_STATEMENT);
+                        if (ic)
+                            wb.previousConnection.connect(ic.connection);
+                    }
+                }
+            }
+            // connect next connection to delete or existing block
+            const next = b.getNextBlock();
+            if (next) {
+                const nextw = ws.getBlockById(dids[next.id]) || ws.getBlockById(next.id);
+                if (nextw) {
+                    log(`next ${b.id}->${wb.toDevString()}: ${nextw.toDevString()}`)
+                    wb.nextConnection.connect(nextw.previousConnection);
+                }
+            }
         }
 
         function markUsed(b: Blockly.Block) {

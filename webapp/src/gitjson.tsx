@@ -608,7 +608,7 @@ ${content}
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0;
-        const displayDiffFiles = isBlocksMode ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
+        const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const { needsPull } = this.state;
         const githubId = this.parsedRepoId()
