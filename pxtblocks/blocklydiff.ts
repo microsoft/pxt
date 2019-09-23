@@ -22,8 +22,8 @@ namespace pxt.blocks {
 
     // Workspaces are modified in place!
     function diffWorkspace(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, options?: DiffOptions): DiffResult {
-        Blockly.Events.disable();
         try {
+            Blockly.Events.disable();
             return diffWorkspaceNoEvents(oldWs, newWs, options);
         }
         catch (e) {
@@ -47,8 +47,8 @@ namespace pxt.blocks {
         pxt.tickEvent("blocks.diff", { started: 1 })
         options = options || {};
 
-        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href)) 
-            ? console.log : (message?: any, ...args: any[]) => {};
+        const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
+            ? console.log : (message?: any, ...args: any[]) => { };
 
         // remove all unmodified topblocks
         newWs.getTopBlocks(false)
@@ -58,7 +58,7 @@ namespace pxt.blocks {
                     const newn = normalizedDom(newb, true);
                     const oldn = normalizedDom(oldb, true);
                     if (newn == oldn) {
-                        log(`unmodified: `, newb.id);
+                        log(`fast unmodified top `, newb.id);
                         newb.dispose();
                         oldb.dispose();
                     }
@@ -99,7 +99,7 @@ namespace pxt.blocks {
 
         // delete disabled blocks from final workspace
         ws.getAllBlocks().filter(b => b.disabled).forEach(b => {
-            log('disabled:', b.id)
+            log('disabled ', b.toDevString())
             b.dispose(false)
         })
         const todoBlocks = Util.toDictionary(ws.getAllBlocks(), b => b.id);
@@ -108,7 +108,7 @@ namespace pxt.blocks {
         // 1. deleted top blocks
         if (!options.hideDeletedTopBlocks) {
             deletedTopBlocks.forEach(b => {
-                log(`deleted top ${b.id}`)
+                log(`deleted top ${b.toDevString()}`)
                 done(b);
                 const b2 = cloneIntoDiff(b);
                 done(b2);
@@ -121,7 +121,7 @@ namespace pxt.blocks {
         addedBlocks.map(b => ws.getBlockById(b.id))
             .filter(b => !!b) // ignore disabled
             .forEach(b => {
-                log(`added top ${b.id}`)
+                log(`added top ${b.toDevString()}`)
                 b.inputList[0].insertFieldAt(0, new Blockly.FieldImage(ADD_IMAGE_DATAURI, 24, 24, false));
                 done(b);
             });
@@ -133,28 +133,36 @@ namespace pxt.blocks {
         const deletedStatementBlocks = deletedBlocks
             .filter(b => !todoBlocks[b.id]
                 && !isUsed(b)
-                && (!b.outputConnection || !b.outputConnection.isConnected())
+                && (!b.outputConnection || !b.outputConnection.isConnected()) // ignore reporters
             );
         deletedStatementBlocks
             .forEach(b => {
                 const b2 = cloneIntoDiff(b);
                 dids[b.id] = b2.id;
-                log(`deleted block ${b.id}->${b2.id}`)
+                log(`deleted block ${b.toDevString()}->${b2.toDevString()}`)
             })
         // connect deleted blocks together
         deletedStatementBlocks
             .forEach(b => {
-                log(`stiching ${b.id}->${dids[b.id]}`)
+                log(`stiching ${b.toDevString()}->${dids[b.id]}`)
                 const wb = ws.getBlockById(dids[b.id]);
                 wb.setDisabled(true);
+                markUsed(wb);
                 done(wb);
                 // connect previous connection to delted or existing block
                 const previous = b.getPreviousBlock();
                 if (previous) {
                     const previousw = ws.getBlockById(dids[previous.id]) || ws.getBlockById(previous.id);
-                    log(`previous ${b.id}->${wb.id}: ${previousw.id}`)
+                    log(`previous ${b.id}->${wb.toDevString()}: ${previousw.toDevString()}`)
                     if (previousw) {
-                        wb.previousConnection.connect(previousw.nextConnection);
+                        // either connected under or in the block
+                        if (previousw.nextConnection)
+                            wb.previousConnection.connect(previousw.nextConnection);
+                        else {
+                            const ic = previousw.inputList.map(input => input.connection).find(c => !!c);
+                            if (ic)
+                                wb.previousConnection.connect(ic);
+                        }
                     }
                 }
                 // connect next connection to delete or existing block
@@ -162,7 +170,7 @@ namespace pxt.blocks {
                 if (next) {
                     const nextw = ws.getBlockById(dids[next.id]) || ws.getBlockById(next.id);
                     if (nextw) {
-                        log(`next ${b.id}->${wb.id}: ${nextw.id}`)
+                        log(`next ${b.id}->${wb.toDevString()}: ${nextw.toDevString()}`)
                         wb.nextConnection.connect(nextw.previousConnection);
                     }
                 }
@@ -171,7 +179,7 @@ namespace pxt.blocks {
         // 4. moved blocks
         let modified = 0;
         Util.values(todoBlocks).filter(b => moved(b)).forEach(b => {
-            log(`moved ${b.id}`)
+            log(`moved ${b.toDevString()}`)
             delete todoBlocks[b.id]
             markUsed(b);
             modified++;
@@ -180,7 +188,7 @@ namespace pxt.blocks {
 
         // 5. blocks with field properties that changed
         Util.values(todoBlocks).filter(b => changed(b)).forEach(b => {
-            log(`changed ${b.id}`)
+            log(`changed ${b.toDevString()}`)
             delete todoBlocks[b.id];
             markUsed(b);
             modified++;
@@ -189,11 +197,14 @@ namespace pxt.blocks {
 
         // delete unmodified top blocks
         ws.getTopBlocks(false)
-            .filter(b => !find(b, c => isUsed(c)))
             .forEach(b => {
-                log(`unmodified ${b.id}`)
-                delete todoBlocks[b.id];
-                b.dispose(false)
+                if (!findUsed(b)) {
+                    log(`unmodified top ${b.toDevString()}`)
+                    delete todoBlocks[b.id];
+                    b.dispose(false)
+                } else {
+                    collapse(b);
+                }
             });
         logTodo('cleaned')
 
@@ -233,6 +244,36 @@ namespace pxt.blocks {
         pxt.tickEvent("blocks.diff", { deleted: r.deleted, added: r.added, modified: r.modified })
         return r;
 
+        function collapse(b: Blockly.Block) {
+            const DIFFLENGTH = 3;
+            const children = b.childBlocks_ || [];
+            let start = -1;
+            for (let i = 1; i < children.length; ++i) {
+                const c = children[i];
+                if (!findUsed(c)) continue;
+                else if (start < 0) start = i;
+                else if (i - start > DIFFLENGTH) {
+                    // delete the inner blocks and inject ... block
+                    const s = children[start];
+                    for (let j = start + 1; j < i; ++j) {
+                        children[j].dispose(true);
+                    }
+                    log(`collapsing ${b.id} ${start}:${s.id}->${i}:${c.id}`)
+                    const cb = ws.newBlock(ts.pxtc.COLLAPSED_BLOCK);
+                    markUsed(cb);
+                    // insert ... block
+                    s.nextConnection.connect(cb.previousConnection);
+                    cb.nextConnection.connect(c.previousConnection);
+                    // patch i
+                    i = children.indexOf(c);
+                    start = -1;
+                }
+            }
+
+            // collapse children too
+            children.forEach(c => collapse(c));
+        }
+
         function markUsed(b: Blockly.Block) {
             (<any>b).___used = true;
         }
@@ -270,16 +311,16 @@ namespace pxt.blocks {
                 children.forEach(c => vis(c, f));
         }
 
-        function find(b: Blockly.Block, f: (b: Blockly.Block) => boolean): boolean {
-            if (f(b)) return true;
+        function findUsed(b: Blockly.Block): boolean {
+            if (isUsed(b)) return true;
             const children = b.getChildren(false);
-            if (children && children.find(c => find(c, f)))
+            if (children && children.find(c => findUsed(c)))
                 return true;
             return false;
         }
 
         function logTodo(msg: string) {
-            log(`${msg}:`, Object.keys(todoBlocks))
+            log(`${msg}:`, Util.values(todoBlocks).map(b => b.toDevString()))
         }
 
         function moved(b: Blockly.Block) {
