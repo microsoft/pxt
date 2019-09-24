@@ -413,6 +413,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const isBlocks = /\.blocks$/.test(f.name)
         const baseContent = f.baseGitContent || "";
         const content = f.content;
+        let legendJSX: JSX.Element;
         let diffJSX: JSX.Element;
         if (isBlocks) {
             if (!pxt.appTarget.appTheme.githubBlocksDiff)
@@ -427,6 +428,11 @@ ${content}
 \`\`\`
 `;
                 diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+                legendJSX = <p className="legend">
+                    <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
+                    <span><span className="deleted icon"></span>{lf("deleted")}</span>
+                    <span><span className="notchanged icon"></span>{lf("not changed")}</span>
+                </p >
             }
         } else {
             const classes: pxt.Map<string> = {
@@ -545,6 +551,7 @@ ${content}
                     <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />
+                    {legendJSX}
                     {deletedFiles.length == 0 ? undefined :
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
@@ -553,8 +560,8 @@ ${content}
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
-                    {virtualF ? <p>
-                        {lf("Reverting this file will also remove: {0}", virtualF.name)}
+                    {virtualF && !isBlocksMode ? <p>
+                        {lf("Reverting this file will also revert: {0}", virtualF.name)}
                     </p> : undefined}
                 </div>
                 {diffJSX ?
