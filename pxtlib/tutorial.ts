@@ -181,9 +181,9 @@ namespace pxt.tutorial {
                 m[k] = JSON.parse(v);
             } catch {
                 m[k] = v;
-            } finally {
-                return "";
             }
+
+            return "";
         });
 
         return m as TutorialMetadata;
