@@ -52,11 +52,14 @@ namespace pxt.blocks {
             ? console.log : (message?: any, ...args: any[]) => { };
 
         // remove all unmodified topblocks
+        // when doing a Blocks->TS roundtrip, all ids are trashed.
+        const oldXml: pxt.Map<Blockly.Block> = pxt.Util.toDictionary(oldWs.getTopBlocks(false), b => normalizedDom(b, true));
         newWs.getTopBlocks(false)
             .forEach(newb => {
-                const oldb = oldWs.getBlockById(newb.id);
+                const newn = normalizedDom(newb, true);
+                // try to find by id or by matching normalized xml
+                const oldb = oldWs.getBlockById(newb.id) || oldXml[newn];
                 if (oldb) {
-                    const newn = normalizedDom(newb, true);
                     const oldn = normalizedDom(oldb, true);
                     if (newn == oldn) {
                         log(`fast unmodified top `, newb.id);
@@ -345,15 +348,15 @@ namespace pxt.blocks {
         function normalizedDom(b: Blockly.Block, keepChildren?: boolean): string {
             const dom = Blockly.Xml.blockToDom(b, true);
             normalizeAttributes(dom);
-            if (!keepChildren) {
-                visDom(dom, (e) => {
-                    normalizeAttributes(e);
+            visDom(dom, (e) => {
+                normalizeAttributes(e);
+                if (!keepChildren) {
                     if (e.localName == "next")
                         e.remove(); // disconnect or unplug not working propertly
                     if (e.localName == "statement")
                         e.remove();
-                })
-            }
+                }
+            })
             return Blockly.Xml.domToText(dom);
         }
 
