@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import { ImageEditor } from "./components/ImageEditor/ImageEditor";
+import { ImageFieldEditor } from "./components/ImageFieldEditor";
 
 export interface EditorBounds {
     top: number;
@@ -168,7 +168,7 @@ export function init() {
         }
 
         current = new FieldEditorView(document.getElementById("blocks-editor-field-div") as HTMLDivElement);
-        current.injectElement(<ImageEditor ref={ refHandler } />);
+        current.injectElement(<ImageFieldEditor ref={ refHandler } />);
 
         if (cachedBounds) current.resize(cachedBounds);
 
