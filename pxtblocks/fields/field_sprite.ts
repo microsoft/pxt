@@ -80,6 +80,7 @@ namespace pxtblockly {
         }
 
         showEditor_() {
+            (this.params as any).blocksInfo = this.blocksInfo;
             const fv = pxt.react.getFieldEditorView("image-editor", this.getText(), this.params);
 
             if (this.undoRedoState) {
@@ -204,7 +205,7 @@ namespace pxtblockly {
         }
     }
 
-    function parseFieldOptions(opts: FieldSpriteEditorOptions) {
+    function  parseFieldOptions(opts: FieldSpriteEditorOptions) {
         const parsed: ParsedSpriteEditorOptions = {
             sizes: [
                 [8, 8],
