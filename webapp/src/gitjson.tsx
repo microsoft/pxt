@@ -220,7 +220,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             disagreeLbl: lf("Cancel"),
             jsxd: () => <div className="grouped fields">
                 <label>{lf("Choose a release version that describes the changes you made to the code.")}
-                    <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn about version numbers.")} />
+                    {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
                 </label>
                 <div className="field">
                     <div className="ui radio checkbox">
@@ -429,6 +429,7 @@ ${content}
                 <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
                 <span><span className="deleted icon"></span>{lf("deleted")}</span>
                 <span><span className="notchanged icon"></span>{lf("not changed")}</span>
+                {sui.helpIconLink("/github/diff#blocks", lf("Learn about reading differences in blocks code."))}
             </p >
         } else {
             const classes: pxt.Map<string> = {
@@ -695,7 +696,9 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
         return <div>
             {needsToken ? <div className="ui info message join">
-                <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
+                <p>{lf("Host your code on GitHub and work together with friends on projects.")}
+                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
+                </p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
             </div> : undefined}
             {!needsToken && needsCommitMessage ? <div className="ui warning message">
@@ -733,7 +736,9 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
             </div>
             {<div className="field">
-                <p>{lf("Save your changes in GitHub.", githubId.tag || "master")}</p>
+                <p>{lf("Save your changes in GitHub.")}
+                    {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
+                </p>
             </div>}
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
@@ -766,13 +771,15 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
             {master ? <div className="ui divider"></div> : undefined}
             {master ? gs.commit && gs.commit.tag ?
                 <div className="ui field">
-                    <p>{lf("Current release: {0}", gs.commit.tag)}</p>
+                    <p>{lf("Current release: {0}", gs.commit.tag)}
+                        {sui.helpIconLink("/github/release", lf("Learn about releases."))}
+                    </p>
                 </div>
                 :
                 <div className="ui field">
                     <p>
                         {lf("Bump up the version number and create a release on GitHub.")}
-                        <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
+                        {sui.helpIconLink("/github/release#license", lf("Learn more about extension releases."))}
                     </p>
                     <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                 </div> : undefined}

@@ -1,8 +1,5 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-
 import * as sui from "./sui";
-import * as data from "./data";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
@@ -15,10 +12,14 @@ export function showGithubLoginAsync() {
     let input: HTMLInputElement;
     return core.confirmAsync({
         header: lf("Log in to GitHub"),
+        hideCancel: true,
+        hasCloseIcon: true,
+        helpUrl: "/github/token",
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
         jsx: <div className="ui form">
+            <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
             <p>{lf("You will need a GitHub token:")}</p>
             <ol>
                 <li>
@@ -614,7 +615,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             return <div className="ui form">
                 <p>
                     {lf("Host your code on GitHub and work together with friends.")}
-                    <sui.Link href="https://github.com/about" target="_blank" icon="question circle" />
+                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
                     <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />

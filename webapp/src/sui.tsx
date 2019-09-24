@@ -504,6 +504,10 @@ export class Link extends StatelessUIElement<LinkProps> {
     }
 }
 
+export function helpIconLink(url: string, title: string) {
+    return <Link href={url} icon="help circle" target="_blank" role="button" title={title} />
+}
+
 ///////////////////////////////////////////////////////////
 ////////////           FormField              /////////////
 ///////////////////////////////////////////////////////////
