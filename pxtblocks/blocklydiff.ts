@@ -71,7 +71,7 @@ namespace pxt.blocks {
         const oldBlocks = oldWs.getAllBlocks().filter(b => !b.disabled);
         const oldTopBlocks = oldWs.getTopBlocks(false).filter(b => !b.disabled);
         const newBlocks = newWs.getAllBlocks().filter(b => !b.disabled);
-        log(`blocks`, newBlocks.map(b => b.id));
+        log(`blocks`, newBlocks.map(b => b.toDevString()));
         log(newBlocks);
 
         if (oldBlocks.length == 0 && newBlocks.length == 0) {
@@ -104,6 +104,7 @@ namespace pxt.blocks {
             b.dispose(false)
         })
         const todoBlocks = Util.toDictionary(ws.getAllBlocks(), b => b.id);
+        log(`todo blocks`, todoBlocks)
         logTodo('start')
 
         // 1. deleted top blocks
@@ -284,22 +285,11 @@ namespace pxt.blocks {
         }
 
         function done(b: Blockly.Block) {
-            vis(b, t => { delete todoBlocks[t.id]; markUsed(t); });
-        }
-
-        function vis(b: Blockly.Block, f: (b: Blockly.Block) => void) {
-            f(b);
-            const children = b.getChildren(false);
-            if (children)
-                children.forEach(c => vis(c, f));
+            b.getDescendants(false).forEach(t => { delete todoBlocks[t.id]; markUsed(t); });
         }
 
         function findUsed(b: Blockly.Block): boolean {
-            if (isUsed(b)) return true;
-            const children = b.getChildren(false);
-            if (children && children.find(c => findUsed(c)))
-                return true;
-            return false;
+            return !!b.getDescendants(false).find(c => isUsed(c));
         }
 
         function logTodo(msg: string) {
