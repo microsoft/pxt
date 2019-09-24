@@ -329,11 +329,10 @@ namespace pxt.blocks {
                 return false;
 
             // normalize
-            oldb = normalize(oldb);
-            b = normalize(b);
-
-            //diff
+            oldb = copyToTrashWs(oldb);
             const oldText = normalizedDom(oldb);
+
+            b = copyToTrashWs(b);
             const newText = normalizedDom(b);
 
             if (oldText != newText) {
@@ -341,11 +340,13 @@ namespace pxt.blocks {
                 log(`new`, newText)
                 return true;
             }
+
             // not changed!
             return false;
         }
 
-        function normalize(b: Blockly.Block): Blockly.Block {
+        function copyToTrashWs(b: Blockly.Block): Blockly.Block {
+            trashWs.clear();
             const dom = Blockly.Xml.blockToDom(b);
             let sb = Blockly.Xml.domToBlock(dom, trashWs);
             // disconnect is broken.. patch up the dom later on
