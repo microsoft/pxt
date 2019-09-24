@@ -526,16 +526,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
-        const hasPrevious = tutorialReady && currentStep != 0;
-        const hasNext = tutorialReady && currentStep != maxSteps - 1;
-        const hasFinish = !lockedEditor && currentStep == maxSteps - 1;
+        const hideIteration =  metadata && metadata.hideIteration;
+        const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
+        const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
 
         let tutorialAriaLabel = '',
