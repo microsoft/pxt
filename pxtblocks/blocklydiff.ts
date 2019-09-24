@@ -20,6 +20,7 @@ namespace pxt.blocks {
         return diffWorkspace(oldWs, newWs, options);
     }
 
+    const UNMODIFIED_COLOR = "#d0d0d0";
     // Workspaces are modified in place!
     function diffWorkspace(oldWs: Blockly.Workspace, newWs: Blockly.Workspace, options?: DiffOptions): DiffResult {
         try {
@@ -177,7 +178,7 @@ namespace pxt.blocks {
 
         // all unmodifed blocks are greyed out
         Util.values(todoBlocks).filter(b => !!ws.getBlockById(b.id)).forEach(b => {
-            b.setColour("#c0c0c0")
+            b.setColour(UNMODIFIED_COLOR)
             forceRender(b);
         });
 
@@ -198,7 +199,12 @@ namespace pxt.blocks {
         Blockly.svgResize(ws);
 
         // final render
-        const svg = pxt.blocks.renderWorkspace(options.renderOptions);
+        const svg = pxt.blocks.renderWorkspace(options.renderOptions || {
+            emPixels: 20,
+            layout: BlockLayout.Flow,
+            aspectRatio: 0.5,
+            useViewWidth: true
+        });
 
         // and we're done
         const r: DiffResult = {
