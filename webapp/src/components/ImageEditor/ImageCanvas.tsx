@@ -348,7 +348,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected updateBackground() {
         (this.refs["canvas-bounds"] as HTMLDivElement).style.cursor = this.cursor;
         this.canvas.style.cursor = this.cursor;
-        this.applyZoom();
+        this.updateZoom(0);
     }
 
     protected updateZoom(delta: number, anchorX?: number, anchorY?: number) {

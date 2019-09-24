@@ -11,7 +11,7 @@ import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 import { FieldEditorComponent } from '../../blocklyFieldView';
 
-import { dispatchSetInitialImage, dispatchSetInitialState } from './actions/dispatch';
+import { dispatchSetInitialImage, dispatchSetInitialState, dispatchImageEdit } from './actions/dispatch';
 import { Bitmap, imageLiteralToBitmap, bitmapToImageLiteral } from './store/bitmap';
 
 export class ImageEditor extends React.Component<{},{}> implements FieldEditorComponent {
@@ -58,5 +58,9 @@ export class ImageEditor extends React.Component<{},{}> implements FieldEditorCo
         if (oldValue) {
             store.dispatch(dispatchSetInitialState(oldValue));
         }
+    }
+
+    setCurrentFrame(bitmap: Bitmap) {
+        store.dispatch(dispatchImageEdit({ bitmap: bitmap.data() }))
     }
 }

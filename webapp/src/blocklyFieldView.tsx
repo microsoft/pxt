@@ -120,7 +120,7 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
     protected resizeContentCore = () => {
         this.resizeFrameRef = undefined;
 
-        const padding = Math.max(this.editorBounds.width, this.editorBounds.height) / 16;
+        const padding = Math.max(this.editorBounds.width, this.editorBounds.height) / 20;
 
         this.contentBounds = {
             left: this.editorBounds.left + padding,

@@ -17,6 +17,7 @@ interface GalleryItem {
 
 export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState> implements FieldEditorComponent {
     protected blocksInfo: pxtc.BlocksInfo;
+    protected ref: ImageEditor;
 
     constructor(props: {}) {
         super(props);
@@ -41,38 +42,44 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
             </div>
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" />
-                <ImageEditorGallery items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")} hidden={!this.state.galleryVisible} />
+                <ImageEditorGallery
+                    items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")}
+                    hidden={!this.state.galleryVisible}
+                    onItemSelected={this.onGalleryItemSelect} />
             </div>
         </div>
     }
 
+    componentDidMount() {
+        this.ref = this.refs["image-editor"] as ImageEditor;
+    }
 
     init(value: string, options?: any) {
-        if (this.refs["image-editor"]) {
-            (this.refs["image-editor"] as ImageEditor).init(value, options);
+        if (this.ref) {
+            this.ref.init(value, options);
         }
 
         if (options) this.blocksInfo = options.blocksInfo;
     }
 
     getValue() {
-        if (this.refs["image-editor"]) {
-            return (this.refs["image-editor"] as ImageEditor).getValue();
+        if (this.ref) {
+            return this.ref.getValue();
         }
         return "";
     }
 
     getPersistentData() {
-        if (this.refs["image-editor"]) {
-            return (this.refs["image-editor"] as ImageEditor).getPersistentData();
+        if (this.ref) {
+            return this.ref.getPersistentData();
         }
 
         return null;
     }
 
     restorePersistentData(oldValue: any) {
-        if (this.refs["image-editor"]) {
-            (this.refs["image-editor"] as ImageEditor).restorePersistentData(oldValue);
+        if (this.ref) {
+            this.ref.restorePersistentData(oldValue);
         }
     }
 
@@ -81,14 +88,27 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
             galleryVisible: !this.state.galleryVisible
         });
     }
+
+    protected onGalleryItemSelect = (item: GalleryItem) => {
+        if (this.ref) {
+            this.ref.setCurrentFrame(getBitmap(this.blocksInfo, item.qName));
+        }
+
+        this.setState({
+            galleryVisible: false
+        });
+    }
 }
 
 interface ImageEditorGalleryProps {
     items?: GalleryItem[];
     hidden: boolean;
+    onItemSelected: (item: GalleryItem) => void;
 }
 
 class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
+    protected handlers: (() => void)[] = [];
+
     render() {
         const { items, hidden } = this.props;
 
@@ -100,11 +120,26 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
                     role="menuitem"
                     className="sprite-gallery-button sprite-editor-card"
                     title={item.alt}
-                    data-value={item.qName}>
+                    data-value={item.qName}
+                    onClick={this.clickHandler(index)}>
                         <img src={item.src} data-value={item.qName} />
                 </button>
             )}
         </div>
+    }
+
+    clickHandler(index: number) {
+        if (!this.handlers[index]) {
+            this.handlers[index] = () => {
+                const { items, onItemSelected, hidden } = this.props;
+
+                if (!hidden && items && items[index]) {
+                    onItemSelected(items[index]);
+                }
+            }
+        }
+
+        return this.handlers[index];
     }
 }
 
