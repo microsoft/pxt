@@ -1537,7 +1537,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (fn.attributes.debug && !pxt.options.debug) return false;
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            return that.shouldShowBlock(fn.attributes.blockId, ns);
+            return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
         }
 
         function variableIsAssigned(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
