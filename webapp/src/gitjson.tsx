@@ -416,24 +416,20 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let legendJSX: JSX.Element;
         let diffJSX: JSX.Element;
         if (isBlocks) {
-            if (!pxt.appTarget.appTheme.githubBlocksDiff)
-                diffJSX = <p className="ui basic segment">{lf("Some blocks were changed.")}</p>
-            else {
-                const markdown =
-                    `
+            const markdown =
+                `
 \`\`\`diffblocksxml
 ${baseContent}
 ---------------------
 ${content}
 \`\`\`
 `;
-                diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
-                legendJSX = <p className="legend">
-                    <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
-                    <span><span className="deleted icon"></span>{lf("deleted")}</span>
-                    <span><span className="notchanged icon"></span>{lf("not changed")}</span>
-                </p >
-            }
+            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            legendJSX = <p className="legend">
+                <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
+                <span><span className="deleted icon"></span>{lf("deleted")}</span>
+                <span><span className="notchanged icon"></span>{lf("not changed")}</span>
+            </p >
         } else {
             const classes: pxt.Map<string> = {
                 "@": "diff-marker",
