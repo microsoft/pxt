@@ -95,9 +95,6 @@ namespace pxt.blocks {
         const newXml = pxt.blocks.saveWorkspaceXml(newWs, true);
         pxt.blocks.domToWorkspaceNoEvents(Blockly.Xml.textToDom(newXml), ws);
 
-        // for comparing blocks
-        const trashWs = new Blockly.Workspace();
-
         // delete disabled blocks from final workspace
         ws.getAllBlocks().filter(b => b.disabled).forEach(b => {
             log('disabled ', b.toDevString())
@@ -123,11 +120,11 @@ namespace pxt.blocks {
         addedBlocks.map(b => ws.getBlockById(b.id))
             .filter(b => !!b) // ignore disabled
             .forEach(b => {
-                log(`added top ${b.toDevString()}`)
+                log(`added ${b.toDevString()}`)
                 //b.inputList[0].insertFieldAt(0, new Blockly.FieldImage(ADD_IMAGE_DATAURI, 24, 24, false));
                 done(b);
             });
-        logTodo('added top')
+        logTodo('added')
 
         // 3. delete statement blocks
         // inject deleted blocks in new workspace
@@ -329,28 +326,20 @@ namespace pxt.blocks {
                 return false;
 
             // normalize
-            oldb = copyToTrashWs(oldb);
+            //oldb = copyToTrashWs(oldb);
             const oldText = normalizedDom(oldb);
 
-            b = copyToTrashWs(b);
+            //b = copyToTrashWs(b);
             const newText = normalizedDom(b);
 
             if (oldText != newText) {
-                log(`old`, oldText)
-                log(`new`, newText)
+                log(`old ${oldb.toDevString()}`, oldText)
+                log(`new ${b.toDevString()}`, newText)
                 return true;
             }
 
             // not changed!
             return false;
-        }
-
-        function copyToTrashWs(b: Blockly.Block): Blockly.Block {
-            trashWs.clear();
-            const dom = Blockly.Xml.blockToDom(b);
-            let sb = Blockly.Xml.domToBlock(dom, trashWs);
-            // disconnect is broken.. patch up the dom later on
-            return sb;
         }
 
         function normalizedDom(b: Blockly.Block, keepChildren?: boolean): string {
