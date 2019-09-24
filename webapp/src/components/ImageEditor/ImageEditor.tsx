@@ -9,8 +9,12 @@ import { ImageCanvas } from './ImageCanvas';
 
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
+import { FieldEditorComponent } from '../../blocklyFieldView';
 
-export class ImageEditor extends React.Component<{},{}> {
+import { dispatchSetInitialImage, dispatchSetInitialState } from './actions/dispatch';
+import { Bitmap, imageLiteralToBitmap, bitmapToImageLiteral } from './store/bitmap';
+
+export class ImageEditor extends React.Component<{},{}> implements FieldEditorComponent {
     componentDidMount() {
         addKeyListener();
     }
@@ -31,5 +35,28 @@ export class ImageEditor extends React.Component<{},{}> {
                 <BottomBar />
             </div>
         </Provider>
+    }
+
+    init(value: string, options?: any) {
+        const bitmap = imageLiteralToBitmap(value);
+        store.dispatch(dispatchSetInitialImage({ bitmap: bitmap.data() }));
+    }
+
+    getValue() {
+        const state = store.getState();
+        const currentFrame = state.present.frames[state.present.currentFrame];
+
+        return bitmapToImageLiteral(Bitmap.fromData(currentFrame.bitmap), "ts");
+    }
+
+    getPersistentData() {
+        const state = store.getState();
+        return state;
+    }
+
+    restorePersistentData(oldValue: any) {
+        if (oldValue) {
+            store.dispatch(dispatchSetInitialState(oldValue));
+        }
     }
 }

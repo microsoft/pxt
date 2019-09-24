@@ -32,7 +32,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected editState: EditState;
     protected cursorLocation: [number, number];
     protected cursor: ToolCursor | string = ToolCursor.Crosshair;
-    protected zoom = 1;
+    protected zoom = 0.25;
     protected panX = 0;
     protected panY = 0;
 
@@ -361,7 +361,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             const { canvasX: oldX, canvasY: oldY } = this.clientToCanvas(anchorX, anchorY, bounds);
 
-            this.zoom = Math.max(this.zoom + delta, 0.5);
+            this.zoom = Math.max(this.zoom + delta, 0.25);
 
             const unit = this.getCanvasUnit(bounds);
             const newWidth = unit * this.canvas.width;

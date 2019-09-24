@@ -38,11 +38,9 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private editor: pxtsprite.SpriteEditor;
         private state: pxtsprite.Bitmap;
         private lightMode: boolean;
-        private undoStack: pxtsprite.CanvasState[];
-        private redoStack: pxtsprite.CanvasState[];
+        private undoRedoState: any;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -81,74 +79,30 @@ namespace pxtblockly {
             (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
         }
 
-        /**
-         * Show the inline free-text editor on top of the text.
-         * @private
-         */
         showEditor_() {
-            const { sizes, initColor, filter} = this.params;
-            // If there is an existing drop-down someone else owns, hide it immediately and clear it.
-            // Blockly.DropDownDiv.hideWithoutAnimation();
-            // Blockly.DropDownDiv.clearContent();
+            const fv = pxt.react.getFieldEditorView("image-editor", this.getText(), this.params);
 
-            // let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
+            if (this.undoRedoState) {
+                fv.restorePersistentData(this.undoRedoState);
+            }
 
-            const fv = pxt.react.getFieldEditorView("image-editor", "", null);
+            fv.onHide(() => {
+                const result = fv.getResult();
+
+                if (result) {
+                    this.state = pxtsprite.imageLiteralToBitmap(result);
+                    this.redrawPreview();
+
+                    this.undoRedoState = fv.getPersistentData();
+
+                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                        Blockly.Events.fire(new Blockly.Events.BlockChange(
+                            this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
+                    }
+                }
+            });
+
             fv.show();
-
-            // this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
-            // this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
-
-            // this.editor.render(contentDiv);
-            // this.editor.rePaint();
-
-            // this.editor.onClose(() => {
-            //     this.undoStack = this.editor.getUndoStack();
-            //     this.redoStack = this.editor.getRedoStack();
-            //     Blockly.DropDownDiv.hideIfOwner(this);
-            // });
-
-            // this.editor.setActiveColor(initColor, true);
-            // if (!sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
-            //     sizes.push([this.state.width, this.state.height]);
-            // }
-            // this.editor.setSizePresets(sizes);
-
-            // if (filter) {
-            //     this.editor.setGalleryFilter(filter);
-            // }
-
-            // goog.style.setHeight(contentDiv, "600px");
-            // goog.style.setWidth(contentDiv, "600px");
-            // goog.style.setStyle(contentDiv, "overflow", "hidden");
-            // goog.style.setStyle(contentDiv, "max-height", "600px");
-            // pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown")
-
-            // // Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
-            // Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-            //     // this.editor.closeEditor();
-            //     // this.state = this.editor.bitmap().image;
-            //     // this.redrawPreview();
-            //     // if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-            //     //     Blockly.Events.fire(new Blockly.Events.BlockChange(
-            //     //         this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
-            //     // }
-
-            //     goog.style.setHeight(contentDiv, null);
-            //     goog.style.setWidth(contentDiv, null);
-            //     goog.style.setStyle(contentDiv, "overflow", null);
-            //     goog.style.setStyle(contentDiv, "max-height", null);
-            //     pxt.BrowserUtils.removeClass(contentDiv.parentElement, "sprite-editor-dropdown");
-            //     // this.editor.removeKeyListeners();
-            //     component.dispose();
-            // });
-
-            // this.editor.addKeyListeners();
-            // this.editor.layout();
-        }
-
-        private isInFlyout() {
-            return ((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
         }
 
         render_() {

@@ -4,6 +4,9 @@ namespace pxt.react {
         hide(): void;
         getResult(): string;
         onHide(cb: () => void): void;
+
+        getPersistentData(): any;
+        restorePersistentData(value: any): void;
     }
 
     export let getFieldEditorView: (fieldEditorId: string, value: string, options: any) => FieldEditorView;

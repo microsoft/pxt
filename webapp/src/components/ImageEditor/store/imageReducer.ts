@@ -116,6 +116,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 ...state,
                 editor: editorReducer(state.editor, action)
             };
+        case actions.SET_INITIAL_STATE:
+            return {
+                ...action.state
+            };
         case actions.UNDO_IMAGE_EDIT:
             if (!state.past.length) return state;
 
@@ -134,6 +138,39 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 present: state.future[state.future.length - 1],
                 future: state.future.slice(0, state.future.length - 1),
             };
+        case actions.SET_INITIAL_IMAGE:
+            return {
+                ...state,
+                past: [],
+                present: {
+                    visible: true,
+                    colors: [
+                        "#000000",
+                        "#ffffff",
+                        "#ff2121",
+                        "#ff93c4",
+                        "#ff8135",
+                        "#fff609",
+                        "#249ca3",
+                        "#78dc52",
+                        "#003fad",
+                        "#87f2ff",
+                        "#8e2ec4",
+                        "#a4839f",
+                        "#5c406c",
+                        "#e5cdc4",
+                        "#91463d",
+                        "#000000"
+                    ],
+
+                    aspectRatioLocked: false,
+
+                    currentFrame: 0,
+                    frames: [action.image],
+                    interval: 200
+                },
+                future: []
+            }
         default:
             return {
                 ...state,
