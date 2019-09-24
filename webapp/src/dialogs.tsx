@@ -19,7 +19,8 @@ export function showGithubLoginAsync() {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
         jsx: <div className="ui form">
-            <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
+            <p>{lf("Host your code on GitHub and work together with friends on projects.")}
+                {sui.helpIconLink("/github", lf("Learn more about GitHub"))}</p>
             <p>{lf("You will need a GitHub token:")}</p>
             <ol>
                 <li>
