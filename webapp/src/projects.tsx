@@ -714,7 +714,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     }
 
     private cloneGithub() {
-        pxt.tickEvent("projects.clonegithub", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.projects.clone", undefined, { interactiveConsent: true });
         this.hide();
         this.props.parent.showImportGithubDialog();
     }
