@@ -19,7 +19,7 @@ A **repository** is used to organize a single project. Repositories will contain
 
 ### ~ hint
 
-If you haven't signed in yet with GitHub, you will need to get a **developer token**. We have a [detailled guide](/github/token) on how to get this token to get signed in.
+If you haven't signed in yet with GitHub, you will need to get a **developer token**. We have a [detailed guide](/github/token) on how to get this token to get signed in.
 
 ### ~
 
