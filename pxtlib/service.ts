@@ -15,7 +15,7 @@ namespace ts.pxtc {
     export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
-    export const COLLAPSED_BLOCK = "__collapsed_block"
+    export const COLLAPSED_BLOCK = "pxt_collapsed_block"
     export const BINARY_JS = "binary.js";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";

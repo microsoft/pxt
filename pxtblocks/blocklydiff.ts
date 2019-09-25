@@ -254,11 +254,11 @@ namespace pxt.blocks {
         }
 
         function markUsed(b: Blockly.Block) {
-            (<any>b).___used = true;
+            (<any>b).__pxt_used = true;
         }
 
         function isUsed(b: Blockly.Block) {
-            return !!(<any>b).___used;
+            return !!(<any>b).__pxt_used;
         }
 
         function cloneIntoDiff(b: Blockly.Block): Blockly.Block {
