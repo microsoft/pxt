@@ -21,6 +21,8 @@ A **repository** is used to organize a single project. Repositories will contain
 
 If you haven't signed in yet with GitHub, you will need to get a **developer token**. We have a [detailed guide](/github/token) on how to get this token to get signed in.
 
+If you cannot see this button, try to sign in into GitHub first. Go to the gearwheel menu, click on **Extensions** and **Log In to GitHub**. Once your token is entered, it should be visible.
+
 ### ~
 
 ### Step 2 Make and commit changes

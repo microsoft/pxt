@@ -19,7 +19,6 @@ The rules of semver are, given a version number ``MAJOR.MINOR.PATCH``, increment
 * ``MINOR`` version when you add functionality in a backwards compatible manner, and
 * ``PATCH`` version when you make backwards compatible bug fixes.
 
-
 ## License #license
 
 You can include an open source license in your repository to make it easier for other people to contribute.
