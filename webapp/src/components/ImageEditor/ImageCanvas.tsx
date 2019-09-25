@@ -81,14 +81,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.editState = getEditState(imageState);
         }
 
-        if (this.props.zoomDelta) {
+        if (this.props.zoomDelta || this.props.zoomDelta === 0) {
             // This is a total hack. Ideally, the zoom should be part of the global state but because
             // the mousewheel events fire very quickly it's much more performant to make it local state.
             // So, for buttons outside this component to change the zoom they have to set the zoom delta
             // which is applied here and then set back to zero
-            this.zoom = Math.max(this.zoom + this.props.zoomDelta, 0.5);
             this.updateZoom(this.props.zoomDelta)
-            this.props.dispatchChangeZoom(0);
+            this.props.dispatchChangeZoom(null);
             return;
         }
 

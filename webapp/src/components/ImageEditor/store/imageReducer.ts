@@ -46,7 +46,7 @@ export interface EditorState {
     tool: ImageEditorTool;
     cursorSize: CursorSize;
     cursorLocation?: [number, number];
-    zoomDelta: number;
+    zoomDelta?: number;
     onionSkinEnabled: boolean;
 }
 
@@ -95,7 +95,6 @@ const initialStore: ImageEditorStore = {
         tool: ImageEditorTool.Paint,
         cursorSize: CursorSize.One,
         backgroundColor: 1,
-        zoomDelta: 0,
         previewAnimating: false,
         onionSkinEnabled: false
     }

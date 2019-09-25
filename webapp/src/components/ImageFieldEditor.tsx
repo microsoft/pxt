@@ -83,6 +83,12 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
         }
     }
 
+    onResize() {
+        if (this.ref) {
+            this.ref.onResize();
+        }
+    }
+
     protected toggleGallery = () => {
         this.setState({
             galleryVisible: !this.state.galleryVisible

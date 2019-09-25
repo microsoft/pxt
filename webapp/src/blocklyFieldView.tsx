@@ -18,6 +18,7 @@ export interface FieldEditorComponent extends React.Component {
 
     getPersistentData(): any;
     restorePersistentData(value: any): void;
+    onResize?: () => void;
 }
 
 let cachedBounds: EditorBounds;
@@ -138,6 +139,10 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         this.overlayDiv.style.top = this.editorBounds.top + "px";
         this.overlayDiv.style.width = this.editorBounds.width + "px";
         this.overlayDiv.style.height = this.editorBounds.height + "px";
+
+        if (this.componentRef && this.visible && this.componentRef.onResize) {
+            this.componentRef.onResize();
+        }
     }
 
     protected handleOutsideClick = (ev: MouseEvent) => {
