@@ -885,7 +885,7 @@ namespace pxt.blocks {
 
         // PXT is in charge of disabling, don't record undo for disabled events
         (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
-            if (this.isEnabled() != enabled) {
+            if (this.disabled == enabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
