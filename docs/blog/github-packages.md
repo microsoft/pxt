@@ -1,4 +1,4 @@
-# GitHub package authoring
+# GitHub Extensions authoring
 
 **Posted on August 1, 2018 by [mmoskal](https://github.com/mmoskal)**
 
