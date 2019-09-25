@@ -34,7 +34,7 @@ You will see a **commit changes** button and a list of **diffs** under. A **comm
 
 ### ~ hint
 
-It's always a good idea to review changes you made to your code before commiting them!
+It's always a good idea to review changes you made to your code before committing them!
 
 ### ~
 
