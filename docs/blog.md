@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [GitHub Extensions Reloaded](/blog/github-extensions-reloaded)
+## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
 
 September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
 

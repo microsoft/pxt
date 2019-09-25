@@ -1,4 +1,4 @@
-# GitHub Extensions reloaded
+# GitHub Extensions Authoring - Episode 2
 
 **Posted on September 25, 2019 by [pelikhan](https://github.com/pelikhan)**
 
