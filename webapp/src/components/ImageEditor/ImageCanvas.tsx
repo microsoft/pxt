@@ -309,8 +309,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             floatingRect.style.display = ""
 
-            floatingRect.style.left = (rect.left - 2 + xScale * left) + "px";
-            floatingRect.style.top = (rect.top - 2 + yScale * top) + "px";
+            floatingRect.style.left = (-this.panX + xScale * left) + "px";
+            floatingRect.style.top = (-this.panY+ yScale * top) + "px";
             floatingRect.style.width = (xScale * (right - left)) + "px";
             floatingRect.style.height = (yScale * (bottom - top)) + "px";
 
