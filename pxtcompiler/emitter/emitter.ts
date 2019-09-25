@@ -592,7 +592,7 @@ namespace ts.pxtc {
             return cmt;
         }
 
-        if (node.symbol && node.symbol.declarations.length > 1) {
+        if (node.symbol && node.symbol.declarations && node.symbol.declarations.length > 1) {
             return node.symbol.declarations.map(cmtCore).join("\n")
         } else {
             return cmtCore(node)
