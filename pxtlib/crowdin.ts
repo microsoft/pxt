@@ -153,6 +153,10 @@ namespace pxt.crowdin {
             else if (code == 404 && data.error.code == 17) {
                 return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
+            } else if (code == 53) {
+                // file is being updated
+                return Promise.delay(5000) // wait 5s and try again
+                    .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200) {
                 return Promise.resolve()
             } else {
