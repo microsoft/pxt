@@ -21,6 +21,8 @@ export interface BottomBarProps {
     dispatchRedoImageEdit: () => void;
     dispatchToggleAspectRatioLocked: () => void;
     dispatchToggleOnionSkinEnabled: () => void;
+
+    singleFrame?: boolean;
 }
 
 export interface BottomBarState {
@@ -46,7 +48,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             onionSkinEnabled,
             dispatchToggleAspectRatioLocked,
             dispatchToggleOnionSkinEnabled,
-            dispatchChangeZoom
+            dispatchChangeZoom,
+            singleFrame
         } = this.props;
 
         const width = this.state.width == null ? imageDimensions[0] : this.state.width;
@@ -91,15 +94,15 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={true}
                     />
                 </div>
-                <div className="image-editor-seperator"/>
-                <div>
+                { singleFrame ? undefined : <div className="image-editor-seperator"/> }
+                { singleFrame ? undefined : <div>
                     <IconButton
                         onClick={dispatchToggleOnionSkinEnabled}
                         iconClass="ms-Icon ms-Icon--MapLayers"
                         title={onionSkinEnabled ? "Hide Previous Frame" : "Show Previous Frame"}
                         toggle={!onionSkinEnabled}
                     />
-                </div>
+                </div> }
                 <div className="image-editor-coordinate-preview">
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
                 </div>

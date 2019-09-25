@@ -14,7 +14,11 @@ import { FieldEditorComponent } from '../../blocklyFieldView';
 import { dispatchSetInitialImage, dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom } from './actions/dispatch';
 import { Bitmap, imageLiteralToBitmap, bitmapToImageLiteral } from './store/bitmap';
 
-export class ImageEditor extends React.Component<{},{}> implements FieldEditorComponent {
+export interface ImageEditorProps {
+    singleFrame?: boolean;
+}
+
+export class ImageEditor extends React.Component<ImageEditorProps,{}> implements FieldEditorComponent {
     componentDidMount() {
         addKeyListener();
     }
@@ -24,15 +28,17 @@ export class ImageEditor extends React.Component<{},{}> implements FieldEditorCo
     }
 
     render() {
+        const { singleFrame } = this.props;
+
         return <Provider store={store}>
             <div className="image-editor">
-                <TopBar />
+                <TopBar singleFrame={singleFrame} />
                 <div className="image-editor-content">
                     <SideBar />
                     <ImageCanvas />
-                    <Timeline />
+                    {singleFrame ? undefined : <Timeline />}
                 </div>
-                <BottomBar />
+                <BottomBar singleFrame={singleFrame} />
             </div>
         </Provider>
     }

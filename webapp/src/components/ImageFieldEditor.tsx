@@ -6,6 +6,7 @@ import { Bitmap } from './ImageEditor/store/bitmap';
 
 export interface ImageFieldEditorState {
     galleryVisible: boolean;
+    galleryFilter?: string;
 }
 
 interface GalleryItem {
@@ -41,10 +42,11 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
                 </div>
             </div>
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" />
+                <ImageEditor ref="image-editor" singleFrame={true} />
                 <ImageEditorGallery
                     items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")}
                     hidden={!this.state.galleryVisible}
+                    filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
             </div>
         </div>
@@ -59,7 +61,15 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
             this.ref.init(value, options);
         }
 
-        if (options) this.blocksInfo = options.blocksInfo;
+        if (options) {
+            this.blocksInfo = options.blocksInfo;
+
+            if (options.filter) {
+                this.setState({
+                    galleryFilter: options.filter
+                });
+            }
+        }
     }
 
     getValue() {
@@ -110,13 +120,18 @@ interface ImageEditorGalleryProps {
     items?: GalleryItem[];
     hidden: boolean;
     onItemSelected: (item: GalleryItem) => void;
+    filterString?: string;
 }
 
 class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
     protected handlers: (() => void)[] = [];
 
     render() {
-        const { items, hidden } = this.props;
+        let { items, hidden, filterString } = this.props;
+
+        if (filterString) {
+            items = filterItems(items, filterString.split(" "));
+        }
 
         return <div className={`image-editor-gallery ${items && !hidden ? "visible" : ""}`}>
             {items && items.map((item, index) =>
@@ -197,6 +212,34 @@ function getBitmap(blocksInfo: pxtc.BlocksInfo, qName: string) {
     }
 
     return out;
+}
+
+function filterItems(target: GalleryItem[], tags: string[]) {
+    tags = tags
+        .filter(el => !!el)
+        .map(el => el.toLowerCase());
+    const includeTags = tags
+        .filter(tag => tag.indexOf("!") !== 0);
+    const excludeTags = tags
+        .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
+        .map(tag => tag.substring(1));
+
+    return target.filter(el => checkInclude(el) && checkExclude(el));
+
+    function checkInclude(item: GalleryItem) {
+        return includeTags.every(filterTag => {
+            const optFilterTag = `?${filterTag}`;
+            return item.tags.some(tag =>
+                tag === filterTag || tag === optFilterTag
+            )
+        });
+    }
+
+    function checkExclude(item: GalleryItem) {
+        return excludeTags.every(filterTag =>
+            !item.tags.some(tag => tag === filterTag)
+        );
+    }
 }
 
 function getGalleryItems(blocksInfo: pxtc.BlocksInfo, qName: string): GalleryItem[] {

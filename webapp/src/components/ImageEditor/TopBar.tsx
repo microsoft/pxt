@@ -12,6 +12,7 @@ export interface TopBarProps {
     interval: number;
     previewAnimating: boolean;
     dispatchChangePreviewAnimating: (animating: boolean) => void;
+    singleFrame?: boolean;
 }
 
 export interface TopBarState {
@@ -25,7 +26,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
     }
 
     render() {
-        const { interval, previewAnimating, dispatchChangePreviewAnimating } = this.props;
+        const { interval, previewAnimating, dispatchChangePreviewAnimating, singleFrame } = this.props;
 
         const intervalVal = this.state.interval == null ? interval : this.state.interval;
 
@@ -35,26 +36,28 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                     <CursorSizes />
                 </div>
                 <div className="spacer"/>
-                <div className="image-editor-seperator"/>
-                <div className="timeline-controls">
-                    <IconButton
-                        onClick={() => dispatchChangePreviewAnimating(!previewAnimating)}
-                        iconClass={previewAnimating ? "ms-Icon ms-Icon--Stop" : "ms-Icon ms-Icon--Play"}
-                        title={previewAnimating ? "Stop Animation Preview" : "Play Animation Preview"}
-                        toggle={true}
-                    />
-                    <div className="image-editor-interval-label image-editor-label">
-                        <span className="ms-Icon ms-Icon--Clock" />
+                { singleFrame ? undefined : <div className="image-editor-seperator"/> }
+                { singleFrame ? undefined :
+                    <div className="timeline-controls">
+                        <IconButton
+                            onClick={() => dispatchChangePreviewAnimating(!previewAnimating)}
+                            iconClass={previewAnimating ? "ms-Icon ms-Icon--Stop" : "ms-Icon ms-Icon--Play"}
+                            title={previewAnimating ? "Stop Animation Preview" : "Play Animation Preview"}
+                            toggle={true}
+                        />
+                        <div className="image-editor-interval-label image-editor-label">
+                            <span className="ms-Icon ms-Icon--Clock" />
+                        </div>
+                        <div className="image-editor-interval">
+                            <input className="image-editor-input"
+                                title="Interval Between Frames (ms)"
+                                value={intervalVal}
+                                onChange={this.handleIntervalChange}
+                                onBlur={this.handleIntervalBlur}
+                                />
+                        </div>
                     </div>
-                    <div className="image-editor-interval">
-                        <input className="image-editor-input"
-                            title="Interval Between Frames (ms)"
-                            value={intervalVal}
-                            onChange={this.handleIntervalChange}
-                            onBlur={this.handleIntervalBlur}
-                            />
-                    </div>
-                </div>
+                }
             </div>
         );
     }
