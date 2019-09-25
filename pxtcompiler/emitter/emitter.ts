@@ -585,14 +585,15 @@ namespace ts.pxtc {
             node = node.parent.parent // we need variable stmt
 
         let cmtCore = (node: Node) => {
-            let src = getSourceFileOfNode(node)
-            let doc = getLeadingCommentRangesOfNode(node, src)
+            const src = getSourceFileOfNode(node)
+            if (!src) return "";
+            const doc = getLeadingCommentRangesOfNode(node, src)
             if (!doc) return "";
-            let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
+            const cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
             return cmt;
         }
 
-        if (node.symbol && node.symbol.declarations.length > 1) {
+        if (node.symbol && node.symbol.declarations && node.symbol.declarations.length > 1) {
             return node.symbol.declarations.map(cmtCore).join("\n")
         } else {
             return cmtCore(node)
