@@ -163,6 +163,7 @@ export interface DialogOptions {
     timeout?: number;
     modalContext?: string;
     hasCloseIcon?: boolean;
+    helpUrl?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -173,6 +174,14 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             label: options.disagreeLbl || lf("Cancel"),
             className: (options.disagreeClass || "cancel"),
             icon: options.disagreeIcon || "cancel"
+        })
+    }
+    if (options.helpUrl) {
+        options.buttons.push({
+            label: lf("Help"),
+            className: "help",
+            icon: "help",
+            url: options.helpUrl
         })
     }
     return coretsx.renderConfirmDialogAsync(options as PromptOptions);

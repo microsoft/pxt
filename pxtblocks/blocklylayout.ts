@@ -414,7 +414,7 @@ namespace pxt.blocks.layout {
             }
             const f = formattable(block);
 
-            if (block.type === pxtc.ON_START_TYPE) {
+            if (!onStart && !block.disabled && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
                 onStart = f;
             }
             else {

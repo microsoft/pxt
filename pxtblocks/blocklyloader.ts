@@ -1293,11 +1293,34 @@ namespace pxt.blocks {
                 });
 
                 setHelpResources(this,
-                    ts.pxtc.TS_BREAK_TYPE,
+                    ts.pxtc.TS_CONTINUE_TYPE,
                     continueBlockDef.name,
                     continueBlockDef.tooltip,
                     continueBlockDef.url,
                     color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        const collapsedColor = "#cccccc";
+        Blockly.Blocks[pxtc.COLLAPSED_BLOCK] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": "...",
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": collapsedColor
+                })
+                setHelpResources(this,
+                    ts.pxtc.COLLAPSED_BLOCK,
+                    "...",
+                    lf("a few blocks"),
+                    undefined,
+                    collapsedColor,
                     undefined/*colourSecondary*/,
                     undefined/*colourTertiary*/,
                     false/*undeletable*/

@@ -286,8 +286,10 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
     private handleClick(e: React.MouseEvent<HTMLElement>) {
         const { githubId } = this.props.parent.state.header;
         if (!githubId) {
+            pxt.tickEvent("github.filelist.create")
             this.createRepositoryAsync().done();
         } else {
+            pxt.tickEvent("github.filelist.nav")
             const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
             this.props.parent.setSideFile(gitf);
         }

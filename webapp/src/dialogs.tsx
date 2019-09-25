@@ -1,8 +1,5 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
-
 import * as sui from "./sui";
-import * as data from "./data";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
@@ -12,13 +9,19 @@ import Cloud = pxt.Cloud;
 import Util = pxt.Util;
 
 export function showGithubLoginAsync() {
+    pxt.tickEvent("github.token.dialog");
     let input: HTMLInputElement;
     return core.confirmAsync({
         header: lf("Log in to GitHub"),
+        hideCancel: true,
+        hasCloseIcon: true,
+        helpUrl: "/github/token",
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
         jsx: <div className="ui form">
+            <p>{lf("Host your code on GitHub and work together with friends on projects.")}
+                {sui.helpIconLink("/github", lf("Learn more about GitHub"))}</p>
             <p>{lf("You will need a GitHub token:")}</p>
             <ol>
                 <li>
@@ -43,10 +46,12 @@ export function showGithubLoginAsync() {
             </div>
         </div>,
     }).then(res => {
-        if (res) {
-            pxt.tickEvent("app.github.token");
+        if (!res)
+            pxt.tickEvent("github.token.cancel");
+        else {
             const hextoken = input.value.trim()
             if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
+                pxt.tickEvent("github.token.invalid");
                 core.errorNotification(lf("Invalid token format"))
             } else {
                 pxt.github.token = hextoken
@@ -60,6 +65,7 @@ export function showGithubLoginAsync() {
                         pxt.reportError("github", "Succeeded creating undefined repo!")
                         core.infoNotification(lf("Something went wrong with validation; token stored"))
                         pxt.storage.setLocal("githubtoken", hextoken)
+                        pxt.tickEvent("github.token.wrong");
                     }, err => {
                         pxt.github.token = ""
                         if (!showGithubTokenError(err)) {
@@ -69,6 +75,7 @@ export function showGithubLoginAsync() {
                                 core.infoNotification(lf("Token stored but not validated"))
                             pxt.github.token = hextoken
                             pxt.storage.setLocal("githubtoken", hextoken)
+                            pxt.tickEvent("github.token.ok");
                         }
                     })
             }
@@ -562,6 +569,7 @@ export function showImportUrlDialogAsync() {
 
 
 export function showCreateGithubRepoDialogAsync(name?: string) {
+    pxt.tickEvent("github.create.dialog");
     if (name) {
         name = name.toLocaleLowerCase().replace(/\s+/g, '-');
         name = name.replace(/[^\w\-]/g, '');
@@ -614,7 +622,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             return <div className="ui form">
                 <p>
                     {lf("Host your code on GitHub and work together with friends.")}
-                    <sui.Link href="https://github.com/about" target="_blank" icon="question circle" />
+                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <div className="ui field">
                     <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
@@ -631,26 +639,29 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             </div>
         },
     }).then(res => {
-        if (res) {
-            pxt.tickEvent("app.github.create");
-
+        if (!res)
+            pxt.tickEvent("github.create.cancel");
+        else {
             if (!repoNameError()) {
                 core.showLoading("creategithub", lf("creating {0} repository...", repoName))
                 return pxt.github.createRepoAsync(repoName, repoDescription.trim(), !repoPublic)
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
-                        return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                        pxt.tickEvent("github.create.ok");
+                        return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName);
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
                                 core.errorNotification(lf("Repository '{0}' already exists.", repoName))
                             else
                                 core.errorNotification(err.message)
+                            pxt.tickEvent("github.create.error", { statusCode: err.statusCode });
                         }
                         return "";
                     })
             } else {
                 core.errorNotification(lf("Invalid repository name."))
+                pxt.tickEvent("github.create.invalidname");
             }
         }
         return "";

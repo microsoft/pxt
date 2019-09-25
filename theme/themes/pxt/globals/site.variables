@@ -220,6 +220,7 @@ default semantic
    Github Diff editor
 --------------------*/
 @githubBackgroundColor: lighten(@simulatorBackground, 2);
+@diffSegmentBackgroundColor: @pageBackground;
 @diffRemovedBackground:#ffeef0;
 @diffAddedBackground: #e6ffed;
 @diffMarkerBackground: #f1f8ff;
