@@ -1,6 +1,6 @@
 # Diffs
 
-When comparing two document, a **diff** is a viual representation of the changes.
+When comparing two document, a **diff** is a visual representation of the changes.
 
 ## Text
 
