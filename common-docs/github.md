@@ -5,7 +5,7 @@
 To use GitHub, you need a [creating an account](https://github.com/) and internet access.
 You do not need special knowledge beyond what you've learned in MakeCode so far.
 
-## I code my program on my own
+## I want to program on my own
 
 Let's start discovering GitHub by explaining a usage common scenario: you are editing your own project and use GitHub to save your changes.
 
