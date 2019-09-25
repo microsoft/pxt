@@ -30,7 +30,7 @@ the name of the repository you just created.
 Make a random change in the code editor and you will notice that an up arrow is displayed
 on the button. The arrow means some changes stored on your computer need to be uploaded to GitHub. Click on that button.
 
-You will see a **commit changes** button and a list of **diffs** under. A **commit** is a bunbled set of changes that can be uploaded to GitHub [Read more...](/github/commit). A **diff** is a common jargon used by developer to describe a widget that shows the differences between two pieces of text [Read more](/diff). Look at the diff carefully, it tells you which lines you added, deleted or modified.
+You will see a **commit changes** button and a list of **diffs** under. A **commit** is a bundled set of changes that can be uploaded to GitHub [Read more...](/github/commit). A **diff** is a common jargon used by developer to describe a widget that shows the differences between two pieces of text [Read more](/diff). Look at the diff carefully, it tells you which lines you added, deleted or modified.
 
 ### ~ hint
 
