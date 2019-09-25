@@ -80,4 +80,12 @@ If you are on a branch other than ``master``, the GitHub status and view will re
 
 ![A branch switching dialog](/docs/static/blog/github-extensions-reloaded/branchstatus.png)
 
-That's it, happy branching!
+## Roll-out
+
+The GitHub authoring **reloaded** is currently available in:
+
+* `/beta` version of [micro:bit editor](https://makecode.microbit.org/beta)
+* `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
+* `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
+* The [Maker Editor](https://maker.makecode.com)
+
