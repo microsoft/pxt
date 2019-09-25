@@ -89,3 +89,6 @@ The GitHub authoring **reloaded** is currently available in:
 * `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
 * The [Maker Editor](https://maker.makecode.com)
 
+## Feedback?
+
+Drop us a note in the MakeCode forums at https://forum.makecode.com 
