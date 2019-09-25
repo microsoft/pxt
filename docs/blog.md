@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [GitHub Extensions Reloaded](/blog/github-extensions-reloaded)
+
+September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+We've made a number of improvements to our GitHub authoring support. Let's take a tour...
+**[Continue reading this blog post](/blog/github-extensions-reloaded)**
+
+
 ## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
 
 September 16th, 2019 by [Jaqster](https://github.com/jaqster)
