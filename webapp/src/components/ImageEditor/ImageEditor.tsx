@@ -43,7 +43,7 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> implements
         </Provider>
     }
 
-    init(value: string, options?: any) {
+    init(value: string, close: () => void, options?: any) {
         const bitmap = imageLiteralToBitmap(value);
         store.dispatch(dispatchSetInitialImage({ bitmap: bitmap.data() }));
     }

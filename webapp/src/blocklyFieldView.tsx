@@ -13,7 +13,7 @@ export interface EditorBounds {
 }
 
 export interface FieldEditorComponent extends React.Component {
-    init(value: string, options?: any): void;
+    init(value: string, close: () => void, options?: any): void;
     getValue(): string;
 
     getPersistentData(): any;
@@ -121,7 +121,7 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
     protected resizeContentCore = () => {
         this.resizeFrameRef = undefined;
 
-        const padding = Math.max(this.editorBounds.width, this.editorBounds.height) / 20;
+        const padding = Math.max(this.editorBounds.width, this.editorBounds.height) / 30;
 
         this.contentBounds = {
             left: this.editorBounds.left + padding,
@@ -168,7 +168,7 @@ export function init() {
 
             if (current) {
                 current.setRef(e);
-                e.init(value, options);
+                e.init(value, dismissIfVisible, options);
             }
         }
 

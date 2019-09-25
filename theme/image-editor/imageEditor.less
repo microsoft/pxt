@@ -61,7 +61,7 @@
 }
 
 .gallery-editor-header {
-    height: 4rem;
+    height: 3rem;
     background-color: #4B7BEC;
     border: 2px solid #4067b3;
     border-bottom: none;
@@ -78,13 +78,13 @@
     flex-direction: row;
     position: relative;
 
-    height: 3rem;
-    line-height: 3rem;
+    height: 2.25rem;
+    line-height: 2.25rem;
 
     background-color: #4572cf;
     border: 2px solid #4067b3;
     border-radius: 5px;
-    width: 15rem;
+    width: 13rem;
     margin-top: 0.25rem;
 
     margin-left: auto;
@@ -94,7 +94,7 @@
 
 .gallery-editor-toggle.right {
     .gallery-editor-toggle-handle {
-        transform: translateX(7.25rem);
+        transform: translateX(6.25rem);
     }
     .gallery-editor-toggle-right {
         color: #4B7BEC;
@@ -117,8 +117,8 @@
 }
 
 .gallery-editor-toggle-handle {
-    width: 7.5rem;
-    height: 2.75rem;
+    width: 6.5rem;
+    height: 2rem;
     background-color: white;
     border-radius: 5px;
     position: absolute;
@@ -152,6 +152,22 @@
 .sprite-gallery-button {
     width: ~"calc(20% - 8px)";
     height: ~"calc(30% - 8px)";
+}
+
+.ui.button.image-editor-confirm {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 2.5rem;
+    background-color: #4b7bec;
+    color: #ffffff;
+}
+
+.ui.button.image-editor-confirm:hover {
+    background-color: darken(#4b7bec, 5%);
+}
+
+.ui.button.image-editor-confirm:active {
+    background-color: darken(#4b7bec, 10%);
 }
 
 :root {

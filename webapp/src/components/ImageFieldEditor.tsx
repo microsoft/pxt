@@ -19,6 +19,7 @@ interface GalleryItem {
 export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState> implements FieldEditorComponent {
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
+    protected closeEditor: () => void;
 
     constructor(props: {}) {
         super(props);
@@ -48,6 +49,12 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
+                <button
+                    className="image-editor-confirm ui small button"
+                    title={lf("Done")}
+                    onClick={this.onDoneClick}>
+                        {lf("Done")}
+                </button>
             </div>
         </div>
     }
@@ -56,10 +63,12 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
         this.ref = this.refs["image-editor"] as ImageEditor;
     }
 
-    init(value: string, options?: any) {
+    init(value: string, close: () => void, options?: any) {
         if (this.ref) {
-            this.ref.init(value, options);
+            this.ref.init(value, close, options);
         }
+
+        this.closeEditor = close;
 
         if (options) {
             this.blocksInfo = options.blocksInfo;
@@ -113,6 +122,10 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
         this.setState({
             galleryVisible: false
         });
+    }
+
+    protected onDoneClick = () => {
+        if (this.closeEditor) this.closeEditor();
     }
 }
 

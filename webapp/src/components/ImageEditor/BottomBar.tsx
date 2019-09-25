@@ -79,21 +79,6 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         onBlur={this.handleDimensionalBlur}
                     />
                 </div>
-                <div className="image-editor-seperator"/>
-                <div className="image-editor-zoom-controls">
-                    <IconButton
-                        onClick={() => dispatchChangeZoom(1)}
-                        iconClass="ms-Icon ms-Icon--ZoomIn"
-                        title="Zoom In"
-                        toggle={true}
-                    />
-                    <IconButton
-                        onClick={() => dispatchChangeZoom(-1)}
-                        iconClass="ms-Icon ms-Icon--ZoomOut"
-                        title="Zoom Out"
-                        toggle={true}
-                    />
-                </div>
                 { singleFrame ? undefined : <div className="image-editor-seperator"/> }
                 { singleFrame ? undefined : <div>
                     <IconButton
@@ -118,6 +103,21 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         iconClass="ms-Icon ms-Icon--Redo"
                         onClick={hasRedo ? dispatchRedoImageEdit : null}
                         disabled={!hasRedo}
+                    />
+                </div>
+                <div className="image-editor-seperator"/>
+                <div className="image-editor-zoom-controls">
+                    <IconButton
+                        onClick={() => dispatchChangeZoom(-1)}
+                        iconClass="ms-Icon ms-Icon--ZoomOut"
+                        title="Zoom Out"
+                        toggle={true}
+                    />
+                    <IconButton
+                        onClick={() => dispatchChangeZoom(1)}
+                        iconClass="ms-Icon ms-Icon--ZoomIn"
+                        title="Zoom In"
+                        toggle={true}
                     />
                 </div>
             </div>
