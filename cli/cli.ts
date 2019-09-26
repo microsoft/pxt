@@ -303,7 +303,7 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
             r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
             console.log(`file\t language\t completion\t phrases\t translated\t approved`)
             stats.forEach(stat => {
-                const cfn = `stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
+                const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
                 r += `${cfn}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
                 if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
                     console.log(`${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
