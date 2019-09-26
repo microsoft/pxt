@@ -190,6 +190,8 @@ namespace pxt.crowdin {
         // flatten the files
         files.forEach(f => flatten(allFiles, f, ""));
 
+        allFiles.forEach(f => console.log(`${f.branch || "master"}:${f.fullName}`))
+
         // top level files are for PXT, subolder are targets
         allFiles = allFiles.filter(f => {
             if (f.fullName.indexOf('/') < 0) return f.branch == pxtCrowdinBranch; // pxt file

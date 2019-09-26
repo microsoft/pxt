@@ -248,7 +248,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
             cmd = cmd.toLowerCase();
             if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
             switch (cmd) {
-                case "stats": return statsCrowdinAsync(prj, key);
+                case "stats": return statsCrowdinAsync(prj, key, args[0]);
                 case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
                 case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
                 case "download": {
@@ -284,18 +284,21 @@ function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void>
         })
 }
 
-function statsCrowdinAsync(prj: string, key: string): Promise<void> {
-    pxt.log(`collecting crowdin stats for ${prj}`);
+function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Promise<void> {
+    pxt.log(`collecting crowdin stats for ${prj} ${preferredLang ? `for language ${preferredLang}` : `all languages`}`);
 
     const fn = `crowdinstats.csv`;
     let headers = 'sep=\t\r\n';
-    headers += `file\t language\t completion\t phrases\t translated\t approved\r\n`;
+    headers += `id\tfile\t language\t completion\t phrases\t translated\t approved\r\n`;
     nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
-    console.log(`file\t language\t completion\t phrases\t translated\t approved`)
+    console.log(`id\tfile\t language\t completion\t phrases\t translated\t approved`)
     return pxt.crowdin.projectInfoAsync(prj, key)
         .then(info => {
             if (!info) throw new Error("info failed")
-            return Promise.all(info.languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
+            let languages = info.languages;
+            if (preferredLang)
+                languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
+            return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
         }).then(() => {
             console.log(`stats written to ${fn}`)
         })
@@ -306,9 +309,9 @@ function statsCrowdinAsync(prj: string, key: string): Promise<void> {
                 let r = '';
                 stats.forEach(stat => {
                     const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
-                    r += `${cfn}\t${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                    r += `${stat.id}\t${cfn}\t${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
                     if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
-                        console.log(`${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                        console.log(`${stat.id}\t${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                     }
                 })
                 fs.appendFileSync(fn, r, { encoding: "utf8" });
@@ -5886,7 +5889,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
+    advancedCommand("crowdin", "upload, download, clean, stats files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
