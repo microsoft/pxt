@@ -1484,11 +1484,22 @@ namespace ts.pxtc {
                     autoCreateFunctions[info.attrs.autoCreate] = true
                 // only do it after storing ours in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
+                const prevFields = info.baseClassInfo
+                    ? U.toDictionary(info.baseClassInfo.allfields, f => getName(f)) : {}
+                const prevMethod =
+                    (n: string, c = info.baseClassInfo): FunctionLikeDeclaration[] => {
+                        if (!c) return null
+                        return c.methods[n] || prevMethod(n, c.baseClassInfo)
+                    }
+
                 for (let mem of decl.members) {
                     if (mem.kind == SK.PropertyDeclaration) {
                         let pdecl = <PropertyDeclaration>mem
                         if (!isStatic(pdecl))
                             info.allfields.push(pdecl)
+                        const key = getName(pdecl)
+                        if (prevMethod(key) || U.lookup(prevFields, key))
+                            error(pdecl, 9279, lf("redefinition of '{0}' as field", key))
                     } else if (mem.kind == SK.Constructor) {
                         for (let p of (mem as FunctionLikeDeclaration).parameters) {
                             if (isCtorField(p))
@@ -1501,14 +1512,11 @@ namespace ts.pxtc {
                         if (!info.methods.hasOwnProperty(key))
                             info.methods[key] = []
                         info.methods[key].push(mem as FunctionLikeDeclaration)
+                        if (U.lookup(prevFields, key))
+                            error(mem, 9279, lf("redefinition of '{0}' (previously a field)", key))
                     }
                 }
                 if (info.baseClassInfo) {
-                    const prevFields = U.toDictionary(info.baseClassInfo.allfields, f => getName(f))
-                    for (let f of info.allfields) {
-                        if (U.lookup(prevFields, getName(f)))
-                            error(f, 9279, lf("redefinition of field '{0}'", getName(f)))
-                    }
                     info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                     computeVtableInfo(info)
                 }
