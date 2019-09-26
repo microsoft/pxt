@@ -23,8 +23,6 @@ namespace Number {
         return typeof x == "number" && x !== x
     }
 }
-  
-  
 
 /**
  * A dictionary from string key to string values
