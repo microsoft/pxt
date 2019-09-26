@@ -287,34 +287,34 @@ function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void>
 function statsCrowdinAsync(prj: string, key: string): Promise<void> {
     pxt.log(`collecting crowdin stats for ${prj}`);
 
+    const fn = `crowdinstats.csv`;
+    let headers = 'sep=\t\r\n';
+    headers += `file\t language\t completion\t phrases\t translated\t approved\r\n`;
+    nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
+    console.log(`file\t language\t completion\t phrases\t translated\t approved`)
     return pxt.crowdin.projectInfoAsync(prj, key)
         .then(info => {
             if (!info) throw new Error("info failed")
             return Promise.all(info.languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
         }).then(() => {
-
-        })
-}
-
-function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
-    const fn = `crowdinstats.csv`;
-    let headers = 'sep=\t\r\n';
-    headers += `file\t language\t completion\t phrases\t translated\t approved\r\n`;
-    nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
-    return pxt.crowdin.languageStatsAsync(prj, key, lang)
-        .then(stats => {
-            let r = '';
-            console.log(`file\t language\t completion\t phrases\t translated\t approved`)
-            stats.forEach(stat => {
-                const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
-                r += `${cfn}\t${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
-                if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
-                    console.log(`${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
-                }
-            })
-            fs.appendFileSync(fn, r, { encoding: "utf8" });
             console.log(`stats written to ${fn}`)
         })
+
+    function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
+        return pxt.crowdin.languageStatsAsync(prj, key, lang)
+            .then(stats => {
+                let r = '';
+                stats.forEach(stat => {
+                    const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
+                    r += `${cfn}\t${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                    if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
+                        console.log(`${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                    }
+                })
+                fs.appendFileSync(fn, r, { encoding: "utf8" });
+            })
+    }
+
 }
 
 
