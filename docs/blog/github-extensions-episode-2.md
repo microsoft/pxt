@@ -52,7 +52,7 @@ Once you have reviewed all the changes, you are ready to commit and push your ch
 
 ## Pulling changes
 
-If you've made changes in another computer or you are working with other people on the same projects, changes are that you need to **pull** changes from GitHub. MakeCode will detect that changes are needed and will try to merge the changes in your project. If the merge fails, we might have to create a pull request or even fork the repository.
+If you've made changes in another computer or you are working with other people on the same projects, changes are that you need to **pull** changes from GitHub. MakeCode will detect that changes are needed and will try to merge the changes in your project. If the merge fails, we might have to commit and create a pull request or even fork the repository.
 
 ![Pull changes](/docs/static/blog/github-extensions-reloaded/pullchanges.png)
 
