@@ -49,12 +49,12 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
-                <button
+                {!this.state.galleryVisible && <button
                     className="image-editor-confirm ui small button"
                     title={lf("Done")}
                     onClick={this.onDoneClick}>
                         {lf("Done")}
-                </button>
+                </button>}
             </div>
         </div>
     }

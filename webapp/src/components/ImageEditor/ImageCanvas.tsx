@@ -85,8 +85,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             // This is a total hack. Ideally, the zoom should be part of the global state but because
             // the mousewheel events fire very quickly it's much more performant to make it local state.
             // So, for buttons outside this component to change the zoom they have to set the zoom delta
-            // which is applied here and then set back to zero
-            this.updateZoom(this.props.zoomDelta)
+            // which is applied here and then set back to null
+
+            if (this.props.zoomDelta === 0){
+                this.zoomToCanvas();
+            }
+            else {
+                this.updateZoom(this.props.zoomDelta)
+            }
             this.props.dispatchChangeZoom(null);
             return;
         }
@@ -120,7 +126,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     onDragMove(coord: ClientCoordinates): void {
-        if (this.isPanning()) {
+        if (this.isPanning() && this.lastPanX != undefined && this.lastPanY != undefined) {
             this.panX += this.lastPanX - coord.clientX;
             this.panY += this.lastPanY - coord.clientY;
             this.lastPanX = coord.clientX;
@@ -135,7 +141,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     onDragEnd(coord: ClientCoordinates): void {
-        if (this.isPanning()) {
+        if (this.isPanning() && this.lastPanX != undefined && this.lastPanY != undefined) {
             this.panX += this.lastPanX - coord.clientX;
             this.panY += this.lastPanY - coord.clientY;
             this.lastPanX = undefined;
@@ -363,28 +369,39 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.zoom = Math.max(this.zoom + delta, 0.25);
 
             const unit = this.getCanvasUnit(bounds);
-            const newWidth = unit * this.canvas.width;
-            const newHeight = unit * this.canvas.height;
 
-            // Center if smaller than bounds, otherwise adjust the pan so that the zoom is anchored at the cursor
             const { canvasX, canvasY } = this.clientToCanvas(anchorX, anchorY, bounds);
 
-            if (newWidth < bounds.width) {
-                this.panX = -((bounds.width >> 1) - (newWidth >> 1));
-            }
-            else {
-                this.panX += (oldX - canvasX) * unit;
+            if (isNaN(canvasX) || isNaN(canvasY) || isNaN(oldX) || isNaN(oldY)) {
+                return;
             }
 
-            if (newHeight < bounds.height) {
-                this.panY = -((bounds.height >> 1) - (newHeight >> 1));
-            }
-            else {
-                this.panY += (oldY - canvasY) * unit;
-            }
+            this.panX += (oldX - canvasX) * unit;
+            this.panY += (oldY - canvasY) * unit;
 
             this.applyZoom();
         }
+    }
+
+    protected zoomToCanvas() {
+        this.zoom = 1;
+        const outer = this.refs["canvas-bounds"] as HTMLDivElement;
+
+        this.applyZoom();
+        if (this.canvas && outer) {
+            const bounds = outer.getBoundingClientRect();
+            const canvas = this.canvas.getBoundingClientRect();
+
+            if (canvas.width < bounds.width) {
+                this.panX = -((bounds.width >> 1) - (canvas.width >> 1));
+            }
+
+            if (canvas.height < bounds.height) {
+                this.panY = -((bounds.height >> 1) - (canvas.height >> 1));
+            }
+
+        }
+        this.applyZoom();
     }
 
     protected applyZoom(bounds?: ClientRect) {
@@ -430,7 +447,15 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
      * @param bounds The bounds in which the canvas is contained
      */
     protected getCanvasUnit(bounds: ClientRect) {
-        return this.zoom * (this.canvas.height > this.canvas.width ? bounds.height / this.canvas.height : bounds.width / this.canvas.width);
+        const boundsRatio = bounds.width / bounds.height;
+        const imageRatio = this.canvas.width / this.canvas.height;
+
+        if (boundsRatio > imageRatio) {
+            return this.zoom * (bounds.height / this.canvas.height);
+        }
+        else {
+            return this.zoom * (bounds.width / this.canvas.width);
+        }
     }
 
     protected inBounds(x: number, y: number) {
