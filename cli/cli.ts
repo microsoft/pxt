@@ -301,14 +301,17 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
         .then(stats => {
             let r = 'sep=\t\r\n'
             r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
+            console.log(`file\t language\t completion\t phrases\t translated\t approved`)
             stats.forEach(stat => {
-                r += `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                const cfn = `stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
+                r += `${cfn}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
                 if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
-                    console.log(`${stat.fullName}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
+                    console.log(`${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                 }
             })
             const fn = `crowdinstats.csv`;
             nodeutil.writeFileSync(fn, r, { encoding: "utf8" });
+            console.log(`stats written to ${fn}`)
         })
 }
 
