@@ -63,6 +63,8 @@ namespace ts.pxtc {
         resetEmit() {
             // clear IsUsed flag
             this.flags &= ~(PxtNodeFlags.IsUsed | PxtNodeFlags.FromPreviousCompile)
+            if (this.proc && this.proc.classInfo && this.proc.classInfo.ctor == this.proc)
+                this.proc.classInfo.ctor = null
             this.functionInfo = null;
             this.variableInfo = null;
             this.classInfo = null;
