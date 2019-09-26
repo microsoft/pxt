@@ -142,6 +142,11 @@
     background-color: var(--editor-bg-color);
     overflow-y: scroll;
 
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+
     visibility: hidden;
 }
 
@@ -150,9 +155,10 @@
     visibility: visible;
 }
 
-.sprite-gallery-button {
-    width: ~"calc(20% - 8px)";
-    height: ~"calc(30% - 8px)";
+.image-editor-gallery .sprite-gallery-button {
+    margin: 1px;
+    border-radius: 0px;
+    width: ~"calc(20% - 2px)";
 }
 
 .ui.button.image-editor-confirm {

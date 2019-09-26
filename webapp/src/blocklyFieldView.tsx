@@ -121,7 +121,7 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
     protected resizeContentCore = () => {
         this.resizeFrameRef = undefined;
 
-        const padding = Math.max(this.editorBounds.width, this.editorBounds.height) / 30;
+        const padding = this.editorBounds.width < 500 ? 0 : Math.max(this.editorBounds.width, this.editorBounds.height) / 30;
 
         this.contentBounds = {
             left: this.editorBounds.left + padding,
@@ -146,6 +146,8 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
     }
 
     protected handleOutsideClick = (ev: MouseEvent) => {
+        if (!this.contentBounds) return;
+
         if (!inBounds(ev.clientX, ev.clientY, this.contentBounds)) {
             this.hide();
         }

@@ -165,7 +165,11 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
     clickHandler(index: number) {
         if (!this.handlers[index]) {
             this.handlers[index] = () => {
-                const { items, onItemSelected, hidden } = this.props;
+                let { items, onItemSelected, filterString, hidden } = this.props;
+
+                if (filterString) {
+                    items = filterItems(items, filterString.split(" "));
+                }
 
                 if (!hidden && items && items[index]) {
                     onItemSelected(items[index]);
