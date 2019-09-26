@@ -4879,19 +4879,3 @@ ${lbl}: .short 0xffff
         }
     }
 }
-
-/*
-// inline
-MAX_TIME_STEP = Fx8(100)
-MIN_MOVE_GAP = Fx8(0.1)
-oneHalfFx8 = Fx8(0.5)
-
-CONTENT_HEIGHT = screen.height - PADDING_VERTICAL * 2
-CONTENT_WIDTH = screen.width - PADDING * 2
-CELL_HEIGHT = Math.floor(CONTENT_HEIGHT / (NUM_ROWS + 4))
-CELL_WIDTH = Math.floor(CONTENT_WIDTH / ALPHABET_ROW_LENGTH)
-
-consoleColumns = Math.floor((screen.width - 2 * marginx) / consoleFont.charWidth)
-consoleFont = image.font5
-consoleLines = Math.floor(screen.height / (consoleFont.charHeight + marginy)) - 1
-*/
