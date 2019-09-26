@@ -1467,7 +1467,7 @@ namespace ts.pxtc {
                     // pinf is the transitive parent
                     minf.virtualParent = pinf
                     if (!pinf.virtualParent) {
-                        needsFullRecompile(pxtInfo(baseMethod))
+                        needsFullRecompileIfCached(pxtInfo(baseMethod))
                         pinf.virtualParent = pinf
                     }
                     assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
@@ -1475,7 +1475,7 @@ namespace ts.pxtc {
             }
         }
 
-        function needsFullRecompile(pxtinfo: PxtNode) {
+        function needsFullRecompileIfCached(pxtinfo: PxtNode) {
             if ((pxtinfo.flags & PxtNodeFlags.FromPreviousCompile) ||
                 (pxtinfo.flags & PxtNodeFlags.InPxtModules &&
                     compileOptions.skipPxtModulesEmit)) {
@@ -1531,7 +1531,7 @@ namespace ts.pxtc {
                                 pxtinfo.flags |= PxtNodeFlags.IsOverridden
                                 if (pxtinfo.flags & PxtNodeFlags.IsUsed)
                                     getIfaceMemberId(key, true)
-                                needsFullRecompile(pxtinfo)
+                                needsFullRecompileIfCached(pxtinfo)
                             }
                             // error(mem, 9279, lf("redefinition of '{0}' (previously a field)", key))
                         }
