@@ -1259,7 +1259,7 @@ namespace pxsim {
 
         // Wrapper for the setTimeout
         schedule(fn: Function, timeout: number): number {
-            if (timeout <= 1) timeout = 1;
+            if (timeout <= 0) timeout = 0;
             if (this.pausedOnBreakpoint) {
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(fn, timeout));
                 return -1;

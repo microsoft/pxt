@@ -602,10 +602,7 @@ namespace pxsim {
 
         export function pause(ms: number) {
             let cb = getResume();
-            if (ms < 1)
-                cb()
-            else
-                runtime.schedule(() => { cb() }, ms)
+            runtime.schedule(() => { cb() }, ms)
         }
 
         export function runInBackground(a: RefAction) {
