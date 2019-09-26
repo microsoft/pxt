@@ -23,7 +23,7 @@ namespace pxt.winrt {
         }
 
         isSwitchingToBootloader() {
-            return false;
+            isSwitchingToBootloader();
         }
 
         disconnectAsync(): Promise<void> {
