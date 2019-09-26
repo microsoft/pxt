@@ -1465,11 +1465,20 @@ namespace ts.pxtc {
                         error(currMethod, 9255, lf("the overriding method is currently required to have the same number of arguments as the base one"))
                     // pinf is the transitive parent
                     minf.virtualParent = pinf
-                    if (!pinf.virtualParent)
+                    if (!pinf.virtualParent) {
+                        const pxtinfo = pxtInfo(baseMethod)
+                        if (pxtinfo.flags & PxtNodeFlags.FromPreviousCompile)
+                            needsFullRecompile();
                         pinf.virtualParent = pinf
+                    }
                     assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
                 }
             }
+        }
+
+        function needsFullRecompile() {
+            res.needsFullRecompile = true;
+            throw userError(9200, lf("full recompile required"));
         }
 
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
@@ -1512,8 +1521,11 @@ namespace ts.pxtc {
                         if (!info.methods.hasOwnProperty(key))
                             info.methods[key] = []
                         info.methods[key].push(mem as FunctionLikeDeclaration)
-                        if (U.lookup(prevFields, key))
+                        const pfield = U.lookup(prevFields, key)
+                        if (pfield) {
+                            // pxtInfo(pfield).flags |= PxtNodeFlags.IsOverridden
                             error(mem, 9279, lf("redefinition of '{0}' (previously a field)", key))
+                        }
                     }
                 }
                 if (info.baseClassInfo) {
