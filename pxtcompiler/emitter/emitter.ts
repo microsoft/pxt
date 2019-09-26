@@ -242,7 +242,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9279
+    // next free error 9280
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -1502,6 +1502,11 @@ namespace ts.pxtc {
                     }
                 }
                 if (info.baseClassInfo) {
+                    const prevFields = U.toDictionary(info.baseClassInfo.allfields, f => getName(f))
+                    for (let f of info.allfields) {
+                        if (U.lookup(prevFields, getName(f)))
+                            error(f, 9279, lf("redefinition of field '{0}'", getName(f)))
+                    }
                     info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                     computeVtableInfo(info)
                 }
