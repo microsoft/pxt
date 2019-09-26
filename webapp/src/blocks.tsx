@@ -176,7 +176,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private serializeBlocks(normalize?: boolean): string {
-        let xml = pxt.blocks.saveWorkspaceXml(this.editor);
+        // store ids when using github
+        let xml = pxt.blocks.saveWorkspaceXml(this.editor, !normalize && !!this.parent.state.header.githubId);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -385,13 +386,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         for (const block in deprecatedMap) {
-            if (deprecatedMap[block] === 0) {
-                delete deprecatedMap[block];
+            if (deprecatedMap[block] !== 0) {
+                pxt.tickEvent("blocks.usingDeprecated", {block : block, count : deprecatedMap[block] });
             }
-        }
-
-        if (deprecatedBlocksFound) {
-            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
         }
     }
 
@@ -429,7 +426,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             if (ev.type == 'create') {
                 let blockId = ev.xml.getAttribute('type');
-                pxt.tickActivity("blocks.create", "blocks.create." + blockId);
+                pxt.tickEvent("blocks.create", {"block": blockId});
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
@@ -1540,7 +1537,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (fn.attributes.debug && !pxt.options.debug) return false;
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            return that.shouldShowBlock(fn.attributes.blockId, ns);
+            return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
         }
 
         function variableIsAssigned(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {

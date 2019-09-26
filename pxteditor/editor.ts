@@ -74,7 +74,6 @@ namespace pxt.editor {
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
-        updatingEditorFile?: boolean;
         pokeUserComponent?: string;
 
         highContrast?: boolean;
@@ -189,7 +188,6 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
-        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;

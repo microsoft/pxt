@@ -29,7 +29,7 @@ export function setCookieLang(langId: string) {
     }
 
     if (langId !== getCookieLang()) {
-        pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
+        pxt.tickEvent(`menu.lang.setcookielang`, {lang : langId});
         const expiration = new Date();
         expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
         document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
@@ -62,14 +62,14 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         setCookieLang(langId);
 
         if (langId !== initialLang) {
-            pxt.tickEvent(`menu.lang.changelang.${langId}`);
+            pxt.tickEvent(`menu.lang.changelang`, {lang : langId});
             pxt.winrt.releaseAllDevicesAsync()
                 .then(() => {
                     this.props.parent.reloadEditor();
                 })
                 .done();
         } else {
-            pxt.tickEvent(`menu.lang.samelang.${langId}`);
+            pxt.tickEvent(`menu.lang.samelang`, {lang : langId});
             this.hide();
         }
     }

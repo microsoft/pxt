@@ -244,7 +244,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9276
+    // next free error 9279
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -591,14 +591,15 @@ namespace ts.pxtc {
             node = node.parent.parent // we need variable stmt
 
         let cmtCore = (node: Node) => {
-            let src = getSourceFileOfNode(node)
-            let doc = getLeadingCommentRangesOfNode(node, src)
+            const src = getSourceFileOfNode(node)
+            if (!src) return "";
+            const doc = getLeadingCommentRangesOfNode(node, src)
             if (!doc) return "";
-            let cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
+            const cmt = doc.map(r => src.text.slice(r.pos, r.end)).join("\n")
             return cmt;
         }
 
-        if (node.symbol && node.symbol.declarations.length > 1) {
+        if (node.symbol && node.symbol.declarations && node.symbol.declarations.length > 1) {
             return node.symbol.declarations.map(cmtCore).join("\n")
         } else {
             return cmtCore(node)
@@ -889,6 +890,7 @@ namespace ts.pxtc {
     export interface VariableAddInfo {
         captured?: boolean;
         written?: boolean;
+        functionsToDefine?: FunctionDeclaration[];
     }
 
     export class FunctionAddInfo {
@@ -898,9 +900,11 @@ namespace ts.pxtc {
         virtualParent?: FunctionAddInfo;
         virtualIndex?: number;
         parentClassInfo?: ClassInfo;
+        usedBeforeDecl?: boolean;
         // these two are only used in native backend
         usedAsValue?: boolean;
         usedAsIface?: boolean;
+        alreadyEmitted?: boolean;
 
         constructor(public decl: EmittableAsCall) { }
 
@@ -927,6 +931,7 @@ namespace ts.pxtc {
         let currJres: pxt.JRes = null
         let currUsingContext: PxtNode = null
         let needsUsingInfo = false
+        let pendingFunctionDefinitions: FunctionDeclaration[] = []
 
         currNodeWave++
 
@@ -1605,9 +1610,8 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(f);
             if (attrs.shim)
                 userError(9207, lf("built-in functions cannot be yet used as values; did you forget ()?"))
-            if (isGenericFunction(f))
-                userError(9232, lf("generic functions cannot be yet used as values; did you forget ()?"))
             let info = getFunctionInfo(f)
+            markUsageOrder(info);
             if (info.location) {
                 return info.location.load()
             } else {
@@ -1615,6 +1619,15 @@ ${lbl}: .short 0xffff
                 info.usedAsValue = true
                 markFunctionUsed(f)
                 return emitFunLitCore(f)
+            }
+        }
+
+        function markUsageOrder(info: FunctionAddInfo) {
+            if (info.usedBeforeDecl === undefined)
+                info.usedBeforeDecl = true;
+            else if (bin.finalPass && info.usedBeforeDecl && info.capturedVars.length) {
+                if (getEnclosingFunction(info.decl) && !info.alreadyEmitted)
+                    userError(9278, lf("function referenced before all variables it uses are defined"))
             }
         }
 
@@ -1731,19 +1744,41 @@ ${lbl}: .short 0xffff
         function emitObjectLiteral(node: ObjectLiteralExpression) {
             let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment | ShorthandPropertyAssignment) => {
+                assert(!p.questionToken) // should be disallowed by TS grammar checker
+
+                let keyName: string
+                let init: ir.Expr
                 if (p.kind == SK.ShorthandPropertyAssignment) {
-                    userError(9264, "Shorthand properties not supported.")
-                    return;
+                    const sp = p as ShorthandPropertyAssignment
+                    assert(!sp.equalsToken && !sp.objectAssignmentInitializer) // disallowed by TS grammar checker
+                    keyName = p.name.text;
+                    const vsym = checker.getShorthandAssignmentValueSymbol(p)
+                    const vname: Identifier = vsym && vsym.valueDeclaration && (vsym.valueDeclaration as any).name
+                    if (vname && vname.kind == SK.Identifier)
+                        init = emitIdentifier(vname)
+                    else
+                        throw unhandled(p) // not sure what happened
+                } else if (p.name.kind == SK.ComputedPropertyName) {
+                    const keyExpr = (p.name as ComputedPropertyName).expression
+                    // need to use rtcallMask, so keyExpr gets converted to string
+                    proc.emitExpr(rtcallMask("pxtrt::mapSetByString", [
+                        irToNode(expr, true),
+                        keyExpr,
+                        p.initializer
+                    ], null))
+                    return
+                } else {
+                    keyName = p.name.kind == SK.StringLiteral ?
+                        (p.name as StringLiteral).text : p.name.getText();
+                    init = emitExpr(p.initializer)
                 }
-                const keyName = p.name.kind == SK.StringLiteral ?
-                    (p.name as StringLiteral).text : p.name.getText();
                 const fieldId = target.isNative
                     ? ir.numlit(getIfaceMemberId(keyName))
                     : ir.ptrlit(null, JSON.stringify(keyName))
                 const args = [
                     expr,
                     fieldId,
-                    emitExpr(p.initializer)
+                    init
                 ];
                 proc.emitExpr(ir.rtcall(target.isNative ? "pxtrt::mapSet" : "pxtrt::mapSetByString", args))
             })
@@ -1770,11 +1805,6 @@ ${lbl}: .short 0xffff
             if (fold)
                 return emitLit(fold.val)
 
-            // we need to type check node.expression before committing code gen
-            if ((decl.kind == SK.PropertyDeclaration && !isStatic(decl))
-                || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
-                emitExpr(node.expression, false)
-            }
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
@@ -2331,7 +2361,11 @@ ${lbl}: .short 0xffff
         }
 
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
-            let proc = lookupProc(decl)
+            const proc = lookupProc(decl)
+            if (decl.kind == SK.FunctionDeclaration) {
+                const info = getFunctionInfo(decl as FunctionDeclaration)
+                markUsageOrder(info)
+            }
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
             return mkProcCallCore(proc, args)
         }
@@ -2669,9 +2703,37 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function flushHoistedFunctionDefinitions() {
+            const curr = pendingFunctionDefinitions
+            if (curr.length > 0) {
+                pendingFunctionDefinitions = []
+                for (let node of curr) {
+                    const prevProc = proc;
+                    try {
+                        emitFuncCore(node);
+                    } finally {
+                        proc = prevProc;
+                    }
+                }
+            }
+        }
+        function markVariableDefinition(vi: VariableAddInfo) {
+            if (bin.finalPass && vi.functionsToDefine) {
+                U.pushRange(pendingFunctionDefinitions, vi.functionsToDefine)
+            }
+        }
+
         function emitFuncCore(node: FunctionLikeDeclaration) {
             const info = getFunctionInfo(node)
             let lit: ir.Expr = null
+
+            if (bin.finalPass) {
+                if (info.alreadyEmitted) {
+                    U.assert(info.usedBeforeDecl)
+                    return null
+                }
+                info.alreadyEmitted = true
+            }
 
             let isExpression = node.kind == SK.ArrowFunction || node.kind == SK.FunctionExpression
 
@@ -2682,12 +2744,8 @@ ${lbl}: .short 0xffff
                 return l;
             })
 
-            // forbid: let x = function<T>(a:T) { }
-            if (isExpression && isGenericFunction(node))
-                userError(9233, lf("function expressions cannot be generic"))
-
-            if (caps.length > 0 && isGenericFunction(node))
-                userError(9234, lf("nested functions cannot be generic yet"))
+            if (info.usedBeforeDecl === undefined)
+                info.usedBeforeDecl = false
 
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
@@ -2775,6 +2833,7 @@ ${lbl}: .short 0xffff
                     fieldAssignmentParameters.push(p)
                 }
                 let l = new ir.Cell(i, p, getVarInfo(p))
+                markVariableDefinition(l.info)
                 l.isarg = true
                 return l
             })
@@ -2806,6 +2865,8 @@ ${lbl}: .short 0xffff
                 proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(f.initializer)]))
             }
 
+            flushHoistedFunctionDefinitions()
+
             if (node.body.kind == SK.Block) {
                 emit(node.body);
                 if (funcHasReturn(proc.action)) {
@@ -2833,6 +2894,16 @@ ${lbl}: .short 0xffff
                 proc.emitJmp(lbl, emitLit(undefined))
             }
             proc.emitLbl(lbl)
+
+            if (info.capturedVars.length &&
+                info.usedBeforeDecl &&
+                node.kind == SK.FunctionDeclaration && !bin.finalPass) {
+                info.capturedVars.sort((a, b) => b.pos - a.pos)
+                const vinfo = getVarInfo(info.capturedVars[0])
+                if (!vinfo.functionsToDefine)
+                    vinfo.functionsToDefine = []
+                vinfo.functionsToDefine.push(node)
+            }
 
             // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
@@ -2898,7 +2969,34 @@ ${lbl}: .short 0xffff
             return lit
         }
 
-        function emitDeleteExpression(node: DeleteExpression) { }
+        function emitDeleteExpression(node: DeleteExpression) {
+            let objExpr: Expression
+            let keyExpr: () => ir.Expr
+            if (node.expression.kind == SK.PropertyAccessExpression) {
+                const inner = node.expression as PropertyAccessExpression
+                objExpr = inner.expression
+                keyExpr = () => emitStringLiteral(inner.name.text)
+            } else if (node.expression.kind == SK.ElementAccessExpression) {
+                const inner = node.expression as ElementAccessExpression
+                objExpr = inner.expression
+                keyExpr = () => emitExpr(inner.argumentExpression)
+            } else {
+                throw userError(9276, lf("expression not supported as argument to 'delete'"))
+            }
+
+            // we know these would just fail at runtime
+            const objExprType = typeOf(objExpr)
+            if (isClassType(objExprType))
+                throw userError(9277, lf("'delete' not supported on class types"))
+            if (isArrayType(objExprType))
+                throw userError(9277, lf("'delete' not supported on array"))
+
+            const args = [
+                emitExpr(objExpr),
+                keyExpr()
+            ]
+            return rtcallMaskDirect("pxtrt::mapDeleteByString", args)
+        }
         function emitTypeOfExpression(node: TypeOfExpression) {
             return rtcallMask("pxt::typeOf", [node.expression], null)
         }
@@ -3959,8 +4057,10 @@ ${lbl}: .short 0xffff
             const iterVar = emitVariableDeclaration(declList.declarations[0]) // c
             U.assert(!!iterVar || !bin.finalPass)
             //Start with undefined
-            if (iterVar)
+            if (iterVar) {
                 proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
+                recordUse(declList.declarations[0], true)
+            }
             proc.stackEmpty()
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
@@ -3972,6 +4072,8 @@ ${lbl}: .short 0xffff
             let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
+
+            flushHoistedFunctionDefinitions()
 
             emitBrk(node);
 
@@ -4143,6 +4245,7 @@ ${lbl}: .short 0xffff
                     const loc = lookupCell(decl)
                     proc.emitExpr(loc.storeByRef(rtcallMaskDirect("pxt::getThrownValue", [])))
                 }
+                flushHoistedFunctionDefinitions()
                 emitBlock(node.catchClause.block)
                 proc.emitLbl(skip)
             }
@@ -4208,6 +4311,8 @@ ${lbl}: .short 0xffff
             } else {
                 loc = proc.mkLocal(node, getVarInfo(node))
             }
+
+            markVariableDefinition(loc.info)
 
             if (loc.isByRefLocal()) {
                 proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
@@ -4417,6 +4522,7 @@ ${lbl}: .short 0xffff
                     return emitBlock(<Block>node);
                 case SK.VariableDeclaration:
                     emitVariableDeclaration(<VariableDeclaration>node);
+                    flushHoistedFunctionDefinitions()
                     return
                 case SK.IfStatement:
                     return emitIfStatement(<IfStatement>node);
@@ -4524,6 +4630,8 @@ ${lbl}: .short 0xffff
                     return emitObjectLiteral(<ObjectLiteralExpression>node);
                 case SK.TypeOfExpression:
                     return emitTypeOfExpression(<TypeOfExpression>node);
+                case SyntaxKind.DeleteExpression:
+                    return emitDeleteExpression(<DeleteExpression>node);
                 default:
                     unhandled(node);
                     return null
@@ -4557,8 +4665,6 @@ ${lbl}: .short 0xffff
                     return emitComputedPropertyName(<ComputedPropertyName>node);
                 case SyntaxKind.TaggedTemplateExpression:
                     return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
-                case SyntaxKind.DeleteExpression:
-                    return emitDeleteExpression(<DeleteExpression>node);
                 case SyntaxKind.VoidExpression:
                     return emitVoidExpression(<VoidExpression>node);
                 case SyntaxKind.AwaitExpression:

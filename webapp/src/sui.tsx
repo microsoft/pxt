@@ -477,6 +477,7 @@ export interface LinkProps extends ButtonProps {
     href?: string;
     download?: string;
     target?: string;
+    rel?: string;
 }
 
 export class Link extends StatelessUIElement<LinkProps> {
@@ -486,6 +487,7 @@ export class Link extends StatelessUIElement<LinkProps> {
                 id={this.props.id}
                 href={this.props.href}
                 target={this.props.target}
+                rel={this.props.rel || (this.props.target ? "noopener noreferrer" : "")}
                 download={this.props.download}
                 role={this.props.role}
                 title={this.props.title}
@@ -500,6 +502,10 @@ export class Link extends StatelessUIElement<LinkProps> {
             </a>
         );
     }
+}
+
+export function helpIconLink(url: string, title: string) {
+    return <Link href={url} icon="help circle" target="_blank" role="button" title={title} />
 }
 
 ///////////////////////////////////////////////////////////
@@ -532,6 +538,7 @@ export interface InputProps {
     inputLabel?: string;
     class?: string;
     value?: string;
+    error?: string;
     type?: string;
     placeholder?: string;
     disabled?: boolean;
@@ -547,7 +554,11 @@ export interface InputProps {
     selectOnMount?: boolean;
 }
 
-export class Input extends data.Component<InputProps, { value: string }> {
+export interface InputState {
+    value: string;
+}
+
+export class Input extends data.Component<InputProps, InputState> {
     constructor(props: InputProps) {
         super(props);
         this.state = {
@@ -617,6 +628,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
         let copyBtn = p.copy && document.queryCommandSupported('copy')
             ? <Button className="ui right labeled primary icon button" text={lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
+        const { error } = this.props;
         const { value } = this.state;
 
         return (
@@ -636,7 +648,8 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         autoComplete={p.autoComplete ? "" : "off"}
                         autoCorrect={p.autoComplete ? "" : "off"}
                         autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete} />
+                        spellCheck={p.autoComplete}
+                    />
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
@@ -649,6 +662,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         </textarea>}
                     {copyBtn}
                 </div>
+                {error ? <div className="ui yellow message">{error}</div> : undefined}
             </Field>
         );
     }
@@ -663,7 +677,7 @@ export interface CheckBoxProps {
     inputLabel?: string;
     class?: string;
     checked?: boolean;
-    onChange: (v: string) => void;
+    onChange: (v: boolean) => void;
 }
 
 export class Checkbox extends data.Component<CheckBoxProps, {}> {
@@ -676,7 +690,7 @@ export class Checkbox extends data.Component<CheckBoxProps, {}> {
     }
 
     handleChange(v: React.ChangeEvent<any>) {
-        this.props.onChange(v.target.value)
+        this.props.onChange(v.currentTarget.checked);
     }
 
     renderCore() {
@@ -1314,7 +1328,7 @@ export interface ProgressCircleProps {
 export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
     protected radius: number = 100 / (2 * Math.PI); // 100 steps in circle
     protected view: number;
-    constructor (props: ProgressCircleProps) {
+    constructor(props: ProgressCircleProps) {
         super(props);
         this.view = this.radius * 2 + this.props.stroke;
     }
@@ -1335,5 +1349,41 @@ export class ProgressCircle extends React.Component<ProgressCircleProps, {}> {
                     d={`M${this.view / 2} ${props.stroke / 2} a ${r} ${r} 0 0 1 0 ${r * 2} a ${r} ${r} 0 0 1 0 -${r * 2}`} />
             </svg>
         </div>
+    }
+}
+
+///////////////////////////////////////////////////////////
+////////////             Plain checkbox       /////////////
+///////////////////////////////////////////////////////////
+
+export interface PlainCheckboxProps {
+    label: string;
+    onChange: (v: boolean) => void;
+}
+
+export interface PlainCheckboxState {
+    isChecked: boolean;
+}
+
+export class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
+    constructor(props: PlainCheckboxProps) {
+        super(props);
+        this.state = {
+            isChecked: false
+        }
+        this.setCheckedBit = this.setCheckedBit.bind(this);
+    }
+
+    setCheckedBit() {
+        let val = !this.state.isChecked
+        this.props.onChange(val)
+        this.setState({ isChecked: val })
+    }
+
+    renderCore() {
+        return <Checkbox
+            inputLabel={this.props.label}
+            checked={this.state.isChecked}
+            onChange={this.setCheckedBit} />
     }
 }

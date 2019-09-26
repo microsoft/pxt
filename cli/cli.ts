@@ -942,7 +942,7 @@ function uploadArtFile(fn: string): string {
 
 function gitHash(buf: Buffer) {
     let hash = crypto.createHash("sha1")
-    hash.update(new Buffer("blob " + buf.length + "\u0000"))
+    hash.update(Buffer.from("blob " + buf.length + "\u0000", "utf8"))
     hash.update(buf)
     return hash.digest("hex")
 }
@@ -1062,7 +1062,7 @@ function uploadCoreAsync(opts: UploadOptions) {
         if (opts.fileContent) {
             let s = U.lookup(opts.fileContent, p)
             if (s != null)
-                rdf = Promise.resolve(new Buffer(s, "utf8"))
+                rdf = Promise.resolve(Buffer.from(s, "utf8"))
         }
         if (!rdf) {
             if (!fs.existsSync(p))
@@ -1116,7 +1116,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                         content = U.replaceAll(content, from, replacements[from])
                     }
                     if (opts.localDir) {
-                        data = new Buffer(content, "utf8")
+                        data = Buffer.from(content, "utf8")
                     } else {
                         // save it for developer inspection
                         fs.writeFileSync("built/uploadrepl/" + fileName, content)
@@ -1139,7 +1139,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
                             res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
                         })
-                        data = new Buffer((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
+                        data = Buffer.from((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
                         if (trg.simulator
                             && trg.simulator.boardDefinition
@@ -1183,7 +1183,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                 filename: fileName,
                 size: 0
             }
-            let buf = new Buffer(req.content, req.encoding)
+            let buf = Buffer.from(req.content, req.encoding)
             req.size = buf.length
             req.hash = gitHash(buf)
             uplReqs[fileName] = req
@@ -2225,7 +2225,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                     return beg + ` href="${webpath}docs${url}.html"`
                 })
-                buf = new Buffer(html, "utf8")
+                buf = Buffer.from(html, "utf8")
                 dd = dd.slice(0, dd.length - 3) + ".html"
             }
             nodeutil.writeFileSync(dd, buf)
@@ -2541,7 +2541,7 @@ class Host
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         if (process.env["PXT_LOCAL_DOCKER_TEST"] === "yes") {
-            const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
+            const compileReq = JSON.parse(Buffer.from(extInfo.compileData, "base64").toString("utf8"))
             const mappedFiles =
                 Object.keys(compileReq.replaceFiles).map(k => {
                     return {
@@ -2567,7 +2567,7 @@ class Host
         }
 
         if (pxt.options.debug) {
-            const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
+            const compileReq = JSON.parse(Buffer.from(extInfo.compileData, "base64").toString("utf8"))
             const replLong = (m: any) => {
                 for (let k of Object.keys(m)) {
                     let v = m[k]
@@ -2587,7 +2587,7 @@ class Host
             pxt.debug("trying " + cachedPath)
             try {
                 const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
-                pxt.log(`Using hexcache: ${extInfo.sha}`)
+                pxt.debug(`Using hexcache: ${extInfo.sha}`)
                 return Promise.resolve({ hex: lines })
             } catch (e) { }
         }
@@ -4479,7 +4479,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                 if (info.frames && imgIdx >= info.frames.length) return;
 
                 let img = U.flatClone(sheet)
-                img.data = new Buffer(info.width * info.height * 4)
+                img.data = Buffer.alloc(info.width * info.height * 4)
                 img.width = info.width
                 img.height = info.height
                 for (let i = 0; i < info.height; ++i) {
@@ -4498,7 +4498,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
                 let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) =>
                     closestColor(img.data, 4 * (x + y * img.width)))
-                let data = new Buffer(hex, "hex").toString(star.dataEncoding)
+                let data = Buffer.from(hex, "hex").toString(star.dataEncoding)
 
                 let storeIcon = false
 
@@ -4834,7 +4834,7 @@ export function hex2uf2Async(c: commandParser.ParsedCommand) {
     } else {
         let f = pxtc.UF2.newBlockFile()
         pxtc.UF2.writeHex(f, buf)
-        let uf2buf = new Buffer(pxtc.UF2.serializeFile(f), "binary")
+        let uf2buf = Buffer.from(pxtc.UF2.serializeFile(f), "binary")
         let uf2fn = filename.replace(/(\.hex)?$/i, ".uf2")
         nodeutil.writeFileSync(uf2fn, uf2buf)
         console.log("Wrote: " + uf2fn)
@@ -6050,7 +6050,6 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         advanced: true,
         argString: "<target-directory>"
     }, exportCppAsync);
-
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

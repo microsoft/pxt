@@ -62,6 +62,7 @@ const statAsync = Promise.promisify(fs.stat)
 const readdirAsync = Promise.promisify(fs.readdir)
 const readFileAsync = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const unlinkAsync: any = Promise.promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -166,7 +167,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         const data = m[2];
         const fn = path.join(dirname, name + "." + ext);
         console.log(`writing ${fn}`)
-        return writeFileAsync(fn, new Buffer(data, 'base64'));
+        return writeFileAsync(fn, Buffer.from(data, 'base64'));
     }
 
     return Promise.all([
@@ -179,7 +180,7 @@ function writePkgAssetAsync(logicalDirname: string, data: any) {
     const dirname = path.join(userProjectsDir, logicalDirname, "assets")
 
     nodeutil.mkdirP(dirname)
-    return writeFileAsync(dirname + "/" + data.name, new Buffer(data.data, data.encoding || "base64"))
+    return writeFileAsync(dirname + "/" + data.name, Buffer.from(data.data, data.encoding || "base64"))
         .then(() => ({
             name: data.name
         }))
@@ -215,7 +216,8 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
-            return writeFileAsync(path.join(dirname, f.name), f.content)
+            const fn = path.join(dirname, f.name)
+            return f.content == null ? unlinkAsync(fn) : writeFileAsync(fn, f.content)
         }))
         .then(() => {
             if (data.header)
@@ -602,7 +604,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 })
 
                             case "send":
-                                sock.write(new Buffer(msg.arg.data, msg.arg.encoding || "utf8"))
+                                sock.write(Buffer.from(msg.arg.data, msg.arg.encoding || "utf8"))
                                 return {}
                             default: // unknown message
                                 pxt.log(`unknown tcp message ${msg.op}`)
