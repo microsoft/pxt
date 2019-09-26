@@ -297,20 +297,22 @@ function statsCrowdinAsync(prj: string, key: string): Promise<void> {
 }
 
 function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<void> {
+    const fn = `crowdinstats.csv`;
+    let headers = 'sep=\t\r\n';
+    headers += `file\t language\t completion\t phrases\t translated\t approved\r\n`;
+    nodeutil.writeFileSync(fn, headers, { encoding: "utf8" });
     return pxt.crowdin.languageStatsAsync(prj, key, lang)
         .then(stats => {
-            let r = 'sep=\t\r\n'
-            r += `file\t language\t completion\t phrases\t translated\t approved\r\n`
+            let r = '';
             console.log(`file\t language\t completion\t phrases\t translated\t approved`)
             stats.forEach(stat => {
                 const cfn = `${stat.branch ? stat.branch + "/" : ""}${stat.fullName}`;
-                r += `${cfn}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
+                r += `${cfn}\t${lang}\t ${stat.phrases}\t ${stat.translated}\t ${stat.approved}\r\n`;
                 if (stat.fullName == "strings.json" || /core-strings\.json$/.test(stat.fullName)) {
                     console.log(`${cfn}\t${lang}\t ${(stat.approved / stat.phrases * 100) >> 0}%\t ${stat.phrases}\t ${stat.translated}\t${stat.approved}`)
                 }
             })
-            const fn = `crowdinstats.csv`;
-            nodeutil.writeFileSync(fn, r, { encoding: "utf8" });
+            fs.appendFileSync(fn, r, { encoding: "utf8" });
             console.log(`stats written to ${fn}`)
         })
 }
