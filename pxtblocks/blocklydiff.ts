@@ -63,8 +63,8 @@ namespace pxt.blocks {
                     const oldn = normalizedDom(oldb, true);
                     if (newn == oldn) {
                         log(`fast unmodified top `, newb.id);
-                        newb.dispose();
-                        oldb.dispose();
+                        newb.dispose(false);
+                        oldb.dispose(false);
                     }
                 }
             })

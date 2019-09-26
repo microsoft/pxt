@@ -7298,7 +7298,7 @@ declare module Blockly {
              * Select the element to bind the click handler to. When this element is
              * clicked on an editable field, the editor will open.
              *
-             * <p>If the block has multiple fields, this is just the group containing the
+             * If the block has multiple fields, this is just the group containing the
              * field. If the block has only one field, we handle clicks over the whole
              * block.
              *
@@ -7822,7 +7822,7 @@ declare module Blockly {
             columns_: number;
     
             /**
-             * The color picker.
+             * The color picker. // TODO shakao rename to colourPicker_
              * @type {!Element}
              * @private
              */
@@ -8231,6 +8231,14 @@ declare module Blockly {
              * @constructor
              */
             constructor(menuGenerator: any[][]|Function, opt_validator?: Function);
+    
+            /**
+             * Editable fields usually show some sort of UI for the user to change them.
+             * This field should be serialized, but only edited programmatically.
+             * @type {boolean}
+             * @public
+             */
+            EDITABLE: boolean;
     
             /**
              * Serializable fields are saved by the XML renderer, non-serializable fields
@@ -8672,6 +8680,13 @@ declare module Blockly {
              * @const
              */
             EDITABLE: boolean;
+    
+            /**
+             * pxt-blockly: labels do not bind events, to allow blocks with one
+             * field to bind the event to the entire block.
+             * @protected
+             */
+            bindEvents_(): void;
     
             /**
              * Create block UI for this label.
@@ -9498,6 +9513,11 @@ declare module Blockly {
              * @private
              */
             onHtmlInputChange_(e: Event): void;
+    
+            /**
+             * pxt-blockly: Focus and select the input.
+             */
+            focus(): void;
     
             /**
              * Resize the editor to fit the text.
