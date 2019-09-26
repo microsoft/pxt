@@ -153,67 +153,120 @@ export class GestureState {
 }
 
 export function bindGestureEvents(el: HTMLElement, target: GestureTarget) {
+    if (hasPointerEvents()) {
+        bindPointerEvents(el, target);
+    }
+    else if (isTouchEnabled()) {
+        bindTouchEvents(el, target);
+    }
+    else {
+        bindMouseEvents(el, target);
+    }
+}
+
+function bindPointerEvents(el: HTMLElement, target: GestureTarget) {
     let state: GestureState;
 
-    let upHandler = (ev: MouseEvent) => {
-        endGesture(ev);
+    el.addEventListener("pointerup", ev => {
+        if (state) state.end(clientCoord(ev));
+        state = undefined;
+    });
 
-        ev.stopPropagation();
-        ev.preventDefault();
-    };
-
-    let leaveHandler = (ev: MouseEvent) => {
-        endGesture(ev);
-
-        ev.stopPropagation();
-        ev.preventDefault();
-    };
-
-    let moveHandler = (ev: MouseEvent) => {
-        if (state) state.update(clientCoord(ev));
-
-        ev.stopPropagation();
-        ev.preventDefault();
-    };
-
-    let startGesture = (ev: MouseEvent | PointerEvent | TouchEvent) => {
+    el.addEventListener("pointerdown", ev => {
         if (state) state.end();
 
         state = new GestureState(target, clientCoord(ev), isRightClick(ev));
-
-        document.addEventListener(pointerEvents.move, moveHandler);
-        document.addEventListener(pointerEvents.up, upHandler);
-
-        if (isTouchEnabled() && !hasPointerEvents()) {
-            document.addEventListener("touchend", upHandler);
-            document.addEventListener("touchcancel", leaveHandler);
-        }
-        else {
-            document.addEventListener(pointerEvents.leave, leaveHandler);
-        }
-    }
-
-    let endGesture = (ev: MouseEvent | PointerEvent | TouchEvent) => {
-        if (state) state.end(clientCoord(ev));
-
-        state = undefined;
-
-        document.removeEventListener(pointerEvents.move, moveHandler);
-        document.removeEventListener(pointerEvents.up, upHandler);
-        document.removeEventListener(pointerEvents.leave, leaveHandler);
-
-        if (isTouchEnabled() && !hasPointerEvents()) {
-            document.removeEventListener("touchend", upHandler);
-            document.removeEventListener("touchcancel", leaveHandler);
-        }
-        else {
-            document.removeEventListener(pointerEvents.leave, leaveHandler);
-        }
-    }
-
-    pointerEvents.down.forEach(evId => {
-        el.addEventListener(evId, startGesture);
     });
+
+    el.addEventListener("pointermove", ev => {
+        if (state) state.update(clientCoord(ev));
+    });
+
+    el.addEventListener("pointerleave", ev => {
+        if (state) state.end(clientCoord(ev));
+        state = undefined;
+    });
+}
+
+function bindMouseEvents(el: HTMLElement, target: GestureTarget) {
+    let state: GestureState;
+
+    el.addEventListener("mouseup", ev => {
+        if (state) state.end(clientCoord(ev));
+        state = undefined;
+    });
+
+    el.addEventListener("mousedown", ev => {
+        if (state) state.end();
+
+        state = new GestureState(target, clientCoord(ev), isRightClick(ev));
+    });
+
+    el.addEventListener("mousemove", ev => {
+        if (state) state.update(clientCoord(ev));
+    });
+
+    el.addEventListener("mouseleave", ev => {
+        if (state) state.end(clientCoord(ev));
+        state = undefined;
+    });
+}
+
+function bindTouchEvents(el: HTMLElement, target: GestureTarget) {
+    let state: GestureState;
+    let touchIdentifier: number | undefined;
+
+    el.addEventListener("touchend", ev => {
+        if (state && touchIdentifier) {
+            const touch = getTouch(ev, touchIdentifier);
+
+            if (touch) {
+                state.end(touch);
+                state = undefined;
+                ev.preventDefault();
+            }
+        }
+    });
+
+    el.addEventListener("touchstart", ev => {
+        if (state) state.end();
+
+        touchIdentifier = ev.changedTouches[0].identifier;
+        state = new GestureState(target, ev.changedTouches[0], isRightClick(ev));
+    });
+
+    el.addEventListener("touchmove", ev => {
+        if (state && touchIdentifier) {
+            const touch = getTouch(ev, touchIdentifier);
+
+            if (touch) {
+                state.update(touch);
+                ev.preventDefault();
+            }
+        }
+    });
+
+    el.addEventListener("touchcancel", ev => {
+        if (state && touchIdentifier) {
+            const touch = getTouch(ev, touchIdentifier);
+
+            if (touch) {
+                state.end(touch);
+                state = undefined;
+                ev.preventDefault();
+            }
+        }
+    });
+}
+
+function getTouch(ev: TouchEvent, identifier: number) {
+    for (let i = 0; i < ev.changedTouches.length; i++) {
+        if (ev.changedTouches[i].identifier === identifier) {
+            return ev.changedTouches[i];
+        }
+    }
+
+    return undefined;
 }
 
 function isRightClick(ev: MouseEvent | PointerEvent | TouchEvent) {
