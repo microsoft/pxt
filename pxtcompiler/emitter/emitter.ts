@@ -15,6 +15,7 @@ namespace ts.pxtc {
         IsUsed = 0x0008,
         InPxtModules = 0x0010,
         FromPreviousCompile = 0x0020,
+        IsOverridden = 0x0040,
     }
     export type EmitAction = (bin: Binary) => void;
     export class PxtNode {
@@ -1466,9 +1467,7 @@ namespace ts.pxtc {
                     // pinf is the transitive parent
                     minf.virtualParent = pinf
                     if (!pinf.virtualParent) {
-                        const pxtinfo = pxtInfo(baseMethod)
-                        if (pxtinfo.flags & PxtNodeFlags.FromPreviousCompile)
-                            needsFullRecompile();
+                        needsFullRecompile(pxtInfo(baseMethod))
                         pinf.virtualParent = pinf
                     }
                     assert(pinf.virtualParent == pinf, "pinf.virtualParent == pinf")
@@ -1476,9 +1475,13 @@ namespace ts.pxtc {
             }
         }
 
-        function needsFullRecompile() {
-            res.needsFullRecompile = true;
-            throw userError(9200, lf("full recompile required"));
+        function needsFullRecompile(pxtinfo: PxtNode) {
+            if ((pxtinfo.flags & PxtNodeFlags.FromPreviousCompile) ||
+                (pxtinfo.flags & PxtNodeFlags.InPxtModules &&
+                    compileOptions.skipPxtModulesEmit)) {
+                res.needsFullRecompile = true;
+                throw userError(9200, lf("full recompile required"));
+            }
         }
 
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
@@ -1523,8 +1526,14 @@ namespace ts.pxtc {
                         info.methods[key].push(mem as FunctionLikeDeclaration)
                         const pfield = U.lookup(prevFields, key)
                         if (pfield) {
-                            // pxtInfo(pfield).flags |= PxtNodeFlags.IsOverridden
-                            error(mem, 9279, lf("redefinition of '{0}' (previously a field)", key))
+                            const pxtinfo = pxtInfo(pfield)
+                            if (!(pxtinfo.flags & PxtNodeFlags.IsOverridden)) {
+                                pxtinfo.flags |= PxtNodeFlags.IsOverridden
+                                if (pxtinfo.flags & PxtNodeFlags.IsUsed)
+                                    getIfaceMemberId(key, true)
+                                needsFullRecompile(pxtinfo)
+                            }
+                            // error(mem, 9279, lf("redefinition of '{0}' (previously a field)", key))
                         }
                     }
                 }
@@ -1860,7 +1869,7 @@ ${lbl}: .short 0xffff
                 if (isStatic(decl)) {
                     return emitLocalLoad(decl as PropertyDeclaration)
                 }
-                if (target.switches.slowFields) {
+                if (isSlowField(decl)) {
                     // treat as interface call
                     return emitCallCore(node, node, [], null, decl as any, node.expression)
                 } else {
@@ -1876,6 +1885,14 @@ ${lbl}: .short 0xffff
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
             }
+        }
+
+        function isSlowField(decl: Declaration) {
+            if (decl.kind == SK.Parameter || decl.kind == SK.PropertyDeclaration) {
+                const pinfo = pxtInfo(decl)
+                return !!target.switches.slowFields || !!(pinfo.flags & PxtNodeFlags.IsOverridden)
+            }
+            return false
         }
 
         function emitIndexedAccess(node: ElementAccessExpression, assign: Expression = null): ir.Expr {
@@ -3199,7 +3216,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || target.switches.slowFields)) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || isSlowField(decl))) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     let trg2 = emitExpr(trg)
