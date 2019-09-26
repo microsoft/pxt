@@ -1,7 +1,9 @@
+function one() { return 1 }
+
 function foobar() {
-    const x = 1
+    const x = one()
     qux() // TS9278
-    const y = 2
+    const y = one() + one()
     function qux() {
         let a = x + y
     }
