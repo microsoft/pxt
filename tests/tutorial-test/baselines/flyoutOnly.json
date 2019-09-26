@@ -22,6 +22,6 @@
     "activities": null,
     "code": "\n { \n let x = 8;\nlet y = x + 2;\n } \n\n { \n basic.showIcon(IconNames.Square)\n } \n",
     "metadata": {
-        "flyoutOnly": "true"
+        "flyoutOnly": true
     }
 }

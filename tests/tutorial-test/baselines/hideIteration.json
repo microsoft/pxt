@@ -22,6 +22,6 @@
     "activities": null,
     "code": "\n { \n basic.showString(\"Micro!\")\n } \n\n { \n basic.showIcon(IconNames.Square)\n } \n",
     "metadata": {
-        "hideIteration": "true"
+        "hideIteration": true
     }
 }

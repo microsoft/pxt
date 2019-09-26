@@ -413,8 +413,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyDiv = document.getElementById('blocksEditor');
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
-        if ((this.editor.options as any).hasCategories != forceHasCategories) {
-            this.parent.state.editorState.hasCategories = (this.editor.options as any).hasCategories;
+        const hasCategories = (this.editor.options as any).hasCategories;
+        if (hasCategories != forceHasCategories) {
+            this.parent.state.editorState.hasCategories = hasCategories;
         }
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
@@ -936,7 +937,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.clearCaches();
 
-        let forceFlyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
+        const forceFlyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         const hasCategories = this.shouldShowCategories(!forceFlyoutOnly);
 
         // We might need to switch the toolbox type
