@@ -1,47 +1,3 @@
-/**
- * @license
- * PXT Blockly
- *
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * https://github.com/Microsoft/pxt-blockly
- *
- * See LICENSE file for details.
- */
-
-declare module Blockly {
-
-    /**
-     * Interfaces
-     */ 
-
-    interface Metrics {
-        absoluteLeft: number;
-        absoluteTop: number;
-        contentHeight: number;
-        contentLeft: number;
-        contentTop: number;
-        contentWidth: number;
-        viewHeight: number;
-        viewLeft: number;
-        viewTop: number;
-        viewWidth: number;
-    }
-
-    interface ImageJson {
-        width: number;
-        height: number;
-        src: string;
-    }
-
-    namespace ContextMenu {
-        interface MenuItem {
-            enabled?: boolean;
-            text?: string;
-            callback?: () => void;
-        }
-    }
-}
-
 
 declare module Blockly {
 
@@ -89,6 +45,108 @@ declare module Blockly {
 }
 
 
+/**
+ * @license
+ * PXT Blockly
+ *
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * https://github.com/Microsoft/pxt-blockly
+ *
+ * See LICENSE file for details.
+ */
+
+declare module Blockly {
+
+    /**
+     * Interfaces
+     */ 
+
+    interface Metrics {
+        absoluteLeft: number;
+        absoluteTop: number;
+        contentHeight: number;
+        contentLeft: number;
+        contentTop: number;
+        contentWidth: number;
+        viewHeight: number;
+        viewLeft: number;
+        viewTop: number;
+        viewWidth: number;
+    }
+
+    interface ImageJson {
+        width: number;
+        height: number;
+        src: string;
+    }
+
+    namespace ContextMenu {
+        interface MenuItem {
+            enabled?: boolean;
+            text?: string;
+            callback?: () => void;
+        }
+    }
+}
+declare module Blockly {
+
+  interface BlocklyOptions {
+    toolbox?: HTMLElement | string;
+    readOnly?: boolean;
+    trashcan?: boolean;
+    maxTrashcanContents?: number;
+    collapse?: boolean;
+    comments?: boolean;
+    disable?: boolean;
+    sounds?: boolean;
+    rtl?: boolean;
+    horizontalLayout?: boolean;
+    toolboxPosition?: string;
+    css?: boolean;
+    oneBasedIndex?: boolean;
+    media?: string;
+    theme?: Blockly.BlocklyTheme;
+    move?: {
+      scrollbars?: boolean;
+      drag?: boolean;
+      wheel?: boolean;
+    };
+    grid?: {
+      spacing?: number;
+      colour?: string;
+      length?: number;
+      snap?: boolean;
+    };
+    zoom?: {
+      controls?: boolean;
+      wheel?: boolean;
+      startScale?: number;
+      maxScale?: number;
+      minScale?: number;
+      scaleSpeed?: number;
+    };
+  }
+
+  interface BlocklyTheme {
+    defaultBlockStyles?: {[blocks: string]: Blockly.Theme.BlockStyle;};
+    categoryStyles?: {[category: string]: Blockly.Theme.CategoryStyle;};
+  }
+
+  interface Metrics {
+    absoluteLeft: number;
+    absoluteTop: number;
+    contentHeight: number;
+    contentLeft: number;
+    contentTop: number;
+    contentWidth: number;
+    viewHeight: number;
+    viewLeft: number;
+    viewTop: number;
+    viewWidth: number;
+  }
+
+}
+
 declare module Blockly {
 
     interface WorkspaceOptions {
@@ -134,6 +192,7 @@ declare module Blockly {
     }
 
 }
+
 declare namespace goog {
     function require(name: string): void;
     function provide(name: string): void;
@@ -633,6 +692,625 @@ declare namespace goog {
     }
 }
 
+
+
+
+
+declare module Blockly.utils {
+
+    /**
+     * Reference to the global object.
+     */
+    var global: any /*missing*/;
+}
+
+
+declare module Blockly.utils.colour {
+
+    /**
+     * Parses a colour from a string.
+     * .parse('red') -> '#ff0000'
+     * .parse('#f00') -> '#ff0000'
+     * .parse('#ff0000') -> '#ff0000'
+     * .parse('rgb(255, 0, 0)') -> '#ff0000'
+     * @param {string} str Colour in some CSS format.
+     * @return {string|null} A string containing a hex representation of the colour,
+     *   or null if can't be parsed.
+     */
+    function parse(str: string): string|any /*null*/;
+
+    /**
+     * Converts a colour from RGB to hex representation.
+     * @param {number} r Amount of red, int between 0 and 255.
+     * @param {number} g Amount of green, int between 0 and 255.
+     * @param {number} b Amount of blue, int between 0 and 255.
+     * @return {string} Hex representation of the colour.
+     */
+    function rgbToHex(r: number, g: number, b: number): string;
+
+    /**
+     * Converts a colour from RGB to hex representation.
+     * @param {!Array.<number>} rgb RGB array representation of the colour.
+     * @return {string} Hex representation of the colour.
+     */
+    function rgbArrayToHex(rgb: number[]): string;
+
+    /**
+     * Converts a hex representation of a colour to RGB.
+     * @param {string} hexColor Colour in '#ff0000' format.
+     * @return {!Array.<number>} RGB representation of the colour.
+     */
+    function hexToRgb(hexColor: string): number[];
+
+    /**
+     * Converts an HSV triplet to hex representation.
+     * @param {number} h Hue value in [0, 360].
+     * @param {number} s Saturation value in [0, 1].
+     * @param {number} v Brightness in [0, 255].
+     * @return {string} Hex representation of the colour.
+     */
+    function hsvToHex(h: number, s: number, v: number): string;
+
+    /**
+     * Blend two colours together, using the specified factor to indicate the
+     * weight given to the first colour.
+     * @param {string} colour1 First colour.
+     * @param {string} colour2 Second colour.
+     * @param {number} factor The weight to be given to colour1 over colour2.
+     *     Values should be in the range [0, 1].
+     * @return {string} Combined colour represented in hex.
+     */
+    function blend(colour1: string, colour2: string, factor: number): string;
+
+    /**
+     * Adds black to the specified color, darkening it
+     * @param {string} colour Colour to darken.
+     * @param {number} factor Number in the range [0, 1]. 0 will do nothing, while
+     *     1 will return black. If less than 0, factor will be set to 0. If greater
+     *     than 1, factor will be set to 1.
+     * @return {string} Combined colour represented in hex.
+     */
+    function darken(colour: string, factor: number): string;
+
+    /**
+     * Adds white to the specified color, lightening it
+     * @param {string} colour Colour to lighten.
+     * @param {number} factor Number in the range [0, 1].  0 will do nothing, while
+     *     1 will return white. If less than 0, factor will be set to 0. If greater
+     *     than 1, factor will be set to 1.
+     * @return {string} Combined colour represented in hex.
+     */
+    function lighten(colour: string, factor: number): string;
+
+    /**
+     * A map that contains the 16 basic colour keywords as defined by W3C:
+     * https://www.w3.org/TR/2018/REC-css-color-3-20180619/#html4
+     * The keys of this map are the lowercase "readable" names of the colours,
+     * while the values are the "hex" values.
+     *
+     * @type {!Object<string, string>}
+     */
+    var names: { [key: string]: string };
+}
+
+declare module Blockly {
+
+    /**
+     * Convert a hue (HSV model) into an RGB hex triplet.
+     * @param {number} hue Hue on a colour wheel (0-360).
+     * @return {string} RGB code, e.g. '#5ba65b'.
+     */
+    function hueToRgb(hue: number): string;
+}
+
+
+declare module Blockly.utils {
+
+    class Coordinate extends Coordinate__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Coordinate__Class  { 
+    
+            /**
+             * Class for representing coordinates and positions.
+             * @param {number} x Left.
+             * @param {number} y Top.
+             * @struct
+             * @constructor
+             */
+            constructor(x: number, y: number);
+    
+            /**
+             * X-value
+             * @type {number}
+             */
+            x: number;
+    
+            /**
+             * Y-value
+             * @type {number}
+             */
+            y: number;
+    
+            /**
+             * Scales this coordinate by the given scale factor.
+             * @param {number} s The scale factor to use for both x and y dimensions.
+             * @return {!Blockly.utils.Coordinate} This coordinate after scaling.
+             */
+            scale(s: number): Blockly.utils.Coordinate;
+    
+            /**
+             * Translates this coordinate by the given offsets.
+             * respectively.
+             * @param {number} tx The value to translate x by.
+             * @param {number} ty The value to translate y by.
+             * @return {!Blockly.utils.Coordinate} This coordinate after translating.
+             */
+            translate(tx: number, ty: number): Blockly.utils.Coordinate;
+    
+            /**
+             * Clones this coordinate.
+             * @return {!Blockly.utils.Coordinate} This coordinate after translating.
+             */
+            clone(): Blockly.utils.Coordinate;
+    } 
+    
+}
+
+declare module Blockly.utils.Coordinate {
+
+    /**
+     * Compares coordinates for equality.
+     * @param {Blockly.utils.Coordinate} a A Coordinate.
+     * @param {Blockly.utils.Coordinate} b A Coordinate.
+     * @return {boolean} True iff the coordinates are equal, or if both are null.
+     */
+    function equals(a: Blockly.utils.Coordinate, b: Blockly.utils.Coordinate): boolean;
+
+    /**
+     * Returns the distance between two coordinates.
+     * @param {!Blockly.utils.Coordinate} a A Coordinate.
+     * @param {!Blockly.utils.Coordinate} b A Coordinate.
+     * @return {number} The distance between `a` and `b`.
+     */
+    function distance(a: Blockly.utils.Coordinate, b: Blockly.utils.Coordinate): number;
+
+    /**
+     * Returns the magnitude of a coordinate.
+     * @param {!Blockly.utils.Coordinate} a A Coordinate.
+     * @return {number} The distance between the origin and `a`.
+     */
+    function magnitude(a: Blockly.utils.Coordinate): number;
+
+    /**
+     * Returns the difference between two coordinates as a new
+     * Blockly.utils.Coordinate.
+     * @param {!Blockly.utils.Coordinate|!SVGPoint} a An x/y coordinate.
+     * @param {!Blockly.utils.Coordinate|!SVGPoint} b An x/y coordinate.
+     * @return {!Blockly.utils.Coordinate} A Coordinate representing the difference
+     *     between `a` and `b`.
+     */
+    function difference(a: Blockly.utils.Coordinate|SVGPoint, b: Blockly.utils.Coordinate|SVGPoint): Blockly.utils.Coordinate;
+
+    /**
+     * Returns the sum of two coordinates as a new Blockly.utils.Coordinate.
+     * @param {!Blockly.utils.Coordinate|!SVGPoint} a An x/y coordinate.
+     * @param {!Blockly.utils.Coordinate|!SVGPoint} b An x/y coordinate.
+     * @return {!Blockly.utils.Coordinate} A Coordinate representing the sum of
+     *     the two coordinates.
+     */
+    function sum(a: Blockly.utils.Coordinate|SVGPoint, b: Blockly.utils.Coordinate|SVGPoint): Blockly.utils.Coordinate;
+}
+
+
+declare module Blockly.utils.dom {
+
+    /**
+     * Required name space for SVG elements.
+     * @const
+     */
+    var SVG_NS: any /*missing*/;
+
+    /**
+     * Required name space for HTML elements.
+     * @const
+     */
+    var HTML_NS: any /*missing*/;
+
+    /**
+     * Required name space for XLINK elements.
+     * @const
+     */
+    var XLINK_NS: any /*missing*/;
+
+    /**
+     * Node type constants.
+     * https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
+     * @enum {number}
+     */
+    enum Node { ELEMENT_NODE, TEXT_NODE, COMMENT_NODE, DOCUMENT_POSITION_CONTAINED_BY } 
+
+    /**
+     * Helper method for creating SVG elements.
+     * @param {string} name Element's tag name.
+     * @param {!Object} attrs Dictionary of attribute names and values.
+     * @param {Element} parent Optional parent on which to append the element.
+     * @return {!SVGElement} Newly created SVG element.
+     */
+    function createSvgElement(name: string, attrs: Object, parent: Element): SVGElement;
+
+    /**
+     * Add a CSS class to a element.
+     * Similar to Closure's goog.dom.classes.add, except it handles SVG elements.
+     * @param {!Element} element DOM element to add class to.
+     * @param {string} className Name of class to add.
+     * @return {boolean} True if class was added, false if already present.
+     */
+    function addClass(element: Element, className: string): boolean;
+
+    /**
+     * Remove a CSS class from a element.
+     * Similar to Closure's goog.dom.classes.remove, except it handles SVG elements.
+     * @param {!Element} element DOM element to remove class from.
+     * @param {string} className Name of class to remove.
+     * @return {boolean} True if class was removed, false if never present.
+     */
+    function removeClass(element: Element, className: string): boolean;
+
+    /**
+     * Checks if an element has the specified CSS class.
+     * Similar to Closure's goog.dom.classes.has, except it handles SVG elements.
+     * @param {!Element} element DOM element to check.
+     * @param {string} className Name of class to check.
+     * @return {boolean} True if class exists, false otherwise.
+     */
+    function hasClass(element: Element, className: string): boolean;
+
+    /**
+     * Removes a node from its parent. No-op if not attached to a parent.
+     * @param {Node} node The node to remove.
+     * @return {Node} The node removed if removed; else, null.
+     */
+    function removeNode(node: Node): Node;
+
+    /**
+     * Insert a node after a reference node.
+     * Contrast with node.insertBefore function.
+     * @param {!Element} newNode New element to insert.
+     * @param {!Element} refNode Existing element to precede new node.
+     */
+    function insertAfter(newNode: Element, refNode: Element): void;
+
+    /**
+     * Whether a node contains another node.
+     * @param {!Node} parent The node that should contain the other node.
+     * @param {!Node} descendant The node to test presence of.
+     * @return {boolean} Whether the parent node contains the descendant node.
+     */
+    function containsNode(parent: Node, descendant: Node): boolean;
+
+    /**
+     * Sets the CSS transform property on an element. This function sets the
+     * non-vendor-prefixed and vendor-prefixed versions for backwards compatibility
+     * with older browsers. See https://caniuse.com/#feat=transforms2d
+     * @param {!Element} element Element to which the CSS transform will be applied.
+     * @param {string} transform The value of the CSS `transform` property.
+     */
+    function setCssTransform(element: Element, transform: string): void;
+}
+
+
+declare module Blockly.utils.math {
+
+    /**
+     * Converts degrees to radians.
+     * Copied from Closure's goog.math.toRadians.
+     * @param {number} angleDegrees Angle in degrees.
+     * @return {number} Angle in radians.
+     */
+    function toRadians(angleDegrees: number): number;
+
+    /**
+     * Converts radians to degrees.
+     * Copied from Closure's goog.math.toDegrees.
+     * @param {number} angleRadians Angle in radians.
+     * @return {number} Angle in degrees.
+     */
+    function toDegrees(angleRadians: number): number;
+
+    /**
+     * Clamp the provided number between the lower bound and the upper bound.
+     * @param {number} lowerBound The desired lower bound.
+     * @param {number} number The number to clamp.
+     * @param {number} upperBound The desired upper bound.
+     * @return {number} The clamped number.
+     */
+    function clamp(lowerBound: number, number: number, upperBound: number): number;
+}
+
+
+declare module Blockly.utils {
+
+    class Rect extends Rect__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Rect__Class  { 
+    
+            /**
+             * Class for representing rectangular regions.
+             * @param {number} top Top.
+             * @param {number} bottom Bottom.
+             * @param {number} left Left.
+             * @param {number} right Right.
+             * @struct
+             * @constructor
+             */
+            constructor(top: number, bottom: number, left: number, right: number);
+    
+            /** @type {number} */
+            top: number;
+    
+            /** @type {number} */
+            bottom: number;
+    
+            /** @type {number} */
+            left: number;
+    
+            /** @type {number} */
+            right: number;
+    
+            /**
+             * Tests whether this rectangle contains a x/y coordinate.
+             *
+             * @param {number} x The x coordinate to test for containment.
+             * @param {number} y The y coordinate to test for containment.
+             * @return {boolean} Whether this rectangle contains given coordinate.
+             */
+            contains(x: number, y: number): boolean;
+    } 
+    
+}
+
+
+declare module Blockly.utils._string {
+
+    /**
+     * Fast prefix-checker.
+     * Copied from Closure's goog.string.startsWith.
+     * @param {string} str The string to check.
+     * @param {string} prefix A string to look for at the start of `str`.
+     * @return {boolean} True if `str` begins with `prefix`.
+     */
+    function startsWith(str: string, prefix: string): boolean;
+
+    /**
+     * Given an array of strings, return the length of the shortest one.
+     * @param {!Array.<string>} array Array of strings.
+     * @return {number} Length of shortest string.
+     */
+    function shortestStringLength(array: string[]): number;
+
+    /**
+     * Given an array of strings, return the length of the common prefix.
+     * Words may not be split.  Any space after a word is included in the length.
+     * @param {!Array.<string>} array Array of strings.
+     * @param {number=} opt_shortest Length of shortest string.
+     * @return {number} Length of common prefix.
+     */
+    function commonWordPrefix(array: string[], opt_shortest?: number): number;
+
+    /**
+     * Given an array of strings, return the length of the common suffix.
+     * Words may not be split.  Any space after a word is included in the length.
+     * @param {!Array.<string>} array Array of strings.
+     * @param {number=} opt_shortest Length of shortest string.
+     * @return {number} Length of common suffix.
+     */
+    function commonWordSuffix(array: string[], opt_shortest?: number): number;
+
+    /**
+     * Wrap text to the specified width.
+     * @param {string} text Text to wrap.
+     * @param {number} limit Width to wrap each line.
+     * @return {string} Wrapped text.
+     */
+    function wrap(text: string, limit: number): string;
+
+    /**
+     * Wrap single line of text to the specified width.
+     * @param {string} text Text to wrap.
+     * @param {number} limit Width to wrap each line.
+     * @return {string} Wrapped text.
+     * @private
+     */
+    function wrapLine_(text: string, limit: number): string;
+
+    /**
+     * Compute a score for how good the wrapping is.
+     * @param {!Array.<string>} words Array of each word.
+     * @param {!Array.<boolean>} wordBreaks Array of line breaks.
+     * @param {number} limit Width to wrap each line.
+     * @return {number} Larger the better.
+     * @private
+     */
+    function wrapScore_(words: string[], wordBreaks: boolean[], limit: number): number;
+
+    /**
+     * Mutate the array of line break locations until an optimal solution is found.
+     * No line breaks are added or deleted, they are simply moved around.
+     * @param {!Array.<string>} words Array of each word.
+     * @param {!Array.<boolean>} wordBreaks Array of line breaks.
+     * @param {number} limit Width to wrap each line.
+     * @return {!Array.<boolean>} New array of optimal line breaks.
+     * @private
+     */
+    function wrapMutate_(words: string[], wordBreaks: boolean[], limit: number): boolean[];
+
+    /**
+     * Reassemble the array of words into text, with the specified line breaks.
+     * @param {!Array.<string>} words Array of each word.
+     * @param {!Array.<boolean>} wordBreaks Array of line breaks.
+     * @return {string} Plain text.
+     * @private
+     */
+    function wrapToText_(words: string[], wordBreaks: boolean[]): string;
+}
+
+
+declare module Blockly.utils.svgPaths {
+
+    /**
+     * Create a string representing the given x, y pair.  It does not matter whether
+     * the coordinate is relative or absolute.  The result has leading
+     * and trailing spaces, and separates the x and y coordinates with a comma but
+     * no space.
+     * @param {number} x The x coordinate.
+     * @param {number} y The y coordinate.
+     * @return {string} A string of the format ' x,y '
+     * @public
+     */
+    function point(x: number, y: number): string;
+
+    /**
+     * Draw a curbic or quadratic curve.  See
+     * developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#Cubic_B%C3%A9zier_Curve
+     * These coordinates are unitless and hence in the user coordinate system.
+     * @param {string} command The command to use.
+     *     Should be one of: c, C, s, S, q, Q.
+     * @param {string} points  An array containing all of the points to pass to the
+     *     curve command, in order.  The points are represented as strings of the
+     *     format ' x, y '.
+     * @return {string} A string defining one or more Bezier curves.  See the MDN
+     *     documentation for exact format.
+     * @public
+     */
+    function curve(command: string, points: string): string;
+
+    /**
+     * Move the cursor to the given position without drawing a line.
+     * The coordinates are absolute.
+     * These coordinates are unitless and hence in the user coordinate system.
+     * See developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#Line_commands
+     * @param {number} x The absolute x coordinate.
+     * @param {number} y The absolute y coordinate.
+     * @return {string} A string of the format ' M x,y '
+     * @public
+     */
+    function moveTo(x: number, y: number): string;
+
+    /**
+     * Move the cursor to the given position without drawing a line.
+     * Coordinates are relative.
+     * These coordinates are unitless and hence in the user coordinate system.
+     * See developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#Line_commands
+     * @param {number} dx The relative x coordinate.
+     * @param {number} dy The relative y coordinate.
+     * @return {string} A string of the format ' m dx,dy '
+     * @public
+     */
+    function moveBy(dx: number, dy: number): string;
+
+    /**
+     * Draw a line from the current point to the end point, which is the current
+     * point shifted by dx along the x-axis and dy along the y-axis.
+     * These coordinates are unitless and hence in the user coordinate system.
+     * See developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#Line_commands
+     * @param {number} dx The relative x coordinate.
+     * @param {number} dy The relative y coordinate.
+     * @return {string} A string of the format ' l dx,dy '
+     * @public
+     */
+    function lineTo(dx: number, dy: number): string;
+
+    /**
+     * Draw multiple lines connecting all of the given points in order.  This is
+     * equivalent to a series of 'l' commands.
+     * These coordinates are unitless and hence in the user coordinate system.
+     * See developer.mozilla.org/en-US/docs/Web/SVG/Tutorial/Paths#Line_commands
+     * @param {!Array.<string>} points An array containing all of the points to
+     *     draw lines to, in order.  The points are represented as strings of the
+     *     format ' dx,dy '.
+     * @return {string} A string of the format ' l (dx,dy)+ '
+     * @public
+     */
+    function line(points: string[]): string;
+
+    /**
+     * Draw a horizontal or vertical line.
+     * The first argument specifies the direction and whether the given position is
+     * relative or absolute.
+     * These coordinates are unitless and hence in the user coordinate system.
+     * See developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#LineTo_path_commands
+     * @param {string} command The command to prepend to the coordinate.  This
+     *     should be one of: V, v, H, h.
+     * @param {number} val The coordinate to pass to the command.  It may be
+     *     absolute or relative.
+     * @return {string} A string of the format ' command val '
+     * @public
+     */
+    function lineOnAxis(command: string, val: number): string;
+
+    /**
+     * Draw an elliptical arc curve.
+     * These coordinates are unitless and hence in the user coordinate system.
+     * See developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d#Elliptical_Arc_Curve
+     * @param {string} command The command string.  Either 'a' or 'A'.
+     * @param {string} flags The flag string.  See the MDN documentation for a
+     *     description and examples.
+     * @param {number} radius The radius of the arc to draw.
+     * @param {string} point The point to move the cursor to after drawing the arc,
+     *     specified either in absolute or relative coordinates depending on the
+     *     command.
+     * @return {string} A string of the format 'command radius radius flags point'
+     * @public
+     */
+    function arc(command: string, flags: string, radius: number, point: string): string;
+}
+
+
+
+declare module Blockly.utils.xml {
+
+    /**
+     * Namespace for Blockly's XML.
+     */
+    var NAME_SPACE: any /*missing*/;
+
+    /**
+     * Create DOM element for XML.
+     * @param {string} tagName Name of DOM element.
+     * @return {!Element} New DOM element.
+     * @public
+     */
+    function createElement(tagName: string): Element;
+
+    /**
+     * Create text element for XML.
+     * @param {string} text Text content.
+     * @return {!Node} New DOM node.
+     * @public
+     */
+    function createTextNode(text: string): Node;
+
+    /**
+     * Converts an XML string into a DOM tree. This method will be overridden in
+     * the Node.js build of Blockly. See gulpfile.js, blockly_javascript_en task.
+     * @param {string} text XML string.
+     * @return {Document} The DOM document.
+     * @throws if XML doesn't parse.
+     * @public
+     */
+    function textToDomDocument(text: string): Document;
+
+    /**
+     * Converts a DOM structure into plain text.
+     * Currently the text format is fairly ugly: all one line with no whitespace.
+     * @param {!Element} dom A tree of XML elements.
+     * @return {string} Text representation.
+     * @public
+     */
+    function domToText(dom: Element): string;
+}
+
+
 declare module Blockly {
 
     class Block extends Block__Class { }
@@ -648,6 +1326,7 @@ declare module Blockly {
              * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
              *     create a new ID.
              * @constructor
+             * @throw When block is not valid or block name is not allowed.
              */
             constructor(workspace: Blockly.Workspace, prototypeName: string, opt_id?: string);
     
@@ -672,7 +1351,10 @@ declare module Blockly {
             /** @type {boolean|undefined} */
             startHat: boolean|any /*undefined*/;
     
-            /** @type {boolean} */
+            /**
+             * @type {boolean}
+             * @private
+             */
             disabled: boolean;
     
             /** @type {string|!Function} */
@@ -741,10 +1423,10 @@ declare module Blockly {
             /**
              * The block's position in workspace units.  (0, 0) is at the workspace's
              * origin; scale does not change this value.
-             * @type {!goog.math.Coordinate}
+             * @type {!Blockly.utils.Coordinate}
              * @private
              */
-            xy_: goog.math.Coordinate;
+            xy_: Blockly.utils.Coordinate;
     
             /** @type {!Blockly.Workspace} */
             workspace: Blockly.Workspace;
@@ -758,8 +1440,18 @@ declare module Blockly {
             /** @type {boolean} */
             RTL: boolean;
     
-            /** @type {boolean} */
+            /**
+             * True if this block is an insertion marker.
+             * @type {boolean}
+             * @protected
+             */
             isInsertionMarker_: boolean;
+    
+            /**
+             * Name of the type of hat.
+             * @type {string|undefined}
+             */
+            hat: string|any /*undefined*/;
     
             /** @type {string} */
             type: string;
@@ -775,6 +1467,14 @@ declare module Blockly {
             data: string;
     
             /**
+             * Colour of the block as HSV hue value (0-360)
+             * This may be null if the block colour was not set via a hue number.
+             * @type {?number}
+             * @private
+             */
+            hue_: number;
+    
+            /**
              * Colour of the block in '#RRGGBB' format.
              * @type {string}
              * @private
@@ -782,15 +1482,17 @@ declare module Blockly {
             colour_: string;
     
             /**
-             * Secondary colour of the block in '#RRGGBB' format.
-             * @type {string}
+             * Secondary colour of the block.
+             * Colour of shadow blocks.
+             * @type {?string}
              * @private
              */
             colourSecondary_: string;
     
             /**
-             * Tertiary colour of the block in '#RRGGBB' format.
-             * @type {string}
+             * Tertiary colour of the block.
+             * Colour of the block's border.
+             * @type {?string}
              * @private
              */
             colourTertiary_: string;
@@ -803,19 +1505,19 @@ declare module Blockly {
             shadowColour_: string;
     
             /**
-             * Colour of the block as HSV hue value (0-360)
-             * @type {?number}
+             * Name of the block style.
+             * @type {?string}
              * @private
-              */
-            hue_: number;
+             */
+            styleName_: string;
     
             /**
              * Dispose of this block.
-             * @param {boolean=} healStack If true, then try to heal any gap by connecting
+             * @param {boolean} healStack If true, then try to heal any gap by connecting
              *     the next statement with the previous statement.  Otherwise, dispose of
              *     all children of this block.
              */
-            dispose(healStack?: boolean): void;
+            dispose(healStack: boolean): void;
     
             /**
              * Call initModel on all fields on the block.
@@ -835,6 +1537,36 @@ declare module Blockly {
              *   stack.  Defaults to false.
              */
             unplug(opt_healStack?: boolean): void;
+    
+            /**
+             * Unplug this block's output from an input on another block.  Optionally
+             * reconnect the block's parent to the only child block, if possible.
+             * @param {boolean=} opt_healStack Disconnect right-side block and connect to
+             *     left-side block.  Defaults to false.
+             * @private
+             */
+            unplugFromRow_(opt_healStack?: boolean): void;
+    
+            /**
+             * Returns the connection on the value input that is connected to another block.
+             * When an insertion marker is connected to a connection with a block already
+             * attached, the connected block is attached to the insertion marker.
+             * Since only one block can be displaced and attached to the insertion marker
+             * this should only ever return one connection.
+             *
+             * @return {Blockly.Connection} The connection on the value input, or null.
+             * @private
+             */
+            getOnlyValueConnection_(): Blockly.Connection;
+    
+            /**
+             * Unplug this statement block from its superior block.  Optionally reconnect
+             * the block underneath with the block on top.
+             * @param {boolean=} opt_healStack Disconnect child statement and reconnect
+             *   stack.  Defaults to false.
+             * @private
+             */
+            unplugFromStack_(opt_healStack?: boolean): void;
     
             /**
              * Returns all connections originating from this block.
@@ -902,6 +1634,7 @@ declare module Blockly {
              * Return the connection on the first statement input on this block, or null if
              * there are none.
              * @return {Blockly.Connection} The first statement connection or null.
+             * @package
              */
             getFirstStatementConnection(): Blockly.Connection;
     
@@ -971,6 +1704,15 @@ declare module Blockly {
             setMovable(movable: boolean): void;
     
             /**
+             * Get whether is block is duplicatable or not. If duplicating this block and
+             * descendants will put this block over the workspace's capacity this block is
+             * not duplicatable. If duplicating this block and descendants will put any
+             * type over their maxInstances this block is not duplicatable.
+             * @return {boolean} True if duplicatable.
+             */
+            isDuplicatable(): boolean;
+    
+            /**
              * Get whether this block is a shadow block or not.
              * @return {boolean} True if a shadow.
              */
@@ -985,6 +1727,7 @@ declare module Blockly {
             /**
              * Get whether this block is an insertion marker block or not.
              * @return {boolean} True if an insertion marker.
+             * @package
              */
             isInsertionMarker(): boolean;
     
@@ -1025,7 +1768,8 @@ declare module Blockly {
              * Used to match connections between a block and its insertion marker.
              * @param {!Blockly.Block} otherBlock The other block to match against.
              * @param {!Blockly.Connection} conn The other connection to match.
-             * @return {Blockly.Connection} the matching connection on this block, or null.
+             * @return {Blockly.Connection} The matching connection on this block, or null.
+             * @package
              */
             getMatchingConnection(otherBlock: Blockly.Block, conn: Blockly.Connection): Blockly.Connection;
     
@@ -1050,12 +1794,6 @@ declare module Blockly {
             getColour(): string;
     
             /**
-             * Get the HSV hue value of a block. Null if hue not set.
-             * @return {?number} Hue value (0-360)
-             */
-            getHue(): number;
-    
-            /**
              * Get the secondary colour of a block.
              * @return {string} #RRGGBB string.
              */
@@ -1066,6 +1804,35 @@ declare module Blockly {
              * @return {string} #RRGGBB string.
              */
             getColourTertiary(): string;
+    
+            /**
+             * Get the shadow colour of a block.
+             * @return {?string} #RRGGBB string.
+             */
+            getColourShadow(): string;
+    
+            /**
+             * Get the border colour(s) of a block.
+             * @return {{colourDark, colourLight, colourBorder}} An object containing
+             *     colour values for the border(s) of the block. If the block is using a
+             *     style the colourBorder will be defined and equal to the tertiary colour
+             *     of the style (#RRGGBB string). Otherwise the colourDark and colourLight
+             *     attributes will be defined (#RRGGBB strings).
+             * @package
+             */
+            getColourBorder(): { colourDark: any /*missing*/; colourLight: any /*missing*/; colourBorder: any /*missing*/ };
+    
+            /**
+             * Get the name of the block style.
+             * @return {?string} Name of the block style.
+             */
+            getStyleName(): string;
+    
+            /**
+             * Get the HSV hue value of a block.  Null if hue not set.
+             * @return {?number} Hue value (0-360).
+             */
+            getHue(): number;
     
             /**
              * Get the shadow colour of a block.
@@ -1085,20 +1852,28 @@ declare module Blockly {
             clearShadowColour(): void;
     
             /**
-            * Create an #RRGGBB string colour from a colour HSV hue value or #RRGGBB string.
-            * @param {number|string} colour HSV hue value, or #RRGGBB string.
+            * Create an #RRGGBB string from an HSV hue value (0 to 360), #RRGGBB string,
+             *     or a message reference string pointing to one of those two values.
             * @return {string} #RRGGBB string.
             * @private
             */
-            makeColour_(colour: number|string): string;
+            makeColour_(colour: any /* jsdoc error */): string;
     
             /**
-             * Change the colour of a block, and optional secondary/teriarty colours.
-             * @param {number|string} colour HSV hue value, or #RRGGBB string.
+             * Change the colour of a block.
+             * @param {number|string} colour HSV hue value (0 to 360), #RRGGBB string,
+             *     or a message reference string pointing to one of those two values.
              * @param {number|string=} colourSecondary HSV hue value, or #RRGGBB string.
              * @param {number|string=} colourTertiary HSV hue value, or #RRGGBB string.
              */
             setColour(colour: number|string, colourSecondary?: number|string, colourTertiary?: number|string): void;
+    
+            /**
+             * Set the style and colour values of a block.
+             * @param {string} blockStyleName Name of the block style
+             * @throws {Error} if the block style does not exist.
+             */
+            setStyle(blockStyleName: string): void;
     
             /**
              * Sets a callback function to use whenever the block's parent workspace
@@ -1215,8 +1990,21 @@ declare module Blockly {
             /**
              * Set whether the block is disabled or not.
              * @param {boolean} disabled True if disabled.
+             * @deprecated May 2019
              */
             setDisabled(disabled: boolean): void;
+    
+            /**
+             * Get whether this block is enabled or not.
+             * @return {boolean} True if enabled.
+             */
+            isEnabled(): boolean;
+    
+            /**
+             * Set whether the block is enabled or not.
+             * @param {boolean} enabled True if enabled.
+             */
+            setEnabled(enabled: boolean): void;
     
             /**
              * Get whether the block is disabled or not due to parents.
@@ -1298,6 +2086,14 @@ declare module Blockly {
             jsonInitColour_(json: Object, warningPrefix: string): void;
     
             /**
+             * Initialize the style of this block from the JSON description.
+             * @param {!Object} json Structured data describing the block.
+             * @param {string} warningPrefix Warning prefix string identifying block.
+             * @private
+             */
+            jsonInitStyle_(json: Object, warningPrefix: string): void;
+    
+            /**
              * Add key/values from mixinObj to this block object. By default, this method
              * will check that the keys in mixinObj will not overwrite existing values in
              * the block, including prototype values. This provides some insurance against
@@ -1313,11 +2109,11 @@ declare module Blockly {
              * @param {string} message Text contains interpolation tokens (%1, %2, ...)
              *     that match with fields or inputs defined in the args array.
              * @param {!Array} args Array of arguments to be interpolated.
-             * @param {string=} lastDummyAlign If a dummy input is added at the end,
-             *     how should it be aligned?
+             * @param {string|undefined} lastDummyAlign If a dummy input is added at the
+             *     end, how should it be aligned?
              * @private
              */
-            interpolate_(message: string, args: any[], lastDummyAlign?: string): void;
+            interpolate_(message: string, args: any[], lastDummyAlign: string|any /*undefined*/): void;
     
             /**
              * Add a value input, statement input or local variable to this block.
@@ -1349,7 +2145,7 @@ declare module Blockly {
              * Remove an input from this block.
              * @param {string} name The name of the input.
              * @param {boolean=} opt_quiet True to prevent error if input is not present.
-             * @throws {goog.asserts.AssertionError} if the input is not present and
+             * @throws {Error} if the input is not present and
              *     opt_quiet is not true.
              */
             removeInput(name: string, opt_quiet?: boolean): void;
@@ -1444,9 +2240,9 @@ declare module Blockly {
             /**
              * Return the coordinates of the top-left corner of this block relative to the
              * drawing surface's origin (0,0), in workspace units.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties.
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
              */
-            getRelativeToSurfaceXY(): goog.math.Coordinate;
+            getRelativeToSurfaceXY(): Blockly.utils.Coordinate;
     
             /**
              * Move a block by a relative offset.
@@ -1499,7 +2295,308 @@ declare module Blockly.Block {
     function obtain(workspace: Blockly.Workspace, prototypeName: string): Blockly.Block;
 }
 
-declare module Blockly.BlockAnimations {
+
+declare module Blockly {
+
+    /**
+     * The main workspace most recently used.
+     * Set by Blockly.WorkspaceSvg.prototype.markFocused
+     * @type {Blockly.Workspace}
+     */
+    var mainWorkspace: Blockly.Workspace;
+
+    /**
+     * Currently selected block.
+     * @type {Blockly.Block}
+     */
+    var selected: Blockly.Block;
+
+    /**
+     * All of the connections on blocks that are currently being dragged.
+     * @type {!Array.<!Blockly.Connection>}
+     * @private
+     */
+    var draggingConnections_: Blockly.Connection[];
+
+    /**
+     * Contents of the local clipboard.
+     * @type {Element}
+     * @private
+     */
+    var clipboardXml_: Element;
+
+    /**
+     * Source of the local clipboard.
+     * @type {Blockly.WorkspaceSvg}
+     * @private
+     */
+    var clipboardSource_: Blockly.WorkspaceSvg;
+
+    /**
+     * Map of types to type counts for the clipboard object and descendants.
+     * @type {Object}
+     * @private
+     */
+    var clipboardTypeCounts_: Object;
+
+    /**
+     * Cached value for whether 3D is supported.
+     * @type {?boolean}
+     * @private
+     */
+    var cache3dSupported_: boolean;
+
+    /**
+     * Holds all Blockly style attributes.
+     * @type {Blockly.Theme}
+     * @private
+     */
+    var theme_: Blockly.Theme;
+
+    /**
+     * Returns the dimensions of the specified SVG image.
+     * @param {!Element} svg SVG image.
+     * @return {!Object} Contains width and height properties.
+     */
+    function svgSize(svg: Element): Object;
+
+    /**
+     * Size the workspace when the contents change.  This also updates
+     * scrollbars accordingly.
+     * @param {!Blockly.WorkspaceSvg} workspace The workspace to resize.
+     */
+    function resizeSvgContents(workspace: Blockly.WorkspaceSvg): void;
+
+    /**
+     * Size the SVG image to completely fill its container. Call this when the view
+     * actually changes sizes (e.g. on a window resize/device orientation change).
+     * See Blockly.resizeSvgContents to resize the workspace when the contents
+     * change (e.g. when a block is added or removed).
+     * Record the height/width of the SVG image.
+     * @param {!Blockly.WorkspaceSvg} workspace Any workspace in the SVG.
+     */
+    function svgResize(workspace: Blockly.WorkspaceSvg): void;
+
+    /**
+     * Handle a key-down on SVG drawing surface. Does nothing if the main workspace
+     * is not visible.
+     * @param {!Event} e Key down event.
+     * @private
+     */
+    function onKeyDown_(e: Event): void;
+
+    /**
+     * Copy a block or workspace comment onto the local clipboard.
+     * @param {!Blockly.Block | !Blockly.WorkspaceComment} toCopy Block or
+     *    Workspace Comment to be copied.
+     * @private
+     */
+    function copy_(toCopy: Blockly.Block|Blockly.WorkspaceComment): void;
+
+    /**
+     * Duplicate this block and its children, or a workspace comment.
+     * @param {!Blockly.Block | !Blockly.WorkspaceComment} toDuplicate Block or
+     *     Workspace Comment to be copied.
+     * @private
+     */
+    function duplicate_(toDuplicate: Blockly.Block|Blockly.WorkspaceComment): void;
+
+    /**
+     * Cancel the native context menu, unless the focus is on an HTML input widget.
+     * @param {!Event} e Mouse down event.
+     * @private
+     */
+    function onContextMenu_(e: Event): void;
+
+    /**
+     * Close tooltips, context menus, dropdown selections, etc.
+     * @param {boolean=} opt_allowToolbox If true, don't close the toolbox.
+     */
+    function hideChaff(opt_allowToolbox?: boolean): void;
+
+    /**
+     * Close tooltips, context menus, dropdown selections, etc.
+     * For some elements (e.g. field text inputs), rather than hiding, it will
+     * move them.
+     * @param {boolean=} opt_allowToolbox If true, don't close the toolbox.
+     */
+    function hideChaffOnResize(opt_allowToolbox?: boolean): void;
+
+    /**
+     * Does a majority of the work for hideChaff including tooltips, dropdowns,
+     * toolbox, etc. It does not deal with the WidgetDiv.
+     * @param {boolean=} opt_allowToolbox If true, don't close the toolbox.
+     * @private
+     */
+    function hideChaffInternal_(opt_allowToolbox?: boolean): void;
+
+    /**
+     * When something in Blockly's workspace changes, call a function.
+     * @param {!Function} func Function to call.
+     * @return {!Array.<!Array>} Opaque data that can be passed to
+     *     removeChangeListener.
+     * @deprecated April 2015
+     */
+    function addChangeListener(func: Function): any[][];
+
+    /**
+     * Returns the main workspace.  Returns the last used main workspace (based on
+     * focus).  Try not to use this function, particularly if there are multiple
+     * Blockly instances on a page.
+     * @return {!Blockly.Workspace} The main workspace.
+     */
+    function getMainWorkspace(): Blockly.Workspace;
+
+    /**
+     * Wrapper to window.alert() that app developers may override to
+     * provide alternatives to the modal browser window.
+     * @param {string} message The message to display to the user.
+     * @param {function()=} opt_callback The callback when the alert is dismissed.
+     */
+    function alert(message: string, opt_callback?: { (): any /*missing*/ }): void;
+
+    /**
+     * Wrapper to window.confirm() that app developers may override to
+     * provide alternatives to the modal browser window.
+     * @param {string} message The message to display to the user.
+     * @param {!function(boolean)} callback The callback for handling user response.
+     */
+    function confirm(message: string, callback: { (_0: boolean): any /*missing*/ }): void;
+
+    /**
+     * Wrapper to window.prompt() that app developers may override to provide
+     * alternatives to the modal browser window. Built-in browser prompts are
+     * often used for better text input experience on mobile device. We strongly
+     * recommend testing mobile when overriding this.
+     * @param {string} message The message to display to the user.
+     * @param {string} defaultValue The value to initialize the prompt with.
+     * @param {!function(string)} callback The callback for handling user response.
+     */
+    function prompt(message: string, defaultValue: string, callback: { (_0: string): any /*missing*/ }): void;
+
+    /**
+     * Helper function for defining a block from JSON.  The resulting function has
+     * the correct value of jsonDef at the point in code where jsonInit is called.
+     * @param {!Object} jsonDef The JSON definition of a block.
+     * @return {function()} A function that calls jsonInit with the correct value
+     *     of jsonDef.
+     * @private
+     */
+    function jsonInitFactory_(jsonDef: Object): { (): any /*missing*/ };
+
+    /**
+     * Define blocks from an array of JSON block definitions, as might be generated
+     * by the Blockly Developer Tools.
+     * @param {!Array.<!Object>} jsonArray An array of JSON block definitions.
+     */
+    function defineBlocksWithJsonArray(jsonArray: Object[]): void;
+
+    /**
+     * Bind an event to a function call.  When calling the function, verifies that
+     * it belongs to the touch stream that is currently being processed, and splits
+     * multitouch events into multiple events as needed.
+     * @param {!EventTarget} node Node upon which to listen.
+     * @param {string} name Event name to listen to (e.g. 'mousedown').
+     * @param {Object} thisObject The value of 'this' in the function.
+     * @param {!Function} func Function to call when event is triggered.
+     * @param {boolean=} opt_noCaptureIdentifier True if triggering on this event
+     *     should not block execution of other event handlers on this touch or
+     *     other simultaneous touches.  False by default.
+     * @param {boolean=} opt_noPreventDefault True if triggering on this event
+     *     should prevent the default handler.  False by default.  If
+     *     opt_noPreventDefault is provided, opt_noCaptureIdentifier must also be
+     *     provided.
+     * @return {!Array.<!Array>} Opaque data that can be passed to unbindEvent_.
+     */
+    function bindEventWithChecks_(node: EventTarget, name: string, thisObject: Object, func: Function, opt_noCaptureIdentifier?: boolean, opt_noPreventDefault?: boolean): any[][];
+
+    /**
+     * Bind an event to a function call.  Handles multitouch events by using the
+     * coordinates of the first changed touch, and doesn't do any safety checks for
+     * simultaneous event processing.
+     * @deprecated in favor of bindEventWithChecks_, but preserved for external
+     * users.
+     * @param {!EventTarget} node Node upon which to listen.
+     * @param {string} name Event name to listen to (e.g. 'mousedown').
+     * @param {Object} thisObject The value of 'this' in the function.
+     * @param {!Function} func Function to call when event is triggered.
+     * @return {!Array.<!Array>} Opaque data that can be passed to unbindEvent_.
+     */
+    function bindEvent_(node: EventTarget, name: string, thisObject: Object, func: Function): any[][];
+
+    /**
+     * Unbind one or more events event from a function call.
+     * @param {!Array.<!Array>} bindData Opaque data from bindEvent_.
+     *     This list is emptied during the course of calling this function.
+     * @return {!Function} The function call.
+     */
+    function unbindEvent_(bindData: any[][]): Function;
+
+    /**
+     * Is the given string a number (includes negative and decimals).
+     * @param {string} str Input string.
+     * @return {boolean} True if number, false otherwise.
+     */
+    function isNumber(str: string): boolean;
+
+    /**
+     * Convert a hue (HSV model) into an RGB hex triplet.
+     * @param {number} hue Hue on a colour wheel (0-360).
+     * @return {string} RGB code, e.g. '#5ba65b'.
+     */
+    function hueToHex(hue: number): string;
+
+    /**
+     * Checks old colour constants are not overwritten by the host application.
+     * If a constant is overwritten, it prints a console warning directing the
+     * developer to use the equivalent Msg constant.
+     * @package
+     */
+    function checkBlockColourConstants(): void;
+
+    /**
+     * Checks for a constant in the Blockly namespace, verifying it is undefined or
+     * has the old/original value. Prints a warning if this is not true.
+     * @param {string} msgName The Msg constant identifier.
+     * @param {Array<string>} blocklyNamePath The name parts of the tested
+     *     constant.
+     * @param {number|undefined} expectedValue The expected value of the constant.
+     * @private
+     */
+    function checkBlockColourConstant_(msgName: string, blocklyNamePath: string[], expectedValue: number|any /*undefined*/): void;
+
+    /**
+     * Sets the theme for Blockly and refreshes all blocks in the toolbox and
+     * workspace.
+     * @param {!Blockly.Theme} theme Theme for Blockly.
+     */
+    function setTheme(theme: Blockly.Theme): void;
+
+    /**
+     * Refresh the theme for all items on the workspace.
+     * @param {!Blockly.Workspace} ws Blockly workspace to refresh theme on.
+     * @private
+     */
+    function refreshTheme_(ws: Blockly.Workspace): void;
+
+    /**
+     * Updates all the blocks with new style.
+     * @param {!Array.<!Blockly.Block>} blocks List of blocks to update the style
+     * on.
+     * @private
+     */
+    function updateBlockStyles_(blocks: Blockly.Block[]): void;
+
+    /**
+     * Gets the theme.
+     * @return {Blockly.Theme} Theme for Blockly.
+     */
+    function getTheme(): Blockly.Theme;
+}
+
+
+
+declare module Blockly.blockAnimations {
 
     /**
      * PID of disconnect UI animation.  There can only be one at a time.
@@ -1558,11 +2655,210 @@ declare module Blockly.BlockAnimations {
     function disconnectUiEffect(block: Blockly.BlockSvg): void;
 
     /**
+     * Animate a brief wiggle of a disconnected block.
+     * @param {!Element} group SVG element to animate.
+     * @param {number} magnitude Maximum degrees skew (reversed for RTL).
+     * @param {!Date} start Date of animation's start.
+     * @private
+     */
+    function disconnectUiStep_(group: Element, magnitude: number, start: Date): void;
+
+    /**
      * Stop the disconnect UI animation immediately.
      * @package
      */
     function disconnectUiStop(): void;
 }
+
+
+declare module Blockly {
+
+    class BlockDragger extends BlockDragger__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class BlockDragger__Class  { 
+    
+            /**
+             * Class for a block dragger.  It moves blocks around the workspace when they
+             * are being dragged by a mouse or touch.
+             * @param {!Blockly.BlockSvg} block The block to drag.
+             * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag on.
+             * @param {!Blockly.utils.Coordinate} mousedownxy Position where the mouse down
+             *          that started the drag occured in pixels (pxtblockly)
+             * @constructor
+             */
+            constructor(block: Blockly.BlockSvg, workspace: Blockly.WorkspaceSvg, mousedownxy: Blockly.utils.Coordinate);
+    
+            /**
+             * The top block in the stack that is being dragged.
+             * @type {!Blockly.BlockSvg}
+             * @private
+             */
+            draggingBlock_: Blockly.BlockSvg;
+    
+            /**
+             * The workspace on which the block is being dragged.
+             * @type {!Blockly.WorkspaceSvg}
+             * @private
+             */
+            workspace_: Blockly.WorkspaceSvg;
+    
+            /**
+             * Object that keeps track of connections on dragged blocks.
+             * @type {!Blockly.InsertionMarkerManager}
+             * @private
+             */
+            draggedConnectionManager_: Blockly.InsertionMarkerManager;
+    
+            /**
+             * Which delete area the mouse pointer is over, if any.
+             * One of {@link Blockly.DELETE_AREA_TRASH},
+             * {@link Blockly.DELETE_AREA_TOOLBOX}, or {@link Blockly.DELETE_AREA_NONE}.
+             * @type {?number}
+             * @private
+             */
+            deleteArea_: number;
+    
+            /**
+             * Whether the block would be deleted if dropped immediately.
+             * @type {boolean}
+             * @private
+             */
+            wouldDeleteBlock_: boolean;
+    
+            /**
+             * The location of the top left corner of the dragging block at the beginning
+             * of the drag in workspace coordinates.
+             * @type {!Blockly.utils.Coordinate}
+             * @private
+             */
+            startXY_: Blockly.utils.Coordinate;
+    
+            /**
+             * A list of all of the icons (comment, warning, and mutator) that are
+             * on this block and its descendants.  Moving an icon moves the bubble that
+             * extends from it if that bubble is open.
+             * @type {Array.<!Object>}
+             * @private
+             */
+            dragIconData_: Object[];
+    
+            /**
+             * Sever all links from this object.
+             * @package
+             */
+            dispose(): void;
+    
+            /**
+             * Start dragging a block.  This includes moving it to the drag surface.
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
+             *     moved from the position at mouse down, in pixel units.
+             * @param {boolean} healStack Whether or not to heal the stack after
+             *     disconnecting.
+             * @package
+             */
+            startBlockDrag(currentDragDeltaXY: Blockly.utils.Coordinate, healStack: boolean): void;
+    
+            /**
+             * Execute a step of block dragging, based on the given event.  Update the
+             * display accordingly.
+             * @param {!Event} e The most recent move event.
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
+             *     moved from the position at the start of the drag, in pixel units.
+             * @package
+             */
+            dragBlock(e: Event, currentDragDeltaXY: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Finish a block drag and put the block back on the workspace.
+             * @param {!Event} e The mouseup/touchend event.
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
+             *     moved from the position at the start of the drag, in pixel units.
+             * @package
+             */
+            endBlockDrag(e: Event, currentDragDeltaXY: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Fire a move event at the end of a block drag.
+             * @private
+             */
+            fireMoveEvent_(): void;
+    
+            /**
+             * pxt-blockly: Fire an end_drag event at the end of a block drag. We need this
+             * in addition to the move event because the move event is fired in multiple
+             * other places, so it can't be relied on to listen for drag end specifically.
+             * @private
+             */
+            fireEndDragEvent_(): void;
+    
+            /**
+             * Shut the trash can and, if necessary, delete the dragging block.
+             * Should be called at the end of a block drag.
+             * @return {boolean} Whether the block was deleted.
+             * @private
+             */
+            maybeDeleteBlock_(): boolean;
+    
+            /**
+             * Update the cursor (and possibly the trash can lid) to reflect whether the
+             * dragging block would be deleted if released immediately.
+             * @private
+             */
+            updateCursorDuringBlockDrag_(): void;
+    
+            /**
+             * Convert a coordinate object from pixels to workspace units, including a
+             * correction for mutator workspaces.
+             * This function does not consider differing origins.  It simply scales the
+             * input's x and y values.
+             * @param {!Blockly.utils.Coordinate} pixelCoord A coordinate with x and y values
+             *     in CSS pixel units.
+             * @return {!Blockly.utils.Coordinate} The input coordinate divided by the workspace
+             *     scale.
+             * @private
+             */
+            pixelsToWorkspaceUnits_(pixelCoord: Blockly.utils.Coordinate): Blockly.utils.Coordinate;
+    
+            /**
+             * (pxtblockly) Gets the top left of the workspace in pixels
+             * @return {!Blockly.utils.Coordinate} The coordinate of the workspace top left in pixels
+             * @private
+             */
+            workspaceOriginInPixels_(): Blockly.utils.Coordinate;
+    
+            /**
+             * Move all of the icons connected to this drag.
+             * @param {!Blockly.utils.Coordinate} dxy How far to move the icons from their
+             *     original positions, in workspace units.
+             * @private
+             */
+            dragIcons_(dxy: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Get a list of the insertion markers that currently exist.  Drags have 0, 1,
+             * or 2 insertion markers.
+             * @return {!Array.<!Blockly.BlockSvg>} A possibly empty list of insertion
+             *     marker blocks.
+             * @package
+             */
+            getInsertionMarkers(): Blockly.BlockSvg[];
+    } 
+    
+}
+
+declare module Blockly.BlockDragger {
+
+    /**
+     * Make a list of all of the icons (comment, warning, and mutator) that are
+     * on this block and its descendants.  Moving an icon moves the bubble that
+     * extends from it if that bubble is open.
+     * @param {!Blockly.BlockSvg} block The root block that is being dragged.
+     * @return {!Array.<!Object>} The list of all icons and their locations.
+     * @private
+     */
+    function initIconData_(block: Blockly.BlockSvg): Object[];
+}
+
 
 declare module Blockly {
 
@@ -1612,10 +2908,10 @@ declare module Blockly {
              * Cached value for the translation of the drag surface.
              * This translation is in pixel units, because the scale is applied to the
              * drag group rather than the top-level SVG.
-             * @type {goog.math.Coordinate}
+             * @type {Blockly.utils.Coordinate}
              * @private
              */
-            surfaceXY_: goog.math.Coordinate;
+            surfaceXY_: Blockly.utils.Coordinate;
     
             /**
              * ID for the drag shadow filter, set in createDom.
@@ -1672,9 +2968,9 @@ declare module Blockly {
             /**
              * Reports the surface translation in scaled workspace coordinates.
              * Use this when finishing a drag to return blocks to the correct position.
-             * @return {!goog.math.Coordinate} Current translation of the surface.
+             * @return {!Blockly.utils.Coordinate} Current translation of the surface.
              */
-            getSurfaceTranslation(): goog.math.Coordinate;
+            getSurfaceTranslation(): Blockly.utils.Coordinate;
     
             /**
              * Provide a reference to the drag group (primarily for
@@ -1722,183 +3018,6 @@ declare module Blockly.BlockDragSurfaceSvg {
     var SHADOW_STD_DEVIATION: number;
 }
 
-declare module Blockly {
-
-    class BlockDragger extends BlockDragger__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class BlockDragger__Class  { 
-    
-            /**
-             * Class for a block dragger.  It moves blocks around the workspace when they
-             * are being dragged by a mouse or touch.
-             * @param {!Blockly.BlockSvg} block The block to drag.
-             * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag on.
-             * @param {!goog.math.Coordinate} mousedownxy Position where the mouse down
-             *          that started the drag occured in pixels (pxtblockly)
-             * @constructor
-             */
-            constructor(block: Blockly.BlockSvg, workspace: Blockly.WorkspaceSvg, mousedownxy: goog.math.Coordinate);
-    
-            /**
-             * The top block in the stack that is being dragged.
-             * @type {!Blockly.BlockSvg}
-             * @private
-             */
-            draggingBlock_: Blockly.BlockSvg;
-    
-            /**
-             * The workspace on which the block is being dragged.
-             * @type {!Blockly.WorkspaceSvg}
-             * @private
-             */
-            workspace_: Blockly.WorkspaceSvg;
-    
-            /**
-             * Object that keeps track of connections on dragged blocks.
-             * @type {!Blockly.InsertionMarkerManager}
-             * @private
-             */
-            draggedConnectionManager_: Blockly.InsertionMarkerManager;
-    
-            /**
-             * Which delete area the mouse pointer is over, if any.
-             * One of {@link Blockly.DELETE_AREA_TRASH},
-             * {@link Blockly.DELETE_AREA_TOOLBOX}, or {@link Blockly.DELETE_AREA_NONE}.
-             * @type {?number}
-             * @private
-             */
-            deleteArea_: number;
-    
-            /**
-             * Whether the block would be deleted if dropped immediately.
-             * @type {boolean}
-             * @private
-             */
-            wouldDeleteBlock_: boolean;
-    
-            /**
-             * The location of the top left corner of the dragging block at the beginning
-             * of the drag in workspace coordinates.
-             * @type {!goog.math.Coordinate}
-             * @private
-             */
-            startXY_: goog.math.Coordinate;
-    
-            /**
-             * A list of all of the icons (comment, warning, and mutator) that are
-             * on this block and its descendants.  Moving an icon moves the bubble that
-             * extends from it if that bubble is open.
-             * @type {Array.<!Object>}
-             * @private
-             */
-            dragIconData_: Object[];
-    
-            /**
-             * Sever all links from this object.
-             * @package
-             */
-            dispose(): void;
-    
-            /**
-             * Start dragging a block.  This includes moving it to the drag surface.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-             *     moved from the position at mouse down, in pixel units.
-             * @param {boolean} healStack whether or not to heal the stack after disconnecting
-             * @package
-             */
-            startBlockDrag(currentDragDeltaXY: goog.math.Coordinate, healStack: boolean): void;
-    
-            /**
-             * Execute a step of block dragging, based on the given event.  Update the
-             * display accordingly.
-             * @param {!Event} e The most recent move event.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-             *     moved from the position at the start of the drag, in pixel units.
-             * @package
-             */
-            dragBlock(e: Event, currentDragDeltaXY: goog.math.Coordinate): void;
-    
-            /**
-             * Finish a block drag and put the block back on the workspace.
-             * @param {!Event} e The mouseup/touchend event.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-             *     moved from the position at the start of the drag, in pixel units.
-             * @package
-             */
-            endBlockDrag(e: Event, currentDragDeltaXY: goog.math.Coordinate): void;
-    
-            /**
-             * Fire a move event at the end of a block drag.
-             * @private
-             */
-            fireMoveEvent_(): void;
-    
-            /**
-             * pxt-blockly: Fire an end_drag event at the end of a block drag. We need this
-             * in addition to the move event because the move event is fired in multiple
-             * other places, so it can't be relied on to listen for drag end specifically.
-             * @private
-             */
-            fireEndDragEvent_(): void;
-    
-            /**
-             * Shut the trash can and, if necessary, delete the dragging block.
-             * Should be called at the end of a block drag.
-             * @return {boolean} whether the block was deleted.
-             * @private
-             */
-            maybeDeleteBlock_(): boolean;
-    
-            /**
-             * Update the cursor (and possibly the trash can lid) to reflect whether the
-             * dragging block would be deleted if released immediately.
-             * @private
-             */
-            updateCursorDuringBlockDrag_(): void;
-    
-            /**
-             * Convert a coordinate object from pixels to workspace units, including a
-             * correction for mutator workspaces.
-             * This function does not consider differing origins.  It simply scales the
-             * input's x and y values.
-             * @param {!goog.math.Coordinate} pixelCoord A coordinate with x and y values
-             *     in css pixel units.
-             * @return {!goog.math.Coordinate} The input coordinate divided by the workspace
-             *     scale.
-             * @private
-             */
-            pixelsToWorkspaceUnits_(pixelCoord: goog.math.Coordinate): goog.math.Coordinate;
-    
-            /**
-             * (pxtblockly) Gets the top left of the workspace in pixels
-             * @return {!goog.math.Coordinate} The coordinate of the workspace top left in pixels
-             * @private
-             */
-            workspaceOriginInPixels_(): goog.math.Coordinate;
-    
-            /**
-             * Move all of the icons connected to this drag.
-             * @param {!goog.math.Coordinate} dxy How far to move the icons from their
-             *     original positions, in workspace units.
-             * @private
-             */
-            dragIcons_(dxy: goog.math.Coordinate): void;
-    } 
-    
-}
-
-declare module Blockly.BlockDragger {
-
-    /**
-     * Make a list of all of the icons (comment, warning, and mutator) that are
-     * on this block and its descendants.  Moving an icon moves the bubble that
-     * extends from it if that bubble is open.
-     * @param {!Blockly.BlockSvg} block The root block that is being dragged.
-     * @return {!Array.<!Object>} The list of all icons and their locations.
-     * @private
-     */
-    function initIconData_(block: Blockly.BlockSvg): Object[];
-}
 
 declare module Blockly.Events {
 
@@ -1970,7 +3089,7 @@ declare module Blockly.Events {
     
             /**
              * Does this event record any change of state?
-             * @return {boolean} True if something changed.
+             * @return {boolean} False if something changed.
              */
             isNull(): boolean;
     
@@ -2149,7 +3268,7 @@ declare module Blockly.Events {
     
             /**
              * Does this event record any change of state?
-             * @return {boolean} True if something changed.
+             * @return {boolean} False if something changed.
              */
             isNull(): boolean;
     
@@ -2176,7 +3295,49 @@ declare module Blockly.Events {
     
 }
 
+
 declare module Blockly.BlockSvg {
+
+    class PathObject extends PathObject__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class PathObject__Class  { 
+    
+            /**
+             * An object that holds information about the paths that are used to render the
+             * block.  Each path is built up as an array of steps during the render process.
+             * The arrays are then turned into strings, which are set in the block's SVG.
+             * @constructor
+             * @struct
+             * @private
+             */
+            constructor();
+    
+            /**
+             * The primary outline of the block.
+             * @type {!Array.<string|number>}
+             */
+            steps: string|number[];
+    
+            /**
+             * The highlight on the primary outline of the block.
+             * pxt-blockly: Scratch rendering does not use this property
+             * @type {!Array.<string|number>}
+             */
+            highlightSteps: string|number[];
+    
+            /**
+             * The holes in the block for inline inputs.
+             * @type {!Array.<string|number>}
+             */
+            inlineSteps: string|number[];
+    
+            /**
+             * The highlights on holes in the block for inline inputs.
+             * @type {!Array.<string|number>}
+             */
+            highlightInlineSteps: string|number[];
+    } 
+    
 
     /**
     * Grid unit to pixels conversion
@@ -2541,7 +3702,8 @@ declare module Blockly.BlockSvg {
 
     /**
      * Draw the outline of a statement input, starting at the top right corner.
-     * @param {!Array.<string>} steps Path of block outline.
+     * @param {!Blockly.BlockSvg.PathObject} pathObject The object containing
+     *     partially constructed SVG paths, which will be modified by this function.
      * @param {number} cursorX The x position of the start of the notch at the top
      *     of the input.
      * @param {number} rightEdge The far right edge of the block, which determines
@@ -2551,22 +3713,24 @@ declare module Blockly.BlockSvg {
      *     the bottom.
      * @private
      */
-    function drawStatementInputFromTopRight_(steps: string[], cursorX: number, rightEdge: number, row: Object[]): void;
+    function drawStatementInputFromTopRight_(pathObject: Blockly.BlockSvg.PathObject, cursorX: number, rightEdge: number, row: Object[]): void;
 
     /**
      * Draw the top of the outline of a statement input, starting at the top right
      * corner.
-     * @param {!Array.<string>} steps Path of block outline.
+     * @param {!Blockly.BlockSvg.PathObject} pathObject The object containing
+     *     partially constructed SVG paths, which will be modified by this function.
      * @param {number} cursorX The x position of the start of the notch at the top
      *     of the input.
      * @private
      */
-    function drawStatementInputTop_(steps: string[], cursorX: number): void;
+    function drawStatementInputTop_(pathObject: Blockly.BlockSvg.PathObject, cursorX: number): void;
 
     /**
      * Draw the bottom of the outline of a statement input, starting at the inner
      * left corner.
-     * @param {!Array.<string>} steps Path of block outline.
+     * @param {!Blockly.BlockSvg.PathObject} pathObject The object containing
+     *     partially constructed SVG paths, which will be modified by this function.
      * @param {number} rightEdge The far right edge of the block, which determines
      *     how wide the statement input is.
      * @param {!Array.<!Object>} row An object containing information about the
@@ -2574,7 +3738,7 @@ declare module Blockly.BlockSvg {
      *     the bottom.
      * @private
      */
-    function drawStatementInputBottom_(steps: string[], rightEdge: number, row: Object[]): void;
+    function drawStatementInputBottom_(pathObject: Blockly.BlockSvg.PathObject, rightEdge: number, row: Object[]): void;
 
     /**
      * Get some information about the input shape to draw, based on the type of the
@@ -2599,6 +3763,7 @@ declare module Blockly.BlockSvg {
      */
     function getAlignedCursor_(cursorX: number, input: Blockly.Input, rightEdge: number): number;
 }
+
 
 declare module Blockly {
 
@@ -2625,8 +3790,23 @@ declare module Blockly {
              */
             svgGroup_: SVGElement;
     
-            /** @type {SVGElement} */
+            /**
+             * @type {SVGElement}
+             * @private
+             */
+            svgPathDark_: SVGElement;
+    
+            /**
+             * @type {SVGElement}
+             * @private
+             */
             svgPath_: SVGElement;
+    
+            /**
+             * @type {SVGElement}
+             * @private
+             */
+            svgPathLight_: SVGElement;
     
             /** @type {boolean} */
             rendered: boolean;
@@ -2666,10 +3846,10 @@ declare module Blockly {
     
             /**
              * Original location of block being dragged.
-             * @type {goog.math.Coordinate}
+             * @type {Blockly.utils.Coordinate}
              * @private
              */
-            dragStartXY_: goog.math.Coordinate;
+            dragStartXY_: Blockly.utils.Coordinate;
     
             /**
              * Whether the block glows as if running.
@@ -2788,10 +3968,10 @@ declare module Blockly {
              * If the block is on the workspace, (0, 0) is the origin of the workspace
              * coordinate system.
              * This does not change with workspace scale.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties in
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties in
              *     workspace coordinates.
              */
-            getRelativeToSurfaceXY(): goog.math.Coordinate;
+            getRelativeToSurfaceXY(): Blockly.utils.Coordinate;
     
             /**
              * Move a block by a relative offset.
@@ -2820,21 +4000,21 @@ declare module Blockly {
              * Move this block back to the workspace block canvas.
              * Generally should be called at the same time as setDragging_(false).
              * Does nothing if useDragSurface_ is false.
-             * @param {!goog.math.Coordinate} newXY The position the block should take on
+             * @param {!Blockly.utils.Coordinate} newXY The position the block should take on
              *     on the workspace canvas, in workspace coordinates.
              * @private
              */
-            moveOffDragSurface_(newXY: goog.math.Coordinate): void;
+            moveOffDragSurface_(newXY: Blockly.utils.Coordinate): void;
     
             /**
              * Move this block during a drag, taking into account whether we are using a
              * drag surface to translate blocks.
              * This block must be a top-level block.
-             * @param {!goog.math.Coordinate} newLoc The location to translate to, in
+             * @param {!Blockly.utils.Coordinate} newLoc The location to translate to, in
              *     workspace coordinates.
              * @package
              */
-            moveDuringDrag(newLoc: goog.math.Coordinate): void;
+            moveDuringDrag(newLoc: Blockly.utils.Coordinate): void;
     
             /**
              * Clear the block of transform="..." attributes.
@@ -2852,10 +4032,9 @@ declare module Blockly {
              * Returns the coordinates of a bounding box describing the dimensions of this
              * block and any blocks stacked below it.
              * Coordinate system: workspace coordinates.
-             * @return {!{topLeft: goog.math.Coordinate, bottomRight: goog.math.Coordinate}}
-             *    Object with top left and bottom right coordinates of the bounding box.
+             * @return {!Blockly.utils.Rect} Object with coordinates of the bounding box.
              */
-            getBoundingRectangle(): { topLeft: goog.math.Coordinate; bottomRight: goog.math.Coordinate };
+            getBoundingRectangle(): Blockly.utils.Rect;
     
             /**
              * Set block opacity for SVG rendering.
@@ -2901,6 +4080,13 @@ declare module Blockly {
              * @private
              */
             showHelp_(): void;
+    
+            /**
+             * Generate the context menu for this block.
+             * @protected
+             * @returns {Array.<!Object>} Context menu options
+             */
+            generateContextMenu(): Object[];
     
             /**
              * Show the context menu for this block.
@@ -2952,10 +4138,11 @@ declare module Blockly {
     
             /**
              * Set whether this block is an insertion marker block or not.
+             * Once set this cannot be unset.
              * @param {boolean} insertionMarker True if an insertion marker.
-             * @param {Number=} opt_minWidth Optional minimum width of the marker.
+             * @package
              */
-            setInsertionMarker(insertionMarker: boolean, opt_minWidth?: Number): void;
+            setInsertionMarker(insertionMarker: boolean, opt_minWidth?: any /* jsdoc error */): void;
     
             /**
              * Return the root node of the SVG or null if none exists.
@@ -2971,6 +4158,23 @@ declare module Blockly {
              * @param {boolean=} animate If true, show a disposal animation and sound.
              */
             dispose(healStack?: boolean, animate?: boolean): void;
+    
+            /**
+             * Change the colour of a block.
+             */
+            updateColour(): void;
+    
+            /**
+             * Sets the colour of the border.
+             * Removes the light and dark paths if a border colour is defined.
+             */
+            setBorderColour_(): void;
+    
+            /**
+             * Sets the colour of shadow blocks.
+             * @return {?string} The background colour of the block.
+             */
+            setShadowColour_(): string;
     
             /**
              * Enable or disable a block.
@@ -3012,8 +4216,15 @@ declare module Blockly {
             /**
              * Set whether the block is disabled or not.
              * @param {boolean} disabled True if disabled.
+             * @deprecated May 2019
              */
             setDisabled(disabled: boolean): void;
+    
+            /**
+             * Set whether the block is enabled or not.
+             * @param {boolean} enabled True if enabled.
+             */
+            setEnabled(enabled: boolean): void;
     
             /**
              * Set whether the block is highlighted or not.  Block highlighting is
@@ -3094,7 +4305,7 @@ declare module Blockly {
              * Remove an input from this block.
              * @param {string} name The name of the input.
              * @param {boolean=} opt_quiet True to prevent error if input is not present.
-             * @throws {goog.asserts.AssertionError} if the input is not present and
+             * @throws {Error} if the input is not present and
              *     opt_quiet is not true.
              */
             removeInput(name: string, opt_quiet?: boolean): void;
@@ -3182,262 +4393,17 @@ declare module Blockly.BlockSvg {
      * @const
      */
     var INLINE: any /*missing*/;
+
+    /**
+     * ID to give the "collapsed warnings" warning. Allows us to remove the
+     * "collapsed warnings" warning without removing any warnings that belong to
+     * the block.
+     * @type {string}
+     * @const
+     */
+    var COLLAPSED_WARNING_ID: string;
 }
 
-declare module Blockly {
-
-    /**
-     * The main workspace most recently used.
-     * Set by Blockly.WorkspaceSvg.prototype.markFocused
-     * @type {Blockly.Workspace}
-     */
-    var mainWorkspace: Blockly.Workspace;
-
-    /**
-     * Currently selected block.
-     * @type {Blockly.Block}
-     */
-    var selected: Blockly.Block;
-
-    /**
-     * All of the connections on blocks that are currently being dragged.
-     * @type {!Array.<!Blockly.Connection>}
-     * @private
-     */
-    var draggingConnections_: Blockly.Connection[];
-
-    /**
-     * Contents of the local clipboard.
-     * @type {Element}
-     * @private
-     */
-    var clipboardXml_: Element;
-
-    /**
-     * Source of the local clipboard.
-     * @type {Blockly.WorkspaceSvg}
-     * @private
-     */
-    var clipboardSource_: Blockly.WorkspaceSvg;
-
-    /**
-     * Cached value for whether 3D is supported.
-     * @type {!boolean}
-     * @private
-     */
-    var cache3dSupported_: boolean;
-
-    /**
-     * Convert a hue (HSV model) into an RGB hex triplet.
-     * @param {number} hue Hue on a colour wheel (0-360).
-     * @return {string} RGB code, e.g. '#5ba65b'.
-     */
-    function hueToRgb(hue: number): string;
-
-    /**
-     * Returns the dimensions of the specified SVG image.
-     * @param {!Element} svg SVG image.
-     * @return {!Object} Contains width and height properties.
-     */
-    function svgSize(svg: Element): Object;
-
-    /**
-     * Size the workspace when the contents change.  This also updates
-     * scrollbars accordingly.
-     * @param {!Blockly.WorkspaceSvg} workspace The workspace to resize.
-     */
-    function resizeSvgContents(workspace: Blockly.WorkspaceSvg): void;
-
-    /**
-     * Size the SVG image to completely fill its container. Call this when the view
-     * actually changes sizes (e.g. on a window resize/device orientation change).
-     * See Blockly.resizeSvgContents to resize the workspace when the contents
-     * change (e.g. when a block is added or removed).
-     * Record the height/width of the SVG image.
-     * @param {!Blockly.WorkspaceSvg} workspace Any workspace in the SVG.
-     */
-    function svgResize(workspace: Blockly.WorkspaceSvg): void;
-
-    /**
-     * Handle a key-down on SVG drawing surface.
-     * @param {!Event} e Key down event.
-     * @private
-     */
-    function onKeyDown_(e: Event): void;
-
-    /**
-     * Copy a block onto the local clipboard.
-     * @param {!Blockly.Block | !Blockly.WorkspaceComment} toCopy Block or Workspace Comment
-     *    to be copied.
-     * @private
-     */
-    function copy_(toCopy: Blockly.Block|Blockly.WorkspaceComment): void;
-
-    /**
-     * Duplicate this block and its children.
-     * @param {!Blockly.Block | !Blockly.WorkspaceComment} toDuplicate Block or Workspace Comment to be
-     *  copied.
-     * @private
-     */
-    function duplicate_(toDuplicate: Blockly.Block|Blockly.WorkspaceComment): void;
-
-    /**
-     * Cancel the native context menu, unless the focus is on an HTML input widget.
-     * @param {!Event} e Mouse down event.
-     * @private
-     */
-    function onContextMenu_(e: Event): void;
-
-    /**
-     * Close tooltips, context menus, dropdown selections, etc.
-     * @param {boolean=} opt_allowToolbox If true, don't close the toolbox.
-     */
-    function hideChaff(opt_allowToolbox?: boolean): void;
-
-    /**
-     * Close tooltips, context menus, dropdown selections, etc.
-     * For some elements (e.g. field text inputs), rather than hiding, it will
-     * move them.
-     * @param {boolean=} opt_allowToolbox If true, don't close the toolbox.
-     */
-    function hideChaffOnResize(opt_allowToolbox?: boolean): void;
-
-    /**
-     * Does a majority of the work for hideChaff including tooltips, dropdowns,
-     * toolbox, etc. It does not deal with the WidgetDiv.
-     * @param {boolean=} opt_allowToolbox If true, don't close the toolbox.
-     * @private
-     */
-    function hideChaffInternal_(opt_allowToolbox?: boolean): void;
-
-    /**
-     * When something in Blockly's workspace changes, call a function.
-     * @param {!Function} func Function to call.
-     * @return {!Array.<!Array>} Opaque data that can be passed to
-     *     removeChangeListener.
-     * @deprecated April 2015
-     */
-    function addChangeListener(func: Function): any[][];
-
-    /**
-     * Returns the main workspace.  Returns the last used main workspace (based on
-     * focus).  Try not to use this function, particularly if there are multiple
-     * Blockly instances on a page.
-     * @return {!Blockly.Workspace} The main workspace.
-     */
-    function getMainWorkspace(): Blockly.Workspace;
-
-    /**
-     * Wrapper to window.alert() that app developers may override to
-     * provide alternatives to the modal browser window.
-     * @param {string} message The message to display to the user.
-     * @param {function()=} opt_callback The callback when the alert is dismissed.
-     */
-    function alert(message: string, opt_callback?: { (): any /*missing*/ }): void;
-
-    /**
-     * Wrapper to window.confirm() that app developers may override to
-     * provide alternatives to the modal browser window.
-     * @param {string} message The message to display to the user.
-     * @param {!function(boolean)} callback The callback for handling user response.
-     */
-    function confirm(message: string, callback: { (_0: boolean): any /*missing*/ }): void;
-
-    /**
-     * Wrapper to window.prompt() that app developers may override to provide
-     * alternatives to the modal browser window. Built-in browser prompts are
-     * often used for better text input experience on mobile device. We strongly
-     * recommend testing mobile when overriding this.
-     * @param {string} message The message to display to the user.
-     * @param {string} defaultValue The value to initialize the prompt with.
-     * @param {!function(string)} callback The callback for handling user response.
-     */
-    function prompt(message: string, defaultValue: string, callback: { (_0: string): any /*missing*/ }): void;
-
-    /**
-     * Helper function for defining a block from JSON.  The resulting function has
-     * the correct value of jsonDef at the point in code where jsonInit is called.
-     * @param {!Object} jsonDef The JSON definition of a block.
-     * @return {function()} A function that calls jsonInit with the correct value
-     *     of jsonDef.
-     * @private
-     */
-    function jsonInitFactory_(jsonDef: Object): { (): any /*missing*/ };
-
-    /**
-     * Define blocks from an array of JSON block definitions, as might be generated
-     * by the Blockly Developer Tools.
-     * @param {!Array.<!Object>} jsonArray An array of JSON block definitions.
-     */
-    function defineBlocksWithJsonArray(jsonArray: Object[]): void;
-
-    /**
-     * Bind an event to a function call.  When calling the function, verifies that
-     * it belongs to the touch stream that is currently being processed, and splits
-     * multitouch events into multiple events as needed.
-     * @param {!EventTarget} node Node upon which to listen.
-     * @param {string} name Event name to listen to (e.g. 'mousedown').
-     * @param {Object} thisObject The value of 'this' in the function.
-     * @param {!Function} func Function to call when event is triggered.
-     * @param {boolean=} opt_noCaptureIdentifier True if triggering on this event
-     *     should not block execution of other event handlers on this touch or other
-     *     simultaneous touches.
-     * @param {boolean=} opt_noPreventDefault True if triggering on this event
-     *     should prevent the default handler.  False by default.  If
-     *     opt_noPreventDefault is provided, opt_noCaptureIdentifier must also be
-     *     provided.
-     * @return {!Array.<!Array>} Opaque data that can be passed to unbindEvent_.
-     */
-    function bindEventWithChecks_(node: EventTarget, name: string, thisObject: Object, func: Function, opt_noCaptureIdentifier?: boolean, opt_noPreventDefault?: boolean): any[][];
-
-    /**
-     * Bind an event to a function call.  Handles multitouch events by using the
-     * coordinates of the first changed touch, and doesn't do any safety checks for
-     * simultaneous event processing.
-     * @deprecated in favor of bindEventWithChecks_, but preserved for external
-     * users.
-     * @param {!EventTarget} node Node upon which to listen.
-     * @param {string} name Event name to listen to (e.g. 'mousedown').
-     * @param {Object} thisObject The value of 'this' in the function.
-     * @param {!Function} func Function to call when event is triggered.
-     * @return {!Array.<!Array>} Opaque data that can be passed to unbindEvent_.
-     */
-    function bindEvent_(node: EventTarget, name: string, thisObject: Object, func: Function): any[][];
-
-    /**
-     * Unbind one or more events event from a function call.
-     * @param {!Array.<!Array>} bindData Opaque data from bindEvent_.
-     *     This list is emptied during the course of calling this function.
-     * @return {!Function} The function call.
-     */
-    function unbindEvent_(bindData: any[][]): Function;
-
-    /**
-     * Is the given string a number (includes negative and decimals).
-     * @param {string} str Input string.
-     * @return {boolean} True if number, false otherwise.
-     */
-    function isNumber(str: string): boolean;
-
-    /**
-     * Checks old colour constants are not overwritten by the host application.
-     * If a constant is overwritten, it prints a console warning directing the
-     * developer to use the equivalent Msg constant.
-     * @package
-     */
-    function checkBlockColourConstants(): void;
-
-    /**
-     * Checks for a constant in the Blockly namespace, verifying it is undefined or
-     * has the old/original value. Prints a warning if this is not true.
-     * @param {string} msgName The Msg constant identifier.
-     * @param {Array<string>} blocklyNamePath The name parts of the tested
-     *     constant.
-     * @param {number|undefined} expectedValue The expected value of the constant.
-     * @private
-     */
-    function checkBlockColourConstant_(msgName: string, blocklyNamePath: string[], expectedValue: number|any /*undefined*/): void;
-}
 
 declare module Blockly {
 
@@ -3451,13 +4417,13 @@ declare module Blockly {
              *     bubble.
              * @param {!Element} content SVG content for the bubble.
              * @param {Element} shape SVG element to avoid eclipsing.
-             * @param {!goog.math.Coordinate} anchorXY Absolute position of bubble's anchor
-             *     point.
+             * @param {!Blockly.utils.Coordinate} anchorXY Absolute position of bubble's
+             *     anchor point.
              * @param {?number} bubbleWidth Width of bubble, or null if not resizable.
              * @param {?number} bubbleHeight Height of bubble, or null if not resizable.
              * @constructor
              */
-            constructor(workspace: Blockly.WorkspaceSvg, content: Element, shape: Element, anchorXY: goog.math.Coordinate, bubbleWidth: number, bubbleHeight: number);
+            constructor(workspace: Blockly.WorkspaceSvg, content: Element, shape: Element, anchorXY: Blockly.utils.Coordinate, bubbleWidth: number, bubbleHeight: number);
     
             /**
              * Function to call on resize of bubble.
@@ -3473,10 +4439,10 @@ declare module Blockly {
     
             /**
              * Absolute coordinate of anchor point, in workspace coordinates.
-             * @type {goog.math.Coordinate}
+             * @type {Blockly.utils.Coordinate}
              * @private
              */
-            anchorXY_: goog.math.Coordinate;
+            anchorXY_: Blockly.utils.Coordinate;
     
             /**
              * Relative X coordinate of bubble with respect to the anchor's centre,
@@ -3487,19 +4453,20 @@ declare module Blockly {
             relativeLeft_: any /*missing*/;
     
             /**
-             * Relative Y coordinate of bubble with respect to the anchor's centre.
+             * Relative Y coordinate of bubble with respect to the anchor's centre, in
+             * workspace units.
              * @private
              */
             relativeTop_: any /*missing*/;
     
             /**
-             * Width of bubble.
+             * Width of bubble, in workspace units.
              * @private
              */
             width_: any /*missing*/;
     
             /**
-             * Height of bubble.
+             * Height of bubble, in workspace units.
              * @private
              */
             height_: any /*missing*/;
@@ -3509,6 +4476,12 @@ declare module Blockly {
              * @private
              */
             autoLayout_: any /*missing*/;
+    
+            /**
+             * pxt-blockly: Boolean for whether to use arrow or line connector
+             * @private
+             */
+            useArrow_: any /*missing*/;
     
             /**
              * Create the bubble's DOM.
@@ -3540,14 +4513,15 @@ declare module Blockly {
     
             /**
              * Show the context menu for this bubble.
-             * @param {!Event} e Mouse event.
+             * @param {!Event} _e Mouse event.
              * @private
              */
-            showContextMenu_(): void;
+            showContextMenu_(_e: Event): void;
     
             /**
              * Get whether this bubble is deletable or not.
              * @return {boolean} True if deletable.
+             * @package
              */
             isDeletable(): boolean;
     
@@ -3573,7 +4547,7 @@ declare module Blockly {
     
             /**
              * Move this bubble to the top of the stack.
-             * @return {!boolean} Whether or not the bubble has been moved.
+             * @return {boolean} Whether or not the bubble has been moved.
              * @private
              */
             promote_(): boolean;
@@ -3581,15 +4555,53 @@ declare module Blockly {
             /**
              * Notification that the anchor has moved.
              * Update the arrow and bubble accordingly.
-             * @param {!goog.math.Coordinate} xy Absolute location.
+             * @param {!Blockly.utils.Coordinate} xy Absolute location.
              */
-            setAnchorLocation(xy: goog.math.Coordinate): void;
+            setAnchorLocation(xy: Blockly.utils.Coordinate): void;
     
             /**
              * Position the bubble so that it does not fall off-screen.
              * @private
              */
             layoutBubble_(): void;
+    
+            /**
+             * Calculate the what percentage of the bubble overlaps with the visible
+             * workspace (what percentage of the bubble is visible).
+             * @param {!Object} relativeMin The position of the top-left corner of the
+             *    bubble relative to the anchor point.
+             * @param {number} relativeMin.x The x-position of the relativeMin.
+             * @param {number} relativeMin.y The y-position of the relativeMin.
+             * @param {!Object} metrics The metrics of the workspace the bubble will
+             *    appear in.
+             * @return {number} The percentage of the bubble that is visible.
+             * @private
+             */
+            getOverlap_(relativeMin: Object, metrics: Object): number;
+    
+            /**
+             * Calculate what the optimal horizontal position of the top-left corner of the
+             * bubble is (relative to the anchor point) so that the most area of the
+             * bubble is shown.
+             * @param {!Object} metrics The metrics of the workspace the bubble will
+             *    appear in.
+             * @return {number} The optimal horizontal position of the top-left corner
+             *    of the bubble.
+             * @private
+             */
+            getOptimalRelativeLeft_(metrics: Object): number;
+    
+            /**
+             * Calculate what the optimal vertical position of the top-left corner of
+             * the bubble is (relative to the anchor point) so that the most area of the
+             * bubble is shown.
+             * @param {!Object} metrics The metrics of the workspace the bubble will
+             *    appear in.
+             * @return {number} The optimal vertical position of the top-left corner
+             *    of the bubble.
+             * @private
+             */
+            getOptimalRelativeTop_(metrics: Object): number;
     
             /**
              * Move the bubble to a location relative to the anchor's centre.
@@ -3619,16 +4631,29 @@ declare module Blockly {
             setBubbleSize(width: number, height: number): void;
     
             /**
-             * Draw the arrow between the bubble and the origin.
+             * pxt-blockly: Draw the connector between the bubble and the origin.
              * @private
              */
             renderArrow_(): void;
     
             /**
+             * Draw the arrow between the bubble and the origin.
+             * @private
+             */
+            drawArrow_(): void;
+    
+            /**
+             * Draw the line between the bubble and the origin.
+             * From https://github.com/LLK/scratch-blocks/blob/develop/core/scratch_bubble.js
+             * @private
+             */
+            drawLine_(): void;
+    
+            /**
              * Change the colour of a bubble.
              * @param {string} hexColour Hex code of colour.
              */
-            setColour(hexColour: string): void;
+            setColour(hexColour: string, secondaryColour: any /* jsdoc error */): void;
     
             /**
              * Dispose of this bubble.
@@ -3638,20 +4663,21 @@ declare module Blockly {
             /**
              * Move this bubble during a drag, taking into account whether or not there is
              * a drag surface.
-             * @param {?Blockly.BlockDragSurfaceSvg} dragSurface The surface that carries
+             * @param {Blockly.BlockDragSurfaceSvg} dragSurface The surface that carries
              *     rendered items during a drag, or null if no drag surface is in use.
-             * @param {!goog.math.Coordinate} newLoc The location to translate to, in
+             * @param {!Blockly.utils.Coordinate} newLoc The location to translate to, in
              *     workspace coordinates.
              * @package
              */
-            moveDuringDrag(dragSurface: Blockly.BlockDragSurfaceSvg, newLoc: goog.math.Coordinate): void;
+            moveDuringDrag(dragSurface: Blockly.BlockDragSurfaceSvg, newLoc: Blockly.utils.Coordinate): void;
     
             /**
-             * Return the coordinates of the top-left corner of this bubble's body relative
+             * Return the coordinates of the top corner of this bubble's starting edge (e.g.
+             * top left corner in LTR and top right corner in RTL) relative
              * to the drawing surface's origin (0,0), in workspace units.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties.
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
              */
-            getRelativeToSurfaceXY(): goog.math.Coordinate;
+            getRelativeToSurfaceXY(): Blockly.utils.Coordinate;
     
             /**
              * Set whether auto-layout of this bubble is enabled.  The first time a bubble
@@ -3674,9 +4700,9 @@ declare module Blockly.Bubble {
     var BORDER_WIDTH: any /*missing*/;
 
     /**
-     * Radius of the border around the bubble.
+     * PXT Blockly: Size of the resize icon.
      */
-    var BORDER_RADIUS: any /*missing*/;
+    var RESIZE_SIZE: any /*missing*/;
 
     /**
      * Determines the thickness of the base of the arrow in relation to the size
@@ -3700,6 +4726,14 @@ declare module Blockly.Bubble {
     var ANCHOR_RADIUS: any /*missing*/;
 
     /**
+     * Thickness of the line connecting the bubble
+     * to the block.
+     * From https://github.com/LLK/scratch-blocks/blob/develop/core/scratch_bubble.js
+     * @private
+     */
+    var LINE_THICKNESS: any /*missing*/;
+
+    /**
      * Wrapper function called when a mouseUp occurs during a drag operation.
      * @type {Array.<!Array>}
      * @private
@@ -3720,6 +4754,7 @@ declare module Blockly.Bubble {
     function unbindDragEvents_(): void;
 }
 
+
 declare module Blockly {
 
     class BubbleDragger extends BubbleDragger__Class { }
@@ -3727,17 +4762,18 @@ declare module Blockly {
     class BubbleDragger__Class  { 
     
             /**
-             * Class for a bubble dragger.  It moves bubbles around the workspace when they
-             * are being dragged by a mouse or touch.
-             * @param {!Blockly.Bubble|!Blockly.WorkspaceCommentSvg} bubble The bubble to
-             *     drag.
+             * Class for a bubble dragger.  It moves things on the bubble canvas around the
+             * workspace when they are being dragged by a mouse or touch.  These can be
+             * block comments, mutators, warnings, or workspace comments.
+             * @param {!Blockly.Bubble|!Blockly.WorkspaceCommentSvg} bubble The item on the
+             *     bubble canvas to drag.
              * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag on.
              * @constructor
              */
             constructor(bubble: Blockly.Bubble|Blockly.WorkspaceCommentSvg, workspace: Blockly.WorkspaceSvg);
     
             /**
-             * The bubble that is being dragged.
+             * The item on the bubble canvas that is being dragged.
              * @type {!Blockly.Bubble|!Blockly.WorkspaceCommentSvg}
              * @private
              */
@@ -3769,15 +4805,15 @@ declare module Blockly {
             /**
              * The location of the top left corner of the dragging bubble's body at the
              * beginning of the drag, in workspace coordinates.
-             * @type {!goog.math.Coordinate}
+             * @type {!Blockly.utils.Coordinate}
              * @private
              */
-            startXY_: goog.math.Coordinate;
+            startXY_: Blockly.utils.Coordinate;
     
             /**
              * The drag surface to move bubbles to during a drag, or null if none should
              * be used.  Block dragging and bubble dragging use the same surface.
-             * @type {?Blockly.BlockDragSurfaceSvg}
+             * @type {Blockly.BlockDragSurfaceSvg}
              * @private
              */
             dragSurface_: Blockly.BlockDragSurfaceSvg;
@@ -3798,16 +4834,16 @@ declare module Blockly {
              * Execute a step of bubble dragging, based on the given event.  Update the
              * display accordingly.
              * @param {!Event} e The most recent move event.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
              *     moved from the position at the start of the drag, in pixel units.
              * @package
              */
-            dragBubble(e: Event, currentDragDeltaXY: goog.math.Coordinate): void;
+            dragBubble(e: Event, currentDragDeltaXY: Blockly.utils.Coordinate): void;
     
             /**
              * Shut the trash can and, if necessary, delete the dragging bubble.
              * Should be called at the end of a bubble drag.
-             * @return {boolean} whether the bubble was deleted.
+             * @return {boolean} Whether the bubble was deleted.
              * @private
              */
             maybeDeleteBubble_(): boolean;
@@ -3822,14 +4858,15 @@ declare module Blockly {
             /**
              * Finish a bubble drag and put the bubble back on the workspace.
              * @param {!Event} e The mouseup/touchend event.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
              *     moved from the position at the start of the drag, in pixel units.
              * @package
              */
-            endBubbleDrag(e: Event, currentDragDeltaXY: goog.math.Coordinate): void;
+            endBubbleDrag(e: Event, currentDragDeltaXY: Blockly.utils.Coordinate): void;
     
             /**
              * Fire a move event at the end of a bubble drag.
+             * PXT Blockly: remove if statement check for ScratchBubble
              * @private
              */
             fireMoveEvent_(): void;
@@ -3839,13 +4876,13 @@ declare module Blockly {
              * correction for mutator workspaces.
              * This function does not consider differing origins.  It simply scales the
              * input's x and y values.
-             * @param {!goog.math.Coordinate} pixelCoord A coordinate with x and y values
-             *     in css pixel units.
-             * @return {!goog.math.Coordinate} The input coordinate divided by the workspace
+             * @param {!Blockly.utils.Coordinate} pixelCoord A coordinate with x and y values
+             *     in CSS pixel units.
+             * @return {!Blockly.utils.Coordinate} The input coordinate divided by the workspace
              *     scale.
              * @private
              */
-            pixelsToWorkspaceUnits_(pixelCoord: goog.math.Coordinate): goog.math.Coordinate;
+            pixelsToWorkspaceUnits_(pixelCoord: Blockly.utils.Coordinate): Blockly.utils.Coordinate;
     
             /**
              * Move the bubble onto the drag surface at the beginning of a drag.  Move the
@@ -3856,6 +4893,8 @@ declare module Blockly {
     } 
     
 }
+
+
 
 declare module Blockly {
 
@@ -3891,6 +4930,7 @@ declare module Blockly {
     
             /**
              * Draw the comment icon.
+             * PXT Blockly: draw comment icon shape
              * @param {!Element} group The icon group.
              * @private
              */
@@ -3898,6 +4938,8 @@ declare module Blockly {
     
             /**
              * Create the editor for the comment's bubble.
+             * PXT Blockly: keep creatEditor_ and createTextEditor_
+             * functions separate, to leave space for top icons
              * @return {!Element} The top-level node of the editor.
              * @private
              */
@@ -3917,40 +4959,27 @@ declare module Blockly {
             createTextEditor_(): Element;
     
             /**
-             * Add the delete icon to the DOM
+             * PXT Blockly: Create the minimize toggle and delete icons that in the comment top bar.
              * @private
              */
-            addDeleteDom_(): void;
+            createTopBarIcons_(): void;
     
             /**
-             * Handle a mouse-down on comment's delete icon.
+             * PXT Blockly: Handle a mouse-down on comment's delete icon.
              * @param {!Event} e Mouse down event.
              * @private
              */
             deleteMouseDown_(e: Event): void;
     
             /**
-             * Handle a mouse-out on comment's delete icon.
-             * @param {!Event} e Mouse out event.
-             * @private
-             */
-            deleteMouseOut_(): void;
-    
-            /**
-             * Handle a mouse-up on comment's delete icon.
+             * PXT Blockly: Handle a mouse-up on comment's delete icon.
              * @param {!Event} e Mouse up event.
              * @private
              */
             deleteMouseUp_(e: Event): void;
     
             /**
-             * Add the minimize icon to the DOM
-             * @private
-             */
-            addMinimizeDom_(): void;
-    
-            /**
-             * Handle a mouse-up on comment's minimize icon.
+             * PXT Blockly: Handle a mouse-up on comment's minimize icon.
              * @param {!Event} e Mouse up event.
              * @private
              */
@@ -3970,28 +4999,11 @@ declare module Blockly {
             setVisible(visible: boolean): void;
     
             /**
-             * Focus this comment.  Highlight it visually.
-             */
-            addFocus(): void;
-    
-            /**
-             * Unfocus this comment.  Remove its highlighting.
-             */
-            removeFocus(): void;
-    
-            /**
              * Bring the comment to the top of the stack when clicked on.
              * @param {!Event} _e Mouse up event.
              * @private
              */
             textareaFocus_(_e: Event): void;
-    
-            /**
-             * Remove the focused attribute when the text area goes out of focus.
-             * @param {!Event} e blur event.
-             * @private
-             */
-            textareaBlur_(e: Event): void;
     
             /**
              * Get the dimensions of this comment's bubble.
@@ -4025,6 +5037,7 @@ declare module Blockly {
     } 
     
 }
+
 
 declare module Blockly {
 
@@ -4184,6 +5197,7 @@ declare module Blockly {
              * connection.
              * @param {!Blockly.Connection} candidate A nearby connection to check.
              * @return {boolean} True if the connection is allowed, false otherwise.
+             * @private
              */
             isConnectionAllowed(candidate: Blockly.Connection): boolean;
     
@@ -4243,6 +5257,14 @@ declare module Blockly {
             setCheck(check: any): Blockly.Connection;
     
             /**
+             * Get a connection's compatibility.
+             * @return {Array} List of compatible value types.
+             *     Null if all types are compatible.
+             * @public
+             */
+            getCheck(): any[];
+    
+            /**
              * Returns a shape enum for this connection.
              * Used in scratch-blocks to draw unoccupied inputs.
              * @return {number} Enum representing shape.
@@ -4257,7 +5279,7 @@ declare module Blockly {
     
             /**
              * Return a connection's shadow block.
-             * @return {Element} shadow DOM representation of a block or null.
+             * @return {Element} Shadow DOM representation of a block or null.
              */
             getShadowDom(): Element;
     
@@ -4269,11 +5291,11 @@ declare module Blockly {
              * and always return an empty list (the default).
              * {@link Blockly.RenderedConnection} overrides this behavior with a list
              * computed from the rendered positioning.
-             * @param {number=} maxLimit The maximum radius to another connection.
+             * @param {number} _maxLimit The maximum radius to another connection.
              * @return {!Array.<!Blockly.Connection>} List of connections.
              * @private
              */
-            neighbours_(): Blockly.Connection[];
+            neighbours_(_maxLimit: number): Blockly.Connection[];
     
             /**
              * This method returns a string describing this Connection in developer terms
@@ -4325,6 +5347,7 @@ declare module Blockly.Connection {
      */
     function lastConnectionInRow_(startBlock: Blockly.Block, orphanBlock: Blockly.Block): Blockly.Connection;
 }
+
 
 declare module Blockly {
 
@@ -4386,7 +5409,7 @@ declare module Blockly {
              * @param {!Blockly.Connection} connection The connection whose neighbours
              *     should be returned.
              * @param {number} maxRadius The maximum radius to another connection.
-             * @return {!Array.<Blockly.Connection>} List of connections.
+             * @return {!Array.<!Blockly.Connection>} List of connections.
              */
             getNeighbours(connection: Blockly.Connection, maxRadius: number): Blockly.Connection[];
     
@@ -4406,13 +5429,14 @@ declare module Blockly {
              * @param {!Blockly.Connection} conn The connection searching for a compatible
              *     mate.
              * @param {number} maxRadius The maximum radius to another connection.
-             * @param {!goog.math.Coordinate} dxy Offset between this connection's location
-             *     in the database and the current location (as a result of dragging).
+             * @param {!Blockly.utils.Coordinate} dxy Offset between this connection's
+             *     location in the database and the current location (as a result of
+             *     dragging).
              * @return {!{connection: ?Blockly.Connection, radius: number}} Contains two
              *     properties:' connection' which is either another connection or null,
              *     and 'radius' which is the distance.
              */
-            searchForClosest(conn: Blockly.Connection, maxRadius: number, dxy: goog.math.Coordinate): { connection: Blockly.Connection; radius: number };
+            searchForClosest(conn: Blockly.Connection, maxRadius: number, dxy: Blockly.utils.Coordinate): { connection: Blockly.Connection; radius: number };
     } 
     
 }
@@ -4420,13 +5444,26 @@ declare module Blockly {
 declare module Blockly.ConnectionDB {
 
     /**
-     * Initialize a set of connection DBs for a specified workspace.
-     * @param {!Blockly.Workspace} workspace The workspace this DB is for.
+     * Initialize a set of connection DBs for a workspace.
+     * @return {!Array.<!Blockly.ConnectionDB>} Array of databases.
      */
-    function init(workspace: Blockly.Workspace): void;
+    function init(): Blockly.ConnectionDB[];
 }
 
+
 declare module Blockly {
+
+    /**
+     * The multiplier for scroll wheel deltas using the line delta mode.
+     * @type {number}
+     */
+    var LINE_MODE_MULTIPLIER: number;
+
+    /**
+     * The multiplier for scroll wheel deltas using the page delta mode.
+     * @type {number}
+     */
+    var PAGE_MODE_MULTIPLIER: number;
 
     /**
      * Number of pixels the mouse must move before a drag starts.
@@ -4462,6 +5499,11 @@ declare module Blockly {
      * Delay in ms between trigger and bumping unconnected block out of alignment.
      */
     var BUMP_DELAY: any /*missing*/;
+
+    /**
+     * Maximum randomness in workspace units for bumping a block.
+     */
+    var BUMP_RANDOMNESS: any /*missing*/;
 
     /**
      * Number of characters to truncate a collapsed block to.
@@ -4501,18 +5543,6 @@ declare module Blockly {
      * Sprited icons and images.
      */
     var SPRITE: any /*missing*/;
-
-    /**
-     * Required name space for SVG elements.
-     * @const
-     */
-    var SVG_NS: any /*missing*/;
-
-    /**
-     * Required name space for HTML elements.
-     * @const
-     */
-    var HTML_NS: any /*missing*/;
 
     /**
      * ENUM for a right-facing value input.  E.g. 'set item to' or 'return'.
@@ -4656,7 +5686,7 @@ declare module Blockly {
     var DELETE_AREA_TOOLBOX: any /*missing*/;
 
     /**
-     * String for use in the "custom" attribute of a category in toolbox xml.
+     * String for use in the "custom" attribute of a category in toolbox XML.
      * This string indicates that the category should be dynamically populated with
      * variable blocks.
      * @const {string}
@@ -4664,7 +5694,7 @@ declare module Blockly {
     var VARIABLE_CATEGORY_NAME: any /*missing*/;
 
     /**
-     * String for use in the "custom" attribute of a category in toolbox xml.
+     * String for use in the "custom" attribute of a category in toolbox XML.
      * This string indicates that the category should be dynamically populated with
      * variable blocks.
      * @const {string}
@@ -4672,7 +5702,7 @@ declare module Blockly {
     var VARIABLE_DYNAMIC_CATEGORY_NAME: any /*missing*/;
 
     /**
-     * String for use in the "custom" attribute of a category in toolbox xml.
+     * String for use in the "custom" attribute of a category in toolbox XML.
      * This string indicates that the category should be dynamically populated with
      * procedure blocks.
      * @const {string}
@@ -4721,6 +5751,7 @@ declare module Blockly {
      */
     var FUNCTION_CALL_BLOCK_TYPE: any /*missing*/;
 }
+
 
 declare module Blockly.ContextMenu {
 
@@ -4819,73 +5850,18 @@ declare module Blockly.ContextMenu {
     function blockCommentOption(block: Blockly.BlockSvg): Object;
 
     /**
-     * Make a context menu option for undoing the most recent action on the
-     * workspace.
-     * @param {!Blockly.WorkspaceSvg} ws The workspace where the right-click
-     *     originated.
+     * Make a context menu option for deleting the current workspace comment.
+     * @param {!Blockly.WorkspaceCommentSvg} comment The workspace comment where the
+     *     right-click originated.
      * @return {!Object} A menu option, containing text, enabled, and a callback.
      * @package
      */
-    function wsUndoOption(ws: Blockly.WorkspaceSvg): Object;
-
-    /**
-     * Make a context menu option for redoing the most recent action on the
-     * workspace.
-     * @param {!Blockly.WorkspaceSvg} ws The workspace where the right-click
-     *     originated.
-     * @return {!Object} A menu option, containing text, enabled, and a callback.
-     * @package
-     */
-    function wsRedoOption(ws: Blockly.WorkspaceSvg): Object;
-
-    /**
-     * Make a context menu option for cleaning up blocks on the workspace, by
-     * aligning them vertically.
-     * @param {!Blockly.WorkspaceSvg} ws The workspace where the right-click
-     *     originated.
-     * @param {number} numTopBlocks The number of top blocks on the workspace.
-     * @return {!Object} A menu option, containing text, enabled, and a callback.
-     * @package
-     */
-    function wsCleanupOption(ws: Blockly.WorkspaceSvg, numTopBlocks: number): Object;
-
-    /**
-     * Helper function for toggling delete state on blocks on the workspace, to be
-     * called from a right-click menu.
-     * @param {!Array.<!Blockly.BlockSvg>} topBlocks The list of top blocks on the
-     *     the workspace.
-     * @param {boolean} shouldCollapse True if the blocks should be collapsed, false
-     *     if they should be expanded.
-     * @private
-     */
-    function toggleCollapseFn_(topBlocks: Blockly.BlockSvg[], shouldCollapse: boolean): void;
-
-    /**
-     * Make a context menu option for collapsing all block stacks on the workspace.
-     * @param {boolean} hasExpandedBlocks Whether there are any non-collapsed blocks
-     *     on the workspace.
-     * @param {!Array.<!Blockly.BlockSvg>} topBlocks The list of top blocks on the
-     *     the workspace.
-     * @return {!Object} A menu option, containing text, enabled, and a callback.
-     * @package
-     */
-    function wsCollapseOption(hasExpandedBlocks: boolean, topBlocks: Blockly.BlockSvg[]): Object;
-
-    /**
-     * Make a context menu option for expanding all block stacks on the workspace.
-     * @param {boolean} hasCollapsedBlocks Whether there are any collapsed blocks
-     *     on the workspace.
-     * @param {!Array.<!Blockly.BlockSvg>} topBlocks The list of top blocks on the
-     *     the workspace.
-     * @return {!Object} A menu option, containing text, enabled, and a callback.
-     * @package
-     */
-    function wsExpandOption(hasCollapsedBlocks: boolean, topBlocks: Blockly.BlockSvg[]): Object;
+    function commentDeleteOption(comment: Blockly.WorkspaceCommentSvg): Object;
 
     /**
      * Make a context menu option for duplicating the current workspace comment.
-     * @param {!Blockly.WorkspaceCommentSvg} comment The workspace comment
-     *  where the right-click originated.
+     * @param {!Blockly.WorkspaceCommentSvg} comment The workspace comment where the
+     *     right-click originated.
      * @return {!Object} A menu option, containing text, enabled, and a callback.
      * @package
      */
@@ -4901,6 +5877,7 @@ declare module Blockly.ContextMenu {
      */
     function workspaceCommentOption(ws: Blockly.WorkspaceSvg, e: Event): Object;
 }
+
 
 declare module Blockly.Css {
 
@@ -4918,11 +5895,11 @@ declare module Blockly.Css {
     var currentCursor_: string;
 
     /**
-     * Large stylesheet added by Blockly.Css.inject.
-     * @type {Element}
+     * Has CSS already been injected?
+     * @type {boolean}
      * @private
      */
-    var styleSheet_: Element;
+    var injected_: boolean;
 
     /**
      * Path to media directory, with any trailing slash removed.
@@ -4957,6 +5934,7 @@ declare module Blockly.Css {
     var CONTENT: any /*missing*/;
 }
 
+
 declare module Blockly {
 
     class DraggedConnectionManager extends DraggedConnectionManager__Class { }
@@ -4967,6 +5945,7 @@ declare module Blockly {
              * Class that controls updates to connections during drags.  It is primarily
              * responsible for finding the closest eligible connection and highlighting or
              * unhiglighting it as needed during a drag.
+             * @deprecated July 2018. Use InsertionMarkerManager.
              * @param {!Blockly.BlockSvg} block The top block in the stack being dragged.
              * @constructor
              */
@@ -4990,8 +5969,8 @@ declare module Blockly {
     
             /**
              * The connections on the dragging blocks that are available to connect to
-             * other blocks.  This includes all open connections on the top block, as well
-             * as the last connection on the block stack.
+             * other blocks.  This includes all open connections on the top block,
+             * as well as the last connection on the block stack.
              * Does not change during a drag.
              * @type {!Array.<!Blockly.RenderedConnection>}
              * @private
@@ -5041,10 +6020,19 @@ declare module Blockly {
             /**
              * Return whether the block would be deleted if dropped immediately, based on
              * information from the most recent move event.
-             * @return {boolean} true if the block would be deleted if dropped immediately.
+             * @return {boolean} True if the block would be deleted if dropped immediately.
              * @package
              */
             wouldDeleteBlock(): boolean;
+    
+            /**
+             * Return whether the block would be connected if dropped immediately, based on
+             * information from the most recent move event.
+             * @return {boolean} True if the block would be connected if dropped
+             *     immediately.
+             * @package
+             */
+            wouldConnectBlock(): boolean;
     
             /**
              * Connect to the closest connection and render the results.
@@ -5055,13 +6043,13 @@ declare module Blockly {
     
             /**
              * Update highlighted connections based on the most recent move location.
-             * @param {!goog.math.Coordinate} dxy Position relative to drag start,
+             * @param {!Blockly.utils.Coordinate} dxy Position relative to drag start,
              *     in workspace units.
              * @param {?number} deleteArea One of {@link Blockly.DELETE_AREA_TRASH},
              *     {@link Blockly.DELETE_AREA_TOOLBOX}, or {@link Blockly.DELETE_AREA_NONE}.
              * @package
              */
-            update(dxy: goog.math.Coordinate, deleteArea: number): void;
+            update(dxy: Blockly.utils.Coordinate, deleteArea: number): void;
     
             /**
              * Remove highlighting from the currently highlighted connection, if it exists.
@@ -5078,7 +6066,7 @@ declare module Blockly {
             /**
              * Populate the list of available connections on this block stack.  This should
              * only be called once, at the beginning of a drag.
-             * @return {!Array.<!Blockly.RenderedConnection>} a list of available
+             * @return {!Array.<!Blockly.RenderedConnection>} A list of available
              *     connections.
              * @private
              */
@@ -5086,15 +6074,16 @@ declare module Blockly {
     
             /**
              * Find the new closest connection, and update internal state in response.
-             * @param {!goog.math.Coordinate} dxy Position relative to the drag start,
+             * @param {!Blockly.utils.Coordinate} dxy Position relative to the drag start,
              *     in workspace units.
              * @return {boolean} Whether the closest connection has changed.
              * @private
              */
-            updateClosest_(dxy: goog.math.Coordinate): boolean;
+            updateClosest_(dxy: Blockly.utils.Coordinate): boolean;
     } 
     
 }
+
 
 declare module Blockly {
 
@@ -5192,22 +6181,21 @@ declare module Blockly.DropDownDiv {
 
     /**
      * Create and insert the DOM element for this div.
-     * @param {Element} container Element that the div should be contained in.
      */
     function createDom(): void;
 
     /**
      * Set an element to maintain bounds within. Drop-downs will appear
      * within the box of this element if possible.
-     * @param {Element} boundsElement Element to bound drop-down to.
+     * @param {Element} boundsElement Element to bind drop-down to.
      */
     function setBoundsElement(boundsElement: Element): void;
 
     /**
      * Provide the div for inserting content into the drop-down.
-     * @return {HTMLElement} Div to populate with content
+     * @return {Element} Div to populate with content
      */
-    function getContentDiv(): HTMLElement;
+    function getContentDiv(): Element;
 
     /**
      * Clear the content of the drop-down.
@@ -5216,8 +6204,8 @@ declare module Blockly.DropDownDiv {
 
     /**
      * Set the colour for the drop-down.
-     * @param {string} backgroundColour Any CSS color for the background
-     * @param {string} borderColour Any CSS color for the border
+     * @param {string} backgroundColour Any CSS colour for the background.
+     * @param {string} borderColour Any CSS colour for the border.
      */
     function setColour(backgroundColour: string, borderColour: string): void;
 
@@ -5232,25 +6220,29 @@ declare module Blockly.DropDownDiv {
      * by a particular block. The primary position will be below the block,
      * and the secondary position above the block. Drop-down will be
      * constrained to the block's workspace.
-     * @param {!Blockly.Field} field The field showing the drop-down
+     * @param {!Blockly.Field} field The field showing the drop-down.
      * @param {!Blockly.Block} block Block to position the drop-down around.
-     * @param {Function=} opt_onHide Optional callback for when the drop-down is hidden.
-     * @param {Number=} opt_secondaryYOffset Optional Y offset for above-block positioning.
+     * @param {Function=} opt_onHide Optional callback for when the drop-down is
+     *   hidden.
+     * @param {number=} opt_secondaryYOffset Optional Y offset for above-block
+     *   positioning.
      * @return {boolean} True if the menu rendered below block; false if above.
      */
-    function showPositionedByBlock(field: Blockly.Field, block: Blockly.Block, opt_onHide?: Function, opt_secondaryYOffset?: Number): boolean;
+    function showPositionedByBlock(field: Blockly.Field, block: Blockly.Block, opt_onHide?: Function, opt_secondaryYOffset?: number): boolean;
 
     /**
      * Shortcut to show and place the drop-down with positioning determined
      * by a particular field. The primary position will be below the field,
      * and the secondary position above the field. Drop-down will be
      * constrained to the block's workspace.
-     * @param {Object} owner The object showing the drop-down
-     * @param {Function=} opt_onHide Optional callback for when the drop-down is hidden.
-     * @param {Number=} opt_secondaryYOffset Optional Y offset for above-block positioning.
+     * @param {!Object} owner The object showing the drop-down.
+     * @param {Function=} opt_onHide Optional callback for when the drop-down is
+     *   hidden.
+     * @param {number=} opt_secondaryYOffset Optional Y offset for above-block
+     *   positioning.
      * @return {boolean} True if the menu rendered below block; false if above.
      */
-    function showPositionedByField(owner: Object, opt_onHide?: Function, opt_secondaryYOffset?: Number): boolean;
+    function showPositionedByField(owner: Object, opt_onHide?: Function, opt_secondaryYOffset?: number): boolean;
 
     /**
      * Show and place the drop-down.
@@ -5271,13 +6263,21 @@ declare module Blockly.DropDownDiv {
     function show(owner: Object, primaryX: number, primaryY: number, secondaryX: number, secondaryY: number, opt_onHide?: Function): boolean;
 
     /**
+     * Get sizing info about the bounding element.
+     * @return {!Object} An object containing size information about the bounding
+     *   element (bounding box and width/height).
+     * @private
+     */
+    function getBoundsInfo_(): Object;
+
+    /**
      * Helper to position the drop-down and the arrow, maintaining bounds.
      * See explanation of origin points in Blockly.DropDownDiv.show.
      * @param {number} primaryX Desired origin point x, in absolute px
      * @param {number} primaryY Desired origin point y, in absolute px
      * @param {number} secondaryX Secondary/alternative origin point x, in absolute px
      * @param {number} secondaryY Secondary/alternative origin point y, in absolute px
-     * @returns {Object} Various final metrics, including rendered positions for drop-down and arrow.
+     * @return {Object} Various final metrics, including rendered positions for drop-down and arrow.
      */
     function getPositionMetrics(primaryX: number, primaryY: number, secondaryX: number, secondaryY: number): Object;
 
@@ -5289,10 +6289,10 @@ declare module Blockly.DropDownDiv {
 
     /**
      * Hide the menu only if it is owned by the provided object.
-     * @param {Object} owner Object which must be owning the drop-down to hide
-     * @return {Boolean} True if hidden
+     * @param {Object} owner Object which must be owning the drop-down to hide.
+     * @return {boolean} True if hidden.
      */
-    function hideIfOwner(owner: Object): Boolean;
+    function hideIfOwner(owner: Object): boolean;
 
     /**
      * Hide the menu, triggering animation.
@@ -5306,10 +6306,14 @@ declare module Blockly.DropDownDiv {
 
     /**
      * Set the dropdown div's position.
-     * @param {number} initialX Initial Horizontal location (window coordinates, not body).
-     * @param {number} initialY Initial Vertical location (window coordinates, not body).
-     * @param {number} finalX Final Horizontal location (window coordinates, not body).
-     * @param {number} finalY Final Vertical location (window coordinates, not body).
+     * @param {number} initialX Initial Horizontal location
+     *    (window coordinates, not body).
+     * @param {number} initialY Initial Vertical location
+     *    (window coordinates, not body).
+     * @param {number} finalX Final Horizontal location
+     *    (window coordinates, not body).
+     * @param {number} finalY Final Vertical location
+     *    (window coordinates, not body).
      * @private
      */
     function positionInternal_(initialX: number, initialY: number, finalX: number, finalY: number): void;
@@ -5320,6 +6324,7 @@ declare module Blockly.DropDownDiv {
      */
     function repositionForWindowResize(): void;
 }
+
 
 declare module Blockly.Events {
 
@@ -5446,6 +6451,21 @@ declare module Blockly.Events {
     var END_DRAG: any /*missing*/;
 
     /**
+     * Name of event that records a workspace load.
+     */
+    var FINISHED_LOADING: any /*missing*/;
+
+    /**
+     * List of events that cause objects to be bumped back into the visible
+     * portion of the workspace (only used for non-movable workspaces).
+     *
+     * Not to be confused with bumping so that disconnected connections to do
+     * not appear connected.
+     * @const
+     */
+    var BUMP_EVENTS: any /*missing*/;
+
+    /**
      * List of events queued for firing.
      * @private
      */
@@ -5527,11 +6547,12 @@ declare module Blockly.Events {
      * Enable/disable a block depending on whether it is properly connected.
      * Use this on applications where all blocks should be connected to a top block.
      * Recommend setting the 'disable' option to 'false' in the config so that
-     * users don't try to reenable disabled orphan blocks.
+     * users don't try to re-enable disabled orphan blocks.
      * @param {!Blockly.Events.Abstract} event Custom data for event.
      */
     function disableOrphans(event: Blockly.Events.Abstract): void;
 }
+
 
 declare module Blockly.Events {
 
@@ -5599,6 +6620,7 @@ declare module Blockly.Events {
     } 
     
 }
+
 
 declare module Blockly.Extensions {
 
@@ -5702,7 +6724,7 @@ declare module Blockly.Extensions {
     /**
      * Get a list of values of mutator properties on the given block.
      * @param {!Blockly.Block} block The block to inspect.
-     * @return {!Array.<Object>} a list with all of the defined properties, which
+     * @return {!Array.<Object>} A list with all of the defined properties, which
      *     should be functions, but may be anything other than undefined.
      * @private
      */
@@ -5757,7 +6779,7 @@ declare module Blockly.Extensions {
      * @param {string} msgTemplate The template form to of the message text, with
      *     %1 placeholder.
      * @param {string} fieldName The field with the replacement text.
-     * @returns {Function} The extension function.
+     * @return {Function} The extension function.
      */
     function buildTooltipWithFieldText(msgTemplate: string, fieldName: string): Function;
 
@@ -5772,6 +6794,7 @@ declare module Blockly.Extensions {
     function extensionParentTooltip_(): void;
 }
 
+
 declare module Blockly {
 
     class Field extends Field__Class { }
@@ -5780,19 +6803,18 @@ declare module Blockly {
     
             /**
              * Abstract class for an editable field.
-             * @param {string} text The initial content of the field.
-             * @param {Function=} opt_validator An optional function that is called
-             *     to validate any constraints on what the user entered.  Takes the new
-             *     text as an argument and returns either the accepted text, a replacement
-             *     text, or null to abort the change.
+             * @param {*} value The initial value of the field.
+             * @param {Function=} opt_validator  A function that is called to validate
+             *    changes to the field's value. Takes in a value & returns a validated
+             *    value, or null to abort the change.
              * @constructor
              */
-            constructor(text: string, opt_validator?: Function);
+            constructor(value: any, opt_validator?: Function);
     
             /**
              * Maximum characters of text to display before adding an ellipsis.
-             * Same for strings and numbers.
              * @type {number}
+             * @protected
              */
             maxDisplayLength: number;
     
@@ -5811,23 +6833,55 @@ declare module Blockly {
             className_: string;
     
             /**
-             * Visible text to display.
+             * Has this field been disposed of?
+             * @type {boolean}
+             * @package
+             */
+            disposed: boolean;
+    
+            /**
+             * A generic value possessed by the field.
+             * Should generally be non-null, only null when the field is created.
+             * @type {*}
+             * @protected
+             */
+            value_: any;
+    
+            /**
+             * Text representation of the field's value. Maintained for backwards
+             * compatibility reasons.
              * @type {string}
-             * @private
+             * @protected
+             * @deprecated Use or override getText instead.
              */
             text_: string;
     
             /**
-             * Block this field is attached to.  Starts as null, then in set in init.
-             * @type {Blockly.Block}
+             * Used to cache the field's tooltip value if setTooltip is called when the
+             * field is not yet initialized. Is *not* guaranteed to be accurate.
+             * @type {?string}
              * @private
+             */
+            tooltip_: string;
+    
+            /**
+             * Block this field is attached to.  Starts as null, then set in init.
+             * @type {Blockly.Block}
+             * @protected
              */
             sourceBlock_: Blockly.Block;
     
             /**
-             * Is the field visible, or hidden due to the block being collapsed?
+             * Does this block need to be re-rendered?
              * @type {boolean}
              * @private
+             */
+            isDirty_: boolean;
+    
+            /**
+             * Is the field visible, or hidden due to the block being collapsed?
+             * @type {boolean}
+             * @protected
              */
             visible_: boolean;
     
@@ -5841,7 +6895,7 @@ declare module Blockly {
             /**
              * Validation function called when user edits an editable field.
              * @type {Function}
-             * @private
+             * @protected
              */
             validator_: Function;
     
@@ -5881,17 +6935,29 @@ declare module Blockly {
             fieldGroup_: SVGElement;
     
             /**
-             * Editable fields usually show some sort of UI for the user to change them.
+             * The element the click handler is bound to.
+             * @type {!Element}
+             * @private
+             */
+            clickTarget_: Element;
+    
+            /**
+             * Editable fields usually show some sort of UI indicating they are editable.
+             * They will also be saved by the XML renderer.
              * @type {boolean}
-             * @public
+             * @const
+             * @default
              */
             EDITABLE: boolean;
     
             /**
              * Serializable fields are saved by the XML renderer, non-serializable fields
-             * are not.  Editable fields should be serialized.
+             * are not. Editable fields should also be serializable. This is not the
+             * case by default so that SERIALIZABLE is backwards compatible.
+             * TODO shakao verify serializable defaulting to false ok
              * @type {boolean}
-             * @public
+             * @const
+             * @default
              */
             SERIALIZABLE: boolean;
     
@@ -5902,21 +6968,84 @@ declare module Blockly {
             setSourceBlock(block: Blockly.Block): void;
     
             /**
-             * Install this field on a block.
+             * Get the block this field is attached to.
+             * @return {Blockly.Block} The block containing this field.
+             */
+            getSourceBlock(): Blockly.Block;
+    
+            /**
+             * Initialize everything to render this field. Override
+             * methods initModel and initView rather than this method.
+             * @package
              */
             init(): void;
+    
+            /**
+             * Create the block UI for this field.
+             * @package
+             */
+            initView(): void;
+    
+            /**
+             * Create a field border rect element. Not to be overridden by subclasses.
+             * Instead modify the result of the function inside initView, or create a
+             * separate function to call.
+             * @protected
+             */
+            createBorderRect_(): void;
+    
+            /**
+             * Create a field text element. Not to be overridden by subclasses. Instead
+             * modify the result of the function inside initView, or create a separate
+             * function to call.
+             * @protected
+             */
+            createTextElement_(): void;
     
             /** @type {!Element} */
             textElement_: Element;
     
             /**
+             * pxt-blockly: Add an attribute to classify the type of field.
+             * @protected
+             */
+            setDataAttribute_(): void;
+    
+            /**
+             * Bind events to the field. Can be overridden by subclasses if they need to do
+             * custom input handling.
+             * @protected
+             */
+            bindEvents_(): void;
+    
+            /**
              * Initializes the model of the field after it has been installed on a block.
              * No-op by default.
+             * @package
              */
             initModel(): void;
     
             /**
-             * Dispose of all DOM objects belonging to this editable field.
+             * Sets the field's value based on the given XML element. Should only be
+             * called by Blockly.Xml.
+             * @param {!Element} fieldElement The element containing info about the
+             *    field's state.
+             * @package
+             */
+            fromXml(fieldElement: Element): void;
+    
+            /**
+             * Serializes this field's value to XML. Should only be called by Blockly.Xml.
+             * @param {!Element} fieldElement The element to populate with info about the
+             *    field's state.
+             * @return {!Element} The element containing info about the field's state.
+             * @package
+             */
+            toXml(fieldElement: Element): Element;
+    
+            /**
+             * Dispose of all DOM objects and events belonging to this editable field.
+             * @package
              */
             dispose(): void;
     
@@ -5926,13 +7055,25 @@ declare module Blockly {
             updateEditable(): void;
     
             /**
+             * Check whether this field defines the showEditor_ function.
+             * @return {boolean} Whether this field is clickable.
+             */
+            isClickable(): boolean;
+    
+            /**
              * Check whether this field is currently editable.  Some fields are never
-             * editable (e.g. text labels).  Those fields are not serialized to XML.  Other
-             * fields may be editable, and therefore serialized, but may exist on
+             * EDITABLE (e.g. text labels). Other fields may be EDITABLE but may exist on
              * non-editable blocks.
-             * @return {boolean} whether this field is editable and on an editable block
+             * @return {boolean} Whether this field is editable and on an editable block
              */
             isCurrentlyEditable(): boolean;
+    
+            /**
+             * Check whether this field should be serialized by the XML renderer.
+             * Handles the logic for backwards compatibility and incongruous states.
+             * @return {boolean} Whether this field should be serialized or not.
+             */
+            isSerializable(): boolean;
     
             /**
              * Gets whether this editable field is visible or not.
@@ -5941,8 +7082,10 @@ declare module Blockly {
             isVisible(): boolean;
     
             /**
-             * Sets whether this editable field is visible or not.
+             * Sets whether this editable field is visible or not. Should only be called
+             * by input.setVisible.
              * @param {boolean} visible True if visible.
+             * @package
              */
             setVisible(visible: boolean): void;
     
@@ -5959,13 +7102,24 @@ declare module Blockly {
             getArgTypes(): string;
     
             /**
-             * Sets a new validation function for editable fields.
-             * @param {Function} handler New validation function, or null.
+             * Sets a new validation function for editable fields, or clears a previously
+             * set validator.
+             *
+             * The validator function takes in the new field value, and returns
+             * validated value. The validated value could be the input value, a modified
+             * version of the input value, or null to abort the change.
+             *
+             * If the function does not return anything (or returns undefined) the new
+             * value is accepted as valid. This is to allow for fields using the
+             * validated founction as a field-level change event notification.
+             *
+             * @param {Function=} handler The validator
+             *     function or null to clear a previous validator.
              */
-            setValidator(handler: Function): void;
+            setValidator(handler?: Function): void;
     
             /**
-             * Gets the validation function for editable fields.
+             * Gets the validation function for editable fields, or null if not set.
              * @return {Function} Validation function, or null.
              */
             getValidator(): Function;
@@ -5974,6 +7128,8 @@ declare module Blockly {
              * Validates a change.  Does nothing.  Subclasses may override this.
              * @param {string} text The user's text.
              * @return {string} No change needed.
+             * @deprecated May 2019. Override doClassValidation and other relevant 'do'
+             *  functions instead.
              */
             classValidator(text: string): string;
     
@@ -5982,6 +7138,7 @@ declare module Blockly {
              * function for the field's class and its parents.
              * @param {string} text Proposed text.
              * @return {?string} Revised text, or null if invalid.
+             * @deprecated May 2019. setValue now contains all relevant logic.
              */
             callValidator(text: string): string;
     
@@ -5993,21 +7150,39 @@ declare module Blockly {
             getSvgRoot(): Element;
     
             /**
-             * Draws the border with the correct width.
-             * Saves the computed width in a property.
-             * @private
+             * Updates the field to match the colour/style of the block. Should only be
+             * called by BlockSvg.updateColour().
+             * @package
+             */
+            updateColour(): void;
+    
+            /**
+             * Used by getSize() to move/resize any dom elements, and get the new size.
+             *
+             * All rendering that has an effect on the size/shape of the block should be
+             * done here, and should be triggered by getSize().
+             * @protected
              */
             render_(): void;
     
             /**
-             * Updates the width of the field. This calls getCachedWidth which won't cache
-             * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
-             * it eventually does succeed, the result will be cached.
-             **/
+             * Updates the width of the field. Redirects to updateSize_().
+             * @deprecated May 2019  Use Blockly.Field.updateSize_() to force an update
+             * to the size of the field, or Blockly.Field.getCachedWidth() to check the
+             * size of the field..
+             */
             updateWidth(): void;
     
             /**
+             * Updates the size of the field based on the text.
+             * @protected
+             */
+            updateSize_(): void;
+    
+            /**
              * Returns the height and width of the field.
+             *
+             * This should *in general* be the only place render_ gets called from.
              * @return {!goog.math.Size} Height and width.
              */
             getSize(): goog.math.Size;
@@ -6017,7 +7192,7 @@ declare module Blockly {
              * scaling.
              * @return {!goog.math.Box} An object with top, bottom, left, and right in pixels
              *     relative to the top left corner of the page (window coordinates).
-             * @private
+             * @protected
              */
             getScaledBBox_(): goog.math.Box;
     
@@ -6025,7 +7200,7 @@ declare module Blockly {
              * Get the text from this field as displayed on screen.  May differ from getText
              * due to ellipsis, and other formatting.
              * @return {string} Currently displayed text.
-             * @private
+             * @protected
              */
             getDisplayText_(): string;
     
@@ -6057,39 +7232,73 @@ declare module Blockly {
             updateTextNode_(): void;
     
             /**
-             * By default there is no difference between the human-readable text and
-             * the language-neutral values.  Subclasses (such as dropdown) may define this.
-             * @return {string} Current value.
+             * Used to change the value of the field. Handles validation and events.
+             * Subclasses should override doClassValidation_ and doValueUpdate_ rather
+             * than this method.
+             * @param {*} newValue New value.
              */
-            getValue(): string;
+            setValue(newValue: any): void;
     
             /**
-             * By default there is no difference between the human-readable text and
-             * the language-neutral values.  Subclasses (such as dropdown) may define this.
-             * @param {string} newValue New value.
+             * Process the result of validation.
+             * @param {*} newValue New value.
+             * @param {*} validatedValue Validated value.
+             * @return {*} New value, or an Error object.
+             * @private
              */
-            setValue(newValue: string): void;
+            processValidation_(newValue: any, validatedValue: any): any;
+    
+            /**
+             * Get the current value of the field.
+             * @return {*} Current value.
+             */
+            getValue(): any;
+    
+            /**
+             * Used to validate a value. Returns input by default. Can be overridden by
+             * subclasses, see FieldDropdown.
+             * @param {*} newValue The value to be validated.
+             * @return {*} The validated value, same as input by default.
+             * @protected
+             */
+            doClassValidation_(newValue: any): any;
+    
+            /**
+             * Used to update the value of a field. Can be overridden by subclasses to do
+             * custom storage of values/updating of external things.
+             * @param {*} newValue The value to be saved.
+             * @protected
+             */
+            doValueUpdate_(newValue: any): void;
+    
+            /**
+             * Used to notify the field an invalid value was input. Can be overidden by
+             * subclasses, see FieldTextInput.
+             * No-op by default.
+             * @param {*} _invalidValue The input value that was determined to be invalid.
+             * @protected
+             */
+            doValueInvalid_(_invalidValue: any): void;
     
             /**
              * Handle a mouse down event on a field.
              * @param {!Event} e Mouse down event.
-             * @private
+             * @protected
              */
             onMouseDown_(e: Event): void;
     
             /**
              * Change the tooltip text for this field.
-             * @param {string|!Element} _newTip Text for tooltip or a parent element to
-             *     link to for its tooltip.
-             * @abstract
+             * @param {string|Function|!Element} newTip Text for tooltip or a parent
+             *    element to link to for its tooltip.
              */
-            setTooltip(_newTip: string|Element): void;
+            setTooltip(newTip: string|Function|Element): void;
     
             /**
              * Select the element to bind the click handler to. When this element is
              * clicked on an editable field, the editor will open.
              *
-             * <p>If the block has multiple fields, this is just the group containing the
+             * If the block has multiple fields, this is just the group containing the
              * field. If the block has only one field, we handle clicks over the whole
              * block.
              *
@@ -6101,10 +7310,10 @@ declare module Blockly {
             /**
              * Return the absolute coordinates of the top-left corner of this field.
              * The origin (0,0) is the top-left corner of the page body.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties.
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
              * @private
              */
-            getAbsoluteXY_(): goog.math.Coordinate;
+            getAbsoluteXY_(): Blockly.utils.Coordinate;
     
             /**
              * Show an editor when the field is clicked.
@@ -6112,6 +7321,15 @@ declare module Blockly {
              * @private
              */
             showEditor_(e?: Event): void;
+    
+            /**
+             * Whether this field references any Blockly variables.  If true it may need to
+             * be handled differently during serialization and deserialization.  Subclasses
+             * may override this.
+             * @return {boolean} True if this field has any variable references.
+             * @package
+             */
+            referencesVariables(): boolean;
     } 
     
 }
@@ -6129,7 +7347,7 @@ declare module Blockly.Field {
     /**
      * Registers a field type. May also override an existing field type.
      * Blockly.Field.fromJson uses this registry to find the appropriate field.
-     * @param {!string} type The field type name as used in the JSON definition.
+     * @param {string} type The field type name as used in the JSON definition.
      * @param {!{fromJson: Function}} fieldClass The field class containing a
      *     fromJson function that can construct an instance of the field.
      * @throws {Error} if the type name is empty, or the fieldClass is not an
@@ -6143,7 +7361,7 @@ declare module Blockly.Field {
      * Blockly.Field.register.
      * @param {!Object} options A JSON object with a type and options specific
      *     to the field type.
-     * @returns {?Blockly.Field} The new field instance or null if a field wasn't
+     * @return {Blockly.Field} The new field instance or null if a field wasn't
      *     found with the given type name
      * @package
      */
@@ -6195,6 +7413,7 @@ declare module Blockly.Field {
     function stopCache(): void;
 }
 
+
 declare module Blockly {
 
     class FieldAngle extends FieldAngle__Class { }
@@ -6203,30 +7422,48 @@ declare module Blockly {
     
             /**
              * Class for an editable angle field.
-             * @param {(string|number)=} opt_value The initial content of the field. The
-             *     value should cast to a number, and if it does not, '0' will be used.
-             * @param {Function=} opt_validator An optional function that is called
-             *     to validate any constraints on what the user entered.  Takes the new
-             *     text as an argument and returns the accepted text or null to abort
-             *     the change.
+             * @param {string|number=} opt_value The initial value of the field. Should cast
+             *    to a number. Defaults to 0.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a number & returns a
+             *    validated number, or null to abort the change.
              * @extends {Blockly.FieldTextInput}
              * @constructor
              */
             constructor(opt_value?: string|number, opt_validator?: Function);
     
             /**
-             * Clean up this FieldAngle, as well as the inherited FieldTextInput.
-             * @return {!Function} Closure to call on destruction of the WidgetDiv.
-             * @private
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
              */
-            dispose(): Function;
+            SERIALIZABLE: boolean;
     
             /**
-             * Show the inline free-text editor on top of the text.
-             * @param {!Event} e A mouse down or touch start event.
+             * Create the block UI for this field.
+             * @package
+             */
+            initView(): void;
+    
+            /**
+             * Updates the graph when the field rerenders.
              * @private
              */
-            showEditor_(e: Event): void;
+            render_(): void;
+    
+            /**
+             * Create and show the angle field's editor.
+             * @private
+             */
+            showEditor_(): void;
+    
+            /**
+             * Create the angle dropdown editor.
+             * @return {!Element} The newly created angle picker.
+             * @private
+             */
+            dropdownCreate_(): Element;
     
             /**
              * Set the angle to match the mouse's position.
@@ -6247,23 +7484,10 @@ declare module Blockly {
             onMouseMove(e: Event): void;
     
             /**
-             * Insert a degree symbol.
-             * @param {?string} text New text.
-             */
-            setText(text: string): void;
-    
-            /**
              * Redraw the graph with the current angle.
              * @private
              */
             updateGraph_(): void;
-    
-            /**
-             * Ensure that only an angle may be entered.
-             * @param {string} text The user's text.
-             * @return {?string} A string representing a valid angle, or null if invalid.
-             */
-            classValidator(text: string): string;
     } 
     
 }
@@ -6273,7 +7497,7 @@ declare module Blockly.FieldAngle {
     /**
      * Construct a FieldAngle from a JSON arg object.
      * @param {!Object} options A JSON object with options (angle).
-     * @returns {!Blockly.FieldAngle} The new field instance.
+     * @return {!Blockly.FieldAngle} The new field instance.
      * @package
      * @nocollapse
      */
@@ -6334,6 +7558,7 @@ declare module Blockly.FieldAngle {
     var ARROW_SVG_DATAURI: any /*missing*/;
 }
 
+
 declare module Blockly {
 
     class FieldArgumentEditor extends FieldArgumentEditor__Class { }
@@ -6391,6 +7616,7 @@ declare module Blockly.FieldArgumentEditor {
     function fromJson(options: Object): Blockly.FieldArgumentEditor;
 }
 
+
 declare module Blockly {
 
     class FieldCheckbox extends FieldCheckbox__Class { }
@@ -6399,15 +7625,24 @@ declare module Blockly {
     
             /**
              * Class for a checkbox field.
-             * @param {string} state The initial state of the field ('TRUE' or 'FALSE').
-             * @param {Function=} opt_validator A function that is executed when a new
-             *     option is selected.  Its sole argument is the new checkbox state.  If
-             *     it returns a value, this becomes the new checkbox state, unless the
-             *     value is null, in which case the change is aborted.
+             * @param {string|boolean=} opt_value The initial value of the field. Should
+             *    either be 'TRUE', 'FALSE' or a boolean. Defaults to 'FALSE'.
+             * @param {Function=} opt_validator  A function that is called to validate
+             *    changes to the field's value. Takes in a value ('TRUE' or 'FALSE') &
+             *    returns a validated value ('TRUE' or 'FALSE'), or null to abort the
+             *    change.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(state: string, opt_validator?: Function);
+            constructor(opt_value?: string|boolean, opt_validator?: Function);
+    
+            /**
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
     
             /**
              * Mouse cursor style when over the hotspot that initiates editability.
@@ -6415,28 +7650,70 @@ declare module Blockly {
             CURSOR: any /*missing*/;
     
             /**
-             * Install this checkbox on a block.
+             * Used to tell if the field needs to be rendered the next time the block is
+             * rendered. Checkbox fields are statically sized, and only need to be
+             * rendered at initialization.
+             * @type {boolean}
+             * @private
              */
-            init(): void;
+            isDirty_: boolean;
     
             /**
-             * Return 'TRUE' if the checkbox is checked, 'FALSE' otherwise.
-             * @return {string} Current state.
+             * Create the block UI for this checkbox.
+             * @package
+             */
+            initView(): void;
+    
+            /**
+             * Toggle the state of the checkbox on click.
+             * @protected
+             */
+            showEditor_(): void;
+    
+            /**
+             * Ensure that the input value is valid ('TRUE' or 'FALSE').
+             * @param {string|boolean=} newValue The input value.
+             * @return {?string} A valid value ('TRUE' or 'FALSE), or null if invalid.
+             * @protected
+             */
+            doClassValidation_(newValue?: string|boolean): string;
+    
+            /**
+             * Update the value of the field, and update the checkElement.
+             * @param {string} newValue The new value ('TRUE' or 'FALSE') of the field.
+             * @protected
+             */
+            doValueUpdate_(newValue: string): void;
+    
+            /**
+             * Get the value of this field, either 'TRUE' or 'FALSE'.
+             * @return {string} The value of this field.
              */
             getValue(): string;
     
             /**
-             * Set the checkbox to be checked if newBool is 'TRUE' or true,
-             * unchecks otherwise.
-             * @param {string|boolean} newBool New state.
+             * Get the boolean value of this field.
+             * @return {string} The boolean value of this field.
              */
-            setValue(newBool: string|boolean): void;
+            getValueBoolean(): string;
     
             /**
-             * Toggle the state of the checkbox.
+             * Get the text of this field. Used when the block is collapsed.
+             * @return {string} Text representing the value of this field
+             *    ('true' or 'false').
+             */
+            getText(): string;
+    
+            /**
+             * Convert a value into a pure boolean.
+             *
+             * Converts 'TRUE' to true and 'FALSE' to false correctly, everything else
+             * is cast to a boolean.
+             * @param {*} value The value to convert.
+             * @return {boolean} The converted value.
              * @private
              */
-            showEditor_(): void;
+            convertValueToBool_(value: any): boolean;
     } 
     
 }
@@ -6446,17 +7723,41 @@ declare module Blockly.FieldCheckbox {
     /**
      * Construct a FieldCheckbox from a JSON arg object.
      * @param {!Object} options A JSON object with options (checked).
-     * @returns {!Blockly.FieldCheckbox} The new field instance.
+     * @return {!Blockly.FieldCheckbox} The new field instance.
      * @package
      * @nocollapse
      */
     function fromJson(options: Object): Blockly.FieldCheckbox;
 
     /**
-     * Character for the checkmark.
+     * The width of a checkbox field.
+     * @type {number}
+     * @const
      */
-    var CHECK_CHAR: any /*missing*/;
+    var WIDTH: number;
+
+    /**
+     * Character for the checkmark.
+     * @type {string}
+     * @const
+     */
+    var CHECK_CHAR: string;
+
+    /**
+     * Used to correctly position the check mark.
+     * @type {number}
+     * @const
+     */
+    var CHECK_X_OFFSET: number;
+
+    /**
+     * Used to correctly position the check mark.
+     * @type {number}
+     * @const
+     */
+    var CHECK_Y_OFFSET: number;
 }
+
 
 declare module Blockly {
 
@@ -6466,43 +7767,23 @@ declare module Blockly {
     
             /**
              * Class for a colour input field.
-             * @param {string} colour The initial colour in '#rrggbb' format.
-             * @param {Function=} opt_validator A function that is executed when a new
-             *     colour is selected.  Its sole argument is the new colour value.  Its
-             *     return value becomes the selected colour, unless it is undefined, in
-             *     which case the new colour stands, or it is null, in which case the change
-             *     is aborted.
+             * @param {string=} opt_value The initial value of the field. Should be in
+             *    '#rrggbb' format. Defaults to the first value in the default colour array.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a colour string & returns a
+             *    validated colour string ('#rrggbb' format), or null to abort the change.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(colour: string, opt_validator?: Function);
+            constructor(opt_value?: string, opt_validator?: Function);
     
             /**
-             * By default use the global constants for colours.
-             * @type {Array.<string>}
-             * @private
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
              */
-            colours_: string[];
-    
-            /**
-             * By default use the global constants for columns.
-             * @type {number}
-             * @private
-             */
-            columns_: number;
-    
-            /**
-             * The color picker.
-             * @type {goog.ui.ColorPicker}
-             * @private
-             */
-            colorPicker_: goog.ui.ColorPicker;
-    
-            /**
-             * Install this field on a block.
-             * @param {!Blockly.Block=} block The block containing this field.
-             */
-            init(block?: Blockly.Block): void;
+            SERIALIZABLE: boolean;
     
             /**
              * Mouse cursor style when over the hotspot that initiates the editor.
@@ -6510,26 +7791,83 @@ declare module Blockly {
             CURSOR: any /*missing*/;
     
             /**
-             * Hide the colour palette.
+             * Used to tell if the field needs to be rendered the next time the block is
+             * rendered. Colour fields are statically sized, and only need to be
+             * rendered at initialization.
+             * @type {boolean}
              * @private
              */
-            dispose(): void;
+            isDirty_: boolean;
     
             /**
-             * Return the current colour.
-             * @return {string} Current colour in '#rrggbb' format.
+             * Array of colours used by this field.  If null, use the global list.
+             * @type {Array.<string>}
+             * @private
              */
-            getValue(): string;
+            colours_: string[];
     
             /**
-             * Set the colour.
-             * @param {string} colour The new colour in '#rrggbb' format.
+             * Array of colour tooltips used by this field.  If null, use the global list.
+             * @type {Array.<string>}
+             * @private
              */
-            setValue(colour: string): void;
+            titles_: string[];
     
             /**
-             * Get the text from this field.  Used when the block is collapsed.
-             * @return {string} Current text.
+             * Number of colour columns used by this field.  If 0, use the global setting.
+             * By default use the global constants for columns.
+             * @type {number}
+             * @private
+             */
+            columns_: number;
+    
+            /**
+             * The color picker. // TODO shakao rename to colourPicker_
+             * @type {!Element}
+             * @private
+             */
+            colorPicker_: Element;
+    
+            /**
+             * Border colour for the dropdown div showing the colour picker.  Must be a CSS
+             * string.
+             * @type {string}
+             * @private
+             */
+            DROPDOWN_BORDER_COLOUR: string;
+    
+            /**
+             * Background colour for the dropdown div showing the colour picker.  Must be a
+             * CSS string.
+             * @type {string}
+             * @private
+             */
+            DROPDOWN_BACKGROUND_COLOUR: string;
+    
+            /**
+             * Create the block UI for this colour field.
+             * @package
+             */
+            initView(): void;
+    
+            /**
+             * Ensure that the input value is a valid colour.
+             * @param {string=} newValue The input value.
+             * @return {?string} A valid colour, or null if invalid.
+             * @protected
+             */
+            doClassValidation_(newValue?: string): string;
+    
+            /**
+             * Update the value of this colour field, and update the displayed colour.
+             * @param {string} newValue The new colour in '#rrggbb' format.
+             * @protected
+             */
+            doValueUpdate_(newValue: string): void;
+    
+            /**
+             * Get the text for this field.  Used when the block is collapsed.
+             * @return {string} Text representing the value of this field.
              */
             getText(): string;
     
@@ -6543,9 +7881,11 @@ declare module Blockly {
              * Set a custom colour grid for this field.
              * @param {Array.<string>} colours Array of colours for this block,
              *     or null to use default (Blockly.FieldColour.COLOURS).
+             * @param {Array.<string>=} opt_titles Optional array of colour tooltips,
+             *     or null to use default (Blockly.FieldColour.TITLES).
              * @return {!Blockly.FieldColour} Returns itself (for method chaining).
              */
-            setColours(colours: string[]): Blockly.FieldColour;
+            setColours(colours: string[], opt_titles?: string[]): Blockly.FieldColour;
     
             /**
              * Set a custom grid size for this field.
@@ -6556,17 +7896,30 @@ declare module Blockly {
             setColumns(columns: number): Blockly.FieldColour;
     
             /**
-             * Create a palette under the colour field.
+             * Create and show the colour field's editor.
              * @private
              */
             showEditor_(): void;
     
             /**
-             * Create a color picker widget and render it inside the widget div.
-             * @return {!goog.ui.ColorPicker} The newly created color picker.
+             * Handle a click on a colour cell.
+             * @param {!Event} e Mouse event.
              * @private
              */
-            createWidget_(): goog.ui.ColorPicker;
+            onClick_(e: Event): void;
+    
+            /**
+             * Create a colour picker dropdown editor.
+             * @return {!Element} The newly created colour picker.
+             * @private
+             */
+            dropdownCreate_(): Element;
+    
+            /**
+             * Dispose of events belonging to the colour editor.
+             * @private
+             */
+            dropdownDispose_(): void;
     } 
     
 }
@@ -6576,25 +7929,51 @@ declare module Blockly.FieldColour {
     /**
      * Construct a FieldColour from a JSON arg object.
      * @param {!Object} options A JSON object with options (colour).
-     * @returns {!Blockly.FieldColour} The new field instance.
+     * @return {!Blockly.FieldColour} The new field instance.
      * @package
      * @nocollapse
      */
     function fromJson(options: Object): Blockly.FieldColour;
 
     /**
+     * Default width of a colour field.
+     * @type {number}
+     * @private
+     * @const
+     */
+    var DEFAULT_WIDTH: number;
+
+    /**
+     * Default height of a colour field.
+     * @type {number}
+     * @private
+     * @const
+     */
+    var DEFAULT_HEIGHT: number;
+
+    /**
      * An array of colour strings for the palette.
-     * See bottom of this page for the default:
-     * http://docs.closure-library.googlecode.com/git/closure_goog_ui_colorpicker.js.source.html
+     * Copied from goog.ui.ColorPicker.SIMPLE_GRID_COLORS
+     * All colour pickers use this unless overridden with setColours.
      * @type {!Array.<string>}
      */
     var COLOURS: string[];
 
     /**
+     * An array of tooltip strings for the palette.  If not the same length as
+     * COLOURS, the colour's hex code will be used for any missing titles.
+     * All colour pickers use this unless overridden with setColours.
+     * @type {!Array.<string>}
+     */
+    var TITLES: string[];
+
+    /**
      * Number of columns in the palette.
+     * All colour pickers use this unless overridden with setColumns.
      */
     var COLUMNS: any /*missing*/;
 }
+
 
 declare module Blockly {
 
@@ -6704,6 +8083,7 @@ declare module Blockly.FieldColourSlider {
     function fromJson(options: Object): Blockly.FieldColourSlider;
 }
 
+
 declare module Blockly {
 
     class FieldDate extends FieldDate__Class { }
@@ -6712,16 +8092,23 @@ declare module Blockly {
     
             /**
              * Class for a date input field.
-             * @param {string} date The initial date.
-             * @param {Function=} opt_validator A function that is executed when a new
-             *     date is selected.  Its sole argument is the new date value.  Its
-             *     return value becomes the selected date, unless it is undefined, in
-             *     which case the new date stands, or it is null, in which case the change
-             *     is aborted.
+             * @param {string=} opt_value The initial value of the field. Should be in
+             *    'YYYY-MM-DD' format. Defaults to the current date.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a date string & returns a
+             *    validated date string ('YYYY-MM-DD' format), or null to abort the change.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(date: string, opt_validator?: Function);
+            constructor(opt_value?: string, opt_validator?: Function);
+    
+            /**
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
     
             /**
              * Mouse cursor style when over the hotspot that initiates the editor.
@@ -6729,34 +8116,74 @@ declare module Blockly {
             CURSOR: any /*missing*/;
     
             /**
-             * Close the colour picker if this input is being deleted.
+             * Border colour for the dropdown div showing the date picker. Must be a CSS
+             * string.
+             * @type {string}
+             * @private
              */
-            dispose(): void;
+            DROPDOWN_BORDER_COLOUR: string;
     
             /**
-             * Return the current date.
-             * @return {string} Current date.
+             * Background colour for the dropdown div showing the date picker. Must be a
+             * CSS string.
+             * @type {string}
+             * @private
              */
-            getValue(): string;
+            DROPDOWN_BACKGROUND_COLOUR: string;
     
             /**
-             * Set the date.
-             * @param {string} date The new date.
+             * Ensure that the input value is a valid date.
+             * @param {string=} newValue The input value.
+             * @return {?string} A valid date, or null if invalid.
+             * @protected
              */
-            setValue(date: string): void;
+            doClassValidation_(newValue?: string): string;
     
             /**
-             * Create a date picker under the date field.
+             * Render the field. If the picker is shown make sure it has the current
+             * date selected.
+             * @protected
+             */
+            render_(): void;
+    
+            /**
+             * Updates the field's colours to match those of the block.
+             * @package
+             */
+            updateColour(): void;
+    
+            /**
+             * Updates the picker to show the current date and currently selected date.
+             * @private
+             */
+            updateEditor_(): void;
+    
+            /**
+             * Create and show the date field's editor.
              * @private
              */
             showEditor_(): void;
     
             /**
-             * Create a date picker widget and render it inside the widget div.
+             * Create the date dropdown editor.
              * @return {!goog.ui.DatePicker} The newly created date picker.
              * @private
              */
-            createWidget_(): goog.ui.DatePicker;
+            dropdownCreate_(): goog.ui.DatePicker;
+    
+            /**
+             * Dispose of references to DOM elements and events belonging
+             * to the date editor.
+             * @private
+             */
+            dropdownDispose_(): void;
+    
+            /**
+             * Handle a CHANGE event in the date picker.
+             * @param {!Event} event The CHANGE event.
+             * @private
+             */
+            onDateSelected_(event: Event): void;
     } 
     
 }
@@ -6766,17 +8193,11 @@ declare module Blockly.FieldDate {
     /**
      * Construct a FieldDate from a JSON arg object.
      * @param {!Object} options A JSON object with options (date).
-     * @returns {!Blockly.FieldDate} The new field instance.
+     * @return {!Blockly.FieldDate} The new field instance.
      * @package
      * @nocollapse
      */
     function fromJson(options: Object): Blockly.FieldDate;
-
-    /**
-     * Hide the date picker.
-     * @private
-     */
-    function widgetDispose_(): void;
 
     /**
      * Load the best language pack by scanning the Blockly.Msg object for a
@@ -6791,6 +8212,7 @@ declare module Blockly.FieldDate {
     var CSS: any /*missing*/;
 }
 
+
 declare module Blockly {
 
     class FieldDropdown extends FieldDropdown__Class { }
@@ -6801,15 +8223,30 @@ declare module Blockly {
              * Class for an editable dropdown field.
              * @param {(!Array.<!Array>|!Function)} menuGenerator An array of options
              *     for a dropdown list, or a function which generates these options.
-             * @param {Function=} opt_validator A function that is executed when a new
-             *     option is selected, with the newly selected value as its sole argument.
-             *     If it returns a value, that value (which must be one of the options) will
-             *     become selected in place of the newly selected option, unless the return
-             *     value is null, in which case the change is aborted.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a language-neutral dropdown
+             *    option & returns a validated language-neutral dropdown option, or null to
+             *    abort the change.
              * @extends {Blockly.Field}
              * @constructor
              */
             constructor(menuGenerator: any[][]|Function, opt_validator?: Function);
+    
+            /**
+             * Editable fields usually show some sort of UI for the user to change them.
+             * This field should be serialized, but only edited programmatically.
+             * @type {boolean}
+             * @public
+             */
+            EDITABLE: boolean;
+    
+            /**
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
     
             /**
              * Mouse cursor style when over the hotspot that initiates the editor.
@@ -6845,7 +8282,8 @@ declare module Blockly {
             imageJson_: Blockly.ImageJson;
     
             /**
-             * Install this dropdown on a block.
+             * Create the block UI for this dropdown.
+             * @package
              */
             init(): void;
     
@@ -6913,20 +8351,30 @@ declare module Blockly {
              * Return a list of the options for this dropdown.
              * @return {!Array.<!Array>} Array of option tuples:
              *     (human-readable text or image, language-neutral name).
+             * @throws If generated options are incorrectly structured.
              */
             getOptions(): any[][];
     
             /**
-             * Get the language-neutral value from this dropdown menu.
-             * @return {string} Current text.
+             * Ensure that the input value is a valid language-neutral option.
+             * @param {string=} newValue The input value.
+             * @return {?string} A valid language-neutral option, or null if invalid.
+             * @protected
              */
-            getValue(): string;
+            doClassValidation_(newValue?: string): string;
     
             /**
-             * Set the language-neutral value for this dropdown menu.
-             * @param {string} newValue New value to set.
+             * Update the value of this dropdown field.
+             * @param {string} newValue The new language-enutral value.
+             * @protected
              */
-            setValue(newValue: string): void;
+            doValueUpdate_(newValue: string): void;
+    
+            /**
+             * Updates the dropdown arrow to match the colour/style of the block.
+             * @package
+             */
+            updateColour(): void;
     
             /**
              * Sets the text in this field.  Trigger a rerender of the source block.
@@ -6954,7 +8402,7 @@ declare module Blockly.FieldDropdown {
     /**
      * Construct a FieldDropdown from a JSON arg object.
      * @param {!Object} options A JSON object with options (options).
-     * @returns {!Blockly.FieldDropdown} The new field instance.
+     * @return {!Blockly.FieldDropdown} The new field instance.
      * @package
      * @nocollapse
      */
@@ -6964,7 +8412,28 @@ declare module Blockly.FieldDropdown {
      * Horizontal distance that a checkmark overhangs the dropdown.
      */
     var CHECKMARK_OVERHANG: any /*missing*/;
+
+    /**
+     * Maximum height of the dropdown menu, as a percentage of the viewport height.
+     */
+    var MAX_MENU_HEIGHT_VH: any /*missing*/;
+
+    /**
+     * Used to position the imageElement_ correctly.
+     * @type {number}
+     * @const
+     */
+    var IMAGE_Y_OFFSET: number;
+
+    /**
+     * Validates the data structure to be processed as an options list.
+     * @param {?} options The proposed dropdown options.
+     * @throws If proposed options are incorrectly structured.
+     * @private
+     */
+    function validateOptions_(options: any): void;
 }
+
 
 declare module Blockly {
 
@@ -7072,6 +8541,7 @@ declare module Blockly.FieldIconMenu {
     var savedPrimary_: number|string;
 }
 
+
 declare module Blockly {
 
     class FieldImage extends FieldImage__Class { }
@@ -7080,25 +8550,38 @@ declare module Blockly {
     
             /**
              * Class for an image on a block.
-             * @param {string} src The URL of the image.
-             * @param {number} width Width of the image.
-             * @param {number} height Height of the image.
-             * @param {boolean} flip_rtl Whether to flip the icon in RTL
+             * @param {string} src The URL of the image. Defaults to an empty string.
+             * @param {!(string|number)} width Width of the image.
+             * @param {!(string|number)} height Height of the image.
              * @param {string=} opt_alt Optional alt text for when block is collapsed.
              * @param {Function=} opt_onClick Optional function to be called when the image
              *     is clicked.  If opt_onClick is defined, opt_alt must also be defined.
+             * @param {boolean=} opt_flipRtl Whether to flip the icon in RTL.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(src: string, width: number, height: number, flip_rtl: boolean, opt_alt?: string, opt_onClick?: Function);
+            constructor(src: string, width: string|number, height: string|number, opt_alt?: string, opt_onClick?: Function, opt_flipRtl?: boolean);
     
             /**
-             * Editable fields are saved by the XML renderer, non-editable fields are not.
+             * Editable fields usually show some sort of UI indicating they are
+             * editable. This field should not.
+             * @type {boolean}
+             * @const
              */
-            EDITABLE: any /*missing*/;
+            EDITABLE: boolean;
+    
+            /**
+             * Used to tell if the field needs to be rendered the next time the block is
+             * rendered. Image fields are statically sized, and only need to be
+             * rendered at initialization.
+             * @type {boolean}
+             * @private
+             */
+            isDirty_: boolean;
     
             /**
              * Install this image on a block.
+             * TODO shakao override initView instead of init
              */
             init(): void;
     
@@ -7131,7 +8614,7 @@ declare module Blockly {
              * Get whether to flip this image in RTL
              * @return {boolean} True if we should flip in RTL.
              */
-            getFlipRTL(): boolean;
+            getFlipRtl(): boolean;
     
             /**
              * Images are fixed width, no need to render.
@@ -7164,14 +8647,15 @@ declare module Blockly.FieldImage {
     /**
      * Construct a FieldImage from a JSON arg object,
      * dereferencing any string table references.
-     * @param {!Object} options A JSON object with options (src, width, height, and
-     *                          alt).
-     * @returns {!Blockly.FieldImage} The new field instance.
+     * @param {!Object} options A JSON object with options (src, width, height,
+     *    alt, and flipRtl).
+     * @return {!Blockly.FieldImage} The new field instance.
      * @package
      * @nocollapse
      */
     function fromJson(options: Object): Blockly.FieldImage;
 }
+
 
 declare module Blockly {
 
@@ -7180,50 +8664,43 @@ declare module Blockly {
     class FieldLabel__Class extends Blockly.Field__Class  { 
     
             /**
-             * Class for a non-editable field.
-             * @param {string} text The initial content of the field.
+             * Class for a non-editable, non-serializable text field.
+             * @param {string=} opt_value The initial value of the field. Should cast to a
+             *    string. Defaults to an empty string if null or undefined.
              * @param {string=} opt_class Optional CSS class for the field's text.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(text: string, opt_class?: string);
+            constructor(opt_value?: string, opt_class?: string);
     
             /**
-             * Editable fields are saved by the XML renderer, non-editable fields are not.
-             */
-            EDITABLE: any /*missing*/;
-    
-            /**
-             * Serializable fields are saved by the XML renderer, non-serializable fields
-             * are not.  Editable fields should be serialized.
+             * Editable fields usually show some sort of UI indicating they are
+             * editable. This field should not.
              * @type {boolean}
-             * @public
+             * @const
              */
-            SERIALIZABLE: boolean;
+            EDITABLE: boolean;
     
             /**
-             * Install this text on a block.
+             * pxt-blockly: labels do not bind events, to allow blocks with one
+             * field to bind the event to the entire block.
+             * @protected
              */
-            init(): void;
+            bindEvents_(): void;
     
             /**
-             * Dispose of all DOM objects belonging to this text.
+             * Create block UI for this label.
+             * @package
              */
-            dispose(): void;
+            initView(): void;
     
             /**
-             * Gets the group element for this field.
-             * Used for measuring the size and for positioning.
-             * @return {!Element} The group element.
+             * Ensure that the input value casts to a valid string.
+             * @param {string=} newValue The input value.
+             * @return {?string} A valid string, or null if invalid.
+             * @protected
              */
-            getSvgRoot(): Element;
-    
-            /**
-             * Change the tooltip text for this field.
-             * @param {string|!Element} newTip Text for tooltip or a parent element to
-             *     link to for its tooltip.
-             */
-            setTooltip(newTip: string|Element): void;
+            doClassValidation_(newValue?: string): string;
     } 
     
 }
@@ -7234,12 +8711,13 @@ declare module Blockly.FieldLabel {
      * Construct a FieldLabel from a JSON arg object,
      * dereferencing any string table references.
      * @param {!Object} options A JSON object with options (text, and class).
-     * @returns {!Blockly.FieldLabel} The new field instance.
+     * @return {!Blockly.FieldLabel} The new field instance.
      * @package
      * @nocollapse
      */
     function fromJson(options: Object): Blockly.FieldLabel;
 }
+
 
 declare module Blockly {
 
@@ -7334,6 +8812,57 @@ declare module Blockly.FieldLabelHover {
     function dispose(): void;
 }
 
+
+declare module Blockly {
+
+    class FieldLabelSerializable extends FieldLabelSerializable__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldLabelSerializable__Class extends Blockly.FieldLabel__Class  { 
+    
+            /**
+             * Class for a non-editable, serializable text field.
+             * @param {*} opt_value The initial value of the field. Should cast to a
+             *    string. Defaults to an empty string if null or undefined.
+             * @param {string=} opt_class Optional CSS class for the field's text.
+             * @extends {Blockly.FieldLabel}
+             * @constructor
+             *
+             */
+            constructor(opt_value: any, opt_class?: string);
+    
+            /**
+             * Editable fields usually show some sort of UI indicating they are
+             * editable. This field should not.
+             * @type {boolean}
+             * @public
+             */
+            EDITABLE: boolean;
+    
+            /**
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not.  This field should be serialized, but only edited programmatically.
+             * @type {boolean}
+             * @public
+             */
+            SERIALIZABLE: boolean;
+    } 
+    
+}
+
+declare module Blockly.FieldLabelSerializable {
+
+    /**
+     * Construct a FieldLabelSerializable from a JSON arg object,
+     * dereferencing any string table references.
+     * @param {!Object} options A JSON object with options (text, and class).
+     * @returns {!Blockly.FieldLabelSerializable} The new field instance.
+     * @package
+     * @nocollapse
+     */
+    function fromJson(options: Object): Blockly.FieldLabelSerializable;
+}
+
+
 declare module Blockly {
 
     class FieldNumber extends FieldNumber__Class { }
@@ -7342,25 +8871,26 @@ declare module Blockly {
     
             /**
              * Class for an editable number field.
-             * In scratch-blocks, the min/max/precision properties are only used
-             * to construct a restrictor on typable characters, and to inform the pop-up
-             * numpad on touch devices.
-             * These properties are included here (i.e. instead of just accepting a
-             * decimalAllowed, negativeAllowed) to maintain API compatibility with Blockly
-             * and Blockly for Android.
-             * @param {(string|number)=} opt_value The initial content of the field. The value
-             *     should cast to a number, and if it does not, '0' will be used.
+             * @param {string|number=} opt_value The initial value of the field. Should cast
+             *    to a number. Defaults to 0.
              * @param {(string|number)=} opt_min Minimum value.
              * @param {(string|number)=} opt_max Maximum value.
              * @param {(string|number)=} opt_precision Precision for value.
-             * @param {Function=} opt_validator An optional function that is called
-             *     to validate any constraints on what the user entered.  Takes the new
-             *     text as an argument and returns the accepted text or null to abort
-             *     the change.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a number & returns a validated
+             *    number, or null to abort the change.
              * @extends {Blockly.FieldTextInput}
              * @constructor
              */
             constructor(opt_value?: string|number, opt_min?: string|number, opt_max?: string|number, opt_precision?: string|number, opt_validator?: Function);
+    
+            /**
+             *  * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
     
             /**
              * Return an appropriate restrictor, depending on whether this FieldNumber
@@ -7407,13 +8937,6 @@ declare module Blockly {
              * Callback for when the drop-down is hidden.
              */
             onHide_(): void;
-    
-            /**
-             * Ensure that only a number in the correct range may be entered.
-             * @param {string} text The user's text.
-             * @return {?string} A string representing a valid number, or null if invalid.
-             */
-            classValidator(text: string): string;
     } 
     
 }
@@ -7424,7 +8947,7 @@ declare module Blockly.FieldNumber {
      * Construct a FieldNumber from a JSON arg object.
      * @param {!Object} options A JSON object with options (value, min, max, and
      *                          precision).
-     * @returns {!Blockly.FieldNumber} The new field instance.
+     * @return {!Blockly.FieldNumber} The new field instance.
      * @package
      * @nocollapse
      */
@@ -7481,6 +9004,7 @@ declare module Blockly.FieldNumber {
     function updateDisplay_(newValue: string): void;
 }
 
+
 declare module Blockly {
 
     class FieldNumberDropdown extends FieldNumberDropdown__Class { }
@@ -7525,6 +9049,7 @@ declare module Blockly.FieldNumberDropdown {
      */
     function fromJson(options: Object): Blockly.FieldNumberDropdown;
 }
+
 
 declare module Blockly {
 
@@ -7637,6 +9162,7 @@ declare module Blockly.FieldSlider {
     function fromJson(options: Object): Blockly.FieldSlider;
 }
 
+
 declare module Blockly {
 
     class FieldString extends FieldString__Class { }
@@ -7683,21 +9209,8 @@ declare module Blockly.FieldString {
      * @public
      */
     var quotePadding: number;
-
-    /**
-     * Quote left data URI.
-     * @type {string}
-     * @public
-     */
-    var QUOTE_0_DATA_URI: string;
-
-    /**
-     * Quote right data URI.
-     * @type {string}
-     * @public
-     */
-    var QUOTE_1_DATA_URI: string;
 }
+
 
 declare module Blockly {
 
@@ -7802,6 +9315,7 @@ declare module Blockly.FieldTextDropdown {
     function fromJson(options: Object): Blockly.FieldTextDropdown;
 }
 
+
 declare module Blockly {
 
     class FieldTextInput extends FieldTextInput__Class { }
@@ -7810,18 +9324,26 @@ declare module Blockly {
     
             /**
              * Class for an editable text field.
-             * @param {string} text The initial content of the field.
-             * @param {Function=} opt_validator An optional function that is called
-             *     to validate any constraints on what the user entered.  Takes the new
-             *     text as an argument and returns either the accepted text, a replacement
-             *     text, or null to abort the change.
+             * @param {string=} opt_value The initial value of the field. Should cast to a
+             *    string. Defaults to an empty string if null or undefined.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a string & returns a validated
+             *    string, or null to abort the change.
              * @param {RegExp=} opt_restrictor An optional regular expression to restrict
-             *     typed text to. Text that doesn't match the restrictor will never show
-             *     in the text field.
+             *    typed text to. Text that doesn't match the restrictor will never show
+             *    in the text field.
              * @extends {Blockly.Field}
              * @constructor
              */
-            constructor(text: string, opt_validator?: Function, opt_restrictor?: RegExp);
+            constructor(opt_value?: string, opt_validator?: Function, opt_restrictor?: RegExp);
+    
+            /**
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
     
             /**
              * Mouse cursor style when over the hotspot that initiates the editor.
@@ -7865,10 +9387,39 @@ declare module Blockly {
             dispose(): void;
     
             /**
-             * Set the text in this field and fire a change event.
-             * @param {*} newText New text.
+             * Ensure that the input value casts to a valid string.
+             * @param {string=} newValue The input value.
+             * @return {?string} A valid string, or null if invalid.
+             * @protected
              */
-            setText(newText: any): void;
+            doClassValidation_(newValue?: string): string;
+    
+            /**
+             * Called by setValue if the text input is not valid. If the field is
+             * currently being edited it reverts value of the field to the previous
+             * value while allowing the display text to be handled by the htmlInput_.
+             * @param {*} _invalidValue The input value that was determined to be invalid.
+             *    This is not used by the text input because its display value is stored on
+             *    the htmlInput_.
+             * @protected
+             */
+            doValueInvalid_(_invalidValue: any): void;
+    
+            /**
+             * Called by setValue if the text input is valid. Updates the value of the
+             * field, and updates the text of the field if it is not currently being
+             * edited (i.e. handled by the htmlInput_).
+             * @param {string} newValue The new validated value of the field.
+             * @protected
+             */
+            doValueUpdate_(newValue: string): void;
+    
+            /**
+             * Updates the colour of the htmlInput given the current validity of the
+             * field's value.
+             * @protected
+             */
+            render_(): void;
     
             /**
              * Set whether this field is spellchecked by the browser.
@@ -7898,24 +9449,56 @@ declare module Blockly {
              *     input set to read-only, to prevent virtual keyboards.
              * @param {boolean=} opt_withArrow True to show drop-down arrow in text editor.
              * @param {Function=} opt_arrowCallback Callback for when drop-down arrow clicked.
-             * @private
+             * @protected
              */
             showEditor_(e: Event, opt_quietInput?: boolean, opt_readOnly?: boolean, opt_withArrow?: boolean, opt_arrowCallback?: Function): void;
     
             /**
-             * Bind handlers for user input on this field and size changes on the workspace.
-             * @param {!HTMLInputElement} htmlInput The htmlInput created in showEditor, to
-             *     which event handlers will be bound.
+             * Create and show a text input editor that is a prompt (usually a popup).
+             * Mobile browsers have issues with in-line textareas (focus and keyboards).
              * @private
              */
-            bindEvents_(htmlInput: HTMLInputElement): void;
+            showPromptEditor_(): void;
+    
+            /**
+             * Create and show a text input editor that sits directly over the text input.
+             * @param {boolean} quietInput True if editor should be created without
+             *     focus.
+             * @param {boolean=} withArrow True to show drop-down arrow in text editor.
+             * @param {Function=} arrowCallback Callback for when drop-down arrow clicked.
+             * @private
+             */
+            showInlineEditor_(quietInput: boolean, readOnly: any /* jsdoc error */, withArrow?: boolean, arrowCallback?: Function): void;
+    
+            /**
+             * Create the text input editor widget.
+             * @return {!HTMLInputElement} The newly created text input editor.
+             * @param {boolean=} withArrow True to show drop-down arrow in text editor.
+             * @param {Function=} arrowCallback Callback for when drop-down arrow clicked.
+             * @private
+             */
+            widgetCreate_(readOnly: any /* jsdoc error */, withArrow?: boolean, arrowCallback?: Function): HTMLInputElement;
+    
+            /**
+             * Close the editor, save the results, and dispose any events bound to the
+             * text input's editor.
+             * @private
+             */
+            widgetDispose_(): void;
+    
+            /**
+             * Bind handlers for user input on the text input field's editor.
+             * @param {!HTMLInputElement} htmlInput The htmlInput to which event
+             *    handlers will be bound.
+             * @private
+             */
+            bindInputEvents_(htmlInput: HTMLInputElement): void;
     
             /**
              * Unbind handlers for user input and workspace size changes.
-             * @param {!HTMLInputElement} htmlInput The html for this text input.
              * @private
              */
-            unbindEvents_(htmlInput: HTMLInputElement): void;
+            unbindInputEvents_(): void;
     
             /**
              * Handle key down to the editor.
@@ -7932,15 +9515,13 @@ declare module Blockly {
             onHtmlInputChange_(e: Event): void;
     
             /**
-             * Check to see if the contents of the editor validates.
-             * Style the editor accordingly.
-             * @private
+             * pxt-blockly: Focus and select the input.
              */
-            validate_(): void;
+            focus(): void;
     
             /**
-             * Resize the editor and the underlying block to fit the text.
-             * @private
+             * Resize the editor to fit the text.
+             * @protected
              */
             resizeEditor_(): void;
     
@@ -7949,20 +9530,6 @@ declare module Blockly {
              * @return {Number} Border radius in px.
             */
             getBorderRadius(): Number;
-    
-            /**
-             * Close the editor, save the results, and start animating the disposal of elements.
-             * @return {!Function} Closure to call on destruction of the WidgetDiv.
-             * @private
-             */
-            widgetDispose_(): Function;
-    
-            /**
-             * Final disposal of the text field's elements and properties.
-             * @return {!Function} Closure to call on finish animation of the WidgetDiv.
-             * @private
-             */
-            widgetDisposeAnimationFinished_(): Function;
     } 
     
 }
@@ -7974,7 +9541,7 @@ declare module Blockly.FieldTextInput {
      * dereferencing any string table references.
      * @param {!Object} options A JSON object with options (text, class, and
      *                          spellcheck).
-     * @returns {!Blockly.FieldTextInput} The new field instance.
+     * @return {!Blockly.FieldTextInput} The new field instance.
      * @package
      * @nocollapse
      */
@@ -7990,18 +9557,18 @@ declare module Blockly.FieldTextInput {
      */
     var TEXT_MEASURE_PADDING_MAGIC: any /*missing*/;
 
-    /** @type {!HTMLInputElement} */
+    /**
+     * The HTML input element for the user to type, or null if no FieldTextInput
+     * editor is currently open.
+     * @type {HTMLInputElement}
+     * @private
+     */
     var htmlInput_: HTMLInputElement;
 
     /**
-     * Focus and select the html text field of this input.
+     * Point size of text.  Should match blocklyText's font-size in CSS.
      */
-    function focusAndSelect(): void;
-
-    /**
-     * Focus the html text field of this input.
-     */
-    function focus(): void;
+    var FONTSIZE: any /*missing*/;
 
     /**
      * Key codes that are whitelisted from the restrictor.
@@ -8014,6 +9581,7 @@ declare module Blockly.FieldTextInput {
      * Ensure that only a number may be entered.
      * @param {string} text The user's text.
      * @return {?string} A string representing a valid number, or null if invalid.
+     * @deprecated
      */
     function numberValidator(text: string): string;
 
@@ -8021,9 +9589,11 @@ declare module Blockly.FieldTextInput {
      * Ensure that only a nonnegative integer may be entered.
      * @param {string} text The user's text.
      * @return {?string} A string representing a valid int, or null if invalid.
+     * @deprecated
      */
     function nonnegativeIntegerValidator(text: string): string;
 }
+
 
 declare module Blockly {
 
@@ -8035,8 +9605,9 @@ declare module Blockly {
              * Class for a variable's dropdown field.
              * @param {?string} varname The default name for the variable.  If null,
              *     a unique variable name will be generated.
-             * @param {Function=} opt_validator A function that is executed when a new
-             *     option is selected.  Its sole argument is the new option value.
+             * @param {Function=} opt_validator A function that is called to validate
+             *    changes to the field's value. Takes in a variable ID  & returns a
+             *    validated variable ID, or null to abort the change.
              * @param {Array.<string>=} opt_variableTypes A list of the types of variables
              *     to include in the dropdown.
              * @param {string=} opt_defaultType The type of variable to create if this
@@ -8047,11 +9618,19 @@ declare module Blockly {
             constructor(varname: string, opt_validator?: Function, opt_variableTypes?: string[], opt_defaultType?: string);
     
             /**
-             * Initialize everything needed to render this field.  This includes making sure
-             * that the field's value is valid.
-             * @public
+             * The workspace that this variable field belongs to.
+             * @type {?Blockly.Workspace}
+             * @private
              */
-            init(): void;
+            workspace_: Blockly.Workspace;
+    
+            /**
+             * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
     
             /**
              * Initialize the model for this field if it has not already been initialized.
@@ -8062,10 +9641,19 @@ declare module Blockly {
             initModel(): void;
     
             /**
-             * Dispose of this field.
-             * @public
+             * Initialize this field based on the given XML.
+             * @param {!Element} fieldElement The element containing information about the
+             *    variable field's state.
              */
-            dispose(): void;
+            fromXml(fieldElement: Element): void;
+    
+            /**
+             * Serialize this field to XML.
+             * @param {!Element} fieldElement The element to populate with info about the
+             *    field's state.
+             * @return {!Element} The element containing info about the field's state.
+             */
+            toXml(fieldElement: Element): Element;
     
             /**
              * Attach this field to a block.
@@ -8090,18 +9678,38 @@ declare module Blockly {
              * Get the variable model for the selected variable.
              * Not guaranteed to be in the variable map on the workspace (e.g. if accessed
              * after the variable has been deleted).
-             * @return {?Blockly.VariableModel} the selected variable, or null if none was
+             * @return {Blockly.VariableModel} The selected variable, or null if none was
              *     selected.
              * @package
              */
             getVariable(): Blockly.VariableModel;
     
             /**
-             * Set the variable ID.
-             * @param {string} id New variable ID, which must reference an existing
-             *     variable.
+             * Gets the validation function for this field, or null if not set.
+             * Returns null if the variable is not set, because validators should not
+             * run on the initial setValue call, because the field won't be attached to
+             * a block and workspace at that point.
+             * @return {Function} Validation function, or null.
              */
-            setValue(id: string): void;
+            getValidator(): Function;
+    
+            /**
+             * Ensure that the id belongs to a valid variable of an allowed type.
+             * @param {string} newId The id of the new variable to set.
+             * @return {?string} The validated id, or null if invalid.
+             * @protected
+             */
+            doClassValidation_(newId: string): string;
+    
+            /**
+             * Update the value of this variable field, as well as its variable and text.
+             *
+             * The variable ID should be valid at this point, but if a variable field
+             * validator returns a bad ID, this could break.
+             * @param {string} newId The id of the new variable.
+             * @protected
+             */
+            doValueUpdate_(newId: string): void;
     
             /**
              * Check whether the given variable type is allowed on this field.
@@ -8133,7 +9741,7 @@ declare module Blockly {
     
             /**
              * Handle the selection of an item in the variable dropdown menu.
-             * Special case the 'Rename variable...', 'Delete variable...' options.
+             * Special case the 'Rename variable...' and 'Delete variable...' options.
              * In the rename case, prompt the user for a new name.
              * @param {!goog.ui.Menu} menu The Menu component clicked.
              * @param {!goog.ui.MenuItem} menuItem The MenuItem selected within menu.
@@ -8141,7 +9749,6 @@ declare module Blockly {
             onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
     
             /**
-             * Whether or not to show a box around the dropdown menu.
              * @return {boolean} True if we should show a box (rect) around the dropdown menu. Otherwise false.
              * @private
              */
@@ -8157,7 +9764,7 @@ declare module Blockly.FieldVariable {
      * dereferencing any string table references.
      * @param {!Object} options A JSON object with options (variable,
      *                          variableTypes, and defaultType).
-     * @returns {!Blockly.FieldVariable} The new field instance.
+     * @return {!Blockly.FieldVariable} The new field instance.
      * @package
      * @nocollapse
      */
@@ -8171,6 +9778,7 @@ declare module Blockly.FieldVariable {
      */
     function dropdownCreate(): string[];
 }
+
 
 declare module Blockly {
 
@@ -8192,6 +9800,13 @@ declare module Blockly {
              * @constructor
              */
             constructor(varname: string, opt_validator?: Function, opt_variableTypes?: string[], opt_defaultType?: string);
+    
+            /**
+             * The workspace that this variable field belongs to.
+             * @type {?Blockly.Workspace}
+             * @private
+             */
+            workspace_: Blockly.Workspace;
     
             /**
              * Mouse cursor style when over the hotspot that initiates the editor.
@@ -8246,6 +9861,21 @@ declare module Blockly {
              * @private
              */
             onMouseOut_(e: Event): void;
+    
+            /**
+             * Initialize this field based on the given XML.
+             * @param {!Element} fieldElement The element containing information about the
+             *    variable field's state.
+             */
+            fromXml(fieldElement: Element): void;
+    
+            /**
+             * Serialize this field to XML.
+             * @param {!Element} fieldElement The element to populate with info about the
+             *    field's state.
+             * @return {!Element} The element containing info about the field's state.
+             */
+            toXml(fieldElement: Element): Element;
     
             /**
              * Attach this field to a block.
@@ -8339,6 +9969,7 @@ declare module Blockly.FieldVariableGetter {
     function dispose(): void;
 }
 
+
 declare module Blockly {
 
     class FieldVerticalSeparator extends FieldVerticalSeparator__Class { }
@@ -8409,6 +10040,7 @@ declare module Blockly.FieldVerticalSeparator {
      */
     function fromJson(_element: Object): Blockly.FieldVerticalSeparator;
 }
+
 
 declare module Blockly {
 
@@ -8666,12 +10298,13 @@ declare module Blockly {
     
             /**
              * Hide the flyout.
-             * Note: this does not remove any flyout state like event listeners.
+             * pxt-blockly: Note this does not remove any flyout state like event listeners.
              */
             hide(): void;
     
             /**
              * Delete any event listeners.
+             * pxt-blockly: Separate from hide() for flyout caching
              * @private
              */
             clearOldEventListeners_(): void;
@@ -8713,6 +10346,16 @@ declare module Blockly {
              * @private
              */
             onMouseDown_(e: Event): void;
+    
+            /**
+             * Does this flyout allow you to create a new instance of the given block?
+             * Used for deciding if a block can be "dragged out of" the flyout.
+             * @param {!Blockly.BlockSvg} block The block to copy from the flyout.
+             * @return {boolean} True if you can create a new instance of the block, false
+             *    otherwise.
+             * @package
+             */
+            isBlockCreatable_(block: Blockly.BlockSvg): boolean;
     
             /**
              * Create a copy of this block on the workspace.
@@ -8788,6 +10431,7 @@ declare module Blockly {
     
 }
 
+
 declare module Blockly {
 
     class FlyoutButton extends FlyoutButton__Class { }
@@ -8824,10 +10468,10 @@ declare module Blockly {
             text_: string;
     
             /**
-             * @type {!goog.math.Coordinate}
+             * @type {!Blockly.utils.Coordinate}
              * @private
              */
-            position_: goog.math.Coordinate;
+            position_: Blockly.utils.Coordinate;
     
             /**
              * Whether this button should be styled as a label.
@@ -8844,11 +10488,12 @@ declare module Blockly {
             helpButtonIcon_: string;
     
             /**
-             * Function to call when this button is clicked.
-             * @type {function(!Blockly.FlyoutButton)}
+             * The key to the function called when this button is clicked.
+             * TODO shakao check if callbackkey changes needed pxt-blockly/commit/3dc9e08f9add5147ab42946692017bac953cf9ad
+             * @type {string}
              * @private
              */
-            callback_: { (_0: Blockly.FlyoutButton): any /*missing*/ };
+            callbackKey_: string;
     
             /**
              * If specified, a CSS class to add to this button.
@@ -8916,10 +10561,10 @@ declare module Blockly {
     
             /**
              * Get the position of this button.
-             * @return {!goog.math.Coordinate} The button position.
+             * @return {!Blockly.utils.Coordinate} The button position.
              * @package
              */
-            getPosition(): goog.math.Coordinate;
+            getPosition(): Blockly.utils.Coordinate;
     
             /**
              * Get the button's target workspace.
@@ -8964,6 +10609,7 @@ declare module Blockly.FlyoutButton {
      */
     var HELP_IMAGE_URI: any[][];
 }
+
 
 declare module Blockly {
 
@@ -9012,6 +10658,7 @@ declare module Blockly {
     } 
     
 }
+
 
 declare module Blockly {
 
@@ -9100,18 +10747,18 @@ declare module Blockly {
              * Determine if a drag delta is toward the workspace, based on the position
              * and orientation of the flyout. This is used in determineDragIntention_ to
              * determine if a new block should be created or if the flyout should scroll.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
              *     moved from the position at mouse down, in pixel units.
-             * @return {boolean} true if the drag is toward the workspace.
+             * @return {boolean} True if the drag is toward the workspace.
              * @package
              */
-            isDragTowardWorkspace(currentDragDeltaXY: goog.math.Coordinate): boolean;
+            isDragTowardWorkspace(currentDragDeltaXY: Blockly.utils.Coordinate): boolean;
     
             /**
              * Return the deletion rectangle for this flyout in viewport coordinates.
-             * @return {goog.math.Rect} Rectangle in which to delete.
+             * @return {Blockly.utils.Rect} Rectangle in which to delete.
              */
-            getClientRect(): goog.math.Rect;
+            getClientRect(): Blockly.utils.Rect;
     
             /**
              * Compute height of flyout.  Position mat under each block.
@@ -9122,6 +10769,7 @@ declare module Blockly {
     } 
     
 }
+
 
 declare module Blockly {
 
@@ -9210,18 +10858,18 @@ declare module Blockly {
              * Determine if a drag delta is toward the workspace, based on the position
              * and orientation of the flyout. This is used in determineDragIntention_ to
              * determine if a new block should be created or if the flyout should scroll.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
              *     moved from the position at mouse down, in pixel units.
-             * @return {boolean} true if the drag is toward the workspace.
+             * @return {boolean} True if the drag is toward the workspace.
              * @package
              */
-            isDragTowardWorkspace(currentDragDeltaXY: goog.math.Coordinate): boolean;
+            isDragTowardWorkspace(currentDragDeltaXY: Blockly.utils.Coordinate): boolean;
     
             /**
              * Return the deletion rectangle for this flyout in viewport coordinates.
-             * @return {goog.math.Rect} Rectangle in which to delete.
+             * @return {Blockly.utils.Rect} Rectangle in which to delete.
              */
-            getClientRect(): goog.math.Rect;
+            getClientRect(): Blockly.utils.Rect;
     
             /**
              * Compute width of flyout.  Position mat under each block.
@@ -9232,6 +10880,7 @@ declare module Blockly {
     } 
     
 }
+
 
 declare module Blockly {
 
@@ -9263,6 +10912,14 @@ declare module Blockly {
             STATEMENT_PREFIX: string;
     
             /**
+             * Arbitrary code to inject after every statement.
+             * Any instances of '%1' will be replaced by the block ID of the statement.
+             * E.g. 'highlight(%1);\n'
+             * @type {?string}
+             */
+            STATEMENT_SUFFIX: string;
+    
+            /**
              * The method of indenting.  Defaults to two spaces, but language generators
              * may override this to increase indent or change to tabs.
              * @type {string}
@@ -9291,6 +10948,7 @@ declare module Blockly {
     
             /**
              * Prepend a common prefix onto each line of code.
+             * Intended for indenting code or adding comment markers.
              * @param {string} text The lines of code.
              * @param {string} prefix The common prefix.
              * @return {string} The prefixed lines of code.
@@ -9307,11 +10965,12 @@ declare module Blockly {
             /**
              * Generate code for the specified block (and attached blocks).
              * @param {Blockly.Block} block The block to generate code for.
+             * @param {boolean=} opt_thisOnly True to generate code for only this statement.
              * @return {string|!Array} For statement blocks, the generated code.
              *     For value blocks, an array containing the generated code and an
              *     operator order value.  Returns '' if block is null.
              */
-            blockToCode(block: Blockly.Block): string|any[];
+            blockToCode(block: Blockly.Block, opt_thisOnly?: boolean): string|any[];
     
             /**
              * Generate code representing the specified value input.
@@ -9325,7 +10984,10 @@ declare module Blockly {
             valueToCode(block: Blockly.Block, name: string, outerOrder: number): string;
     
             /**
-             * Generate code representing the statement.  Indent the code.
+             * Generate a code string representing the blocks attached to the named
+             * statement input. Indent the code.
+             * This is mainly used in generators. When trying to generate code to evaluate
+             * look at using workspaceToCode or blockToCode.
              * @param {!Blockly.Block} block The block containing the input.
              * @param {string} name The name of the input.
              * @return {string} Generated code or '' if no blocks are connected.
@@ -9334,12 +10996,23 @@ declare module Blockly {
     
             /**
              * Add an infinite loop trap to the contents of a loop.
-             * If loop is empty, add a statment prefix for the loop block.
+             * Add statement suffix at the start of the loop block (right after the loop
+             * statement executes), and a statement prefix to the end of the loop block
+             * (right before the loop statement executes).
              * @param {string} branch Code for loop contents.
-             * @param {string} id ID of enclosing block.
+             * @param {!Blockly.Block} block Enclosing block.
              * @return {string} Loop contents, with infinite loop trap added.
              */
-            addLoopTrap(branch: string, id: string): string;
+            addLoopTrap(branch: string, block: Blockly.Block): string;
+    
+            /**
+             * Inject a block ID into a message to replace '%1'.
+             * Used for STATEMENT_PREFIX, STATEMENT_SUFFIX, and INFINITE_LOOP_TRAP.
+             * @param {string} msg Code snippet with '%1'.
+             * @param {!Blockly.Block} block Block which has an ID.
+             * @return {string} Code snippet with ID.
+             */
+            injectId(msg: string, block: Blockly.Block): string;
     
             /**
              * Comma-separated list of reserved words.
@@ -9399,8 +11072,8 @@ declare module Blockly {
              * the block, or to handle comments for the specified block and any connected
              * value blocks.
              * @param {!Blockly.Block} _block The current block.
-             * @param {string} code The JavaScript code created for this block.
-             * @return {string} JavaScript code with comments and subsequent blocks added.
+             * @param {string} code The code created for this block.
+             * @return {string} Code with comments and subsequent blocks added.
              * @private
              */
             scrub_(_block: Blockly.Block, code: string): string;
@@ -9435,6 +11108,7 @@ declare module Blockly.Generator {
     var NAME_TYPE: any /*missing*/;
 }
 
+
 declare module Blockly {
 
     class Gesture extends Gesture__Class { }
@@ -9451,19 +11125,19 @@ declare module Blockly {
             constructor(e: Event, creatorWorkspace: Blockly.WorkspaceSvg);
     
             /**
-             * The position of the mouse when the gesture started.  Units are css pixels,
+             * The position of the mouse when the gesture started.  Units are CSS pixels,
              * with (0, 0) at the top left of the browser window (mouseEvent clientX/Y).
-             * @type {goog.math.Coordinate}
+             * @type {Blockly.utils.Coordinate}
              */
-            mouseDownXY_: goog.math.Coordinate;
+            mouseDownXY_: Blockly.utils.Coordinate;
     
             /**
              * How far the mouse has moved during this drag, in pixel units.
              * (0, 0) is at this.mouseDownXY_.
-             * @type {goog.math.Coordinate}
+             * @type {Blockly.utils.Coordinate}
              * @private
              */
-            currentDragDeltaXY_: goog.math.Coordinate;
+            currentDragDeltaXY_: Blockly.utils.Coordinate;
     
             /**
              * The bubble that the gesture started on, or null if it did not start on a
@@ -9504,7 +11178,7 @@ declare module Blockly {
              * workspaces on a page; this is more accurate than using
              * Blockly.getMainWorkspace().
              * @type {Blockly.WorkspaceSvg}
-             * @private
+             * @protected
              */
             startWorkspace_: Blockly.WorkspaceSvg;
     
@@ -9520,8 +11194,8 @@ declare module Blockly {
     
             /**
              * Whether the pointer has at any point moved out of the drag radius.
-             * A gesture that exceeds the drag radius is a drag even if it ends exactly at
-             * its start point.
+             * A gesture that exceeds the drag radius is a drag even if it ends exactly
+             * at its start point.
              * @type {boolean}
              * @private
              */
@@ -9559,7 +11233,7 @@ declare module Blockly {
              * A handle to use to unbind a mouse move listener at the end of a drag.
              * Opaque data returned from Blockly.bindEventWithChecks_.
              * @type {Array.<!Array>}
-             * @private
+             * @protected
              */
             onMoveWrapper_: any[][];
     
@@ -9567,7 +11241,7 @@ declare module Blockly {
              * A handle to use to unbind a mouse up listener at the end of a drag.
              * Opaque data returned from Blockly.bindEventWithChecks_.
              * @type {Array.<!Array>}
-             * @private
+             * @protected
              */
             onUpWrapper_: any[][];
     
@@ -9617,7 +11291,7 @@ declare module Blockly {
             /**
              * Boolean used internally to break a cycle in disposal.
              * @type {boolean}
-             * @private
+             * @protected
              */
             isEnding_: boolean;
     
@@ -9652,13 +11326,13 @@ declare module Blockly {
     
             /**
              * DO MATH to set currentDragDeltaXY_ based on the most recent mouse position.
-             * @param {!goog.math.Coordinate} currentXY The most recent mouse/pointer
+             * @param {!Blockly.utils.Coordinate} currentXY The most recent mouse/pointer
              *     position, in pixel units, with (0, 0) at the window's top left corner.
              * @return {boolean} True if the drag just exceeded the drag radius for the
              *     first time.
              * @private
              */
-            updateDragDelta_(currentXY: goog.math.Coordinate): boolean;
+            updateDragDelta_(currentXY: Blockly.utils.Coordinate): boolean;
     
             /**
              * Update this gesture to record whether a block is being dragged from the
@@ -9678,7 +11352,7 @@ declare module Blockly {
              * drag radius is exceeded.  It should be called no more than once per gesture.
              * If a bubble should be dragged this function creates the necessary
              * BubbleDragger and starts the drag.
-             * @return {boolean} true if a bubble is being dragged.
+             * @return {boolean} True if a bubble is being dragged.
              * @private
              */
             updateIsDraggingBubble_(): boolean;
@@ -9689,7 +11363,7 @@ declare module Blockly {
              * drag radius is exceeded.  It should be called no more than once per gesture.
              * If a block should be dragged, either from the flyout or in the workspace,
              * this function creates the necessary BlockDragger and starts the drag.
-             * @return {boolean} true if a block is being dragged.
+             * @return {boolean} True if a block is being dragged.
              * @private
              */
             updateIsDraggingBlock_(): boolean;
@@ -9880,7 +11554,7 @@ declare module Blockly {
             /**
              * Whether this gesture is a click on a bubble.  This should only be called when
              * ending a gesture (mouse up, touch end).
-             * @return {boolean} whether this gesture was a click on a bubble.
+             * @return {boolean} Whether this gesture was a click on a bubble.
              * @private
              */
             isBubbleClick_(): boolean;
@@ -9888,7 +11562,7 @@ declare module Blockly {
             /**
              * Whether this gesture is a click on a block.  This should only be called when
              * ending a gesture (mouse up, touch end).
-             * @return {boolean} whether this gesture was a click on a block.
+             * @return {boolean} Whether this gesture was a click on a block.
              * @private
              */
             isBlockClick_(): boolean;
@@ -9896,7 +11570,7 @@ declare module Blockly {
             /**
              * Whether this gesture is a click on a field.  This should only be called when
              * ending a gesture (mouse up, touch end).
-             * @return {boolean} whether this gesture was a click on a field.
+             * @return {boolean} Whether this gesture was a click on a field.
              * @private
              */
             isFieldClick_(): boolean;
@@ -9904,7 +11578,7 @@ declare module Blockly {
             /**
              * Whether this gesture is a click on a workspace.  This should only be called
              * when ending a gesture (mouse up, touch end).
-             * @return {boolean} whether this gesture was a click on a workspace.
+             * @return {boolean} Whether this gesture was a click on a workspace.
              * @private
              */
             isWorkspaceClick_(): boolean;
@@ -9913,7 +11587,7 @@ declare module Blockly {
              * Whether this gesture is a drag of either a workspace or block.
              * This function is called externally to block actions that cannot be taken
              * mid-drag (e.g. using the keyboard to delete the selected blocks).
-             * @return {boolean} true if this gesture is a drag of a workspace or block.
+             * @return {boolean} True if this gesture is a drag of a workspace or block.
              * @package
              */
             isDragging(): boolean;
@@ -9922,10 +11596,19 @@ declare module Blockly {
              * Whether this gesture has already been started.  In theory every mouse down
              * has a corresponding mouse up, but in reality it is possible to lose a
              * mouse up, leaving an in-process gesture hanging.
-             * @return {boolean} whether this gesture was a click on a workspace.
+             * @return {boolean} Whether this gesture was a click on a workspace.
              * @package
              */
             hasStarted(): boolean;
+    
+            /**
+             * Get a list of the insertion markers that currently exist.  Block drags have
+             * 0, 1, or 2 insertion markers.
+             * @return {!Array.<!Blockly.BlockSvg>} A possibly empty list of insertion
+             *     marker blocks.
+             * @package
+             */
+            getInsertionMarkers(): Blockly.BlockSvg[];
     
             /**
              * Don't even think about using this function before talking to rachel-fenichel.
@@ -9950,6 +11633,16 @@ declare module Blockly {
     
 }
 
+declare module Blockly.Gesture {
+
+    /**
+     * Is a drag or other gesture currently in progress on any workspace?
+     * @return {boolean} True if gesture is occurring.
+     */
+    function inProgress(): boolean;
+}
+
+
 declare module Blockly {
 
     class Grid extends Grid__Class { }
@@ -9958,7 +11651,8 @@ declare module Blockly {
     
             /**
              * Class for a workspace's grid.
-             * @param {!SVGElement} pattern The grid's SVG pattern, created during injection.
+             * @param {!SVGElement} pattern The grid's SVG pattern, created during
+             *     injection.
              * @param {!Object} options A dictionary of normalized options for the grid.
              *     See grid documentation:
              *     https://developers.google.com/blockly/guides/configure/web/grid
@@ -10065,7 +11759,8 @@ declare module Blockly {
             setLineAttributes_(line: SVGElement, width: number, x1: number, x2: number, y1: number, y2: number): void;
     
             /**
-             * Move the grid to a new x and y position, and make sure that change is visible.
+             * Move the grid to a new x and y position, and make sure that change is
+             * visible.
              * @param {number} x The new x position of the grid (in px).
              * @param {number} y The new y position ofthe grid (in px).
              * @package
@@ -10087,6 +11782,7 @@ declare module Blockly.Grid {
      */
     function createDom(rnd: string, gridOptions: Object, defs: SVGElement): SVGElement;
 }
+
 
 declare module Blockly {
 
@@ -10120,10 +11816,10 @@ declare module Blockly {
     
             /**
              * Absolute coordinate of icon's center.
-             * @type {goog.math.Coordinate}
+             * @type {Blockly.utils.Coordinate}
              * @protected
              */
-            iconXY_: goog.math.Coordinate;
+            iconXY_: Blockly.utils.Coordinate;
     
             /**
              * Create the icon on the block.
@@ -10175,9 +11871,9 @@ declare module Blockly {
     
             /**
              * Notification that the icon has moved.  Update the arrow accordingly.
-             * @param {!goog.math.Coordinate} xy Absolute location in workspace coordinates.
+             * @param {!Blockly.utils.Coordinate} xy Absolute location in workspace coordinates.
              */
-            setIconLocation(xy: goog.math.Coordinate): void;
+            setIconLocation(xy: Blockly.utils.Coordinate): void;
     
             /**
              * Notification that the icon has moved, but we don't really know where.
@@ -10187,13 +11883,14 @@ declare module Blockly {
     
             /**
              * Returns the center of the block's icon relative to the surface.
-             * @return {!goog.math.Coordinate} Object with x and y properties in workspace
+             * @return {!Blockly.utils.Coordinate} Object with x and y properties in workspace
              *     coordinates.
              */
-            getIconLocation(): goog.math.Coordinate;
+            getIconLocation(): Blockly.utils.Coordinate;
     } 
     
 }
+
 
 declare module Blockly {
 
@@ -10266,6 +11963,7 @@ declare module Blockly.inject {
      */
     function loadSounds_(pathToMedia: string, workspace: Blockly.Workspace): void;
 }
+
 
 declare module Blockly {
 
@@ -10346,7 +12044,7 @@ declare module Blockly {
             /**
              * Remove a field from this input.
              * @param {string} name The name of the field.
-             * @throws {goog.asserts.AssertionError} if the field is not present.
+             * @throws {Error} if the field is not present.
              */
             removeField(name: string): void;
     
@@ -10358,9 +12056,10 @@ declare module Blockly {
     
             /**
              * Sets whether this input is visible or not.
-             * Used to collapse/uncollapse a block.
+             * Should only be used to collapse/uncollapse a block.
              * @param {boolean} visible True if visible.
              * @return {!Array.<!Blockly.Block>} List of blocks to render.
+             * @package
              */
             setVisible(visible: boolean): Blockly.Block[];
     
@@ -10400,6 +12099,7 @@ declare module Blockly {
     
 }
 
+
 declare module Blockly {
 
     class InsertionMarkerManager extends InsertionMarkerManager__Class { }
@@ -10411,11 +12111,11 @@ declare module Blockly {
              * responsible for finding the closest eligible connection and highlighting or
              * unhiglighting it as needed during a drag.
              * @param {!Blockly.BlockSvg} block The top block in the stack being dragged.
-             * @param {!goog.math.Coordinate} handleXY Position where the mouse down
+             * @param {!Blockly.utils.Coordinate} handleXY Position where the mouse down
              *          that started the drag occured in workspace units (pxtblockly)
              * @constructor
              */
-            constructor(block: Blockly.BlockSvg, handleXY: goog.math.Coordinate);
+            constructor(block: Blockly.BlockSvg, handleXY: Blockly.utils.Coordinate);
     
             /**
              * The top block in the stack being dragged.
@@ -10531,10 +12231,19 @@ declare module Blockly {
             /**
              * Return whether the block would be deleted if dropped immediately, based on
              * information from the most recent move event.
-             * @return {boolean} true if the block would be deleted if dropped immediately.
+             * @return {boolean} True if the block would be deleted if dropped immediately.
              * @package
              */
             wouldDeleteBlock(): boolean;
+    
+            /**
+             * Return whether the block would be connected if dropped immediately, based on
+             * information from the most recent move event.
+             * @return {boolean} True if the block would be connected if dropped
+             *   immediately.
+             * @package
+             */
+            wouldConnectBlock(): boolean;
     
             /**
              * Connect to the closest connection and render the results.
@@ -10545,13 +12254,13 @@ declare module Blockly {
     
             /**
              * Update highlighted connections based on the most recent move location.
-             * @param {!goog.math.Coordinate} dxy Position relative to drag start,
+             * @param {!Blockly.utils.Coordinate} dxy Position relative to drag start,
              *     in workspace units.
              * @param {?number} deleteArea One of {@link Blockly.DELETE_AREA_TRASH},
              *     {@link Blockly.DELETE_AREA_TOOLBOX}, or {@link Blockly.DELETE_AREA_NONE}.
              * @package
              */
-            update(dxy: goog.math.Coordinate, deleteArea: number): void;
+            update(dxy: Blockly.utils.Coordinate, deleteArea: number): void;
     
             /**
              * Remove highlighting from the currently highlighted connection, if it exists.
@@ -10580,7 +12289,7 @@ declare module Blockly {
              * only be called once, at the beginning of a drag.
              * If the stack has more than one block, this function will populate
              * lastOnStack_ and create the corresponding insertion marker.
-             * @return {!Array.<!Blockly.RenderedConnection>} a list of available
+             * @return {!Array.<!Blockly.RenderedConnection>} A list of available
              *     connections.
              * @private
              */
@@ -10591,22 +12300,22 @@ declare module Blockly {
              * updated based on the closest candidate and the current drag distance.
              * @param {!Object} candidate An object containing a local connection, a closest
              *     connection, and a radius.  Returned by getCandidate_.
-             * @param {!goog.math.Coordinate} dxy Position relative to drag start,
+             * @param {!Blockly.utils.Coordinate} dxy Position relative to drag start,
              *     in workspace units.
-             * @return {boolean} whether the preview should be updated.
+             * @return {boolean} Whether the preview should be updated.
              * @private
              */
-            shouldUpdatePreviews_(candidate: Object, dxy: goog.math.Coordinate): boolean;
+            shouldUpdatePreviews_(candidate: Object, dxy: Blockly.utils.Coordinate): boolean;
     
             /**
              * Find the nearest valid connection, which may be the same as the current
              * closest connection.
-             * @param {!goog.math.Coordinate} dxy Position relative to drag start,
+             * @param {!Blockly.utils.Coordinate} dxy Position relative to drag start,
              *     in workspace units.
-             * @return {!Object} candidate An object containing a local connection, a closest
+             * @return {!Object} An object containing a local connection, a closest
              *     connection, and a radius.
              */
-            getCandidate_(dxy: goog.math.Coordinate): Object;
+            getCandidate_(dxy: Blockly.utils.Coordinate): Object;
     
             /**
              * Decide the radius at which to start searching for the closest connection.
@@ -10699,9 +12408,6655 @@ declare module Blockly {
              * @private
              */
             connectMarker_(): void;
+    
+            /**
+             * Get a list of the insertion markers that currently exist.  Drags have 0, 1,
+             * or 2 insertion markers.
+             * @return {!Array.<!Blockly.BlockSvg>} A possibly empty list of insertion
+             *     marker blocks.
+             * @package
+             */
+            getInsertionMarkers(): Blockly.BlockSvg[];
     } 
     
 }
+
+
+declare module goog {
+
+    /**
+     * Back up original getMsg function.
+     * @type {!Function}
+     */
+    var getMsgOrig: Function;
+
+    /**
+     * Gets a localized message.
+     * Overrides the default Closure function to check for a Blockly.Msg first.
+     * Used infrequently, only known case is TODAY button in date picker.
+     * @param {string} str Translatable string, places holders in the form {$foo}.
+     * @param {Object.<string, string>=} opt_values Maps place holder name to value.
+     * @return {string} Message with placeholders filled.
+     * @suppress {duplicate}
+     */
+    function getMsg(str: string, opt_values?: { [key: string]: string }): string;
+}
+
+declare module goog.getMsg {
+
+    /**
+     * Mapping of Closure messages to Blockly.Msg names.
+     */
+    var blocklyMsgMap: any /*missing*/;
+}
+
+
+declare module Blockly {
+
+    class Mutator extends Mutator__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Mutator__Class extends Blockly.Icon__Class  { 
+    
+            /**
+             * Class for a mutator dialog.
+             * @param {!Array.<string>} quarkNames List of names of sub-blocks for flyout.
+             * @extends {Blockly.Icon}
+             * @constructor
+             */
+            constructor(quarkNames: string[]);
+    
+            /**
+             * Width of workspace.
+             * @private
+             */
+            workspaceWidth_: any /*missing*/;
+    
+            /**
+             * Height of workspace.
+             * @private
+             */
+            workspaceHeight_: any /*missing*/;
+    
+            /**
+             * Draw the mutator icon.
+             * @param {!Element} group The icon group.
+             * @private
+             */
+            drawIcon_(group: Element): void;
+    
+            /**
+             * Create the editor for the mutator's bubble.
+             * @return {!Element} The top-level node of the editor.
+             * @private
+             */
+            createEditor_(): Element;
+    
+            /**
+             * Add or remove the UI indicating if this icon may be clicked or not.
+             */
+            updateEditable(): void;
+    
+            /**
+             * Callback function triggered when the bubble has resized.
+             * Resize the workspace accordingly.
+             * @private
+             */
+            resizeBubble_(): void;
+    
+            /**
+             * Show or hide the mutator bubble.
+             * @param {boolean} visible True if the bubble should be visible.
+             */
+            setVisible(visible: boolean): void;
+    
+            /**
+             * Update the source block when the mutator's blocks are changed.
+             * Bump down any block that's too high.
+             * Fired whenever a change is made to the mutator's workspace.
+             * @param {!Blockly.Events.Abstract} e Custom data for event.
+             * @private
+             */
+            workspaceChanged_(e: Blockly.Events.Abstract): void;
+    
+            /**
+             * Return an object with all the metrics required to size scrollbars for the
+             * mutator flyout.  The following properties are computed:
+             * .viewHeight: Height of the visible rectangle,
+             * .viewWidth: Width of the visible rectangle,
+             * .absoluteTop: Top-edge of view.
+             * .absoluteLeft: Left-edge of view.
+             * @return {!Object} Contains size and position metrics of mutator dialog's
+             *     workspace.
+             * @private
+             */
+            getFlyoutMetrics_(): Object;
+    
+            /**
+             * Dispose of this mutator.
+             */
+            dispose(): void;
+    
+            /**
+             * Update the styles on all blocks in the mutator.
+             * @public
+             */
+            updateBlockStyle(): void;
+    } 
+    
+}
+
+declare module Blockly.Mutator {
+
+    /**
+     * Reconnect an block to a mutated input.
+     * @param {Blockly.Connection} connectionChild Connection on child block.
+     * @param {!Blockly.Block} block Parent block.
+     * @param {string} inputName Name of input on parent block.
+     * @return {boolean} True iff a reconnection was made, false otherwise.
+     */
+    function reconnect(connectionChild: Blockly.Connection, block: Blockly.Block, inputName: string): boolean;
+
+    /**
+     * Get the parent workspace of a workspace that is inside a mutator, taking into
+     * account whether it is a flyout.
+     * @param {Blockly.Workspace} workspace The workspace that is inside a mutator.
+     * @return {Blockly.Workspace} The mutator's parent workspace or null.
+     * @public
+     */
+    function findParentWs(workspace: Blockly.Workspace): Blockly.Workspace;
+}
+
+
+declare module Blockly {
+
+    class Names extends Names__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Names__Class  { 
+    
+            /**
+             * Class for a database of entity names (variables, functions, etc).
+             * @param {string} reservedWords A comma-separated string of words that are
+             *     illegal for use as names in a language (e.g. 'new,if,this,...').
+             * @param {string=} opt_variablePrefix Some languages need a '$' or a namespace
+             *     before all variable names.
+             * @constructor
+             */
+            constructor(reservedWords: string, opt_variablePrefix?: string);
+    
+            /**
+             * Empty the database and start from scratch.  The reserved words are kept.
+             */
+            reset(): void;
+    
+            /**
+             * Set the variable map that maps from variable name to variable object.
+             * @param {!Blockly.VariableMap} map The map to track.
+             * @package
+             */
+            setVariableMap(map: Blockly.VariableMap): void;
+    
+            /**
+             * Get the name for a user-defined variable, based on its ID.
+             * This should only be used for variables of type Blockly.Variables.NAME_TYPE.
+             * @param {string} id The ID to look up in the variable map.
+             * @return {?string} The name of the referenced variable, or null if there was
+             *     no variable map or the variable was not found in the map.
+             * @private
+             */
+            getNameForUserVariable_(id: string): string;
+    
+            /**
+             * Convert a Blockly entity name to a legal exportable entity name.
+             * @param {string} name The Blockly entity name (no constraints).
+             * @param {string} type The type of entity in Blockly
+             *     ('VARIABLE', 'PROCEDURE', 'BUILTIN', etc...).
+             * @return {string} An entity name that is legal in the exported language.
+             */
+            getName(name: string, type: string): string;
+    
+            /**
+             * Convert a Blockly entity name to a legal exportable entity name.
+             * Ensure that this is a new name not overlapping any previously defined name.
+             * Also check against list of reserved words for the current language and
+             * ensure name doesn't collide.
+             * @param {string} name The Blockly entity name (no constraints).
+             * @param {string} type The type of entity in Blockly
+             *     ('VARIABLE', 'PROCEDURE', 'BUILTIN', etc...).
+             * @return {string} An entity name that is legal in the exported language.
+             */
+            getDistinctName(name: string, type: string): string;
+    
+            /**
+             * Given a proposed entity name, generate a name that conforms to the
+             * [_A-Za-z][_A-Za-z0-9]* format that most languages consider legal for
+             * variables.
+             * @param {string} name Potentially illegal entity name.
+             * @return {string} Safe entity name.
+             * @private
+             */
+            safeName_(name: string): string;
+    } 
+    
+}
+
+declare module Blockly.Names {
+
+    /**
+     * Constant to separate developer variable names from user-defined variable
+     * names when running generators.
+     * A developer variable will be declared as a global in the generated code, but
+     * will never be shown to the user in the workspace or stored in the variable
+     * map.
+     */
+    var DEVELOPER_VARIABLE_TYPE: any /*missing*/;
+
+    /**
+     * Do the given two entity names refer to the same entity?
+     * Blockly names are case-insensitive.
+     * @param {string} name1 First name.
+     * @param {string} name2 Second name.
+     * @return {boolean} True if names are the same.
+     */
+    function equals(name1: string, name2: string): boolean;
+}
+
+
+declare module Blockly {
+
+    class Options extends Options__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Options__Class  { 
+    
+            /**
+             * Parse the user-specified options, using reasonable defaults where behaviour
+             * is unspecified.
+             * @param {!Object} options Dictionary of options.  Specification:
+             *   https://developers.google.com/blockly/guides/get-started/web#configuration
+             * @constructor
+             */
+            constructor(options: Object);
+    
+            /** @deprecated  January 2019 */
+            hasScrollbars: any /*missing*/;
+    
+            /**
+             * The parent of the current workspace, or null if there is no parent workspace.
+             * @type {Blockly.Workspace}
+             */
+            parentWorkspace: Blockly.Workspace;
+    
+            /**
+             * If set, sets the translation of the workspace to match the scrollbars.
+             */
+            setMetrics: any /*missing*/;
+    
+            /**
+             * Return an object with the metrics required to size the workspace.
+             * @return {Object} Contains size and position metrics, or null.
+             */
+            getMetrics(): Object;
+    } 
+    
+}
+
+declare module Blockly.Options {
+
+    /**
+     * Parse the user-specified move options, using reasonable defaults where
+     *    behaviour is unspecified.
+     * @param {!Object} options Dictionary of options.
+     * @param {boolean} hasCategories Whether the workspace has categories or not.
+     * @return {!Object} A dictionary of normalized options.
+     * @private
+     */
+    function parseMoveOptions(options: Object, hasCategories: boolean): Object;
+
+    /**
+     * Parse the user-specified zoom options, using reasonable defaults where
+     * behaviour is unspecified.  See zoom documentation:
+     *   https://developers.google.com/blockly/guides/configure/web/zoom
+     * @param {!Object} options Dictionary of options.
+     * @return {!Object} A dictionary of normalized options.
+     * @private
+     */
+    function parseZoomOptions_(options: Object): Object;
+
+    /**
+     * Parse the user-specified grid options, using reasonable defaults where
+     * behaviour is unspecified. See grid documentation:
+     *   https://developers.google.com/blockly/guides/configure/web/grid
+     * @param {!Object} options Dictionary of options.
+     * @return {!Object} A dictionary of normalized options.
+     * @private
+     */
+    function parseGridOptions_(options: Object): Object;
+
+    /**
+     * Parse the provided toolbox tree into a consistent DOM format.
+     * @param {Node|string} tree DOM tree of blocks, or text representation of same.
+     * @return {Node} DOM tree of blocks, or null.
+     */
+    function parseToolboxTree(tree: Node|string): Node;
+}
+
+
+declare module Blockly.Procedures {
+
+    /**
+     * Constant to separate procedure names from variables and generated functions
+     * when running generators.
+     * @deprecated Use Blockly.PROCEDURE_CATEGORY_NAME
+     */
+    var NAME_TYPE: any /*missing*/;
+
+    /**
+     * Find all user-created procedure definitions in a workspace.
+     * @param {!Blockly.Workspace} root Root workspace.
+     * @return {!Array.<!Array.<!Array>>} Pair of arrays, the
+     *     first contains procedures without return variables, the second with.
+     *     Each procedure is defined by a three-element list of name, parameter
+     *     list, and return value boolean.
+     */
+    function allProcedures(root: Blockly.Workspace): any[][][];
+
+    /**
+     * Comparison function for case-insensitive sorting of the first element of
+     * a tuple.
+     * @param {!Array} ta First tuple.
+     * @param {!Array} tb Second tuple.
+     * @return {number} -1, 0, or 1 to signify greater than, equality, or less than.
+     * @private
+     */
+    function procTupleComparator_(ta: any[], tb: any[]): number;
+
+    /**
+     * Ensure two identically-named procedures don't exist.
+     * @param {string} name Proposed procedure name.
+     * @param {!Blockly.Block} block Block to disambiguate.
+     * @return {string} Non-colliding name.
+     */
+    function findLegalName(name: string, block: Blockly.Block): string;
+
+    /**
+     * Does this procedure have a legal name?  Illegal names include names of
+     * procedures already defined.
+     * @param {string} name The questionable name.
+     * @param {!Blockly.Workspace} workspace The workspace to scan for collisions.
+     * @param {Blockly.Block=} opt_exclude Optional block to exclude from
+     *     comparisons (one doesn't want to collide with oneself).
+     * @return {boolean} True if the name is legal.
+     * @private
+     */
+    function isLegalName_(name: string, workspace: Blockly.Workspace, opt_exclude?: Blockly.Block): boolean;
+
+    /**
+     * Return if the given name is already a procedure name.
+     * @param {string} name The questionable name.
+     * @param {!Blockly.Workspace} workspace The workspace to scan for collisions.
+     * @param {Blockly.Block=} opt_exclude Optional block to exclude from
+     *     comparisons (one doesn't want to collide with oneself).
+     * @return {boolean} True if the name is used, otherwise return false.
+     */
+    function isNameUsed(name: string, workspace: Blockly.Workspace, opt_exclude?: Blockly.Block): boolean;
+
+    /**
+     * Rename a procedure.  Called by the editable field.
+     * @param {string} name The proposed new name.
+     * @return {string} The accepted name.
+     * @this {Blockly.Field}
+     */
+    function rename(name: string): string;
+
+    /**
+     * Construct the blocks required by the flyout for the procedure category.
+     * @param {!Blockly.Workspace} workspace The workspace containing procedures.
+     * @return {!Array.<!Element>} Array of XML block elements.
+     */
+    function flyoutCategory(workspace: Blockly.Workspace): Element[];
+
+    /**
+     * Find all the callers of a named procedure.
+     * @param {string} name Name of procedure.
+     * @param {!Blockly.Workspace} workspace The workspace to find callers in.
+     * @return {!Array.<!Blockly.Block>} Array of caller blocks.
+     */
+    function getCallers(name: string, workspace: Blockly.Workspace): Blockly.Block[];
+
+    /**
+     * When a procedure definition changes its parameters, find and edit all its
+     * callers.
+     * @param {!Blockly.Block} defBlock Procedure definition block.
+     */
+    function mutateCallers(defBlock: Blockly.Block): void;
+
+    /**
+     * Find the definition block for the named procedure.
+     * @param {string} name Name of procedure.
+     * @param {!Blockly.Workspace} workspace The workspace to search.
+     * @return {Blockly.Block} The procedure definition block, or null not found.
+     */
+    function getDefinition(name: string, workspace: Blockly.Workspace): Blockly.Block;
+}
+
+
+declare module Blockly.Events {
+
+    class EndBlockDrag extends EndBlockDrag__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class EndBlockDrag__Class extends Blockly.Events.BlockBase__Class  { 
+    
+            /**
+             * Class for a block end drag event.
+             * @param {Blockly.Block} block The moved block.  Null for a blank event.
+             * @param {boolean} isOutside True if the moved block is outside of the
+             *     blocks workspace.
+             * @extends {Blockly.Events.BlockBase}
+             * @constructor
+             */
+            constructor(block: Blockly.Block);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    } 
+    
+}
+
+
+declare module Blockly.Functions {
+
+    /**
+     * Constant to separate function names from variables and generated functions
+     * when running generators.
+     * @deprecated Use Blockly.PROCEDURE_CATEGORY_NAME
+     */
+    var NAME_TYPE: any /*missing*/;
+
+    /**
+      * Construct the blocks required by the flyout for the functions category.
+      * @param {!Blockly.Workspace} workspace The workspace containing functions.
+      * @return {!Array.<!Element>} Array of XML block elements.
+      */
+    function flyoutCategory(workspace: Blockly.Workspace): Element[];
+
+    /**
+     * Create the "Make a Block..." button.
+     * @param {!Blockly.Workspace} workspace The workspace contianing procedures.
+     * @param {!Array.<!Element>} xmlList Array of XML block elements to add to.
+     * @private
+     */
+    function addCreateButton_(workspace: Blockly.Workspace, xmlList: Element[]): void;
+
+    /**
+     * Find all the callers of a named function.
+     * @param {string} name Name of function.
+     * @param {!Blockly.Workspace} workspace The workspace to find callers in.
+     * @return {!Array.<!Blockly.Block>} Array of caller blocks.
+     */
+    function getCallers(name: string, workspace: Blockly.Workspace): Blockly.Block[];
+
+    /**
+     * Find the definition block for the named function.
+     * @param {string} name Name of function.
+     * @param {!Blockly.Workspace} workspace The workspace to search.
+     * @return {!Blockly.Block} The function definition block, or null if not found.
+     */
+    function getDefinition(name: string, workspace: Blockly.Workspace): Blockly.Block;
+
+    /**
+     * Find all user-created function definitions in a workspace.
+     * @param {!Blockly.Workspace} root Root workspace.
+     * @return {!Array.<Blockly.Block>} An array of function definition blocks.
+     */
+    function getAllFunctionDefinitionBlocks(root: Blockly.Workspace): Blockly.Block[];
+
+    /**
+     * Determines whether the specified type is custom or a built-in literal.
+     * @param {string} argumentType The argument type to check,
+     * @return {boolean} Whether the argument type is a custom type. A return value
+     *  of false means the argument is a built-in literal.
+     */
+    function isCustomType(argumentType: string): boolean;
+
+    /**
+     * Create a mutation for a brand new function.
+     * @param {!Blockly.Workspace} destWs The main workspace where the user keeps their code.
+     * @return {Element} The mutation for a new function.
+     * @package
+     */
+    function newFunctionMutation(destWs: Blockly.Workspace): Element;
+
+    /**
+     * Appends a number to the given name, or increments the number if one is already present.
+     * @param {string} name The name for which to add or increment the suffix.
+     * @return {string} The resulting name.
+     */
+    function incrementNameSuffix(name: string): string;
+
+    /**
+     * Returns a unique parameter name based on the given name (using a numbered
+     * suffix).
+     * @param {string} name Initial name.
+     * @param {string[]} paramNames Existing parameter names.
+     * @return {string} The unique parameter name. If the name was already unique,
+     *  the original name is returned.
+     */
+    function findUniqueParamName(name: string, paramNames: string[]): string;
+
+    /**
+     * Determines whether the given parameter name is unique among the given
+     * parameter names.
+     * @param {string} name Initial name.
+     * @param {string[]} paramNames Existing parameter names.
+     * @return {boolean} Whether the name is unique.
+     */
+    function isUniqueParamName(name: string, paramNames: string[]): boolean;
+
+    /**
+     * Callback to create a new function.
+     * @param {!Blockly.Workspace} workspace The workspace to create the new function on.
+     * @private
+     */
+    function createFunctionCallback_(workspace: Blockly.Workspace): void;
+
+    /**
+     * Callback factory for adding a new custom function from a mutation.
+     * @param {!Blockly.Workspace} workspace The workspace to create the new function on.
+     * @return {function(?Element)} callback for creating the new custom function.
+     * @private
+     */
+    function createFunctionCallbackFactory_(workspace: Blockly.Workspace): { (_0: Element): any /*missing*/ };
+
+    /**
+     * Callback for editing custom functions.
+     * @param {!Blockly.Block} block The block that was right-clicked.
+     * @private
+     */
+    function editFunctionCallback_(block: Blockly.Block): void;
+
+    /**
+     * Callback factory for editing an existing custom function.
+     * @param {!Blockly.Block} block The function prototype block being edited.
+     * @return {function(?Element)} Callback for editing the custom function.
+     * @private
+     */
+    function editFunctionCallbackFactory_(block: Blockly.Block): { (_0: Element): any /*missing*/ };
+
+    /**
+     * Callback to create a new function custom command block.
+     * @param {Element=} mutation The function mutator
+     * @param {Function=} callback The function callback.
+     * @public
+     */
+    function editFunctionExternalHandler(mutation?: Element, callback?: Function): void;
+
+    /**
+     * Make a context menu option for editing a custom function.
+     * This appears in the context menu for function definitions and function
+     * calls.
+     * @param {!Blockly.BlockSvg} block The block where the right-click originated.
+     * @return {!Object} A menu option, containing text, enabled, and a callback.
+     * @package
+     */
+    function makeEditOption(block: Blockly.BlockSvg): Object;
+
+    /**
+     * Converts an argument reporter block's output type to its equivalent
+     * TypeScript type. For literal types, this means the output type in all lower
+     * case. For custom reporters, this the output type is taken as is.
+     * @param {string} reporterOutputType The reporter's output type.
+     * @return {string} The TypeScript type of the argument.
+     * @package
+     */
+    function getReporterArgumentType(reporterOutputType: string): string;
+
+    /**
+     * Returns a dictionary of all variable, old functions and new functions names currently in use.
+     * @param {!Blockly.Workspace} ws The workspace to search.
+     * @param {!Blockly.Block} exceptBlock Optional block to disambiguate.
+     * @param {!string} exceptFuncId Optional function ID to ignore.
+     * @return {!Object.<string,boolean>} The dictionary <name, true> of names in use.
+     */
+    function namesInUse(ws: Blockly.Workspace, exceptBlock: Blockly.Block, exceptFuncId: string): { [key: string]: boolean };
+
+    /**
+     * Returns a name that is unique among existing functions and variables.
+     * @param {string} name Proposed function name.
+     * @param {!Blockly.Workspace} ws The workspace to search.
+     * @param {!Blockly.Block} block Block to disambiguate.
+     * @return {string} Non-colliding name.
+     */
+    function findLegalName(name: string, ws: Blockly.Workspace, block: Blockly.Block): string;
+
+    /**
+     * Rename a Function. Called by the editable field on a function definition.
+     * @param {string} name The proposed new name.
+     * @return {string} The accepted name.
+     * @this {Blockly.Field}
+     */
+    function rename(name: string): string;
+
+    /**
+     * Validate the given function mutation to ensure that:
+     *  1) the function name is globally unique in the specified workspace
+     *  2) the parameter names are unique among themselves
+     *  3) the argument names are not the same as the function name
+     * @param {!Element} mutation The proposed function mutation.
+     * @param {!Blockly.Workspace} destinationWs The workspace to check for name uniqueness.
+     * @return {boolean} Whether the function passes name validation or not.
+     * @package
+     */
+    function validateFunctionExternal(mutation: Element, destinationWs: Blockly.Workspace): boolean;
+
+    /**
+     * Creates a map of argument name -> argument ID based on the specified
+     * function mutation. If specified, can also create the inverse map:
+     * argument ID -> argument name.
+     * @param {!Element} mutation The function mutation to parse.
+     * @param {boolean} inverse Whether to make the inverse map, ID -> name.
+     * @return {!Object} A map of name -> ID, or ID -> name if inverse was true.
+     * @package
+     */
+    function getArgMap(mutation: Element, inverse: boolean): Object;
+
+    /**
+     * Find and edit all callers and the definition of a function using a new
+     * mutation.
+     * @param {string} name Name of function.
+     * @param {!Blockly.Workspace} ws The workspace to find callers in.
+     * @param {!Element} mutation New mutation for the callers.
+     * @package
+     */
+    function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, mutation: Element): void;
+
+    /**
+     * Whether a block is a function argument reporter.
+     * @param {!Blockly.BlockSvg} block The block that should be used to make this
+     *     decision.
+     * @return {boolean} True if the block is a function argument reporter.
+     */
+    function isFunctionArgumentReporter(block: Blockly.BlockSvg): boolean;
+
+    /**
+     * Create a flyout, creates the DOM elements for the flyout, and initializes the flyout.
+     * @param {!Blockly.Workspace} workspace The target and parent workspace for this flyout. The workspace's options will
+     *     be used to create the flyout's inner workspace.
+     * @param {!Element} siblingNode The flyout is added after this reference node. 
+     * @return {!Blockly.Flyout} The newly created flyout.
+     */
+    function createFlyout(workspace: Blockly.Workspace, siblingNode: Element): Blockly.Flyout;
+}
+
+
+declare module Blockly.pxtBlocklyUtils {
+
+    /**
+     * Whitelist of blocks whose shadow blocks duplicate on drag
+     */
+    var _duplicateOnDragWhitelist: any /*missing*/;
+
+    /**
+     * Measure some text using a canvas in-memory.
+     * Does not exist in Blockly, but needed in scratch-blocks
+     * @param {string} fontSize E.g., '10pt'
+     * @param {string} fontFamily E.g., 'Arial'
+     * @param {string} fontWeight E.g., '600'
+     * @param {string} text The actual text to measure
+     * @return {number} Width of the text in px.
+     * @package
+     */
+    function measureText(fontSize: string, fontFamily: string, fontWeight: string, text: string): number;
+
+    /**
+     * Whether a block is both a shadow block and an argument reporter.  These
+     * blocks have special behaviour in scratch-blocks: they're duplicated when
+     * dragged, and they are rendered slightly differently from normal shadow
+     * blocks.
+     * @param {!Blockly.BlockSvg} block The block that should be used to make this
+     *     decision.
+     * @return {boolean} True if the block should be duplicated on drag.
+     * @package
+     */
+    function isShadowArgumentReporter(block: Blockly.BlockSvg): boolean;
+
+    /**
+     * Sets a whitelist of blocks whose shadow blocks duplicate on drag (in addition
+     * to argument reporter blocks).
+     * @param {Array<string>} blockTypes a list of block
+     * @package
+     */
+    function whitelistDraggableBlockTypes(blockTypes: string[]): void;
+
+    /**
+     * Finds and returns an argument reporter of the given name, argument type
+     * name, and reporter type on the given block, or null if none match.
+     * @param {!Blockly.Block} targetBlock The block to search.
+     * @param {!Blockly.Block} reporter The reporter to try to match.
+     * @return {boolean} Whether there is a matching reporter or not.
+     */
+    function hasMatchingArgumentReporter(targetBlock: Blockly.Block, reporter: Blockly.Block): boolean;
+}
+
+
+declare module Blockly {
+
+    class Breakpoint extends Breakpoint__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Breakpoint__Class extends Blockly.Icon__Class  { 
+    
+            /**
+             * Class for a breakpoint.
+             * @param {!Blockly.Block} block The block associated with this breakpoint.
+             * @extends {Blockly.Icon}
+             * @constructor
+             */
+            constructor(block: Blockly.Block);
+    
+            /**
+             * Does this icon get hidden when the block is collapsed.
+             */
+            collapseHidden: any /*missing*/;
+    
+            /**
+             * Create the icon on the block.
+             */
+            createIcon(): void;
+    
+            /**
+             * Draw the breakpoint icon.
+             * @param {!Element} group The icon group.
+             * @private
+             */
+            drawIcon_(group: Element): void;
+    
+            /**
+             * Enable/Disable the breakpoint icon.
+             * @private
+             */
+            enableBreakpoint(): void;
+    
+            /**
+             * Dispose of this breakpoint Icon.
+             */
+            dispose(): void;
+    
+            /**
+             * Toggle the breakpoint icon between set and unset.
+             * @param {boolean} visible True if the breakpoint icon should be set.
+             */
+            setVisible(visible: boolean): void;
+    
+            /**
+             * Is this breakpoint set?
+             * @return {boolean} True if the breakpoint is Set.
+             */
+            isVisible(): boolean;
+    
+            /**
+             * Notification that the icon has moved.
+             * @param {!Blockly.utils.Coordinate} xy Absolute location in workspace coordinates.
+             */
+            setIconLocation(xy: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Don't do anything, since breakpoint icon doesn't have a bubble.
+             */
+            updateColour(): void;
+    } 
+    
+}
+
+
+declare module Blockly.PXTUtils {
+
+    /**
+     * Fade hex colour.
+     * Words may not be split.  Any space after a word is included in the length.
+     * @param {string} hex Hex colour
+     * @param {number} luminosity Luminosity
+     * @param {number} lighten Lighten weight
+     * @return {number} rgb colour.
+     */
+    function fadeColour(hex: string, luminosity: number, lighten: number): number;
+}
+
+
+declare module Blockly {
+
+    class RenderedConnection extends RenderedConnection__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class RenderedConnection__Class extends Blockly.Connection__Class  { 
+    
+            /**
+             * Class for a connection between blocks that may be rendered on screen.
+             * @param {!Blockly.Block} source The block establishing this connection.
+             * @param {number} type The type of the connection.
+             * @extends {Blockly.Connection}
+             * @constructor
+             */
+            constructor(source: Blockly.Block, type: number);
+    
+            /**
+             * Workspace units, (0, 0) is top left of block.
+             * @type {!Blockly.utils.Coordinate}
+             * @private
+             */
+            offsetInBlock_: Blockly.utils.Coordinate;
+    
+            /**
+             * Returns the distance between this connection and another connection in
+             * workspace units.
+             * @param {!Blockly.Connection} otherConnection The other connection to measure
+             *     the distance to.
+             * @return {number} The distance between connections, in workspace units.
+             */
+            distanceFrom(otherConnection: Blockly.Connection): number;
+    
+            /**
+             * Move the block(s) belonging to the connection to a point where they don't
+             * visually interfere with the specified connection.
+             * @param {!Blockly.Connection} staticConnection The connection to move away
+             *     from.
+             * @private
+             */
+            bumpAwayFrom_(staticConnection: Blockly.Connection): void;
+    
+            /**
+             * Change the connection's coordinates.
+             * @param {number} x New absolute x coordinate, in workspace coordinates.
+             * @param {number} y New absolute y coordinate, in workspace coordinates.
+             */
+            moveTo(x: number, y: number): void;
+    
+            /**
+             * Change the connection's coordinates.
+             * @param {number} dx Change to x coordinate, in workspace units.
+             * @param {number} dy Change to y coordinate, in workspace units.
+             */
+            moveBy(dx: number, dy: number): void;
+    
+            /**
+             * Move this connection to the location given by its offset within the block and
+             * the location of the block's top left corner.
+             * @param {!Blockly.utils.Coordinate} blockTL The location of the top left corner
+             *     of the block, in workspace coordinates.
+             */
+            moveToOffset(blockTL: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Set the offset of this connection relative to the top left of its block.
+             * @param {number} x The new relative x, in workspace units.
+             * @param {number} y The new relative y, in workspace units.
+             */
+            setOffsetInBlock(x: number, y: number): void;
+    
+            /**
+             * Move the blocks on either side of this connection right next to each other.
+             * @private
+             */
+            tighten_(): void;
+    
+            /**
+             * Find the closest compatible connection to this connection.
+             * All parameters are in workspace units.
+             * @param {number} maxLimit The maximum radius to another connection.
+             * @param {!Blockly.utils.Coordinate} dxy Offset between this connection's location
+             *     in the database and the current location (as a result of dragging).
+             * @return {!{connection: ?Blockly.Connection, radius: number}} Contains two
+             *     properties: 'connection' which is either another connection or null,
+             *     and 'radius' which is the distance.
+             */
+            closest(maxLimit: number, dxy: Blockly.utils.Coordinate): { connection: Blockly.Connection; radius: number };
+    
+            /**
+             * Add highlighting around this connection.
+             */
+            highlight(): void;
+    
+            /**
+             * Unhide this connection, as well as all down-stream connections on any block
+             * attached to this connection.  This happens when a block is expanded.
+             * Also unhides down-stream comments.
+             * @return {!Array.<!Blockly.Block>} List of blocks to render.
+             */
+            unhideAll(): Blockly.Block[];
+    
+            /**
+             * Remove the highlighting around this connection.
+             */
+            unhighlight(): void;
+    
+            /**
+             * Set whether this connections is hidden (not tracked in a database) or not.
+             * @param {boolean} hidden True if connection is hidden.
+             */
+            setHidden(hidden: boolean): void;
+    
+            /**
+             * Hide this connection, as well as all down-stream connections on any block
+             * attached to this connection.  This happens when a block is collapsed.
+             * Also hides down-stream comments.
+             */
+            hideAll(): void;
+    
+            /**
+             * Check if the two connections can be dragged to connect to each other.
+             * @param {!Blockly.Connection} candidate A nearby connection to check.
+             * @param {number=} maxRadius The maximum radius allowed for connections, in
+             *     workspace units.
+             * @return {boolean} True if the connection is allowed, false otherwise.
+             */
+            isConnectionAllowed(candidate: Blockly.Connection, maxRadius?: number): boolean;
+    
+            /**
+             * Disconnect two blocks that are connected by this connection.
+             * @param {!Blockly.Block} parentBlock The superior block.
+             * @param {!Blockly.Block} childBlock The inferior block.
+             * @private
+             */
+            disconnectInternal_(parentBlock: Blockly.Block, childBlock: Blockly.Block): void;
+    
+            /**
+             * Respawn the shadow block if there was one connected to the this connection.
+             * Render/rerender blocks as needed.
+             * @private
+             */
+            respawnShadow_(): void;
+    
+            /**
+             * Find all nearby compatible connections to this connection.
+             * Type checking does not apply, since this function is used for bumping.
+             * @param {number=} maxLimit The maximum radius to another connection, in
+             *     workspace units.
+             * @return {!Array.<!Blockly.Connection>} List of connections.
+             * @private
+             */
+            neighbours_(maxLimit?: number): Blockly.Connection[];
+    
+            /**
+             * Connect two connections together.  This is the connection on the superior
+             * block.  Rerender blocks as needed.
+             * @param {!Blockly.Connection} childConnection Connection on inferior block.
+             * @private
+             */
+            connect_(childConnection: Blockly.Connection): void;
+    
+            /**
+             * Function to be called when this connection's compatible types have changed.
+             * @private
+             */
+            onCheckChanged_(): void;
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class ScrollbarPair extends ScrollbarPair__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class ScrollbarPair__Class  { 
+    
+            /**
+             * Class for a pair of scrollbars.  Horizontal and vertical.
+             * @param {!Blockly.Workspace} workspace Workspace to bind the scrollbars to.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * Previously recorded metrics from the workspace.
+             * @type {Object}
+             * @private
+             */
+            oldHostMetrics_: Object;
+    
+            /**
+             * Dispose of this pair of scrollbars.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Recalculate both of the scrollbars' locations and lengths.
+             * Also reposition the corner rectangle.
+             */
+            resize(): void;
+    
+            /**
+             * Set the handles of both scrollbars to be at a certain position in CSS pixels
+             * relative to their parents.
+             * @param {number} x Horizontal scroll value.
+             * @param {number} y Vertical scroll value.
+             */
+            set(x: number, y: number): void;
+    
+            /**
+             * Helper to calculate the ratio of handle position to scrollbar view size.
+             * @param {number} handlePosition The value of the handle.
+             * @param {number} viewSize The total size of the scrollbar's view.
+             * @return {number} Ratio.
+             * @private
+             */
+            getRatio_(handlePosition: number, viewSize: number): number;
+    
+            /**
+             * Set whether this scrollbar's container is visible.
+             * @param {boolean} visible Whether the container is visible.
+             */
+            setContainerVisible(visible: boolean): void;
+    } 
+    
+
+    class Scrollbar extends Scrollbar__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Scrollbar__Class  { 
+    
+            /**
+             * Class for a pure SVG scrollbar.
+             * This technique offers a scrollbar that is guaranteed to work, but may not
+             * look or behave like the system's scrollbars.
+             * @param {!Blockly.Workspace} workspace Workspace to bind the scrollbar to.
+             * @param {boolean} horizontal True if horizontal, false if vertical.
+             * @param {boolean=} opt_pair True if scrollbar is part of a horiz/vert pair.
+             * @param {string=} opt_class A class to be applied to this scrollbar.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace, horizontal: boolean, opt_pair?: boolean, opt_class?: string);
+    
+            /**
+             * The svg element containing the scrollbar dom elements.
+             * @type {!SVGSVGElement}
+             * @private
+             */
+            svgGroup_: SVGSVGElement;
+    
+            /**
+             * The upper left corner of the scrollbar's SVG group in CSS pixels relative
+             * to the scrollbar's origin.  This is usually relative to the injection div
+             * origin.
+             * @type {Blockly.utils.Coordinate}
+             * @private
+             */
+            position_: Blockly.utils.Coordinate;
+    
+            /**
+             * The location of the origin of the workspace that the scrollbar is in,
+             * measured in CSS pixels relative to the injection div origin.  This is usually
+             * (0, 0).  When the scrollbar is in a flyout it may have a different origin.
+             * @type {Blockly.utils.Coordinate}
+             * @private
+             */
+            origin_: Blockly.utils.Coordinate;
+    
+            /**
+               * Whether or not the origin of the scrollbar has changed. Used
+               * to help decide whether or not the reflow/resize calls need to happen.
+               * @type {boolean}
+               * @private
+               */
+            originHasChanged_: boolean;
+    
+            /**
+             * The position of the mouse along this scrollbar's major axis at the start of
+             * the most recent drag.
+             * Units are CSS pixels, with (0, 0) at the top left of the browser window.
+             * For a horizontal scrollbar this is the x coordinate of the mouse down event;
+             * for a vertical scrollbar it's the y coordinate of the mouse down event.
+             * @type {Blockly.utils.Coordinate}
+             */
+            startDragMouse_: Blockly.utils.Coordinate;
+    
+            /**
+             * The size of the area within which the scrollbar handle can move, in CSS
+             * pixels.
+             * @type {number}
+             * @private
+             */
+            scrollViewSize_: number;
+    
+            /**
+             * The length of the scrollbar handle in CSS pixels.
+             * @type {number}
+             * @private
+             */
+            handleLength_: number;
+    
+            /**
+             * The offset of the start of the handle from the scrollbar position, in CSS
+             * pixels.
+             * @type {number}
+             * @private
+             */
+            handlePosition_: number;
+    
+            /**
+             * Whether the scrollbar handle is visible.
+             * @type {boolean}
+             * @private
+             */
+            isVisible_: boolean;
+    
+            /**
+             * Whether the workspace containing this scrollbar is visible.
+             * @type {boolean}
+             * @private
+             */
+            containerVisible_: boolean;
+    
+            /**
+             * Dispose of this scrollbar.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Set the length of the scrollbar's handle and change the SVG attribute
+             * accordingly.
+             * @param {number} newLength The new scrollbar handle length in CSS pixels.
+             */
+            setHandleLength_(newLength: number): void;
+    
+            /**
+             * Set the offset of the scrollbar's handle from the scrollbar's position, and
+             * change the SVG attribute accordingly.
+             * @param {number} newPosition The new scrollbar handle offset in CSS pixels.
+             */
+            setHandlePosition(newPosition: number): void;
+    
+            /**
+             * Set the size of the scrollbar's background and change the SVG attribute
+             * accordingly.
+             * @param {number} newSize The new scrollbar background length in CSS pixels.
+             * @private
+             */
+            setScrollViewSize_(newSize: number): void;
+    
+            /**
+             * Set the position of the scrollbar's SVG group in CSS pixels relative to the
+             * scrollbar's origin.  This sets the scrollbar's location within the workspace.
+             * @param {number} x The new x coordinate.
+             * @param {number} y The new y coordinate.
+             * @private
+             */
+            setPosition_(x: number, y: number): void;
+    
+            /**
+             * Recalculate the scrollbar's location and its length.
+             * @param {Object=} opt_metrics A data structure of from the describing all the
+             * required dimensions.  If not provided, it will be fetched from the host
+             * object.
+             */
+            resize(opt_metrics?: Object): void;
+    
+            /**
+             * Recalculate a horizontal scrollbar's location and length.
+             * @param {!Object} hostMetrics A data structure describing all the
+             *     required dimensions, possibly fetched from the host object.
+             * @private
+             */
+            resizeHorizontal_(hostMetrics: Object): void;
+    
+            /**
+             * Recalculate a horizontal scrollbar's location on the screen and path length.
+             * This should be called when the layout or size of the window has changed.
+             * @param {!Object} hostMetrics A data structure describing all the
+             *     required dimensions, possibly fetched from the host object.
+             */
+            resizeViewHorizontal(hostMetrics: Object): void;
+    
+            /**
+             * Recalculate a horizontal scrollbar's location within its path and length.
+             * This should be called when the contents of the workspace have changed.
+             * @param {!Object} hostMetrics A data structure describing all the
+             *     required dimensions, possibly fetched from the host object.
+             */
+            resizeContentHorizontal(hostMetrics: Object): void;
+    
+            /**
+             * Recalculate a vertical scrollbar's location and length.
+             * @param {!Object} hostMetrics A data structure describing all the
+             *     required dimensions, possibly fetched from the host object.
+             * @private
+             */
+            resizeVertical_(hostMetrics: Object): void;
+    
+            /**
+             * Recalculate a vertical scrollbar's location on the screen and path length.
+             * This should be called when the layout or size of the window has changed.
+             * @param {!Object} hostMetrics A data structure describing all the
+             *     required dimensions, possibly fetched from the host object.
+             */
+            resizeViewVertical(hostMetrics: Object): void;
+    
+            /**
+             * Recalculate a vertical scrollbar's location within its path and length.
+             * This should be called when the contents of the workspace have changed.
+             * @param {!Object} hostMetrics A data structure describing all the
+             *     required dimensions, possibly fetched from the host object.
+             */
+            resizeContentVertical(hostMetrics: Object): void;
+    
+            /**
+             * Create all the DOM elements required for a scrollbar.
+             * The resulting widget is not sized.
+             * @param {string=} opt_class A class to be applied to this scrollbar.
+             * @private
+             */
+            createDom_(opt_class?: string): void;
+    
+            /**
+             * Is the scrollbar visible.  Non-paired scrollbars disappear when they aren't
+             * needed.
+             * @return {boolean} True if visible.
+             */
+            isVisible(): boolean;
+    
+            /**
+             * Set whether the scrollbar's container is visible and update
+             * display accordingly if visibility has changed.
+             * @param {boolean} visible Whether the container is visible
+             */
+            setContainerVisible(visible: boolean): void;
+    
+            /**
+             * Set whether the scrollbar is visible.
+             * Only applies to non-paired scrollbars.
+             * @param {boolean} visible True if visible.
+             */
+            setVisible(visible: boolean): void;
+    
+            /**
+             * Update visibility of scrollbar based on whether it thinks it should
+             * be visible and whether its containing workspace is visible.
+             * We cannot rely on the containing workspace being hidden to hide us
+             * because it is not necessarily our parent in the DOM.
+             */
+            updateDisplay_(): void;
+    
+            /**
+             * Scroll by one pageful.
+             * Called when scrollbar background is clicked.
+             * @param {!Event} e Mouse down event.
+             * @private
+             */
+            onMouseDownBar_(e: Event): void;
+    
+            /**
+             * Start a dragging operation.
+             * Called when scrollbar handle is clicked.
+             * @param {!Event} e Mouse down event.
+             * @private
+             */
+            onMouseDownHandle_(e: Event): void;
+    
+            /**
+             * Drag the scrollbar's handle.
+             * @param {!Event} e Mouse up event.
+             * @private
+             */
+            onMouseMoveHandle_(e: Event): void;
+    
+            /**
+             * Release the scrollbar handle and reset state accordingly.
+             * @private
+             */
+            onMouseUpHandle_(): void;
+    
+            /**
+             * Hide chaff and stop binding to mouseup and mousemove events.  Call this to
+             * wrap up lose ends associated with the scrollbar.
+             * @private
+             */
+            cleanUp_(): void;
+    
+            /**
+             * Constrain the handle's position within the minimum (0) and maximum
+             * (length of scrollbar) values allowed for the scrollbar.
+             * @param {number} value Value that is potentially out of bounds, in CSS pixels.
+             * @return {number} Constrained value, in CSS pixels.
+             * @private
+             */
+            constrainHandle_(value: number): number;
+    
+            /**
+             * Called when scrollbar is moved.
+             * @private
+             */
+            onScroll_(): void;
+    
+            /**
+             * Set the scrollbar handle's position.
+             * @param {number} value The distance from the top/left end of the bar, in CSS
+             *     pixels.  It may be larger than the maximum allowable position of the
+             *     scrollbar handle.
+             */
+            set(value: number): void;
+    
+            /**
+             * Record the origin of the workspace that the scrollbar is in, in pixels
+             * relative to the injection div origin. This is for times when the scrollbar is
+             * used in an object whose origin isn't the same as the main workspace
+             * (e.g. in a flyout.)
+             * @param {number} x The x coordinate of the scrollbar's origin, in CSS pixels.
+             * @param {number} y The y coordinate of the scrollbar's origin, in CSS pixels.
+             */
+            setOrigin(x: number, y: number): void;
+    } 
+    
+}
+
+declare module Blockly.Scrollbar {
+
+    /**
+     * Width of vertical scrollbar or height of horizontal scrollbar in CSS pixels.
+     * Scrollbars should be larger on touch devices.
+     */
+    var scrollbarThickness: any /*missing*/;
+
+    /**
+     * @param {!Object} first An object containing computed measurements of a
+     *    workspace.
+     * @param {!Object} second Another object containing computed measurements of a
+     *    workspace.
+     * @return {boolean} Whether the two sets of metrics are equivalent.
+     * @private
+     */
+    function metricsAreEquivalent_(first: Object, second: Object): boolean;
+}
+
+
+declare module Blockly {
+
+    class Theme extends Theme__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Theme__Class  { 
+    
+            /**
+             * Class for a theme.
+             * @param {!Object.<string, Blockly.Theme.BlockStyle>} blockStyles A map from style
+             *     names (strings) to objects with style attributes relating to blocks.
+             * @param {!Object.<string, Blockly.Theme.CategoryStyle>} categoryStyles A map from
+             *     style names (strings) to objects with style attributes relating to
+             *     categories.
+             * @constructor
+             */
+            constructor(blockStyles: { [key: string]: Blockly.Theme.BlockStyle }, categoryStyles: { [key: string]: Blockly.Theme.CategoryStyle });
+    
+            /**
+             * Overrides or adds all values from blockStyles to blockStyles_
+             * @param {Object.<string, Blockly.Theme.BlockStyle>} blockStyles Map of
+             *     block styles.
+             */
+            setAllBlockStyles(blockStyles: { [key: string]: Blockly.Theme.BlockStyle }): void;
+    
+            /**
+             * Gets a map of all the block style names.
+             * @return {!Object.<string, Blockly.Theme.BlockStyle>} Map of block styles.
+             */
+            getAllBlockStyles(): { [key: string]: Blockly.Theme.BlockStyle };
+    
+            /**
+             * Gets the BlockStyle for the given block style name.
+             * @param {string} blockStyleName The name of the block style.
+             * @return {Blockly.Theme.BlockStyle|undefined} The named block style.
+             */
+            getBlockStyle(blockStyleName: string): Blockly.Theme.BlockStyle|any /*undefined*/;
+    
+            /**
+             * Overrides or adds a style to the blockStyles map.
+             * @param {string} blockStyleName The name of the block style.
+             * @param {Blockly.Theme.BlockStyle} blockStyle The block style.
+            */
+            setBlockStyle(blockStyleName: string, blockStyle: Blockly.Theme.BlockStyle): void;
+    
+            /**
+             * Gets the CategoryStyle for the given category style name.
+             * @param {string} categoryStyleName The name of the category style.
+             * @return {Blockly.Theme.CategoryStyle|undefined} The named category style.
+             */
+            getCategoryStyle(categoryStyleName: string): Blockly.Theme.CategoryStyle|any /*undefined*/;
+    
+            /**
+             * Overrides or adds a style to the categoryStyles map.
+             * @param {string} categoryStyleName The name of the category style.
+             * @param {Blockly.Theme.CategoryStyle} categoryStyle The category style.
+            */
+            setCategoryStyle(categoryStyleName: string, categoryStyle: Blockly.Theme.CategoryStyle): void;
+    } 
+    
+}
+
+declare module Blockly.Theme {
+
+    /**
+     * A block style.
+     * @typedef {{
+      *            colourPrimary:string,
+      *            colourSecondary:string,
+      *            colourTertiary:string,
+      *            hat:string
+      *          }}
+      */
+    interface BlockStyle {
+        colourPrimary: string;
+        colourSecondary: string;
+        colourTertiary: string;
+        hat: string
+    }
+
+    /**
+     * A category style.
+     * @typedef {{
+      *            colour:string
+      *          }}
+      */
+    interface CategoryStyle {
+        colour: string
+    }
+}
+
+
+declare module Blockly {
+
+    class Toolbox extends Toolbox__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Toolbox__Class  { 
+    
+            /**
+             * Class for a Toolbox.
+             * Creates the toolbox's DOM.
+             * @param {!Blockly.Workspace} workspace The workspace in which to create new
+             *     blocks.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * @type {!Blockly.Workspace}
+             * @private
+             */
+            workspace_: Blockly.Workspace;
+    
+            /**
+             * Is RTL vs LTR.
+             * @type {boolean}
+             */
+            RTL: boolean;
+    
+            /**
+             * Whether the toolbox should be laid out horizontally.
+             * @type {boolean}
+             * @private
+             */
+            horizontalLayout_: boolean;
+    
+            /**
+             * Position of the toolbox and flyout relative to the workspace.
+             * @type {number}
+             */
+            toolboxPosition: number;
+    
+            /**
+             * Configuration constants for Closure's tree UI.
+             * @type {Object.<string,*>}
+             * @private
+             */
+            config_: { [key: string]: any };
+    
+            /**
+             * Configuration constants for tree separator.
+             * @type {Object.<string,*>}
+             * @private
+             */
+            treeSeparatorConfig_: { [key: string]: any };
+    
+            /**
+             * Width of the toolbox, which changes only in vertical layout.
+             * @type {number}
+             */
+            width: number;
+    
+            /**
+             * Height of the toolbox, which changes only in horizontal layout.
+             * @type {number}
+             */
+            height: number;
+    
+            /**
+             * The SVG group currently selected.
+             * @type {SVGGElement}
+             * @private
+             */
+            selectedOption_: SVGGElement;
+    
+            /**
+             * The tree node most recently selected.
+             * @type {goog.ui.tree.BaseNode}
+             * @private
+             */
+            lastCategory_: goog.ui.tree.BaseNode;
+    
+            /**
+             * Initializes the toolbox.
+             */
+            init(): void;
+    
+            /**
+             * HTML container for the Toolbox menu.
+             * @type {Element}
+             */
+            HtmlDiv: Element;
+    
+            /**
+             * @type {!Blockly.Flyout}
+             * @private
+             */
+            flyout_: Blockly.Flyout;
+    
+            /**
+             * Dispose of this toolbox.
+             */
+            dispose(): void;
+    
+            /**
+             * Get the width of the toolbox.
+             * @return {number} The width of the toolbox.
+             */
+            getWidth(): number;
+    
+            /**
+             * Get the height of the toolbox.
+             * @return {number} The width of the toolbox.
+             */
+            getHeight(): number;
+    
+            /**
+             * Move the toolbox to the edge.
+             */
+            position(): void;
+    
+            /**
+             * Fill the toolbox with categories and blocks.
+             * @param {!Node} newTree DOM tree of blocks.
+             * @return {Node} Tree node to open at startup (or null).
+             * @private
+             */
+            populate_(newTree: Node): Node;
+    
+            /**
+             * Sync trees of the toolbox.
+             * @param {!Node} treeIn DOM tree of blocks.
+             * @param {!Blockly.Toolbox.TreeControl} treeOut The TreeContorol object built
+             *     from treeIn.
+             * @param {string} pathToMedia The path to the Blockly media directory.
+             * @return {Node} Tree node to open at startup (or null).
+             * @private
+             */
+            syncTrees_(treeIn: Node, treeOut: Blockly.Toolbox.TreeControl, pathToMedia: string): Node;
+    
+            /**
+             * Sets the colour on the category.
+             * @param {number|string} colourValue HSV hue value (0 to 360), #RRGGBB string,
+             *     or a message reference string pointing to one of those two values.
+             * @param {Blockly.Toolbox.TreeNode} childOut The child to set the hexColour on.
+             * @param {string} categoryName Name of the toolbox category.
+             * @private
+             */
+            setColour_(colourValue: number|string, childOut: Blockly.Toolbox.TreeNode, categoryName: string): void;
+    
+            /**
+             * Retrieves and sets the colour for the category using the style name.
+             * The category colour is set from the colour style attribute.
+             * @param {string} styleName Name of the style.
+             * @param {!Blockly.Toolbox.TreeNode} childOut The child to set the hexColour on.
+             * @param {string} categoryName Name of the toolbox category.
+             */
+            setColourFromStyle_(styleName: string, childOut: Blockly.Toolbox.TreeNode, categoryName: string): void;
+    
+            /**
+             * Recursively updates all the category colours using the category style name.
+             * @param {Blockly.Toolbox.TreeNode=} opt_tree Starting point of tree.
+             *     Defaults to the root node.
+             * @private
+             */
+            updateColourFromTheme_(opt_tree?: Blockly.Toolbox.TreeNode): void;
+    
+            /**
+             * Updates the category colours and background colour of selected categories.
+             */
+            updateColourFromTheme(): void;
+    
+            /**
+             * Updates the background colour of the selected category.
+             * @param {!Blockly.Toolbox.TreeNode} tree Starting point of tree.
+             *     Defaults to the root node.
+             * @private
+             */
+            updateSelectedItemColour_(tree: Blockly.Toolbox.TreeNode): void;
+    
+            /**
+             * Recursively add colours to this toolbox.
+             * @param {Blockly.Toolbox.TreeNode=} opt_tree Starting point of tree.
+             *     Defaults to the root node.
+             * @private
+             */
+            addColour_(opt_tree?: Blockly.Toolbox.TreeNode): void;
+    
+            /**
+             * Unhighlight any previously specified option.
+             */
+            clearSelection(): void;
+    
+            /**
+             * Adds a style on the toolbox. Usually used to change the cursor.
+             * @param {string} style The name of the class to add.
+             * @package
+             */
+            addStyle(style: string): void;
+    
+            /**
+             * Removes a style from the toolbox. Usually used to change the cursor.
+             * @param {string} style The name of the class to remove.
+             * @package
+             */
+            removeStyle(style: string): void;
+    
+            /**
+             * Return the deletion rectangle for this toolbox.
+             * @return {Blockly.utils.Rect} Rectangle in which to delete.
+             */
+            getClientRect(): Blockly.utils.Rect;
+    
+            /**
+             * Update the flyout's contents without closing it.  Should be used in response
+             * to a change in one of the dynamic categories, such as variables or
+             * procedures.
+             */
+            refreshSelection(): void;
+    } 
+    
+}
+
+declare module Blockly.Toolbox {
+
+    class TreeControl extends TreeControl__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class TreeControl__Class extends goog.ui.tree.TreeControl__Class  { 
+    
+            /**
+             * Extension of a TreeControl object that uses a custom tree node.
+             * @param {Blockly.Toolbox} toolbox The parent toolbox for this tree.
+             * @param {Object} config The configuration for the tree. See
+             *    goog.ui.tree.TreeControl.DefaultConfig.
+             * @constructor
+             * @extends {goog.ui.tree.TreeControl}
+             */
+            constructor(toolbox: Blockly.Toolbox, config: Object);
+    
+            /**
+             * Handles touch events.
+             * @param {!goog.events.BrowserEvent} e The browser event.
+             * @private
+             */
+            handleTouchEvent_(e: goog.events.BrowserEvent): void;
+    } 
+    
+
+    class TreeNode extends TreeNode__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class TreeNode__Class extends goog.ui.tree.TreeNode__Class  { 
+    
+            /**
+             * A single node in the tree, customized for Blockly's UI.
+             * @param {Blockly.Toolbox} toolbox The parent toolbox for this tree.
+             * @param {!goog.html.SafeHtml} html The HTML content of the node label.
+             * @param {Object|undefined} config The configuration for the tree.
+             *    See goog.ui.tree.TreeControl.DefaultConfig.
+             *    If not specified, a default config will be used.
+             * @constructor
+             * @extends {goog.ui.tree.TreeNode}
+             */
+            constructor(toolbox: Blockly.Toolbox, html: goog.html.SafeHtml, config: Object|any /*undefined*/);
+    } 
+    
+
+    class TreeSeparator extends TreeSeparator__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class TreeSeparator__Class extends Blockly.Toolbox.TreeNode__Class  { 
+    
+            /**
+             * A blank separator node in the tree.
+             * @param {Object|undefined} config The configuration for the tree.
+             *    See goog.ui.tree.TreeControl.DefaultConfig
+             *    If not specified, a default config will be used.
+             * @constructor
+             * @extends {Blockly.Toolbox.TreeNode}
+             */
+            constructor(config: Object|any /*undefined*/);
+    } 
+    
+}
+
+
+declare module Blockly.Tooltip {
+
+    /**
+     * Is a tooltip currently showing?
+     */
+    var visible: any /*missing*/;
+
+    /**
+     * Is someone else blocking the tooltip from being shown?
+     * @type {boolean}
+     * @private
+     */
+    var blocked_: boolean;
+
+    /**
+     * Maximum width (in characters) of a tooltip.
+     */
+    var LIMIT: any /*missing*/;
+
+    /**
+     * PID of suspended thread to clear tooltip on mouse out.
+     * @private
+     */
+    var mouseOutPid_: any /*missing*/;
+
+    /**
+     * PID of suspended thread to show the tooltip.
+     * @private
+     */
+    var showPid_: any /*missing*/;
+
+    /**
+     * Last observed X location of the mouse pointer (freezes when tooltip appears).
+     * @private
+     */
+    var lastX_: any /*missing*/;
+
+    /**
+     * Last observed Y location of the mouse pointer (freezes when tooltip appears).
+     * @private
+     */
+    var lastY_: any /*missing*/;
+
+    /**
+     * Current element being pointed at.
+     * @private
+     */
+    var element_: any /*missing*/;
+
+    /**
+     * Once a tooltip has opened for an element, that element is 'poisoned' and
+     * cannot respawn a tooltip until the pointer moves over a different element.
+     * @private
+     */
+    var poisonedElement_: any /*missing*/;
+
+    /**
+     * Horizontal offset between mouse cursor and tooltip.
+     */
+    var OFFSET_X: any /*missing*/;
+
+    /**
+     * Vertical offset between mouse cursor and tooltip.
+     */
+    var OFFSET_Y: any /*missing*/;
+
+    /**
+     * Radius mouse can move before killing tooltip.
+     */
+    var RADIUS_OK: any /*missing*/;
+
+    /**
+     * Delay before tooltip appears.
+     */
+    var HOVER_MS: any /*missing*/;
+
+    /**
+     * Horizontal padding between tooltip and screen edge.
+     */
+    var MARGINS: any /*missing*/;
+
+    /**
+     * The HTML container.  Set once by Blockly.Tooltip.createDom.
+     * @type {Element}
+     */
+    var DIV: Element;
+
+    /**
+     * Create the tooltip div and inject it onto the page.
+     */
+    function createDom(): void;
+
+    /**
+     * Binds the required mouse events onto an SVG element.
+     * @param {!Element} element SVG element onto which tooltip is to be bound.
+     */
+    function bindMouseEvents(element: Element): void;
+
+    /**
+     * Hide the tooltip if the mouse is over a different object.
+     * Initialize the tooltip to potentially appear for this object.
+     * @param {!Event} e Mouse event.
+     * @private
+     */
+    function onMouseOver_(e: Event): void;
+
+    /**
+     * Hide the tooltip if the mouse leaves the object and enters the workspace.
+     * @param {!Event} _e Mouse event.
+     * @private
+     */
+    function onMouseOut_(_e: Event): void;
+
+    /**
+     * When hovering over an element, schedule a tooltip to be shown.  If a tooltip
+     * is already visible, hide it if the mouse strays out of a certain radius.
+     * @param {!Event} e Mouse event.
+     * @private
+     */
+    function onMouseMove_(e: Event): void;
+
+    /**
+     * Hide the tooltip.
+     */
+    function hide(): void;
+
+    /**
+     * Hide any in-progress tooltips and block showing new tooltips until the next
+     * call to unblock().
+     * @package
+     */
+    function block(): void;
+
+    /**
+     * Unblock tooltips: allow them to be scheduled and shown according to their own
+     * logic.
+     * @package
+     */
+    function unblock(): void;
+
+    /**
+     * Create the tooltip and show it.
+     * @private
+     */
+    function show_(): void;
+}
+
+
+declare module Blockly.Touch {
+
+    /**
+      * Whether touch is enabled in the browser.
+      * Copied from Closure's goog.events.BrowserFeature.TOUCH_ENABLED
+      */
+    var TOUCH_ENABLED: any /*missing*/;
+
+    /**
+     * Which touch events are we currently paying attention to?
+     * @type {?string}
+     * @private
+     */
+    var touchIdentifier_: string;
+
+    /**
+     * The TOUCH_MAP lookup dictionary specifies additional touch events to fire,
+     * in conjunction with mouse events.
+     * @type {Object}
+     */
+    var TOUCH_MAP: Object;
+
+    /**
+     * Clear the touch identifier that tracks which touch stream to pay attention
+     * to.  This ends the current drag/gesture and allows other pointers to be
+     * captured.
+     */
+    function clearTouchIdentifier(): void;
+
+    /**
+     * Decide whether Blockly should handle or ignore this event.
+     * Mouse and touch events require special checks because we only want to deal
+     * with one touch stream at a time.  All other events should always be handled.
+     * @param {!Event} e The event to check.
+     * @return {boolean} True if this event should be passed through to the
+     *     registered handler; false if it should be blocked.
+     */
+    function shouldHandleEvent(e: Event): boolean;
+
+    /**
+     * Get the touch identifier from the given event.  If it was a mouse event, the
+     * identifier is the string 'mouse'.
+     * @param {!Event} e Mouse event or touch event.
+     * @return {string} The touch identifier from the first changed touch, if
+     *     defined.  Otherwise 'mouse'.
+     */
+    function getTouchIdentifierFromEvent(e: Event): string;
+
+    /**
+     * Check whether the touch identifier on the event matches the current saved
+     * identifier.  If there is no identifier, that means it's a mouse event and
+     * we'll use the identifier "mouse".  This means we won't deal well with
+     * multiple mice being used at the same time.  That seems okay.
+     * If the current identifier was unset, save the identifier from the
+     * event.  This starts a drag/gesture, during which touch events with other
+     * identifiers will be silently ignored.
+     * @param {!Event} e Mouse event or touch event.
+     * @return {boolean} Whether the identifier on the event matches the current
+     *     saved identifier.
+     */
+    function checkTouchIdentifier(e: Event): boolean;
+
+    /**
+     * Set an event's clientX and clientY from its first changed touch.  Use this to
+     * make a touch event work in a mouse event handler.
+     * @param {!Event} e A touch event.
+     */
+    function setClientFromTouch(e: Event): void;
+
+    /**
+     * Check whether a given event is a mouse or touch event.
+     * @param {!Event} e An event.
+     * @return {boolean} True if it is a mouse or touch event; false otherwise.
+     */
+    function isMouseOrTouchEvent(e: Event): boolean;
+
+    /**
+     * Check whether a given event is a touch event or a pointer event.
+     * @param {!Event} e An event.
+     * @return {boolean} True if it is a touch event; false otherwise.
+     */
+    function isTouchEvent(e: Event): boolean;
+
+    /**
+     * Split an event into an array of events, one per changed touch or mouse
+     * point.
+     * @param {!Event} e A mouse event or a touch event with one or more changed
+     * touches.
+     * @return {!Array.<!Event>} An array of mouse or touch events.  Each touch
+     *     event will have exactly one changed touch.
+     */
+    function splitEventByTouches(e: Event): Event[];
+}
+
+declare module Blockly {
+
+    /**
+     * PID of queued long-press task.
+     * @private
+     */
+    var longPid_: any /*missing*/;
+
+    /**
+     * Context menus on touch devices are activated using a long-press.
+     * Unfortunately the contextmenu touch event is currently (2015) only supported
+     * by Chrome.  This function is fired on any touchstart event, queues a task,
+     * which after about a second opens the context menu.  The tasks is killed
+     * if the touch event terminates early.
+     * @param {!Event} e Touch start event.
+     * @param {Blockly.Gesture} gesture The gesture that triggered this longStart.
+     * @private
+     */
+    function longStart_(e: Event, gesture: Blockly.Gesture): void;
+
+    /**
+     * Nope, that's not a long-press.  Either touchend or touchcancel was fired,
+     * or a drag has begun.  Kill the queued long-press task.
+     * @private
+     */
+    function longStop_(): void;
+}
+
+
+declare module Blockly {
+
+    class TouchGesture extends TouchGesture__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class TouchGesture__Class extends Blockly.Gesture__Class  { 
+    
+            /**
+             * Class for one gesture.
+             * @param {!Event} e The event that kicked off this gesture.
+             * @param {!Blockly.WorkspaceSvg} creatorWorkspace The workspace that created
+             *     this gesture and has a reference to it.
+             * @extends {Blockly.Gesture}
+             * @constructor
+             */
+            constructor(e: Event, creatorWorkspace: Blockly.WorkspaceSvg);
+    
+            /**
+             * Boolean for whether or not this gesture is a multi-touch gesture.
+             * @type {boolean}
+             * @private
+             */
+            isMultiTouch_: boolean;
+    
+            /**
+             * A map of cached points used for tracking multi-touch gestures.
+             * @type {Object<number|string, Blockly.utils.Coordinate>}
+             * @private
+             */
+            cachedPoints_: { [key: string]: Blockly.utils.Coordinate };
+    
+            /**
+             * This is the ratio between the starting distance between the touch points
+             * and the most recent distance between the touch points.
+             * Scales between 0 and 1 mean the most recent zoom was a zoom out.
+             * Scales above 1.0 mean the most recent zoom was a zoom in.
+             * @type {number}
+             * @private
+             */
+            previousScale_: number;
+    
+            /**
+             * The starting distance between two touch points.
+             * @type {number}
+             * @private
+             */
+            startDistance_: number;
+    
+            /**
+             * A handle to use to unbind the second touch start or pointer down listener
+             * at the end of a drag.
+             * Opaque data returned from Blockly.bindEventWithChecks_.
+             * @type {Array.<!Array>}
+             * @private
+             */
+            onStartWrapper_: any[][];
+    
+            /**
+             * Start a gesture: update the workspace to indicate that a gesture is in
+             * progress and bind mousemove and mouseup handlers.
+             * @param {!Event} e A mouse down, touch start or pointer down event.
+             * @package
+             */
+            doStart(e: Event): void;
+    
+            /**
+             * Bind gesture events.
+             * Overriding the gesture definition of this function, binding the same
+             * functions for onMoveWrapper_ and onUpWrapper_ but passing
+             * opt_noCaptureIdentifier.
+             * In addition, binding a second mouse down event to detect multi-touch events.
+             * @param {!Event} e A mouse down or touch start event.
+             * @package
+             */
+            bindMouseEvents(e: Event): void;
+    
+            /**
+             * Handle a mouse down, touch start, or pointer down event.
+             * @param {!Event} e A mouse down, touch start, or pointer down event.
+             * @package
+             */
+            handleStart(e: Event): void;
+    
+            /**
+             * Handle a mouse move, touch move, or pointer move event.
+             * @param {!Event} e A mouse move, touch move, or pointer move event.
+             * @package
+             */
+            handleMove(e: Event): void;
+    
+            /**
+             * Handle a mouse up, touch end, or pointer up event.
+             * @param {!Event} e A mouse up, touch end, or pointer up event.
+             * @package
+             */
+            handleUp(e: Event): void;
+    
+            /**
+             * Whether this gesture is part of a multi-touch gesture.
+             * @return {boolean} Whether this gesture is part of a multi-touch gesture.
+             * @package
+             */
+            isMultiTouch(): boolean;
+    
+            /**
+             * Sever all links from this object.
+             * @package
+             */
+            dispose(): void;
+    
+            /**
+             * Handle a touch start or pointer down event and keep track of current
+             * pointers.
+             * @param {!Event} e A touch start, or pointer down event.
+             * @package
+             */
+            handleTouchStart(e: Event): void;
+    
+            /**
+             * Handle a touch move or pointer move event and zoom in/out if two pointers
+             * are on the screen.
+             * @param {!Event} e A touch move, or pointer move event.
+             * @package
+             */
+            handleTouchMove(e: Event): void;
+    
+            /**
+             * Handle a touch end or pointer end event and end the gesture.
+             * @param {!Event} e A touch end, or pointer end event.
+             * @package
+             */
+            handleTouchEnd(e: Event): void;
+    
+            /**
+             * Helper function returning the current touch point coordinate.
+             * @param {!Event} e A touch or pointer event.
+             * @return {Blockly.utils.Coordinate} The current touch point coordinate
+             * @package
+             */
+            getTouchPoint(e: Event): Blockly.utils.Coordinate;
+    } 
+    
+}
+
+declare module Blockly.TouchGesture {
+
+    /**
+     * A multiplier used to convert the gesture scale to a zoom in delta.
+     * @const
+     */
+    var ZOOM_IN_MULTIPLIER: any /*missing*/;
+
+    /**
+     * A multiplier used to convert the gesture scale to a zoom out delta.
+     * @const
+     */
+    var ZOOM_OUT_MULTIPLIER: any /*missing*/;
+}
+
+
+declare module Blockly {
+
+    class Trashcan extends Trashcan__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Trashcan__Class  { 
+    
+            /**
+             * Class for a trash can.
+             * @param {!Blockly.Workspace} workspace The workspace to sit in.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * The workspace the trashcan sits in.
+             * @type {!Blockly.Workspace}
+             * @private
+             */
+            workspace_: Blockly.Workspace;
+    
+            /**
+             * True if the trashcan contains blocks, otherwise false.
+             * @type {boolean}
+             * @private
+             */
+            hasBlocks_: boolean;
+    
+            /**
+             * A list of Xml (stored as strings) representing blocks "inside" the trashcan.
+             * @type {Array}
+             * @private
+             */
+            contents_: any[];
+    
+            /**
+             * Width of both the trash can and lid images.
+             * @type {number}
+             * @private
+             */
+            WIDTH_: number;
+    
+            /**
+             * Height of the trashcan image (minus lid).
+             * @type {number}
+             * @private
+             */
+            BODY_HEIGHT_: number;
+    
+            /**
+             * Height of the lid image.
+             * @type {number}
+             * @private
+             */
+            LID_HEIGHT_: number;
+    
+            /**
+             * Distance between trashcan and bottom edge of workspace.
+             * @type {number}
+             * @private
+             */
+            MARGIN_BOTTOM_: number;
+    
+            /**
+             * Distance between trashcan and right edge of workspace.
+             * @type {number}
+             * @private
+             */
+            MARGIN_SIDE_: number;
+    
+            /**
+             * Extent of hotspot on all sides beyond the size of the image.
+             * @type {number}
+             * @private
+             */
+            MARGIN_HOTSPOT_: number;
+    
+            /**
+             * Location of trashcan in sprite image.
+             * @type {number}
+             * @private
+             */
+            SPRITE_LEFT_: number;
+    
+            /**
+             * Location of trashcan in sprite image.
+             * @type {number}
+             * @private
+             */
+            SPRITE_TOP_: number;
+    
+            /**
+             * The openness of the lid when the trashcan contains blocks.
+             *    (0.0 = closed, 1.0 = open)
+             * @type {number}
+             * @private
+             */
+            HAS_BLOCKS_LID_ANGLE: number;
+    
+            /**
+             * Current open/close state of the lid.
+             * @type {boolean}
+             */
+            isOpen: boolean;
+    
+            /**
+             * The minimum openness of the lid. Used to indicate if the trashcan contains
+             *  blocks.
+             * @type {number}
+             * @private
+             */
+            minOpenness_: number;
+    
+            /**
+             * The SVG group containing the trash can.
+             * @type {Element}
+             * @private
+             */
+            svgGroup_: Element;
+    
+            /**
+             * The SVG image element of the trash can lid.
+             * @type {Element}
+             * @private
+             */
+            svgLid_: Element;
+    
+            /**
+             * Task ID of opening/closing animation.
+             * @type {number}
+             * @private
+             */
+            lidTask_: number;
+    
+            /**
+             * Current state of lid opening (0.0 = closed, 1.0 = open).
+             * @type {number}
+             * @private
+             */
+            lidOpen_: number;
+    
+            /**
+             * Left coordinate of the trash can.
+             * @type {number}
+             * @private
+             */
+            left_: number;
+    
+            /**
+             * Top coordinate of the trash can.
+             * @type {number}
+             * @private
+             */
+            top_: number;
+    
+            /**
+             * Create the trash can elements.
+             * @return {!Element} The trash can's SVG group.
+             */
+            createDom(): Element;
+    
+            /**
+             * Initialize the trash can.
+             * @param {number} verticalSpacing Vertical distance from workspace edge to the
+             *    same edge of the trashcan.
+             * @return {number} Vertical distance from workspace edge to the opposite
+             *    edge of the trashcan.
+             */
+            init(verticalSpacing: number): number;
+    
+            /**
+             * Dispose of this trash can.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Position the trashcan.
+             * It is positioned in the opposite corner to the corner the
+             * categories/toolbox starts at.
+             */
+            position(): void;
+    
+            /**
+             * Return the deletion rectangle for this trash can.
+             * @return {Blockly.utils.Rect} Rectangle in which to delete.
+             */
+            getClientRect(): Blockly.utils.Rect;
+    
+            /**
+             * Flip the lid open or shut.
+             * @param {boolean} state True if open.
+             * @private
+             */
+            setOpen_(state: boolean): void;
+    
+            /**
+             * Rotate the lid open or closed by one step.  Then wait and recurse.
+             * @private
+             */
+            animateLid_(): void;
+    
+            /**
+             * Set the angle of the trashcan's lid.
+             * @param {number} lidAngle The angle at which to set the lid.
+             * @private
+             */
+            setLidAngle_(lidAngle: number): void;
+    
+            /**
+             * Flip the lid shut.
+             * Called externally after a drag.
+             */
+            close(): void;
+    
+            /**
+             * Inspect the contents of the trash.
+             */
+            click(): void;
+    
+            /**
+             * Indicate that the trashcan can be clicked (by opening it) if it has blocks.
+             * @private
+             */
+            mouseOver_(): void;
+    
+            /**
+             * Close the lid of the trashcan if it was open (Vis. it was indicating it had
+             *    blocks).
+             * @private
+             */
+            mouseOut_(): void;
+    
+            /**
+             * Handle a BLOCK_DELETE event. Adds deleted blocks oldXml to the content array.
+             * @return {!Function} Function to call when a block is deleted.
+             * @private
+             */
+            onDelete_(): Function;
+    
+            /**
+             * Converts XML representing a block into text that can be stored in the
+             *    content array.
+             * @param {!Element} xml An XML tree defining the block and any
+             *    connected child blocks.
+             * @return {string} Text representing the XML tree, cleaned of all unnecessary
+             * attributes.
+             * @private
+             */
+            cleanBlockXML_(xml: Element): string;
+    } 
+    
+}
+
+
+declare module Blockly.Events {
+
+    class Ui extends Ui__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Ui__Class extends Blockly.Events.Abstract__Class  { 
+    
+            /**
+             * Class for a UI event.
+             * UI events are events that don't need to be sent over the wire for multi-user
+             * editing to work (e.g. scrolling the workspace, zooming, opening toolbox
+             * categories).
+             * UI events do not undo or redo.
+             * @param {Blockly.Block} block The affected block.
+             * @param {string} element One of 'selected', 'comment', 'mutatorOpen', 'breakpoint' etc.
+             * @param {*} oldValue Previous value of element.
+             * @param {*} newValue New value of element.
+             * @extends {Blockly.Events.Abstract}
+             * @constructor
+             */
+            constructor(block: Blockly.Block, element: string, oldValue: any, newValue: any);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    } 
+    
+}
+
+
+declare module Blockly.utils.uiMenu {
+
+    /**
+     * Get the size of a rendered goog.ui.Menu.
+     * @param {!goog.ui.Menu} menu The menu to measure.
+     * @return {!goog.math.Size} Object with width and height properties.
+     * @package
+     */
+    function getSize(menu: goog.ui.Menu): goog.math.Size;
+
+    /**
+     * Adjust the bounding boxes used to position the widget div to deal with RTL
+     * goog.ui.Menu positioning.  In RTL mode the menu renders down and to the left
+     * of its start point, instead of down and to the right.  Adjusting all of the
+     * bounding boxes accordingly allows us to use the same code for all widgets.
+     * This function in-place modifies the provided bounding boxes.
+     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
+     *     in window coordinates.
+     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
+     *     coordinates.
+     * @param {!goog.math.Size} menuSize The size of the menu that is inside the
+     *     widget div, in window coordinates.
+     * @package
+     */
+    function adjustBBoxesForRTL(viewportBBox: Object, anchorBBox: Object, menuSize: goog.math.Size): void;
+}
+
+
+declare module Blockly.utils.dom {
+
+    /**
+     * Removes a node from its parent. No-op if not attached to a parent.
+     * @param {Node} node The node to remove.
+     * @return {Node} The node removed if removed; else, null.
+     */
+    function removeNode(node: Node): Node;
+}
+
+declare module Blockly.utils {
+
+    /**
+     * Don't do anything for this event, just halt propagation.
+     * @param {!Event} e An event.
+     */
+    function noEvent(e: Event): void;
+
+    /**
+     * Is this event targeting a text input widget?
+     * @param {!Event} e An event.
+     * @return {boolean} True if text input.
+     */
+    function isTargetInput(e: Event): boolean;
+
+    /**
+     * Return the coordinates of the top-left corner of this element relative to
+     * its parent.  Only for SVG elements and children (e.g. rect, g, path).
+     * @param {!Element} element SVG element to find the coordinates of.
+     * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
+     */
+    function getRelativeXY(element: Element): Blockly.utils.Coordinate;
+
+    /**
+     * Return the coordinates of the top-left corner of this element relative to
+     * the div Blockly was injected into.
+     * @param {!Element} element SVG element to find the coordinates of. If this is
+     *     not a child of the div Blockly was injected into, the behaviour is
+     *     undefined.
+     * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
+     */
+    function getInjectionDivXY_(element: Element): Blockly.utils.Coordinate;
+
+    /**
+     * Is this event a right-click?
+     * @param {!Event} e Mouse event.
+     * @return {boolean} True if right-click.
+     */
+    function isRightButton(e: Event): boolean;
+
+    /**
+     * Return the converted coordinates of the given mouse event.
+     * The origin (0,0) is the top-left corner of the Blockly SVG.
+     * @param {!Event} e Mouse event.
+     * @param {!Element} svg SVG element.
+     * @param {SVGMatrix} matrix Inverted screen CTM to use.
+     * @return {!SVGPoint} Object with .x and .y properties.
+     */
+    function mouseToSvg(e: Event, svg: Element, matrix: SVGMatrix): SVGPoint;
+
+    /**
+     * Get the scroll delta of a mouse event in pixel units.
+     * @param {!Event} e Mouse event.
+     * @return {{x: number, y: number}} Scroll delta object with .x and .y
+     *    properties.
+     */
+    function getScrollDeltaPixels(e: Event): { x: number; y: number };
+
+    /**
+     * Parse a string with any number of interpolation tokens (%1, %2, ...).
+     * It will also replace string table references (e.g., %{bky_my_msg} and
+     * %{BKY_MY_MSG} will both be replaced with the value in
+     * Blockly.Msg['MY_MSG']). Percentage sign characters '%' may be self-escaped
+     * (e.g., '%%').
+     * @param {string} message Text which might contain string table references and
+     *     interpolation tokens.
+     * @return {!Array.<string|number>} Array of strings and numbers.
+     */
+    function tokenizeInterpolation(message: string): string|number[];
+
+    /**
+     * Replaces string table references in a message, if the message is a string.
+     * For example, "%{bky_my_msg}" and "%{BKY_MY_MSG}" will both be replaced with
+     * the value in Blockly.Msg['MY_MSG'].
+     * @param {string|?} message Message, which may be a string that contains
+     *     string table references.
+     * @return {string} String with message references replaced.
+     */
+    function replaceMessageReferences(message: string|any): string;
+
+    /**
+     * Validates that any %{MSG_KEY} references in the message refer to keys of
+     * the Blockly.Msg string table.
+     * @param {string} message Text which might contain string table references.
+     * @return {boolean} True if all message references have matching values.
+     *     Otherwise, false.
+     */
+    function checkMessageReferences(message: string): boolean;
+
+    /**
+     * Internal implementation of the message reference and interpolation token
+     * parsing used by tokenizeInterpolation() and replaceMessageReferences().
+     * @param {string} message Text which might contain string table references and
+     *     interpolation tokens.
+     * @param {boolean} parseInterpolationTokens Option to parse numeric
+     *     interpolation tokens (%1, %2, ...) when true.
+     * @return {!Array.<string|number>} Array of strings and numbers.
+     * @private
+     */
+    function tokenizeInterpolation_(message: string, parseInterpolationTokens: boolean): string|number[];
+
+    /**
+     * Generate a unique ID.  This should be globally unique.
+     * 87 characters ^ 20 length > 128 bits (better than a UUID).
+     * @return {string} A globally unique ID string.
+     */
+    function genUid(): string;
+
+    /**
+     * Check if 3D transforms are supported by adding an element
+     * and attempting to set the property.
+     * @return {boolean} True if 3D transforms are supported.
+     */
+    function is3dSupported(): boolean;
+
+    /**
+     * Calls a function after the page has loaded, possibly immediately.
+     * @param {function()} fn Function to run.
+     * @throws Error Will throw if no global document can be found (e.g., Node.js).
+     */
+    function runAfterPageLoad(fn: { (): any /*missing*/ }): void;
+
+    /**
+     * Get the position of the current viewport in window coordinates.  This takes
+     * scroll into account.
+     * @return {!Object} An object containing window width, height, and scroll
+     *     position in window coordinates.
+     * @package
+     */
+    function getViewportBBox(): Object;
+
+    /**
+     * Removes the first occurrence of a particular value from an array.
+     * @param {!Array} arr Array from which to remove
+     *     value.
+     * @param {*} obj Object to remove.
+     * @return {boolean} True if an element was removed.
+     * @package
+     */
+    function arrayRemove(arr: any[], obj: any): boolean;
+
+    /**
+     * Gets the document scroll distance as a coordinate object.
+     * Copied from Closure's goog.dom.getDocumentScroll.
+     * @return {!Blockly.utils.Coordinate} Object with values 'x' and 'y'.
+     */
+    function getDocumentScroll(): Blockly.utils.Coordinate;
+
+    /**
+     * Get a map of all the block's descendants mapping their type to the number of
+     *    children with that type.
+     * @param {!Blockly.Block} block The block to map.
+     * @param {boolean=} opt_stripFollowing Optionally ignore all following
+     *    statements (blocks that are not inside a value or statement input
+     *    of the block).
+     * @return {!Object} Map of types to type counts for descendants of the bock.
+     */
+    function getBlockTypeCounts(block: Blockly.Block, opt_stripFollowing?: boolean): Object;
+}
+
+declare module Blockly.utils.getRelativeXY {
+
+    /**
+     * Static regex to pull the x,y values out of an SVG translate() directive.
+     * Note that Firefox and IE (9,10) return 'translate(12)' instead of
+     * 'translate(12, 0)'.
+     * Note that IE (9,10) returns 'translate(16 8)' instead of 'translate(16, 8)'.
+     * Note that IE has been reported to return scientific notation (0.123456e-42).
+     * @type {!RegExp}
+     * @private
+     */
+    var XY_REGEX_: RegExp;
+
+    /**
+     * Static regex to pull the x,y values out of a translate() or translate3d()
+     * style property.
+     * Accounts for same exceptions as XY_REGEX_.
+     * @type {!RegExp}
+     * @private
+     */
+    var XY_STYLE_REGEX_: RegExp;
+}
+
+declare module Blockly.utils.genUid {
+
+    /**
+     * Legal characters for the unique ID.  Should be all on a US keyboard.
+     * No characters that conflict with XML or JSON.  Requests to remove additional
+     * 'problematic' characters from this soup will be denied.  That's your failure
+     * to properly escape in your own environment.  Issues #251, #625, #682, #1304.
+     * @private
+     */
+    var soup_: any /*missing*/;
+}
+
+
+declare module Blockly.Variables {
+
+    /**
+     * Constant to separate variable names from procedures and generated functions
+     * when running generators.
+     * @deprecated Use Blockly.VARIABLE_CATEGORY_NAME
+     */
+    var NAME_TYPE: any /*missing*/;
+
+    /**
+     * Find all user-created variables that are in use in the workspace.
+     * For use by generators.
+     * To get a list of all variables on a workspace, including unused variables,
+     * call Workspace.getAllVariables.
+     * @param {!Blockly.Workspace} ws The workspace to search for variables.
+     * @return {!Array.<!Blockly.VariableModel>} Array of variable models.
+     */
+    function allUsedVarModels(ws: Blockly.Workspace): Blockly.VariableModel[];
+
+    /**
+     * Find all user-created variables that are in use in the workspace and return
+     * only their names.
+     * For use by generators.
+     * To get a list of all variables on a workspace, including unused variables,
+     * call Workspace.getAllVariables.
+     * @deprecated January 2018
+     */
+    function allUsedVariables(): void;
+
+    /**
+     * @private
+     * @type {Object<string,boolean>}
+     */
+    var ALL_DEVELOPER_VARS_WARNINGS_BY_BLOCK_TYPE_: { [key: string]: boolean };
+
+    /**
+     * Find all developer variables used by blocks in the workspace.
+     * Developer variables are never shown to the user, but are declared as global
+     * variables in the generated code.
+     * To declare developer variables, define the getDeveloperVariables function on
+     * your block and return a list of variable names.
+     * For use by generators.
+     * @param {!Blockly.Workspace} workspace The workspace to search.
+     * @return {!Array.<string>} A list of non-duplicated variable names.
+     */
+    function allDeveloperVariables(workspace: Blockly.Workspace): string[];
+
+    /**
+     * Construct the elements (blocks and button) required by the flyout for the
+     * variable category.
+     * @param {!Blockly.Workspace} workspace The workspace containing variables.
+     * @return {!Array.<!Element>} Array of XML elements.
+     */
+    function flyoutCategory(workspace: Blockly.Workspace): Element[];
+
+    /**
+     * Construct the blocks required by the flyout for the variable category.
+     * @param {!Blockly.Workspace} workspace The workspace containing variables.
+     * @return {!Array.<!Element>} Array of XML block elements.
+     */
+    function flyoutCategoryBlocks(workspace: Blockly.Workspace): Element[];
+
+    /**
+     * Return a new variable name that is not yet being used. This will try to
+     * generate single letter variable names in the range 'i' to 'z' to start with.
+     * If no unique name is located it will try 'i' to 'z', 'a' to 'h',
+     * then 'i2' to 'z2' etc.  Skip 'l'.
+     * @param {!Blockly.Workspace} workspace The workspace to be unique in.
+     * @return {string} New variable name.
+     */
+    function generateUniqueName(workspace: Blockly.Workspace): string;
+
+    /**
+     * Handles "Create Variable" button in the default variables toolbox category.
+     * It will prompt the user for a variable name, including re-prompts if a name
+     * is already in use among the workspace's variables.
+     *
+     * Custom button handlers can delegate to this function, allowing variables
+     * types and after-creation processing. More complex customization (e.g.,
+     * prompting for variable type) is beyond the scope of this function.
+     *
+     * @param {!Blockly.Workspace} workspace The workspace on which to create the
+     *     variable.
+     * @param {function(?string=)=} opt_callback A callback. It will be passed an
+     *     acceptable new variable name, or null if change is to be aborted (cancel
+     *     button), or undefined if an existing variable was chosen.
+     * @param {string=} opt_type The type of the variable like 'int', 'string', or
+     *     ''. This will default to '', which is a specific type.
+     */
+    function createVariableButtonHandler(workspace: Blockly.Workspace, opt_callback?: { (_0: string): any /*missing*/ }, opt_type?: string): void;
+
+    /**
+     * Original name of Blockly.Variables.createVariableButtonHandler(..).
+     * @deprecated Use Blockly.Variables.createVariableButtonHandler(..).
+     *
+     * @param {!Blockly.Workspace} workspace The workspace on which to create the
+     *     variable.
+     * @param {function(?string=)=} opt_callback A callback. It will be passed an
+     *     acceptable new variable name, or null if change is to be aborted (cancel
+     *     button), or undefined if an existing variable was chosen.
+     * @param {string=} opt_type The type of the variable like 'int', 'string', or
+     *     ''. This will default to '', which is a specific type.
+     */
+    function createVariable(workspace: Blockly.Workspace, opt_callback?: { (_0: string): any /*missing*/ }, opt_type?: string): void;
+
+    /**
+     * Rename a variable with the given workspace, variableType, and oldName.
+     * @param {!Blockly.Workspace} workspace The workspace on which to rename the
+     *     variable.
+     * @param {Blockly.VariableModel} variable Variable to rename.
+     * @param {function(?string=)=} opt_callback A callback. It will
+     *     be passed an acceptable new variable name, or null if change is to be
+     *     aborted (cancel button), or undefined if an existing variable was chosen.
+     */
+    function renameVariable(workspace: Blockly.Workspace, variable: Blockly.VariableModel, opt_callback?: { (_0: string): any /*missing*/ }): void;
+
+    /**
+     * Prompt the user for a new variable name.
+     * @param {string} promptText The string of the prompt.
+     * @param {string} defaultText The default value to show in the prompt's field.
+     * @param {function(?string)} callback A callback. It will return the new
+     *     variable name, or null if the user picked something illegal.
+     */
+    function promptName(promptText: string, defaultText: string, callback: { (_0: string): any /*missing*/ }): void;
+
+    /**
+     * Check whether there exists a variable with the given name but a different
+     * type.
+     * @param {string} name The name to search for.
+     * @param {string} type The type to exclude from the search.
+     * @param {!Blockly.Workspace} workspace The workspace to search for the
+     *     variable.
+     * @return {Blockly.VariableModel} The variable with the given name and a
+     *     different type, or null if none was found.
+     * @private
+     */
+    function nameUsedWithOtherType_(name: string, type: string, workspace: Blockly.Workspace): Blockly.VariableModel;
+
+    /**
+     * Check whether there exists a variable with the given name of any type.
+     * @param {string} name The name to search for.
+     * @param {!Blockly.Workspace} workspace The workspace to search for the
+     *     variable.
+     * @return {Blockly.VariableModel} The variable with the given name,
+     *     or null if none was found.
+     * @private
+     */
+    function nameUsedWithAnyType_(name: string, workspace: Blockly.Workspace): Blockly.VariableModel;
+
+    /**
+     * Generate XML string for variable field.
+     * @param {!Blockly.VariableModel} variableModel The variable model to generate
+     *     an XML string from.
+     * @return {string} The generated XML.
+     * @package
+     */
+    function generateVariableFieldXmlString(variableModel: Blockly.VariableModel): string;
+
+    /**
+     * Generate DOM objects representing a variable field.
+     * @param {!Blockly.VariableModel} variableModel The variable model to
+     *     represent.
+     * @return {Element} The generated DOM.
+     * @public
+     */
+    function generateVariableFieldDom(variableModel: Blockly.VariableModel): Element;
+
+    /**
+     * Helper function to look up or create a variable on the given workspace.
+     * If no variable exists, creates and returns it.
+     * @param {!Blockly.Workspace} workspace The workspace to search for the
+     *     variable.  It may be a flyout workspace or main workspace.
+     * @param {string} id The ID to use to look up or create the variable, or null.
+     * @param {string=} opt_name The string to use to look up or create the
+     *     variable.
+     * @param {string=} opt_type The type to use to look up or create the variable.
+     * @return {!Blockly.VariableModel} The variable corresponding to the given ID
+     *     or name + type combination.
+     */
+    function getOrCreateVariablePackage(workspace: Blockly.Workspace, id: string, opt_name?: string, opt_type?: string): Blockly.VariableModel;
+
+    /**
+     * Look up  a variable on the given workspace.
+     * Always looks in the main workspace before looking in the flyout workspace.
+     * Always prefers lookup by ID to lookup by name + type.
+     * @param {!Blockly.Workspace} workspace The workspace to search for the
+     *     variable.  It may be a flyout workspace or main workspace.
+     * @param {string} id The ID to use to look up the variable, or null.
+     * @param {string=} opt_name The string to use to look up the variable.
+     *     Only used if lookup by ID fails.
+     * @param {string=} opt_type The type to use to look up the variable.
+     *     Only used if lookup by ID fails.
+     * @return {Blockly.VariableModel} The variable corresponding to the given ID
+     *     or name + type combination, or null if not found.
+     * @public
+     */
+    function getVariable(workspace: Blockly.Workspace, id: string, opt_name?: string, opt_type?: string): Blockly.VariableModel;
+
+    /**
+     * Helper function to create a variable on the given workspace.
+     * @param {!Blockly.Workspace} workspace The workspace in which to create the
+     * variable.  It may be a flyout workspace or main workspace.
+     * @param {string} id The ID to use to create the variable, or null.
+     * @param {string=} opt_name The string to use to create the variable.
+     * @param {string=} opt_type The type to use to create the variable.
+     * @return {!Blockly.VariableModel} The variable corresponding to the given ID
+     *     or name + type combination.
+     * @private
+     */
+    function createVariable_(workspace: Blockly.Workspace, id: string, opt_name?: string, opt_type?: string): Blockly.VariableModel;
+
+    /**
+     * Helper function to get the list of variables that have been added to the
+     * workspace after adding a new block, using the given list of variables that
+     * were in the workspace before the new block was added.
+     * @param {!Blockly.Workspace} workspace The workspace to inspect.
+     * @param {!Array.<!Blockly.VariableModel>} originalVariables The array of
+     *     variables that existed in the workspace before adding the new block.
+     * @return {!Array.<!Blockly.VariableModel>} The new array of variables that
+     *     were freshly added to the workspace after creating the new block,
+     *     or [] if no new variables were added to the workspace.
+     * @package
+     */
+    function getAddedVariables(workspace: Blockly.Workspace, originalVariables: Blockly.VariableModel[]): Blockly.VariableModel[];
+}
+
+
+declare module Blockly.VariablesDynamic {
+
+    /**
+     * Construct the elements (blocks and button) required by the flyout for the
+     * variable category.
+     * @param {!Blockly.Workspace} workspace The workspace containing variables.
+     * @return {!Array.<!Element>} Array of XML elements.
+     */
+    function flyoutCategory(workspace: Blockly.Workspace): Element[];
+
+    /**
+     * Construct the blocks required by the flyout for the variable category.
+     * @param {!Blockly.Workspace} workspace The workspace containing variables.
+     * @return {!Array.<!Element>} Array of XML block elements.
+     */
+    function flyoutCategoryBlocks(workspace: Blockly.Workspace): Element[];
+}
+
+
+declare module Blockly.Events {
+
+    class VarBase extends VarBase__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class VarBase__Class extends Blockly.Events.Abstract__Class  { 
+    
+            /**
+             * Abstract class for a variable event.
+             * @param {Blockly.VariableModel} variable The variable this event corresponds
+             *     to.
+             * @extends {Blockly.Events.Abstract}
+             * @constructor
+             */
+            constructor(variable: Blockly.VariableModel);
+    
+            /**
+             * The variable id for the variable this event pertains to.
+             * @type {string}
+             */
+            varId: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    } 
+    
+
+    class VarCreate extends VarCreate__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class VarCreate__Class extends Blockly.Events.VarBase__Class  { 
+    
+            /**
+             * Class for a variable creation event.
+             * @param {Blockly.VariableModel} variable The created variable.
+             *     Null for a blank event.
+             * @extends {Blockly.Events.VarBase}
+             * @constructor
+             */
+            constructor(variable: Blockly.VariableModel);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Run a variable creation event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+
+    class VarDelete extends VarDelete__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class VarDelete__Class extends Blockly.Events.VarBase__Class  { 
+    
+            /**
+             * Class for a variable deletion event.
+             * @param {Blockly.VariableModel} variable The deleted variable.
+             *     Null for a blank event.
+             * @extends {Blockly.Events.VarBase}
+             * @constructor
+             */
+            constructor(variable: Blockly.VariableModel);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Run a variable deletion event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+
+    class VarRename extends VarRename__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class VarRename__Class extends Blockly.Events.VarBase__Class  { 
+    
+            /**
+             * Class for a variable rename event.
+             * @param {Blockly.VariableModel} variable The renamed variable.
+             *     Null for a blank event.
+             * @param {string} newName The new name the variable will be changed to.
+             * @extends {Blockly.Events.VarBase}
+             * @constructor
+             */
+            constructor(variable: Blockly.VariableModel, newName: string);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Run a variable rename event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class VariableMap extends VariableMap__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class VariableMap__Class  { 
+    
+            /**
+             * Class for a variable map.  This contains a dictionary data structure with
+             * variable types as keys and lists of variables as values.  The list of
+             * variables are the type indicated by the key.
+             * @param {!Blockly.Workspace} workspace The workspace this map belongs to.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * A map from variable type to list of variable names.  The lists contain all
+             * of the named variables in the workspace, including variables
+             * that are not currently in use.
+             * @type {!Object.<string, !Array.<Blockly.VariableModel>>}
+             * @private
+             */
+            variableMap_: { [key: string]: Blockly.VariableModel[] };
+    
+            /**
+             * The workspace this map belongs to.
+             * @type {!Blockly.Workspace}
+             */
+            workspace: Blockly.Workspace;
+    
+            /**
+             * Clear the variable map.
+             */
+            clear(): void;
+    
+            /**
+             * Rename the given variable by updating its name in the variable map.
+             * @param {!Blockly.VariableModel} variable Variable to rename.
+             * @param {string} newName New variable name.
+             * @package
+             */
+            renameVariable(variable: Blockly.VariableModel, newName: string): void;
+    
+            /**
+             * Rename a variable by updating its name in the variable map. Identify the
+             * variable to rename with the given ID.
+             * @param {string} id ID of the variable to rename.
+             * @param {string} newName New variable name.
+             */
+            renameVariableById(id: string, newName: string): void;
+    
+            /**
+             * Update the name of the given variable and refresh all references to it.
+             * The new name must not conflict with any existing variable names.
+             * @param {!Blockly.VariableModel} variable Variable to rename.
+             * @param {string} newName New variable name.
+             * @param {!Array.<!Blockly.Block>} blocks The list of all blocks in the
+             *     workspace.
+             * @private
+             */
+            renameVariableAndUses_(variable: Blockly.VariableModel, newName: string, blocks: Blockly.Block[]): void;
+    
+            /**
+             * Update the name of the given variable to the same name as an existing
+             * variable.  The two variables are coalesced into a single variable with the ID
+             * of the existing variable that was already using newName.
+             * Refresh all references to the variable.
+             * @param {!Blockly.VariableModel} variable Variable to rename.
+             * @param {string} newName New variable name.
+             * @param {!Blockly.VariableModel} conflictVar The variable that was already
+             *     using newName.
+             * @param {!Array.<!Blockly.Block>} blocks The list of all blocks in the
+             *     workspace.
+             * @private
+             */
+            renameVariableWithConflict_(variable: Blockly.VariableModel, newName: string, conflictVar: Blockly.VariableModel, blocks: Blockly.Block[]): void;
+    
+            /**
+             * Create a variable with a given name, optional type, and optional ID.
+             * @param {string} name The name of the variable. This must be unique across
+             *     variables and procedures.
+             * @param {?string=} opt_type The type of the variable like 'int' or 'string'.
+             *     Does not need to be unique. Field_variable can filter variables based on
+             *     their type. This will default to '' which is a specific type.
+             * @param {?string=} opt_id The unique ID of the variable. This will default to
+             *     a UUID.
+             * @return {Blockly.VariableModel} The newly created variable.
+             */
+            createVariable(name: string, opt_type?: string, opt_id?: string): Blockly.VariableModel;
+    
+            /**
+             * Delete a variable.
+             * @param {!Blockly.VariableModel} variable Variable to delete.
+             */
+            deleteVariable(variable: Blockly.VariableModel): void;
+    
+            /**
+             * Delete a variables by the passed in ID and all of its uses from this
+             * workspace. May prompt the user for confirmation.
+             * @param {string} id ID of variable to delete.
+             */
+            deleteVariableById(id: string): void;
+    
+            /**
+             * Deletes a variable and all of its uses from this workspace without asking the
+             * user for confirmation.
+             * @param {!Blockly.VariableModel} variable Variable to delete.
+             * @param {!Array.<!Blockly.Block>} uses An array of uses of the variable.
+             * @private
+             */
+            deleteVariableInternal_(variable: Blockly.VariableModel, uses: Blockly.Block[]): void;
+    
+            /**
+             * Find the variable by the given name and type and return it.  Return null if
+             *     it is not found.
+             * @param {string} name The name to check for.
+             * @param {string=} opt_type The type of the variable.  If not provided it
+             *     defaults to the empty string, which is a specific type.
+             * @return {Blockly.VariableModel} The variable with the given name, or null if
+             *     it was not found.
+             */
+            getVariable(name: string, opt_type?: string): Blockly.VariableModel;
+    
+            /**
+             * Find the variable by the given ID and return it. Return null if it is not
+             *     found.
+             * @param {string} id The ID to check for.
+             * @return {Blockly.VariableModel} The variable with the given ID.
+             */
+            getVariableById(id: string): Blockly.VariableModel;
+    
+            /**
+             * Get a list containing all of the variables of a specified type. If type is
+             *     null, return list of variables with empty string type.
+             * @param {?string} type Type of the variables to find.
+             * @return {!Array.<!Blockly.VariableModel>} The sought after variables of the
+             *     passed in type. An empty array if none are found.
+             */
+            getVariablesOfType(type: string): Blockly.VariableModel[];
+    
+            /**
+             * Return all variable and potential variable types.  This list always contains
+             * the empty string.
+             * @param {?Blockly.Workspace} ws The workspace used to look for potential
+             * variables. This can be different than the workspace stored on this object
+             * if the passed in ws is a flyout workspace.
+             * @return {!Array.<string>} List of variable types.
+             * @package
+             */
+            getVariableTypes(ws: Blockly.Workspace): string[];
+    
+            /**
+             * Return all variables of all types.
+             * @return {!Array.<!Blockly.VariableModel>} List of variable models.
+             */
+            getAllVariables(): Blockly.VariableModel[];
+    
+            /**
+             * Find all the uses of a named variable.
+             * @param {string} id ID of the variable to find.
+             * @return {!Array.<!Blockly.Block>} Array of block usages.
+             */
+            getVariableUsesById(id: string): Blockly.Block[];
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class VariableModel extends VariableModel__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class VariableModel__Class  { 
+    
+            /**
+             * Class for a variable model.
+             * Holds information for the variable including name, ID, and type.
+             * @param {!Blockly.Workspace} workspace The variable's workspace.
+             * @param {string} name The name of the variable. This must be unique across
+             *     variables and procedures.
+             * @param {string=} opt_type The type of the variable like 'int' or 'string'.
+             *     Does not need to be unique. Field_variable can filter variables based on
+             *     their type. This will default to '' which is a specific type.
+             * @param {string=} opt_id The unique ID of the variable. This will default to
+             *     a UUID.
+             * @see {Blockly.FieldVariable}
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace, name: string, opt_type?: string, opt_id?: string);
+    
+            /**
+             * The workspace the variable is in.
+             * @type {!Blockly.Workspace}
+             */
+            workspace: Blockly.Workspace;
+    
+            /**
+             * The name of the variable, typically defined by the user. It must be
+             * unique across all names used for procedures and variables. It may be
+             * changed by the user.
+             * @type {string}
+             */
+            name: string;
+    
+            /**
+             * The type of the variable, such as 'int' or 'sound_effect'. This may be
+             * used to build a list of variables of a specific type. By default this is
+             * the empty string '', which is a specific type.
+             * @see {Blockly.FieldVariable}
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * A unique id for the variable. This should be defined at creation and
+             * not change, even if the name changes. In most cases this should be a
+             * UUID.
+             * @type {string}
+             * @private
+             */
+            id_: string;
+    
+            /**
+             * @return {string} The ID for the variable.
+             */
+            getId(): string;
+    } 
+    
+}
+
+declare module Blockly.VariableModel {
+
+    /**
+     * A custom compare function for the VariableModel objects.
+     * @param {Blockly.VariableModel} var1 First variable to compare.
+     * @param {Blockly.VariableModel} var2 Second variable to compare.
+     * @return {number} -1 if name of var1 is less than name of var2, 0 if equal,
+     *     and 1 if greater.
+     * @package
+     */
+    function compareByName(var1: Blockly.VariableModel, var2: Blockly.VariableModel): number;
+}
+
+
+declare module Blockly {
+
+    class Warning extends Warning__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Warning__Class extends Blockly.Icon__Class  { 
+    
+            /**
+             * Class for a warning.
+             * @param {!Blockly.Block} block The block associated with this warning.
+             * @extends {Blockly.Icon}
+             * @constructor
+             */
+            constructor(block: Blockly.Block);
+    
+            /**
+             * Does this icon get hidden when the block is collapsed.
+             */
+            collapseHidden: any /*missing*/;
+    
+            /**
+             * Draw the warning icon.
+             * @param {!Element} group The icon group.
+             * @private
+             */
+            drawIcon_(group: Element): void;
+    
+            /**
+             * Show or hide the warning bubble.
+             * @param {boolean} visible True if the bubble should be visible.
+             */
+            setVisible(visible: boolean): void;
+    
+            /**
+             * Bring the warning to the top of the stack when clicked on.
+             * @param {!Event} _e Mouse up event.
+             * @private
+             */
+            bodyFocus_(_e: Event): void;
+    
+            /**
+             * Set this warning's text.
+             * @param {string} text Warning text (or '' to delete).
+             * @param {string} id An ID for this text entry to be able to maintain
+             *     multiple warnings.
+             */
+            setText(text: string, id: string): void;
+    
+            /**
+             * Get this warning's texts.
+             * @return {string} All texts concatenated into one string.
+             */
+            getText(): string;
+    
+            /**
+             * Dispose of this warning.
+             */
+            dispose(): void;
+    } 
+    
+}
+
+declare module Blockly.Warning {
+
+    /**
+     * Create the text for the warning's bubble.
+     * @param {string} text The text to display.
+     * @return {!SVGTextElement} The top-level node of the text.
+     * @private
+     */
+    function textToDom_(text: string): SVGTextElement;
+}
+
+
+declare module Blockly.WidgetDiv {
+
+    /**
+     * The HTML container.  Set once by Blockly.WidgetDiv.createDom.
+     * @type {Element}
+     */
+    var DIV: Element;
+
+    /**
+     * The object currently using this container.
+     * @type {Object}
+     * @private
+     */
+    var owner_: Object;
+
+    /**
+     * Optional cleanup function set by whichever object uses the widget.
+     * @type {Function}
+     * @private
+     */
+    var dispose_: Function;
+
+    /**
+     * Create the widget div and inject it onto the page.
+     */
+    function createDom(): void;
+
+    /**
+     * Initialize and display the widget div.  Close the old one if needed.
+     * @param {!Object} newOwner The object that will be using this container.
+     * @param {boolean} rtl Right-to-left (true) or left-to-right (false).
+     * @param {Function} dispose Optional cleanup function to be run when the
+     *     widget is closed.
+     */
+    function show(newOwner: Object, rtl: boolean, dispose: Function): void;
+
+    /**
+     *  Repositions the widgetDiv on window resize. If it doesn't know how to
+     *  calculate the new position, it wll just hide it instead.
+     */
+    function repositionForWindowResize(): void;
+
+    /**
+     * Destroy the widget and hide the div.
+     */
+    function hide(): void;
+
+    /**
+     * Is the container visible?
+     * @return {boolean} True if visible.
+     */
+    function isVisible(): boolean;
+
+    /**
+     * Destroy the widget and hide the div if it is being used by the specified
+     * object.
+     * @param {!Object} oldOwner The object that was using this container.
+     */
+    function hideIfOwner(oldOwner: Object): void;
+
+    /**
+     * Set the widget div's position and height.  This function does nothing clever:
+     * it will not ensure that your widget div ends up in the visible window.
+     * @param {number} x Horizontal location (window coordinates, not body).
+     * @param {number} y Vertical location (window coordinates, not body).
+     * @param {number} height The height of the widget div (pixels).
+     * @private
+     */
+    function positionInternal_(x: number, y: number, height: number): void;
+
+    /**
+     * Position the widget div based on an anchor rectangle.
+     * The widget should be placed adjacent to but not overlapping the anchor
+     * rectangle.  The preferred position is directly below and aligned to the left
+     * (LTR) or right (RTL) side of the anchor.
+     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
+     *     in window coordinates.
+     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
+     *     coordinates.
+     * @param {!goog.math.Size} widgetSize The size of the widget that is inside the
+     *     widget div, in window coordinates.
+     * @param {boolean} rtl Whether the workspace is in RTL mode.  This determines
+     *     horizontal alignment.
+     * @package
+     */
+    function positionWithAnchor(viewportBBox: Object, anchorBBox: Object, widgetSize: goog.math.Size, rtl: boolean): void;
+
+    /**
+     * Calculate an x position (in window coordinates) such that the widget will not
+     * be offscreen on the right or left.
+     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
+     *     in window coordinates.
+     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
+     *     coordinates.
+     * @param {goog.math.Size} widgetSize The dimensions of the widget inside the
+     *     widget div.
+     * @param {boolean} rtl Whether the Blockly workspace is in RTL mode.
+     * @return {number} A valid x-coordinate for the top left corner of the widget
+     *     div, in window coordinates.
+     * @private
+     */
+    function calculateX_(viewportBBox: Object, anchorBBox: Object, widgetSize: goog.math.Size, rtl: boolean): number;
+
+    /**
+     * Calculate a y position (in window coordinates) such that the widget will not
+     * be offscreen on the top or bottom.
+     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
+     *     in window coordinates.
+     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
+     *     coordinates.
+     * @param {goog.math.Size} widgetSize The dimensions of the widget inside the
+     *     widget div.
+     * @return {number} A valid y-coordinate for the top left corner of the widget
+     *     div, in window coordinates.
+     * @private
+     */
+    function calculateY_(viewportBBox: Object, anchorBBox: Object, widgetSize: goog.math.Size): number;
+}
+
+
+declare module Blockly {
+
+    class Workspace extends Workspace__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Workspace__Class  { 
+    
+            /**
+             * Class for a workspace.  This is a data structure that contains blocks.
+             * There is no UI, and can be created headlessly.
+             * @param {!Blockly.Options=} opt_options Dictionary of options.
+             * @constructor
+             */
+            constructor(opt_options?: Blockly.Options);
+    
+            /** @type {string} */
+            id: string;
+    
+            /** @type {!Blockly.Options} */
+            options: Blockly.Options;
+    
+            /** @type {boolean} */
+            RTL: boolean;
+    
+            /** @type {boolean} */
+            horizontalLayout: boolean;
+    
+            /** @type {number} */
+            toolboxPosition: number;
+    
+            /**
+             * @type {!Array.<!Blockly.Block>}
+             * @private
+             */
+            topBlocks_: Blockly.Block[];
+    
+            /**
+             * @type {!Array.<!Blockly.WorkspaceComment>}
+             * @private
+             */
+            topComments_: Blockly.WorkspaceComment[];
+    
+            /**
+             * @type {!Object}
+             * @private
+             */
+            commentDB_: Object;
+    
+            /**
+             * @type {!Array.<!Function>}
+             * @private
+             */
+            listeners_: Function[];
+    
+            /** @type {!Array.<!Function>} */
+            tapListeners_: Function[];
+    
+            /**
+             * @type {!Array.<!Blockly.Events.Abstract>}
+             * @protected
+             */
+            undoStack_: Blockly.Events.Abstract[];
+    
+            /**
+             * @type {!Array.<!Blockly.Events.Abstract>}
+             * @protected
+             */
+            redoStack_: Blockly.Events.Abstract[];
+    
+            /**
+             * @type {!Object}
+             * @private
+             */
+            blockDB_: Object;
+    
+            /**
+             * @type {!Object}
+             * @private
+             */
+            typedBlocksDB_: Object;
+    
+            /**
+             * A map from variable type to list of variable names.  The lists contain all
+             * of the named variables in the workspace, including variables
+             * that are not currently in use.
+             * @type {!Blockly.VariableMap}
+             * @private
+             */
+            variableMap_: Blockly.VariableMap;
+    
+            /**
+             * Blocks in the flyout can refer to variables that don't exist in the main
+             * workspace.  For instance, the "get item in list" block refers to an "item"
+             * variable regardless of whether the variable has been created yet.
+             * A FieldVariable must always refer to a Blockly.VariableModel.  We reconcile
+             * these by tracking "potential" variables in the flyout.  These variables
+             * become real when references to them are dragged into the main workspace.
+             * @type {!Blockly.VariableMap}
+             * @private
+             */
+            potentialVariableMap_: Blockly.VariableMap;
+    
+            /**
+             * Returns `true` if the workspace is visible and `false` if it's headless.
+             * @type {boolean}
+             */
+            rendered: boolean;
+    
+            /**
+             * Returns `true` if the workspace is currently in the process of a bulk clear.
+             * @type {boolean}
+             * @package
+             */
+            isClearing: boolean;
+    
+            /**
+             * Maximum number of undo events in stack. `0` turns off undo, `Infinity` sets
+             * it to unlimited.
+             * @type {number}
+             */
+            MAX_UNDO: number;
+    
+            /**
+             * Set of databases for rapid lookup of connection locations.
+             * @type {Array.<!Blockly.ConnectionDB>}
+             */
+            connectionDBList: Blockly.ConnectionDB[];
+    
+            /**
+             * Dispose of this workspace.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Compare function for sorting objects (blocks, comments, etc) by position;
+             *    top to bottom (with slight LTR or RTL bias).
+             * @param {!Blockly.Block | !Blockly.WorkspaceComment} a The first object to
+             *    compare.
+             * @param {!Blockly.Block | !Blockly.WorkspaceComment} b The second object to
+             *    compare.
+             * @return {number} The comparison value. This tells Array.sort() how to change
+             *    object a's index.
+             * @private
+             */
+            sortObjects_(a: Blockly.Block|Blockly.WorkspaceComment, b: Blockly.Block|Blockly.WorkspaceComment): number;
+    
+            /**
+             * Add a block to the list of top blocks.
+             * @param {!Blockly.Block} block Block to add.
+             */
+            addTopBlock(block: Blockly.Block): void;
+    
+            /**
+             * Remove a block from the list of top blocks.
+             * @param {!Blockly.Block} block Block to remove.
+             */
+            removeTopBlock(block: Blockly.Block): void;
+    
+            /**
+             * Finds the top-level blocks and returns them.  Blocks are optionally sorted
+             * by position; top to bottom (with slight LTR or RTL bias).
+             * @param {boolean} ordered Sort the list if true.
+             * @return {!Array.<!Blockly.Block>} The top-level block objects.
+             */
+            getTopBlocks(ordered: boolean): Blockly.Block[];
+    
+            /**
+             * Add a block to the list of blocks keyed by type.
+             * @param {!Blockly.Block} block Block to add.
+             */
+            addTypedBlock(block: Blockly.Block): void;
+    
+            /**
+             * Remove a block from the list of blocks keyed by type.
+             * @param {!Blockly.Block} block Block to remove.
+             */
+            removeTypedBlock(block: Blockly.Block): void;
+    
+            /**
+             * Finds the blocks with the associated type and returns them. Blocks are
+             * optionally sorted by position; top to bottom (with slight LTR or RTL bias).
+             * @param {string} type The type of block to search for.
+             * @param {boolean} ordered Sort the list if true.
+             * @return {!Array.<!Blockly.Block>} The blocks of the given type.
+             */
+            getBlocksByType(type: string, ordered: boolean): Blockly.Block[];
+    
+            /**
+             * Add a comment to the list of top comments.
+             * @param {!Blockly.WorkspaceComment} comment comment to add.
+             * @package
+             */
+            addTopComment(comment: Blockly.WorkspaceComment): void;
+    
+            /**
+             * Remove a comment from the list of top comments.
+             * @param {!Blockly.WorkspaceComment} comment comment to remove.
+             * @package
+             */
+            removeTopComment(comment: Blockly.WorkspaceComment): void;
+    
+            /**
+             * Find all blocks in workspace.  Blocks are optionally sorted
+             * by position; top to bottom (with slight LTR or RTL bias).
+             * @param {boolean} ordered Sort the list if true.
+             * @return {!Array.<!Blockly.WorkspaceComment>} The top-level comment objects.
+             * @package
+             */
+            getTopComments(ordered: boolean): Blockly.WorkspaceComment[];
+    
+            /**
+             * Find all blocks in workspace.  Blocks are optionally sorted
+             * by position; top to bottom (with slight LTR or RTL bias).
+             * @param {boolean=} ordered Sort the list if true.
+             * @return {!Array.<!Blockly.Block>} Array of blocks.
+             */
+            getAllBlocks(ordered?: boolean): Blockly.Block[];
+    
+            /**
+             * Dispose of all blocks and comments in workspace.
+             */
+            clear(): void;
+    
+            /**
+             * Rename a variable by updating its name in the variable map. Identify the
+             * variable to rename with the given ID.
+             * @param {string} id ID of the variable to rename.
+             * @param {string} newName New variable name.
+             */
+            renameVariableById(id: string, newName: string): void;
+    
+            /**
+             * Create a variable with a given name, optional type, and optional ID.
+             * @param {string} name The name of the variable. This must be unique across
+             *     variables and procedures.
+             * @param {?string=} opt_type The type of the variable like 'int' or 'string'.
+             *     Does not need to be unique. Field_variable can filter variables based on
+             *     their type. This will default to '' which is a specific type.
+             * @param {?string=} opt_id The unique ID of the variable. This will default to
+             *     a UUID.
+             * @return {Blockly.VariableModel} The newly created variable.
+             */
+            createVariable(name: string, opt_type?: string, opt_id?: string): Blockly.VariableModel;
+    
+            /**
+             * Find all the uses of the given variable, which is identified by ID.
+             * @param {string} id ID of the variable to find.
+             * @return {!Array.<!Blockly.Block>} Array of block usages.
+             */
+            getVariableUsesById(id: string): Blockly.Block[];
+    
+            /**
+             * Delete a variables by the passed in ID and all of its uses from this
+             * workspace. May prompt the user for confirmation.
+             * @param {string} id ID of variable to delete.
+             */
+            deleteVariableById(id: string): void;
+    
+            /**
+             * Deletes a variable and all of its uses from this workspace without asking
+             * the user for confirmation.
+             * @param {!Blockly.VariableModel} variable Variable to delete.
+             * @param {!Array.<!Blockly.Block>} uses An array of uses of the variable.
+             * @private
+             */
+            deleteVariableInternal_(variable: Blockly.VariableModel, uses: Blockly.Block[]): void;
+    
+            /**
+             * Check whether a variable exists with the given name.  The check is
+             * case-insensitive.
+             * @param {string} _name The name to check for.
+             * @return {number} The index of the name in the variable list, or -1 if it is
+             *     not present.
+             * @deprecated April 2017
+             */
+            variableIndexOf(_name: string): number;
+    
+            /**
+             * Find the variable by the given name and return it. Return null if it is not
+             *     found.
+             * @param {string} name The name to check for.
+             * @param {string=} opt_type The type of the variable.  If not provided it
+             *     defaults to the empty string, which is a specific type.
+             * @return {Blockly.VariableModel} The variable with the given name.
+             */
+            getVariable(name: string, opt_type?: string): Blockly.VariableModel;
+    
+            /**
+             * Find the variable by the given ID and return it. Return null if it is not
+             *     found.
+             * @param {string} id The ID to check for.
+             * @return {Blockly.VariableModel} The variable with the given ID.
+             */
+            getVariableById(id: string): Blockly.VariableModel;
+    
+            /**
+             * Find the variable with the specified type. If type is null, return list of
+             *     variables with empty string type.
+             * @param {?string} type Type of the variables to find.
+             * @return {Array.<Blockly.VariableModel>} The sought after variables of the
+             *     passed in type. An empty array if none are found.
+             */
+            getVariablesOfType(type: string): Blockly.VariableModel[];
+    
+            /**
+             * Return all variable types.
+             * @return {!Array.<string>} List of variable types.
+             * @package
+             */
+            getVariableTypes(): string[];
+    
+            /**
+             * Return all variables of all types.
+             * @return {!Array.<!Blockly.VariableModel>} List of variable models.
+             */
+            getAllVariables(): Blockly.VariableModel[];
+    
+            /**
+             * Returns the horizontal offset of the workspace.
+             * Intended for LTR/RTL compatibility in XML.
+             * Not relevant for a headless workspace.
+             * @return {number} Width.
+             */
+            getWidth(): number;
+    
+            /**
+             * Obtain a newly created block.
+             * @param {?string} prototypeName Name of the language object containing
+             *     type-specific functions for this block.
+             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
+             *     create a new ID.
+             * @return {!Blockly.Block} The created block.
+             */
+            newBlock(prototypeName: string, opt_id?: string): Blockly.Block;
+    
+            /**
+             * The number of blocks that may be added to the workspace before reaching
+             *     the maxBlocks.
+             * @return {number} Number of blocks left.
+             */
+            remainingCapacity(): number;
+    
+            /**
+             * The number of blocks of the given type that may be added to the workspace
+             *    before reaching the maxInstances allowed for that type.
+             * @param {string} type Type of block to return capacity for.
+             * @return {number} Number of blocks of type left.
+             */
+            remainingCapacityOfType(type: string): number;
+    
+            /**
+             * Check if there is remaining capacity for blocks of the given counts to be
+             *    created. If the total number of blocks represented by the map is more than
+             *    the total remaining capacity, it returns false. If a type count is more
+             *    than the remaining capacity for that type, it returns false.
+             * @param {!Object} typeCountsMap A map of types to counts (usually representing
+             *    blocks to be created).
+             * @return {boolean} True if there is capacity for the given map,
+             *    false otherwise.
+             */
+            isCapacityAvailable(typeCountsMap: Object): boolean;
+    
+            /**
+             * Checks if the workspace has any limits on the maximum number of blocks,
+             *    or the maximum number of blocks of specific types.
+             * @return {boolean} True if it has block limits, false otherwise.
+             */
+            hasBlockLimits(): boolean;
+    
+            /**
+             * Undo or redo the previous action.
+             * @param {boolean} redo False if undo, true if redo.
+             */
+            undo(redo: boolean): void;
+    
+            /**
+             * Clear the undo/redo stacks.
+             */
+            clearUndo(): void;
+    
+            /**
+             * @return {boolean} whether there are any events in the redo stack.
+             * @package
+             */
+            hasRedoStack(): boolean;
+    
+            /**
+             * @return {boolean} whether there are any events in the undo stack.
+             * @package
+             */
+            hasUndoStack(): boolean;
+    
+            /**
+             * When something in this workspace changes, call a function.
+             * Note that there may be a few recent events already on the stack.  Thus the
+             * new change listener might be called with events that occurred a few
+             * milliseconds before the change listener was added.
+             * @param {!Function} func Function to call.
+             * @return {!Function} Obsolete return value, ignore.
+             */
+            addChangeListener(func: Function): Function;
+    
+            /**
+             * Stop listening for this workspace's changes.
+             * @param {Function} func Function to stop calling.
+             */
+            removeChangeListener(func: Function): void;
+    
+            /**
+             * Fire a change event.
+             * @param {!Blockly.Events.Abstract} event Event to fire.
+             */
+            fireChangeListener(event: Blockly.Events.Abstract): void;
+    
+            /**
+             * Find the block on this workspace with the specified ID.
+             * @param {string} id ID of block to find.
+             * @return {Blockly.Block} The sought after block, or null if not found.
+             */
+            getBlockById(id: string): Blockly.Block;
+    
+            /**
+             * Getter for the flyout associated with this workspace.  This is null in a
+             * non-rendered workspace, but may be overriden by subclasses.
+             * @return {Blockly.Flyout} The flyout on this workspace.
+             */
+            getFlyout(): Blockly.Flyout;
+    
+            /**
+             * Find the comment on this workspace with the specified ID.
+             * @param {string} id ID of comment to find.
+             * @return {Blockly.WorkspaceComment} The sought after comment, or null if not
+             *     found.
+             * @package
+             */
+            getCommentById(id: string): Blockly.WorkspaceComment;
+    
+            /**
+             * Add the comment to the comment database.
+             * @param {Blockly.WorkspaceComment} comment The comment to add.
+             * @public
+             */
+            addCommentById(comment: Blockly.WorkspaceComment): void;
+    
+            /**
+             * Remove the comment from the comment database.
+             * @param {string} id The id of the comment to remove.
+             * @public
+             */
+            removeCommentById(id: string): void;
+    
+            /**
+             * Checks whether all value and statement inputs in the workspace are filled
+             * with blocks.
+             * @param {boolean=} opt_shadowBlocksAreFilled An optional argument controlling
+             *     whether shadow blocks are counted as filled. Defaults to true.
+             * @return {boolean} True if all inputs are filled, false otherwise.
+             */
+            allInputsFilled(opt_shadowBlocksAreFilled?: boolean): boolean;
+    
+            /**
+             * Return the variable map that contains "potential" variables.
+             * These exist in the flyout but not in the workspace.
+             * @return {Blockly.VariableMap} The potential variable map.
+             * @package
+             */
+            getPotentialVariableMap(): Blockly.VariableMap;
+    
+            /**
+             * Create and store the potential variable map for this workspace.
+             * @package
+             */
+            createPotentialVariableMap(): void;
+    
+            /**
+             * Return the map of all variables on the workspace.
+             * @return {Blockly.VariableMap} The variable map.
+             */
+            getVariableMap(): Blockly.VariableMap;
+    
+            /**
+             * Sets the debugMode option in the workspace.
+             * @param {boolean} debugMode value to set to this option.
+             */
+            setDebugModeOption(debugMode: boolean): void;
+    } 
+    
+}
+
+declare module Blockly.Workspace {
+
+    /**
+     * Angle away from the horizontal to sweep for blocks.  Order of execution is
+     * generally top to bottom, but a small angle changes the scan to give a bit of
+     * a left to right bias (reversed in RTL).  Units are in degrees.
+     * See: https://tvtropes.org/pmwiki/pmwiki.php/Main/DiagonalBilling
+     */
+    var SCAN_ANGLE: any /*missing*/;
+
+    /**
+     * Database of all workspaces.
+     * @private
+     */
+    var WorkspaceDB_: any /*missing*/;
+
+    /**
+     * Find the workspace with the specified ID.
+     * @param {string} id ID of workspace to find.
+     * @return {Blockly.Workspace} The sought after workspace or null if not found.
+     */
+    function getById(id: string): Blockly.Workspace;
+
+    /**
+     * Find all workspaces.
+     * @return {!Array.<!Blockly.Workspace>} Array of workspaces.
+     */
+    function getAll(): Blockly.Workspace[];
+}
+
+
+declare module Blockly {
+
+    class WorkspaceAudio extends WorkspaceAudio__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class WorkspaceAudio__Class  { 
+    
+            /**
+             * Class for loading, storing, and playing audio for a workspace.
+             * @param {Blockly.WorkspaceSvg} parentWorkspace The parent of the workspace
+             *     this audio object belongs to, or null.
+             * @constructor
+             */
+            constructor(parentWorkspace: Blockly.WorkspaceSvg);
+    
+            /**
+             * The parent of the workspace this object belongs to, or null.  May be
+             * checked for sounds that this object can't find.
+             * @type {Blockly.WorkspaceSvg}
+             * @private
+             */
+            parentWorkspace_: Blockly.WorkspaceSvg;
+    
+            /**
+             * Database of pre-loaded sounds.
+             * @private
+             * @const
+             */
+            SOUNDS_: any /*missing*/;
+    
+            /**
+             * Time that the last sound was played.
+             * @type {Date}
+             * @private
+             */
+            lastSound_: Date;
+    
+            /**
+             * Dispose of this audio manager.
+             * @package
+             */
+            dispose(): void;
+    
+            /**
+             * Load an audio file.  Cache it, ready for instantaneous playing.
+             * @param {!Array.<string>} filenames List of file types in decreasing order of
+             *   preference (i.e. increasing size).  E.g. ['media/go.mp3', 'media/go.wav']
+             *   Filenames include path from Blockly's root.  File extensions matter.
+             * @param {string} name Name of sound.
+             */
+            load(filenames: string[], name: string): void;
+    
+            /**
+             * Preload all the audio files so that they play quickly when asked for.
+             * @package
+             */
+            preload(): void;
+    
+            /**
+             * Play a named sound at specified volume.  If volume is not specified,
+             * use full volume (1).
+             * @param {string} name Name of sound.
+             * @param {number=} opt_volume Volume of sound (0-1).
+             */
+            play(name: string, opt_volume?: number): void;
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class WorkspaceComment extends WorkspaceComment__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class WorkspaceComment__Class  { 
+    
+            /**
+             * Class for a workspace comment.
+             * @param {!Blockly.Workspace} workspace The block's workspace.
+             * @param {string} content The content of this workspace comment.
+             * @param {number} height Height of the comment.
+             * @param {number} width Width of the comment.
+             * @param {boolean} minimized Whether this comment is in the minimized state
+             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
+             *     create a new ID.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, minimized: boolean, opt_id?: string);
+    
+            /** @type {string} */
+            id: string;
+    
+            /**
+             * The comment's position in workspace units.  (0, 0) is at the workspace's
+             * origin; scale does not change this value.
+             * @type {!Blockly.utils.Coordinate}
+             * @protected
+             */
+            xy_: Blockly.utils.Coordinate;
+    
+            /**
+             * The comment's height in workspace units.  Scale does not change this value.
+             * @type {number}
+             * @private
+             */
+            height_: number;
+    
+            /**
+             * The comment's width in workspace units.  Scale does not change this value.
+             * @type {number}
+             * @private
+             */
+            width_: number;
+    
+            /**
+             * The comment's minimized state.
+             * @type {boolean}
+             * @private
+             */
+            isMinimized_: boolean;
+    
+            /**
+             * @type {!Blockly.Workspace}
+             */
+            workspace: Blockly.Workspace;
+    
+            /**
+             * @protected
+             * @type {boolean}
+             */
+            RTL: boolean;
+    
+            /**
+             * @type {boolean}
+             * @private
+             */
+            deletable_: boolean;
+    
+            /**
+             * @type {boolean}
+             * @private
+             */
+            movable_: boolean;
+    
+            /**
+             * pxt-blockly: uneditable comments for IE
+             * @type {boolean}
+             * @private
+             */
+            editable_: boolean;
+    
+            /**
+             * @protected
+             * @type {string}
+             */
+            content_: string;
+    
+            /**
+             * @package
+             * @type {boolean}
+             */
+            isComment: boolean;
+    
+            /**
+             * PXT Blockly: Optional text data that round-trips beween blocks and XML.
+             * Has no effect. May be used by 3rd parties for meta information.
+             * @type {?string}
+             */
+            data: string;
+    
+            /**
+             * Dispose of this comment.
+             * @package
+             */
+            dispose(): void;
+    
+            /**
+             * Get comment height.
+             * @return {number} Comment height.
+             * @package
+             */
+            getHeight(): number;
+    
+            /**
+             * Set comment height.
+             * @param {number} height Comment height.
+             * @package
+             */
+            setHeight(height: number): void;
+    
+            /**
+             * Get comment width.
+             * @return {number} Comment width.
+             * @package
+             */
+            getWidth(): number;
+    
+            /**
+             * Set comment width.
+             * @param {number} width comment width.
+             * @package
+             */
+            setWidth(width: number): void;
+    
+            /**
+             * Get stored location.
+             * @return {!Blockly.utils.Coordinate} The comment's stored location.
+             *   This is not valid if the comment is currently being dragged.
+             * @package
+             */
+            getXY(): Blockly.utils.Coordinate;
+    
+            /**
+             * Move a comment by a relative offset.
+             * @param {number} dx Horizontal offset, in workspace units.
+             * @param {number} dy Vertical offset, in workspace units.
+             * @package
+             */
+            moveBy(dx: number, dy: number): void;
+    
+            /**
+             * Get whether this comment is deletable or not.
+             * @return {boolean} True if deletable.
+             * @package
+             */
+            isDeletable(): boolean;
+    
+            /**
+             * Set whether this comment is deletable or not.
+             * @param {boolean} deletable True if deletable.
+             * @package
+             */
+            setDeletable(deletable: boolean): void;
+    
+            /**
+             * Get whether this comment is movable or not.
+             * @return {boolean} True if movable.
+             * @package
+             */
+            isMovable(): boolean;
+    
+            /**
+             * Set whether this comment is movable or not.
+             * @param {boolean} movable True if movable.
+             * @package
+             */
+            setMovable(movable: boolean): void;
+    
+            /**
+             * Get whether this comment is editable or not.
+             * @return {boolean} True if editable.
+             * @package
+             */
+            isEditable(): boolean;
+    
+            /**
+             * Set whether this comment is editable or not.
+             * @param {boolean} editable True if editable.
+             * @package
+             */
+            setEditable(editable: boolean): void;
+    
+            /**
+             * Returns this comment's text.
+             * @return {string} Comment text.
+             * @package
+             */
+            getContent(): string;
+    
+            /**
+             * Set this comment's content.
+             * @param {string} content Comment content.
+             * @package
+             */
+            setContent(content: string): void;
+    
+            /**
+             * Check whether this comment is currently minimized.
+             * @return {boolean} True if minimized
+             * @package
+             */
+            isMinimized(): boolean;
+    
+            /**
+             * Return the coordinates of the top-left corner of this comment relative to the
+             * drawing surface's origin (0,0), in workspace units.
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
+             * @package
+             */
+            getRelativeToSurfaceXY(): Blockly.utils.Coordinate;
+    
+            /**
+             * Encode a comment subtree as XML with XY coordinates.
+             * @param {boolean=} opt_noId True if the encoder should skip the comment ID.
+             * @return {!Element} Tree of XML elements.
+             * @package
+             */
+            toXmlWithXY(opt_noId?: boolean): Element;
+    
+            /**
+             * Get the truncated text for this comment to display in the minimized
+             * top bar.
+             * @return {string} The truncated comment text
+             * @package
+             */
+            getLabelText(): string;
+    
+            /**
+             * Encode a comment subtree as XML, but don't serialize the XY coordinates.
+             * This method avoids some expensive metrics-related calls that are made in
+             * toXmlWithXY().
+             * @param {boolean=} opt_noId True if the encoder should skip the comment ID.
+             * @return {!Element} Tree of XML elements.
+             * @package
+             */
+            toXml(opt_noId?: boolean): Element;
+    } 
+    
+}
+
+declare module Blockly.WorkspaceComment {
+
+    /**
+     * Maximum lable length (actual label length will include
+     * one additional character, the ellipsis).
+     * @private
+     */
+    var MAX_LABEL_LENGTH: any /*missing*/;
+
+    /**
+     * Maximum character length for comment text.
+     * @private
+     */
+    var COMMENT_TEXT_LIMIT: any /*missing*/;
+
+    /**
+     * Fire a create event for the given workspace comment, if comments are enabled.
+     * @param {!Blockly.WorkspaceComment} comment The comment that was just created.
+     * @package
+     */
+    function fireCreateEvent(comment: Blockly.WorkspaceComment): void;
+
+    /**
+     * Decode an XML comment tag and create a comment on the workspace.
+     * @param {!Element} xmlComment XML comment element.
+     * @param {!Blockly.Workspace} workspace The workspace.
+     * @return {!Blockly.WorkspaceComment} The created workspace comment.
+     * @package
+     */
+    function fromXml(xmlComment: Element, workspace: Blockly.Workspace): Blockly.WorkspaceComment;
+
+    /**
+     * Decode an XML comment tag and return the results in an object.
+     * @param {!Element} xml XML comment element.
+     * @return {{w: number, h: number, x: number, y: number, content: string}} An
+     *     object containing the id, size, position, and comment string.
+     * @package
+     */
+    function parseAttributes(xml: Element): { w: number; h: number; x: number; y: number; content: string };
+}
+
+
+declare module Blockly.Events {
+
+    class CommentBase extends CommentBase__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class CommentBase__Class extends Blockly.Events.Abstract__Class  { 
+    
+            /**
+             * Abstract class for a comment event.
+             * @param {Blockly.WorkspaceComment} comment
+             *    The comment this event corresponds to.
+             * @extends {Blockly.Events.Abstract}
+             * @constructor
+             */
+            constructor(comment: Blockly.WorkspaceComment);
+    
+            /**
+             * The ID of the comment this event pertains to.
+             * @type {string}
+             */
+            commentId: string;
+    
+            /**
+             * The workspace identifier for this event.
+             * @type {string}
+             */
+            workspaceId: string;
+    
+            /**
+             * The ID of the block this comment belongs to or null if it is not a block
+             * comment.
+             * @type {string}
+             */
+            blockId: string;
+    
+            /**
+             * The event group id for the group this event belongs to. Groups define
+             * events that should be treated as an single action from the user's
+             * perspective, and should be undone together.
+             * @type {string}
+             */
+            group: string;
+    
+            /**
+             * Sets whether the event should be added to the undo stack.
+             * @type {boolean}
+             */
+            recordUndo: boolean;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Helper function for finding the comment this event pertains to.
+             * @return {Blockly.WorkspaceComment}
+             *     The comment this event pertains to, or null if it no longer exists.
+             * @private
+             */
+            getComment_(): Blockly.WorkspaceComment;
+    } 
+    
+
+    class CommentChange extends CommentChange__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class CommentChange__Class extends Blockly.Events.CommentBase__Class  { 
+    
+            /**
+             * Class for a comment change event.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The comment that is being changed. Null for a blank event.
+             * @param {!object} oldContents Object containing previous state of a comment's
+             *     properties. The possible properties can be: 'minimized', 'text', or
+             *     'width' and 'height' together. Must contain the same property (or in the
+             *     case of 'width' and 'height' properties) as the 'newContents' param.
+             * @param {!object} newContents Object containing the new state of a comment's
+             *     properties. The possible properties can be: 'minimized', 'text', or
+             *     'width' and 'height' together. Must contain the same property (or in the
+             *     case of 'width' and 'height' properties) as the 'oldContents' param.
+             * @extends {Blockly.Events.CommentBase}
+             * @constructor
+             */
+            constructor(comment: Blockly.WorkspaceComment, oldContents: object, newContents: object);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Does this event record any change of state?
+             * @return {boolean} False if something changed.
+             */
+            isNull(): boolean;
+    
+            /**
+             * Run a change event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+
+    class CommentCreate extends CommentCreate__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class CommentCreate__Class extends Blockly.Events.CommentBase__Class  { 
+    
+            /**
+             * Class for a comment creation event.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The created comment. Null for a blank event.
+             * @param {string=} opt_blockId Optional id for the block this comment belongs
+             *     to, if it is a block comment.
+             * @extends {Blockly.Events.CommentBase}
+             * @constructor
+             */
+            constructor(comment: Blockly.WorkspaceComment);
+    
+            /**
+             * The text content of this comment.
+             * @type {string}
+             */
+            text: string;
+    
+            /**
+             * The XY position of this comment on the workspace.
+             * @type {Blockly.utils.Coordinate}
+             */
+            xy: Blockly.utils.Coordinate;
+    
+            /**
+             * The width of this comment when it is full size.
+             * @type {number}
+             */
+            width: number;
+    
+            /**
+             * The height of this comment when it is full size.
+             * @type {number}
+             */
+            height: number;
+    
+            /**
+             * Whether or not this comment is minimized.
+             * @type {boolean}
+             */
+            minimized: boolean;
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * TODO (github.com/google/blockly/issues/1266): "Full" and "minimal"
+             * serialization.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Run a creation event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+
+    class CommentDelete extends CommentDelete__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class CommentDelete__Class extends Blockly.Events.CommentBase__Class  { 
+    
+            /**
+             * Class for a comment deletion event.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The deleted comment. Null for a blank event.
+             * @extends {Blockly.Events.CommentBase}
+             * @constructor
+             */
+            constructor(comment: Blockly.WorkspaceComment);
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * TODO (github.com/google/blockly/issues/1266): "Full" and "minimal"
+             * serialization.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Run a creation event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+
+    class CommentMove extends CommentMove__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class CommentMove__Class extends Blockly.Events.CommentBase__Class  { 
+    
+            /**
+             * Class for a comment move event.  Created before the move.
+             * @param {Blockly.WorkspaceComment} comment
+             *     The comment that is being moved. Null for a blank event.
+             * @extends {Blockly.Events.CommentBase}
+             * @constructor
+             */
+            constructor(comment: Blockly.WorkspaceComment);
+    
+            /**
+             * The comment that is being moved.  Will be cleared after recording the new
+             * location.
+             * @type {?Blockly.WorkspaceComment}
+             */
+            comment_: Blockly.WorkspaceComment;
+    
+            /**
+             * The location before the move, in workspace coordinates.
+             * @type {!Blockly.utils.Coordinate}
+             */
+            oldCoordinate_: Blockly.utils.Coordinate;
+    
+            /**
+             * The location after the move, in workspace coordinates.
+             * @type {!Blockly.utils.Coordinate}
+             */
+            newCoordinate_: Blockly.utils.Coordinate;
+    
+            /**
+             * Calculate the current, language agnostic location of the comment.
+             * This value should not report different numbers in LTR vs. RTL.
+             * @return {Blockly.utils.Coordinate} The location of the comment.
+             * @private
+             */
+            currentLocation_(): Blockly.utils.Coordinate;
+    
+            /**
+             * Record the comment's new location.  Called after the move.  Can only be
+             * called once.
+             */
+            recordNew(): void;
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Override the location before the move.  Use this if you don't create the
+             * event until the end of the move, but you know the original location.
+             * @param {!Blockly.utils.Coordinate} xy The location before the move, in workspace
+             *     coordinates.
+             */
+            setOldCoordinate(xy: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Encode the event as JSON.
+             * TODO (github.com/google/blockly/issues/1266): "Full" and "minimal"
+             * serialization.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    
+            /**
+             * Does this event record any change of state?
+             * @return {boolean} False if something changed.
+             */
+            isNull(): boolean;
+    
+            /**
+             * Run a move event.
+             * @param {boolean} forward True if run forward, false if run backward (undo).
+             */
+            run(forward: boolean): void;
+    } 
+    
+}
+
+
+declare module Blockly.WorkspaceCommentSvg {
+
+    /**
+     * Radius of the border around the comment.
+     * @type {number}
+     * @const
+     * @private
+     */
+    var BORDER_WIDTH: number;
+
+    /**
+     * Size of the resize icon.
+     * @type {number}
+     * @const
+     * @private
+     */
+    var RESIZE_SIZE: number;
+
+    /**
+     * Offset from the foreignobject edge to the textarea edge.
+     * @type {number}
+     * @const
+     * @private
+     */
+    var TEXTAREA_OFFSET: number;
+
+    /**
+     * The height of the comment top bar.
+     * @package
+     */
+    var TOP_BAR_HEIGHT: any /*missing*/;
+
+    /**
+     * The size of the minimize arrow icon in the comment top bar.
+     * @private
+     */
+    var MINIMIZE_ICON_SIZE: any /*missing*/;
+
+    /**
+     * The size of the delete icon in the comment top bar.
+     * @private
+     */
+    var DELETE_ICON_SIZE: any /*missing*/;
+
+    /**
+     * The inset for the top bar icons.
+     * @private
+     */
+    var TOP_BAR_ICON_INSET: any /*missing*/;
+
+    /**
+     * Width that a minimized comment should have.
+     * @private
+     */
+    var MINIMIZE_WIDTH: any /*missing*/;
+
+    /**
+     * Length of an uneditable text field in characters.
+     * @type {number}
+     * @const
+     */
+    var UNEDITABLE_TEXT_LENGTH: number;
+
+    /**
+     * Line gap.
+     * @type {number}
+     * @const
+     */
+    var UNEDITABLE_LINE_GAP: number;
+
+    /**
+     * Draw the trash can icon
+     * @private
+     */
+    function drawDeleteIcon(svgGroup: any /* jsdoc error */): void;
+}
+
+
+declare module Blockly {
+
+    class WorkspaceCommentSvg extends WorkspaceCommentSvg__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class WorkspaceCommentSvg__Class extends Blockly.WorkspaceComment__Class  { 
+    
+            /**
+             * Class for a workspace comment's SVG representation.
+             * @param {!Blockly.Workspace} workspace The block's workspace.
+             * @param {string} content The content of this workspace comment.
+             * @param {number} height Height of the comment.
+             * @param {number} width Width of the comment.
+             * @param {boolean} minimized Whether this comment is minimized.
+             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
+             *     create a new ID.
+             * @extends {Blockly.WorkspaceComment}
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, minimized: boolean, opt_id?: string);
+    
+            /**
+             * @type {SVGElement}
+             * @private
+             */
+            svgGroup_: SVGElement;
+    
+            /**
+             * Whether the comment is rendered onscreen and is a part of the DOM.
+             * @type {boolean}
+             * @private
+             */
+            rendered_: boolean;
+    
+            /**
+             * Whether to move the comment to the drag surface when it is dragged.
+             * True if it should move, false if it should be translated directly.
+             * @type {boolean}
+             * @private
+             */
+            useDragSurface_: boolean;
+    
+            /**
+             * Dispose of this comment.
+             * @package
+             */
+            dispose(): void;
+    
+            /**
+             * Create and initialize the SVG representation of a workspace comment.
+             * May be called more than once.
+             * @package
+             */
+            initSvg(): void;
+    
+            /**
+             * Handle a mouse-down on an SVG comment.
+             * @param {!Event} e Mouse down event or touch start event.
+             * @private
+             */
+            pathMouseDown_(e: Event): void;
+    
+            /**
+             * Show the context menu for this workspace comment.
+             * @param {!Event} e Mouse event.
+             * @private
+             */
+            showContextMenu_(e: Event): void;
+    
+            /**
+             * Select this comment.  Highlight it visually.
+             * @package
+             */
+            select(): void;
+    
+            /**
+             * Unselect this comment.  Remove its highlighting.
+             * @package
+             */
+            unselect(): void;
+    
+            /**
+             * Select this comment.  Highlight it visually.
+             * @package
+             */
+            addSelect(): void;
+    
+            /**
+             * Unselect this comment.  Remove its highlighting.
+             * @package
+             */
+            removeSelect(): void;
+    
+            /**
+             * Focus this comment.  Highlight it visually.
+             * @package
+             */
+            addFocus(): void;
+    
+            /**
+             * Unfocus this comment.  Remove its highlighting.
+             * @package
+             */
+            removeFocus(): void;
+    
+            /**
+             * Return the coordinates of the top-left corner of this comment relative to
+             * the drawing surface's origin (0,0), in workspace units.
+             * If the comment is on the workspace, (0, 0) is the origin of the workspace
+             * coordinate system.
+             * This does not change with workspace scale.
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties in
+             *     workspace coordinates.
+             * @package
+             */
+            getRelativeToSurfaceXY(): Blockly.utils.Coordinate;
+    
+            /**
+             * Move a comment by a relative offset.
+             * @param {number} dx Horizontal offset, in workspace units.
+             * @param {number} dy Vertical offset, in workspace units.
+             * @package
+             */
+            moveBy(dx: number, dy: number): void;
+    
+            /**
+             * Transforms a comment by setting the translation on the transform attribute
+             * of the block's SVG.
+             * @param {number} x The x coordinate of the translation in workspace units.
+             * @param {number} y The y coordinate of the translation in workspace units.
+             * @package
+             */
+            translate(x: number, y: number): void;
+    
+            /**
+             * Move this comment to its workspace's drag surface, accounting for
+             * positioning.  Generally should be called at the same time as
+             * setDragging(true).  Does nothing if useDragSurface_ is false.
+             * @private
+             */
+            moveToDragSurface_(): void;
+    
+            /**
+             * Move this comment back to the workspace block canvas.
+             * Generally should be called at the same time as setDragging(false).
+             * Does nothing if useDragSurface_ is false.
+             * @param {!Blockly.utils.Coordinate} newXY The position the comment should take on
+             *     on the workspace canvas, in workspace coordinates.
+             * @private
+             */
+            moveOffDragSurface_(newXY: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Move this comment during a drag, taking into account whether we are using a
+             * drag surface to translate blocks.
+             * @param {Blockly.BlockDragSurfaceSvg} dragSurface The surface that carries
+             *     rendered items during a drag, or null if no drag surface is in use.
+             * @param {!Blockly.utils.Coordinate} newLoc The location to translate to, in
+             *     workspace coordinates.
+             * @package
+             */
+            moveDuringDrag(dragSurface: Blockly.BlockDragSurfaceSvg, newLoc: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Move the bubble group to the specified location in workspace coordinates.
+             * @param {number} x The x position to move to.
+             * @param {number} y The y position to move to.
+             * @package
+             */
+            moveTo(x: number, y: number): void;
+    
+            /**
+             * Clear the comment of transform="..." attributes.
+             * Used when the comment is switching from 3d to 2d transform or vice versa.
+             * @private
+             */
+            clearTransformAttributes_(): void;
+    
+            /**
+             * Return the rendered size of the comment or the stored size if the comment is
+             * not rendered. This differs from getHeightWidth in the behavior of rendered
+             * minimized comments. This function reports the actual size of the minimized
+             * comment instead of the full sized comment height/width.
+             * @return {!{height: number, width: number}} Object with height and width
+             *    properties in workspace units.
+             * @package
+             */
+            getBubbleSize(): { height: number; width: number };
+    
+            /**
+             * Returns the coordinates of a bounding box describing the dimensions of this
+             * comment.
+             * Coordinate system: workspace coordinates.
+             * @return {!Blockly.utils.Rect} Object with coordinates of the bounding box.
+             * @package
+             */
+            getBoundingRectangle(): Blockly.utils.Rect;
+    
+            /**
+             * Add or remove the UI indicating if this comment is movable or not.
+             * @package
+             */
+            updateMovable(): void;
+    
+            /**
+             * Set whether this comment is movable or not.
+             * @param {boolean} movable True if movable.
+             * @package
+             */
+            setMovable(movable: boolean): void;
+    
+            /**
+             * Recursively adds or removes the dragging class to this node and its children.
+             * @param {boolean} adding True if adding, false if removing.
+             * @package
+             */
+            setDragging(adding: boolean): void;
+    
+            /**
+             * Return the root node of the SVG or null if none exists.
+             * @return {Element} The root SVG node (probably a group).
+             * @package
+             */
+            getSvgRoot(): Element;
+    
+            /**
+             * Returns this comment's text.
+             * @return {string} Comment text.
+             * @package
+             */
+            getContent(): string;
+    
+            /**
+             * Set this comment's content.
+             * @param {string} content Comment content.
+             * @package
+             */
+            setContent(content: string): void;
+    
+            /**
+             * Update the cursor over this comment by adding or removing a class.
+             * @param {boolean} enable True if the delete cursor should be shown, false
+             *     otherwise.
+             * @package
+             */
+            setDeleteStyle(enable: boolean): void;
+    
+            /**
+             * Encode a comment subtree as XML with XY coordinates.
+             * @param {boolean=} opt_noId True if the encoder should skip the comment ID.
+             * @return {!Element} Tree of XML elements.
+             * @package
+             */
+            toXmlWithXY(opt_noId?: boolean): Element;
+    
+            /**
+             * Returns a bounding box describing the dimensions of this workspace comment.
+             * @return {!{height: number, width: number}} Object with height and width properties.
+             */
+            getHeightWidth(): { height: number; width: number };
+    } 
+    
+}
+
+declare module Blockly.WorkspaceCommentSvg {
+
+    /**
+     * The width and height to use to size a workspace comment when it is first
+     * added, before it has been edited by the user.
+     * @type {number}
+     * @package
+     */
+    var DEFAULT_SIZE: number;
+
+    /**
+     * Decode an XML comment tag and create a rendered comment on the workspace.
+     * @param {!Element} xmlComment XML comment element.
+     * @param {!Blockly.Workspace} workspace The workspace.
+     * @param {number=} opt_wsWidth The width of the workspace, which is used to
+     *     position comments correctly in RTL.
+     * @return {!Blockly.WorkspaceCommentSvg} The created workspace comment.
+     * @package
+     */
+    function fromXml(xmlComment: Element, workspace: Blockly.Workspace, opt_wsWidth?: number): Blockly.WorkspaceCommentSvg;
+}
+
+
+declare module Blockly {
+
+    class WorkspaceDragger extends WorkspaceDragger__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class WorkspaceDragger__Class  { 
+    
+            /**
+             * Class for a workspace dragger.  It moves the workspace around when it is
+             * being dragged by a mouse or touch.
+             * Note that the workspace itself manages whether or not it has a drag surface
+             * and how to do translations based on that.  This simply passes the right
+             * commands based on events.
+             * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag.
+             * @constructor
+             */
+            constructor(workspace: Blockly.WorkspaceSvg);
+    
+            /**
+             * @type {!Blockly.WorkspaceSvg}
+             * @private
+             */
+            workspace_: Blockly.WorkspaceSvg;
+    
+            /**
+             * The scroll position of the workspace at the beginning of the drag.
+             * Coordinate system: pixel coordinates.
+             * @type {!Blockly.utils.Coordinate}
+             * @private
+             */
+            startScrollXY_: Blockly.utils.Coordinate;
+    
+            /**
+             * Sever all links from this object.
+             * @package
+             */
+            dispose(): void;
+    
+            /**
+             * Start dragging the workspace.
+             * @package
+             */
+            startDrag(): void;
+    
+            /**
+             * Finish dragging the workspace and put everything back where it belongs.
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
+             *     moved from the position at the start of the drag, in pixel coordinates.
+             * @package
+             */
+            endDrag(currentDragDeltaXY: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Move the workspace based on the most recent mouse movements.
+             * @param {!Blockly.utils.Coordinate} currentDragDeltaXY How far the pointer has
+             *     moved from the position at the start of the drag, in pixel coordinates.
+             * @package
+             */
+            drag(currentDragDeltaXY: Blockly.utils.Coordinate): void;
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class WorkspaceDragSurfaceSvg extends WorkspaceDragSurfaceSvg__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class WorkspaceDragSurfaceSvg__Class  { 
+    
+            /**
+             * Blocks are moved into this SVG during a drag, improving performance.
+             * The entire SVG is translated using CSS transforms instead of SVG so the
+             * blocks are never repainted during drag improving performance.
+             * @param {!Element} container Containing element.
+             * @constructor
+             */
+            constructor(container: Element);
+    
+            /**
+             * Dom structure when the workspace is being dragged. If there is no drag in
+             * progress, the SVG is empty and display: none.
+             * <svg class="blocklyWsDragSurface" style=transform:translate3d(...)>
+             *   <g class="blocklyBlockCanvas"></g>
+             *   <g class="blocklyBubbleCanvas">/g>
+             * </svg>
+             */
+            SVG_: any /*missing*/;
+    
+            /**
+             * SVG group inside the drag surface that holds blocks while a drag is in
+             * progress. Blocks are moved here by the workspace at start of a drag and moved
+             * back into the main SVG at the end of a drag.
+             *
+             * @type {Element}
+             * @private
+             */
+            dragGroup_: Element;
+    
+            /**
+             * Containing HTML element; parent of the workspace and the drag surface.
+             * @type {Element}
+             * @private
+             */
+            container_: Element;
+    
+            /**
+             * Create the drag surface and inject it into the container.
+             */
+            createDom(): void;
+    
+            /**
+             * Translate the entire drag surface during a drag.
+             * We translate the drag surface instead of the blocks inside the surface
+             * so that the browser avoids repainting the SVG.
+             * Because of this, the drag coordinates must be adjusted by scale.
+             * @param {number} x X translation for the entire surface
+             * @param {number} y Y translation for the entire surface
+             * @package
+             */
+            translateSurface(x: number, y: number): void;
+    
+            /**
+             * Reports the surface translation in scaled workspace coordinates.
+             * Use this when finishing a drag to return blocks to the correct position.
+             * @return {!Blockly.utils.Coordinate} Current translation of the surface
+             * @package
+             */
+            getSurfaceTranslation(): Blockly.utils.Coordinate;
+    
+            /**
+             * Move the blockCanvas and bubbleCanvas out of the surface SVG and on to
+             * newSurface.
+             * @param {SVGElement} newSurface The element to put the drag surface contents
+             *     into.
+             * @package
+             */
+            clearAndHide(newSurface: SVGElement): void;
+    
+            /**
+             * Set the SVG to have the block canvas and bubble canvas in it and then
+             * show the surface.
+             * @param {!Element} blockCanvas The block canvas <g> element from the
+             *     workspace.
+             * @param {!Element} bubbleCanvas The <g> element that contains the bubbles.
+             * @param {Element} previousSibling The element to insert the block canvas and
+                   bubble canvas after when it goes back in the DOM at the end of a drag.
+             * @param {number} width The width of the workspace SVG element.
+             * @param {number} height The height of the workspace SVG element.
+             * @param {number} scale The scale of the workspace being dragged.
+             * @package
+             */
+            setContentsAndShow(blockCanvas: Element, bubbleCanvas: Element, previousSibling: Element, width: number, height: number, scale: number): void;
+    } 
+    
+}
+
+
+declare module Blockly.Events {
+
+    class FinishedLoading extends FinishedLoading__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FinishedLoading__Class  { 
+    
+            /**
+             * Class for a finished loading event.
+             * Used to notify the developer when the workspace has finished loading (i.e
+             * domToWorkspace).
+             * Finished loading events do not record undo or redo.
+             * @param {!Blockly.Workspace} workspace The workspace that has finished
+             *    loading.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * The workspace identifier for this event.
+             * @type {string}
+             */
+            workspaceId: string;
+    
+            /**
+             * The event group id for the group this event belongs to. Groups define
+             * events that should be treated as an single action from the user's
+             * perspective, and should be undone together.
+             * @type {string}
+             */
+            group: string;
+    
+            /**
+             * Type of this event.
+             * @type {string}
+             */
+            type: string;
+    
+            /**
+             * Encode the event as JSON.
+             * @return {!Object} JSON representation.
+             */
+            toJson(): Object;
+    
+            /**
+             * Decode the JSON event.
+             * @param {!Object} json JSON representation.
+             */
+            fromJson(json: Object): void;
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class WorkspaceSvg extends WorkspaceSvg__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class WorkspaceSvg__Class extends Blockly.Workspace__Class  { 
+    
+            /**
+             * Class for a workspace.  This is an onscreen area with optional trashcan,
+             * scrollbars, bubbles, and dragging.
+             * @param {!Blockly.Options} options Dictionary of options.
+             * @param {Blockly.BlockDragSurfaceSvg=} opt_blockDragSurface Drag surface for
+             *     blocks.
+             * @param {Blockly.WorkspaceDragSurfaceSvg=} opt_wsDragSurface Drag surface for
+             *     the workspace.
+             * @extends {Blockly.Workspace}
+             * @constructor
+             */
+            constructor(options: Blockly.Options, opt_blockDragSurface?: Blockly.BlockDragSurfaceSvg, opt_wsDragSurface?: Blockly.WorkspaceDragSurfaceSvg);
+    
+            /**
+             * List of currently highlighted blocks.  Block highlighting is often used to
+             * visually mark blocks currently being executed.
+             * @type !Array.<!Blockly.BlockSvg>
+             * @private
+             */
+            highlightedBlocks_: any /*missing*/;
+    
+            /**
+             * Object in charge of loading, storing, and playing audio for a workspace.
+             * @type {Blockly.WorkspaceAudio}
+             * @private
+             */
+            audioManager_: Blockly.WorkspaceAudio;
+    
+            /**
+             * This workspace's grid object or null.
+             * @type {Blockly.Grid}
+             * @private
+             */
+            grid_: Blockly.Grid;
+    
+            /**
+             * A wrapper function called when a resize event occurs.
+             * You can pass the result to `unbindEvent_`.
+             * @type {Array.<!Array>}
+             */
+            resizeHandlerWrapper_: any[][];
+    
+            /**
+             * The render status of an SVG workspace.
+             * Returns `false` for headless workspaces and true for instances of
+             * `Blockly.WorkspaceSvg`.
+             * @type {boolean}
+             */
+            rendered: boolean;
+    
+            /**
+             * Whether the workspace is visible.  False if the workspace has been hidden
+             * by calling `setVisible(false)`.
+             * @type {boolean}
+             * @private
+             */
+            isVisible_: boolean;
+    
+            /**
+             * Is this workspace the surface for a flyout?
+             * @type {boolean}
+             */
+            isFlyout: boolean;
+    
+            /**
+             * Is this workspace the surface for a mutator?
+             * @type {boolean}
+             * @package
+             */
+            isMutator: boolean;
+    
+            /**
+             * Whether this workspace has resizes enabled.
+             * Disable during batch operations for a performance improvement.
+             * @type {boolean}
+             * @private
+             */
+            resizesEnabled_: boolean;
+    
+            /**
+             * Current horizontal scrolling offset in pixel units, relative to the
+             * workspace origin.
+             *
+             * It is useful to think about a view, and a canvas moving beneath that
+             * view. As the canvas moves right, this value becomes more positive, and
+             * the view is now "seeing" the left side of the canvas. As the canvas moves
+             * left, this value becomes more negative, and the view is now "seeing" the
+             * right side of the canvas.
+             *
+             * The confusing thing about this value is that it does not, and must not
+             * include the absoluteLeft offset. This is because it is used to calculate
+             * the viewLeft value.
+             *
+             * The viewLeft is relative to the workspace origin (although in pixel
+             * units). The workspace origin is the top-left corner of the workspace (at
+             * least when it is enabled). It is shifted from the top-left of the blocklyDiv
+             * so as not to be beneath the toolbox.
+             *
+             * When the workspace is enabled the viewLeft and workspace origin are at
+             * the same X location. As the canvas slides towards the right beneath the view
+             * this value (scrollX) becomes more positive, and the viewLeft becomes more
+             * negative relative to the workspace origin (imagine the workspace origin
+             * as a dot on the canvas sliding to the right as the canvas moves).
+             *
+             * So if the scrollX were to include the absoluteLeft this would in a way
+             * "unshift" the workspace origin. This means that the viewLeft would be
+             * representing the left edge of the blocklyDiv, rather than the left edge
+             * of the workspace.
+             *
+             * @type {number}
+             */
+            scrollX: number;
+    
+            /**
+             * Current vertical scrolling offset in pixel units, relative to the
+             * workspace origin.
+             *
+             * It is useful to think about a view, and a canvas moving beneath that
+             * view. As the canvas moves down, this value becomes more positive, and the
+             * view is now "seeing" the upper part of the canvas. As the canvas moves
+             * up, this value becomes more negative, and the view is "seeing" the lower
+             * part of the canvas.
+             *
+             * This confusing thing about this value is that it does not, and must not
+             * include the absoluteTop offset. This is because it is used to calculate
+             * the viewTop value.
+             *
+             * The viewTop is relative to the workspace origin (although in pixel
+             * units). The workspace origin is the top-left corner of the workspace (at
+             * least when it is enabled). It is shifted from the top-left of the
+             * blocklyDiv so as not to be beneath the toolbox.
+             *
+             * When the workspace is enabled the viewTop and workspace origin are at the
+             * same Y location. As the canvas slides towards the bottom this value
+             * (scrollY) becomes more positive, and the viewTop becomes more negative
+             * relative to the workspace origin (image in the workspace origin as a dot
+             * on the canvas sliding downwards as the canvas moves).
+             *
+             * So if the scrollY were to include the absoluteTop this would in a way
+             * "unshift" the workspace origin. This means that the viewTop would be
+             * representing the top edge of the blocklyDiv, rather than the top edge of
+             * the workspace.
+             *
+             * @type {number}
+             */
+            scrollY: number;
+    
+            /**
+             * Horizontal scroll value when scrolling started in pixel units.
+             * @type {number}
+             */
+            startScrollX: number;
+    
+            /**
+             * Vertical scroll value when scrolling started in pixel units.
+             * @type {number}
+             */
+            startScrollY: number;
+    
+            /**
+             * Distance from mouse to object being dragged.
+             * @type {Blockly.utils.Coordinate}
+             * @private
+             */
+            dragDeltaXY_: Blockly.utils.Coordinate;
+    
+            /**
+             * Current scale.
+             * @type {number}
+             */
+            scale: number;
+    
+            /** @type {Blockly.Trashcan} */
+            trashcan: Blockly.Trashcan;
+    
+            /**
+             * This workspace's scrollbars, if they exist.
+             * @type {Blockly.ScrollbarPair}
+             */
+            scrollbar: Blockly.ScrollbarPair;
+    
+            /**
+             * Fixed flyout providing blocks which may be dragged into this workspace.
+             * @type {Blockly.Flyout}
+             * @private
+             */
+            flyout_: Blockly.Flyout;
+    
+            /**
+             * Category-based toolbox providing blocks which may be dragged into this
+             * workspace.
+             * @type {Blockly.Toolbox}
+             */
+            toolbox_: Blockly.Toolbox;
+    
+            /**
+             * The current gesture in progress on this workspace, if any.
+             * @type {Blockly.TouchGesture}
+             * @private
+             */
+            currentGesture_: Blockly.TouchGesture;
+    
+            /**
+             * This workspace's surface for dragging blocks, if it exists.
+             * @type {Blockly.BlockDragSurfaceSvg}
+             * @private
+             */
+            blockDragSurface_: Blockly.BlockDragSurfaceSvg;
+    
+            /**
+             * This workspace's drag surface, if it exists.
+             * @type {Blockly.WorkspaceDragSurfaceSvg}
+             * @private
+             */
+            workspaceDragSurface_: Blockly.WorkspaceDragSurfaceSvg;
+    
+            /**
+              * Whether to move workspace to the drag surface when it is dragged.
+              * True if it should move, false if it should be translated directly.
+              * @type {boolean}
+              * @private
+              */
+            useWorkspaceDragSurface_: boolean;
+    
+            /**
+             * Whether the drag surface is actively in use. When true, calls to
+             * translate will translate the drag surface instead of the translating the
+             * workspace directly.
+             * This is set to true in setupDragSurface and to false in resetDragSurface.
+             * @type {boolean}
+             * @private
+             */
+            isDragSurfaceActive_: boolean;
+    
+            /**
+             * The first parent div with 'injectionDiv' in the name, or null if not set.
+             * Access this with getInjectionDiv.
+             * @type {!Element}
+             * @private
+             */
+            injectionDiv_: Element;
+    
+            /**
+             * Last known position of the page scroll.
+             * This is used to determine whether we have recalculated screen coordinate
+             * stuff since the page scrolled.
+             * @type {!Blockly.utils.Coordinate}
+             * @private
+             */
+            lastRecordedPageScroll_: Blockly.utils.Coordinate;
+    
+            /**
+             * Map from function names to callbacks, for deciding what to do when a button
+             * is clicked.
+             * @type {!Object.<string, function(!Blockly.FlyoutButton)>}
+             * @private
+             */
+            flyoutButtonCallbacks_: { [key: string]: { (_0: Blockly.FlyoutButton): any /*missing*/ } };
+    
+            /**
+             * Map from function names to callbacks, for deciding what to do when a custom
+             * toolbox category is opened.
+             * @type {!Object.<string, function(!Blockly.Workspace):!Array.<!Element>>}
+             * @private
+             */
+            toolboxCategoryCallbacks_: { [key: string]: { (_0: Blockly.Workspace): Element[] } };
+    
+            /**
+             * Developers may define this function to add custom menu options to the
+             * workspace's context menu or edit the workspace-created set of menu options.
+             * @param {!Array.<!Object>} options List of menu options to add to.
+             */
+            configureContextMenu(options: Object[]): void;
+    
+            /**
+             * In a flyout, the target workspace where blocks should be placed after a drag.
+             * Otherwise null.
+             * @type {Blockly.WorkspaceSvg}
+             * @package
+             */
+            targetWorkspace: Blockly.WorkspaceSvg;
+    
+            /**
+             * Inverted screen CTM, for use in mouseToSvg.
+             * @type {SVGMatrix}
+             * @private
+             */
+            inverseScreenCTM_: SVGMatrix;
+    
+            /**
+             * Inverted screen CTM is dirty, recalculate it.
+             * @type {boolean}
+             * @private
+             */
+            inverseScreenCTMDirty_: boolean;
+    
+            /**
+             * Getter for the inverted screen CTM.
+             * @return {SVGMatrix} The matrix to use in mouseToSvg
+             */
+            getInverseScreenCTM(): SVGMatrix;
+    
+            /**
+             * Mark the inverse screen CTM as dirty.
+             */
+            updateInverseScreenCTM(): void;
+    
+            /**
+             * Getter for isVisible
+             * @return {boolean} Whether the workspace is visible.
+             *     False if the workspace has been hidden by calling `setVisible(false)`.
+             */
+            isVisible(): boolean;
+    
+            /**
+             * Return the absolute coordinates of the top-left corner of this element,
+             * scales that after canvas SVG element, if it's a descendant.
+             * The origin (0,0) is the top-left corner of the Blockly SVG.
+             * @param {!Element} element Element to find the coordinates of.
+             * @return {!Blockly.utils.Coordinate} Object with .x and .y properties.
+             * @private
+             */
+            getSvgXY(element: Element): Blockly.utils.Coordinate;
+    
+            /**
+             * Return the position of the workspace origin relative to the injection div
+             * origin in pixels.
+             * The workspace origin is where a block would render at position (0, 0).
+             * It is not the upper left corner of the workspace SVG.
+             * @return {!Blockly.utils.Coordinate} Offset in pixels.
+             * @package
+             */
+            getOriginOffsetInPixels(): Blockly.utils.Coordinate;
+    
+            /**
+             * Return the injection div that is a parent of this workspace.
+             * Walks the DOM the first time it's called, then returns a cached value.
+             * @return {!Element} The first parent div with 'injectionDiv' in the name.
+             * @package
+             */
+            getInjectionDiv(): Element;
+    
+            /**
+             * Save resize handler data so we can delete it later in dispose.
+             * @param {!Array.<!Array>} handler Data that can be passed to unbindEvent_.
+             */
+            setResizeHandlerWrapper(handler: any[][]): void;
+    
+            /**
+             * Create the workspace DOM elements.
+             * @param {string=} opt_backgroundClass Either 'blocklyMainBackground' or
+             *     'blocklyMutatorBackground'.
+             * @return {!Element} The workspace's SVG group.
+             */
+            createDom(opt_backgroundClass?: string): Element;
+    
+            /**
+             * <g class="blocklyWorkspace">
+             *   <rect class="blocklyMainBackground" height="100%" width="100%"></rect>
+             *   [Trashcan and/or flyout may go here]
+             *   <g class="blocklyBlockCanvas"></g>
+             *   <g class="blocklyBubbleCanvas"></g>
+             * </g>
+             * @type {SVGElement}
+             */
+            svgGroup_: SVGElement;
+    
+            /** @type {SVGElement} */
+            svgBackground_: SVGElement;
+    
+            /** @type {SVGElement} */
+            svgBlockCanvas_: SVGElement;
+    
+            /** @type {SVGElement} */
+            svgBubbleCanvas_: SVGElement;
+    
+            /**
+             * Dispose of this workspace.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Obtain a newly created block.
+             * @param {?string} prototypeName Name of the language object containing
+             *     type-specific functions for this block.
+             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
+             *     create a new ID.
+             * @return {!Blockly.BlockSvg} The created block.
+             */
+            newBlock(prototypeName: string, opt_id?: string): Blockly.BlockSvg;
+    
+            /**
+             * Add a trashcan.
+             * @package
+             */
+            addTrashcan(): void;
+    
+            /**
+             * Add zoom controls.
+             * @package
+             */
+            addZoomControls(): void;
+    
+            /** @type {Blockly.ZoomControls} */
+            zoomControls_: Blockly.ZoomControls;
+    
+            /**
+             * Add a flyout element in an element with the given tag name.
+             * @param {string} tagName What type of tag the flyout belongs in.
+             * @return {!Element} The element containing the flyout DOM.
+             * @private
+             */
+            addFlyout_(tagName: string): Element;
+    
+            /**
+             * Getter for the flyout associated with this workspace.  This flyout may be
+             * owned by either the toolbox or the workspace, depending on toolbox
+             * configuration.  It will be null if there is no flyout.
+             * @return {Blockly.Flyout} The flyout on this workspace.
+             * @package
+             */
+            getFlyout(): Blockly.Flyout;
+    
+            /**
+             * Getter for the toolbox associated with this workspace, if one exists.
+             * @return {Blockly.Toolbox} The toolbox on this workspace.
+             * @package
+             */
+            getToolbox(): Blockly.Toolbox;
+    
+            /**
+             * Update items that use screen coordinate calculations
+             * because something has changed (e.g. scroll position, window size).
+             * @private
+             */
+            updateScreenCalculations_(): void;
+    
+            /**
+             * If enabled, resize the parts of the workspace that change when the workspace
+             * contents (e.g. block positions) change.  This will also scroll the
+             * workspace contents if needed.
+             * @package
+             */
+            resizeContents(): void;
+    
+            /**
+             * Resize and reposition all of the workspace chrome (toolbox,
+             * trash, scrollbars etc.)
+             * This should be called when something changes that
+             * requires recalculating dimensions and positions of the
+             * trash, zoom, toolbox, etc. (e.g. window resize).
+             */
+            resize(): void;
+    
+            /**
+             * Resizes and repositions workspace chrome if the page has a new
+             * scroll position.
+             * @package
+             */
+            updateScreenCalculationsIfScrolled(): void;
+    
+            /**
+             * Get the SVG element that forms the drawing surface.
+             * @return {!Element} SVG element.
+             */
+            getCanvas(): Element;
+    
+            /**
+             * Get the SVG element that forms the bubble surface.
+             * @return {!SVGGElement} SVG element.
+             */
+            getBubbleCanvas(): SVGGElement;
+    
+            /**
+             * Get the SVG element that contains this workspace.
+             * @return {SVGElement} SVG element.
+             */
+            getParentSvg(): SVGElement;
+    
+            /**
+             * Translate this workspace to new coordinates.
+             * @param {number} x Horizontal translation, in pixel units relative to the
+             *    top left of the Blockly div.
+             * @param {number} y Vertical translation, in pixel units relative to the
+             *    top left of the Blockly div.
+             */
+            translate(x: number, y: number): void;
+    
+            /**
+             * Called at the end of a workspace drag to take the contents
+             * out of the drag surface and put them back into the workspace SVG.
+             * Does nothing if the workspace drag surface is not enabled.
+             * @package
+             */
+            resetDragSurface(): void;
+    
+            /**
+             * Called at the beginning of a workspace drag to move contents of
+             * the workspace to the drag surface.
+             * Does nothing if the drag surface is not enabled.
+             * @package
+             */
+            setupDragSurface(): void;
+    
+            /**
+             * @return {Blockly.BlockDragSurfaceSvg} This workspace's block drag surface,
+             *     if one is in use.
+             * @package
+             */
+            getBlockDragSurface(): Blockly.BlockDragSurfaceSvg;
+    
+            /**
+             * Returns the horizontal offset of the workspace.
+             * Intended for LTR/RTL compatibility in XML.
+             * @return {number} Width.
+             */
+            getWidth(): number;
+    
+            /**
+             * Toggles the visibility of the workspace.
+             * Currently only intended for main workspace.
+             * @param {boolean} isVisible True if workspace should be visible.
+             */
+            setVisible(isVisible: boolean): void;
+    
+            /**
+             * Render all blocks in workspace.
+             */
+            render(): void;
+    
+            /**
+             * Was used back when block highlighting (for execution) and block selection
+             * (for editing) were the same thing.
+             * Any calls of this function can be deleted.
+             * @deprecated October 2016
+             */
+            traceOn(): void;
+    
+            /**
+             * Highlight or unhighlight a block in the workspace.  Block highlighting is
+             * often used to visually mark blocks currently being executed.
+             * @param {?string} id ID of block to highlight/unhighlight,
+             *   or null for no block (used to unhighlight all blocks).
+             * @param {boolean=} opt_state If undefined, highlight specified block and
+             * automatically unhighlight all others.  If true or false, manually
+             * highlight/unhighlight the specified block.
+             */
+            highlightBlock(id: string, opt_state?: boolean): void;
+    
+            /**
+             * Glow/unglow a block in the workspace.
+             * @param {?string} id ID of block to find.
+             * @param {boolean} isGlowingBlock Whether to glow the block.
+             */
+            glowBlock(id: string, isGlowingBlock: boolean): void;
+    
+            /**
+             * Glow/unglow a stack in the workspace.
+             * @param {?string} id ID of block which starts the stack.
+             * @param {boolean} isGlowingStack Whether to glow the stack.
+             */
+            glowStack(id: string, isGlowingStack: boolean): void;
+    
+            /**
+             * Paste the provided block onto the workspace.
+             * @param {!Element} xmlBlock XML block element.
+             */
+            paste(xmlBlock: Element): void;
+    
+            /**
+             * Paste the provided block onto the workspace.
+             * @param {!Element} xmlBlock XML block element.
+             */
+            pasteBlock_(xmlBlock: Element): void;
+    
+            /**
+             * Paste the provided comment onto the workspace.
+             * @param {!Element} xmlComment XML workspace comment element.
+             * @private
+             */
+            pasteWorkspaceComment_(xmlComment: Element): void;
+    
+            /**
+             * Refresh the toolbox unless there's a drag in progress.
+             * @package
+             */
+            refreshToolboxSelection(): void;
+    
+            /**
+             * Rename a variable by updating its name in the variable map.  Update the
+             *     flyout to show the renamed variable immediately.
+             * @param {string} id ID of the variable to rename.
+             * @param {string} newName New variable name.
+             * @package
+             */
+            renameVariableById(id: string, newName: string): void;
+    
+            /**
+             * Delete a variable by the passed in ID.   Update the flyout to show
+             *     immediately that the variable is deleted.
+             * @param {string} id ID of variable to delete.
+             * @package
+             */
+            deleteVariableById(id: string): void;
+    
+            /**
+             * Create a new variable with the given name.  Update the flyout to show the
+             *     new variable immediately.
+             * @param {string} name The new variable's name.
+             * @param {string=} opt_type The type of the variable like 'int' or 'string'.
+             *     Does not need to be unique. Field_variable can filter variables based on
+             *     their type. This will default to '' which is a specific type.
+             * @param {string=} opt_id The unique ID of the variable. This will default to
+             *     a UUID.
+             * @return {Blockly.VariableModel} The newly created variable.
+             * @package
+             */
+            createVariable(name: string, opt_type?: string, opt_id?: string): Blockly.VariableModel;
+    
+            /**
+             * Make a list of all the delete areas for this workspace.
+             */
+            recordDeleteAreas(): void;
+    
+            /**
+             * Is the mouse event over a delete area (toolbox or non-closing flyout)?
+             * @param {!Event} e Mouse move event.
+             * @return {?number} Null if not over a delete area, or an enum representing
+             *     which delete area the event is over.
+             */
+            isDeleteArea(e: Event): number;
+    
+            /**
+             * Handle a mouse-down on SVG drawing surface.
+             * @param {!Event} e Mouse down event.
+             * @private
+             */
+            onMouseDown_(e: Event): void;
+    
+            /**
+             * Start tracking a drag of an object on this workspace.
+             * @param {!Event} e Mouse down event.
+             * @param {!Blockly.utils.Coordinate} xy Starting location of object.
+             */
+            startDrag(e: Event, xy: Blockly.utils.Coordinate): void;
+    
+            /**
+             * Track a drag of an object on this workspace.
+             * @param {!Event} e Mouse move event.
+             * @return {!Blockly.utils.Coordinate} New location of object.
+             */
+            moveDrag(e: Event): Blockly.utils.Coordinate;
+    
+            /**
+             * Is the user currently dragging a block or scrolling the flyout/workspace?
+             * @return {boolean} True if currently dragging or scrolling.
+             */
+            isDragging(): boolean;
+    
+            /**
+             * Is this workspace draggable?
+             * @return {boolean} True if this workspace may be dragged.
+             */
+            isDraggable(): boolean;
+    
+            /**
+             * Should the workspace have bounded content? Used to tell if the
+             * workspace's content should be sized so that it can move (bounded) or not
+             * (exact sizing).
+             * @return {boolean} True if the workspace should be bounded, false otherwise.
+             * @package
+             */
+            isContentBounded(): boolean;
+    
+            /**
+             * Is this workspace movable?
+             *
+             * This means the user can reposition the X Y coordinates of the workspace
+             * through input. This can be through scrollbars, scroll wheel, dragging, or
+             * through zooming with the scroll wheel (since the zoom is centered on the
+             * mouse position). This does not include zooming with the zoom controls
+             * since the X Y coordinates are decided programmatically.
+             * @return {boolean} True if the workspace is movable, false otherwise.
+             * @package
+             */
+            isMovable(): boolean;
+    
+            /**
+             * Handle a mouse-wheel on SVG drawing surface.
+             * @param {!Event} e Mouse wheel event.
+             * @private
+             */
+            onMouseWheel_(e: Event): void;
+    
+            /**
+             * Calculate the bounding box for the blocks on the workspace.
+             * Coordinate system: workspace coordinates.
+             *
+             * @return {!Blockly.utils.Rect} Contains the position and size of the
+             *   bounding box containing the blocks on the workspace.
+             */
+            getBlocksBoundingBox(): Blockly.utils.Rect;
+    
+            /**
+             * Clean up the workspace by ordering all the blocks in a column.
+             */
+            cleanUp(): void;
+    
+            /**
+             * Show the context menu for the workspace.
+             * @param {!Event} e Mouse event.
+             * @private
+             */
+            showContextMenu_(e: Event): void;
+    
+            /**
+             * Modify the block tree on the existing toolbox.
+             * @param {Node|string} tree DOM tree of blocks, or text representation of same.
+             */
+            updateToolbox(tree: Node|string): void;
+    
+            /**
+             * Mark this workspace as the currently focused main workspace.
+             */
+            markFocused(): void;
+    
+            /**
+             * Set the workspace to have focus in the browser.
+             * @private
+             */
+            setBrowserFocus(): void;
+    
+            /**
+             * Zooms the workspace in or out relative to/centered on the given (x, y)
+             * coordinate.
+             * @param {number} x X coordinate of center, in pixel units relative to the
+             *     top-left corner of the parentSVG.
+             * @param {number} y Y coordinate of center, in pixel units relative to the
+             *     top-left corner of the parentSVG.
+             * @param {number} amount Amount of zooming. The formula for the new scale
+             *     is newScale = currentScale * (scaleSpeed^amount). scaleSpeed is set in
+             *     the workspace options. Negative amount values zoom out, and positive
+             *     amount values zoom in.
+             */
+            zoom(x: number, y: number, amount: number): void;
+    
+            /**
+             * Zooming the blocks centered in the center of view with zooming in or out.
+             * @param {number} type Type of zooming (-1 zooming out and 1 zooming in).
+             */
+            zoomCenter(type: number): void;
+    
+            /**
+             * Zoom the blocks to fit in the workspace if possible.
+             */
+            zoomToFit(): void;
+    
+            /**
+             * Add a transition class to the block and bubble canvas, to animate any
+             * transform changes.
+             * @package
+             */
+            beginCanvasTransition(): void;
+    
+            /**
+             * Remove transition class from the block and bubble canvas.
+             * @package
+             */
+            endCanvasTransition(): void;
+    
+            /**
+             * Center the workspace.
+             */
+            scrollCenter(): void;
+    
+            /**
+             * Scroll the workspace to center on the given block.
+             * @param {?string} id ID of block center on.
+             * @param {boolean=} animate If true, transition to the block.
+             * @public
+             */
+            centerOnBlock(id: string, animate?: boolean): void;
+    
+            /**
+             * Set the workspace's zoom factor.
+             * @param {number} newScale Zoom factor. Units: (pixels / workspaceUnit).
+             */
+            setScale(newScale: number): void;
+    
+            /**
+             * Scroll the workspace to a specified offset (in pixels), keeping in the
+             * workspace bounds. See comment on workspaceSvg.scrollX for more detail on
+             * the meaning of these values.
+             * @param {number} x Target X to scroll to.
+             * @param {number} y Target Y to scroll to.
+             * @package
+             */
+            scroll(x: number, y: number): void;
+    
+            /**
+             * Update the workspace's stack glow radius to be proportional to scale.
+             * Ensures that stack glows always appear to be a fixed size.
+             */
+            updateStackGlowScale_(): void;
+    
+            /**
+             * Update whether this workspace has resizes enabled.
+             * If enabled, workspace will resize when appropriate.
+             * If disabled, workspace will not resize until re-enabled.
+             * Use to avoid resizing during a batch operation, for performance.
+             * @param {boolean} enabled Whether resizes should be enabled.
+             */
+            setResizesEnabled(enabled: boolean): void;
+    
+            /**
+             * Dispose of all blocks in workspace, with an optimization to prevent resizes.
+             */
+            clear(): void;
+    
+            /**
+             * Register a callback function associated with a given key, for clicks on
+             * buttons and labels in the flyout.
+             * For instance, a button specified by the XML
+             * <button text="create variable" callbackkey="CREATE_VARIABLE"></button>
+             * should be matched by a call to
+             * registerButtonCallback("CREATE_VARIABLE", yourCallbackFunction).
+             * @param {string} key The name to use to look up this function.
+             * @param {function(!Blockly.FlyoutButton)} func The function to call when the
+             *     given button is clicked.
+             */
+            registerButtonCallback(key: string, func: { (_0: Blockly.FlyoutButton): any /*missing*/ }): void;
+    
+            /**
+             * Get the callback function associated with a given key, for clicks on buttons
+             * and labels in the flyout.
+             * @param {string} key The name to use to look up the function.
+             * @return {?function(!Blockly.FlyoutButton)} The function corresponding to the
+             *     given key for this workspace; null if no callback is registered.
+             */
+            getButtonCallback(key: string): { (_0: Blockly.FlyoutButton): any /*missing*/ };
+    
+            /**
+             * Remove a callback for a click on a button in the flyout.
+             * @param {string} key The name associated with the callback function.
+             */
+            removeButtonCallback(key: string): void;
+    
+            /**
+             * Register a callback function associated with a given key, for populating
+             * custom toolbox categories in this workspace.  See the variable and procedure
+             * categories as an example.
+             * @param {string} key The name to use to look up this function.
+             * @param {function(!Blockly.Workspace):!Array.<!Element>} func The function to
+             *     call when the given toolbox category is opened.
+             */
+            registerToolboxCategoryCallback(key: string, func: { (_0: Blockly.Workspace): Element[] }): void;
+    
+            /**
+             * Get the callback function associated with a given key, for populating
+             * custom toolbox categories in this workspace.
+             * @param {string} key The name to use to look up the function.
+             * @return {?function(!Blockly.Workspace):!Array.<!Element>} The function
+             *     corresponding to the given key for this workspace, or null if no function
+             *     is registered.
+             */
+            getToolboxCategoryCallback(key: string): { (_0: Blockly.Workspace): Element[] };
+    
+            /**
+             * Remove a callback for a click on a custom category's name in the toolbox.
+             * @param {string} key The name associated with the callback function.
+             */
+            removeToolboxCategoryCallback(key: string): void;
+    
+            /**
+             * Look up the gesture that is tracking this touch stream on this workspace.
+             * May create a new gesture.
+             * @param {!Event} e Mouse event or touch event.
+             * @return {Blockly.Gesture} The gesture that is tracking this touch
+             *     stream, or null if no valid gesture exists.
+             * @package
+             */
+            getGesture(e: Event): Blockly.Gesture;
+    
+            /**
+             * Clear the reference to the current gesture.
+             * @package
+             */
+            clearGesture(): void;
+    
+            /**
+             * Cancel the current gesture, if one exists.
+             * @package
+             */
+            cancelCurrentGesture(): void;
+    
+            /**
+             * Don't even think about using this function before talking to rachel-fenichel.
+             *
+             * Force a drag to start without clicking and dragging the block itself.  Used
+             * to attach duplicated blocks to the mouse pointer.
+             * @param {!Object} fakeEvent An object with the properties needed to start a
+             *     drag, including clientX and clientY.
+             * @param {!Blockly.BlockSvg} block The block to start dragging.
+             * @package
+             */
+            startDragWithFakeEvent(fakeEvent: Object, block: Blockly.BlockSvg): void;
+    
+            /**
+             * Get the audio manager for this workspace.
+             * @return {Blockly.WorkspaceAudio} The audio manager for this workspace.
+             */
+            getAudioManager(): Blockly.WorkspaceAudio;
+    
+            /**
+             * Get the grid object for this workspace, or null if there is none.
+             * @return {Blockly.Grid} The grid object for this workspace.
+             * @package
+             */
+            getGrid(): Blockly.Grid;
+    
+            /**
+             * Return an object with the metrics required to size the workspace.
+             * @return {Blockly.Metrics} Contains size and position metrics, or null.
+             */
+            getMetrics(): Blockly.Metrics;
+    } 
+    
+}
+
+declare module Blockly.WorkspaceSvg {
+
+    /**
+     * Build a list of all deletable blocks that are reachable from the given
+     * list of top blocks.
+     * @param {!Array.<!Blockly.BlockSvg>} topBlocks The list of top blocks on the
+     *     workspace.
+     * @return {!Array.<!Blockly.BlockSvg>} A list of deletable blocks on the
+     *     workspace.
+     * @private
+     */
+    function buildDeleteList_(topBlocks: Blockly.BlockSvg[]): Blockly.BlockSvg[];
+
+    /**
+     * Get the dimensions of the given workspace component, in pixels.
+     * @param {Blockly.Toolbox|Blockly.Flyout} elem The element to get the
+     *     dimensions of, or null.  It should be a toolbox or flyout, and should
+     *     implement getWidth() and getHeight().
+     * @return {!Object} An object containing width and height attributes, which
+     *     will both be zero if elem did not exist.
+     * @private
+     */
+    function getDimensionsPx_(elem: Blockly.Toolbox|Blockly.Flyout): Object;
+
+    /**
+     * Get the content dimensions of the given workspace, taking into account
+     * whether or not it is scrollable and what size the workspace div is on screen.
+     * @param {!Blockly.WorkspaceSvg} ws The workspace to measure.
+     * @param {!Object} svgSize An object containing height and width attributes in
+     *     CSS pixels.  Together they specify the size of the visible workspace, not
+     *     including areas covered up by the toolbox.
+     * @return {!Object} The dimensions of the contents of the given workspace, as
+     *     an object containing at least
+     *     - height and width in pixels
+     *     - left and top in pixels relative to the workspace origin.
+     * @private
+     */
+    function getContentDimensions_(ws: Blockly.WorkspaceSvg, svgSize: Object): Object;
+
+    /**
+     * Get the bounding box for all workspace contents, in pixels.
+     * @param {!Blockly.WorkspaceSvg} ws The workspace to inspect.
+     * @return {!Object} The dimensions of the contents of the given workspace, as
+     *     an object containing
+     *     - height and width in pixels
+     *     - left, right, top and bottom in pixels relative to the workspace origin.
+     * @private
+     */
+    function getContentDimensionsExact_(ws: Blockly.WorkspaceSvg): Object;
+
+    /**
+     * Calculate the size of a scrollable workspace, which should include room for a
+     * half screen border around the workspace contents.
+     * @param {!Blockly.WorkspaceSvg} ws The workspace to measure.
+     * @param {!Object} svgSize An object containing height and width attributes in
+     *     CSS pixels.  Together they specify the size of the visible workspace, not
+     *     including areas covered up by the toolbox.
+     * @return {!Object} The dimensions of the contents of the given workspace, as
+     *     an object containing
+     *     - height and width in pixels
+     *     - left and top in pixels relative to the workspace origin.
+     * @private
+     */
+    function getContentDimensionsBounded_(ws: Blockly.WorkspaceSvg, svgSize: Object): Object;
+
+    /**
+     * Return an object with all the metrics required to size scrollbars for a
+     * top level workspace.  The following properties are computed:
+     * Coordinate system: pixel coordinates, -left, -up, +right, +down
+     * .viewHeight: Height of the visible portion of the workspace.
+     * .viewWidth: Width of the visible portion of the workspace.
+     * .contentHeight: Height of the content.
+     * .contentWidth: Width of the content.
+     * .svgHeight: Height of the Blockly div (the view + the toolbox,
+     *    simple or otherwise),
+     * .svgWidth: Width of the Blockly div (the view + the toolbox,
+     *    simple or otherwise),
+     * .viewTop: Top-edge of the visible portion of the workspace, relative to
+     *     the workspace origin.
+     * .viewLeft: Left-edge of the visible portion of the workspace, relative to
+     *     the workspace origin.
+     * .contentTop: Top-edge of the content, relative to the workspace origin.
+     * .contentLeft: Left-edge of the content relative to the workspace origin.
+     * .absoluteTop: Top-edge of the visible portion of the workspace, relative
+     *     to the blocklyDiv.
+     * .absoluteLeft: Left-edge of the visible portion of the workspace, relative
+     *     to the blocklyDiv.
+     * .toolboxWidth: Width of the toolbox, if it exists.  Otherwise zero.
+     * .toolboxHeight: Height of the toolbox, if it exists.  Otherwise zero.
+     * .flyoutWidth: Width of the flyout if it is always open.  Otherwise zero.
+     * .flyoutHeight: Height of the flyout if it is always open.  Otherwise zero.
+     * .toolboxPosition: Top, bottom, left or right. Use TOOLBOX_AT constants to
+     *     compare.
+     * @return {!Object} Contains size and position metrics of a top level
+     *   workspace.
+     * @private
+     * @this Blockly.WorkspaceSvg
+     */
+    function getTopLevelWorkspaceMetrics_(): Object;
+
+    /**
+     * Sets the X/Y translations of a top level workspace.
+     * @param {!Object} xyRatio Contains an x and/or y property which is a float
+     *     between 0 and 1 specifying the degree of scrolling.
+     * @private
+     * @this Blockly.WorkspaceSvg
+     */
+    function setTopLevelWorkspaceMetrics_(xyRatio: Object): void;
+}
+
+
+declare module Blockly.Xml {
+
+    /**
+     * Encode a block tree as XML.
+     * @param {!Blockly.Workspace} workspace The workspace containing blocks.
+     * @param {boolean=} opt_noId True if the encoder should skip the block IDs.
+     * @return {!Element} XML document.
+     */
+    function workspaceToDom(workspace: Blockly.Workspace, opt_noId?: boolean): Element;
+
+    /**
+     * Encode a list of variables as XML.
+     * @param {!Array.<!Blockly.VariableModel>} variableList List of all variable
+     *     models.
+     * @return {!Element} List of XML elements.
+     */
+    function variablesToDom(variableList: Blockly.VariableModel[]): Element;
+
+    /**
+     * Encode a block subtree as XML with XY coordinates.
+     * @param {!Blockly.Block} block The root block to encode.
+     * @param {boolean=} opt_noId True if the encoder should skip the block ID.
+     * @return {!Element} Tree of XML elements.
+     */
+    function blockToDomWithXY(block: Blockly.Block, opt_noId?: boolean): Element;
+
+    /**
+     * Encode a field as XML.
+     * @param {!Blockly.Field} field The field to encode.
+     * @return {Element} XML element, or null if the field did not need to be
+     *     serialized.
+     * @private
+     */
+    function fieldToDom_(field: Blockly.Field): Element;
+
+    /**
+     * Encode all of a block's fields as XML and attach them to the given tree of
+     * XML elements.
+     * @param {!Blockly.Block} block A block with fields to be encoded.
+     * @param {!Element} element The XML element to which the field DOM should be
+     *     attached.
+     * @private
+     */
+    function allFieldsToDom_(block: Blockly.Block, element: Element): void;
+
+    /**
+     * Encode a block subtree as XML.
+     * @param {!Blockly.Block} block The root block to encode.
+     * @param {boolean=} opt_noId True if the encoder should skip the block ID.
+     * @return {!Element} Tree of XML elements.
+     */
+    function blockToDom(block: Blockly.Block, opt_noId?: boolean): Element;
+
+    /**
+     * Deeply clone the shadow's DOM so that changes don't back-wash to the block.
+     * @param {!Element} shadow A tree of XML elements.
+     * @param {boolean=} opt_noId True if the encoder should skip the block ID.
+     * @return {!Element} A tree of XML elements.
+     * @private
+     */
+    function cloneShadow_(shadow: Element, opt_noId?: boolean): Element;
+
+    /**
+     * Converts a DOM structure into plain text.
+     * Currently the text format is fairly ugly: all one line with no whitespace.
+     * @param {!Element} dom A tree of XML elements.
+     * @return {string} Text representation.
+     */
+    function domToText(dom: Element): string;
+
+    /**
+     * Converts a DOM structure into properly indented text.
+     * @param {!Element} dom A tree of XML elements.
+     * @return {string} Text representation.
+     */
+    function domToPrettyText(dom: Element): string;
+
+    /**
+     * Converts an XML string into a DOM structure.
+     * @param {string} text An XML string.
+     * @return {!Element} A DOM object representing the singular child of the
+     *     document element.
+     * @throws if the text doesn't parse.
+     */
+    function textToDom(text: string): Element;
+
+    /**
+     * Clear the given workspace then decode an XML DOM and
+     * create blocks on the workspace.
+     * @param {!Element} xml XML DOM.
+     * @param {!Blockly.Workspace} workspace The workspace.
+     * @return {Array.<string>} An array containing new block ids.
+     */
+    function clearWorkspaceAndLoadFromXml(xml: Element, workspace: Blockly.Workspace): string[];
+
+    /**
+     * Decode an XML DOM and create blocks on the workspace.
+     * @param {!Element} xml XML DOM.
+     * @param {!Blockly.Workspace} workspace The workspace.
+     * @return {!Array.<string>} An array containing new block IDs.
+     */
+    function domToWorkspace(xml: Element, workspace: Blockly.Workspace): string[];
+
+    /**
+     * Decode an XML DOM and create blocks on the workspace. Position the new
+     * blocks immediately below prior blocks, aligned by their starting edge.
+     * @param {!Element} xml The XML DOM.
+     * @param {!Blockly.Workspace} workspace The workspace to add to.
+     * @return {Array.<string>} An array containing new block IDs.
+     */
+    function appendDomToWorkspace(xml: Element, workspace: Blockly.Workspace): string[];
+
+    /**
+     * Decode an XML block tag and create a block (and possibly sub blocks) on the
+     * workspace.
+     * @param {!Element} xmlBlock XML block element.
+     * @param {!Blockly.Workspace} workspace The workspace.
+     * @return {!Blockly.Block} The root block created.
+     */
+    function domToBlock(xmlBlock: Element, workspace: Blockly.Workspace): Blockly.Block;
+
+    /**
+     * Decode an XML list of variables and add the variables to the workspace.
+     * @param {!Element} xmlVariables List of XML variable elements.
+     * @param {!Blockly.Workspace} workspace The workspace to which the variable
+     *     should be added.
+     */
+    function domToVariables(xmlVariables: Element, workspace: Blockly.Workspace): void;
+
+    /**
+     * Decode an XML block tag and create a block (and possibly sub blocks) on the
+     * workspace.
+     * @param {!Element} xmlBlock XML block element.
+     * @param {!Blockly.Workspace} workspace The workspace.
+     * @return {!Blockly.Block} The root block created.
+     * @private
+     */
+    function domToBlockHeadless_(xmlBlock: Element, workspace: Blockly.Workspace): Blockly.Block;
+
+    /**
+     * Decode an XML field tag and set the value of that field on the given block.
+     * @param {!Blockly.Block} block The block that is currently being deserialized.
+     * @param {string} fieldName The name of the field on the block.
+     * @param {!Element} xml The field tag to decode.
+     * @private
+     */
+    function domToField_(block: Blockly.Block, fieldName: string, xml: Element): void;
+
+    /**
+     * Remove any 'next' block (statements in a stack).
+     * @param {!Element} xmlBlock XML block element.
+     */
+    function deleteNext(xmlBlock: Element): void;
+}
+
+
+declare module Blockly {
+
+    class ZoomControls extends ZoomControls__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class ZoomControls__Class  { 
+    
+            /**
+             * Class for a zoom controls.
+             * @param {!Blockly.Workspace} workspace The workspace to sit in.
+             * @constructor
+             */
+            constructor(workspace: Blockly.Workspace);
+    
+            /**
+             * Width of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            WIDTH_: number;
+    
+            /**
+             * Height of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            HEIGHT_: number;
+    
+            /**
+             * Distance between zoom controls and bottom edge of workspace.
+             * @type {number}
+             * @private
+             */
+            MARGIN_BOTTOM_: number;
+    
+            /**
+             * Distance between zoom controls and right edge of workspace.
+             * @type {number}
+             * @private
+             */
+            MARGIN_SIDE_: number;
+    
+            /**
+             * The SVG group containing the zoom controls.
+             * @type {Element}
+             * @private
+             */
+            svgGroup_: Element;
+    
+            /**
+             * Left coordinate of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            left_: number;
+    
+            /**
+             * Top coordinate of the zoom controls.
+             * @type {number}
+             * @private
+             */
+            top_: number;
+    
+            /**
+             * Create the zoom controls.
+             * @return {!Element} The zoom controls SVG group.
+             */
+            createDom(): Element;
+    
+            /**
+             * Initialize the zoom controls.
+             * @param {number} verticalSpacing Vertical distances from workspace edge to the
+             *    same edge of the controls.
+             * @return {number} Vertical distance from workspace edge to the opposite
+             *    edge of the controls.
+             */
+            init(verticalSpacing: number): number;
+    
+            /**
+             * Dispose of this zoom controls.
+             * Unlink from all DOM elements to prevent memory leaks.
+             */
+            dispose(): void;
+    
+            /**
+             * Position the zoom controls.
+             * It is positioned in the opposite corner to the corner the
+             * categories/toolbox starts at.
+             */
+            position(): void;
+    
+            /**
+             * Create the zoom in icon and its event handler.
+             * @param {string} rnd The random string to use as a suffix in the clip path's
+             *     ID.  These IDs must be unique in case there are multiple Blockly
+             *     instances on the same page.
+             * @private
+             */
+            createZoomOutSvg_(rnd: string): void;
+    
+            /**
+             * Create the zoom out icon and its event handler.
+             * @param {string} rnd The random string to use as a suffix in the clip path's
+             *     ID.  These IDs must be unique in case there are multiple Blockly
+             *     instances on the same page.
+             * @private
+             */
+            createZoomInSvg_(rnd: string): void;
+    
+            /**
+             * Create the zoom reset icon and its event handler.
+             * @param {string} rnd The random string to use as a suffix in the clip path's
+             *     ID.  These IDs must be unique in case there are multiple Blockly
+             *     instances on the same page.
+             * @private
+             */
+            createZoomResetSvg_(rnd: string): void;
+    } 
+    
+}
+
 
 declare module Blockly.Msg {
 
@@ -10968,16 +19323,6 @@ declare module Blockly.Msg {
     /**
      * @const
      */
-    var COLOUR_RGB_HELPURL: any /*missing*/;
-
-    /**
-     * @const
-     */
-    var COLOUR_RGB_TITLE: any /*missing*/;
-
-    /**
-     * @const
-     */
     var COLOUR_RGB_RED: any /*missing*/;
 
     /**
@@ -10998,27 +19343,12 @@ declare module Blockly.Msg {
     /**
      * @const
      */
-    var COLOUR_BLEND_HELPURL: any /*missing*/;
-
-    /**
-     * @const
-     */
-    var COLOUR_BLEND_TITLE: any /*missing*/;
-
-    /**
-     * @const
-     */
     var COLOUR_BLEND_COLOUR1: any /*missing*/;
 
     /**
      * @const
      */
     var COLOUR_BLEND_COLOUR2: any /*missing*/;
-
-    /**
-     * @const
-     */
-    var COLOUR_BLEND_RATIO: any /*missing*/;
 
     /**
      * @const
@@ -12864,6164 +21194,9 @@ declare module Blockly.Msg {
      * @const
      */
     var WORKSPACE_COMMENT_DEFAULT_TEXT: any /*missing*/;
-}
 
-declare module goog {
-
-    /**
-     * Back up original getMsg function.
-     * @type {!Function}
-     */
-    var getMsgOrig: Function;
-
-    /**
-     * Gets a localized message.
-     * Overrides the default Closure function to check for a Blockly.Msg first.
-     * Used infrequently, only known case is TODAY button in date picker.
-     * @param {string} str Translatable string, places holders in the form {$foo}.
-     * @param {Object.<string, string>=} opt_values Maps place holder name to value.
-     * @return {string} message with placeholders filled.
-     * @suppress {duplicate}
-     */
-    function getMsg(str: string, opt_values?: { [key: string]: string }): string;
-}
-
-declare module goog.getMsg {
-
-    /**
-     * Mapping of Closure messages to Blockly.Msg names.
-     */
-    var blocklyMsgMap: any /*missing*/;
-}
-
-declare module Blockly {
-
-    class Mutator extends Mutator__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Mutator__Class extends Blockly.Icon__Class  { 
-    
-            /**
-             * Class for a mutator dialog.
-             * @param {!Array.<string>} quarkNames List of names of sub-blocks for flyout.
-             * @extends {Blockly.Icon}
-             * @constructor
-             */
-            constructor(quarkNames: string[]);
-    
-            /**
-             * Width of workspace.
-             * @private
-             */
-            workspaceWidth_: any /*missing*/;
-    
-            /**
-             * Height of workspace.
-             * @private
-             */
-            workspaceHeight_: any /*missing*/;
-    
-            /**
-             * Draw the mutator icon.
-             * @param {!Element} group The icon group.
-             * @private
-             */
-            drawIcon_(group: Element): void;
-    
-            /**
-             * Create the editor for the mutator's bubble.
-             * @return {!Element} The top-level node of the editor.
-             * @private
-             */
-            createEditor_(): Element;
-    
-            /**
-             * Add or remove the UI indicating if this icon may be clicked or not.
-             */
-            updateEditable(): void;
-    
-            /**
-             * Callback function triggered when the bubble has resized.
-             * Resize the workspace accordingly.
-             * @private
-             */
-            resizeBubble_(): void;
-    
-            /**
-             * Show or hide the mutator bubble.
-             * @param {boolean} visible True if the bubble should be visible.
-             */
-            setVisible(visible: boolean): void;
-    
-            /**
-             * Update the source block when the mutator's blocks are changed.
-             * Bump down any block that's too high.
-             * Fired whenever a change is made to the mutator's workspace.
-             * @private
-             */
-            workspaceChanged_(): void;
-    
-            /**
-             * Return an object with all the metrics required to size scrollbars for the
-             * mutator flyout.  The following properties are computed:
-             * .viewHeight: Height of the visible rectangle,
-             * .viewWidth: Width of the visible rectangle,
-             * .absoluteTop: Top-edge of view.
-             * .absoluteLeft: Left-edge of view.
-             * @return {!Object} Contains size and position metrics of mutator dialog's
-             *     workspace.
-             * @private
-             */
-            getFlyoutMetrics_(): Object;
-    
-            /**
-             * Dispose of this mutator.
-             */
-            dispose(): void;
-    } 
-    
-}
-
-declare module Blockly.Mutator {
-
-    /**
-     * Reconnect an block to a mutated input.
-     * @param {Blockly.Connection} connectionChild Connection on child block.
-     * @param {!Blockly.Block} block Parent block.
-     * @param {string} inputName Name of input on parent block.
-     * @return {boolean} True iff a reconnection was made, false otherwise.
-     */
-    function reconnect(connectionChild: Blockly.Connection, block: Blockly.Block, inputName: string): boolean;
-
-    /**
-     * Get the parent workspace of a workspace that is inside a mutator, taking into
-     * account whether it is a flyout.
-     * @param {?Blockly.Workspace} workspace The workspace that is inside a mutator.
-     * @return {?Blockly.Workspace} The mutator's parent workspace or null.
-     * @public
-     */
-    function findParentWs(workspace: Blockly.Workspace): Blockly.Workspace;
-}
-
-declare module Blockly {
-
-    class Names extends Names__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Names__Class  { 
-    
-            /**
-             * Class for a database of entity names (variables, functions, etc).
-             * @param {string} reservedWords A comma-separated string of words that are
-             *     illegal for use as names in a language (e.g. 'new,if,this,...').
-             * @param {string=} opt_variablePrefix Some languages need a '$' or a namespace
-             *     before all variable names.
-             * @constructor
-             */
-            constructor(reservedWords: string, opt_variablePrefix?: string);
-    
-            /**
-             * Empty the database and start from scratch.  The reserved words are kept.
-             */
-            reset(): void;
-    
-            /**
-             * Set the variable map that maps from variable name to variable object.
-             * @param {!Blockly.VariableMap} map The map to track.
-             * @package
-             */
-            setVariableMap(map: Blockly.VariableMap): void;
-    
-            /**
-             * Get the name for a user-defined variable, based on its ID.
-             * This should only be used for variables of type Blockly.Variables.NAME_TYPE.
-             * @param {string} id The ID to look up in the variable map.
-             * @return {?string} The name of the referenced variable, or null if there was
-             *     no variable map or the variable was not found in the map.
-             * @private
-             */
-            getNameForUserVariable_(id: string): string;
-    
-            /**
-             * Convert a Blockly entity name to a legal exportable entity name.
-             * @param {string} name The Blockly entity name (no constraints).
-             * @param {string} type The type of entity in Blockly
-             *     ('VARIABLE', 'PROCEDURE', 'BUILTIN', etc...).
-             * @return {string} An entity name that is legal in the exported language.
-             */
-            getName(name: string, type: string): string;
-    
-            /**
-             * Convert a Blockly entity name to a legal exportable entity name.
-             * Ensure that this is a new name not overlapping any previously defined name.
-             * Also check against list of reserved words for the current language and
-             * ensure name doesn't collide.
-             * @param {string} name The Blockly entity name (no constraints).
-             * @param {string} type The type of entity in Blockly
-             *     ('VARIABLE', 'PROCEDURE', 'BUILTIN', etc...).
-             * @return {string} An entity name that is legal in the exported language.
-             */
-            getDistinctName(name: string, type: string): string;
-    
-            /**
-             * Given a proposed entity name, generate a name that conforms to the
-             * [_A-Za-z][_A-Za-z0-9]* format that most languages consider legal for
-             * variables.
-             * @param {string} name Potentially illegal entity name.
-             * @return {string} Safe entity name.
-             * @private
-             */
-            safeName_(name: string): string;
-    } 
-    
-}
-
-declare module Blockly.Names {
-
-    /**
-     * Constant to separate developer variable names from user-defined variable
-     * names when running generators.
-     * A developer variable will be declared as a global in the generated code, but
-     * will never be shown to the user in the workspace or stored in the variable
-     * map.
-     */
-    var DEVELOPER_VARIABLE_TYPE: any /*missing*/;
-
-    /**
-     * Do the given two entity names refer to the same entity?
-     * Blockly names are case-insensitive.
-     * @param {string} name1 First name.
-     * @param {string} name2 Second name.
-     * @return {boolean} True if names are the same.
-     */
-    function equals(name1: string, name2: string): boolean;
-}
-
-declare module Blockly {
-
-    class Options extends Options__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Options__Class  { 
-    
-            /**
-             * Parse the user-specified options, using reasonable defaults where behaviour
-             * is unspecified.
-             * @param {!Object} options Dictionary of options.  Specification:
-             *   https://developers.google.com/blockly/guides/get-started/web#configuration
-             * @constructor
-             */
-            constructor(options: Object);
-    
-            /**
-             * The parent of the current workspace, or null if there is no parent workspace.
-             * @type {Blockly.Workspace}
-             **/
-            parentWorkspace: Blockly.Workspace;
-    
-            /**
-             * If set, sets the translation of the workspace to match the scrollbars.
-             */
-            setMetrics: any /*missing*/;
-    
-            /**
-             * Return an object with the metrics required to size the workspace.
-             * @return {Object} Contains size and position metrics, or null.
-             */
-            getMetrics(): Object;
-    } 
-    
-}
-
-declare module Blockly.Options {
-
-    /**
-     * Parse the user-specified zoom options, using reasonable defaults where
-     * behaviour is unspecified.  See zoom documentation:
-     *   https://developers.google.com/blockly/guides/configure/web/zoom
-     * @param {!Object} options Dictionary of options.
-     * @return {!Object} A dictionary of normalized options.
-     * @private
-     */
-    function parseZoomOptions_(options: Object): Object;
-
-    /**
-     * Parse the user-specified grid options, using reasonable defaults where
-     * behaviour is unspecified. See grid documentation:
-     *   https://developers.google.com/blockly/guides/configure/web/grid
-     * @param {!Object} options Dictionary of options.
-     * @return {!Object} A dictionary of normalized options.
-     * @private
-     */
-    function parseGridOptions_(options: Object): Object;
-
-    /**
-     * Parse the provided toolbox tree into a consistent DOM format.
-     * @param {Node|string} tree DOM tree of blocks, or text representation of same.
-     * @return {Node} DOM tree of blocks, or null.
-     */
-    function parseToolboxTree(tree: Node|string): Node;
-}
-
-declare module Blockly.Procedures {
-
-    /**
-     * Constant to separate procedure names from variables and generated functions
-     * when running generators.
-     * @deprecated Use Blockly.PROCEDURE_CATEGORY_NAME
-     */
-    var NAME_TYPE: any /*missing*/;
-
-    /**
-     * Find all user-created procedure definitions in a workspace.
-     * @param {!Blockly.Workspace} root Root workspace.
-     * @return {!Array.<!Array.<!Array>>} Pair of arrays, the
-     *     first contains procedures without return variables, the second with.
-     *     Each procedure is defined by a three-element list of name, parameter
-     *     list, and return value boolean.
-     */
-    function allProcedures(root: Blockly.Workspace): any[][][];
-
-    /**
-     * Comparison function for case-insensitive sorting of the first element of
-     * a tuple.
-     * @param {!Array} ta First tuple.
-     * @param {!Array} tb Second tuple.
-     * @return {number} -1, 0, or 1 to signify greater than, equality, or less than.
-     * @private
-     */
-    function procTupleComparator_(ta: any[], tb: any[]): number;
-
-    /**
-     * Ensure two identically-named procedures don't exist.
-     * @param {string} name Proposed procedure name.
-     * @param {!Blockly.Block} block Block to disambiguate.
-     * @return {string} Non-colliding name.
-     */
-    function findLegalName(name: string, block: Blockly.Block): string;
-
-    /**
-     * Does this procedure have a legal name?  Illegal names include names of
-     * procedures already defined.
-     * @param {string} name The questionable name.
-     * @param {!Blockly.Workspace} workspace The workspace to scan for collisions.
-     * @param {Blockly.Block=} opt_exclude Optional block to exclude from
-     *     comparisons (one doesn't want to collide with oneself).
-     * @return {boolean} True if the name is legal.
-     * @private
-     */
-    function isLegalName_(name: string, workspace: Blockly.Workspace, opt_exclude?: Blockly.Block): boolean;
-
-    /**
-     * Return if the given name is already a procedure name.
-     * @param {string} name The questionable name.
-     * @param {!Blockly.Workspace} workspace The workspace to scan for collisions.
-     * @param {Blockly.Block=} opt_exclude Optional block to exclude from
-     *     comparisons (one doesn't want to collide with oneself).
-     * @return {boolean} True if the name is used, otherwise return false.
-     */
-    function isNameUsed(name: string, workspace: Blockly.Workspace, opt_exclude?: Blockly.Block): boolean;
-
-    /**
-     * Rename a procedure.  Called by the editable field.
-     * @param {string} name The proposed new name.
-     * @return {string} The accepted name.
-     * @this {Blockly.Field}
-     */
-    function rename(name: string): string;
-
-    /**
-     * Construct the blocks required by the flyout for the procedure category.
-     * @param {!Blockly.Workspace} workspace The workspace containing procedures.
-     * @return {!Array.<!Element>} Array of XML block elements.
-     */
-    function flyoutCategory(workspace: Blockly.Workspace): Element[];
-
-    /**
-     * Find all the callers of a named procedure.
-     * @param {string} name Name of procedure.
-     * @param {!Blockly.Workspace} workspace The workspace to find callers in.
-     * @return {!Array.<!Blockly.Block>} Array of caller blocks.
-     */
-    function getCallers(name: string, workspace: Blockly.Workspace): Blockly.Block[];
-
-    /**
-     * When a procedure definition changes its parameters, find and edit all its
-     * callers.
-     * @param {!Blockly.Block} defBlock Procedure definition block.
-     */
-    function mutateCallers(defBlock: Blockly.Block): void;
-
-    /**
-     * Find the definition block for the named procedure.
-     * @param {string} name Name of procedure.
-     * @param {!Blockly.Workspace} workspace The workspace to search.
-     * @return {Blockly.Block} The procedure definition block, or null not found.
-     */
-    function getDefinition(name: string, workspace: Blockly.Workspace): Blockly.Block;
-}
-
-declare module Blockly.Events {
-
-    class EndBlockDrag extends EndBlockDrag__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class EndBlockDrag__Class extends Blockly.Events.BlockBase__Class  { 
-    
-            /**
-             * Class for a block end drag event.
-             * @param {Blockly.Block} block The moved block.  Null for a blank event.
-             * @param {boolean} isOutside True if the moved block is outside of the
-             *     blocks workspace.
-             * @extends {Blockly.Events.BlockBase}
-             * @constructor
-             */
-            constructor(block: Blockly.Block);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    } 
-    
-}
-
-declare module Blockly.Functions {
-
-    /**
-     * Constant to separate function names from variables and generated functions
-     * when running generators.
-     * @deprecated Use Blockly.PROCEDURE_CATEGORY_NAME
-     */
-    var NAME_TYPE: any /*missing*/;
-
-    /**
-      * Construct the blocks required by the flyout for the functions category.
-      * @param {!Blockly.Workspace} workspace The workspace containing functions.
-      * @return {!Array.<!Element>} Array of XML block elements.
-      */
-    function flyoutCategory(workspace: Blockly.Workspace): Element[];
-
-    /**
-     * Create the "Make a Block..." button.
-     * @param {!Blockly.Workspace} workspace The workspace contianing procedures.
-     * @param {!Array.<!Element>} xmlList Array of XML block elements to add to.
-     * @private
-     */
-    function addCreateButton_(workspace: Blockly.Workspace, xmlList: Element[]): void;
-
-    /**
-     * Find all the callers of a named function.
-     * @param {string} name Name of function.
-     * @param {!Blockly.Workspace} workspace The workspace to find callers in.
-     * @return {!Array.<!Blockly.Block>} Array of caller blocks.
-     */
-    function getCallers(name: string, workspace: Blockly.Workspace): Blockly.Block[];
-
-    /**
-     * Find the definition block for the named function.
-     * @param {string} name Name of function.
-     * @param {!Blockly.Workspace} workspace The workspace to search.
-     * @return {!Blockly.Block} The function definition block, or null if not found.
-     */
-    function getDefinition(name: string, workspace: Blockly.Workspace): Blockly.Block;
-
-    /**
-     * Find all user-created function definitions in a workspace.
-     * @param {!Blockly.Workspace} root Root workspace.
-     * @return {!Array.<Blockly.Block>} An array of function definition blocks.
-     */
-    function getAllFunctionDefinitionBlocks(root: Blockly.Workspace): Blockly.Block[];
-
-    /**
-     * Determines whether the specified type is custom or a built-in literal.
-     * @param {string} argumentType The argument type to check,
-     * @return {boolean} Whether the argument type is a custom type. A return value
-     *  of false means the argument is a built-in literal.
-     */
-    function isCustomType(argumentType: string): boolean;
-
-    /**
-     * Create a mutation for a brand new function.
-     * @param {!Blockly.Workspace} destWs The main workspace where the user keeps their code.
-     * @return {Element} The mutation for a new function.
-     * @package
-     */
-    function newFunctionMutation(destWs: Blockly.Workspace): Element;
-
-    /**
-     * Appends a number to the given name, or increments the number if one is already present.
-     * @param {string} name The name for which to add or increment the suffix.
-     * @return {string} The resulting name.
-     */
-    function incrementNameSuffix(name: string): string;
-
-    /**
-     * Returns a unique parameter name based on the given name (using a numbered
-     * suffix).
-     * @param {string} name Initial name.
-     * @param {string[]} paramNames Existing parameter names.
-     * @return {string} The unique parameter name. If the name was already unique,
-     *  the original name is returned.
-     */
-    function findUniqueParamName(name: string, paramNames: string[]): string;
-
-    /**
-     * Determines whether the given parameter name is unique among the given
-     * parameter names.
-     * @param {string} name Initial name.
-     * @param {string[]} paramNames Existing parameter names.
-     * @return {boolean} Whether the name is unique.
-     */
-    function isUniqueParamName(name: string, paramNames: string[]): boolean;
-
-    /**
-     * Callback to create a new function.
-     * @param {!Blockly.Workspace} workspace The workspace to create the new function on.
-     * @private
-     */
-    function createFunctionCallback_(workspace: Blockly.Workspace): void;
-
-    /**
-     * Callback factory for adding a new custom function from a mutation.
-     * @param {!Blockly.Workspace} workspace The workspace to create the new function on.
-     * @return {function(?Element)} callback for creating the new custom function.
-     * @private
-     */
-    function createFunctionCallbackFactory_(workspace: Blockly.Workspace): { (_0: Element): any /*missing*/ };
-
-    /**
-     * Callback for editing custom functions.
-     * @param {!Blockly.Block} block The block that was right-clicked.
-     * @private
-     */
-    function editFunctionCallback_(block: Blockly.Block): void;
-
-    /**
-     * Callback factory for editing an existing custom function.
-     * @param {!Blockly.Block} block The function prototype block being edited.
-     * @return {function(?Element)} Callback for editing the custom function.
-     * @private
-     */
-    function editFunctionCallbackFactory_(block: Blockly.Block): { (_0: Element): any /*missing*/ };
-
-    /**
-     * Callback to create a new function custom command block.
-     * @param {Element=} mutation The function mutator
-     * @param {Function=} callback The function callback.
-     * @public
-     */
-    function editFunctionExternalHandler(mutation?: Element, callback?: Function): void;
-
-    /**
-     * Make a context menu option for editing a custom function.
-     * This appears in the context menu for function definitions and function
-     * calls.
-     * @param {!Blockly.BlockSvg} block The block where the right-click originated.
-     * @return {!Object} A menu option, containing text, enabled, and a callback.
-     * @package
-     */
-    function makeEditOption(block: Blockly.BlockSvg): Object;
-
-    /**
-     * Converts an argument reporter block's output type to its equivalent
-     * TypeScript type. For literal types, this means the output type in all lower
-     * case. For custom reporters, this the output type is taken as is.
-     * @param {string} reporterOutputType The reporter's output type.
-     * @return {string} The TypeScript type of the argument.
-     * @package
-     */
-    function getReporterArgumentType(reporterOutputType: string): string;
-
-    /**
-     * Returns a dictionary of all variable, old functions and new functions names currently in use.
-     * @param {!Blockly.Workspace} ws The workspace to search.
-     * @param {!Blockly.Block} exceptBlock Optional block to disambiguate.
-     * @param {!string} exceptFuncId Optional function ID to ignore.
-     * @return {!Object.<string,boolean>} The dictionary <name, true> of names in use.
-     */
-    function namesInUse(ws: Blockly.Workspace, exceptBlock: Blockly.Block, exceptFuncId: string): { [key: string]: boolean };
-
-    /**
-     * Returns a name that is unique among existing functions and variables.
-     * @param {string} name Proposed function name.
-     * @param {!Blockly.Workspace} ws The workspace to search.
-     * @param {!Blockly.Block} block Block to disambiguate.
-     * @return {string} Non-colliding name.
-     */
-    function findLegalName(name: string, ws: Blockly.Workspace, block: Blockly.Block): string;
-
-    /**
-     * Rename a Function. Called by the editable field on a function definition.
-     * @param {string} name The proposed new name.
-     * @return {string} The accepted name.
-     * @this {Blockly.Field}
-     */
-    function rename(name: string): string;
-
-    /**
-     * Validate the given function mutation to ensure that:
-     *  1) the function name is globally unique in the specified workspace
-     *  2) the parameter names are unique among themselves
-     *  3) the argument names are not the same as the function name
-     * @param {!Element} mutation The proposed function mutation.
-     * @param {!Blockly.Workspace} destinationWs The workspace to check for name uniqueness.
-     * @return {boolean} Whether the function passes name validation or not.
-     * @package
-     */
-    function validateFunctionExternal(mutation: Element, destinationWs: Blockly.Workspace): boolean;
-
-    /**
-     * Creates a map of argument name -> argument ID based on the specified
-     * function mutation. If specified, can also create the inverse map:
-     * argument ID -> argument name.
-     * @param {!Element} mutation The function mutation to parse.
-     * @param {boolean} inverse Whether to make the inverse map, ID -> name.
-     * @return {!Object} A map of name -> ID, or ID -> name if inverse was true.
-     * @package
-     */
-    function getArgMap(mutation: Element, inverse: boolean): Object;
-
-    /**
-     * Find and edit all callers and the definition of a function using a new
-     * mutation.
-     * @param {string} name Name of function.
-     * @param {!Blockly.Workspace} ws The workspace to find callers in.
-     * @param {!Element} mutation New mutation for the callers.
-     * @package
-     */
-    function mutateCallersAndDefinition(name: string, ws: Blockly.Workspace, mutation: Element): void;
-
-    /**
-     * Whether a block is a function argument reporter.
-     * @param {!Blockly.BlockSvg} block The block that should be used to make this
-     *     decision.
-     * @return {boolean} True if the block is a function argument reporter.
-     */
-    function isFunctionArgumentReporter(block: Blockly.BlockSvg): boolean;
-
-    /**
-     * Create a flyout, creates the DOM elements for the flyout, and initializes the flyout.
-     * @param {!Blockly.Workspace} workspace The target and parent workspace for this flyout. The workspace's options will
-     *     be used to create the flyout's inner workspace.
-     * @param {!Element} siblingNode The flyout is added after this reference node. 
-     * @return {!Blockly.Flyout} The newly created flyout.
-     */
-    function createFlyout(workspace: Blockly.Workspace, siblingNode: Element): Blockly.Flyout;
-}
-
-declare module Blockly.pxtBlocklyUtils {
-
-    /**
-     * Whitelist of blocks whose shadow blocks duplicate on drag
-     */
-    var _duplicateOnDragWhitelist: any /*missing*/;
-
-    /**
-     * Measure some text using a canvas in-memory.
-     * Does not exist in Blockly, but needed in scratch-blocks
-     * @param {string} fontSize E.g., '10pt'
-     * @param {string} fontFamily E.g., 'Arial'
-     * @param {string} fontWeight E.g., '600'
-     * @param {string} text The actual text to measure
-     * @return {number} Width of the text in px.
-     * @package
-     */
-    function measureText(fontSize: string, fontFamily: string, fontWeight: string, text: string): number;
-
-    /**
-     * Whether a block is both a shadow block and an argument reporter.  These
-     * blocks have special behaviour in scratch-blocks: they're duplicated when
-     * dragged, and they are rendered slightly differently from normal shadow
-     * blocks.
-     * @param {!Blockly.BlockSvg} block The block that should be used to make this
-     *     decision.
-     * @return {boolean} True if the block should be duplicated on drag.
-     * @package
-     */
-    function isShadowArgumentReporter(block: Blockly.BlockSvg): boolean;
-
-    /**
-     * Sets a whitelist of blocks whose shadow blocks duplicate on drag (in addition
-     * to argument reporter blocks).
-     * @param {Array<string>} blockTypes a list of block
-     * @package
-     */
-    function whitelistDraggableBlockTypes(blockTypes: string[]): void;
-
-    /**
-     * Finds and returns an argument reporter of the given name, argument type
-     * name, and reporter type on the given block, or null if none match.
-     * @param {!Blockly.Block} targetBlock The block to search.
-     * @param {!Blockly.Block} reporter The reporter to try to match.
-     * @return {boolean} Whether there is a matching reporter or not.
-     */
-    function hasMatchingArgumentReporter(targetBlock: Blockly.Block, reporter: Blockly.Block): boolean;
-}
-
-declare module Blockly {
-
-    class Breakpoint extends Breakpoint__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Breakpoint__Class extends Blockly.Icon__Class  { 
-    
-            /**
-             * Class for a breakpoint.
-             * @param {!Blockly.Block} block The block associated with this breakpoint.
-             * @extends {Blockly.Icon}
-             * @constructor
-             */
-            constructor(block: Blockly.Block);
-    
-            /**
-             * Does this icon get hidden when the block is collapsed.
-             */
-            collapseHidden: any /*missing*/;
-    
-            /**
-             * Create the icon on the block.
-             */
-            createIcon(): void;
-    
-            /**
-             * Draw the breakpoint icon.
-             * @param {!Element} group The icon group.
-             * @private
-             */
-            drawIcon_(group: Element): void;
-    
-            /**
-             * Enable/Disable the breakpoint icon.
-             * @private
-             */
-            enableBreakpoint(): void;
-    
-            /**
-             * Dispose of this breakpoint Icon.
-             */
-            dispose(): void;
-    
-            /**
-             * Toggle the breakpoint icon between set and unset.
-             * @param {boolean} visible True if the breakpoint icon should be set.
-             */
-            setVisible(visible: boolean): void;
-    
-            /**
-             * Is this breakpoint set?
-             * @return {boolean} True if the breakpoint is Set.
-             */
-            isVisible(): boolean;
-    
-            /**
-             * Notification that the icon has moved.
-             * @param {!goog.math.Coordinate} xy Absolute location in workspace coordinates.
-             */
-            setIconLocation(xy: goog.math.Coordinate): void;
-    } 
-    
-}
-
-declare module Blockly.PXTUtils {
-
-    /**
-     * Fade hex colour.
-     * Words may not be split.  Any space after a word is included in the length.
-     * @param {string} hex Hex colour
-     * @param {number} luminosity Luminosity
-     * @param {number} lighten Lighten weight
-     * @return {number} rgb colour.
-     */
-    function fadeColour(hex: string, luminosity: number, lighten: number): number;
-}
-
-declare module Blockly {
-
-    class RenderedConnection extends RenderedConnection__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class RenderedConnection__Class extends Blockly.Connection__Class  { 
-    
-            /**
-             * Class for a connection between blocks that may be rendered on screen.
-             * @param {!Blockly.Block} source The block establishing this connection.
-             * @param {number} type The type of the connection.
-             * @extends {Blockly.Connection}
-             * @constructor
-             */
-            constructor(source: Blockly.Block, type: number);
-    
-            /**
-             * Workspace units, (0, 0) is top left of block.
-             * @type {!goog.math.Coordinate}
-             * @private
-             */
-            offsetInBlock_: goog.math.Coordinate;
-    
-            /**
-             * Returns the distance between this connection and another connection in
-             * workspace units.
-             * @param {!Blockly.Connection} otherConnection The other connection to measure
-             *     the distance to.
-             * @return {number} The distance between connections, in workspace units.
-             */
-            distanceFrom(otherConnection: Blockly.Connection): number;
-    
-            /**
-             * Move the block(s) belonging to the connection to a point where they don't
-             * visually interfere with the specified connection.
-             * @param {!Blockly.Connection} staticConnection The connection to move away
-             *     from.
-             * @private
-             */
-            bumpAwayFrom_(staticConnection: Blockly.Connection): void;
-    
-            /**
-             * Change the connection's coordinates.
-             * @param {number} x New absolute x coordinate, in workspace coordinates.
-             * @param {number} y New absolute y coordinate, in workspace coordinates.
-             */
-            moveTo(x: number, y: number): void;
-    
-            /**
-             * Change the connection's coordinates.
-             * @param {number} dx Change to x coordinate, in workspace units.
-             * @param {number} dy Change to y coordinate, in workspace units.
-             */
-            moveBy(dx: number, dy: number): void;
-    
-            /**
-             * Move this connection to the location given by its offset within the block and
-             * the location of the block's top left corner.
-             * @param {!goog.math.Coordinate} blockTL The location of the top left corner
-             *     of the block, in workspace coordinates.
-             */
-            moveToOffset(blockTL: goog.math.Coordinate): void;
-    
-            /**
-             * Set the offset of this connection relative to the top left of its block.
-             * @param {number} x The new relative x, in workspace units.
-             * @param {number} y The new relative y, in workspace units.
-             */
-            setOffsetInBlock(x: number, y: number): void;
-    
-            /**
-             * Move the blocks on either side of this connection right next to each other.
-             * @private
-             */
-            tighten_(): void;
-    
-            /**
-             * Find the closest compatible connection to this connection.
-             * All parameters are in workspace units.
-             * @param {number} maxLimit The maximum radius to another connection.
-             * @param {!goog.math.Coordinate} dxy Offset between this connection's location
-             *     in the database and the current location (as a result of dragging).
-             * @return {!{connection: ?Blockly.Connection, radius: number}} Contains two
-             *     properties: 'connection' which is either another connection or null,
-             *     and 'radius' which is the distance.
-             */
-            closest(maxLimit: number, dxy: goog.math.Coordinate): { connection: Blockly.Connection; radius: number };
-    
-            /**
-             * Add highlighting around this connection.
-             */
-            highlight(): void;
-    
-            /**
-             * Unhide this connection, as well as all down-stream connections on any block
-             * attached to this connection.  This happens when a block is expanded.
-             * Also unhides down-stream comments.
-             * @return {!Array.<!Blockly.Block>} List of blocks to render.
-             */
-            unhideAll(): Blockly.Block[];
-    
-            /**
-             * Remove the highlighting around this connection.
-             */
-            unhighlight(): void;
-    
-            /**
-             * Set whether this connections is hidden (not tracked in a database) or not.
-             * @param {boolean} hidden True if connection is hidden.
-             */
-            setHidden(hidden: boolean): void;
-    
-            /**
-             * Hide this connection, as well as all down-stream connections on any block
-             * attached to this connection.  This happens when a block is collapsed.
-             * Also hides down-stream comments.
-             */
-            hideAll(): void;
-    
-            /**
-             * Check if the two connections can be dragged to connect to each other.
-             * @param {!Blockly.Connection} candidate A nearby connection to check.
-             * @param {number=} maxRadius The maximum radius allowed for connections, in
-             *     workspace units.
-             * @return {boolean} True if the connection is allowed, false otherwise.
-             */
-            isConnectionAllowed(candidate: Blockly.Connection, maxRadius?: number): boolean;
-    
-            /**
-             * Disconnect two blocks that are connected by this connection.
-             * @param {!Blockly.Block} parentBlock The superior block.
-             * @param {!Blockly.Block} childBlock The inferior block.
-             * @private
-             */
-            disconnectInternal_(parentBlock: Blockly.Block, childBlock: Blockly.Block): void;
-    
-            /**
-             * Respawn the shadow block if there was one connected to the this connection.
-             * Render/rerender blocks as needed.
-             * @private
-             */
-            respawnShadow_(): void;
-    
-            /**
-             * Find all nearby compatible connections to this connection.
-             * Type checking does not apply, since this function is used for bumping.
-             * @param {number=} maxLimit The maximum radius to another connection, in
-             *     workspace units.
-             * @return {!Array.<!Blockly.Connection>} List of connections.
-             * @private
-             */
-            neighbours_(maxLimit?: number): Blockly.Connection[];
-    
-            /**
-             * Connect two connections together.  This is the connection on the superior
-             * block.  Rerender blocks as needed.
-             * @param {!Blockly.Connection} childConnection Connection on inferior block.
-             * @private
-             */
-            connect_(childConnection: Blockly.Connection): void;
-    
-            /**
-             * Function to be called when this connection's compatible types have changed.
-             * @private
-             */
-            onCheckChanged_(): void;
-    } 
-    
-}
-
-declare module Blockly {
-
-    class ScrollbarPair extends ScrollbarPair__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class ScrollbarPair__Class  { 
-    
-            /**
-             * Class for a pair of scrollbars.  Horizontal and vertical.
-             * @param {!Blockly.Workspace} workspace Workspace to bind the scrollbars to.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace);
-    
-            /**
-             * Previously recorded metrics from the workspace.
-             * @type {Object}
-             * @private
-             */
-            oldHostMetrics_: Object;
-    
-            /**
-             * Dispose of this pair of scrollbars.
-             * Unlink from all DOM elements to prevent memory leaks.
-             */
-            dispose(): void;
-    
-            /**
-             * Recalculate both of the scrollbars' locations and lengths.
-             * Also reposition the corner rectangle.
-             */
-            resize(): void;
-    
-            /**
-             * Set the handles of both scrollbars to be at a certain position in CSS pixels
-             * relative to their parents.
-             * @param {number} x Horizontal scroll value.
-             * @param {number} y Vertical scroll value.
-             */
-            set(x: number, y: number): void;
-    
-            /**
-             * Helper to calculate the ratio of handle position to scrollbar view size.
-             * @param {number} handlePosition The value of the handle.
-             * @param {number} viewSize The total size of the scrollbar's view.
-             * @return {number} Ratio.
-             * @private
-             */
-            getRatio_(handlePosition: number, viewSize: number): number;
-    
-            /**
-             * Set whether this scrollbar's container is visible.
-             * @param {boolean} visible Whether the container is visible.
-             */
-            setContainerVisible(visible: boolean): void;
-    } 
-    
-
-    class Scrollbar extends Scrollbar__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Scrollbar__Class  { 
-    
-            /**
-             * Class for a pure SVG scrollbar.
-             * This technique offers a scrollbar that is guaranteed to work, but may not
-             * look or behave like the system's scrollbars.
-             * @param {!Blockly.Workspace} workspace Workspace to bind the scrollbar to.
-             * @param {boolean} horizontal True if horizontal, false if vertical.
-             * @param {boolean=} opt_pair True if scrollbar is part of a horiz/vert pair.
-             * @param {string=} opt_class A class to be applied to this scrollbar.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace, horizontal: boolean, opt_pair?: boolean, opt_class?: string);
-    
-            /**
-             * The svg element containing the scrollbar dom elements.
-             * @type {!SVGSVGElement}
-             * @private
-             */
-            svgGroup_: SVGSVGElement;
-    
-            /**
-             * The upper left corner of the scrollbar's SVG group in CSS pixels relative
-             * to the scrollbar's origin.  This is usually relative to the injection div
-             * origin.
-             * @type {goog.math.Coordinate}
-             * @private
-             */
-            position_: goog.math.Coordinate;
-    
-            /**
-             * The location of the origin of the workspace that the scrollbar is in,
-             * measured in CSS pixels relative to the injection div origin.  This is usually
-             * (0, 0).  When the scrollbar is in a flyout it may have a different origin.
-             * @type {goog.math.Coordinate}
-             * @private
-             */
-            origin_: goog.math.Coordinate;
-    
-            /**
-               * Whether or not the origin of the scrollbar has changed. Used
-               * to help decide whether or not the reflow/resize calls need to happen.
-               * @type {boolean}
-               * @private
-               */
-            originHasChanged_: boolean;
-    
-            /**
-             * The position of the mouse along this scrollbar's major axis at the start of
-             * the most recent drag.
-             * Units are CSS pixels, with (0, 0) at the top left of the browser window.
-             * For a horizontal scrollbar this is the x coordinate of the mouse down event;
-             * for a vertical scrollbar it's the y coordinate of the mouse down event.
-             * @type {goog.math.Coordinate}
-             */
-            startDragMouse_: goog.math.Coordinate;
-    
-            /**
-             * The size of the area within which the scrollbar handle can move, in CSS
-             * pixels.
-             * @type {number}
-             * @private
-             */
-            scrollViewSize_: number;
-    
-            /**
-             * The length of the scrollbar handle in CSS pixels.
-             * @type {number}
-             * @private
-             */
-            handleLength_: number;
-    
-            /**
-             * The offset of the start of the handle from the scrollbar position, in CSS
-             * pixels.
-             * @type {number}
-             * @private
-             */
-            handlePosition_: number;
-    
-            /**
-             * Whether the scrollbar handle is visible.
-             * @type {boolean}
-             * @private
-             */
-            isVisible_: boolean;
-    
-            /**
-             * Whether the workspace containing this scrollbar is visible.
-             * @type {boolean}
-             * @private
-             */
-            containerVisible_: boolean;
-    
-            /**
-             * Dispose of this scrollbar.
-             * Unlink from all DOM elements to prevent memory leaks.
-             */
-            dispose(): void;
-    
-            /**
-             * Set the length of the scrollbar's handle and change the SVG attribute
-             * accordingly.
-             * @param {number} newLength The new scrollbar handle length in CSS pixels.
-             */
-            setHandleLength_(newLength: number): void;
-    
-            /**
-             * Set the offset of the scrollbar's handle from the scrollbar's position, and
-             * change the SVG attribute accordingly.
-             * @param {number} newPosition The new scrollbar handle offset in CSS pixels.
-             */
-            setHandlePosition(newPosition: number): void;
-    
-            /**
-             * Set the size of the scrollbar's background and change the SVG attribute
-             * accordingly.
-             * @param {number} newSize The new scrollbar background length in CSS pixels.
-             * @private
-             */
-            setScrollViewSize_(newSize: number): void;
-    
-            /**
-             * Set the position of the scrollbar's SVG group in CSS pixels relative to the
-             * scrollbar's origin.  This sets the scrollbar's location within the workspace.
-             * @param {number} x The new x coordinate.
-             * @param {number} y The new y coordinate.
-             * @private
-             */
-            setPosition_(x: number, y: number): void;
-    
-            /**
-             * Recalculate the scrollbar's location and its length.
-             * @param {Object=} opt_metrics A data structure of from the describing all the
-             * required dimensions.  If not provided, it will be fetched from the host
-             * object.
-             */
-            resize(opt_metrics?: Object): void;
-    
-            /**
-             * Recalculate a horizontal scrollbar's location and length.
-             * @param {!Object} hostMetrics A data structure describing all the
-             *     required dimensions, possibly fetched from the host object.
-             * @private
-             */
-            resizeHorizontal_(hostMetrics: Object): void;
-    
-            /**
-             * Recalculate a horizontal scrollbar's location on the screen and path length.
-             * This should be called when the layout or size of the window has changed.
-             * @param {!Object} hostMetrics A data structure describing all the
-             *     required dimensions, possibly fetched from the host object.
-             */
-            resizeViewHorizontal(hostMetrics: Object): void;
-    
-            /**
-             * Recalculate a horizontal scrollbar's location within its path and length.
-             * This should be called when the contents of the workspace have changed.
-             * @param {!Object} hostMetrics A data structure describing all the
-             *     required dimensions, possibly fetched from the host object.
-             */
-            resizeContentHorizontal(hostMetrics: Object): void;
-    
-            /**
-             * Recalculate a vertical scrollbar's location and length.
-             * @param {!Object} hostMetrics A data structure describing all the
-             *     required dimensions, possibly fetched from the host object.
-             * @private
-             */
-            resizeVertical_(hostMetrics: Object): void;
-    
-            /**
-             * Recalculate a vertical scrollbar's location on the screen and path length.
-             * This should be called when the layout or size of the window has changed.
-             * @param {!Object} hostMetrics A data structure describing all the
-             *     required dimensions, possibly fetched from the host object.
-             */
-            resizeViewVertical(hostMetrics: Object): void;
-    
-            /**
-             * Recalculate a vertical scrollbar's location within its path and length.
-             * This should be called when the contents of the workspace have changed.
-             * @param {!Object} hostMetrics A data structure describing all the
-             *     required dimensions, possibly fetched from the host object.
-             */
-            resizeContentVertical(hostMetrics: Object): void;
-    
-            /**
-             * Create all the DOM elements required for a scrollbar.
-             * The resulting widget is not sized.
-             * @param {string=} opt_class A class to be applied to this scrollbar.
-             * @private
-             */
-            createDom_(opt_class?: string): void;
-    
-            /**
-             * Is the scrollbar visible.  Non-paired scrollbars disappear when they aren't
-             * needed.
-             * @return {boolean} True if visible.
-             */
-            isVisible(): boolean;
-    
-            /**
-             * Set whether the scrollbar's container is visible and update
-             * display accordingly if visibility has changed.
-             * @param {boolean} visible Whether the container is visible
-             */
-            setContainerVisible(visible: boolean): void;
-    
-            /**
-             * Set whether the scrollbar is visible.
-             * Only applies to non-paired scrollbars.
-             * @param {boolean} visible True if visible.
-             */
-            setVisible(visible: boolean): void;
-    
-            /**
-             * Update visibility of scrollbar based on whether it thinks it should
-             * be visible and whether its containing workspace is visible.
-             * We cannot rely on the containing workspace being hidden to hide us
-             * because it is not necessarily our parent in the DOM.
-             */
-            updateDisplay_(): void;
-    
-            /**
-             * Scroll by one pageful.
-             * Called when scrollbar background is clicked.
-             * @param {!Event} e Mouse down event.
-             * @private
-             */
-            onMouseDownBar_(e: Event): void;
-    
-            /**
-             * Start a dragging operation.
-             * Called when scrollbar handle is clicked.
-             * @param {!Event} e Mouse down event.
-             * @private
-             */
-            onMouseDownHandle_(e: Event): void;
-    
-            /**
-             * Drag the scrollbar's handle.
-             * @param {!Event} e Mouse up event.
-             * @private
-             */
-            onMouseMoveHandle_(e: Event): void;
-    
-            /**
-             * Release the scrollbar handle and reset state accordingly.
-             * @private
-             */
-            onMouseUpHandle_(): void;
-    
-            /**
-             * Hide chaff and stop binding to mouseup and mousemove events.  Call this to
-             * wrap up lose ends associated with the scrollbar.
-             * @private
-             */
-            cleanUp_(): void;
-    
-            /**
-             * Constrain the handle's position within the minimum (0) and maximum
-             * (length of scrollbar) values allowed for the scrollbar.
-             * @param {number} value Value that is potentially out of bounds, in CSS pixels.
-             * @return {number} Constrained value, in CSS pixels.
-             * @private
-             */
-            constrainHandle_(value: number): number;
-    
-            /**
-             * Called when scrollbar is moved.
-             * @private
-             */
-            onScroll_(): void;
-    
-            /**
-             * Set the scrollbar handle's position.
-             * @param {number} value The distance from the top/left end of the bar, in CSS
-             *     pixels.  It may be larger than the maximum allowable position of the
-             *     scrollbar handle.
-             */
-            set(value: number): void;
-    
-            /**
-             * Record the origin of the workspace that the scrollbar is in, in pixels
-             * relative to the injection div origin. This is for times when the scrollbar is
-             * used in an object whose origin isn't the same as the main workspace
-             * (e.g. in a flyout.)
-             * @param {number} x The x coordinate of the scrollbar's origin, in CSS pixels.
-             * @param {number} y The y coordinate of the scrollbar's origin, in CSS pixels.
-             */
-            setOrigin(x: number, y: number): void;
-    } 
-    
-}
-
-declare module Blockly.Scrollbar {
-
-    /**
-     * Width of vertical scrollbar or height of horizontal scrollbar in CSS pixels.
-     * Scrollbars should be larger on touch devices.
-     */
-    var scrollbarThickness: any /*missing*/;
-
-    /**
-     * @param {!Object} first An object containing computed measurements of a
-     *    workspace.
-     * @param {!Object} second Another object containing computed measurements of a
-     *    workspace.
-     * @return {boolean} Whether the two sets of metrics are equivalent.
-     * @private
-     */
-    function metricsAreEquivalent_(first: Object, second: Object): boolean;
-}
-
-declare module Blockly {
-
-    class Toolbox extends Toolbox__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Toolbox__Class  { 
-    
-            /**
-             * Class for a Toolbox.
-             * Creates the toolbox's DOM.
-             * @param {!Blockly.Workspace} workspace The workspace in which to create new
-             *     blocks.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace);
-    
-            /**
-             * @type {!Blockly.Workspace}
-             * @private
-             */
-            workspace_: Blockly.Workspace;
-    
-            /**
-             * Is RTL vs LTR.
-             * @type {boolean}
-             */
-            RTL: boolean;
-    
-            /**
-             * Whether the toolbox should be laid out horizontally.
-             * @type {boolean}
-             * @private
-             */
-            horizontalLayout_: boolean;
-    
-            /**
-             * Position of the toolbox and flyout relative to the workspace.
-             * @type {number}
-             */
-            toolboxPosition: number;
-    
-            /**
-             * Configuration constants for Closure's tree UI.
-             * @type {Object.<string,*>}
-             * @private
-             */
-            config_: { [key: string]: any };
-    
-            /**
-             * Configuration constants for tree separator.
-             * @type {Object.<string,*>}
-             * @private
-             */
-            treeSeparatorConfig_: { [key: string]: any };
-    
-            /**
-             * Width of the toolbox, which changes only in vertical layout.
-             * @type {number}
-             */
-            width: number;
-    
-            /**
-             * Height of the toolbox, which changes only in horizontal layout.
-             * @type {number}
-             */
-            height: number;
-    
-            /**
-             * The SVG group currently selected.
-             * @type {SVGGElement}
-             * @private
-             */
-            selectedOption_: SVGGElement;
-    
-            /**
-             * The tree node most recently selected.
-             * @type {goog.ui.tree.BaseNode}
-             * @private
-             */
-            lastCategory_: goog.ui.tree.BaseNode;
-    
-            /**
-             * Initializes the toolbox.
-             */
-            init(): void;
-    
-            /**
-             * HTML container for the Toolbox menu.
-             * @type {Element}
-             */
-            HtmlDiv: Element;
-    
-            /**
-             * @type {!Blockly.Flyout}
-             * @private
-             */
-            flyout_: Blockly.Flyout;
-    
-            /**
-             * Dispose of this toolbox.
-             */
-            dispose(): void;
-    
-            /**
-             * Get the width of the toolbox.
-             * @return {number} The width of the toolbox.
-             */
-            getWidth(): number;
-    
-            /**
-             * Get the height of the toolbox.
-             * @return {number} The width of the toolbox.
-             */
-            getHeight(): number;
-    
-            /**
-             * Move the toolbox to the edge.
-             */
-            position(): void;
-    
-            /**
-             * Fill the toolbox with categories and blocks.
-             * @param {!Node} newTree DOM tree of blocks.
-             * @return {Node} Tree node to open at startup (or null).
-             * @private
-             */
-            populate_(newTree: Node): Node;
-    
-            /**
-             * Sync trees of the toolbox.
-             * @param {!Node} treeIn DOM tree of blocks.
-             * @param {!Blockly.Toolbox.TreeControl} treeOut The TreeContorol object built
-             *     from treeIn.
-             * @param {string} pathToMedia The path to the Blockly media directory.
-             * @return {Node} Tree node to open at startup (or null).
-             * @private
-             */
-            syncTrees_(treeIn: Node, treeOut: Blockly.Toolbox.TreeControl, pathToMedia: string): Node;
-    
-            /**
-             * Recursively add colours to this toolbox.
-             * @param {Blockly.Toolbox.TreeNode=} opt_tree Starting point of tree.
-             *     Defaults to the root node.
-             * @private
-             */
-            addColour_(opt_tree?: Blockly.Toolbox.TreeNode): void;
-    
-            /**
-             * Unhighlight any previously specified option.
-             */
-            clearSelection(): void;
-    
-            /**
-             * Adds a style on the toolbox. Usually used to change the cursor.
-             * @param {string} style The name of the class to add.
-             * @package
-             */
-            addStyle(style: string): void;
-    
-            /**
-             * Removes a style from the toolbox. Usually used to change the cursor.
-             * @param {string} style The name of the class to remove.
-             * @package
-             */
-            removeStyle(style: string): void;
-    
-            /**
-             * Return the deletion rectangle for this toolbox.
-             * @return {goog.math.Rect} Rectangle in which to delete.
-             */
-            getClientRect(): goog.math.Rect;
-    
-            /**
-             * Update the flyout's contents without closing it.  Should be used in response
-             * to a change in one of the dynamic categories, such as variables or
-             * procedures.
-             */
-            refreshSelection(): void;
-    } 
-    
-}
-
-declare module Blockly.Toolbox {
-
-    class TreeControl extends TreeControl__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class TreeControl__Class extends goog.ui.tree.TreeControl__Class  { 
-    
-            /**
-             * Extension of a TreeControl object that uses a custom tree node.
-             * @param {Blockly.Toolbox} toolbox The parent toolbox for this tree.
-             * @param {Object} config The configuration for the tree. See
-             *    goog.ui.tree.TreeControl.DefaultConfig.
-             * @constructor
-             * @extends {goog.ui.tree.TreeControl}
-             */
-            constructor(toolbox: Blockly.Toolbox, config: Object);
-    
-            /**
-             * Handles touch events.
-             * @param {!goog.events.BrowserEvent} e The browser event.
-             * @private
-             */
-            handleTouchEvent_(e: goog.events.BrowserEvent): void;
-    } 
-    
-
-    class TreeNode extends TreeNode__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class TreeNode__Class extends goog.ui.tree.TreeNode__Class  { 
-    
-            /**
-             * A single node in the tree, customized for Blockly's UI.
-             * @param {Blockly.Toolbox} toolbox The parent toolbox for this tree.
-             * @param {!goog.html.SafeHtml} html The HTML content of the node label.
-             * @param {Object=} opt_config The configuration for the tree. See
-             *    goog.ui.tree.TreeControl.DefaultConfig. If not specified, a default config
-             *    will be used.
-             * @param {goog.dom.DomHelper=} opt_domHelper Optional DOM helper.
-             * @constructor
-             * @extends {goog.ui.tree.TreeNode}
-             */
-            constructor(toolbox: Blockly.Toolbox, html: goog.html.SafeHtml, opt_config?: Object, opt_domHelper?: goog.dom.DomHelper);
-    } 
-    
-
-    class TreeSeparator extends TreeSeparator__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class TreeSeparator__Class extends Blockly.Toolbox.TreeNode__Class  { 
-    
-            /**
-             * A blank separator node in the tree.
-             * @param {Object=} config The configuration for the tree. See
-             *    goog.ui.tree.TreeControl.DefaultConfig. If not specified, a default config
-             *    will be used.
-             * @constructor
-             * @extends {Blockly.Toolbox.TreeNode}
-             */
-            constructor(config?: Object);
-    } 
-    
-}
-
-declare module Blockly.Tooltip {
-
-    /**
-     * Is a tooltip currently showing?
-     */
-    var visible: any /*missing*/;
-
-    /**
-     * Is someone else blocking the tooltip from being shown?
-     * @type {boolean}
-     * @private
-     */
-    var blocked_: boolean;
-
-    /**
-     * Maximum width (in characters) of a tooltip.
-     */
-    var LIMIT: any /*missing*/;
-
-    /**
-     * PID of suspended thread to clear tooltip on mouse out.
-     * @private
-     */
-    var mouseOutPid_: any /*missing*/;
-
-    /**
-     * PID of suspended thread to show the tooltip.
-     * @private
-     */
-    var showPid_: any /*missing*/;
-
-    /**
-     * Last observed X location of the mouse pointer (freezes when tooltip appears).
-     * @private
-     */
-    var lastX_: any /*missing*/;
-
-    /**
-     * Last observed Y location of the mouse pointer (freezes when tooltip appears).
-     * @private
-     */
-    var lastY_: any /*missing*/;
-
-    /**
-     * Current element being pointed at.
-     * @private
-     */
-    var element_: any /*missing*/;
-
-    /**
-     * Once a tooltip has opened for an element, that element is 'poisoned' and
-     * cannot respawn a tooltip until the pointer moves over a different element.
-     * @private
-     */
-    var poisonedElement_: any /*missing*/;
-
-    /**
-     * Horizontal offset between mouse cursor and tooltip.
-     */
-    var OFFSET_X: any /*missing*/;
-
-    /**
-     * Vertical offset between mouse cursor and tooltip.
-     */
-    var OFFSET_Y: any /*missing*/;
-
-    /**
-     * Radius mouse can move before killing tooltip.
-     */
-    var RADIUS_OK: any /*missing*/;
-
-    /**
-     * Delay before tooltip appears.
-     */
-    var HOVER_MS: any /*missing*/;
-
-    /**
-     * Horizontal padding between tooltip and screen edge.
-     */
-    var MARGINS: any /*missing*/;
-
-    /**
-     * The HTML container.  Set once by Blockly.Tooltip.createDom.
-     * @type {Element}
-     */
-    var DIV: Element;
-
-    /**
-     * Create the tooltip div and inject it onto the page.
-     */
-    function createDom(): void;
-
-    /**
-     * Binds the required mouse events onto an SVG element.
-     * @param {!Element} element SVG element onto which tooltip is to be bound.
-     */
-    function bindMouseEvents(element: Element): void;
-
-    /**
-     * Hide the tooltip if the mouse is over a different object.
-     * Initialize the tooltip to potentially appear for this object.
-     * @param {!Event} e Mouse event.
-     * @private
-     */
-    function onMouseOver_(e: Event): void;
-
-    /**
-     * Hide the tooltip if the mouse leaves the object and enters the workspace.
-     * @param {!Event} _e Mouse event.
-     * @private
-     */
-    function onMouseOut_(_e: Event): void;
-
-    /**
-     * When hovering over an element, schedule a tooltip to be shown.  If a tooltip
-     * is already visible, hide it if the mouse strays out of a certain radius.
-     * @param {!Event} e Mouse event.
-     * @private
-     */
-    function onMouseMove_(e: Event): void;
-
-    /**
-     * Hide the tooltip.
-     */
-    function hide(): void;
-
-    /**
-     * Hide any in-progress tooltips and block showing new tooltips until the next
-     * call to unblock().
-     * @package
-     */
-    function block(): void;
-
-    /**
-     * Unblock tooltips: allow them to be scheduled and shown according to their own
-     * logic.
-     * @package
-     */
-    function unblock(): void;
-
-    /**
-     * Create the tooltip and show it.
-     * @private
-     */
-    function show_(): void;
-}
-
-declare module Blockly.Touch {
-
-    /**
-     * Which touch events are we currently paying attention to?
-     * @type {?string}
-     * @private
-     */
-    var touchIdentifier_: string;
-
-    /**
-     * The TOUCH_MAP lookup dictionary specifies additional touch events to fire,
-     * in conjunction with mouse events.
-     * @type {Object}
-     */
-    var TOUCH_MAP: Object;
-
-    /**
-     * Clear the touch identifier that tracks which touch stream to pay attention
-     * to.  This ends the current drag/gesture and allows other pointers to be
-     * captured.
-     */
-    function clearTouchIdentifier(): void;
-
-    /**
-     * Decide whether Blockly should handle or ignore this event.
-     * Mouse and touch events require special checks because we only want to deal
-     * with one touch stream at a time.  All other events should always be handled.
-     * @param {!Event} e The event to check.
-     * @return {boolean} True if this event should be passed through to the
-     *     registered handler; false if it should be blocked.
-     */
-    function shouldHandleEvent(e: Event): boolean;
-
-    /**
-     * Get the touch identifier from the given event.  If it was a mouse event, the
-     * identifier is the string 'mouse'.
-     * @param {!Event} e Mouse event or touch event.
-     * @return {string} The touch identifier from the first changed touch, if
-     *     defined.  Otherwise 'mouse'.
-     */
-    function getTouchIdentifierFromEvent(e: Event): string;
-
-    /**
-     * Check whether the touch identifier on the event matches the current saved
-     * identifier.  If there is no identifier, that means it's a mouse event and
-     * we'll use the identifier "mouse".  This means we won't deal well with
-     * multiple mice being used at the same time.  That seems okay.
-     * If the current identifier was unset, save the identifier from the
-     * event.  This starts a drag/gesture, during which touch events with other
-     * identifiers will be silently ignored.
-     * @param {!Event} e Mouse event or touch event.
-     * @return {boolean} Whether the identifier on the event matches the current
-     *     saved identifier.
-     */
-    function checkTouchIdentifier(e: Event): boolean;
-
-    /**
-     * Set an event's clientX and clientY from its first changed touch.  Use this to
-     * make a touch event work in a mouse event handler.
-     * @param {!Event} e A touch event.
-     */
-    function setClientFromTouch(e: Event): void;
-
-    /**
-     * Check whether a given event is a mouse or touch event.
-     * @param {!Event} e An event.
-     * @return {boolean} true if it is a mouse or touch event; false otherwise.
-     */
-    function isMouseOrTouchEvent(e: Event): boolean;
-
-    /**
-     * Check whether a given event is a touch event or a pointer event.
-     * @param {!Event} e An event.
-     * @return {boolean} true if it is a touch event; false otherwise.
-     */
-    function isTouchEvent(e: Event): boolean;
-
-    /**
-     * Split an event into an array of events, one per changed touch or mouse
-     * point.
-     * @param {!Event} e A mouse event or a touch event with one or more changed
-     * touches.
-     * @return {!Array.<!Event>} An array of mouse or touch events.  Each touch
-     *     event will have exactly one changed touch.
-     */
-    function splitEventByTouches(e: Event): Event[];
-}
-
-declare module Blockly {
-
-    /**
-     * PID of queued long-press task.
-     * @private
-     */
-    var longPid_: any /*missing*/;
-
-    /**
-     * Context menus on touch devices are activated using a long-press.
-     * Unfortunately the contextmenu touch event is currently (2015) only supported
-     * by Chrome.  This function is fired on any touchstart event, queues a task,
-     * which after about a second opens the context menu.  The tasks is killed
-     * if the touch event terminates early.
-     * @param {!Event} e Touch start event.
-     * @param {Blockly.Gesture} gesture The gesture that triggered this longStart.
-     * @private
-     */
-    function longStart_(e: Event, gesture: Blockly.Gesture): void;
-
-    /**
-     * Nope, that's not a long-press.  Either touchend or touchcancel was fired,
-     * or a drag has begun.  Kill the queued long-press task.
-     * @private
-     */
-    function longStop_(): void;
-}
-
-declare module Blockly {
-
-    class TouchGesture extends TouchGesture__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class TouchGesture__Class extends Blockly.Gesture__Class  { 
-    
-            /**
-             * Class for one gesture.
-             * @param {!Event} e The event that kicked off this gesture.
-             * @param {!Blockly.WorkspaceSvg} creatorWorkspace The workspace that created
-             *     this gesture and has a reference to it.
-             * @extends {Blockly.Gesture}
-             * @constructor
-             */
-            constructor(e: Event, creatorWorkspace: Blockly.WorkspaceSvg);
-    
-            /**
-             * Boolean for whether or not this gesture is a multi-touch gesture.
-             * @type {boolean}
-             * @private
-             */
-            isMultiTouch_: boolean;
-    
-            /**
-             * A map of cached points used for tracking multi-touch gestures.
-             * @type {Object<number|string, goog.math.Coordinate>}
-             * @private
-             */
-            cachedPoints_: { [key: string]: goog.math.Coordinate };
-    
-            /**
-             * This is the ratio between the starting distance between the touch points
-             * and the most recent distance between the touch points.
-             * Scales between 0 and 1 mean the most recent zoom was a zoom out.
-             * Scales above 1.0 mean the most recent zoom was a zoom in.
-             * @type {number}
-             * @private
-             */
-            previousScale_: number;
-    
-            /**
-             * The starting distance between two touch points.
-             * @type {number}
-             * @private
-             */
-            startDistance_: number;
-    
-            /**
-             * A handle to use to unbind the second touch start or pointer down listener
-             * at the end of a drag. Opaque data returned from Blockly.bindEventWithChecks_.
-             * @type {Array.<!Array>}
-             * @private
-             */
-            onStartWrapper_: any[][];
-    
-            /**
-             * Start a gesture: update the workspace to indicate that a gesture is in
-             * progress and bind mousemove and mouseup handlers.
-             * @param {!Event} e A mouse down, touch start or pointer down event.
-             * @package
-             */
-            doStart(e: Event): void;
-    
-            /**
-             * Bind gesture events.
-             * Overriding the gesture definition of this function, binding the same
-             * functions for onMoveWrapper_ and onUpWrapper_ but passing opt_noCaptureIdentifier.
-             * In addition, binding a second mouse down event to detect multi-touch events.
-             * @param {!Event} e A mouse down or touch start event.
-             * @package
-             */
-            bindMouseEvents(e: Event): void;
-    
-            /**
-             * Handle a mouse down, touch start, or pointer down event.
-             * @param {!Event} e A mouse down, touch start, or pointer down event.
-             * @package
-             */
-            handleStart(e: Event): void;
-    
-            /**
-             * Handle a mouse move, touch move, or pointer move event.
-             * @param {!Event} e A mouse move, touch move, or pointer move event.
-             * @package
-             */
-            handleMove(e: Event): void;
-    
-            /**
-             * Handle a mouse up, touch end, or pointer up event.
-             * @param {!Event} e A mouse up, touch end, or pointer up event.
-             * @package
-             */
-            handleUp(e: Event): void;
-    
-            /**
-             * Whether this gesture is part of a multi-touch gesture.
-             * @return {boolean} whether this gesture is part of a multi-touch gesture.
-             * @package
-             */
-            isMultiTouch(): boolean;
-    
-            /**
-             * Sever all links from this object.
-             * @package
-             */
-            dispose(): void;
-    
-            /**
-             * Handle a touch start or pointer down event and keep track of current pointers.
-             * @param {!Event} e A touch start, or pointer down event.
-             * @package
-             */
-            handleTouchStart(e: Event): void;
-    
-            /**
-             * Handle a touch move or pointer move event and zoom in/out if two pointers are on the screen.
-             * @param {!Event} e A touch move, or pointer move event.
-             * @package
-             */
-            handleTouchMove(e: Event): void;
-    
-            /**
-             * Handle a touch end or pointer end event and end the gesture.
-             * @param {!Event} e A touch end, or pointer end event.
-             * @package
-             */
-            handleTouchEnd(e: Event): void;
-    
-            /**
-             * Helper function returning the current touch point coordinate.
-             * @param {!Event} e A touch or pointer event.
-             * @return {goog.math.Coordinate} the current touch point coordinate
-             * @package
-             */
-            getTouchPoint(e: Event): goog.math.Coordinate;
-    } 
-    
-}
-
-declare module Blockly.TouchGesture {
-
     /**
-     * A multiplier used to convert the gesture scale to a zoom in delta.
      * @const
      */
-    var ZOOM_IN_MULTIPLIER: any /*missing*/;
-
-    /**
-     * A multiplier used to convert the gesture scale to a zoom out delta.
-     * @const
-     */
-    var ZOOM_OUT_MULTIPLIER: any /*missing*/;
-}
-
-declare module Blockly {
-
-    class Trashcan extends Trashcan__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Trashcan__Class  { 
-    
-            /**
-             * Class for a trash can.
-             * @param {!Blockly.Workspace} workspace The workspace to sit in.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace);
-    
-            /**
-             * Width of both the trash can and lid images.
-             * @type {number}
-             * @private
-             */
-            WIDTH_: number;
-    
-            /**
-             * Height of the trashcan image (minus lid).
-             * @type {number}
-             * @private
-             */
-            BODY_HEIGHT_: number;
-    
-            /**
-             * Height of the lid image.
-             * @type {number}
-             * @private
-             */
-            LID_HEIGHT_: number;
-    
-            /**
-             * Distance between trashcan and bottom edge of workspace.
-             * @type {number}
-             * @private
-             */
-            MARGIN_BOTTOM_: number;
-    
-            /**
-             * Distance between trashcan and right edge of workspace.
-             * @type {number}
-             * @private
-             */
-            MARGIN_SIDE_: number;
-    
-            /**
-             * Extent of hotspot on all sides beyond the size of the image.
-             * @type {number}
-             * @private
-             */
-            MARGIN_HOTSPOT_: number;
-    
-            /**
-             * Location of trashcan in sprite image.
-             * @type {number}
-             * @private
-             */
-            SPRITE_LEFT_: number;
-    
-            /**
-             * Location of trashcan in sprite image.
-             * @type {number}
-             * @private
-             */
-            SPRITE_TOP_: number;
-    
-            /**
-             * Current open/close state of the lid.
-             * @type {boolean}
-             */
-            isOpen: boolean;
-    
-            /**
-             * The SVG group containing the trash can.
-             * @type {Element}
-             * @private
-             */
-            svgGroup_: Element;
-    
-            /**
-             * The SVG image element of the trash can lid.
-             * @type {Element}
-             * @private
-             */
-            svgLid_: Element;
-    
-            /**
-             * Task ID of opening/closing animation.
-             * @type {number}
-             * @private
-             */
-            lidTask_: number;
-    
-            /**
-             * Current state of lid opening (0.0 = closed, 1.0 = open).
-             * @type {number}
-             * @private
-             */
-            lidOpen_: number;
-    
-            /**
-             * Left coordinate of the trash can.
-             * @type {number}
-             * @private
-             */
-            left_: number;
-    
-            /**
-             * Top coordinate of the trash can.
-             * @type {number}
-             * @private
-             */
-            top_: number;
-    
-            /**
-             * Create the trash can elements.
-             * @return {!Element} The trash can's SVG group.
-             */
-            createDom(): Element;
-    
-            /**
-             * Initialize the trash can.
-             * @param {number} bottom Distance from workspace bottom to bottom of trashcan.
-             * @return {number} Distance from workspace bottom to the top of trashcan.
-             */
-            init(bottom: number): number;
-    
-            /**
-             * Dispose of this trash can.
-             * Unlink from all DOM elements to prevent memory leaks.
-             */
-            dispose(): void;
-    
-            /**
-             * Move the trash can to the bottom-right corner.
-             */
-            position(): void;
-    
-            /**
-             * Return the deletion rectangle for this trash can.
-             * @return {goog.math.Rect} Rectangle in which to delete.
-             */
-            getClientRect(): goog.math.Rect;
-    
-            /**
-             * Flip the lid open or shut.
-             * @param {boolean} state True if open.
-             * @private
-             */
-            setOpen_(state: boolean): void;
-    
-            /**
-             * Rotate the lid open or closed by one step.  Then wait and recurse.
-             * @private
-             */
-            animateLid_(): void;
-    
-            /**
-             * Flip the lid shut.
-             * Called externally after a drag.
-             */
-            close(): void;
-    
-            /**
-             * Inspect the contents of the trash.
-             */
-            click(): void;
-    } 
-    
-}
-
-declare module Blockly.Events {
-
-    class Ui extends Ui__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Ui__Class extends Blockly.Events.Abstract__Class  { 
-    
-            /**
-             * Class for a UI event.
-             * @param {Blockly.Block} block The affected block.
-             * @param {string} element One of 'selected', 'comment', 'mutator', 'breakpoint' etc.
-             * @param {*} oldValue Previous value of element.
-             * @param {*} newValue New value of element.
-             * @extends {Blockly.Events.Abstract}
-             * @constructor
-             */
-            constructor(block: Blockly.Block, element: string, oldValue: any, newValue: any);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    } 
-    
-}
-
-declare module Blockly.utils.uiMenu {
-
-    /**
-     * Get the size of a rendered goog.ui.Menu.
-     * @param {!goog.ui.Menu} menu The menu to measure.
-     * @return {!goog.math.Size} Object with width and height properties.
-     * @package
-     */
-    function getSize(menu: goog.ui.Menu): goog.math.Size;
-
-    /**
-     * Adjust the bounding boxes used to position the widget div to deal with RTL
-     * goog.ui.Menu positioning.  In RTL mode the menu renders down and to the left
-     * of its start point, instead of down and to the right.  Adjusting all of the
-     * bounding boxes accordingly allows us to use the same code for all widgets.
-     * This function in-place modifies the provided bounding boxes.
-     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
-     *     in window coordinates.
-     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
-     *     coordinates.
-     * @param {!goog.math.Size} menuSize The size of the menu that is inside the
-     *     widget div, in window coordinates.
-     * @package
-     */
-    function adjustBBoxesForRTL(viewportBBox: Object, anchorBBox: Object, menuSize: goog.math.Size): void;
-}
-
-declare module Blockly.utils {
-
-    /**
-     * Remove an attribute from a element even if it's in IE 10.
-     * Similar to Element.removeAttribute() but it works on SVG elements in IE 10.
-     * Sets the attribute to null in IE 10, which treats removeAttribute as a no-op
-     * if it's called on an SVG element.
-     * @param {!Element} element DOM element to remove attribute from.
-     * @param {string} attributeName Name of attribute to remove.
-     */
-    function removeAttribute(element: Element, attributeName: string): void;
-
-    /**
-     * Add a CSS class to a element.
-     * Similar to Closure's goog.dom.classes.add, except it handles SVG elements.
-     * @param {!Element} element DOM element to add class to.
-     * @param {string} className Name of class to add.
-     * @return {boolean} True if class was added, false if already present.
-     */
-    function addClass(element: Element, className: string): boolean;
-
-    /**
-     * Remove a CSS class from a element.
-     * Similar to Closure's goog.dom.classes.remove, except it handles SVG elements.
-     * @param {!Element} element DOM element to remove class from.
-     * @param {string} className Name of class to remove.
-     * @return {boolean} True if class was removed, false if never present.
-     */
-    function removeClass(element: Element, className: string): boolean;
-
-    /**
-     * Checks if an element has the specified CSS class.
-     * Similar to Closure's goog.dom.classes.has, except it handles SVG elements.
-     * @param {!Element} element DOM element to check.
-     * @param {string} className Name of class to check.
-     * @return {boolean} True if class exists, false otherwise.
-     * @package
-     */
-    function hasClass(element: Element, className: string): boolean;
-
-    /**
-     * Removes a node from its parent. No-op if not attached to a parent.
-     * @param {Node} node The node to remove.
-     * @return {Node} The node removed if removed; else, null.
-     */
-    function removeNode(node: Node): Node;
-
-    /**
-     * Don't do anything for this event, just halt propagation.
-     * @param {!Event} e An event.
-     */
-    function noEvent(e: Event): void;
-
-    /**
-     * Is this event targeting a text input widget?
-     * @param {!Event} e An event.
-     * @return {boolean} True if text input.
-     */
-    function isTargetInput(e: Event): boolean;
-
-    /**
-     * Return the coordinates of the top-left corner of this element relative to
-     * its parent.  Only for SVG elements and children (e.g. rect, g, path).
-     * @param {!Element} element SVG element to find the coordinates of.
-     * @return {!goog.math.Coordinate} Object with .x and .y properties.
-     */
-    function getRelativeXY(element: Element): goog.math.Coordinate;
-
-    /**
-     * Return the coordinates of the top-left corner of this element relative to
-     * the div blockly was injected into.
-     * @param {!Element} element SVG element to find the coordinates of. If this is
-     *     not a child of the div blockly was injected into, the behaviour is
-     *     undefined.
-     * @return {!goog.math.Coordinate} Object with .x and .y properties.
-     */
-    function getInjectionDivXY_(element: Element): goog.math.Coordinate;
-
-    /**
-     * Return the scale of this element.
-     * @param {!Element} element  The element to find the coordinates of.
-     * @return {!number} number represending the scale applied to the element.
-     * @private
-     */
-    function getScale_(element: Element): number;
-
-    /**
-     * Static regex to pull the scale values out of a transform style property.
-     * Accounts for same exceptions as XY_REGEXP_.
-     * @type {!RegExp}
-     * @private
-     */
-    var getScale_REGEXP_: RegExp;
-
-    /**
-     * Helper method for creating SVG elements.
-     * @param {string} name Element's tag name.
-     * @param {!Object} attrs Dictionary of attribute names and values.
-     * @param {Element=} parent Optional parent on which to append the element.
-     * @return {!SVGElement} Newly created SVG element.
-     */
-    function createSvgElement(name: string, attrs: Object, parent?: Element): SVGElement;
-
-    /**
-     * Is this event a right-click?
-     * @param {!Event} e Mouse event.
-     * @return {boolean} True if right-click.
-     */
-    function isRightButton(e: Event): boolean;
-
-    /**
-     * Return the converted coordinates of the given mouse event.
-     * The origin (0,0) is the top-left corner of the Blockly SVG.
-     * @param {!Event} e Mouse event.
-     * @param {!Element} svg SVG element.
-     * @param {SVGMatrix} matrix Inverted screen CTM to use.
-     * @return {!SVGPoint} Object with .x and .y properties.
-     */
-    function mouseToSvg(e: Event, svg: Element, matrix: SVGMatrix): SVGPoint;
-
-    /**
-     * Given an array of strings, return the length of the shortest one.
-     * @param {!Array.<string>} array Array of strings.
-     * @return {number} Length of shortest string.
-     */
-    function shortestStringLength(array: string[]): number;
-
-    /**
-     * Given an array of strings, return the length of the common prefix.
-     * Words may not be split.  Any space after a word is included in the length.
-     * @param {!Array.<string>} array Array of strings.
-     * @param {number=} opt_shortest Length of shortest string.
-     * @return {number} Length of common prefix.
-     */
-    function commonWordPrefix(array: string[], opt_shortest?: number): number;
-
-    /**
-     * Given an array of strings, return the length of the common suffix.
-     * Words may not be split.  Any space after a word is included in the length.
-     * @param {!Array.<string>} array Array of strings.
-     * @param {number=} opt_shortest Length of shortest string.
-     * @return {number} Length of common suffix.
-     */
-    function commonWordSuffix(array: string[], opt_shortest?: number): number;
-
-    /**
-     * Parse a string with any number of interpolation tokens (%1, %2, ...).
-     * It will also replace string table references (e.g., %{bky_my_msg} and
-     * %{BKY_MY_MSG} will both be replaced with the value in
-     * Blockly.Msg['MY_MSG']). Percentage sign characters '%' may be self-escaped
-     * (e.g., '%%').
-     * @param {string} message Text which might contain string table references and
-     *     interpolation tokens.
-     * @return {!Array.<string|number>} Array of strings and numbers.
-     */
-    function tokenizeInterpolation(message: string): string|number[];
-
-    /**
-     * Replaces string table references in a message, if the message is a string.
-     * For example, "%{bky_my_msg}" and "%{BKY_MY_MSG}" will both be replaced with
-     * the value in Blockly.Msg['MY_MSG'].
-     * @param {string|?} message Message, which may be a string that contains
-     *                           string table references.
-     * @return {!string} String with message references replaced.
-     */
-    function replaceMessageReferences(message: string|any): string;
-
-    /**
-     * Validates that any %{MSG_KEY} references in the message refer to keys of
-     * the Blockly.Msg string table.
-     * @param {string} message Text which might contain string table references.
-     * @return {boolean} True if all message references have matching values.
-     *     Otherwise, false.
-     */
-    function checkMessageReferences(message: string): boolean;
-
-    /**
-     * Internal implementation of the message reference and interpolation token
-     * parsing used by tokenizeInterpolation() and replaceMessageReferences().
-     * @param {string} message Text which might contain string table references and
-     *     interpolation tokens.
-     * @param {boolean} parseInterpolationTokens Option to parse numeric
-     *     interpolation tokens (%1, %2, ...) when true.
-     * @return {!Array.<string|number>} Array of strings and numbers.
-     * @private
-     */
-    function tokenizeInterpolation_(message: string, parseInterpolationTokens: boolean): string|number[];
-
-    /**
-     * Generate a unique ID.  This should be globally unique.
-     * 87 characters ^ 20 length > 128 bits (better than a UUID).
-     * @return {string} A globally unique ID string.
-     */
-    function genUid(): string;
-
-    /**
-     * Wrap text to the specified width.
-     * @param {string} text Text to wrap.
-     * @param {number} limit Width to wrap each line.
-     * @return {string} Wrapped text.
-     */
-    function wrap(text: string, limit: number): string;
-
-    /**
-     * Wrap single line of text to the specified width.
-     * @param {string} text Text to wrap.
-     * @param {number} limit Width to wrap each line.
-     * @return {string} Wrapped text.
-     * @private
-     */
-    function wrapLine_(text: string, limit: number): string;
-
-    /**
-     * Compute a score for how good the wrapping is.
-     * @param {!Array.<string>} words Array of each word.
-     * @param {!Array.<boolean>} wordBreaks Array of line breaks.
-     * @param {number} limit Width to wrap each line.
-     * @return {number} Larger the better.
-     * @private
-     */
-    function wrapScore_(words: string[], wordBreaks: boolean[], limit: number): number;
-
-    /**
-     * Mutate the array of line break locations until an optimal solution is found.
-     * No line breaks are added or deleted, they are simply moved around.
-     * @param {!Array.<string>} words Array of each word.
-     * @param {!Array.<boolean>} wordBreaks Array of line breaks.
-     * @param {number} limit Width to wrap each line.
-     * @return {!Array.<boolean>} New array of optimal line breaks.
-     * @private
-     */
-    function wrapMutate_(words: string[], wordBreaks: boolean[], limit: number): boolean[];
-
-    /**
-     * Reassemble the array of words into text, with the specified line breaks.
-     * @param {!Array.<string>} words Array of each word.
-     * @param {!Array.<boolean>} wordBreaks Array of line breaks.
-     * @return {string} Plain text.
-     * @private
-     */
-    function wrapToText_(words: string[], wordBreaks: boolean[]): string;
-
-    /**
-     * Check if 3D transforms are supported by adding an element
-     * and attempting to set the property.
-     * @return {boolean} true if 3D transforms are supported.
-     */
-    function is3dSupported(): boolean;
-
-    /**
-     * Insert a node after a reference node.
-     * Contrast with node.insertBefore function.
-     * @param {!Element} newNode New element to insert.
-     * @param {!Element} refNode Existing element to precede new node.
-     * @package
-     */
-    function insertAfter(newNode: Element, refNode: Element): void;
-
-    /**
-     * Calls a function after the page has loaded, possibly immediately.
-     * @param {function()} fn Function to run.
-     * @throws Error Will throw if no global document can be found (e.g., Node.js).
-     */
-    function runAfterPageLoad(fn: { (): any /*missing*/ }): void;
-
-    /**
-     * Sets the CSS transform property on an element. This function sets the
-     * non-vendor-prefixed and vendor-prefixed versions for backwards compatibility
-     * with older browsers. See http://caniuse.com/#feat=transforms2d
-     * @param {!Element} node The node which the CSS transform should be applied.
-     * @param {string} transform The value of the CSS `transform` property.
-     */
-    function setCssTransform(node: Element, transform: string): void;
-
-    /**
-     * Get the position of the current viewport in window coordinates.  This takes
-     * scroll into account.
-     * @return {!Object} an object containing window width, height, and scroll
-     *     position in window coordinates.
-     * @package
-     */
-    function getViewportBBox(): Object;
-
-    /**
-     * Fast prefix-checker.
-     * Copied from Closure's goog.string.startsWith.
-     * @param {string} str The string to check.
-     * @param {string} prefix A string to look for at the start of `str`.
-     * @return {boolean} True if `str` begins with `prefix`.
-     * @package
-     */
-    function startsWith(str: string, prefix: string): boolean;
-
-    /**
-     * Removes the first occurrence of a particular value from an array.
-     * @param {!Array} arr Array from which to remove
-     *     value.
-     * @param {*} obj Object to remove.
-     * @return {boolean} True if an element was removed.
-     * @package
-     */
-    function arrayRemove(arr: any[], obj: any): boolean;
-
-    /**
-     * Converts degrees to radians.
-     * Copied from Closure's goog.math.toRadians.
-     * @param {number} angleDegrees Angle in degrees.
-     * @return {number} Angle in radians.
-     * @package
-     */
-    function toRadians(angleDegrees: number): number;
-
-    /**
-     * Converts radians to degrees.
-     * Copied from Closure's goog.math.toDegrees.
-     * @param {number} angleRadians Angle in radians.
-     * @return {number} Angle in degrees.
-     * @package
-     */
-    function toDegrees(angleRadians: number): number;
-
-    /**
-     * Whether a node contains another node.
-     * @param {!Node} parent The node that should contain the other node.
-     * @param {!Node} descendant The node to test presence of.
-     * @return {boolean} Whether the parent node contains the descendant node.
-     * @package
-     */
-    function containsNode(parent: Node, descendant: Node): boolean;
-}
-
-declare module Blockly.utils.getRelativeXY {
-
-    /**
-     * Static regex to pull the x,y values out of an SVG translate() directive.
-     * Note that Firefox and IE (9,10) return 'translate(12)' instead of
-     * 'translate(12, 0)'.
-     * Note that IE (9,10) returns 'translate(16 8)' instead of 'translate(16, 8)'.
-     * Note that IE has been reported to return scientific notation (0.123456e-42).
-     * @type {!RegExp}
-     * @private
-     */
-    var XY_REGEX_: RegExp;
-
-    /**
-     * Static regex to pull the x,y,z values out of a translate3d() style property.
-     * Accounts for same exceptions as XY_REGEXP_.
-     * @type {!RegExp}
-     * @private
-     */
-    var XY_3D_REGEX_: RegExp;
-
-    /**
-     * Static regex to pull the x,y,z values out of a translate3d() style property.
-     * Accounts for same exceptions as XY_REGEXP_.
-     * @type {!RegExp}
-     * @private
-     */
-    var XY_2D_REGEX_: RegExp;
-}
-
-declare module Blockly.utils.genUid {
-
-    /**
-     * Legal characters for the unique ID.  Should be all on a US keyboard.
-     * No characters that conflict with XML or JSON.  Requests to remove additional
-     * 'problematic' characters from this soup will be denied.  That's your failure
-     * to properly escape in your own environment.  Issues #251, #625, #682, #1304.
-     * @private
-     */
-    var soup_: any /*missing*/;
-}
-
-declare module Blockly.Events {
-
-    class VarBase extends VarBase__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class VarBase__Class extends Blockly.Events.Abstract__Class  { 
-    
-            /**
-             * Abstract class for a variable event.
-             * @param {Blockly.VariableModel} variable The variable this event corresponds
-             *     to.
-             * @extends {Blockly.Events.Abstract}
-             * @constructor
-             */
-            constructor(variable: Blockly.VariableModel);
-    
-            /**
-             * The variable id for the variable this event pertains to.
-             * @type {string}
-             */
-            varId: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    } 
-    
-
-    class VarCreate extends VarCreate__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class VarCreate__Class extends Blockly.Events.VarBase__Class  { 
-    
-            /**
-             * Class for a variable creation event.
-             * @param {Blockly.VariableModel} variable The created variable.
-             *     Null for a blank event.
-             * @extends {Blockly.Events.VarBase}
-             * @constructor
-             */
-            constructor(variable: Blockly.VariableModel);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Run a variable creation event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-
-    class VarDelete extends VarDelete__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class VarDelete__Class extends Blockly.Events.VarBase__Class  { 
-    
-            /**
-             * Class for a variable deletion event.
-             * @param {Blockly.VariableModel} variable The deleted variable.
-             *     Null for a blank event.
-             * @extends {Blockly.Events.VarBase}
-             * @constructor
-             */
-            constructor(variable: Blockly.VariableModel);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Run a variable deletion event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-
-    class VarRename extends VarRename__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class VarRename__Class extends Blockly.Events.VarBase__Class  { 
-    
-            /**
-             * Class for a variable rename event.
-             * @param {Blockly.VariableModel} variable The renamed variable.
-             *     Null for a blank event.
-             * @param {string} newName The new name the variable will be changed to.
-             * @extends {Blockly.Events.VarBase}
-             * @constructor
-             */
-            constructor(variable: Blockly.VariableModel, newName: string);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Run a variable rename event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-}
-
-declare module Blockly {
-
-    class VariableMap extends VariableMap__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class VariableMap__Class  { 
-    
-            /**
-             * Class for a variable map.  This contains a dictionary data structure with
-             * variable types as keys and lists of variables as values.  The list of
-             * variables are the type indicated by the key.
-             * @param {!Blockly.Workspace} workspace The workspace this map belongs to.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace);
-    
-            /**
-             * A map from variable type to list of variable names.  The lists contain all
-             * of the named variables in the workspace, including variables
-             * that are not currently in use.
-             * @type {!Object.<string, !Array.<Blockly.VariableModel>>}
-             * @private
-             */
-            variableMap_: { [key: string]: Blockly.VariableModel[] };
-    
-            /**
-             * The workspace this map belongs to.
-             * @type {!Blockly.Workspace}
-             */
-            workspace: Blockly.Workspace;
-    
-            /**
-             * Clear the variable map.
-             */
-            clear(): void;
-    
-            /**
-             * Rename the given variable by updating its name in the variable map.
-             * @param {!Blockly.VariableModel} variable Variable to rename.
-             * @param {string} newName New variable name.
-             * @package
-             */
-            renameVariable(variable: Blockly.VariableModel, newName: string): void;
-    
-            /**
-             * Rename a variable by updating its name in the variable map. Identify the
-             * variable to rename with the given ID.
-             * @param {string} id ID of the variable to rename.
-             * @param {string} newName New variable name.
-             */
-            renameVariableById(id: string, newName: string): void;
-    
-            /**
-             * Update the name of the given variable and refresh all references to it.
-             * The new name must not conflict with any existing variable names.
-             * @param {!Blockly.VariableModel} variable Variable to rename.
-             * @param {string} newName New variable name.
-             * @param {!Array.<!Blockly.Block>} blocks The list of all blocks in the
-             *     workspace.
-             * @private
-             */
-            renameVariableAndUses_(variable: Blockly.VariableModel, newName: string, blocks: Blockly.Block[]): void;
-    
-            /**
-             * Update the name of the given variable to the same name as an existing
-             * variable.  The two variables are coalesced into a single variable with the ID
-             * of the existing variable that was already using newName.
-             * Refresh all references to the variable.
-             * @param {!Blockly.VariableModel} variable Variable to rename.
-             * @param {string} newName New variable name.
-             * @param {!Blockly.VariableModel} conflictVar The variable that was already
-             *     using newName.
-             * @param {!Array.<!Blockly.Block>} blocks The list of all blocks in the
-             *     workspace.
-             * @private
-             */
-            renameVariableWithConflict_(variable: Blockly.VariableModel, newName: string, conflictVar: Blockly.VariableModel, blocks: Blockly.Block[]): void;
-    
-            /**
-             * Create a variable with a given name, optional type, and optional ID.
-             * @param {string} name The name of the variable. This must be unique across
-             *     variables and procedures.
-             * @param {string=} opt_type The type of the variable like 'int' or 'string'.
-             *     Does not need to be unique. Field_variable can filter variables based on
-             *     their type. This will default to '' which is a specific type.
-             * @param {string=} opt_id The unique ID of the variable. This will default to
-             *     a UUID.
-             * @return {Blockly.VariableModel} The newly created variable.
-             */
-            createVariable(name: string, opt_type?: string, opt_id?: string): Blockly.VariableModel;
-    
-            /**
-             * Delete a variable.
-             * @param {!Blockly.VariableModel} variable Variable to delete.
-             */
-            deleteVariable(variable: Blockly.VariableModel): void;
-    
-            /**
-             * Delete a variables by the passed in ID and all of its uses from this
-             * workspace. May prompt the user for confirmation.
-             * @param {string} id ID of variable to delete.
-             */
-            deleteVariableById(id: string): void;
-    
-            /**
-             * Deletes a variable and all of its uses from this workspace without asking the
-             * user for confirmation.
-             * @param {!Blockly.VariableModel} variable Variable to delete.
-             * @param {!Array.<!Blockly.Block>} uses An array of uses of the variable.
-             * @private
-             */
-            deleteVariableInternal_(variable: Blockly.VariableModel, uses: Blockly.Block[]): void;
-    
-            /**
-             * Find the variable by the given name and type and return it.  Return null if
-             *     it is not found.
-             * @param {string} name The name to check for.
-             * @param {string=} opt_type The type of the variable.  If not provided it
-             *     defaults to the empty string, which is a specific type.
-             * @return {Blockly.VariableModel} The variable with the given name, or null if
-             *     it was not found.
-             */
-            getVariable(name: string, opt_type?: string): Blockly.VariableModel;
-    
-            /**
-             * Find the variable by the given ID and return it. Return null if it is not
-             *     found.
-             * @param {string} id The ID to check for.
-             * @return {Blockly.VariableModel} The variable with the given ID.
-             */
-            getVariableById(id: string): Blockly.VariableModel;
-    
-            /**
-             * Get a list containing all of the variables of a specified type. If type is
-             *     null, return list of variables with empty string type.
-             * @param {?string} type Type of the variables to find.
-             * @return {!Array.<!Blockly.VariableModel>} The sought after variables of the
-             *     passed in type. An empty array if none are found.
-             */
-            getVariablesOfType(type: string): Blockly.VariableModel[];
-    
-            /**
-             * Return all variable types.  This list always contains the empty string.
-             * @return {!Array.<string>} List of variable types.
-             * @package
-             */
-            getVariableTypes(): string[];
-    
-            /**
-             * Return all variables of all types.
-             * @return {!Array.<!Blockly.VariableModel>} List of variable models.
-             */
-            getAllVariables(): Blockly.VariableModel[];
-    
-            /**
-             * Find all the uses of a named variable.
-             * @param {string} id ID of the variable to find.
-             * @return {!Array.<!Blockly.Block>} Array of block usages.
-             */
-            getVariableUsesById(id: string): Blockly.Block[];
-    } 
-    
-}
-
-declare module Blockly {
-
-    class VariableModel extends VariableModel__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class VariableModel__Class  { 
-    
-            /**
-             * Class for a variable model.
-             * Holds information for the variable including name, ID, and type.
-             * @param {!Blockly.Workspace} workspace The variable's workspace.
-             * @param {!string} name The name of the variable. This must be unique across
-             *     variables and procedures.
-             * @param {string=} opt_type The type of the variable like 'int' or 'string'.
-             *     Does not need to be unique. Field_variable can filter variables based on
-             *     their type. This will default to '' which is a specific type.
-             * @param {string=} opt_id The unique ID of the variable. This will default to
-             *     a UUID.
-             * @see {Blockly.FieldVariable}
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace, name: string, opt_type?: string, opt_id?: string);
-    
-            /**
-             * The workspace the variable is in.
-             * @type {!Blockly.Workspace}
-             */
-            workspace: Blockly.Workspace;
-    
-            /**
-             * The name of the variable, typically defined by the user. It must be
-             * unique across all names used for procedures and variables. It may be
-             * changed by the user.
-             * @type {string}
-             */
-            name: string;
-    
-            /**
-             * The type of the variable, such as 'int' or 'sound_effect'. This may be
-             * used to build a list of variables of a specific type. By default this is
-             * the empty string '', which is a specific type.
-             * @see {Blockly.FieldVariable}
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * A unique id for the variable. This should be defined at creation and
-             * not change, even if the name changes. In most cases this should be a
-             * UUID.
-             * @type {string}
-             * @private
-             */
-            id_: string;
-    
-            /**
-             * @return {!string} The ID for the variable.
-             */
-            getId(): string;
-    } 
-    
-}
-
-declare module Blockly.VariableModel {
-
-    /**
-     * A custom compare function for the VariableModel objects.
-     * @param {Blockly.VariableModel} var1 First variable to compare.
-     * @param {Blockly.VariableModel} var2 Second variable to compare.
-     * @return {number} -1 if name of var1 is less than name of var2, 0 if equal,
-     *     and 1 if greater.
-     * @package
-     */
-    function compareByName(var1: Blockly.VariableModel, var2: Blockly.VariableModel): number;
-}
-
-declare module Blockly.Variables {
-
-    /**
-     * Constant to separate variable names from procedures and generated functions
-     * when running generators.
-     * @deprecated Use Blockly.VARIABLE_CATEGORY_NAME
-     */
-    var NAME_TYPE: any /*missing*/;
-
-    /**
-     * Find all user-created variables that are in use in the workspace.
-     * For use by generators.
-     * To get a list of all variables on a workspace, including unused variables,
-     * call Workspace.getAllVariables.
-     * @param {!Blockly.Workspace} ws The workspace to search for variables.
-     * @return {!Array.<!Blockly.VariableModel>} Array of variable models.
-     */
-    function allUsedVarModels(ws: Blockly.Workspace): Blockly.VariableModel[];
-
-    /**
-     * Find all user-created variables that are in use in the workspace and return
-     * only their names.
-     * For use by generators.
-     * To get a list of all variables on a workspace, including unused variables,
-     * call Workspace.getAllVariables.
-     * @deprecated January 2018
-     */
-    function allUsedVariables(): void;
-
-    /**
-     * Find all developer variables used by blocks in the workspace.
-     * Developer variables are never shown to the user, but are declared as global
-     * variables in the generated code.
-     * To declare developer variables, define the getDeveloperVariables function on
-     * your block and return a list of variable names.
-     * For use by generators.
-     * @param {!Blockly.Workspace} workspace The workspace to search.
-     * @return {!Array.<string>} A list of non-duplicated variable names.
-     */
-    function allDeveloperVariables(workspace: Blockly.Workspace): string[];
-
-    /**
-     * Construct the elements (blocks and button) required by the flyout for the
-     * variable category.
-     * @param {!Blockly.Workspace} workspace The workspace containing variables.
-     * @return {!Array.<!Element>} Array of XML elements.
-     */
-    function flyoutCategory(workspace: Blockly.Workspace): Element[];
-
-    /**
-     * Construct the blocks required by the flyout for the variable category.
-     * @param {!Blockly.Workspace} workspace The workspace containing variables.
-     * @return {!Array.<!Element>} Array of XML block elements.
-     */
-    function flyoutCategoryBlocks(workspace: Blockly.Workspace): Element[];
-
-    /**
-     * Return a new variable name that is not yet being used. This will try to
-     * generate single letter variable names in the range 'i' to 'z' to start with.
-     * If no unique name is located it will try 'i' to 'z', 'a' to 'h',
-     * then 'i2' to 'z2' etc.  Skip 'l'.
-     * @param {!Blockly.Workspace} workspace The workspace to be unique in.
-     * @return {string} New variable name.
-     */
-    function generateUniqueName(workspace: Blockly.Workspace): string;
-
-    /**
-     * Handles "Create Variable" button in the default variables toolbox category.
-     * It will prompt the user for a varibale name, including re-prompts if a name
-     * is already in use among the workspace's variables.
-     *
-     * Custom button handlers can delegate to this function, allowing variables
-     * types and after-creation processing. More complex customization (e.g.,
-     * prompting for variable type) is beyond the scope of this function.
-     *
-     * @param {!Blockly.Workspace} workspace The workspace on which to create the
-     *     variable.
-     * @param {function(?string=)=} opt_callback A callback. It will be passed an
-     *     acceptable new variable name, or null if change is to be aborted (cancel
-     *     button), or undefined if an existing variable was chosen.
-     * @param {string=} opt_type The type of the variable like 'int', 'string', or
-     *     ''. This will default to '', which is a specific type.
-     */
-    function createVariableButtonHandler(workspace: Blockly.Workspace, opt_callback?: { (_0: string): any /*missing*/ }, opt_type?: string): void;
-
-    /**
-     * Original name of Blockly.Variables.createVariableButtonHandler(..).
-     * @deprecated Use Blockly.Variables.createVariableButtonHandler(..).
-     *
-     * @param {!Blockly.Workspace} workspace The workspace on which to create the
-     *     variable.
-     * @param {function(?string=)=} opt_callback A callback. It will be passed an
-     *     acceptable new variable name, or null if change is to be aborted (cancel
-     *     button), or undefined if an existing variable was chosen.
-     * @param {string=} opt_type The type of the variable like 'int', 'string', or
-     *     ''. This will default to '', which is a specific type.
-     */
-    function createVariable(workspace: Blockly.Workspace, opt_callback?: { (_0: string): any /*missing*/ }, opt_type?: string): void;
-
-    /**
-     * Rename a variable with the given workspace, variableType, and oldName.
-     * @param {!Blockly.Workspace} workspace The workspace on which to rename the
-     *     variable.
-     * @param {Blockly.VariableModel} variable Variable to rename.
-     * @param {function(?string=)=} opt_callback A callback. It will
-     *     be passed an acceptable new variable name, or null if change is to be
-     *     aborted (cancel button), or undefined if an existing variable was chosen.
-     */
-    function renameVariable(workspace: Blockly.Workspace, variable: Blockly.VariableModel, opt_callback?: { (_0: string): any /*missing*/ }): void;
-
-    /**
-     * Prompt the user for a new variable name.
-     * @param {string} promptText The string of the prompt.
-     * @param {string} defaultText The default value to show in the prompt's field.
-     * @param {function(?string)} callback A callback. It will return the new
-     *     variable name, or null if the user picked something illegal.
-     */
-    function promptName(promptText: string, defaultText: string, callback: { (_0: string): any /*missing*/ }): void;
-
-    /**
-     * Check whether there exists a variable with the given name but a different
-     * type.
-     * @param {string} name The name to search for.
-     * @param {string} type The type to exclude from the search.
-     * @param {!Blockly.Workspace} workspace The workspace to search for the
-     *     variable.
-     * @return {?Blockly.VariableModel} The variable with the given name and a
-     *     different type, or null if none was found.
-     * @private
-     */
-    function nameUsedWithOtherType_(name: string, type: string, workspace: Blockly.Workspace): Blockly.VariableModel;
-
-    /**
-     * Check whether there exists a variable with the given name of any type.
-     * @param {string} name The name to search for.
-     * @param {!Blockly.Workspace} workspace The workspace to search for the
-     *     variable.
-     * @return {?Blockly.VariableModel} The variable with the given name, or null if
-     *    none was found.
-     * @private
-     */
-    function nameUsedWithAnyType_(name: string, workspace: Blockly.Workspace): Blockly.VariableModel;
-
-    /**
-     * Generate XML string for variable field.
-     * @param {!Blockly.VariableModel} variableModel The variable model to generate
-     *     an XML string from.
-     * @return {string} The generated XML.
-     * @package
-     */
-    function generateVariableFieldXmlString(variableModel: Blockly.VariableModel): string;
-
-    /**
-     * Generate DOM objects representing a variable field.
-     * @param {!Blockly.VariableModel} variableModel The variable model to
-     *     represent.
-     * @return {Element} The generated DOM.
-     * @public
-     */
-    function generateVariableFieldDom(variableModel: Blockly.VariableModel): Element;
-
-    /**
-     * Helper function to look up or create a variable on the given workspace.
-     * If no variable exists, creates and returns it.
-     * @param {!Blockly.Workspace} workspace The workspace to search for the
-     *     variable.  It may be a flyout workspace or main workspace.
-     * @param {string} id The ID to use to look up or create the variable, or null.
-     * @param {string=} opt_name The string to use to look up or create the
-     *     variable.
-     * @param {string=} opt_type The type to use to look up or create the variable.
-     * @return {!Blockly.VariableModel} The variable corresponding to the given ID
-     *     or name + type combination.
-     */
-    function getOrCreateVariablePackage(workspace: Blockly.Workspace, id: string, opt_name?: string, opt_type?: string): Blockly.VariableModel;
-
-    /**
-     * Look up  a variable on the given workspace.
-     * Always looks in the main workspace before looking in the flyout workspace.
-     * Always prefers lookup by ID to lookup by name + type.
-     * @param {!Blockly.Workspace} workspace The workspace to search for the
-     *     variable.  It may be a flyout workspace or main workspace.
-     * @param {string} id The ID to use to look up the variable, or null.
-     * @param {string=} opt_name The string to use to look up the variable.  Only
-     *     used if lookup by ID fails.
-     * @param {string=} opt_type The type to use to look up the variable.  Only used
-     *     if lookup by ID fails.
-     * @return {?Blockly.VariableModel} The variable corresponding to the given ID
-     *     or name + type combination, or null if not found.
-     * @package
-     */
-    function getVariable(workspace: Blockly.Workspace, id: string, opt_name?: string, opt_type?: string): Blockly.VariableModel;
-
-    /**
-     * Helper function to create a variable on the given workspace.
-     * @param {!Blockly.Workspace} workspace The workspace in which to create the
-     * variable.  It may be a flyout workspace or main workspace.
-     * @param {string} id The ID to use to create the variable, or null.
-     * @param {string=} opt_name The string to use to create the variable.
-     * @param {string=} opt_type The type to use to create the variable.
-     * @return {!Blockly.VariableModel} The variable corresponding to the given ID
-     *     or name + type combination.
-     * @private
-     */
-    function createVariable_(workspace: Blockly.Workspace, id: string, opt_name?: string, opt_type?: string): Blockly.VariableModel;
-
-    /**
-     * Helper function to get the list of variables that have been added to the
-     * workspace after adding a new block, using the given list of variables that
-     * were in the workspace before the new block was added.
-     * @param {!Blockly.Workspace} workspace The workspace to inspect.
-     * @param {!Array.<!Blockly.VariableModel>} originalVariables The array of
-     *     variables that existed in the workspace before adding the new block.
-     * @return {!Array.<!Blockly.VariableModel>} The new array of variables that were
-     *     freshly added to the workspace after creating the new block, or [] if no
-     *     new variables were added to the workspace.
-     * @package
-     */
-    function getAddedVariables(workspace: Blockly.Workspace, originalVariables: Blockly.VariableModel[]): Blockly.VariableModel[];
-}
-
-declare module Blockly.VariablesDynamic {
-
-    /**
-     * Construct the elements (blocks and button) required by the flyout for the
-     * variable category.
-     * @param {!Blockly.Workspace} workspace The workspace containing variables.
-     * @return {!Array.<!Element>} Array of XML elements.
-     */
-    function flyoutCategory(workspace: Blockly.Workspace): Element[];
-
-    /**
-     * Construct the blocks required by the flyout for the variable category.
-     * @param {!Blockly.Workspace} workspace The workspace containing variables.
-     * @return {!Array.<!Element>} Array of XML block elements.
-     */
-    function flyoutCategoryBlocks(workspace: Blockly.Workspace): Element[];
-}
-
-declare module Blockly {
-
-    class Warning extends Warning__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Warning__Class extends Blockly.Icon__Class  { 
-    
-            /**
-             * Class for a warning.
-             * @param {!Blockly.Block} block The block associated with this warning.
-             * @extends {Blockly.Icon}
-             * @constructor
-             */
-            constructor(block: Blockly.Block);
-    
-            /**
-             * Does this icon get hidden when the block is collapsed.
-             */
-            collapseHidden: any /*missing*/;
-    
-            /**
-             * Draw the warning icon.
-             * @param {!Element} group The icon group.
-             * @private
-             */
-            drawIcon_(group: Element): void;
-    
-            /**
-             * Show or hide the warning bubble.
-             * @param {boolean} visible True if the bubble should be visible.
-             */
-            setVisible(visible: boolean): void;
-    
-            /**
-             * Bring the warning to the top of the stack when clicked on.
-             * @param {!Event} _e Mouse up event.
-             * @private
-             */
-            bodyFocus_(_e: Event): void;
-    
-            /**
-             * Set this warning's text.
-             * @param {string} text Warning text (or '' to delete).
-             * @param {string} id An ID for this text entry to be able to maintain
-             *     multiple warnings.
-             */
-            setText(text: string, id: string): void;
-    
-            /**
-             * Get this warning's texts.
-             * @return {string} All texts concatenated into one string.
-             */
-            getText(): string;
-    
-            /**
-             * Dispose of this warning.
-             */
-            dispose(): void;
-    } 
-    
-}
-
-declare module Blockly.Warning {
-
-    /**
-     * Create the text for the warning's bubble.
-     * @param {string} text The text to display.
-     * @return {!SVGTextElement} The top-level node of the text.
-     * @private
-     */
-    function textToDom_(text: string): SVGTextElement;
-}
-
-declare module Blockly.WidgetDiv {
-
-    /**
-     * The HTML container.  Set once by Blockly.WidgetDiv.createDom.
-     * @type {Element}
-     */
-    var DIV: Element;
-
-    /**
-     * The object currently using this container.
-     * @type {Object}
-     * @private
-     */
-    var owner_: Object;
-
-    /**
-     * Optional cleanup function set by whichever object uses the widget.
-     * This is called as soon as a dispose is desired. If the dispose should
-     * be animated, the animation should start on the call of dispose_.
-     * @type {Function}
-     * @private
-     */
-    var dispose_: Function;
-
-    /**
-     * Optional function called at the end of a dispose animation.
-     * Set by whichever object is using the widget.
-     * @type {Function}
-     * @private
-     */
-    var disposeAnimationFinished_: Function;
-
-    /**
-     * Timer ID for the dispose animation.
-     * @type {number}
-     * @private
-     */
-    var disposeAnimationTimer_: number;
-
-    /**
-     * Length of time in seconds for the dispose animation.
-     * @type {number}
-     * @private
-     */
-    var disposeAnimationTimerLength_: number;
-
-    /**
-     * Create the widget div and inject it onto the page.
-     */
-    function createDom(): void;
-
-    /**
-     * Initialize and display the widget div.  Close the old one if needed.
-     * @param {!Object} newOwner The object that will be using this container.
-     * @param {boolean} rtl Right-to-left (true) or left-to-right (false).
-     * @param {Function=} opt_dispose Optional cleanup function to be run when the widget
-     *   is closed. If the dispose is animated, this function must start the animation.
-     * @param {Function=} opt_disposeAnimationFinished Optional cleanup function to be run
-     *   when the widget is done animating and must disappear.
-     * @param {number=} opt_disposeAnimationTimerLength Length of animation time in seconds
-         if a dispose animation is provided.
-     */
-    function show(newOwner: Object, rtl: boolean, opt_dispose?: Function, opt_disposeAnimationFinished?: Function, opt_disposeAnimationTimerLength?: number): void;
-
-    /**
-     *  Repositions the widgetDiv on window resize. If it doesn't know how to
-     *  calculate the new position, it wll just hide it instead.
-     */
-    function repositionForWindowResize(): void;
-
-    /**
-     * Destroy the widget and hide the div.
-     * @param {boolean=} opt_noAnimate If set, animation will not be run for the hide.
-     */
-    function hide(opt_noAnimate?: boolean): void;
-
-    /**
-     * Hide all DOM for the WidgetDiv, and clear its children.
-     * @private
-     */
-    function hideAndClearDom_(): void;
-
-    /**
-     * Is the container visible?
-     * @return {boolean} True if visible.
-     */
-    function isVisible(): boolean;
-
-    /**
-     * Destroy the widget and hide the div if it is being used by the specified
-     *   object.
-     * @param {!Object} oldOwner The object that was using this container.
-     */
-    function hideIfOwner(oldOwner: Object): void;
-
-    /**
-     * Position the widget at a given location.  Prevent the widget from going
-     * offscreen top or left (right in RTL).
-     * @param {number} anchorX Horizontal location (window coordinates, not body).
-     * @param {number} anchorY Vertical location (window coordinates, not body).
-     * @param {!goog.math.Size} windowSize Height/width of window.
-     * @param {!goog.math.Coordinate} scrollOffset X/y of window scrollbars.
-     * @param {boolean} rtl True if RTL, false if LTR.
-     */
-    function position(anchorX: number, anchorY: number, windowSize: goog.math.Size, scrollOffset: goog.math.Coordinate, rtl: boolean): void;
-
-    /**
-     * Set the widget div's position and height.  This function does nothing clever:
-     * it will not ensure that your widget div ends up in the visible window.
-     * @param {number} x Horizontal location (window coordinates, not body).
-     * @param {number} y Vertical location (window coordinates, not body).
-     * @param {number} height The height of the widget div (pixels).
-     * @private
-     */
-    function positionInternal_(x: number, y: number, height: number): void;
-
-    /**
-     * Position the widget div based on an anchor rectangle.
-     * The widget should be placed adjacent to but not overlapping the anchor
-     * rectangle.  The preferred position is directly below and aligned to the left
-     * (ltr) or right (rtl) side of the anchor.
-     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
-     *     in window coordinates.
-     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
-     *     coordinates.
-     * @param {!goog.math.Size} widgetSize The size of the widget that is inside the
-     *     widget div, in window coordinates.
-     * @param {boolean} rtl Whether the workspace is in RTL mode.  This determines
-     *     horizontal alignment.
-     * @package
-     */
-    function positionWithAnchor(viewportBBox: Object, anchorBBox: Object, widgetSize: goog.math.Size, rtl: boolean): void;
-
-    /**
-     * Calculate an x position (in window coordinates) such that the widget will not
-     * be offscreen on the right or left.
-     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
-     *     in window coordinates.
-     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
-     *     coordinates.
-     * @param {goog.math.Size} widgetSize The dimensions of the widget inside the
-     *     widget div.
-     * @param {boolean} rtl Whether the Blockly workspace is in RTL mode.
-     * @return {number} A valid x-coordinate for the top left corner of the widget
-     *     div, in window coordinates.
-     * @private
-     */
-    function calculateX_(viewportBBox: Object, anchorBBox: Object, widgetSize: goog.math.Size, rtl: boolean): number;
-
-    /**
-     * Calculate a y position (in window coordinates) such that the widget will not
-     * be offscreen on the top or bottom.
-     * @param {!Object} viewportBBox The bounding rectangle of the current viewport,
-     *     in window coordinates.
-     * @param {!Object} anchorBBox The bounding rectangle of the anchor, in window
-     *     coordinates.
-     * @param {goog.math.Size} widgetSize The dimensions of the widget inside the
-     *     widget div.
-     * @return {number} A valid y-coordinate for the top left corner of the widget
-     *     div, in window coordinates.
-     * @private
-     */
-    function calculateY_(viewportBBox: Object, anchorBBox: Object, widgetSize: goog.math.Size): number;
-}
-
-declare module Blockly {
-
-    class Workspace extends Workspace__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class Workspace__Class  { 
-    
-            /**
-             * Class for a workspace.  This is a data structure that contains blocks.
-             * There is no UI, and can be created headlessly.
-             * @param {!Blockly.Options=} opt_options Dictionary of options.
-             * @constructor
-             */
-            constructor(opt_options?: Blockly.Options);
-    
-            /** @type {string} */
-            id: string;
-    
-            /** @type {!Blockly.Options} */
-            options: Blockly.Options;
-    
-            /** @type {boolean} */
-            RTL: boolean;
-    
-            /** @type {boolean} */
-            horizontalLayout: boolean;
-    
-            /** @type {number} */
-            toolboxPosition: number;
-    
-            /**
-             * @type {!Array.<!Blockly.Block>}
-             * @private
-             */
-            topBlocks_: Blockly.Block[];
-    
-            /**
-             * @type {!Array.<!Blockly.WorkspaceComment>}
-             * @private
-             */
-            topComments_: Blockly.WorkspaceComment[];
-    
-            /**
-             * @type {!Object}
-             * @private
-             */
-            commentDB_: Object;
-    
-            /**
-             * @type {!Array.<!Function>}
-             * @private
-             */
-            listeners_: Function[];
-    
-            /** @type {!Array.<!Function>} */
-            tapListeners_: Function[];
-    
-            /**
-             * @type {!Array.<!Blockly.Events.Abstract>}
-             * @protected
-             */
-            undoStack_: Blockly.Events.Abstract[];
-    
-            /**
-             * @type {!Array.<!Blockly.Events.Abstract>}
-             * @protected
-             */
-            redoStack_: Blockly.Events.Abstract[];
-    
-            /**
-             * @type {!Object}
-             * @private
-             */
-            blockDB_: Object;
-    
-            /**
-             * A map from variable type to list of variable names.  The lists contain all
-             * of the named variables in the workspace, including variables
-             * that are not currently in use.
-             * @type {!Blockly.VariableMap}
-             * @private
-             */
-            variableMap_: Blockly.VariableMap;
-    
-            /**
-             * Blocks in the flyout can refer to variables that don't exist in the main
-             * workspace.  For instance, the "get item in list" block refers to an "item"
-             * variable regardless of whether the variable has been created yet.
-             * A FieldVariable must always refer to a Blockly.VariableModel.  We reconcile
-             * these by tracking "potential" variables in the flyout.  These variables
-             * become real when references to them are dragged into the main workspace.
-             * @type {!Blockly.VariableMap}
-             * @private
-             */
-            potentialVariableMap_: Blockly.VariableMap;
-    
-            /**
-             * Returns `true` if the workspace is visible and `false` if it's headless.
-             * @type {boolean}
-             */
-            rendered: boolean;
-    
-            /**
-             * Returns `true` if the workspace is currently in the process of a bulk clear.
-             * @type {boolean}
-             * @package
-             */
-            isClearing: boolean;
-    
-            /**
-             * Maximum number of undo events in stack. `0` turns off undo, `Infinity` sets it to unlimited.
-             * @type {number}
-             */
-            MAX_UNDO: number;
-    
-            /**
-             * Dispose of this workspace.
-             * Unlink from all DOM elements to prevent memory leaks.
-             */
-            dispose(): void;
-    
-            /**
-             * Add a block to the list of top blocks.
-             * @param {!Blockly.Block} block Block to add.
-             */
-            addTopBlock(block: Blockly.Block): void;
-    
-            /**
-             * Remove a block from the list of top blocks.
-             * @param {!Blockly.Block} block Block to remove.
-             */
-            removeTopBlock(block: Blockly.Block): void;
-    
-            /**
-             * Finds the top-level blocks and returns them.  Blocks are optionally sorted
-             * by position; top to bottom (with slight LTR or RTL bias).
-             * @param {boolean} ordered Sort the list if true.
-             * @return {!Array.<!Blockly.Block>} The top-level block objects.
-             */
-            getTopBlocks(ordered: boolean): Blockly.Block[];
-    
-            /**
-             * Add a comment to the list of top comments.
-             * @param {!Blockly.WorkspaceComment} comment comment to add.
-             * @public
-             */
-            addTopComment(comment: Blockly.WorkspaceComment): void;
-    
-            /**
-             * Remove a comment from the list of top comments.
-             * @param {!Blockly.WorkspaceComment} comment comment to remove.
-             * @public
-             */
-            removeTopComment(comment: Blockly.WorkspaceComment): void;
-    
-            /**
-             * Finds the top-level comments and returns them.  Comments are optionally sorted
-             * by position; top to bottom (with slight LTR or RTL bias).
-             * @param {boolean} ordered Sort the list if true.
-             * @return {!Array.<!Blockly.WorkspaceComment>} The top-level comment objects.
-             * @package
-             */
-            getTopComments(ordered: boolean): Blockly.WorkspaceComment[];
-    
-            /**
-             * Find all blocks in workspace.  Blocks are optionally sorted
-             * by position; top to bottom (with slight LTR or RTL bias).
-             * @param {boolean=} ordered Sort the list if true.
-             * @return {!Array.<!Blockly.Block>} Array of blocks.
-             */
-            getAllBlocks(ordered?: boolean): Blockly.Block[];
-    
-            /**
-             * Dispose of all blocks and comments in workspace.
-             */
-            clear(): void;
-    
-            /**
-             * Rename a variable by updating its name in the variable map. Identify the
-             * variable to rename with the given ID.
-             * @param {string} id ID of the variable to rename.
-             * @param {string} newName New variable name.
-             */
-            renameVariableById(id: string, newName: string): void;
-    
-            /**
-             * Create a variable with a given name, optional type, and optional ID.
-             * @param {!string} name The name of the variable. This must be unique across
-             *     variables and procedures.
-             * @param {string=} opt_type The type of the variable like 'int' or 'string'.
-             *     Does not need to be unique. Field_variable can filter variables based on
-             *     their type. This will default to '' which is a specific type.
-             * @param {string=} opt_id The unique ID of the variable. This will default to
-             *     a UUID.
-             * @return {?Blockly.VariableModel} The newly created variable.
-             */
-            createVariable(name: string, opt_type?: string, opt_id?: string): Blockly.VariableModel;
-    
-            /**
-             * Find all the uses of the given variable, which is identified by ID.
-             * @param {string} id ID of the variable to find.
-             * @return {!Array.<!Blockly.Block>} Array of block usages.
-             */
-            getVariableUsesById(id: string): Blockly.Block[];
-    
-            /**
-             * Delete a variables by the passed in ID and all of its uses from this
-             * workspace. May prompt the user for confirmation.
-             * @param {string} id ID of variable to delete.
-             */
-            deleteVariableById(id: string): void;
-    
-            /**
-             * Deletes a variable and all of its uses from this workspace without asking the
-             * user for confirmation.
-             * @param {!Blockly.VariableModel} variable Variable to delete.
-             * @param {!Array.<!Blockly.Block>} uses An array of uses of the variable.
-             * @private
-             */
-            deleteVariableInternal_(variable: Blockly.VariableModel, uses: Blockly.Block[]): void;
-    
-            /**
-             * Check whether a variable exists with the given name.  The check is
-             * case-insensitive.
-             * @param {string} _name The name to check for.
-             * @return {number} The index of the name in the variable list, or -1 if it is
-             *     not present.
-             * @deprecated April 2017
-             */
-            variableIndexOf(_name: string): number;
-    
-            /**
-             * Find the variable by the given name and return it. Return null if it is not
-             *     found.
-             * @param {!string} name The name to check for.
-             * @param {string=} opt_type The type of the variable.  If not provided it
-             *     defaults to the empty string, which is a specific type.
-             * @return {?Blockly.VariableModel} the variable with the given name.
-             */
-            getVariable(name: string, opt_type?: string): Blockly.VariableModel;
-    
-            /**
-             * Find the variable by the given ID and return it. Return null if it is not
-             *     found.
-             * @param {!string} id The ID to check for.
-             * @return {?Blockly.VariableModel} The variable with the given ID.
-             */
-            getVariableById(id: string): Blockly.VariableModel;
-    
-            /**
-             * Find the variable with the specified type. If type is null, return list of
-             *     variables with empty string type.
-             * @param {?string} type Type of the variables to find.
-             * @return {Array.<Blockly.VariableModel>} The sought after variables of the
-             *     passed in type. An empty array if none are found.
-             */
-            getVariablesOfType(type: string): Blockly.VariableModel[];
-    
-            /**
-             * Return all variable types.
-             * @return {!Array.<string>} List of variable types.
-             * @package
-             */
-            getVariableTypes(): string[];
-    
-            /**
-             * Return all variables of all types.
-             * @return {!Array.<Blockly.VariableModel>} List of variable models.
-             */
-            getAllVariables(): Blockly.VariableModel[];
-    
-            /**
-             * Returns the horizontal offset of the workspace.
-             * Intended for LTR/RTL compatibility in XML.
-             * Not relevant for a headless workspace.
-             * @return {number} Width.
-             */
-            getWidth(): number;
-    
-            /**
-             * Obtain a newly created block.
-             * @param {?string} prototypeName Name of the language object containing
-             *     type-specific functions for this block.
-             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
-             *     create a new ID.
-             * @return {!Blockly.Block} The created block.
-             */
-            newBlock(prototypeName: string, opt_id?: string): Blockly.Block;
-    
-            /**
-             * The number of blocks that may be added to the workspace before reaching
-             *     the maxBlocks.
-             * @return {number} Number of blocks left.
-             */
-            remainingCapacity(): number;
-    
-            /**
-             * Undo or redo the previous action.
-             * @param {boolean} redo False if undo, true if redo.
-             */
-            undo(redo: boolean): void;
-    
-            /**
-             * Clear the undo/redo stacks.
-             */
-            clearUndo(): void;
-    
-            /**
-             * @return {boolean} whether there are any events in the redo stack.
-             * @package
-             */
-            hasRedoStack(): boolean;
-    
-            /**
-             * @return {boolean} whether there are any events in the undo stack.
-             * @package
-             */
-            hasUndoStack(): boolean;
-    
-            /**
-             * When something in this workspace changes, call a function.
-             * @param {!Function} func Function to call.
-             * @return {!Function} Function that can be passed to
-             *     removeChangeListener.
-             */
-            addChangeListener(func: Function): Function;
-    
-            /**
-             * Stop listening for this workspace's changes.
-             * @param {Function} func Function to stop calling.
-             */
-            removeChangeListener(func: Function): void;
-    
-            /**
-             * Fire a change event.
-             * @param {!Blockly.Events.Abstract} event Event to fire.
-             */
-            fireChangeListener(event: Blockly.Events.Abstract): void;
-    
-            /**
-             * Find the block on this workspace with the specified ID.
-             * @param {string} id ID of block to find.
-             * @return {Blockly.Block} The sought after block or null if not found.
-             */
-            getBlockById(id: string): Blockly.Block;
-    
-            /**
-             * Getter for the flyout associated with this workspace.  This is null in a
-             * non-rendered workspace, but may be overriden by subclasses.
-             * @return {Blockly.Flyout} The flyout on this workspace.
-             */
-            getFlyout(): Blockly.Flyout;
-    
-            /**
-             * Find the comment on this workspace with the specified ID.
-             * @param {string} id ID of comment to find.
-             * @return {Blockly.WorkspaceComment} The sought after comment or null if not
-             *     found.
-             * @public
-             */
-            getCommentById(id: string): Blockly.WorkspaceComment;
-    
-            /**
-             * Add the comment to the comment database.
-             * @param {Blockly.WorkspaceComment} comment The comment to add.
-             * @public
-             */
-            addCommentById(comment: Blockly.WorkspaceComment): void;
-    
-            /**
-             * Remove the comment from the comment database.
-             * @param {string} id The id of the comment to remove.
-             * @public
-             */
-            removeCommentById(id: string): void;
-    
-            /**
-             * Checks whether all value and statement inputs in the workspace are filled
-             * with blocks.
-             * @param {boolean=} opt_shadowBlocksAreFilled An optional argument controlling
-             *     whether shadow blocks are counted as filled. Defaults to true.
-             * @return {boolean} True if all inputs are filled, false otherwise.
-             */
-            allInputsFilled(opt_shadowBlocksAreFilled?: boolean): boolean;
-    
-            /**
-             * Return the variable map that contains "potential" variables.  These exist in
-             * the flyout but not in the workspace.
-             * @return {?Blockly.VariableMap} The potential variable map.
-             * @package
-             */
-            getPotentialVariableMap(): Blockly.VariableMap;
-    
-            /**
-             * Create and store the potential variable map for this workspace.
-             * @package
-             */
-            createPotentialVariableMap(): void;
-    
-            /**
-             * Return the map of all variables on the workspace.
-             * @return {?Blockly.VariableMap} The  variable map.
-             */
-            getVariableMap(): Blockly.VariableMap;
-    
-            /**
-             * Sets the debugMode option in the workspace.
-             * @param {boolean} debugMode value to set to this option.
-             */
-            setDebugModeOption(debugMode: boolean): void;
-    } 
-    
-}
-
-declare module Blockly.Workspace {
-
-    /**
-     * Angle away from the horizontal to sweep for blocks.  Order of execution is
-     * generally top to bottom, but a small angle changes the scan to give a bit of
-     * a left to right bias (reversed in RTL).  Units are in degrees.
-     * See: http://tvtropes.org/pmwiki/pmwiki.php/Main/DiagonalBilling.
-     */
-    var SCAN_ANGLE: any /*missing*/;
-
-    /**
-     * Database of all workspaces.
-     * @private
-     */
-    var WorkspaceDB_: any /*missing*/;
-
-    /**
-     * Find the workspace with the specified ID.
-     * @param {string} id ID of workspace to find.
-     * @return {Blockly.Workspace} The sought after workspace or null if not found.
-     */
-    function getById(id: string): Blockly.Workspace;
-}
-
-declare module Blockly {
-
-    class WorkspaceAudio extends WorkspaceAudio__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class WorkspaceAudio__Class  { 
-    
-            /**
-             * Class for loading, storing, and playing audio for a workspace.
-             * @param {Blockly.WorkspaceSvg} parentWorkspace The parent of the workspace
-             *     this audio object belongs to, or null.
-             * @constructor
-             */
-            constructor(parentWorkspace: Blockly.WorkspaceSvg);
-    
-            /**
-             * The parent of the workspace this object belongs to, or null.  May be
-             * checked for sounds that this object can't find.
-             * @type {Blockly.WorkspaceSvg}
-             * @private
-             */
-            parentWorkspace_: Blockly.WorkspaceSvg;
-    
-            /**
-             * Database of pre-loaded sounds.
-             * @private
-             * @const
-             */
-            SOUNDS_: any /*missing*/;
-    
-            /**
-             * Time that the last sound was played.
-             * @type {Date}
-             * @private
-             */
-            lastSound_: Date;
-    
-            /**
-             * Dispose of this audio manager.
-             * @package
-             */
-            dispose(): void;
-    
-            /**
-             * Load an audio file.  Cache it, ready for instantaneous playing.
-             * @param {!Array.<string>} filenames List of file types in decreasing order of
-             *   preference (i.e. increasing size).  E.g. ['media/go.mp3', 'media/go.wav']
-             *   Filenames include path from Blockly's root.  File extensions matter.
-             * @param {string} name Name of sound.
-             */
-            load(filenames: string[], name: string): void;
-    
-            /**
-             * Preload all the audio files so that they play quickly when asked for.
-             * @package
-             */
-            preload(): void;
-    
-            /**
-             * Play a named sound at specified volume.  If volume is not specified,
-             * use full volume (1).
-             * @param {string} name Name of sound.
-             * @param {number=} opt_volume Volume of sound (0-1).
-             */
-            play(name: string, opt_volume?: number): void;
-    } 
-    
-}
-
-declare module Blockly {
-
-    class WorkspaceComment extends WorkspaceComment__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class WorkspaceComment__Class  { 
-    
-            /**
-             * Class for a workspace comment.
-             * @param {!Blockly.Workspace} workspace The block's workspace.
-             * @param {string} content The content of this workspace comment.
-             * @param {number} height Height of the comment.
-             * @param {number} width Width of the comment.
-             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
-             *     create a new ID.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, opt_id?: string);
-    
-            /** @type {string} */
-            id: string;
-    
-            /**
-             * The comment's position in workspace units.  (0, 0) is at the workspace's
-             * origin; scale does not change this value.
-             * @type {!goog.math.Coordinate}
-             * @protected
-             */
-            xy_: goog.math.Coordinate;
-    
-            /**
-             * The comment's height in workspace units.  Scale does not change this value.
-             * @type {number}
-             * @private
-             */
-            height_: number;
-    
-            /**
-             * The comment's width in workspace units.  Scale does not change this value.
-             * @type {number}
-             * @private
-             */
-            width_: number;
-    
-            /**
-             * @type {!Blockly.Workspace}
-             */
-            workspace: Blockly.Workspace;
-    
-            /**
-             * @protected
-             * @type {boolean}
-             */
-            RTL: boolean;
-    
-            /**
-             * @type {boolean}
-             * @private
-             */
-            deletable_: boolean;
-    
-            /**
-             * @type {boolean}
-             * @private
-             */
-            movable_: boolean;
-    
-            /**
-             * @type {boolean}
-             * @private
-             */
-            editable_: boolean;
-    
-            /**
-             * @protected
-             * @type {!string}
-             */
-            content_: string;
-    
-            /**
-             * @package
-             * @type {boolean}
-             */
-            isComment: boolean;
-    
-            /**
-             * Optional text data that round-trips beween blocks and XML.
-             * Has no effect. May be used by 3rd parties for meta information.
-             * @type {?string}
-             */
-            data: string;
-    
-            /**
-             * Dispose of this comment.
-             * @publc
-             */
-            dispose(): void;
-    
-            /**
-             * Get comment height.
-             * @return {number} comment height.
-             * @public
-             */
-            getHeight(): number;
-    
-            /**
-             * Set comment height.
-             * @param {number} height comment height.
-             * @public
-             */
-            setHeight(height: number): void;
-    
-            /**
-             * Get comment width.
-             * @return {number} comment width.
-             * @public
-             */
-            getWidth(): number;
-    
-            /**
-             * Set comment width.
-             * @param {number} width comment width.
-             * @public
-             */
-            setWidth(width: number): void;
-    
-            /**
-             * Get stored location.
-             * @return {!goog.math.Coordinate} The comment's stored location.  This is not
-             *     valid if the comment is currently being dragged.
-             * @public
-             */
-            getXY(): goog.math.Coordinate;
-    
-            /**
-             * Move a comment by a relative offset.
-             * @param {number} dx Horizontal offset, in workspace units.
-             * @param {number} dy Vertical offset, in workspace units.
-             * @public
-             */
-            moveBy(dx: number, dy: number): void;
-    
-            /**
-             * Get whether this comment is deletable or not.
-             * @return {boolean} True if deletable.
-             * @package
-             */
-            isDeletable(): boolean;
-    
-            /**
-             * Set whether this comment is deletable or not.
-             * @param {boolean} deletable True if deletable.
-             * @package
-             */
-            setDeletable(deletable: boolean): void;
-    
-            /**
-             * Get whether this comment is movable or not.
-             * @return {boolean} True if movable.
-             * @package
-             */
-            isMovable(): boolean;
-    
-            /**
-             * Set whether this comment is movable or not.
-             * @param {boolean} movable True if movable.
-             * @package
-             */
-            setMovable(movable: boolean): void;
-    
-            /**
-             * Get whether this comment is editable or not.
-             * @return {boolean} True if editable.
-             */
-            isEditable(): boolean;
-    
-            /**
-             * Set whether this comment is editable or not.
-             * @param {boolean} editable True if editable.
-             */
-            setEditable(editable: boolean): void;
-    
-            /**
-             * Returns this comment's text.
-             * @return {string} Comment text.
-             * @package
-             */
-            getContent(): string;
-    
-            /**
-             * Set this comment's content.
-             * @param {string} content Comment content.
-             * @public
-             */
-            setContent(content: string): void;
-    
-            /**
-             * Return the coordinates of the top-left corner of this comment relative to the
-             * drawing surface's origin (0,0), in workspace units.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties.
-             */
-            getRelativeToSurfaceXY(): goog.math.Coordinate;
-    
-            /**
-             * Encode a comment subtree as XML with XY coordinates.
-             * @param {boolean} opt_noId True if the encoder should skip the comment id.
-             * @return {!Element} Tree of XML elements.
-             * @public
-             */
-            toXmlWithXY(opt_noId: boolean): Element;
-    
-            /**
-             * Encode a comment subtree as XML, but don't serialize the XY coordinates.
-             * This method avoids some expensive metrics-related calls that are made in
-             * toXmlWithXY().
-             * @param {boolean} opt_noId True if the encoder should skip the comment id.
-             * @return {!Element} Tree of XML elements.
-             * @package
-             */
-            toXml(opt_noId: boolean): Element;
-    } 
-    
-}
-
-declare module Blockly.WorkspaceComment {
-
-    /**
-     * Fire a create event for the given workspace comment, if comments are enabled.
-     * @param {!Blockly.WorkspaceComment} comment The comment that was just created.
-     * @package
-     */
-    function fireCreateEvent(comment: Blockly.WorkspaceComment): void;
-
-    /**
-     * Decode an XML comment tag and create a comment on the workspace.
-     * @param {!Element} xmlComment XML comment element.
-     * @param {!Blockly.Workspace} workspace The workspace.
-     * @return {!Blockly.WorkspaceComment} The created workspace comment.
-     * @package
-     */
-    function fromXml(xmlComment: Element, workspace: Blockly.Workspace): Blockly.WorkspaceComment;
-
-    /**
-     * Decode an XML comment tag and return the results in an object.
-     * @param {!Element} xml XML comment element.
-     * @return {!Object} An object containing the information about the comment.
-     * @package
-     */
-    function parseAttributes(xml: Element): Object;
-}
-
-declare module Blockly.Events {
-
-    class CommentBase extends CommentBase__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class CommentBase__Class extends Blockly.Events.Abstract__Class  { 
-    
-            /**
-             * Abstract class for a comment event.
-             * @param {Blockly.WorkspaceComment} comment The comment this event corresponds
-             *     to.
-             * @extends {Blockly.Events.Abstract}
-             * @constructor
-             */
-            constructor(comment: Blockly.WorkspaceComment);
-    
-            /**
-             * The ID of the comment this event pertains to.
-             * @type {string}
-             */
-            commentId: string;
-    
-            /**
-             * The workspace identifier for this event.
-             * @type {string}
-             */
-            workspaceId: string;
-    
-            /**
-             * The event group id for the group this event belongs to. Groups define
-             * events that should be treated as an single action from the user's
-             * perspective, and should be undone together.
-             * @type {string}
-             */
-            group: string;
-    
-            /**
-             * Sets whether the event should be added to the undo stack.
-             * @type {boolean}
-             */
-            recordUndo: boolean;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    } 
-    
-
-    class CommentChange extends CommentChange__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class CommentChange__Class extends Blockly.Events.CommentBase__Class  { 
-    
-            /**
-             * Class for a comment change event.
-             * @param {Blockly.WorkspaceComment} comment The comment that is being changed.
-             *     Null for a blank event.
-             * @param {string} oldContents Previous contents of the comment.
-             * @param {string} newContents New contents of the comment.
-             * @extends {Blockly.Events.CommentBase}
-             * @constructor
-             */
-            constructor(comment: Blockly.WorkspaceComment, oldContents: string, newContents: string);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Does this event record any change of state?
-             * @return {boolean} False if something changed.
-             */
-            isNull(): boolean;
-    
-            /**
-             * Run a change event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-
-    class CommentCreate extends CommentCreate__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class CommentCreate__Class extends Blockly.Events.CommentBase__Class  { 
-    
-            /**
-             * Class for a comment creation event.
-             * @param {Blockly.WorkspaceComment} comment The created comment.
-             *     Null for a blank event.
-             * @extends {Blockly.Events.CommentBase}
-             * @constructor
-             */
-            constructor(comment: Blockly.WorkspaceComment);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * TODO (#1266): "Full" and "minimal" serialization.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Run a creation event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-
-    class CommentDelete extends CommentDelete__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class CommentDelete__Class extends Blockly.Events.CommentBase__Class  { 
-    
-            /**
-             * Class for a comment deletion event.
-             * @param {Blockly.WorkspaceComment} comment The deleted comment.
-             *     Null for a blank event.
-             * @extends {Blockly.Events.CommentBase}
-             * @constructor
-             */
-            constructor(comment: Blockly.WorkspaceComment);
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Encode the event as JSON.
-             * TODO (#1266): "Full" and "minimal" serialization.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Run a creation event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-
-    class CommentMove extends CommentMove__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class CommentMove__Class extends Blockly.Events.CommentBase__Class  { 
-    
-            /**
-             * Class for a comment move event.  Created before the move.
-             * @param {Blockly.WorkspaceComment} comment The comment that is being moved.
-             *     Null for a blank event.
-             * @extends {Blockly.Events.CommentBase}
-             * @constructor
-             */
-            constructor(comment: Blockly.WorkspaceComment);
-    
-            /**
-             * The comment that is being moved.  Will be cleared after recording the new
-             * location.
-             * @type {?Blockly.WorkspaceComment}
-             */
-            comment_: Blockly.WorkspaceComment;
-    
-            /**
-             * The location before the move, in workspace coordinates.
-             * @type {!goog.math.Coordinate}
-             */
-            oldCoordinate_: goog.math.Coordinate;
-    
-            /**
-             * The location after the move, in workspace coordinates.
-             * @type {!goog.math.Coordinate}
-             */
-            newCoordinate_: goog.math.Coordinate;
-    
-            /**
-             * Record the comment's new location.  Called after the move.  Can only be
-             * called once.
-             */
-            recordNew(): void;
-    
-            /**
-             * Type of this event.
-             * @type {string}
-             */
-            type: string;
-    
-            /**
-             * Override the location before the move.  Use this if you don't create the
-             * event until the end of the move, but you know the original location.
-             * @param {!goog.math.Coordinate} xy The location before the move, in workspace
-             *     coordinates.
-             */
-            setOldCoordinate(xy: goog.math.Coordinate): void;
-    
-            /**
-             * Encode the event as JSON.
-             * TODO (#1266): "Full" and "minimal" serialization.
-             * @return {!Object} JSON representation.
-             */
-            toJson(): Object;
-    
-            /**
-             * Decode the JSON event.
-             * @param {!Object} json JSON representation.
-             */
-            fromJson(json: Object): void;
-    
-            /**
-             * Does this event record any change of state?
-             * @return {boolean} False if something changed.
-             */
-            isNull(): boolean;
-    
-            /**
-             * Run a move event.
-             * @param {boolean} forward True if run forward, false if run backward (undo).
-             */
-            run(forward: boolean): void;
-    } 
-    
-}
-
-declare module Blockly.WorkspaceCommentSvg {
-
-    /**
-     * Size of the resize icon.
-     * @type {number}
-     * @const
-     * @private
-     */
-    var RESIZE_SIZE: number;
-
-    /**
-     * Radius of the border around the comment.
-     * @type {number}
-     * @const
-     * @private
-     */
-    var BORDER_RADIUS: number;
-
-    /**
-     * Width of the border around the comment.
-     */
-    var BORDER_WIDTH: any /*missing*/;
-
-    /**
-     * Offset from the foreignobject edge to the textarea edge.
-     * @type {number}
-     * @const
-     * @private
-     */
-    var TEXTAREA_OFFSET: number;
-
-    /**
-     * Offset from the top to make room for a top bar.
-     * @type {number}
-     * @const
-     * @private
-     */
-    var TOP_OFFSET: number;
-
-    /**
-     * Padding of the delete icon.
-     * @type {number}
-     * @const
-     */
-    var DELETE_ICON_PADDING: number;
-
-    /**
-     * Length of an uneditable text field in characters.
-     * @type {number}
-     * @const
-     */
-    var UNEDITABLE_TEXT_LENGTH: number;
-
-    /**
-     * Line gap.
-     * @type {number}
-     * @const
-     */
-    var UNEDITABLE_LINE_GAP: number;
-
-    /**
-     * Draw the minimize icon
-     * @private
-     */
-    function drawDeleteIcon(svgGroup: any /* jsdoc error */): void;
-}
-
-declare module Blockly {
-
-    class WorkspaceCommentSvg extends WorkspaceCommentSvg__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class WorkspaceCommentSvg__Class extends Blockly.WorkspaceComment__Class  { 
-    
-            /**
-             * Class for a workspace comment's SVG representation.
-             * @param {!Blockly.Workspace} workspace The block's workspace.
-             * @param {string} content The content of this workspace comment.
-             * @param {number} height Height of the comment.
-             * @param {number} width Width of the comment.
-             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
-             *     create a new ID.
-             * @extends {Blockly.WorkspaceComment}
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace, content: string, height: number, width: number, opt_id?: string);
-    
-            /**
-             * @type {SVGElement}
-             * @private
-             */
-            svgGroup_: SVGElement;
-    
-            /**
-             * Whether the comment is rendered onscreen and is a part of the DOM.
-             * @type {boolean}
-             * @private
-             */
-            rendered_: boolean;
-    
-            /**
-             * Whether to move the comment to the drag surface when it is dragged.
-             * True if it should move, false if it should be translated directly.
-             * @type {boolean}
-             * @private
-             */
-            useDragSurface_: boolean;
-    
-            /**
-             * Dispose of this comment.
-             * @public
-             */
-            dispose(): void;
-    
-            /**
-             * Create and initialize the SVG representation of a workspace comment.
-             * May be called more than once.
-             * @package
-             */
-            initSvg(): void;
-    
-            /**
-             * Handle a mouse-down on an SVG comment.
-             * @param {!Event} e Mouse down event or touch start event.
-             * @private
-             */
-            pathMouseDown_(e: Event): void;
-    
-            /**
-             * Show the context menu for this workspace comment.
-             * @param {!Event} e Mouse event.
-             * @private
-             */
-            showContextMenu_(e: Event): void;
-    
-            /**
-             * Move this workspace comment to the top of the stack.
-             * @return {!boolean} Whether or not the comment has been moved.
-             * @private
-             */
-            promote_(): boolean;
-    
-            /**
-             * Select this comment.  Highlight it visually.
-             * @package
-             */
-            select(): void;
-    
-            /**
-             * Unselect this comment.  Remove its highlighting.
-             * @package
-             */
-            unselect(): void;
-    
-            /**
-             * Select this comment.  Highlight it visually.
-             * @package
-             */
-            addSelect(): void;
-    
-            /**
-             * Unselect this comment.  Remove its highlighting.
-             * @package
-             */
-            removeSelect(): void;
-    
-            /**
-             * Focus this comment.  Highlight it visually.
-             * @package
-             */
-            addFocus(): void;
-    
-            /**
-             * Unfocus this comment.  Remove its highlighting.
-             * @package
-             */
-            removeFocus(): void;
-    
-            /**
-             * Return the coordinates of the top-left corner of this comment relative to the
-             * drawing surface's origin (0,0), in workspace units.
-             * If the comment is on the workspace, (0, 0) is the origin of the workspace
-             * coordinate system.
-             * This does not change with workspace scale.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties in
-             *     workspace coordinates.
-             * @package
-             */
-            getRelativeToSurfaceXY(): goog.math.Coordinate;
-    
-            /**
-             * Move a comment by a relative offset.
-             * @param {number} dx Horizontal offset, in workspace units.
-             * @param {number} dy Vertical offset, in workspace units.
-             * @public
-             */
-            moveBy(dx: number, dy: number): void;
-    
-            /**
-             * Transforms a comment by setting the translation on the transform attribute
-             * of the block's SVG.
-             * @param {number} x The x coordinate of the translation in workspace units.
-             * @param {number} y The y coordinate of the translation in workspace units.
-             * @package
-             */
-            translate(x: number, y: number): void;
-    
-            /**
-             * Move this comment to its workspace's drag surface, accounting for positioning.
-             * Generally should be called at the same time as setDragging(true).
-             * Does nothing if useDragSurface_ is false.
-             * @private
-             */
-            moveToDragSurface_(): void;
-    
-            /**
-             * Move this comment back to the workspace block canvas.
-             * Generally should be called at the same time as setDragging(false).
-             * Does nothing if useDragSurface_ is false.
-             * @param {!goog.math.Coordinate} newXY The position the comment should take on
-             *     on the workspace canvas, in workspace coordinates.
-             * @private
-             */
-            moveOffDragSurface_(newXY: goog.math.Coordinate): void;
-    
-            /**
-             * Move this comment during a drag, taking into account whether we are using a
-             * drag surface to translate blocks.
-             * @param {?Blockly.BlockDragSurfaceSvg} dragSurface The surface that carries
-             *     rendered items during a drag, or null if no drag surface is in use.
-             * @param {!goog.math.Coordinate} newLoc The location to translate to, in
-             *     workspace coordinates.
-             * @package
-             */
-            moveDuringDrag(dragSurface: Blockly.BlockDragSurfaceSvg, newLoc: goog.math.Coordinate): void;
-    
-            /**
-             * Move the bubble group to the specified location in workspace coordinates.
-             * @param {number} x The x position to move to.
-             * @param {number} y The y position to move to.
-             * @package
-             */
-            moveTo(x: number, y: number): void;
-    
-            /**
-             * Clear the comment of transform="..." attributes.
-             * Used when the comment is switching from 3d to 2d transform or vice versa.
-             * @private
-             */
-            clearTransformAttributes_(): void;
-    
-            /**
-             * Returns the coordinates of a bounding box describing the dimensions of this
-             * comment.
-             * Coordinate system: workspace coordinates.
-             * @return {!{topLeft: goog.math.Coordinate, bottomRight: goog.math.Coordinate}}
-             *    Object with top left and bottom right coordinates of the bounding box.
-             * @package
-             */
-            getBoundingRectangle(): { topLeft: goog.math.Coordinate; bottomRight: goog.math.Coordinate };
-    
-            /**
-             * Add or remove the UI indicating if this comment is movable or not.
-             * @package
-             */
-            updateMovable(): void;
-    
-            /**
-             * Set whether this comment is movable or not.
-             * @param {boolean} movable True if movable.
-             * @package
-             */
-            setMovable(movable: boolean): void;
-    
-            /**
-             * Recursively adds or removes the dragging class to this node and its children.
-             * @param {boolean} adding True if adding, false if removing.
-             * @package
-             */
-            setDragging(adding: boolean): void;
-    
-            /**
-             * Return the root node of the SVG or null if none exists.
-             * @return {Element} The root SVG node (probably a group).
-             * @package
-             */
-            getSvgRoot(): Element;
-    
-            /**
-             * Returns this comment's text.
-             * @return {string} Comment text.
-             * @public
-             */
-            getContent(): string;
-    
-            /**
-             * Set this comment's content.
-             * @param {string} content Comment content.
-             * @public
-             */
-            setContent(content: string): void;
-    
-            /**
-             * Update the cursor over this comment by adding or removing a class.
-             * @param {boolean} enable True if the delete cursor should be shown, false
-             *     otherwise.
-             * @package
-             */
-            setDeleteStyle(enable: boolean): void;
-    
-            /**
-             * Encode a comment subtree as XML with XY coordinates.
-             * @param {boolean} opt_noId True if the encoder should skip the comment id.
-             * @return {!Element} Tree of XML elements.
-             * @public
-             */
-            toXmlWithXY(opt_noId: boolean): Element;
-    
-            /**
-             * Returns a bounding box describing the dimensions of this workspace comment.
-             * @return {!{height: number, width: number}} Object with height and width properties.
-             */
-            getHeightWidth(): { height: number; width: number };
-    } 
-    
-}
-
-declare module Blockly.WorkspaceCommentSvg {
-
-    /**
-     * Decode an XML comment tag and create a rendered comment on the workspace.
-     * @param {!Element} xmlComment XML comment element.
-     * @param {!Blockly.Workspace} workspace The workspace.
-     * @param {number=} opt_wsWidth The width of the workspace, which is used to
-     *     position comments correctly in RTL.
-     * @return {!Blockly.WorkspaceCommentSvg} The created workspace comment.
-     * @public
-     */
-    function fromXml(xmlComment: Element, workspace: Blockly.Workspace, opt_wsWidth?: number): Blockly.WorkspaceCommentSvg;
-}
-
-declare module Blockly {
-
-    class WorkspaceDragSurfaceSvg extends WorkspaceDragSurfaceSvg__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class WorkspaceDragSurfaceSvg__Class  { 
-    
-            /**
-             * Blocks are moved into this SVG during a drag, improving performance.
-             * The entire SVG is translated using css transforms instead of SVG so the
-             * blocks are never repainted during drag improving performance.
-             * @param {!Element} container Containing element.
-             * @constructor
-             */
-            constructor(container: Element);
-    
-            /**
-             * Dom structure when the workspace is being dragged. If there is no drag in
-             * progress, the SVG is empty and display: none.
-             * <svg class="blocklyWsDragSurface" style=transform:translate3d(...)>
-             *   <g class="blocklyBlockCanvas"></g>
-             *   <g class="blocklyBubbleCanvas">/g>
-             * </svg>
-             */
-            SVG_: any /*missing*/;
-    
-            /**
-             * SVG group inside the drag surface that holds blocks while a drag is in
-             * progress. Blocks are moved here by the workspace at start of a drag and moved
-             * back into the main SVG at the end of a drag.
-             *
-             * @type {Element}
-             * @private
-             */
-            dragGroup_: Element;
-    
-            /**
-             * Containing HTML element; parent of the workspace and the drag surface.
-             * @type {Element}
-             * @private
-             */
-            container_: Element;
-    
-            /**
-             * Create the drag surface and inject it into the container.
-             */
-            createDom(): void;
-    
-            /**
-             * Translate the entire drag surface during a drag.
-             * We translate the drag surface instead of the blocks inside the surface
-             * so that the browser avoids repainting the SVG.
-             * Because of this, the drag coordinates must be adjusted by scale.
-             * @param {number} x X translation for the entire surface
-             * @param {number} y Y translation for the entire surface
-             * @package
-             */
-            translateSurface(x: number, y: number): void;
-    
-            /**
-             * Reports the surface translation in scaled workspace coordinates.
-             * Use this when finishing a drag to return blocks to the correct position.
-             * @return {!goog.math.Coordinate} Current translation of the surface
-             * @package
-             */
-            getSurfaceTranslation(): goog.math.Coordinate;
-    
-            /**
-             * Move the blockCanvas and bubbleCanvas out of the surface SVG and on to
-             * newSurface.
-             * @param {SVGElement} newSurface The element to put the drag surface contents
-             *     into.
-             * @package
-             */
-            clearAndHide(newSurface: SVGElement): void;
-    
-            /**
-             * Set the SVG to have the block canvas and bubble canvas in it and then
-             * show the surface.
-             * @param {!Element} blockCanvas The block canvas <g> element from the workspace.
-             * @param {!Element} bubbleCanvas The <g> element that contains the bubbles.
-             * @param {?Element} previousSibling The element to insert the block canvas &
-                   bubble canvas after when it goes back in the DOM at the end of a drag.
-             * @param {number} width The width of the workspace SVG element.
-             * @param {number} height The height of the workspace SVG element.
-             * @param {number} scale The scale of the workspace being dragged.
-             * @package
-             */
-            setContentsAndShow(blockCanvas: Element, bubbleCanvas: Element, previousSibling: Element, width: number, height: number, scale: number): void;
-    } 
-    
-}
-
-declare module Blockly {
-
-    class WorkspaceDragger extends WorkspaceDragger__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class WorkspaceDragger__Class  { 
-    
-            /**
-             * Class for a workspace dragger.  It moves the workspace around when it is
-             * being dragged by a mouse or touch.
-             * Note that the workspace itself manages whether or not it has a drag surface
-             * and how to do translations based on that.  This simply passes the right
-             * commands based on events.
-             * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag.
-             * @constructor
-             */
-            constructor(workspace: Blockly.WorkspaceSvg);
-    
-            /**
-             * @type {!Blockly.WorkspaceSvg}
-             * @private
-             */
-            workspace_: Blockly.WorkspaceSvg;
-    
-            /**
-             * The workspace's metrics object at the beginning of the drag.  Contains size
-             * and position metrics of a workspace.
-             * Coordinate system: pixel coordinates.
-             * @type {!Object}
-             * @private
-             */
-            startDragMetrics_: Object;
-    
-            /**
-             * The scroll position of the workspace at the beginning of the drag.
-             * Coordinate system: pixel coordinates.
-             * @type {!goog.math.Coordinate}
-             * @private
-             */
-            startScrollXY_: goog.math.Coordinate;
-    
-            /**
-             * Sever all links from this object.
-             * @package
-             */
-            dispose(): void;
-    
-            /**
-             * Start dragging the workspace.
-             * @package
-             */
-            startDrag(): void;
-    
-            /**
-             * Finish dragging the workspace and put everything back where it belongs.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-             *     moved from the position at the start of the drag, in pixel coordinates.
-             * @package
-             */
-            endDrag(currentDragDeltaXY: goog.math.Coordinate): void;
-    
-            /**
-             * Move the workspace based on the most recent mouse movements.
-             * @param {!goog.math.Coordinate} currentDragDeltaXY How far the pointer has
-             *     moved from the position at the start of the drag, in pixel coordinates.
-             * @package
-             */
-            drag(currentDragDeltaXY: goog.math.Coordinate): void;
-    
-            /**
-             * Move the scrollbars to drag the workspace.
-             * x and y are in pixels.
-             * @param {number} x The new x position to move the scrollbar to.
-             * @param {number} y The new y position to move the scrollbar to.
-             * @private
-             */
-            updateScroll_(x: number, y: number): void;
-    } 
-    
-}
-
-declare module Blockly {
-
-    class WorkspaceSvg extends WorkspaceSvg__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class WorkspaceSvg__Class extends Blockly.Workspace__Class  { 
-    
-            /**
-             * Class for a workspace.  This is an onscreen area with optional trashcan,
-             * scrollbars, bubbles, and dragging.
-             * @param {!Blockly.Options} options Dictionary of options.
-             * @param {Blockly.BlockDragSurfaceSvg=} opt_blockDragSurface Drag surface for
-             *     blocks.
-             * @param {Blockly.WorkspaceDragSurfaceSvg=} opt_wsDragSurface Drag surface for
-             *     the workspace.
-             * @extends {Blockly.Workspace}
-             * @constructor
-             */
-            constructor(options: Blockly.Options, opt_blockDragSurface?: Blockly.BlockDragSurfaceSvg, opt_wsDragSurface?: Blockly.WorkspaceDragSurfaceSvg);
-    
-            /**
-             * List of currently highlighted blocks.  Block highlighting is often used to
-             * visually mark blocks currently being executed.
-             * @type !Array.<!Blockly.BlockSvg>
-             * @private
-             */
-            highlightedBlocks_: any /*missing*/;
-    
-            /**
-             * Object in charge of loading, storing, and playing audio for a workspace.
-             * @type {Blockly.WorkspaceAudio}
-             * @private
-             */
-            audioManager_: Blockly.WorkspaceAudio;
-    
-            /**
-             * This workspace's grid object or null.
-             * @type {Blockly.Grid}
-             * @private
-             */
-            grid_: Blockly.Grid;
-    
-            /**
-             * A wrapper function called when a resize event occurs.
-             * You can pass the result to `unbindEvent_`.
-             * @type {Array.<!Array>}
-             */
-            resizeHandlerWrapper_: any[][];
-    
-            /**
-             * The render status of an SVG workspace.
-             * Returns `true` for visible workspaces and `false` for non-visible,
-             * or headless, workspaces.
-             * @type {boolean}
-             */
-            rendered: boolean;
-    
-            /**
-             * Is this workspace the surface for a flyout?
-             * @type {boolean}
-             */
-            isFlyout: boolean;
-    
-            /**
-             * Is this workspace the surface for a mutator?
-             * @type {boolean}
-             * @package
-             */
-            isMutator: boolean;
-    
-            /**
-             * Whether this workspace has resizes enabled.
-             * Disable during batch operations for a performance improvement.
-             * @type {boolean}
-             * @private
-             */
-            resizesEnabled_: boolean;
-    
-            /**
-             * Current horizontal scrolling offset in pixel units.
-             * @type {number}
-             */
-            scrollX: number;
-    
-            /**
-             * Current vertical scrolling offset in pixel units.
-             * @type {number}
-             */
-            scrollY: number;
-    
-            /**
-             * Horizontal scroll value when scrolling started in pixel units.
-             * @type {number}
-             */
-            startScrollX: number;
-    
-            /**
-             * Vertical scroll value when scrolling started in pixel units.
-             * @type {number}
-             */
-            startScrollY: number;
-    
-            /**
-             * Distance from mouse to object being dragged.
-             * @type {goog.math.Coordinate}
-             * @private
-             */
-            dragDeltaXY_: goog.math.Coordinate;
-    
-            /**
-             * Current scale.
-             * @type {number}
-             */
-            scale: number;
-    
-            /** @type {Blockly.Trashcan} */
-            trashcan: Blockly.Trashcan;
-    
-            /**
-             * This workspace's scrollbars, if they exist.
-             * @type {Blockly.ScrollbarPair}
-             */
-            scrollbar: Blockly.ScrollbarPair;
-    
-            /**
-             * The current gesture in progress on this workspace, if any.
-             * @type {Blockly.TouchGesture}
-             * @private
-             */
-            currentGesture_: Blockly.TouchGesture;
-    
-            /**
-             * This workspace's surface for dragging blocks, if it exists.
-             * @type {Blockly.BlockDragSurfaceSvg}
-             * @private
-             */
-            blockDragSurface_: Blockly.BlockDragSurfaceSvg;
-    
-            /**
-             * This workspace's drag surface, if it exists.
-             * @type {Blockly.WorkspaceDragSurfaceSvg}
-             * @private
-             */
-            workspaceDragSurface_: Blockly.WorkspaceDragSurfaceSvg;
-    
-            /**
-              * Whether to move workspace to the drag surface when it is dragged.
-              * True if it should move, false if it should be translated directly.
-              * @type {boolean}
-              * @private
-              */
-            useWorkspaceDragSurface_: boolean;
-    
-            /**
-             * Whether the drag surface is actively in use. When true, calls to
-             * translate will translate the drag surface instead of the translating the
-             * workspace directly.
-             * This is set to true in setupDragSurface and to false in resetDragSurface.
-             * @type {boolean}
-             * @private
-             */
-            isDragSurfaceActive_: boolean;
-    
-            /**
-             * The first parent div with 'injectionDiv' in the name, or null if not set.
-             * Access this with getInjectionDiv.
-             * @type {!Element}
-             * @private
-             */
-            injectionDiv_: Element;
-    
-            /**
-             * Last known position of the page scroll.
-             * This is used to determine whether we have recalculated screen coordinate
-             * stuff since the page scrolled.
-             * @type {!goog.math.Coordinate}
-             * @private
-             */
-            lastRecordedPageScroll_: goog.math.Coordinate;
-    
-            /**
-             * Map from function names to callbacks, for deciding what to do when a button
-             * is clicked.
-             * @type {!Object.<string, function(!Blockly.FlyoutButton)>}
-             * @private
-             */
-            flyoutButtonCallbacks_: { [key: string]: { (_0: Blockly.FlyoutButton): any /*missing*/ } };
-    
-            /**
-             * Map from function names to callbacks, for deciding what to do when a custom
-             * toolbox category is opened.
-             * @type {!Object.<string, function(!Blockly.Workspace):!Array.<!Element>>}
-             * @private
-             */
-            toolboxCategoryCallbacks_: { [key: string]: { (_0: Blockly.Workspace): Element[] } };
-    
-            /**
-             * Developers may define this function to add custom menu options to the
-             * workspace's context menu or edit the workspace-created set of menu options.
-             * @param {!Array.<!Object>} options List of menu options to add to.
-             */
-            configureContextMenu(options: Object[]): void;
-    
-            /**
-             * In a flyout, the target workspace where blocks should be placed after a drag.
-             * Otherwise null.
-             * @type {?Blockly.WorkspaceSvg}
-             * @package
-             */
-            targetWorkspace: Blockly.WorkspaceSvg;
-    
-            /**
-             * Inverted screen CTM, for use in mouseToSvg.
-             * @type {SVGMatrix}
-             * @private
-             */
-            inverseScreenCTM_: SVGMatrix;
-    
-            /**
-             * Inverted screen CTM is dirty.
-             * @type {Boolean}
-             * @private
-             */
-            inverseScreenCTMDirty_: Boolean;
-    
-            /**
-             * Getter for the inverted screen CTM.
-             * @return {SVGMatrix} The matrix to use in mouseToSvg
-             */
-            getInverseScreenCTM(): SVGMatrix;
-    
-            /**
-             * Mark the inverse screen CTM as dirty.
-             */
-            updateInverseScreenCTM(): void;
-    
-            /**
-             * Return the absolute coordinates of the top-left corner of this element,
-             * scales that after canvas SVG element, if it's a descendant.
-             * The origin (0,0) is the top-left corner of the Blockly SVG.
-             * @param {!Element} element Element to find the coordinates of.
-             * @return {!goog.math.Coordinate} Object with .x and .y properties.
-             * @private
-             */
-            getSvgXY(element: Element): goog.math.Coordinate;
-    
-            /**
-             * Return the position of the workspace origin relative to the injection div
-             * origin in pixels.
-             * The workspace origin is where a block would render at position (0, 0).
-             * It is not the upper left corner of the workspace SVG.
-             * @return {!goog.math.Coordinate} Offset in pixels.
-             * @package
-             */
-            getOriginOffsetInPixels(): goog.math.Coordinate;
-    
-            /**
-             * Return the injection div that is a parent of this workspace.
-             * Walks the DOM the first time it's called, then returns a cached value.
-             * @return {!Element} The first parent div with 'injectionDiv' in the name.
-             * @package
-             */
-            getInjectionDiv(): Element;
-    
-            /**
-             * Save resize handler data so we can delete it later in dispose.
-             * @param {!Array.<!Array>} handler Data that can be passed to unbindEvent_.
-             */
-            setResizeHandlerWrapper(handler: any[][]): void;
-    
-            /**
-             * Create the workspace DOM elements.
-             * @param {string=} opt_backgroundClass Either 'blocklyMainBackground' or
-             *     'blocklyMutatorBackground'.
-             * @return {!Element} The workspace's SVG group.
-             */
-            createDom(opt_backgroundClass?: string): Element;
-    
-            /**
-             * <g class="blocklyWorkspace">
-             *   <rect class="blocklyMainBackground" height="100%" width="100%"></rect>
-             *   [Trashcan and/or flyout may go here]
-             *   <g class="blocklyBlockCanvas"></g>
-             *   <g class="blocklyBubbleCanvas"></g>
-             * </g>
-             * @type {SVGElement}
-             */
-            svgGroup_: SVGElement;
-    
-            /** @type {SVGElement} */
-            svgBackground_: SVGElement;
-    
-            /** @type {SVGElement} */
-            svgBlockCanvas_: SVGElement;
-    
-            /** @type {SVGElement} */
-            svgBubbleCanvas_: SVGElement;
-    
-            /**
-             * @type {Blockly.Toolbox}
-             * @private
-             */
-            toolbox_: Blockly.Toolbox;
-    
-            /**
-             * Dispose of this workspace.
-             * Unlink from all DOM elements to prevent memory leaks.
-             */
-            dispose(): void;
-    
-            /**
-             * Obtain a newly created block.
-             * @param {?string} prototypeName Name of the language object containing
-             *     type-specific functions for this block.
-             * @param {string=} opt_id Optional ID.  Use this ID if provided, otherwise
-             *     create a new ID.
-             * @return {!Blockly.BlockSvg} The created block.
-             */
-            newBlock(prototypeName: string, opt_id?: string): Blockly.BlockSvg;
-    
-            /**
-             * Add a trashcan.
-             * @param {number} bottom Distance from workspace bottom to bottom of trashcan.
-             * @return {number} Distance from workspace bottom to the top of trashcan.
-             * @private
-             */
-            addTrashcan_(bottom: number): number;
-    
-            /**
-             * Add zoom controls.
-             * @param {number} bottom Distance from workspace bottom to bottom of controls.
-             * @return {number} Distance from workspace bottom to the top of controls.
-             * @private
-             */
-            addZoomControls_(bottom: number): number;
-    
-            /** @type {Blockly.ZoomControls} */
-            zoomControls_: Blockly.ZoomControls;
-    
-            /**
-             * Add a flyout element in an element with the given tag name.
-             * @param {string} tagName What type of tag the flyout belongs in.
-             * @return {!Element} The element containing the flyout DOM.
-             * @private
-             */
-            addFlyout_(tagName: string): Element;
-    
-            /**
-             * Getter for the flyout associated with this workspace.  This flyout may be
-             * owned by either the toolbox or the workspace, depending on toolbox
-             * configuration.  It will be null if there is no flyout.
-             * @return {Blockly.Flyout} The flyout on this workspace.
-             * @package
-             */
-            getFlyout(): Blockly.Flyout;
-    
-            /**
-             * Getter for the toolbox associated with this workspace, if one exists.
-             * @return {Blockly.Toolbox} The toolbox on this workspace.
-             * @package
-             */
-            getToolbox(): Blockly.Toolbox;
-    
-            /**
-             * Update items that use screen coordinate calculations
-             * because something has changed (e.g. scroll position, window size).
-             * @private
-             */
-            updateScreenCalculations_(): void;
-    
-            /**
-             * If enabled, resize the parts of the workspace that change when the workspace
-             * contents (e.g. block positions) change.  This will also scroll the
-             * workspace contents if needed.
-             * @package
-             */
-            resizeContents(): void;
-    
-            /**
-             * Resize and reposition all of the workspace chrome (toolbox,
-             * trash, scrollbars etc.)
-             * This should be called when something changes that
-             * requires recalculating dimensions and positions of the
-             * trash, zoom, toolbox, etc. (e.g. window resize).
-             */
-            resize(): void;
-    
-            /**
-             * Resizes and repositions workspace chrome if the page has a new
-             * scroll position.
-             * @package
-             */
-            updateScreenCalculationsIfScrolled(): void;
-    
-            /**
-             * Get the SVG element that forms the drawing surface.
-             * @return {!Element} SVG element.
-             */
-            getCanvas(): Element;
-    
-            /**
-             * Get the SVG element that forms the bubble surface.
-             * @return {!SVGGElement} SVG element.
-             */
-            getBubbleCanvas(): SVGGElement;
-    
-            /**
-             * Get the SVG element that contains this workspace.
-             * @return {SVGElement} SVG element.
-             */
-            getParentSvg(): SVGElement;
-    
-            /**
-             * Translate this workspace to new coordinates.
-             * @param {number} x Horizontal translation.
-             * @param {number} y Vertical translation.
-             */
-            translate(x: number, y: number): void;
-    
-            /**
-             * Called at the end of a workspace drag to take the contents
-             * out of the drag surface and put them back into the workspace SVG.
-             * Does nothing if the workspace drag surface is not enabled.
-             * @package
-             */
-            resetDragSurface(): void;
-    
-            /**
-             * Called at the beginning of a workspace drag to move contents of
-             * the workspace to the drag surface.
-             * Does nothing if the drag surface is not enabled.
-             * @package
-             */
-            setupDragSurface(): void;
-    
-            /**
-             * @return {?Blockly.BlockDragSurfaceSvg} This workspace's block drag surface,
-             *     if one is in use.
-             * @package
-             */
-            getBlockDragSurface(): Blockly.BlockDragSurfaceSvg;
-    
-            /**
-             * Returns the horizontal offset of the workspace.
-             * Intended for LTR/RTL compatibility in XML.
-             * @return {number} Width.
-             */
-            getWidth(): number;
-    
-            /**
-             * Toggles the visibility of the workspace.
-             * Currently only intended for main workspace.
-             * @param {boolean} isVisible True if workspace should be visible.
-             */
-            setVisible(isVisible: boolean): void;
-    
-            /**
-             * Render all blocks in workspace.
-             */
-            render(): void;
-    
-            /**
-             * Was used back when block highlighting (for execution) and block selection
-             * (for editing) were the same thing.
-             * Any calls of this function can be deleted.
-             * @deprecated October 2016
-             */
-            traceOn(): void;
-    
-            /**
-             * Highlight or unhighlight a block in the workspace.  Block highlighting is
-             * often used to visually mark blocks currently being executed.
-             * @param {?string} id ID of block to highlight/unhighlight,
-             *   or null for no block (used to unhighlight all blocks).
-             * @param {boolean=} opt_state If undefined, highlight specified block and
-             * automatically unhighlight all others.  If true or false, manually
-             * highlight/unhighlight the specified block.
-             */
-            highlightBlock(id: string, opt_state?: boolean): void;
-    
-            /**
-             * Glow/unglow a block in the workspace.
-             * @param {?string} id ID of block to find.
-             * @param {boolean} isGlowingBlock Whether to glow the block.
-             */
-            glowBlock(id: string, isGlowingBlock: boolean): void;
-    
-            /**
-             * Glow/unglow a stack in the workspace.
-             * @param {?string} id ID of block which starts the stack.
-             * @param {boolean} isGlowingStack Whether to glow the stack.
-             */
-            glowStack(id: string, isGlowingStack: boolean): void;
-    
-            /**
-             * Paste the provided block onto the workspace.
-             * @param {!Element} xmlBlock XML block element.
-             */
-            paste(xmlBlock: Element): void;
-    
-            /**
-             * Paste the provided block onto the workspace.
-             * @param {!Element} xmlBlock XML block element.
-             */
-            pasteBlock_(xmlBlock: Element): void;
-    
-            /**
-             * Paste the provided comment onto the workspace.
-             * @param {!Element} xmlComment XML workspace comment element.
-             */
-            pasteWorkspaceComment_(xmlComment: Element): void;
-    
-            /**
-             * Refresh the toolbox unless there's a drag in progress.
-             * @package
-             */
-            refreshToolboxSelection(): void;
-    
-            /**
-             * Rename a variable by updating its name in the variable map.  Update the
-             *     flyout to show the renamed variable immediately.
-             * @param {string} id ID of the variable to rename.
-             * @param {string} newName New variable name.
-             * @package
-             */
-            renameVariableById(id: string, newName: string): void;
-    
-            /**
-             * Delete a variable by the passed in ID.   Update the flyout to show
-             *     immediately that the variable is deleted.
-             * @param {string} id ID of variable to delete.
-             * @package
-             */
-            deleteVariableById(id: string): void;
-    
-            /**
-             * Create a new variable with the given name.  Update the flyout to show the new
-             *     variable immediately.
-             * @param {string} name The new variable's name.
-             * @param {string=} opt_type The type of the variable like 'int' or 'string'.
-             *     Does not need to be unique. Field_variable can filter variables based on
-             *     their type. This will default to '' which is a specific type.
-             * @param {string=} opt_id The unique ID of the variable. This will default to
-             *     a UUID.
-             * @return {?Blockly.VariableModel} The newly created variable.
-             * @package
-             */
-            createVariable(name: string, opt_type?: string, opt_id?: string): Blockly.VariableModel;
-    
-            /**
-             * Make a list of all the delete areas for this workspace.
-             */
-            recordDeleteAreas(): void;
-    
-            /**
-             * Is the mouse event over a delete area (toolbox or non-closing flyout)?
-             * @param {!Event} e Mouse move event.
-             * @return {?number} Null if not over a delete area, or an enum representing
-             *     which delete area the event is over.
-             */
-            isDeleteArea(e: Event): number;
-    
-            /**
-             * Handle a mouse-down on SVG drawing surface.
-             * @param {!Event} e Mouse down event.
-             * @private
-             */
-            onMouseDown_(e: Event): void;
-    
-            /**
-             * Start tracking a drag of an object on this workspace.
-             * @param {!Event} e Mouse down event.
-             * @param {!goog.math.Coordinate} xy Starting location of object.
-             */
-            startDrag(e: Event, xy: goog.math.Coordinate): void;
-    
-            /**
-             * Track a drag of an object on this workspace.
-             * @param {!Event} e Mouse move event.
-             * @return {!goog.math.Coordinate} New location of object.
-             */
-            moveDrag(e: Event): goog.math.Coordinate;
-    
-            /**
-             * Is the user currently dragging a block or scrolling the flyout/workspace?
-             * @return {boolean} True if currently dragging or scrolling.
-             */
-            isDragging(): boolean;
-    
-            /**
-             * Is this workspace draggable and scrollable?
-             * @return {boolean} True if this workspace may be dragged.
-             */
-            isDraggable(): boolean;
-    
-            /**
-             * Handle a mouse-wheel on SVG drawing surface.
-             * @param {!Event} e Mouse wheel event.
-             * @private
-             */
-            onMouseWheel_(e: Event): void;
-    
-            /**
-             * Calculate the bounding box for the blocks on the workspace.
-             * Coordinate system: workspace coordinates.
-             *
-             * @return {Object} Contains the position and size of the bounding box
-             *   containing the blocks on the workspace.
-             */
-            getBlocksBoundingBox(): Object;
-    
-            /**
-             * Clean up the workspace by ordering all the blocks in a column.
-             */
-            cleanUp(): void;
-    
-            /**
-             * Show the context menu for the workspace.
-             * @param {!Event} e Mouse event.
-             * @private
-             */
-            showContextMenu_(e: Event): void;
-    
-            /**
-             * Modify the block tree on the existing toolbox.
-             * @param {Node|string} tree DOM tree of blocks, or text representation of same.
-             */
-            updateToolbox(tree: Node|string): void;
-    
-            /**
-             * Mark this workspace as the currently focused main workspace.
-             */
-            markFocused(): void;
-    
-            /**
-             * Set the workspace to have focus in the browser.
-             * @private
-             */
-            setBrowserFocus(): void;
-    
-            /**
-             * Zooming the blocks centered in (x, y) coordinate with zooming in or out.
-             * @param {number} x X coordinate of center.
-             * @param {number} y Y coordinate of center.
-             * @param {number} amount Amount of zooming
-             *                        (negative zooms out and positive zooms in).
-             */
-            zoom(x: number, y: number, amount: number): void;
-    
-            /**
-             * Zooming the blocks centered in the center of view with zooming in or out.
-             * @param {number} type Type of zooming (-1 zooming out and 1 zooming in).
-             */
-            zoomCenter(type: number): void;
-    
-            /**
-             * Zoom the blocks to fit in the workspace if possible.
-             */
-            zoomToFit(): void;
-    
-            /**
-             * Center the workspace.
-             */
-            scrollCenter(): void;
-    
-            /**
-             * Scroll the workspace to center on the given block.
-             * @param {?string} id ID of block center on.
-             * @param {boolean=} animate If true, transition to the block.
-             * @public
-             */
-            centerOnBlock(id: string, animate?: boolean): void;
-    
-            /**
-             * Set the workspace's zoom factor.
-             * @param {number} newScale Zoom factor.
-             */
-            setScale(newScale: number): void;
-    
-            /**
-             * Scroll the workspace by a specified amount, keeping in the bounds.
-             * Be sure to set this.startDragMetrics with cached metrics before calling.
-             * @param {number} x Target X to scroll to
-             * @param {number} y Target Y to scroll to
-             */
-            scroll(x: number, y: number): void;
-    
-            /**
-             * Update the workspace's stack glow radius to be proportional to scale.
-             * Ensures that stack glows always appear to be a fixed size.
-             */
-            updateStackGlowScale_(): void;
-    
-            /**
-             * Update whether this workspace has resizes enabled.
-             * If enabled, workspace will resize when appropriate.
-             * If disabled, workspace will not resize until re-enabled.
-             * Use to avoid resizing during a batch operation, for performance.
-             * @param {boolean} enabled Whether resizes should be enabled.
-             */
-            setResizesEnabled(enabled: boolean): void;
-    
-            /**
-             * Dispose of all blocks in workspace, with an optimization to prevent resizes.
-             */
-            clear(): void;
-    
-            /**
-             * Register a callback function associated with a given key, for clicks on
-             * buttons and labels in the flyout.
-             * For instance, a button specified by the XML
-             * <button text="create variable" callbackkey="CREATE_VARIABLE"></button>
-             * should be matched by a call to
-             * registerButtonCallback("CREATE_VARIABLE", yourCallbackFunction).
-             * @param {string} key The name to use to look up this function.
-             * @param {function(!Blockly.FlyoutButton)} func The function to call when the
-             *     given button is clicked.
-             */
-            registerButtonCallback(key: string, func: { (_0: Blockly.FlyoutButton): any /*missing*/ }): void;
-    
-            /**
-             * Get the callback function associated with a given key, for clicks on buttons
-             * and labels in the flyout.
-             * @param {string} key The name to use to look up the function.
-             * @return {?function(!Blockly.FlyoutButton)} The function corresponding to the
-             *     given key for this workspace; null if no callback is registered.
-             */
-            getButtonCallback(key: string): { (_0: Blockly.FlyoutButton): any /*missing*/ };
-    
-            /**
-             * Remove a callback for a click on a button in the flyout.
-             * @param {string} key The name associated with the callback function.
-             */
-            removeButtonCallback(key: string): void;
-    
-            /**
-             * Register a callback function associated with a given key, for populating
-             * custom toolbox categories in this workspace.  See the variable and procedure
-             * categories as an example.
-             * @param {string} key The name to use to look up this function.
-             * @param {function(!Blockly.Workspace):!Array.<!Element>} func The function to
-             *     call when the given toolbox category is opened.
-             */
-            registerToolboxCategoryCallback(key: string, func: { (_0: Blockly.Workspace): Element[] }): void;
-    
-            /**
-             * Get the callback function associated with a given key, for populating
-             * custom toolbox categories in this workspace.
-             * @param {string} key The name to use to look up the function.
-             * @return {?function(!Blockly.Workspace):!Array.<!Element>} The function
-             *     corresponding to the given key for this workspace, or null if no function
-             *     is registered.
-             */
-            getToolboxCategoryCallback(key: string): { (_0: Blockly.Workspace): Element[] };
-    
-            /**
-             * Remove a callback for a click on a custom category's name in the toolbox.
-             * @param {string} key The name associated with the callback function.
-             */
-            removeToolboxCategoryCallback(key: string): void;
-    
-            /**
-             * Look up the gesture that is tracking this touch stream on this workspace.
-             * May create a new gesture.
-             * @param {!Event} e Mouse event or touch event.
-             * @return {Blockly.Gesture} The gesture that is tracking this touch
-             *     stream, or null if no valid gesture exists.
-             * @package
-             */
-            getGesture(e: Event): Blockly.Gesture;
-    
-            /**
-             * Clear the reference to the current gesture.
-             * @package
-             */
-            clearGesture(): void;
-    
-            /**
-             * Cancel the current gesture, if one exists.
-             * @package
-             */
-            cancelCurrentGesture(): void;
-    
-            /**
-             * Don't even think about using this function before talking to rachel-fenichel.
-             *
-             * Force a drag to start without clicking and dragging the block itself.  Used
-             * to attach duplicated blocks to the mouse pointer.
-             * @param {!Object} fakeEvent An object with the properties needed to start a
-             *     drag, including clientX and clientY.
-             * @param {!Blockly.BlockSvg} block The block to start dragging.
-             * @package
-             */
-            startDragWithFakeEvent(fakeEvent: Object, block: Blockly.BlockSvg): void;
-    
-            /**
-             * Get the audio manager for this workspace.
-             * @return {Blockly.WorkspaceAudio} The audio manager for this workspace.
-             */
-            getAudioManager(): Blockly.WorkspaceAudio;
-    
-            /**
-             * Get the grid object for this workspace, or null if there is none.
-             * @return {Blockly.Grid} The grid object for this workspace.
-             * @package
-             */
-            getGrid(): Blockly.Grid;
-    
-            /**
-             * Return an object with the metrics required to size the workspace.
-             * @return {Blockly.Metrics} Contains size and position metrics, or null.
-             */
-            getMetrics(): Blockly.Metrics;
-    } 
-    
-}
-
-declare module Blockly.WorkspaceSvg {
-
-    /**
-     * Build a list of all deletable blocks that are reachable from the given
-     * list of top blocks.
-     * @param {!Array.<!Blockly.BlockSvg>} topBlocks The list of top blocks on the
-     *     workspace.
-     * @return {!Array.<!Blockly.BlockSvg>} A list of deletable blocks on the
-     *     workspace.
-     * @private
-     */
-    function buildDeleteList_(topBlocks: Blockly.BlockSvg[]): Blockly.BlockSvg[];
-
-    /**
-     * Get the dimensions of the given workspace component, in pixels.
-     * @param {Blockly.Toolbox|Blockly.Flyout} elem The element to get the
-     *     dimensions of, or null.  It should be a toolbox or flyout, and should
-     *     implement getWidth() and getHeight().
-     * @return {!Object} An object containing width and height attributes, which
-     *     will both be zero if elem did not exist.
-     * @private
-     */
-    function getDimensionsPx_(elem: Blockly.Toolbox|Blockly.Flyout): Object;
-
-    /**
-     * Get the content dimensions of the given workspace, taking into account
-     * whether or not it is scrollable and what size the workspace div is on screen.
-     * @param {!Blockly.WorkspaceSvg} ws The workspace to measure.
-     * @param {!Object} svgSize An object containing height and width attributes in
-     *     CSS pixels.  Together they specify the size of the visible workspace, not
-     *     including areas covered up by the toolbox.
-     * @return {!Object} The dimensions of the contents of the given workspace, as
-     *     an object containing at least
-     *     - height and width in pixels
-     *     - left and top in pixels relative to the workspace origin.
-     * @private
-     */
-    function getContentDimensions_(ws: Blockly.WorkspaceSvg, svgSize: Object): Object;
-
-    /**
-     * Get the bounding box for all workspace contents, in pixels.
-     * @param {!Blockly.WorkspaceSvg} ws The workspace to inspect.
-     * @return {!Object} The dimensions of the contents of the given workspace, as
-     *     an object containing
-     *     - height and width in pixels
-     *     - left, right, top and bottom in pixels relative to the workspace origin.
-     * @private
-     */
-    function getContentDimensionsExact_(ws: Blockly.WorkspaceSvg): Object;
-
-    /**
-     * Calculate the size of a scrollable workspace, which should include room for a
-     * half screen border around the workspace contents.
-     * @param {!Blockly.WorkspaceSvg} ws The workspace to measure.
-     * @param {!Object} svgSize An object containing height and width attributes in
-     *     CSS pixels.  Together they specify the size of the visible workspace, not
-     *     including areas covered up by the toolbox.
-     * @return {!Object} The dimensions of the contents of the given workspace, as
-     *     an object containing
-     *     - height and width in pixels
-     *     - left and top in pixels relative to the workspace origin.
-     * @private
-     */
-    function getContentDimensionsBounded_(ws: Blockly.WorkspaceSvg, svgSize: Object): Object;
-
-    /**
-     * Return an object with all the metrics required to size scrollbars for a
-     * top level workspace.  The following properties are computed:
-     * Coordinate system: pixel coordinates.
-     * .viewHeight: Height of the visible rectangle,
-     * .viewWidth: Width of the visible rectangle,
-     * .contentHeight: Height of the contents,
-     * .contentWidth: Width of the content,
-     * .viewTop: Offset of top edge of visible rectangle from parent,
-     * .viewLeft: Offset of left edge of visible rectangle from parent,
-     * .contentTop: Offset of the top-most content from the y=0 coordinate,
-     * .contentLeft: Offset of the left-most content from the x=0 coordinate.
-     * .absoluteTop: Top-edge of view.
-     * .absoluteLeft: Left-edge of view.
-     * .toolboxWidth: Width of toolbox, if it exists.  Otherwise zero.
-     * .toolboxHeight: Height of toolbox, if it exists.  Otherwise zero.
-     * .flyoutWidth: Width of the flyout if it is always open.  Otherwise zero.
-     * .flyoutHeight: Height of flyout if it is always open.  Otherwise zero.
-     * .toolboxPosition: Top, bottom, left or right.
-     * @return {!Object} Contains size and position metrics of a top level
-     *   workspace.
-     * @private
-     * @this Blockly.WorkspaceSvg
-     */
-    function getTopLevelWorkspaceMetrics_(): Object;
-
-    /**
-     * Sets the X/Y translations of a top level workspace to match the scrollbars.
-     * @param {!Object} xyRatio Contains an x and/or y property which is a float
-     *     between 0 and 1 specifying the degree of scrolling.
-     * @private
-     * @this Blockly.WorkspaceSvg
-     */
-    function setTopLevelWorkspaceMetrics_(xyRatio: Object): void;
-}
-
-declare module Blockly.Xml {
-
-    /**
-     * Encode a block tree as XML.
-     * @param {!Blockly.Workspace} workspace The workspace containing blocks.
-     * @param {boolean=} opt_noId True if the encoder should skip the block IDs.
-     * @return {!Element} XML document.
-     */
-    function workspaceToDom(workspace: Blockly.Workspace, opt_noId?: boolean): Element;
-
-    /**
-     * Encode a list of variables as XML.
-     * @param {!Array.<!Blockly.VariableModel>} variableList List of all variable
-     *     models.
-     * @return {!Element} List of XML elements.
-     */
-    function variablesToDom(variableList: Blockly.VariableModel[]): Element;
-
-    /**
-     * Encode a block subtree as XML with XY coordinates.
-     * @param {!Blockly.Block} block The root block to encode.
-     * @param {boolean=} opt_noId True if the encoder should skip the block ID.
-     * @return {!Element} Tree of XML elements.
-     */
-    function blockToDomWithXY(block: Blockly.Block, opt_noId?: boolean): Element;
-
-    /**
-     * Encode a variable field as XML.
-     * @param {!Blockly.FieldVariable} field The field to encode.
-     * @return {?Element} XML element, or null if the field did not need to be
-     *     serialized.
-     * @private
-     */
-    function fieldToDomVariable_(field: Blockly.FieldVariable): Element;
-
-    /**
-     * Encode a field as XML.
-     * @param {!Blockly.Field} field The field to encode.
-     * @param {!Blockly.Workspace} workspace The workspace that the field is in.
-     * @return {?Element} XML element, or null if the field did not need to be
-     *     serialized.
-     * @private
-     */
-    function fieldToDom_(field: Blockly.Field): Element;
-
-    /**
-     * Encode all of a block's fields as XML and attach them to the given tree of
-     * XML elements.
-     * @param {!Blockly.Block} block A block with fields to be encoded.
-     * @param {!Element} element The XML element to which the field DOM should be
-     *     attached.
-     * @private
-     */
-    function allFieldsToDom_(block: Blockly.Block, element: Element): void;
-
-    /**
-     * Encode a block subtree as XML.
-     * @param {!Blockly.Block} block The root block to encode.
-     * @param {boolean=} opt_noId True if the encoder should skip the block ID.
-     * @return {!Element} Tree of XML elements.
-     */
-    function blockToDom(block: Blockly.Block, opt_noId?: boolean): Element;
-
-    /**
-     * Deeply clone the shadow's DOM so that changes don't back-wash to the block.
-     * @param {!Element} shadow A tree of XML elements.
-     * @return {!Element} A tree of XML elements.
-     * @private
-     */
-    function cloneShadow_(shadow: Element): Element;
-
-    /**
-     * Converts a DOM structure into plain text.
-     * Currently the text format is fairly ugly: all one line with no whitespace.
-     * @param {!Element} dom A tree of XML elements.
-     * @return {string} Text representation.
-     */
-    function domToText(dom: Element): string;
-
-    /**
-     * Converts a DOM structure into properly indented text.
-     * @param {!Element} dom A tree of XML elements.
-     * @return {string} Text representation.
-     */
-    function domToPrettyText(dom: Element): string;
-
-    /**
-     * Converts plain text into a DOM structure.
-     * Throws an error if XML doesn't parse.
-     * @param {string} text Text representation.
-     * @return {!Element} A tree of XML elements.
-     */
-    function textToDom(text: string): Element;
-
-    /**
-     * Decode an XML DOM and create blocks on the workspace.
-     * @param {!Element} xml XML DOM.
-     * @param {!Blockly.Workspace} workspace The workspace.
-     * @return {Array.<string>} An array containing new block IDs.
-     */
-    function domToWorkspace(xml: Element, workspace: Blockly.Workspace): string[];
-
-    /**
-     * Decode an XML DOM and create blocks on the workspace. Position the new
-     * blocks immediately below prior blocks, aligned by their starting edge.
-     * @param {!Element} xml The XML DOM.
-     * @param {!Blockly.Workspace} workspace The workspace to add to.
-     * @return {Array.<string>} An array containing new block IDs.
-     */
-    function appendDomToWorkspace(xml: Element, workspace: Blockly.Workspace): string[];
-
-    /**
-     * Decode an XML block tag and create a block (and possibly sub blocks) on the
-     * workspace.
-     * @param {!Element} xmlBlock XML block element.
-     * @param {!Blockly.Workspace} workspace The workspace.
-     * @return {!Blockly.Block} The root block created.
-     */
-    function domToBlock(xmlBlock: Element, workspace: Blockly.Workspace): Blockly.Block;
-
-    /**
-     * Decode an XML list of variables and add the variables to the workspace.
-     * @param {!Element} xmlVariables List of XML variable elements.
-     * @param {!Blockly.Workspace} workspace The workspace to which the variable
-     *     should be added.
-     */
-    function domToVariables(xmlVariables: Element, workspace: Blockly.Workspace): void;
-
-    /**
-     * Decode an XML block tag and create a block (and possibly sub blocks) on the
-     * workspace.
-     * @param {!Element} xmlBlock XML block element.
-     * @param {!Blockly.Workspace} workspace The workspace.
-     * @return {!Blockly.Block} The root block created.
-     * @private
-     */
-    function domToBlockHeadless_(xmlBlock: Element, workspace: Blockly.Workspace): Blockly.Block;
-
-    /**
-     * Decode an XML variable field tag and set the value of that field.
-     * @param {!Blockly.Workspace} workspace The workspace that is currently being
-     *     deserialized.
-     * @param {!Element} xml The field tag to decode.
-     * @param {string} text The text content of the XML tag.
-     * @param {!Blockly.FieldVariable} field The field on which the value will be
-     *     set.
-     * @private
-     */
-    function domToFieldVariable_(workspace: Blockly.Workspace, xml: Element, text: string, field: Blockly.FieldVariable): void;
-
-    /**
-     * Decode an XML field tag and set the value of that field on the given block.
-     * @param {!Blockly.Block} block The block that is currently being deserialized.
-     * @param {string} fieldName The name of the field on the block.
-     * @param {!Element} xml The field tag to decode.
-     * @private
-     */
-    function domToField_(block: Blockly.Block, fieldName: string, xml: Element): void;
-
-    /**
-     * Remove any 'next' block (statements in a stack).
-     * @param {!Element} xmlBlock XML block element.
-     */
-    function deleteNext(xmlBlock: Element): void;
-}
-
-declare module Blockly {
-
-    class ZoomControls extends ZoomControls__Class { }
-    /** Fake class which should be extended to avoid inheriting static properties */
-    class ZoomControls__Class  { 
-    
-            /**
-             * Class for a zoom controls.
-             * @param {!Blockly.Workspace} workspace The workspace to sit in.
-             * @constructor
-             */
-            constructor(workspace: Blockly.Workspace);
-    
-            /**
-             * Width of the zoom controls.
-             * @type {number}
-             * @private
-             */
-            WIDTH_: number;
-    
-            /**
-             * Height of the zoom controls.
-             * @type {number}
-             * @private
-             */
-            HEIGHT_: number;
-    
-            /**
-             * Distance between zoom controls and bottom edge of workspace.
-             * @type {number}
-             * @private
-             */
-            MARGIN_BOTTOM_: number;
-    
-            /**
-             * Distance between zoom controls and right edge of workspace.
-             * @type {number}
-             * @private
-             */
-            MARGIN_SIDE_: number;
-    
-            /**
-             * The SVG group containing the zoom controls.
-             * @type {Element}
-             * @private
-             */
-            svgGroup_: Element;
-    
-            /**
-             * Left coordinate of the zoom controls.
-             * @type {number}
-             * @private
-             */
-            left_: number;
-    
-            /**
-             * Top coordinate of the zoom controls.
-             * @type {number}
-             * @private
-             */
-            top_: number;
-    
-            /**
-             * Create the zoom controls.
-             * @return {!Element} The zoom controls SVG group.
-             */
-            createDom(): Element;
-    
-            /**
-             * Initialize the zoom controls.
-             * @param {number} bottom Distance from workspace bottom to bottom of controls.
-             * @return {number} Distance from workspace bottom to the top of controls.
-             */
-            init(bottom: number): number;
-    
-            /**
-             * Dispose of this zoom controls.
-             * Unlink from all DOM elements to prevent memory leaks.
-             */
-            dispose(): void;
-    
-            /**
-             * Move the zoom controls to the bottom-right corner.
-             */
-            position(): void;
-    } 
-    
+    var COLLAPSED_WARNINGS_WARNING: any /*missing*/;
 }

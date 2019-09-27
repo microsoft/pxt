@@ -1257,23 +1257,25 @@ namespace pxsim {
             }
         }
 
-
         // Wrapper for the setTimeout
         schedule(fn: Function, timeout: number): number {
+            if (timeout <= 0) timeout = 0;
             if (this.pausedOnBreakpoint) {
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(fn, timeout));
                 return -1;
             }
+            const timestamp = U.now();
+            const to = new TimeoutScheduled(-1, fn, timeout, timestamp)
             // We call the timeout function and add its id to the timeouts scheduled.
-            if (timeout <= 0) return -1;
-            let timestamp = U.now();
-            let removeAndExecute = () => {
-                this.timeoutsScheduled.filter(ts => ts.timestampCall !== timestamp);
+            const removeAndExecute = () => {
+                const idx = this.timeoutsScheduled.indexOf(to)
+                if (idx >= 0)
+                    this.timeoutsScheduled.splice(idx, 1)
                 fn();
             }
-            let id = setTimeout(removeAndExecute, timeout);
-            this.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, timestamp));
-            return id;
+            to.id = setTimeout(removeAndExecute, timeout);
+            this.timeoutsScheduled.push(to);
+            return to.id;
         }
 
         // On breakpoint, pause all timeouts

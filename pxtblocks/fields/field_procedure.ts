@@ -32,7 +32,7 @@ namespace pxtblockly {
             return this.getText();
         };
 
-        setValue(newValue: string) {
+        doValueUpdate_(newValue: string) {
             if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                 Blockly.Events.fire(new Blockly.Events.Change(
                     this.sourceBlock_, 'field', this.name, this.value_, newValue));

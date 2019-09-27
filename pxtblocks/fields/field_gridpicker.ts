@@ -34,7 +34,7 @@ namespace pxtblockly {
 
         private tooltipConfig_: FieldGridPickerToolTipConfig;
 
-        private tooltip_: HTMLElement;
+        private gridTooltip_: HTMLElement;
         private firstItem_: HTMLElement;
 
         private hasSearchBar_: boolean;
@@ -85,15 +85,15 @@ namespace pxtblockly {
         }
 
         private createTooltip_() {
-            if (this.tooltip_) return;
+            if (this.gridTooltip_) return;
 
             // Create tooltip
-            this.tooltip_ = document.createElement('div');
-            this.tooltip_.className = 'goog-tooltip blocklyGridPickerTooltip';
-            this.tooltip_.style.position = 'absolute';
-            this.tooltip_.style.display = 'none';
-            this.tooltip_.style.visibility = 'hidden';
-            document.body.appendChild(this.tooltip_);
+            this.gridTooltip_ = document.createElement('div');
+            this.gridTooltip_.className = 'goog-tooltip blocklyGridPickerTooltip';
+            this.gridTooltip_.style.position = 'absolute';
+            this.gridTooltip_.style.display = 'none';
+            this.gridTooltip_.style.visibility = 'hidden';
+            document.body.appendChild(this.gridTooltip_);
         }
 
         /**
@@ -194,15 +194,15 @@ namespace pxtblockly {
 
                     Blockly.bindEvent_(menuItem, 'mousemove', this, (e: MouseEvent) => {
                         if (hasImages) {
-                            this.tooltip_.style.top = `${e.clientY + yOffset}px`;
-                            this.tooltip_.style.left = `${e.clientX + xOffset}px`;
+                            this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
+                            this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
                             // Set tooltip text
                             const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
                             const title = (touchTarget as any).title || (touchTarget as any).alt;
-                            this.tooltip_.textContent = title;
+                            this.gridTooltip_.textContent = title;
                             // Show the tooltip
-                            this.tooltip_.style.visibility = title ? 'visible' : 'hidden';
-                            this.tooltip_.style.display = title ? '' : 'none';
+                            this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
+                            this.gridTooltip_.style.display = title ? '' : 'none';
                         }
 
                         pxt.BrowserUtils.addClass(menuItem, 'goog-menuitem-highlight');
@@ -212,8 +212,8 @@ namespace pxtblockly {
                     Blockly.bindEvent_(menuItem, 'mouseout', this, (e: MouseEvent) => {
                         if (hasImages) {
                             // Hide the tooltip
-                            this.tooltip_.style.visibility = 'hidden';
-                            this.tooltip_.style.display = 'none';
+                            this.gridTooltip_.style.visibility = 'hidden';
+                            this.gridTooltip_.style.display = 'none';
                         }
 
                         pxt.BrowserUtils.removeClass(menuItem, 'goog-menuitem-highlight');
@@ -536,8 +536,8 @@ namespace pxtblockly {
                     this.highlightAndScrollSelected(tableContainer, scrollContainer)
                 }
                 // Hide the tooltip
-                this.tooltip_.style.visibility = 'hidden';
-                this.tooltip_.style.display = 'none';
+                this.gridTooltip_.style.visibility = 'hidden';
+                this.gridTooltip_.style.display = 'none';
             }, 300, false));
 
             // Select the first item if the enter key is pressed
@@ -670,9 +670,9 @@ namespace pxtblockly {
          * @private
          */
         private disposeTooltip() {
-            if (this.tooltip_) {
-                pxsim.U.remove(this.tooltip_);
-                this.tooltip_ = null;
+            if (this.gridTooltip_) {
+                pxsim.U.remove(this.gridTooltip_);
+                this.gridTooltip_ = null;
             }
         }
 
@@ -719,7 +719,7 @@ namespace pxtblockly {
          * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
-        updateWidth() {
+        updateSize_() {
             let width: number;
             if (this.imageJson_) {
                 width = this.imageJson_.width + 5;
@@ -775,11 +775,11 @@ namespace pxtblockly {
             this.imageElement_ = null;
             if (this.imageJson_) {
                 // Image option is selected.
-                this.imageElement_ = Blockly.utils.createSvgElement('image',
+                this.imageElement_ = Blockly.utils.dom.createSvgElement('image',
                     {
                         'y': 5, 'x': 8, 'height': this.imageJson_.height + 'px',
                         'width': this.imageJson_.width + 'px', cursor: 'pointer'
-                    });
+                    }, null);
                 this.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
                     'xlink:href', this.imageJson_.src);
                 this.size_.height = Number(this.imageJson_.height) + 10;

@@ -46,9 +46,10 @@ function testNums(): void {
     msg("TN")
     let z = 12
     msg("ZZ" + z);
-    let x = 40 + 2;
+    let tt = 2;
+    let x = 40 + tt;
     assert(x == 42, "add");
-    x = 40 / 2;
+    x = 40 / tt;
     assert(x == 20, "div");
     let x3 = doStuff(x, 2);
     msg("nums#0")
@@ -65,18 +66,21 @@ function testNums(): void {
     msg("nums#3")
     testIf();
 
-    assert((3 & 6) == 2, "&")
-    assert((3 | 6) == 7, "|")
-    assert((3 ^ 6) == 5, "^")
+    tt = 3;
+
+    assert((tt & 6) == 2, "&")
+    assert((tt | 6) == 7, "|")
+    assert((tt ^ 6) == 5, "^")
     assert((~1) == -2, "~")
     let k1 = 1;
     assert((~k1) == -2, "~")
-    assert((-10 >> 2) == -3, ">>")
-    assert((-10 >>> 20) == 4095, ">>>")
-    assert((-10 << 2) == -40, "<<")
-    assert((10 << 2) == 40, "<<+")
-    assert((10 >> 2) == 2, ">>+")
-    assert((10 >>> 2) == 2, ">>>+")
+    tt = 10;
+    assert((-tt >> 2) == -3, ">>")
+    assert((-tt >>> 20) == 4095, ">>>")
+    assert((-tt << 2) == -40, "<<")
+    assert((tt << 2) == 40, "<<+")
+    assert((tt >> 2) == 2, ">>+")
+    assert((tt >>> 2) == 2, ">>>+")
 
     testZ(0)
     testZ(30)
@@ -106,17 +110,15 @@ function testNums(): void {
     testLeft(1, 31, 0x80000000 >> 0)
     testLeft(1, 32, 1)
 
-    if (!hasFloat) {
-        assert(1000000 * 1000000 == -727379968, "*")
-        assert(100000001 * 100000001 == 2074919425, "*2")
-    }
-    assert(-2 * -3 == 6, "-2*-3")
-    assert(-2 * 3 == -6, "-2*3")
-    assert(2 * 3 == 6, "2*3")
-    assert(2 * -3 == -6, "2*-3")
+    tt = 2;
+    assert(-tt * -3 == 6, "-2*-3")
+    assert(-tt * 3 == -6, "-2*3")
+    assert(tt * 3 == 6, "2*3")
+    assert(tt * -3 == -6, "2*-3")
     msg("nums#4")
 
-    assert(105 % 100 == 5, "perc")
+    tt = 100
+    assert(105 % tt == 5, "perc")
 
     assert((2 ** 3) == 8, "**")
     let ke = 3;
@@ -135,8 +137,10 @@ function testNums(): void {
 
     msg("nums#5")
 
-    assert(1 > 0.5, "<")
-    assert(1 < 1.5, "<")
+    tt = 1
+
+    assert(tt > 0.5, "<")
+    assert(tt < 1.5, "<")
 }
 
 function fib(p: number): number {
@@ -168,6 +172,27 @@ function testComma() {
     assert(y.length == 4, "y")
 }
 
+function isnan(x: number) {
+    return typeof x == "number" && (x !== x)
+}
+
+function mydiv(x: number, y: number) {
+    return x / y
+}
+
+function testNaN() {
+    assert(isnan(mydiv(0, 0)))
+    assert(isnan(0 / 0))
+    assert(isnan(parseFloat("foobar")))
+    assert(isnan(NaN))
+    assert(!isnan(0))
+    assert(!isnan(Infinity))
+    let inf = Infinity
+    assert(1 / Infinity == 0)
+    assert(1 / inf == 0)
+}
+
 testComma();
 
 testNums();
+testNaN();
