@@ -1187,6 +1187,7 @@ namespace ts.pxtc.service {
             res = compile(host.opts, service);
             if (res.needsFullRecompile) {
                 pxt.log("trigering full recompile")
+                pxt.tickEvent("compile.fullrecompile")
                 host.opts.skipPxtModulesEmit = false
                 res = compile(host.opts, service);
             }
