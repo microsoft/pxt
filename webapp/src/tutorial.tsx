@@ -35,7 +35,7 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
                 const allblocks = headless.getAllBlocks();
                 for (let bi = 0; bi < allblocks.length; ++bi) {
                     const blk = allblocks[bi];
-                    usedBlocks[blk.type] = 1;
+                    if (!blk.isShadow_) usedBlocks[blk.type] = 1;
                 }
                 return usedBlocks;
             } else {

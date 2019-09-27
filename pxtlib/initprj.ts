@@ -31,21 +31,30 @@ test:
 
 @DESCRIPTION@
 
-## TODO
+## Usage
 
-- [ ] Add a reference for your blocks here
-- [ ] Add "icon.png" image (300x200) in the root folder
-- [ ] Add "- beta" to the GitHub project description if you are still iterating it.
-- [ ] Turn on your automated builds with GitHub Actions or Travis-CI https://travis-ci.org
-- [ ] Use "pxt bump" to create a tagged release on GitHub
-- [ ] On GitHub, create a new file named LICENSE. Select the MIT License template.
-- [ ] Get your package reviewed and approved @DOCS@extensions/approval
+This repository contains a MakeCode extension. To use it in MakeCode,
 
-Read more at @DOCS@extensions
+* open @HOMEURL@
+* click on **New Project**
+* click on **Extensions** under the gearwheel menu
+* search for the URL of this repository
+
+## Collaborators
+
+You can invite users to become collaborators to this repository. This will allow multiple users to work on the same project at the same time.
+[Learn more...](https://help.github.com/en/articles/inviting-collaborators-to-a-personal-repository)
+
+To edit this repository in MakeCode,
+
+* open @HOMEURL@
+* click on **Import** then click on **Import URL**
+* paste the repository URL and click import
 
 ## Supported targets
 
 * for PXT/@TARGET@
+* for PXT/@PLATFORM@
 (The metadata above is needed for package search.)
 
 `,
@@ -227,8 +236,10 @@ cache:
 
     export function packageFilesFixup(files: Map<string>, removeSubdirs = false) {
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
-        configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
+        configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
+        configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+        configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
 
         if (removeSubdirs)
             for (let k of Object.keys(files)) {

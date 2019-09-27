@@ -176,7 +176,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private serializeBlocks(normalize?: boolean): string {
-        let xml = pxt.blocks.saveWorkspaceXml(this.editor);
+        // store ids when using github
+        let xml = pxt.blocks.saveWorkspaceXml(this.editor, !normalize && !!this.parent.state.header.githubId);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -222,26 +223,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let flyoutOnly = !this.editor.toolbox_ && (this.editor as any).flyout_;
 
         (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
-            const tp = b.getBoundingRectangle().topLeft;
-            if (minX === undefined || tp.x < minX) {
-                minX = tp.x;
+            const tpX = b.getBoundingRectangle().left;
+            const tpY = b.getBoundingRectangle().top;
+            if (minX === undefined || tpX < minX) {
+                minX = tpX;
             }
-            if (minY === undefined || tp.y < minY) {
-                minY = tp.y;
+            if (minY === undefined || tpY < minY) {
+                minY = tpY;
             }
 
-            needsLayout = needsLayout || (tp.x == 10 && tp.y == 10);
+            needsLayout = needsLayout || (tpX == 10 && tpY == 10);
         });
         (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
-            const tp = b.getBoundingRectangle().topLeft;
-            if (minX === undefined || tp.x < minX) {
-                minX = tp.x;
+            const tpX = b.getBoundingRectangle().left;
+            const tpY = b.getBoundingRectangle().top;
+            if (minX === undefined || tpX < minX) {
+                minX = tpX;
             }
-            if (minY === undefined || tp.y < minY) {
-                minY = tp.y;
+            if (minY === undefined || tpY < minY) {
+                minY = tpY;
             }
 
-            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tp.x == 10 && tp.y == 10);
+            needsLayout = needsLayout || (b.type != ts.pxtc.ON_START_TYPE && tpX == 10 && tpY == 10);
         });
 
         if (needsLayout && !flyoutOnly) {
@@ -385,13 +388,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
 
         for (const block in deprecatedMap) {
-            if (deprecatedMap[block] === 0) {
-                delete deprecatedMap[block];
+            if (deprecatedMap[block] !== 0) {
+                pxt.tickEvent("blocks.usingDeprecated", {block : block, count : deprecatedMap[block] });
             }
-        }
-
-        if (deprecatedBlocksFound) {
-            pxt.tickEvent("blocks.usingDeprecated", deprecatedMap);
         }
     }
 
@@ -433,7 +432,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Need to bump suffix in flyout
                     this.clearFlyoutCaches();
                 }
-                pxt.tickActivity("blocks.create", "blocks.create." + blockId);
+                pxt.tickEvent("blocks.create", {"block": blockId});
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
@@ -772,7 +771,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
 
         // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.BlockSvg) => {
+        this.editor.getAllBlocks().filter(b => b.isEnabled()).forEach((b: Blockly.BlockSvg) => {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
@@ -873,7 +872,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
-        blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));
+        blocks.filter(b => b.isShadow()).forEach(b => b.dispose(false));
     }
 
     private getBlocklyOptions(forceHasCategories?: boolean) {
@@ -1543,7 +1542,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (fn.attributes.debug && !pxt.options.debug) return false;
             if (!shadow && (fn.attributes.deprecated || fn.attributes.blockHidden)) return false;
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            return that.shouldShowBlock(fn.attributes.blockId, ns);
+            return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
         }
 
         function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {

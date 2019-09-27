@@ -47,7 +47,7 @@ function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
         errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
         const errorCounts = JSON.stringify(errors);
         if (errorCounts !== lastErrorCounts) {
-            pxt.tickEvent("dianostics", counts);
+            pxt.tickEvent("diagnostics", counts);
             lastErrorCounts = errorCounts;
         }
     } else {

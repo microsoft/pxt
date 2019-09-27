@@ -217,6 +217,20 @@ default semantic
 @serialConsoleBackground: @simulatorBackground;
 
 /*-------------------
+   Github Diff editor
+--------------------*/
+@githubBackgroundColor: lighten(@simulatorBackground, 2);
+@diffSegmentBackgroundColor: @pageBackground;
+@diffRemovedBackground:#ffeef0;
+@diffAddedBackground: #e6ffed;
+@diffMarkerBackground: #f1f8ff;
+@diffMarkerColor: rgba(27,31,35,.7);
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);;
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);;
+
+
+/*-------------------
    Blockly
 --------------------*/
 

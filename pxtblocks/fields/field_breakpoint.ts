@@ -30,8 +30,9 @@ namespace pxtblockly {
                 // Field has already been initialized once.
                 return;
             }
+
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
@@ -47,12 +48,12 @@ namespace pxtblockly {
             }
             // Adjust X to be flipped for RTL. Position is relative to horizontal start of source block.
             const size = this.getSize();
-            this.checkElement_ = Blockly.utils.createSvgElement('g',
+            this.checkElement_ = Blockly.utils.dom.createSvgElement('g',
                 {
                     'class': `blocklyToggle ${this.state_ ? 'blocklyToggleOnBreakpoint' : 'blocklyToggleOffBreakpoint'}`,
                     'transform': `translate(8, ${size.height / 2})`,
                 }, this.fieldGroup_);
-            this.toggleThumb_ = Blockly.utils.createSvgElement('polygon',
+            this.toggleThumb_ = Blockly.utils.dom.createSvgElement('polygon',
                 {
                     'class': 'blocklyToggleRect',
                     'points': '50,5 100,5 125,30 125,80 100,105 50,105 25,80 25,30'
@@ -61,7 +62,7 @@ namespace pxtblockly {
 
             let fieldX = (this.sourceBlock_.RTL) ? -size.width / 2 : size.width / 2;
             /** @type {!Element} */
-            this.textElement_ = Blockly.utils.createSvgElement('text',
+            this.textElement_ = Blockly.utils.dom.createSvgElement('text',
                 {
                     'class': 'blocklyText',
                     'x': fieldX,
@@ -84,7 +85,7 @@ namespace pxtblockly {
                     (this as any).onMouseDown_);
         }
 
-        updateWidth() {
+        updateSize_() {
             this.size_.width = 30;
             this.arrowWidth_ = 0;
         }
@@ -117,7 +118,7 @@ namespace pxtblockly {
 
         switchToggle(newState: boolean) {
             if (this.checkElement_) {
-                this.updateWidth();
+                this.updateSize_();
                 if (newState) {
                     pxt.BrowserUtils.addClass(this.checkElement_, 'blocklyToggleOnBreakpoint');
                     pxt.BrowserUtils.removeClass(this.checkElement_, 'blocklyToggleOffBreakpoint');
@@ -139,7 +140,7 @@ namespace pxtblockly {
             if (this.visible_ && this.textElement_) {
                 // Replace the text.
                 goog.dom.removeChildren(/** @type {!Element} */(this.textElement_));
-                this.updateWidth();
+                this.updateSize_();
             }
         }
 
