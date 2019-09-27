@@ -5,7 +5,7 @@
 September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
 
 We've made a number of improvements to our GitHub authoring support. Let's take a tour...
-**[Continue reading this blog post](/blog/github-extensions-reloaded)**
+**[Continue reading this blog post](/blog/github-extensions-episode-2)**
 
 
 ## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
