@@ -17,7 +17,7 @@
     --editing-tools-bg-color: #333333;
     --sidebar-icon-inactive-color: #adadad;
     --sidebar-icon-active-color: #ffffff;
-    --sidebar-label-color: #ffffffaa;
+    --sidebar-label-color: #adadad;
 
     --navigator-viewport-color: #ff0000;
 
@@ -105,6 +105,19 @@
 .gallery-editor-toggle.left {
     .gallery-editor-toggle-left {
         color: #4B7BEC;
+    }
+}
+
+// Microsoft Edge has a bug related to relative z-indices that prevents the handle
+// from appearing below the text, so instead we make the handle transparent and have the text
+// show through
+.gallery-editor-toggle.edge {
+    .gallery-editor-toggle-label, .gallery-editor-toggle-label-right, .gallery-editor-toggle-label-left {
+        color: #ffffff;
+        z-index: auto;
+    }
+    .gallery-editor-toggle-handle {
+        opacity: 0.3;
     }
 }
 

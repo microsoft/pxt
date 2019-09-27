@@ -32,7 +32,7 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
     render() {
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
-                <div className={`gallery-editor-toggle ${this.state.galleryVisible ? "right" : "left"}`} onClick={this.toggleGallery}>
+                <div className={`gallery-editor-toggle ${this.state.galleryVisible ? "right" : "left"} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} onClick={this.toggleGallery}>
                     <div className="gallery-editor-toggle-label gallery-editor-toggle-left">
                         {lf("Editor")}
                     </div>
