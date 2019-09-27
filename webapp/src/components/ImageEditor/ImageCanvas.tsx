@@ -32,7 +32,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected editState: EditState;
     protected cursorLocation: [number, number];
     protected cursor: ToolCursor | string = ToolCursor.Crosshair;
-    protected zoom = 0.25;
+    protected zoom = 2.5;
     protected panX = 0;
     protected panY = 0;
 
@@ -366,7 +366,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             const { canvasX: oldX, canvasY: oldY } = this.clientToCanvas(anchorX, anchorY, bounds);
 
-            this.zoom = Math.max(this.zoom + delta, 0.25);
+            this.zoom = Math.max(this.zoom + delta, 2.5);
 
             const unit = this.getCanvasUnit(bounds);
 
@@ -384,7 +384,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected zoomToCanvas() {
-        this.zoom = 1;
+        this.zoom = 10;
         const outer = this.refs["canvas-bounds"] as HTMLDivElement;
 
         this.applyZoom();
@@ -449,12 +449,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected getCanvasUnit(bounds: ClientRect) {
         const boundsRatio = bounds.width / bounds.height;
         const imageRatio = this.canvas.width / this.canvas.height;
+        const zm = Math.pow(this.zoom / 10, 2);
 
         if (boundsRatio > imageRatio) {
-            return this.zoom * (bounds.height / this.canvas.height);
+            return zm * (bounds.height / this.canvas.height);
         }
         else {
-            return this.zoom * (bounds.width / this.canvas.width);
+            return zm * (bounds.width / this.canvas.width);
         }
     }
 
