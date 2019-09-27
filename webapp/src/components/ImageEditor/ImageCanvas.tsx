@@ -23,8 +23,20 @@ export interface ImageCanvasProps {
     prevFrame?: ImageState;
 }
 
+/**
+ * This is a scaling factor for all of the pixels in the canvas. Scaling is not needed for browsers
+ * that support "image-rendering: pixelated," so only scale for Microsoft Edge and Chrome on MacOS.
+ *
+ * Chrome on MacOS should be fixed in the next release: https://bugs.chromium.org/p/chromium/issues/detail?id=134040
+ */
+const SCALE = ((pxt.BrowserUtils.isMac() && pxt.BrowserUtils.isChrome()) || pxt.BrowserUtils.isEdge()) ? 25 : 1;
+
 class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
     protected canvas: HTMLCanvasElement;
+
+    protected imageWidth: number;
+    protected imageHeight: number;
+
     protected background: HTMLCanvasElement;
     protected floatingLayer: HTMLDivElement;
 
@@ -162,8 +174,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected updateCursorLocation(coord: ClientCoordinates): boolean {
         if (this.canvas) {
             const rect = this.canvas.getBoundingClientRect();
-            const x = Math.floor(((coord.clientX - rect.left) / rect.width) * this.canvas.width);
-            const y = Math.floor(((coord.clientY - rect.top) / rect.height) * this.canvas.height);
+            const x = Math.floor(((coord.clientX - rect.left) / rect.width) * this.imageWidth);
+            const y = Math.floor(((coord.clientY - rect.top) / rect.height) * this.imageHeight);
 
             if (!this.cursorLocation || x !== this.cursorLocation[0] || y !== this.cursorLocation[1]) {
                 this.cursorLocation = [x, y];
@@ -247,8 +259,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const { imageState, prevFrame: nextFrame, onionSkinEnabled } = this.props;
 
         if (this.canvas) {
-            this.canvas.width = imageState.bitmap.width;
-            this.canvas.height = imageState.bitmap.height;
+            this.imageWidth = imageState.bitmap.width;
+            this.imageHeight = imageState.bitmap.height;
+
+            this.canvas.width = imageState.bitmap.width * SCALE;
+            this.canvas.height = imageState.bitmap.height * SCALE;
 
             if (onionSkinEnabled && nextFrame) {
                 const next = getEditState(nextFrame);
@@ -286,10 +301,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 ctx.fillRect(0, 0, this.background.width, this.background.height);
 
                 ctx.fillStyle = "#dedede";
-                for (let x = 0; x < this.background.width; x++) {
-                    for (let y = 0; y < this.background.height; y++) {
+
+                const bh = this.imageHeight << 1;
+                const bw = this.imageWidth << 1;
+
+                for (let x = 0; x < bw; x++) {
+                    for (let y = 0; y < bh; y++) {
                         if ((x + y) & 1) {
-                            ctx.fillRect(x, y, 1, 1);
+                            ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
                         }
                     }
                 }
@@ -341,10 +360,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
                 if (index) {
                     context.fillStyle = colors[index];
-                    context.fillRect(x + x0, y + y0, 1, 1);
+                    context.fillRect((x + x0) * SCALE, (y + y0) * SCALE, SCALE, SCALE);
                 }
                 else {
-                    if (!transparent) context.clearRect(x + x0, y + y0, 1, 1);
+                    if (!transparent) context.clearRect((x + x0) * SCALE, (y + y0) * SCALE, SCALE, SCALE);
                 }
             }
         }
@@ -390,14 +409,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         this.applyZoom();
         if (this.canvas && outer) {
             const bounds = outer.getBoundingClientRect();
-            const canvas = this.canvas.getBoundingClientRect();
+            const canvasBounds = this.canvas.getBoundingClientRect();
 
-            if (canvas.width < bounds.width) {
-                this.panX = -((bounds.width >> 1) - (canvas.width >> 1));
+            if (canvasBounds.width < bounds.width) {
+                this.panX = -((bounds.width >> 1) - (canvasBounds.width >> 1));
             }
 
-            if (canvas.height < bounds.height) {
-                this.panY = -((bounds.height >> 1) - (canvas.height >> 1));
+            if (canvasBounds.height < bounds.height) {
+                this.panY = -((bounds.height >> 1) - (canvasBounds.height >> 1));
             }
 
         }
@@ -410,8 +429,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             bounds = bounds || outer.getBoundingClientRect();
 
             const unit = this.getCanvasUnit(bounds);
-            const newWidth = unit * this.canvas.width;
-            const newHeight = unit * this.canvas.height;
+            const newWidth = unit * this.imageWidth;
+            const newHeight = unit * this.imageHeight;
 
             this.canvas.style.position = "fixed"
             this.canvas.style.width = `${newWidth}px`;
@@ -448,19 +467,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
      */
     protected getCanvasUnit(bounds: ClientRect) {
         const boundsRatio = bounds.width / bounds.height;
-        const imageRatio = this.canvas.width / this.canvas.height;
+        const imageRatio = this.imageWidth / this.imageHeight;
         const zm = Math.pow(this.zoom / 10, 2);
 
         if (boundsRatio > imageRatio) {
-            return zm * (bounds.height / this.canvas.height);
+            return zm * (bounds.height / this.imageHeight);
         }
         else {
-            return zm * (bounds.width / this.canvas.width);
+            return zm * (bounds.width / this.imageWidth);
         }
     }
 
     protected inBounds(x: number, y: number) {
-        return x >= 0 && x < this.canvas.width && y >= 0 && y < this.canvas.height;
+        return x >= 0 && x < this.imageWidth && y >= 0 && y < this.imageHeight;
     }
 
     protected isPanning() {
