@@ -414,9 +414,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         const hasCategories = (this.editor.options as any).hasCategories;
-        if (hasCategories != forceHasCategories) {
-            this.parent.state.editorState.hasCategories = hasCategories;
-        }
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
