@@ -17,11 +17,12 @@ function testLazyRef() {
     x = "x" + "Y" && "bar"
     assert(x.length == 3, "threeand")
 
-    let z = 0 || 12
+    let tw = 12
+    let z = 0 || tw
     assert(z == 12, "12")
-    z = 12 || 13
+    z = tw || 13
     assert(z == 12, "12.2")
-    z = 12 && 13
+    z = tw && 13
     assert(z == 13, "13")
 
     let q = new Testrec()

@@ -26,6 +26,7 @@ namespace ts.pxtc {
         declCache: Declaration;
         commentAttrs: CommentAttrs;
         fullName: string;
+        constantFolded: { val: any };
 
         // compiler state
         functionInfo: FunctionAddInfo;
@@ -83,6 +84,7 @@ namespace ts.pxtc {
             this.valueOverride = null;
             this.declCache = undefined;
             this.fullName = null;
+            this.constantFolded = undefined;
         }
 
         resetAll() {
@@ -387,6 +389,10 @@ namespace ts.pxtc {
 
     export function isStatic(node: Declaration) {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
+    }
+
+    export function isReadOnly(node: Declaration) {
+        return node.modifiers && node.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
     }
 
     export function getExplicitDefault(attrs: CommentAttrs, name: string) {
@@ -1567,15 +1573,9 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function isConstLiteral(decl: Declaration) {
-            if (isGlobalVar(decl)) {
-                if (decl.parent.flags & NodeFlags.Const) {
-                    let init = (decl as VariableDeclaration).initializer
-                    if (!init) return false
-                    if (init.kind == SK.ArrayLiteralExpression) return false
-                    return !isSideEffectfulInitializer(init)
-                }
-            }
+        function isGlobalConst(decl: Declaration) {
+            if (isGlobalVar(decl) && (decl.parent.flags & NodeFlags.Const))
+                return true
             return false
         }
 
@@ -1583,31 +1583,21 @@ ${lbl}: .short 0xffff
             if (!init) return false;
             if (isStringLiteral(init)) return false;
             switch (init.kind) {
-                case SK.NullKeyword:
-                case SK.NumericLiteral:
-                case SK.TrueKeyword:
-                case SK.FalseKeyword:
-                case SK.UndefinedKeyword:
-                    return false;
-                case SK.Identifier:
-                    return !isConstLiteral(getDecl(init))
-                case SK.PropertyAccessExpression:
-                    let d = getDecl(init)
-                    return !d || d.kind != SK.EnumMember
                 case SK.ArrayLiteralExpression:
                     return (init as ArrayLiteralExpression).elements.some(isSideEffectfulInitializer)
                 default:
-                    return true;
+                    return constantFold(init) == null;
             }
         }
 
         function emitLocalLoad(decl: VarOrParam) {
+            const folded = constantFoldDecl(decl)
+            if (folded)
+                return emitLit(folded.val)
             if (isGlobalVar(decl)) {
-                let attrs = parseComments(decl)
+                const attrs = parseComments(decl)
                 if (attrs.shim)
                     return emitShim(decl, decl, [])
-                if (isConstLiteral(decl))
-                    return emitExpr(decl.initializer)
             }
             let l = lookupCell(decl)
             recordUse(decl)
@@ -1642,7 +1632,12 @@ ${lbl}: .short 0xffff
         }
 
         function emitIdentifier(node: Identifier): ir.Expr {
-            let decl = getDecl(node)
+            const decl = getDecl(node)
+
+            const fold = constantFoldDecl(decl)
+            if (fold)
+                return emitLit(fold.val)
+
             if (decl && (isVar(decl) || isParameter(decl))) {
                 return emitLocalLoad(<VarOrParam>decl)
             } else if (decl && decl.kind == SK.FunctionDeclaration) {
@@ -1804,29 +1799,17 @@ ${lbl}: .short 0xffff
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
-            let decl = getDecl(node);
+            const decl = getDecl(node);
+
+            const fold = constantFoldDecl(decl)
+            if (fold)
+                return emitLit(fold.val)
+
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
             }
-            let attrs = parseComments(decl);
             if (decl.kind == SK.EnumMember) {
-                let ev = attrs.enumval
-                if (!ev) {
-                    let val = checker.getConstantValue(decl as EnumMember)
-                    if (val == null) {
-                        if ((decl as EnumMember).initializer)
-                            return emitExpr((decl as EnumMember).initializer)
-                        userError(9210, lf("Cannot compute enum value"))
-                    }
-                    ev = val + ""
-                }
-                if (/^[+-]?\d+$/.test(ev))
-                    return emitLit(parseInt(ev));
-                if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
-                    return emitLit(parseInt(ev, 16));
-                U.userError("enumval only support number literals")
-                // TODO needs dealing with int conversions
-                return ir.rtcall(ev, [])
+                throw userError(9210, lf("Cannot compute enum value"))
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
             } else if (decl.kind == SK.PropertyDeclaration || decl.kind == SK.Parameter) {
@@ -1965,7 +1948,7 @@ ${lbl}: .short 0xffff
             }
         }
 
-        function getDecl(node: Node): Declaration {
+        function getDeclCore(node: Node): Declaration {
             if (!node) return null
             const pinfo = pxtInfo(node)
             if (pinfo.declCache !== undefined)
@@ -1983,6 +1966,11 @@ ${lbl}: .short 0xffff
                     }
                 }
             }
+            return decl
+        }
+
+        function getDecl(node: Node): Declaration {
+            let decl = getDeclCore(node)
             markUsed(decl)
 
             if (!decl && node.kind == SK.PropertyAccessExpression) {
@@ -3015,6 +3003,10 @@ ${lbl}: .short 0xffff
         function emitVoidExpression(node: VoidExpression) { }
         function emitAwaitExpression(node: AwaitExpression) { }
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
+            const folded = constantFold(node)
+            if (folded)
+                return emitLit(folded.val)
+
             let tp = typeOf(node.operand)
             if (node.operator == SK.ExclamationToken) {
                 return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
@@ -3240,6 +3232,195 @@ ${lbl}: .short 0xffff
 
         function emitIntOp(op: string, left: ir.Expr, right: ir.Expr) {
             return rtcallMaskDirect(mapIntOpName(op), [left, right])
+        }
+
+        interface Folded {
+            val: any;
+        }
+
+        function unaryOpConst(tok: SyntaxKind, aa: Folded): Folded {
+            if (!aa)
+                return null
+            const a = aa.val
+            switch (tok) {
+                case SK.PlusToken: return { val: +a }
+                case SK.MinusToken: return { val: -a }
+                case SK.TildeToken: return { val: ~a }
+                case SK.ExclamationToken: return { val: !a }
+                default:
+                    return null
+            }
+        }
+        function binaryOpConst(tok: SyntaxKind, aa: Folded, bb: Folded): Folded {
+            if (!aa || !bb)
+                return null
+            const a = aa.val
+            const b = bb.val
+            switch (tok) {
+                case SK.PlusToken: return { val: a + b }
+                case SK.MinusToken: return { val: a - b }
+                case SK.SlashToken: return { val: a / b }
+                case SK.PercentToken: return { val: a % b }
+                case SK.AsteriskToken: return { val: a * b }
+                case SK.AsteriskAsteriskToken: return { val: a ** b }
+                case SK.AmpersandToken: return { val: a & b }
+                case SK.BarToken: return { val: a | b }
+                case SK.CaretToken: return { val: a ^ b }
+                case SK.LessThanLessThanToken: return { val: a << b }
+                case SK.GreaterThanGreaterThanToken: return { val: a >> b }
+                case SK.GreaterThanGreaterThanGreaterThanToken: return { val: a >>> b }
+                case SK.LessThanEqualsToken: return { val: a <= b }
+                case SK.LessThanToken: return { val: a < b }
+                case SK.GreaterThanEqualsToken: return { val: a >= b }
+                case SK.GreaterThanToken: return { val: a > b }
+                case SK.EqualsEqualsToken: return { val: a == b }
+                case SK.EqualsEqualsEqualsToken: return { val: a === b }
+                case SK.ExclamationEqualsEqualsToken: return { val: a !== b }
+                case SK.ExclamationEqualsToken: return { val: a != b }
+                case SK.BarBarToken: return { val: a || b }
+                case SK.AmpersandAmpersandToken: return { val: a && b }
+                default:
+                    return null
+            }
+        }
+        function quickGetQualifiedName(expr: Expression): string {
+            if (expr.kind == SK.Identifier) {
+                return (expr as Identifier).text
+            } else if (expr.kind == SK.PropertyAccessExpression) {
+                const pa = expr as PropertyAccessExpression
+                const left = quickGetQualifiedName(pa.expression)
+                if (left)
+                    return left + "." + pa.name.text
+            }
+            return null
+        }
+
+        function fun1Const(expr: Expression, aa: Folded): Folded {
+            if (!aa)
+                return null
+            const a = aa.val
+            switch (quickGetQualifiedName(expr)) {
+                case "Math.floor": return { val: Math.floor(a) }
+                case "Math.ceil": return { val: Math.ceil(a) }
+                case "Math.round": return { val: Math.round(a) }
+            }
+            return null
+        }
+
+        function enumValue(decl: EnumMember): string {
+            const attrs = parseComments(decl);
+            let ev = attrs.enumval
+            if (!ev) {
+                let val = checker.getConstantValue(decl)
+                if (val == null)
+                    return null
+                ev = val + ""
+            }
+            if (/^[+-]?\d+$/.test(ev))
+                return ev;
+            if (/^0x[A-Fa-f\d]{2,8}$/.test(ev))
+                return ev;
+            U.userError("enumval only support number literals")
+            return "0"
+        }
+
+        function emitFolded(f: Folded) {
+            if (f)
+                return emitLit(f.val)
+            return null
+        }
+
+        function constantFoldDecl(decl: Declaration) {
+            if (!decl)
+                return null
+
+            const info = pxtInfo(decl)
+            if (info.constantFolded)
+                return info.constantFolded
+
+            if (isVar(decl) && (decl.parent.flags & NodeFlags.Const)) {
+                const vardecl = decl as VariableDeclaration
+                if (vardecl.initializer)
+                    info.constantFolded = constantFold(vardecl.initializer)
+            } else if (decl.kind == SK.EnumMember) {
+                const en = decl as EnumMember
+                const ev = enumValue(en)
+                if (ev == null) {
+                    info.constantFolded = constantFold(en.initializer)
+                } else {
+                    const v = parseInt(ev)
+                    if (!isNaN(v))
+                        info.constantFolded = { val: v }
+                }
+            } else if (decl.kind == SK.PropertyDeclaration && isStatic(decl) && isReadOnly(decl)) {
+                const pd = decl as PropertyDeclaration
+                info.constantFolded = constantFold(pd.initializer)
+            }
+
+            //if (info.constantFolded)
+            //    console.log(getDeclName(decl), getSourceFileOfNode(decl).fileName, info.constantFolded.val)
+
+            return info.constantFolded
+        }
+
+        function constantFold(e: Expression): Folded {
+            const info = pxtInfo(e)
+            if (info.constantFolded === undefined) {
+                info.constantFolded = null // make sure we don't come back here recursively
+                const res = constantFoldCore(e)
+                info.constantFolded = res
+            }
+            return info.constantFolded
+        }
+
+        function constantFoldCore(e: Expression): Folded {
+            if (!e)
+                return null
+            switch (e.kind) {
+                case SK.PrefixUnaryExpression: {
+                    const expr = e as PrefixUnaryExpression
+                    const inner = constantFold(expr.operand)
+                    return unaryOpConst(expr.operator, inner)
+                }
+                case SK.BinaryExpression: {
+                    const expr = e as BinaryExpression
+                    const left = constantFold(expr.left)
+                    if (!left) return null
+                    const right = constantFold(expr.right)
+                    if (!right) return null
+                    return binaryOpConst(expr.operatorToken.kind, left, right)
+                }
+                case SK.NumericLiteral: {
+                    const expr = e as NumericLiteral
+                    const v = parseFloat(expr.text)
+                    if (isNaN(v))
+                        return null
+                    return { val: v }
+                }
+                case SK.NullKeyword:
+                    return { val: null }
+                case SK.TrueKeyword:
+                    return { val: true }
+                case SK.FalseKeyword:
+                    return { val: false }
+                case SK.UndefinedKeyword:
+                    return { val: undefined }
+                case SK.CallExpression: {
+                    const expr = e as CallExpression
+                    if (expr.arguments.length == 1)
+                        return fun1Const(expr.expression, constantFold(expr.arguments[0]))
+                    return null
+                }
+                case SK.PropertyAccessExpression:
+                case SK.Identifier:
+                    // regular getDecl() will mark symbols as used
+                    // if we succeed, we will not use any symbols, so no rason to mark them
+                    return constantFoldDecl(getDeclCore(e))
+                case SK.AsExpression:
+                    return constantFold((e as AsExpression).expression)
+                default:
+                    return null
+            }
         }
 
         function emitAsInt(e: Expression) {
@@ -3609,6 +3790,10 @@ ${lbl}: .short 0xffff
                 return handleAssignment(node);
             }
 
+            const folded = constantFold(node)
+            if (folded)
+                return emitLit(folded.val)
+
             let lt: Type = null
             let rt: Type = null
 
@@ -3704,13 +3889,13 @@ ${lbl}: .short 0xffff
                     throw userError(9269, lf("conflicting values for config.{0}", ent.name))
             }
 
-            if (node.declarationList.flags & NodeFlags.Const)
-                for (let decl of node.declarationList.declarations) {
-                    let nm = getDeclName(decl)
-                    let parname = node.parent && node.parent.kind == SK.ModuleBlock ?
-                        getName(node.parent.parent) : "?"
+            if (node.declarationList.flags & NodeFlags.Const) {
+                let parname = node.parent && node.parent.kind == SK.ModuleBlock ?
+                    getName(node.parent.parent) : "?"
+                if (parname == "config" || parname == "userconfig")
+                    for (let decl of node.declarationList.declarations) {
+                        let nm = getDeclName(decl)
 
-                    if (parname == "config" || parname == "userconfig") {
                         if (!decl.initializer) continue
                         let val = emitAsInt(decl.initializer)
                         let key = lookupDalConst(node, "CFG_" + nm) as number
@@ -3720,7 +3905,8 @@ ${lbl}: .short 0xffff
                             nm = "!" + nm
                         addConfigEntry({ name: nm, key: key, value: val })
                     }
-                }
+            }
+
             if (ts.isInAmbientContext(node))
                 return;
             checkForLetOrConst(node.declarationList);
@@ -4109,12 +4295,14 @@ ${lbl}: .short 0xffff
                 return null;
             }
 
-
             if (!shouldEmitNow(node)) {
                 return null;
             }
-            if (isConstLiteral(node))
+
+            // skip emit of things, where access to them is emitted as literal
+            if (constantFoldDecl(node))
                 return null;
+
             let loc: ir.Cell
 
             if (isGlobalVar(node)) {
@@ -4293,7 +4481,7 @@ ${lbl}: .short 0xffff
                 currUsingContext = pinfo
                 currUsingContext.usedNodes = null
                 currUsingContext.usedActions = null
-                if (isGlobalVar(node)) emitGlobal(node)
+                if (isGlobalVar(node) && !constantFoldDecl(node)) emitGlobal(node)
                 emit(node)
                 needsUsingInfo = true
             } else {
