@@ -13,7 +13,7 @@ class GetSet {
 }
 
 interface GetSetIface {
-    x:number;
+    x: number;
 }
 
 function testAccessors() {
@@ -50,3 +50,40 @@ function testAccessorsAny() {
 
 testAccessors()
 testAccessorsAny()
+
+namespace FieldRedef {
+    class A {
+        prop: boolean;
+        constructor() {
+            this.prop = true;
+        }
+
+        action() {
+            if (this.prop)
+                glb1 += 1
+        }
+    }
+
+    class B extends A {
+        get prop() {
+            return false;
+        }
+        set prop(v: boolean) {
+            glb1 += 10
+        }
+    }
+
+    function test() {
+        msg("FieldRedef.run")
+        clean()
+        const a = new A();
+        const b = new B();
+        assert(glb1 == 10)
+        a.action();
+        assert(glb1 == 11)
+        b.action();
+        assert(glb1 == 11)
+    }
+
+    test()
+}
