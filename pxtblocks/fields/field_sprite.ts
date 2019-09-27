@@ -5,7 +5,7 @@ namespace pxtblockly {
     import svg = pxt.svgUtil;
 
     export interface FieldSpriteEditorOptions {
-        // Format is semicolon separated pairs, e.g. "width,height;width,height;..."
+        // Deprecated
         sizes: string;
 
         // Index of initial color (defaults to 1)
@@ -18,7 +18,6 @@ namespace pxtblockly {
     }
 
     interface ParsedSpriteEditorOptions {
-        sizes: [number, number][];
         initColor: number;
         initWidth: number;
         initHeight: number;
@@ -207,13 +206,6 @@ namespace pxtblockly {
 
     function  parseFieldOptions(opts: FieldSpriteEditorOptions) {
         const parsed: ParsedSpriteEditorOptions = {
-            sizes: [
-                [8, 8],
-                [8, 16],
-                [16, 16],
-                [16, 32],
-                [32, 32],
-            ],
             initColor: 1,
             initWidth: 16,
             initHeight: 16,
@@ -248,7 +240,6 @@ namespace pxtblockly {
                 sizes.push([width, height]);
             }
             if (sizes.length > 0) {
-                parsed.sizes = sizes;
                 parsed.initWidth = sizes[0][0];
                 parsed.initHeight = sizes[0][1];
             }
