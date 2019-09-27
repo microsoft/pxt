@@ -428,14 +428,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
             if (ev.type == 'create') {
                 let blockId = ev.xml.getAttribute('type');
+                if (blockId == "variables_set") {
+                    // Need to bump suffix in flyout
+                    this.clearFlyoutCaches();
+                }
                 pxt.tickEvent("blocks.create", {"block": blockId});
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
-            else if (ev.type == 'var_create' || ev.type == "delete") {
-                // a new variable was created or blocks were removed,
+            else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {
+                // a new variable name is used or blocks were removed,
                 // clear the toolbox caches as some blocks may need to be recomputed
                 this.clearFlyoutCaches();
             }
@@ -1490,10 +1494,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     // since we are creating variable, generate a new name that does not
                     // clash with existing variable names
-                    const variables = this.editor.getVariablesOfType("");
                     let varNameUnique = varName;
                     let index = 2;
-                    while (variableIsAssigned(varNameUnique, variables, this.editor)) {
+                    while (variableIsAssigned(varNameUnique, this.editor)) {
                         varNameUnique = varName + index++;
                     }
                     varName = varNameUnique;
@@ -1542,13 +1545,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return that.shouldShowBlock(fn.attributes.blockId, ns, shadow);
         }
 
-        function variableIsAssigned(name: string, variables: Blockly.VariableModel[], editor: Blockly.WorkspaceSvg) {
-            return variables.some(v => {
-                if (v.name != name)
-                    return false;
-                const variableUsage = editor.getVariableUsesById(v.id_);
-                return variableUsage.some(b => b.type == 'variables_set' || b.type == 'variables_change');
-            });
+        function variableIsAssigned(name: string, editor: Blockly.WorkspaceSvg) {
+            const varModel = editor.getVariable(name);
+            const varUses = varModel && editor.getVariableUsesById(varModel.getId());
+            return varUses && varUses.some(b => b.type == "variables_set" || b.type == "variables_change");
         }
     }
 
