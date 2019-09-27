@@ -432,6 +432,7 @@ namespace ts.pxtc {
 
     function getEnclosingFunction(node0: Node) {
         let node = node0
+        let hadLoop = false
         while (true) {
             node = node.parent
             if (!node)
@@ -445,7 +446,17 @@ namespace ts.pxtc {
                 case SK.ArrowFunction:
                 case SK.FunctionExpression:
                     return <FunctionLikeDeclaration>node
+                case SK.WhileStatement:
+                case SK.DoStatement:
+                case SK.ForInStatement:
+                case SK.ForOfStatement:
+                case SK.ForStatement:
+                    hadLoop = true
+                    break
                 case SK.SourceFile:
+                    // don't treat variables declared inside of top-level loops as global
+                    if (hadLoop)
+                        return _rootFunction
                     return null
             }
         }
@@ -573,6 +584,7 @@ namespace ts.pxtc {
 
     let lf = assembler.lf;
     let checker: TypeChecker;
+    let _rootFunction: FunctionDeclaration
     export let target: CompileTarget;
     export let compileOptions: CompileOptions;
     let lastSecondaryError: string
@@ -1009,6 +1021,7 @@ namespace ts.pxtc {
             pos: 0,
             end: 0,
         }
+        _rootFunction = rootFunction
         const pinfo = pxtInfo(rootFunction)
         pinfo.flags |= PxtNodeFlags.IsRootFunction | PxtNodeFlags.IsBogusFunction
 
