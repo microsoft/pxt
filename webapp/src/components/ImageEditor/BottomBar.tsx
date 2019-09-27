@@ -59,7 +59,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             <div className="image-editor-bottombar">
                 <div className="image-editor-resize">
                     <input className="image-editor-input"
-                        title="Image Width"
+                        title={lf("Image Width")}
                         value={width}
                         onChange={this.handleWidthChange}
                         onBlur={this.handleDimensionalBlur}
@@ -68,12 +68,12 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     <IconButton
                         onClick={dispatchToggleAspectRatioLocked}
                         iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
-                        title={aspectRatioLocked ? "Unlock Apect Ratio" : "Lock Aspect Ratio"}
+                        title={aspectRatioLocked ? lf("Unlock Apect Ratio") : lf("Lock Aspect Ratio")}
                         toggle={!aspectRatioLocked}
                     />
 
                     <input className="image-editor-input"
-                        title="Image Height"
+                        title={lf("Image Height")}
                         value={height}
                         onChange={this.handleHeightChange}
                         onBlur={this.handleDimensionalBlur}
@@ -84,7 +84,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     <IconButton
                         onClick={dispatchToggleOnionSkinEnabled}
                         iconClass="ms-Icon ms-Icon--MapLayers"
-                        title={onionSkinEnabled ? "Hide Previous Frame" : "Show Previous Frame"}
+                        title={onionSkinEnabled ? lf("Hide Previous Frame") : lf("Show Previous Frame")}
                         toggle={!onionSkinEnabled}
                     />
                 </div> }
@@ -93,13 +93,13 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                 </div>
                 <div className="image-editor-undo-redo">
                     <IconButton
-                        title="Undo"
+                        title={lf("Undo")}
                         iconClass="ms-Icon ms-Icon--Undo"
                         onClick={hasUndo ? dispatchUndoImageEdit : null}
                         disabled={!hasUndo}
                     />
                     <IconButton
-                        title="Redo"
+                        title={lf("Redo")}
                         iconClass="ms-Icon ms-Icon--Redo"
                         onClick={hasRedo ? dispatchRedoImageEdit : null}
                         disabled={!hasRedo}
@@ -110,13 +110,13 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     <IconButton
                         onClick={() => dispatchChangeZoom(-1)}
                         iconClass="ms-Icon ms-Icon--ZoomOut"
-                        title="Zoom Out"
+                        title={lf("Zoom Out")}
                         toggle={true}
                     />
                     <IconButton
                         onClick={() => dispatchChangeZoom(1)}
                         iconClass="ms-Icon ms-Icon--ZoomIn"
-                        title="Zoom In"
+                        title={lf("Zoom In")}
                         toggle={true}
                     />
                 </div>

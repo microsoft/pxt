@@ -57,7 +57,7 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                     <div key={index}
                         className={`image-editor-button ${index === 0 ? "checkerboard" : ""}`}
                         role="button"
-                        title={`Color ${index}`}
+                        title={lf("Color {0}", index)}
                         onMouseDown={this.clickHandler(index)}
                         style={index === 0 ? null : { backgroundColor: color }} />
                 )}

@@ -42,12 +42,12 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
                 <div className="timeline-frame-actions">
                     <IconButton
                         iconClass="ms-Icon ms-Icon--Copy"
-                        title="Duplicate Current Frame"
+                        title={lf("Duplicate Current Frame")}
                         onClick={duplicateFrame}
                     />
                     <IconButton
                         iconClass="ms-Icon ms-Icon--Delete"
-                        title="Delete Current Frame"
+                        title={lf("Delete Current Frame")}
                         onClick={deleteFrame}
                     />
                 </div>

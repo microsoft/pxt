@@ -15,13 +15,13 @@ class CursorSizesImpl extends React.Component<CursorSizesProps, {}> {
     render() {
         const { selected } = this.props;
         return <div className="cursor-buttons">
-            <div className={`cursor-button-outer ${selected === CursorSize.One ? "selected" : ""}`} title="Small Cursor (1px)" onClick={this.clickHandler(CursorSize.One)}>
+            <div className={`cursor-button-outer ${selected === CursorSize.One ? "selected" : ""}`} title={lf("Small Cursor (1px)")} onClick={this.clickHandler(CursorSize.One)}>
                 <div className="cursor-button small" />
             </div>
-            <div className={`cursor-button-outer ${selected === CursorSize.Three ? "selected" : ""}`} title="Medium Cursor (3px)" onClick={this.clickHandler(CursorSize.Three)}>
+            <div className={`cursor-button-outer ${selected === CursorSize.Three ? "selected" : ""}`} title={lf("Medium Cursor (3px)")} onClick={this.clickHandler(CursorSize.Three)}>
                 <div className="cursor-button medium" />
             </div>
-            <div className={`cursor-button-outer ${selected === CursorSize.Five ? "selected" : ""}`} title="Large Cursor (5px)" onClick={this.clickHandler(CursorSize.Five)}>
+            <div className={`cursor-button-outer ${selected === CursorSize.Five ? "selected" : ""}`} title={lf("Large Cursor (5px)")} onClick={this.clickHandler(CursorSize.Five)}>
                 <div className="cursor-button large" />
             </div>
         </div>

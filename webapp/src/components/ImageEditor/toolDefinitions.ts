@@ -30,45 +30,45 @@ export const tools: ToolInfo[] = [
     {
         tool: ImageEditorTool.Paint,
         iconClass: "ms-Icon ms-Icon--Edit",
-        title: "Paint Tool",
+        title: lf("Paint Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Erase,
         iconClass: "ms-Icon ms-Icon--EraseTool",
-        title: "Erase Tool",
+        title: lf("Erase Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Rect,
         iconClass: "ms-Icon ms-Icon--RectangleShape",
-        title: "Rectangle Tool",
+        title: lf("Rectangle Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Fill,
         iconClass: "ms-Icon ms-Icon--BucketColor",
-        title: "Fill Tool",
+        title: lf("Fill Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Circle,
         hiddenTool: true,
         iconClass: "ms-Icon ms-Icon--CircleRing",
-        title: "Circle Tool",
+        title: lf("Circle Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Line,
         hiddenTool: true,
         iconClass: "ms-Icon ms-Icon--Line",
-        title: "Line Tool",
+        title: lf("Line Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Marquee,
         iconClass: "ms-Icon ms-Icon--SelectAll",
-        title: "Marquee Tool",
+        title: lf("Marquee Tool"),
         hoverCursor: ToolCursor.Crosshair,
         hoverLayerCursor: ToolCursor.Grab,
         downLayerCursr: ToolCursor.Grabbing
@@ -76,7 +76,7 @@ export const tools: ToolInfo[] = [
     {
         tool: ImageEditorTool.Pan,
         iconClass: "ms-Icon ms-Icon--HandsFree",
-        title: "Canvas Pan Tool",
+        title: lf("Canvas Pan Tool"),
         hoverCursor: ToolCursor.Grab,
         downCursor: ToolCursor.Grabbing
     }

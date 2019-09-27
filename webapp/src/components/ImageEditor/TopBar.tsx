@@ -42,7 +42,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                         <IconButton
                             onClick={() => dispatchChangePreviewAnimating(!previewAnimating)}
                             iconClass={previewAnimating ? "ms-Icon ms-Icon--Stop" : "ms-Icon ms-Icon--Play"}
-                            title={previewAnimating ? "Stop Animation Preview" : "Play Animation Preview"}
+                            title={previewAnimating ? lf("Stop Animation Preview") : lf("Play Animation Preview")}
                             toggle={true}
                         />
                         <div className="image-editor-interval-label image-editor-label">
@@ -50,7 +50,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                         </div>
                         <div className="image-editor-interval">
                             <input className="image-editor-input"
-                                title="Interval Between Frames (ms)"
+                                title={lf("Interval Between Frames (ms)")}
                                 value={intervalVal}
                                 onChange={this.handleIntervalChange}
                                 onBlur={this.handleIntervalBlur}
