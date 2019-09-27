@@ -168,7 +168,10 @@ function bindPointerEvents(el: HTMLElement, target: GestureTarget) {
     let state: GestureState;
 
     el.addEventListener("pointerup", ev => {
-        if (state) state.end(clientCoord(ev));
+        if (state) {
+            state.end(clientCoord(ev));
+            ev.preventDefault();
+        }
         state = undefined;
     });
 
@@ -176,14 +179,21 @@ function bindPointerEvents(el: HTMLElement, target: GestureTarget) {
         if (state) state.end();
 
         state = new GestureState(target, clientCoord(ev), isRightClick(ev));
+        ev.preventDefault();
     });
 
     el.addEventListener("pointermove", ev => {
-        if (state) state.update(clientCoord(ev));
+        if (state) {
+            state.update(clientCoord(ev));
+            ev.preventDefault();
+        }
     });
 
     el.addEventListener("pointerleave", ev => {
-        if (state) state.end(clientCoord(ev));
+        if (state) {
+            state.end(clientCoord(ev));
+            ev.preventDefault();
+        }
         state = undefined;
     });
 }
