@@ -716,7 +716,7 @@ namespace pxt.blocks {
     }
 
     function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             return `${escapeVarName(a.name, e)}: ${a.type}`;
@@ -742,7 +742,7 @@ namespace pxt.blocks {
     }
 
     function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const externalInputs = !b.getInputsInline();
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
             return {
@@ -1551,7 +1551,7 @@ namespace pxt.blocks {
 
             w.getTopBlocks(false).filter(isFunctionDefinition).forEach(b => {
                 // Add functions to the rename map to prevent name collisions with variables
-                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getFieldValue("function_name");
+                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getField("function_name").getText();
                 escapeVarName(name, e, true);
             });
         }
@@ -1734,7 +1734,7 @@ namespace pxt.blocks {
 
     function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
         // unset disabled
-        allBlocks.forEach(b => b.setDisabled(false));
+        allBlocks.forEach(b => b.setEnabled(true));
 
         // update top blocks
         const events: Map<Blockly.Block> = {};
@@ -1743,9 +1743,9 @@ namespace pxt.blocks {
             const otherEvent = events[key];
             if (otherEvent) {
                 // another block is already registered
-                block.setDisabled(true);
+                block.setEnabled(false);
             } else {
-                block.setDisabled(false);
+                block.setEnabled(true);
                 events[key] = block;
             }
         }
@@ -1766,7 +1766,7 @@ namespace pxt.blocks {
                 // all non-events are disabled
                 let t = b;
                 while (t) {
-                    t.setDisabled(true);
+                    t.setEnabled(false);
                     t = t.getNextBlock();
                 }
             }
@@ -1996,8 +1996,8 @@ namespace pxt.blocks {
             const size = block.getHeightWidth();
             return {
                 id: block.id,
-                x: bounds.topLeft.x,
-                y: bounds.topLeft.y,
+                x: bounds.left,
+                y: bounds.top,
                 width: size.width,
                 height: size.height
             }
@@ -2013,8 +2013,8 @@ namespace pxt.blocks {
             const bounds = comment.getBoundingRectangle();
             const size = comment.getHeightWidth();
 
-            const x = bounds.topLeft.x;
-            const y = bounds.topLeft.y;
+            const x = bounds.left;
+            const y = bounds.top;
 
             let parent: Rect;
 
