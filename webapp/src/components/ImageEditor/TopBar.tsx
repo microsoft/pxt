@@ -40,7 +40,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                 { singleFrame ? undefined :
                     <div className="timeline-controls">
                         <IconButton
-                            onClick={() => dispatchChangePreviewAnimating(!previewAnimating)}
+                            onClick={this.togglePreviewAnimating}
                             iconClass={previewAnimating ? "ms-Icon ms-Icon--Stop" : "ms-Icon ms-Icon--Play"}
                             title={previewAnimating ? lf("Stop Animation Preview") : lf("Play Animation Preview")}
                             toggle={true}
@@ -61,6 +61,8 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
             </div>
         );
     }
+
+    protected togglePreviewAnimating = () => this.props.dispatchChangePreviewAnimating(!this.props.previewAnimating);
 
     protected handleIntervalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         this.setState({ interval: event.target.value });

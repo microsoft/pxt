@@ -245,7 +245,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 currentFrame: state.frames.length,
             };
         case actions.MOVE_FRAME:
-            if (action.newIndex < 0 ||action.newIndex >= state.frames.length ||
+            if (action.newIndex < 0 || action.newIndex >= state.frames.length ||
                 action.newIndex < 0 || action.newIndex >= state.frames.length) return state;
 
             tickEvent(`move-frame`);

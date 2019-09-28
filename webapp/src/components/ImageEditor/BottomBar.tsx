@@ -108,13 +108,13 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                 <div className="image-editor-seperator"/>
                 <div className="image-editor-zoom-controls">
                     <IconButton
-                        onClick={() => dispatchChangeZoom(-1)}
+                        onClick={this.zoomOut}
                         iconClass="ms-Icon ms-Icon--ZoomOut"
                         title={lf("Zoom Out")}
                         toggle={true}
                     />
                     <IconButton
-                        onClick={() => dispatchChangeZoom(1)}
+                        onClick={this.zoomIn}
                         iconClass="ms-Icon ms-Icon--ZoomIn"
                         title={lf("Zoom In")}
                         toggle={true}
@@ -175,6 +175,14 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             width: null,
             height: null
         });
+    }
+
+    protected zoomIn = () => {
+        this.props.dispatchChangeZoom(1)
+    }
+
+    protected zoomOut = () => {
+        this.props.dispatchChangeZoom(-1)
     }
 }
 

@@ -34,7 +34,7 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
     render() {
         return <div className="image-editor-wrapper">
             <div className="gallery-editor-header">
-                <div className={`gallery-editor-toggle ${this.state.galleryVisible ? "right" : "left"} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} onClick={this.toggleGallery}>
+                <div className={`gallery-editor-toggle ${this.state.galleryVisible ? "right" : "left"} ${pxt.BrowserUtils.isEdge() ? "edge" : ""}`} onClick={this.toggleGallery} role="button" aria-pressed={this.state.galleryVisible}>
                     <div className="gallery-editor-toggle-label gallery-editor-toggle-left">
                         {lf("Editor")}
                     </div>
@@ -171,7 +171,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
                     title={item.alt}
                     data-value={item.qName}
                     onClick={this.clickHandler(index)}>
-                        <img src={item.src} data-value={item.qName} />
+                        <img src={item.src} data-value={item.qName} alt={item.alt}/>
                 </button>
             )}
         </div>

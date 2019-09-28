@@ -52,7 +52,7 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
                     </rect>
                 </g>
             </svg>
-            <div className="image-editor-color-buttons" onContextMenu={ev => ev.preventDefault()}>
+            <div className="image-editor-color-buttons" onContextMenu={this.preventContextMenu}>
                 {this.props.colors.map((color, index) =>
                     <div key={index}
                         className={`image-editor-button ${index === 0 ? "checkerboard" : ""}`}
@@ -79,6 +79,8 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
 
         return this.handlers[index];
     }
+
+    protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
 }
 
 function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps: any) {

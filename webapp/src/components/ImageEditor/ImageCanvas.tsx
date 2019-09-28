@@ -55,7 +55,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const { imageState } = this.props;
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
 
-        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={ev => ev.preventDefault()}>
+        return <div ref="canvas-bounds" className={`image-editor-canvas ${isPortrait ? "portrait" : "landscape"}`} onContextMenu={this.preventContextMenu}>
             <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
@@ -99,7 +99,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             // So, for buttons outside this component to change the zoom they have to set the zoom delta
             // which is applied here and then set back to null
 
-            if (this.props.zoomDelta === 0){
+            if (this.props.zoomDelta === 0) {
                 this.zoomToCanvas();
             }
             else {
@@ -335,7 +335,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             floatingRect.style.display = ""
 
             floatingRect.style.left = (-this.panX + xScale * left) + "px";
-            floatingRect.style.top = (-this.panY+ yScale * top) + "px";
+            floatingRect.style.top = (-this.panY + yScale * top) + "px";
             floatingRect.style.width = (xScale * (right - left)) + "px";
             floatingRect.style.height = (yScale * (bottom - top)) + "px";
 
@@ -485,6 +485,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected isPanning() {
         return this.props.tool === ImageEditorTool.Pan;
     }
+
+    protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
 }
 
 

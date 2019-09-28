@@ -64,7 +64,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                                 const isActive = !isMovingFrame && index === currentFrame;
                                 if (!frame) return <div className="image-editor-timeline-frame drop-marker" key={index} />
 
-                                return <div className={`image-editor-timeline-frame ${isActive ? "active" : ""}`} key={index} onClick={this.clickHandler(index)}>
+                                return <div className={`image-editor-timeline-frame ${isActive ? "active" : ""}`} key={index} role="button" onClick={this.clickHandler(index)}>
                                     <TimelineFrame
                                         frames={[frame]}
                                         colors={colors}
@@ -83,7 +83,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                                     deleteFrame={this.deleteFrame} />
                             </div>
                         }
-                        <div className="image-editor-timeline-frame collapsed" onClick={this.newFrame}>
+                        <div className="image-editor-timeline-frame collapsed" role="button" onClick={this.newFrame}>
                             <span className="ms-Icon ms-Icon--Add" />
                         </div>
                     </div>

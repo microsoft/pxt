@@ -97,7 +97,7 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
         const shouldAnimate = animating && interval > 5 && frames.length > 1;
 
         if (shouldAnimate && interval !== this.intervalcurrent) {
-            this.intervalId && clearInterval(this.intervalId);
+            if (this.intervalId) clearInterval(this.intervalId);
             this.intervalId = setInterval(() => this.setState({
                 index: (this.state.index + 1) % this.props.frames.length
             }), interval)
