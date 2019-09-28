@@ -1,7 +1,7 @@
 import * as actions from '../actions/types'
 import { ImageState, Bitmap } from './bitmap';
 
-export const enum ImageEditorTool {
+export enum ImageEditorTool {
     Paint,
     Fill,
     Line,
@@ -122,6 +122,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.UNDO_IMAGE_EDIT:
             if (!state.past.length) return state;
 
+            tickEvent(`undo`);
             return {
                 ...state,
                 past: state.past.slice(0, state.past.length - 1),
@@ -131,6 +132,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.REDO_IMAGE_EDIT:
             if (!state.future.length) return state;
 
+            tickEvent(`redo`);
             return {
                 ...state,
                 past: [...state.past, state.present],
@@ -184,12 +186,16 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
 const animationReducer = (state: AnimationState, action: any): AnimationState => {
     switch (action.type) {
         case actions.TOGGLE_ASPECT_RATIO:
+            tickEvent(`toggle-aspect-ratio-lock`);
             return { ...state, aspectRatioLocked: !state.aspectRatioLocked };
         case actions.CHANGE_CURRENT_FRAME:
+            tickEvent(`change-frame`);
             return { ...state, currentFrame: action.index };
         case actions.CHANGE_INTERVAL:
+            tickEvent(`change-interval`);
             return { ...state, interval: action.newInterval };
         case actions.CHANGE_IMAGE_DIMENSIONS:
+            tickEvent(`change-dimensions`);
             const [width, height] = action.imageDimensions as [number, number];
             return {
                 ...state,
@@ -199,6 +205,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 }))
             };
         case actions.IMAGE_EDIT:
+            tickEvent(`image-edit`);
             return {
                 ...state,
                 frames: state.frames.map((frame, index) => (
@@ -207,6 +214,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
         case actions.DELETE_FRAME:
             if (state.frames.length === 1) return state;
 
+            tickEvent(`delete-frame`);
             const newFrames = state.frames.slice();
             newFrames.splice(action.index, 1);
 
@@ -221,6 +229,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 frames: newFrames
             }
         case actions.DUPLICATE_FRAME:
+            tickEvent(`duplicate-frame`);
             const frames = state.frames.slice();
             frames.splice(action.index, 0, cloneImage(state.frames[action.index]))
             return {
@@ -229,6 +238,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 currentFrame: action.index + 1
             };
         case actions.NEW_FRAME:
+            tickEvent(`new-frame`);
             return {
                 ...state,
                 frames: [...state.frames, emptyFrame(state.frames[0].bitmap.width, state.frames[0].bitmap.height)],
@@ -237,6 +247,8 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
         case actions.MOVE_FRAME:
             if (action.newIndex < 0 ||action.newIndex >= state.frames.length ||
                 action.newIndex < 0 || action.newIndex >= state.frames.length) return state;
+
+            tickEvent(`move-frame`);
             const movedFrames = state.frames.slice();
             const toMove = movedFrames.splice(action.oldIndex, 1)[0];
             movedFrames.splice(action.newIndex, 0, toMove);
@@ -253,22 +265,32 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
 const editorReducer = (state: EditorState, action: any): EditorState => {
     switch (action.type) {
         case actions.CHANGE_PREVIEW_ANIMATING:
+            tickEvent(`preview-animate-${action.animating ? "on" : "off"}`)
             return { ...state, previewAnimating: action.animating };
         case actions.CHANGE_CANVAS_ZOOM:
+            if (action.zoom > 0 || action.zoom < 0) {
+                tickEvent(`zoom-${action.zoom > 0 ? "in" : "out"}`);
+            }
             return { ...state, zoomDelta: action.zoom };
         case actions.CHANGE_IMAGE_TOOL:
+            tickEvent(`change-tool-${ImageEditorTool[action.tool]}`);
             return { ...state, tool: action.tool };
         case actions.CHANGE_CURSOR_SIZE:
+            tickEvent(`change-cursor-size-${action.cursorSize}`);
             return { ...state, cursorSize: action.cursorSize };
         case actions.CHANGE_SELECTED_COLOR:
+            tickEvent(`foreground-color-${action.selectedColor}`);
             return { ...state, selectedColor: action.selectedColor };
         case actions.CHANGE_CURSOR_LOCATION:
             return { ...state, cursorLocation: action.cursorLocation };
         case actions.CHANGE_BACKGROUND_COLOR:
+            tickEvent(`background-color-${action.backgroundColor}`);
             return { ...state, backgroundColor: action.backgroundColor };
         case actions.SWAP_FOREGROUND_BACKGROUND:
+            tickEvent(`swap-foreground-background`);
             return { ...state, backgroundColor: state.selectedColor, selectedColor: state.backgroundColor };
         case actions.TOGGLE_ONION_SKIN_ENABLED:
+            tickEvent(`toggle-onion-skin`);
             return { ...state, onionSkinEnabled: !state.onionSkinEnabled };
     }
     return state;
@@ -286,6 +308,18 @@ function cloneImage(state: ImageState): ImageState {
         bitmap: Bitmap.fromData(state.bitmap).copy().data(),
         floatingLayer: state.floatingLayer && Bitmap.fromData(state.floatingLayer).copy().data()
     };
+}
+
+let tickCallback: (event: string) => void;
+
+function tickEvent(event: string) {
+    if (tickCallback) {
+        tickCallback(event)
+    }
+}
+
+export function setTelemetryFunction(cb: (event: string) => void) {
+    tickCallback = cb;
 }
 
 export default topReducer;

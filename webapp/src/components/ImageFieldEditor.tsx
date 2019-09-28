@@ -3,6 +3,7 @@ import * as React from "react";
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { Bitmap } from './ImageEditor/store/bitmap';
+import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorState {
     galleryVisible: boolean;
@@ -27,6 +28,7 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
         this.state = {
             galleryVisible: false
         };
+        setTelemetryFunction(tickImageEditorEvent);
     }
 
     render() {
@@ -61,6 +63,11 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
 
     componentDidMount() {
         this.ref = this.refs["image-editor"] as ImageEditor;
+        tickImageEditorEvent("image-editor-shown");
+    }
+
+    componentWillUnmount() {
+        tickImageEditorEvent("image-editor-hidden");
     }
 
     init(value: string, close: () => void, options?: any) {
@@ -109,6 +116,12 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
     }
 
     protected toggleGallery = () => {
+        if (this.state.galleryVisible) {
+            tickImageEditorEvent("gallery-hide");
+        }
+        else {
+            tickImageEditorEvent("gallery-show");
+        }
         this.setState({
             galleryVisible: !this.state.galleryVisible
         });
@@ -118,6 +131,8 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
         if (this.ref) {
             this.ref.setCurrentFrame(getBitmap(this.blocksInfo, item.qName));
         }
+
+        tickImageEditorEvent("gallery-selection");
 
         this.setState({
             galleryVisible: false
@@ -298,5 +313,11 @@ function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
         if (v.attributes.jresURL && !v.attributes.iconURL && v.attributes.jresURL.indexOf("data:image/x-mkcd-f") == 0) {
             v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
         }
+    });
+}
+
+function tickImageEditorEvent(event: string) {
+    pxt.tickEvent("image.editor", {
+        action: event
     });
 }
