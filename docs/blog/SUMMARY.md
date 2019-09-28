@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [GitHub Extensions Authoring - Episode 2](/blog/github-extensions-episode-2)
     * [CS Ed Week 2019](/blog/csed-week/csed-week-2019)
     * [Arcade Game Jam](/blog/arcade/game-jam)
     * [LEGO MINDSTORMS update](/blog/lego/09-06-2019)

@@ -10,6 +10,7 @@ namespace pxt.runner {
         signatureClass?: string;
         blocksClass?: string;
         blocksXmlClass?: string;
+        diffBlocksXmlClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
         projectClass?: string;
         blocksAspectRatio?: number;
@@ -369,6 +370,49 @@ namespace pxt.runner {
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
                     $el.removeClass(cls);
+                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                })
+        }
+
+        return renderNextXmlAsync(cls, (c, r) => {
+            const s = r.blocksSvg;
+            if (opts.snippetReplaceParent) c = c.parent();
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
+            c.replaceWith(segment);
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+    }
+
+    function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffBlocksXmlClass) return Promise.resolve();
+        const cls = opts.diffBlocksXmlClass;
+        function renderNextXmlAsync(cls: string,
+            render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
+            options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            if (!options.emPixels) options.emPixels = 18;
+            options.splitSvg = true;
+
+            const xml = $el.text().split(/-{10,}/);
+            const oldXml = xml[0];
+            const newXml = xml[1];
+
+            return pxt.runner.compileBlocksAsync("", options) // force loading blocks
+                .then(r => {
+                    $el.removeClass(cls);
+                    try {
+                        const diff = pxt.blocks.diffXml(oldXml, newXml);
+                        if (!diff)
+                            $el.text("no changes");
+                        else {
+                            r.blocksSvg = diff.svg;
+                            render($el, r);
+                        }
+                    } catch (e) {
+                        pxt.reportException(e)
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
                     return Promise.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }
@@ -856,6 +900,7 @@ namespace pxt.runner {
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
+            .then(() => renderDiffBlocksXmlAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))
             .then(() => consumeRenderQueueAsync())

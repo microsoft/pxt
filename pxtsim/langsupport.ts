@@ -485,6 +485,7 @@ namespace pxsim {
         }
 
         export function mapGetByString(map: RefMap, key: string) {
+            key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
                 return r.fields[key]
@@ -496,10 +497,20 @@ namespace pxsim {
             return (map.data[i].val);
         }
 
+        export function mapDeleteByString(map: RefMap, key: string) {
+            if (!(map instanceof RefMap))
+                pxtrt.panic(923)
+            let i = map.findIdx(key);
+            if (i >= 0)
+                map.data.splice(i, 1)
+            return true
+        }
+
         export const mapSetGeneric = mapSetByString
         export const mapGetGeneric = mapGetByString
 
         export function mapSetByString(map: RefMap, key: string, val: any) {
+            key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
                 r.fields[key] = val

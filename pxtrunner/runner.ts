@@ -825,6 +825,7 @@ ${linkString}
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
             blocksXmlClass: 'lang-blocksxml',
+            diffBlocksXmlClass: 'lang-diffblocksxml',
             staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',

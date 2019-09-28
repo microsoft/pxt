@@ -504,6 +504,10 @@ export class Link extends StatelessUIElement<LinkProps> {
     }
 }
 
+export function helpIconLink(url: string, title: string) {
+    return <Link href={url} icon="help circle" target="_blank" role="button" title={title} />
+}
+
 ///////////////////////////////////////////////////////////
 ////////////           FormField              /////////////
 ///////////////////////////////////////////////////////////
@@ -673,7 +677,7 @@ export interface CheckBoxProps {
     inputLabel?: string;
     class?: string;
     checked?: boolean;
-    onChange: (v: string) => void;
+    onChange: (v: boolean) => void;
 }
 
 export class Checkbox extends data.Component<CheckBoxProps, {}> {
@@ -686,7 +690,7 @@ export class Checkbox extends data.Component<CheckBoxProps, {}> {
     }
 
     handleChange(v: React.ChangeEvent<any>) {
-        this.props.onChange(v.target.value)
+        this.props.onChange(v.currentTarget.checked);
     }
 
     renderCore() {

@@ -136,7 +136,12 @@ namespace pxt.editor.experiments {
             {
                 id: "alwaysGithubItem",
                 name: lf("Always GitHub"),
-                descript: lf("Always show GitHub item in Explorer view, even if token is not available.")
+                description: lf("Always show GitHub item in Explorer view, even if token is not available.")
+            },
+            {
+                id: "alwaysGithubItemBlocks",
+                name: lf("Always GitHub Blocks"),
+                description: lf("Always show GitHub item in Explorer view for blocks, even if token is not available.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

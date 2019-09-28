@@ -14,23 +14,23 @@
     border-spacing: 0px;
     width: 100%;
 
-    pre {
-        margin: 0;
+    .change code {
+        white-space: pre;
     }
 
     .diff-added {
         background: @diffAddedBackground;
 
-        pre:hover {
-            background: @diffAddedHoverBackground;
+        .ch-added {
+            background: @diffAddedTokenBackground;
         }
     }
 
     .diff-removed {
         background: @diffRemovedBackground;
 
-        pre:hover {
-            background: @diffRemovedHoverBackground;
+        .ch-removed {
+            background: @diffRemovedTokenBackground;
         }
     }
 
@@ -101,6 +101,42 @@
     .diffheader .ui.button {
         float: right;
         margin-top: -0.5em;
+    }
+
+    .ui.segment.diff svg {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+
+    .ui.segments.filediff {
+        background: @diffSegmentBackgroundColor;        
+    }
+
+    .legend > span:not(:first-child) {
+        margin-left: 0.5rem;
+    }
+
+    .legend span.icon {
+        width: 0.8rem;
+        height: 0.8rem;
+        display: inline-block;
+        border-radius: 2px;
+        margin-right: 0.25rem;
+    }
+
+    .legend span.added.icon {
+        background: linear-gradient(45deg, orange , yellow, green, cyan, blue, violet);
+    }
+
+    .legend span.deleted.icon {
+        background-color: #d0d04e;
+        background-image: linear-gradient(45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb),
+        linear-gradient(-45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb);
+        background-size: 4px 4px;
+    }
+
+    .legend span.notchanged.icon {
+        background: #d0d0d0;
     }
 
     .repo-branch {

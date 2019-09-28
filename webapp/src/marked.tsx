@@ -131,6 +131,47 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         })
                 }
             })
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-diffblocksxml`))
+            .forEach((langBlock: HTMLElement) => {
+                // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
+                // Also can't use innerText because IE strips out the newlines from the code
+                // textContent seems to work in all browsers and return the "pure" text
+                const code = langBlock.textContent;
+                const xml = langBlock.textContent.split(/-{10,}/);
+                const oldXml = xml[0];
+                const newXml = xml[1];
+
+                const wrapperDiv = document.createElement('div');
+                pxsim.U.clear(langBlock);
+                langBlock.appendChild(wrapperDiv);
+
+                pxt.BrowserUtils.loadBlocklyAsync()
+                    .then(() => {
+                        const diff = pxt.blocks.diffXml(oldXml, newXml);
+                        const svg = diff.svg;
+                        if (svg) {
+                            if (svg.tagName == "SVG") { // splitsvg
+                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                                const width = viewBox[2];
+                                let height = viewBox[3];
+                                if (width > 480 || height > 128)
+                                    height = (height * 0.8) | 0;
+                                svg.setAttribute('height', `${height}px`);
+                            }
+                            // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
+                            if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
+                            wrapperDiv.appendChild(svg);
+                            pxsim.U.removeClass(wrapperDiv, 'loading');
+                        } else {
+                            // An error occured, show alternate message
+                            const textDiv = document.createElement('div');
+                            textDiv.className = "ui basic segment";
+                            textDiv.textContent = diff.message || lf("No changes.");
+                            wrapperDiv.appendChild(textDiv);
+                            pxsim.U.removeClass(wrapperDiv, 'loading');
+                        }
+                    });
+            });
     }
 
     private renderInlineBlocks(content: HTMLElement) {

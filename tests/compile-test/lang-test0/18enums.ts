@@ -31,7 +31,8 @@ function testEnums() {
     msg("enums0")
     assert(switchA(En.A) == 7, "s1")
     assert(switchA(En.B) == 7, "s2")
-    assert(switchA((3 - 2) as En) == 7, "s2")
+    let two = 2
+    assert(switchA((3 - two) as En) == 7, "s2")
     assert(switchA(En.C) == 12, "s3")
     assert(switchA(En.D) == 13, "s4")
     assert(switchA(En.E) == 12, "s5")

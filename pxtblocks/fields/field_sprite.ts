@@ -34,6 +34,7 @@ namespace pxtblockly {
 
     export class FieldSpriteEditor extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
@@ -59,7 +60,7 @@ namespace pxtblockly {
                 return;
             }
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
@@ -111,18 +112,19 @@ namespace pxtblockly {
             this.size_.width = TOTAL_WIDTH;
         }
 
-        getText() {
+        getValue() {
             return pxtsprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
         }
 
-        setText(newText: string) {
-            if (newText == null) {
+        doValueUpdate_(newValue: string) {
+            if (newValue == null) {
                 return;
             }
-            this.parseBitmap(newText);
+            this.value_ = newValue;
+            this.parseBitmap(newValue);
             this.redrawPreview();
 
-            super.setText(newText);
+            super.doValueUpdate_(newValue);
         }
 
         private redrawPreview() {
