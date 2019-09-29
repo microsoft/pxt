@@ -30,11 +30,11 @@ export class DomObject {
         return criteria;
     }
 
-    async getRect(criteria){
+    async getRect(criteria) {
         let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         return await element.getRect();
     }
-    async contextClick(criteria){
+    async contextClick(criteria) {
         let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         return await actions.contextClick(element).perform();
     }
@@ -47,10 +47,10 @@ export class DomObject {
         return await actions.dragAndDrop(origin, goal).perform();
     }
 
-    async dragAndDropByCoordinate(criteria, xoffset,yoffset) {
+    async dragAndDropByCoordinate(criteria, xoffset, yoffset) {
 
         let origin = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
-        return await actions.dragAndDrop(origin, {x:xoffset,y:yoffset}).perform();
+        return await actions.dragAndDrop(origin, { x: xoffset, y: yoffset }).perform();
     }
 
     async catchScreenShot(name) {
