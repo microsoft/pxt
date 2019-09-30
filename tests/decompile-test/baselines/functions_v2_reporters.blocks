@@ -1,9 +1,9 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="function_definition">
 <mutation name="foo_all" >
-<arg name="num" type="number" id="8llt4zko0w3c0fr3cwax1" />
-<arg name="text" type="string" id="95xldc45fl46ioyc9tmk" />
-<arg name="bool" type="boolean" id="wthr93xs658v7972msnz" />
+<arg name="num" type="number" id="ymoapcju01zuefu52ds" />
+<arg name="text" type="string" id="0y2erv8i9mab76336h2n" />
+<arg name="bool" type="boolean" id="69h09devqtwjtsbh2x35e" />
 </mutation>
 <statement name="STACK">
 <block type="variables_set">
@@ -40,5 +40,18 @@
 </block>
 </statement>
 <comment pinned="false">Describe this function...</comment>
+</block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">tmp</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT"></field>
+</block>
+</value>
+</block>
+</statement>
 </block>
 </xml>
