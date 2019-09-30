@@ -1421,12 +1421,13 @@ export class ProjectView
         if (this.checkForHwVariant())
             return;
 
+        this.beforeCompile();
         if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
+            this.editor.beforeCompile();
             this.saveAndCompile();
             return;
         }
 
-        this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
