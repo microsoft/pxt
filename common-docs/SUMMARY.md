@@ -62,7 +62,7 @@
 
 ## Miscellaneous #misc
 
-* [Miscellaneous]
+* Miscellaneous
     * [About](/about)
     * [Support](/support)
     * [Translate](/translate)
@@ -72,7 +72,7 @@
 
 ## Developers #devs
 
-* [Developers]
+* Developers
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Blocks Embed](/blocks-embed)
