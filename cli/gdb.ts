@@ -168,8 +168,10 @@ function getOpenOcdPath(cmds = "") {
     if (fs.existsSync("/usr/bin/openocd")) {
         openocdPath = "/usr/"
         gccPath = "/usr/"
-    }
-    else {
+    } else if (fs.existsSync("/usr/local/bin/openocd")) {
+        openocdPath = "/usr/local/"
+        gccPath = "/usr/local/"
+    } else {
         for (let ardV = 15; ardV < 50; ++ardV) {
             for (let d of dirs) {
                 pkgDir = path.join(d + ardV, "/packages/arduino/")
@@ -898,7 +900,7 @@ export async function startAsync(gdbArgs: string[]) {
     if (bmpPort) {
         bmpMode = true
         trg = "target extended-remote " + bmpPort
-        trg += "\nmonitor tpwr enable\nmonitor swdp_scan\nattach 1"
+        trg += "\nmonitor swdp_scan\nattach 1"
         pxt.log("Using Black Magic Probe at " + bmpPort)
         monReset = "run"
         monResetHalt = "run"

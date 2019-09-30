@@ -20,4 +20,5 @@ namespace pxt.commands {
     export let saveProjectAsync: (project: pxt.cpp.HexFile) => Promise<void> = undefined;
     export let electronDeployAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined; // A pointer to the Electron deploy function, so that targets can access it in their extension.ts
     export let webUsbPairDialogAsync: (confirmAsync: (options: any) => Promise<number>) => Promise<number> = undefined;
+    export let onTutorialCompleted: () => void = undefined;
 }

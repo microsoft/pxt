@@ -25,6 +25,7 @@ namespace pxt.github {
         mode: string; // "100644",
         type: "blob" | "tree";
         size?: number; // 126,
+        blobContent?: string; // this is added for caching
     }
 
     export interface Tree extends SHAObject {
@@ -48,6 +49,14 @@ namespace pxt.github {
         head?: string;
     }
 
+    export interface FileContent {
+        encoding: string;
+        content: string;
+        size: number;
+        sha: string;
+        download_url: string;
+    }
+
     export let forceProxy = false;
 
     export function useProxy() {
@@ -61,6 +70,8 @@ namespace pxt.github {
             return false // target requests no proxy
         return true
     }
+
+    let isPrivateRepoCache: pxt.Map<boolean> = {};
 
     export interface CachedPackage {
         files: Map<string>;
@@ -79,6 +90,7 @@ namespace pxt.github {
             else
                 opts.url += "?"
             opts.url += "access_token=" + token
+            opts.url += "&anti_cache=" + Math.random()
             // Token in headers doesn't work with CORS, especially for githubusercontent.com
             //if (!opts.headers) opts.headers = {}
             //opts.headers['Authorization'] = `token ${token}`
@@ -135,8 +147,7 @@ namespace pxt.github {
                 return this.proxyLoadPackageAsync(repopath, tag)
                     .then(v => cacheConfig(v.files[pxt.CONFIG_NAME]))
             }
-            let url = "https://raw.githubusercontent.com/" + repopath + "/" + tag + "/" + pxt.CONFIG_NAME
-            return ghGetTextAsync(url)
+            return downloadTextAsync(repopath, tag, pxt.CONFIG_NAME)
                 .then(cfg => cacheConfig(cfg));
         }
 
@@ -180,9 +191,35 @@ namespace pxt.github {
         }
     }
 
+    function fallbackDownloadTextAsync(repopath: string, commitid: string, filepath: string) {
+        return ghRequestAsync({
+            url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid
+        }).then(resp => {
+            const f = resp.json as FileContent
+            isPrivateRepoCache[repopath] = true
+            // if they give us content, just return it
+            if (f && f.encoding == "base64" && f.content != null)
+                return atob(f.content)
+            // otherwise, go to download URL
+            return U.httpGetTextAsync(f.download_url)
+        })
+    }
+
     export function downloadTextAsync(repopath: string, commitid: string, filepath: string) {
-        return ghGetTextAsync(
-            "https://raw.githubusercontent.com/" + repopath + "/" + commitid + "/" + filepath)
+        // raw.githubusercontent.com doesn't accept ?access_toke=... and has wrong CORS settings
+        // for Authorization: header; so try anonymous access first, and otherwise fetch using API
+
+        if (isPrivateRepoCache[repopath])
+            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+
+        return U.requestAsync({
+            url: "https://raw.githubusercontent.com/" + repopath + "/" + commitid + "/" + filepath,
+            allowHttpErrors: true
+        }).then(resp => {
+            if (resp.statusCode == 200)
+                return resp.text
+            return fallbackDownloadTextAsync(repopath, commitid, filepath)
+        })
     }
 
     // overriden by client
@@ -223,10 +260,16 @@ namespace pxt.github {
             allowHttpErrors: true,
             data: data
         }).then(resp => {
-            if (resp.statusCode == 200 || resp.statusCode == 201 || resp.statusCode == 204)
+            if (resp.statusCode == 200 || resp.statusCode == 202 || resp.statusCode == 201 || resp.statusCode == 204)
                 return resp.json
-            throw U.userError(lf("Cannot create object at github.com/{0}; code: {1}",
-                path, resp.statusCode))
+
+            let e = new Error(lf("Cannot create object at github.com/{0}; code: {1}",
+                path, resp.statusCode));
+            (<any>e).statusCode = resp.statusCode;
+            (<any>e).isUserError = true;
+            if (resp.statusCode == 404)
+                (<any>e).needsWritePermission = true;
+            throw e
         })
     }
 
@@ -271,17 +314,13 @@ namespace pxt.github {
         })
     }
 
-    export async function createPRAsync(repopath: string, branch: string, commitid: string, msg: string) {
-        let branchName = "pr-" + commitid.slice(0, 8)
-        await ghPostAsync(repopath + "/git/refs", {
-            ref: "refs/heads/" + branchName,
-            sha: commitid
-        })
-        let res = await ghPostAsync(repopath + "/pulls", {
+    export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
+        headBranch: string, msg: string) {
+        const res = await ghPostAsync(repopath + "/pulls", {
             title: msg,
             body: lf("Automatically created from MakeCode."),
-            head: branchName,
-            base: "master",
+            head: headBranch,
+            base: baseBranch,
             maintainer_can_modify: true
         })
         return res.html_url as string
@@ -310,6 +349,47 @@ namespace pxt.github {
     export function getRefAsync(repopath: string, branch: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
+    }
+
+    function generateNextRefName(res: RefsResult, pref: string): string {
+        let n = 1
+        while (res.refs[pref + n])
+            n++
+        return pref + n
+    }
+
+    export async function getNewBranchNameAsync(repopath: string, pref = "patch-") {
+        const res = await listRefsExtAsync(repopath, "heads")
+        return generateNextRefName(res, pref);
+    }
+
+    export async function createNewBranchAsync(repopath: string, branchName: string, commitid: string) {
+        await ghPostAsync(repopath + "/git/refs", {
+            ref: "refs/heads/" + branchName,
+            sha: commitid
+        })
+        return branchName
+    }
+
+    export async function forkRepoAsync(repopath: string, commitid: string, pref = "pr-") {
+        const res = await ghPostAsync(repopath + "/forks", {})
+        const repoInfo = mkRepo(res, null)
+        const endTm = Date.now() + 5 * 60 * 1000
+        let refs: RefsResult = null
+        while (!refs && Date.now() < endTm) {
+            await Promise.delay(1000)
+            try {
+                refs = await listRefsExtAsync(repoInfo.fullName, "heads");
+            } catch (err) {
+                // not created
+            }
+        }
+        if (!refs)
+            throw new Error(lf("Timeout waiting for fork"))
+
+        const branchName = generateNextRefName(refs, pref);
+        await createNewBranchAsync(repoInfo.fullName, branchName, commitid)
+        return repoInfo.fullName + "#" + branchName
     }
 
     export function listRefsAsync(repopath: string, namespace = "tags"): Promise<string[]> {
@@ -429,6 +509,7 @@ namespace pxt.github {
 
     export interface ParsedRepo {
         owner?: string;
+        project?: string;
         fullName: string;
         tag?: string;
     }
@@ -445,6 +526,8 @@ namespace pxt.github {
         defaultBranch: string;
         status?: GitRepoStatus;
         updatedAt?: number;
+        private?: boolean;
+        fork?: boolean;
     }
 
     export function listUserReposAsync() {
@@ -452,11 +535,14 @@ namespace pxt.github {
             .then((res: Repo[]) => res.map(r => mkRepo(r, null)))
     }
 
-    export function createRepoAsync(name: string, description: string) {
+    export function createRepoAsync(name: string, description: string, priv?: boolean) {
         return ghPostAsync("https://api.github.com/user/repos", {
             name,
             description,
-            private: false,
+            private: !!priv,
+            has_issues: true, // default
+            has_projects: false,
+            has_wiki: false,
         }).then(v => mkRepo(v, null))
     }
 
@@ -479,7 +565,9 @@ namespace pxt.github {
             description: r.description,
             defaultBranch: r.default_branch,
             tag: tag,
-            updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000)
+            updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000),
+            fork: r.fork,
+            private: r.private,
         }
         rr.status = repoStatus(rr, config);
         return rr;
@@ -589,7 +677,7 @@ namespace pxt.github {
     export function parseRepoUrl(url: string): { repo: string; tag?: string; path?: string; } {
         if (!url) return undefined;
 
-        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)(#(\w+))?$/i.exec(url.trim());
+        let m = /^((https:\/\/)?github.com\/)?([^/]+\/[^/#]+)\/?(#(\w+))?$/i.exec(url.trim());
         if (!m) return undefined;
 
         let r: { repo: string; tag?: string; path?: string; } = {
@@ -604,14 +692,26 @@ namespace pxt.github {
         if (!repo) return undefined;
 
         repo = repo.replace(/^github:/i, "")
-        repo = repo.replace(/^https:\/\/github.com\//i, "")
+        repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
         let m = /([^#]+)(#(.*))?/.exec(repo)
-        let owner = m ? m[1].split('/')[0].toLowerCase() : undefined;
+        const tag = m ? m[3] : null;
+        let owner: string;
+        let project: string;
+        let fullName: string;
+        if (m) {
+            fullName = m[1].toLowerCase();
+            const parts = fullName.split('/');
+            owner = parts[0];
+            project = parts[1];
+        } else {
+            fullName = repo.toLowerCase();
+        }
         return {
             owner,
-            fullName: m ? m[1].toLowerCase() : repo.toLowerCase(),
-            tag: m ? m[3] : null
+            project,
+            fullName,
+            tag
         }
     }
 
@@ -626,7 +726,9 @@ namespace pxt.github {
     }
 
     export function noramlizeRepoId(id: string) {
-        return stringifyRepo(parseRepoId(id))
+        const gid = parseRepoId(id);
+        gid.tag = gid.tag || "master";
+        return stringifyRepo(gid);
     }
 
     export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
@@ -649,7 +751,7 @@ namespace pxt.github {
                             const release = config.releases["v" + targetVersion.major]
                                 .map(repo => pxt.github.parseRepoId(repo))
                                 .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
-                                [0];
+                            [0];
                             if (release) {
                                 // this repo is frozen to a particular tag for this target
                                 if (tags.some(t => t == release.tag)) { // tag still exists!!!
@@ -673,8 +775,293 @@ namespace pxt.github {
 
     export interface GitJson {
         repo: string;
+        prUrl?: string; // if any
         commit: pxt.github.Commit;
+        isFork?: boolean;
     }
 
     export const GIT_JSON = ".git.json"
+
+    /*
+    Constant MAX ∈ [0,M+N]
+    Var V: Array [− MAX .. MAX] of Integer
+    V[1]←0
+    For D←0 to MAX Do
+        For k ← −D to D in steps of 2 Do 
+            If k=−D or k≠D and V[k−1]<V[k+1] Then
+                x ← V[k+1] 
+            Else
+                x ← V[k−1]+1 
+            y←x−k
+            While x<N and y<M and a[x+1] =b[y+1] Do 
+                (x,y)←(x+1,y+1) 
+            V[k]←x
+            If x≥N and y≥M Then
+                Length of an SES is D
+                Stop
+    */
+
+    type UArray = Uint32Array | Uint16Array
+
+    function toLines(file: string) {
+        return file ? file.split(/\r?\n/) : []
+    }
+
+    export interface DiffOptions {
+        context?: number; // lines of context; defaults to 3
+        ignoreWhitespace?: boolean;
+        maxDiffSize?: number; // defaults to 1024
+    }
+
+    // based on An O(ND) Difference Algorithm and Its Variations by EUGENE W. MYERS
+    export function diff(fileA: string, fileB: string, options: DiffOptions = {}) {
+        if (options.ignoreWhitespace) {
+            fileA = fileA.replace(/[\r\n]+$/, "")
+            fileB = fileB.replace(/[\r\n]+$/, "")
+        }
+
+        const a = toLines(fileA)
+        const b = toLines(fileB)
+
+        const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
+        const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array
+
+        const idxmap: pxt.Map<number> = {}
+        let curridx = 0
+        const aidx = mkidx(a), bidx = mkidx(b)
+
+        function mkidx(strings: string[]) {
+            const idxarr = new ctor(strings.length)
+            let i = 0
+            for (let e of strings) {
+                if (options.ignoreWhitespace)
+                    e = e.replace(/\s+/g, "")
+                if (idxmap.hasOwnProperty(e))
+                    idxarr[i] = idxmap[e]
+                else {
+                    ++curridx
+                    idxarr[i] = curridx
+                    idxmap[e] = curridx
+                }
+                i++
+            }
+            return idxarr
+        }
+
+        const V = new ctor(2 * MAX + 1)
+        let diffLen = -1
+        for (let D = 0; D <= MAX; D++) {
+            if (computeFor(D, V) != null) {
+                diffLen = D
+            }
+        }
+
+        if (diffLen == -1)
+            return null // diffLen > MAX
+
+        const trace: UArray[] = []
+        let endpoint: number = null
+        for (let D = 0; D <= diffLen; D++) {
+            const V = trace.length ? trace[trace.length - 1].slice(0) : new ctor(2 * diffLen + 1)
+            trace.push(V)
+            endpoint = computeFor(D, V)
+            if (endpoint != null)
+                break
+        }
+
+        const diff: string[] = []
+        let k = endpoint
+        for (let D = trace.length - 1; D >= 0; D--) {
+            const V = trace[D]
+            let x = 0
+            let nextK = 0
+            if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1])) {
+                nextK = k + 1
+                x = V[MAX + nextK]
+            } else {
+                nextK = k - 1
+                x = V[MAX + nextK] + 1
+            }
+            let y = x - k
+            const snakeLen = V[MAX + k] - x
+            for (let i = snakeLen - 1; i >= 0; --i)
+                diff.push("  " + a[x + i])
+
+            if (nextK == k - 1) {
+                diff.push("- " + a[x - 1])
+            } else {
+                if (y > 0)
+                    diff.push("+ " + b[y - 1])
+            }
+            k = nextK
+        }
+        diff.reverse()
+
+        if (options.context == Infinity)
+            return diff
+
+        let aline = 1, bline = 1, idx = 0
+        const shortDiff: string[] = []
+        const context = options.context || 3
+        while (idx < diff.length) {
+            let nextIdx = idx
+            while (nextIdx < diff.length && diff[nextIdx][0] == " ")
+                nextIdx++
+            if (nextIdx == diff.length)
+                break
+            const startIdx = nextIdx - context
+            const skip = startIdx - idx
+            if (skip > 0) {
+                aline += skip
+                bline += skip
+                idx = startIdx
+            }
+            const hdPos = shortDiff.length
+            const aline0 = aline, bline0 = bline
+            shortDiff.push("@@") // patched below
+
+            let endIdx = idx
+            let numCtx = 0
+            while (endIdx < diff.length) {
+                if (diff[endIdx][0] == " ") {
+                    numCtx++
+                    if (numCtx > context * 2 + 2) {
+                        endIdx -= context + 2
+                        break
+                    }
+                } else {
+                    numCtx = 0
+                }
+                endIdx++
+            }
+
+            while (idx < endIdx) {
+                shortDiff.push(diff[idx])
+                const c = diff[idx][0]
+                switch (c) {
+                    case "-": aline++; break;
+                    case "+": bline++; break;
+                    case " ": aline++; bline++; break;
+                }
+                idx++
+            }
+            shortDiff[hdPos] = `@@ -${aline0},${aline - aline0} +${bline0},${bline - bline0} @@`
+        }
+
+        return shortDiff
+
+        function computeFor(D: number, V: UArray) {
+            for (let k = -D; k <= D; k += 2) {
+                let x = 0
+                if (k == -D || (k != D && V[MAX + k - 1] < V[MAX + k + 1]))
+                    x = V[MAX + k + 1]
+                else
+                    x = V[MAX + k - 1] + 1
+                let y = x - k
+                while (x < aidx.length && y < bidx.length && aidx[x] == bidx[y]) {
+                    x++
+                    y++
+                }
+                V[MAX + k] = x
+                if (x >= aidx.length && y >= bidx.length) {
+                    return k
+                }
+            }
+            return null
+        }
+    }
+
+    // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
+    export function diff3(fileA: string, fileO: string, fileB: string,
+        lblA?: string, lblB?: string) {
+        // we're not showing these to users (yet anyways)
+        if (!lblA)
+            lblA = lf("Yours") // ours/HEAD
+        if (!lblB)
+            lblB = lf("Incoming") // theirs/upstream/origin
+
+        const ma = computeMatch(fileA)
+        const mb = computeMatch(fileB)
+        const fa = toLines(fileA)
+        const fb = toLines(fileB)
+        let numConflicts = 0
+
+        let r: string[] = []
+        let la = 0, lb = 0
+        for (let i = 0; i < ma.length - 1;) {
+            if (ma[i] == la && mb[i] == lb) {
+                r.push(fa[la])
+                la++
+                lb++
+                i++
+            } else {
+                let aSame = true
+                let bSame = true
+                let j = i
+                while (j < ma.length) {
+                    if (ma[j] != la + j - i)
+                        aSame = false
+                    if (mb[j] != lb + j - i)
+                        bSame = false
+                    if (ma[j] != null && mb[j] != null)
+                        break
+                    j++
+                }
+                U.assert(j < ma.length)
+                if (aSame) {
+                    while (lb < mb[j])
+                        r.push(fb[lb++])
+                } else if (bSame) {
+                    while (la < ma[j])
+                        r.push(fa[la++])
+                } else if (fa.slice(la, ma[j]).join("\n") == fb.slice(lb, mb[j]).join("\n")) {
+                    // false conflict - both are the same
+                    while (la < ma[j])
+                        r.push(fa[la++])
+                } else {
+                    numConflicts++
+                    r.push("<<<<<<< " + lblA)
+                    while (la < ma[j])
+                        r.push(fa[la++])
+                    r.push("=======")
+                    while (lb < mb[j])
+                        r.push(fb[lb++])
+                    r.push(">>>>>>> " + lblB)
+                }
+                i = j
+                la = ma[j]
+                lb = mb[j]
+            }
+        }
+
+        return { merged: r.join("\n"), numConflicts }
+
+        function computeMatch(fileA: string) {
+            const da = pxt.github.diff(fileO, fileA, { context: Infinity })
+            const ma: number[] = []
+
+            let aidx = 0
+            let oidx = 0
+
+            // console.log(da)
+            for (let l of da) {
+                if (l[0] == "+") {
+                    aidx++
+                } else if (l[0] == "-") {
+                    ma[oidx] = null
+                    oidx++
+                } else if (l[0] == " ") {
+                    ma[oidx] = aidx
+                    aidx++
+                    oidx++
+                } else {
+                    U.oops()
+                }
+            }
+
+            ma.push(aidx + 1) // terminator
+
+            return ma
+        }
+    }
 }

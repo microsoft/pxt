@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "outDir": "built",
+        "rootDir": ".",
+        "newLine": "LF",
+        "sourceMap": false
+    }
+}

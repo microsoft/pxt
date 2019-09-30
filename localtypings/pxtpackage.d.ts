@@ -70,6 +70,7 @@ declare namespace pxt {
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
+        requiredCategories?: string[]; // ensure that those block categories are visible
     }
 
     interface PackageExtension {
@@ -163,38 +164,84 @@ declare namespace pxt {
         mimeType: string;
     }
 
+    type SnippetOutputType = 'blocks'
+    type SnippetOutputBehavior = /*assumed default*/'merge' | 'replace'
     interface SnippetConfig {
         name: string;
         namespace: string;
         group?: string;
         label: string;
-        outputType: string;
+        outputType: SnippetOutputType;
+        outputBehavior?: SnippetOutputBehavior;
         initialOutput?: string;
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = any; // TODO(jb) Should include custom answer types for number, enums, string, image
-
-    interface SnippetGoToParameters {
-        [tokenType: string]: number;
-    }
+    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
-        question: number;
-        parameters?: SnippetGoToParameters;
+        question?: number;
+        validate?: SnippetValidate;
+        parameters?: SnippetParameters[]; // Answer token with corresponding question
     }
 
-    interface SnippetQuestionInput {
+    interface SnippetOutputOptions {
+        type: 'error' | 'hint';
+        output: string;
+    }
+
+    interface SnippetParameters {
+        token?: string;
+        answer?: string;
+        question: number;
+    }
+
+    interface SnippetInputAnswerSingular {
         answerToken: string;
         defaultAnswer: SnippetAnswerTypes;
-        type?: string;
-        label?: string;
+    }
+
+    interface SnippetInputAnswerPlural {
+        answerTokens: string[];
+        defaultAnswers: SnippetAnswerTypes[];
+    }
+
+    interface SnippetInputOtherType {
+        type: string;
+    }
+
+    interface SnippetInputNumberType {
+        type: 'number' | 'positionPicker';
+        max?: number;
+        min?: number;
+    }
+
+    interface SnippetInputDropdownType {
+        type: "dropdown";
+        options: pxt.Map<string>;
+    }
+
+    type SnippetQuestionInput = { label?: string; }
+        & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType)
+
+    interface SnippetValidateRegex {
+        token: string;
+        regex: string;
+        match?: SnippetParameters;
+        noMatch?: SnippetParameters;
+    }
+
+    interface SnippetValidate {
+        regex?: SnippetValidateRegex;
     }
 
     interface SnippetQuestions {
         title: string;
         output?: string;
+        errorMessage?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];
+        hint?: string;
     }
 }

@@ -57,8 +57,9 @@ export class SearchInput extends React.Component<SearchInputProps, SearchInputSt
 
         return <div className={`ui search ${className || ''}`} {...rest}>
             <div className={`ui icon input ${inputClassName || ''}`}>
-                <div aria-live="polite" className="accessible-hidden">{ariaMessage}</div>
-                <input role="search" autoFocus={autoFocus} ref="searchInput" className="prompt" type="text" placeholder={placeholder}
+                <div aria-live="polite" className="accessible-hidden" id="searchInputBoxLabel">{ariaMessage}</div>
+                <input role="search" autoFocus={autoFocus} ref="searchInput" aria-labelledby="searchInputBoxLabel"
+                    className="prompt" type="text" placeholder={placeholder}
                     onChange={this.updateInputValue} value={inputValue}
                     onKeyUp={this.handleSearchKeyUpdate} disabled={disabled}
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />

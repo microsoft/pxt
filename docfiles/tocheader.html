@@ -1,36 +1,11 @@
-<div class="ui vertical accent @tocclass@ sidebar menu left hideprint">
-    <div class="item">
-        <a href="/" class="header focused" tabindex="0" title="Go to editor">
-            @targetlogo@
-        </a>
-        Documentation
+<div id="docsMobile" class="ui vertical accent @tocclass@ wide sidebar menu left hideprint">
+    <div class="mobile-menu" style="display: none;">
+        <div class="activities">
+        </div>
+        <hr>
     </div>
-    <div class="item search">
-        <form id="tocsearch1" role="form" method="get" action="https://www.bing.com/search">
-            <div class="ui fluid icon input">
-                <input type="hidden" name="q1" value="site:@homeurl@" />
-                @searchBar1@
-            </div>
-        </form>
-    </div>
-    <!-- TOC Menu -->
-    <div class="menuContainer">
+    <!-- TOC Menu (tocheader.html) -->
+    <div class="ui list menuContainer toc">
         @TOC@
     </div>
-</div>
-
-<div class="ui fixed accent borderless @tocclass@ main menu hideprint">
-  <div class="ui container">
-    @sidebarToggle@
-
-    <div class="item">
-        @breadcrumb@
-    </div>
-    
-    <div class="right menu">
-        <a href="/" class="header item" tabindex="0" title="Go to editor">
-            @targetlogo@
-        </a>
-    </div>
-  </div>
 </div>

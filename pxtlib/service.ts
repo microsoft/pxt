@@ -11,8 +11,11 @@ namespace ts.pxtc {
     export const HANDLER_COMMENT = "code goes here"; // TODO: Localize? (adding lf doesn't work because this is run before translations are downloaded)
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_DEBUGGER_TYPE = "debugger_keyword";
+    export const TS_BREAK_TYPE = "break_keyword";
+    export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
+    export const COLLAPSED_BLOCK = "pxt_collapsed_block"
     export const BINARY_JS = "binary.js";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
@@ -104,6 +107,7 @@ namespace ts.pxtc {
         blocksInfo?: BlocksInfo;
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
+        needsFullRecompile?: boolean;
         // client options
         saveOnly?: boolean;
         userContextWindow?: Window;
@@ -438,13 +442,8 @@ namespace ts.pxtc {
             }
         }
 
-        if (pxt.appTarget && pxt.appTarget.runtime && Array.isArray(pxt.appTarget.runtime.bannedCategories)) {
-            filterCategories(pxt.appTarget.runtime.bannedCategories)
-        }
-
-        if (categoryFilters) {
+        if (categoryFilters)
             filterCategories(categoryFilters);
-        }
 
         return {
             apis: info,
@@ -562,7 +561,8 @@ namespace ts.pxtc {
         "decompileIndirectFixedInstances",
         "topblock",
         "callInDebugger",
-        "duplicateShadowOnDrag"
+        "duplicateShadowOnDrag",
+        "argsNullable"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

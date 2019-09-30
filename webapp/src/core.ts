@@ -141,6 +141,7 @@ export interface PromptOptions extends ConfirmOptions {
     initialValue?: string;
     placeholder?: string;
     onInputChanged?: (newValue?: string) => void;
+    onInputValidation?: (newValue?: string) => string; // return error if any
 }
 
 export interface DialogOptions {
@@ -154,6 +155,7 @@ export interface DialogOptions {
     header: string;
     body?: string;
     jsx?: JSX.Element;
+    jsxd?: () => JSX.Element; // dynamic-er version of jsx
     copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
@@ -161,6 +163,7 @@ export interface DialogOptions {
     timeout?: number;
     modalContext?: string;
     hasCloseIcon?: boolean;
+    helpUrl?: string;
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
@@ -171,6 +174,14 @@ export function dialogAsync(options: DialogOptions): Promise<void> {
             label: options.disagreeLbl || lf("Cancel"),
             className: (options.disagreeClass || "cancel"),
             icon: options.disagreeIcon || "cancel"
+        })
+    }
+    if (options.helpUrl) {
+        options.buttons.push({
+            label: lf("Help"),
+            className: "help",
+            icon: "help",
+            url: options.helpUrl
         })
     }
     return coretsx.renderConfirmDialogAsync(options as PromptOptions);

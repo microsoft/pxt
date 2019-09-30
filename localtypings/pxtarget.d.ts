@@ -49,7 +49,8 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
-        unsupportedBrowsers?: BrowserOptions[] // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
     }
 
     interface BrowserOptions {
@@ -102,6 +103,8 @@ declare namespace pxt {
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
+        breakBlock?: boolean;
+        continueBlock?: boolean;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
@@ -234,6 +237,7 @@ declare namespace pxt {
         accentColor?: string; // used in PWA manifest as theme color
         backgroundColor?: string; // use in PWA manifest as background color
         cardLogo?: string;
+        thumbLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
@@ -282,6 +286,7 @@ declare namespace pxt {
         debugger?: boolean; // debugger button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
+        showProjectSettings?: boolean; // show a link to pxt.json in the cogwheel menu
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
@@ -294,6 +299,7 @@ declare namespace pxt {
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
         saveInMenu?: boolean; // move save icon under gearwheel menu
+        lockedEditor?: boolean; // remove default home navigation links from the editor
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
         appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
@@ -338,6 +344,11 @@ declare namespace pxt {
         experimentalHw?: boolean; // enable experimental hardware
         recipes?: boolean; // inlined tutorials
         checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
+        leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
+        nameProjectFirst?: boolean;
+        alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
+        alwaysGithubItem?: boolean; // show Github item; even when token is not available
     }
 
     interface SocialOptions {
@@ -410,6 +421,7 @@ declare namespace ts.pxtc {
         inlineConversions?: boolean;
         noPeepHole?: boolean;
         time?: boolean;
+        noIncr?: boolean;
     }
 
     interface CompileTarget {
@@ -451,6 +463,7 @@ declare namespace ts.pxtc {
         postProcessSymbols?: boolean;
         imageRefTag?: number;
         keepCppFiles?: boolean;
+        debugMode?: boolean; // set dynamically, not in config
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
@@ -535,6 +548,9 @@ declare namespace ts.pxtc {
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+        py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
+        pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
+        argsNullable?: boolean; // allow NULL to be passed to C++ shim function
 
         // on class
         snippet?: string; // value used to generate TS snippet
@@ -545,6 +561,7 @@ declare namespace ts.pxtc {
         group?: string;
         whenUsed?: boolean;
         jres?: string;
+        tags?: string; // value used to describe an element in a gallery when filtering / searching
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
         topblock?: boolean;
         topblockWeight?: number;
@@ -621,6 +638,7 @@ declare namespace ts.pxtc {
         name: string;
         description: string;
         type: string;
+        pyTypeString?: string;
         initializer?: string;
         default?: string;
         properties?: PropertyDesc[];
@@ -712,6 +730,9 @@ declare namespace ts.pxtc {
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
+        bannedCategories?: string[];
+        skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
+        skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
 
         syntaxInfo?: SyntaxInfo;
 
@@ -769,18 +790,33 @@ declare namespace ts.pxtc {
 declare namespace pxt.tutorial {
     interface TutorialInfo {
         editor: string; // preferred editor or blocks by default
+        title?: string;
         steps: TutorialStepInfo[];
+        activities: TutorialActivityInfo[];
         code: string; // all code
+        templateCode?: string;
+    }
+
+    interface TutorialMetadata {
+        activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
+        explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
     }
 
     interface TutorialStepInfo {
         fullscreen?: boolean;
         // no coding
         unplugged?: boolean;
+        tutorialCompleted?: boolean;
         hasHint?: boolean;
         contentMd?: string;
         headerContentMd?: string;
-        blockSolution?: string;
+        hintContentMd?: string;
+        activity?: number;
+    }
+
+    interface TutorialActivityInfo {
+        name: string,
+        step: number
     }
 
     interface TutorialOptions {
@@ -788,6 +824,7 @@ declare namespace pxt.tutorial {
         tutorialName?: string; // tutorial title
         tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialActivityInfo?: pxt.tutorial.TutorialActivityInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
         tutorialHintCounter?: number // count for number of times hint has been shown
@@ -795,6 +832,8 @@ declare namespace pxt.tutorial {
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
+        templateCode?: string;
+        autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

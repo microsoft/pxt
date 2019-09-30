@@ -25,3 +25,9 @@ paper.fdb_latexmk
 paper.aux
 tests/**/*.local.*
 package-lock.json
+tests/ui-test/node_modules
+tests/ui-test/.vs 
+tests/ui-test/package-lock.json
+tests/ui-test/debug.log
+tests/ui-test/chromedriver.exe
+tests/ui-test/screenshot/**

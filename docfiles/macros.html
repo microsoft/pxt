@@ -37,8 +37,24 @@
     </div>
 </aside>
 
+<aside id=hero class=box>
+    <div class="ui hero">
+        <div class="main-description">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
 <aside id=hint class=box>
     <div class="ui info message">
+        <div class="content">
+            @BODY@
+        </div>
+    </div>
+</aside>
+
+<aside id=tutorialhint class=box>
+    <div class="ui hint message">
         <div class="content">
             @BODY@
         </div>
@@ -128,9 +144,10 @@
 </aside>
 
 <aside id=top-dropdown class=toc>
-    <div class="item" title="@TITLE@">
-        <a class="header @ACTIVE@" href="@LINK@" role="menu">@NAME@</a>
-        <div class="menu">
+    <div class="item" title="@TITLE@" role="menu">
+        <i class="chevron right icon"></i>
+        <a class="header @ACTIVE@" href="@LINK@" role="menuitem">@NAME@</a>
+        <div class="menu" role="menu">
             @ITEMS@
         </div>
     </div>
@@ -147,7 +164,7 @@
 <aside id=inner-dropdown class=toc>
     <div class="ui @tocclass@ accordion item visible" role="tree" title="@TITLE@">
         <div class="@ACTIVE@ title">
-            <i class="dropdown icon"></i>
+            <i class="dropdown icon chevron right"></i>
             <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
@@ -159,7 +176,7 @@
 <aside id=nested-dropdown class=toc>
     <div class="@tocclass@ accordion item visible" title="@TITLE@">
         <div class="@ACTIVE@ title">
-            <i class="dropdown icon"></i>
+            <i class="dropdown icon chevron right"></i>
             <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">

@@ -1,0 +1,154 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*-------------------
+   Github view and diffs
+--------------------*/
+
+.diffview {
+    border: 0px;
+    border-spacing: 0px;
+    width: 100%;
+
+    .change code {
+        white-space: pre;
+    }
+
+    .diff-added {
+        background: @diffAddedBackground;
+
+        .ch-added {
+            background: @diffAddedTokenBackground;
+        }
+    }
+
+    .diff-removed {
+        background: @diffRemovedBackground;
+
+        .ch-removed {
+            background: @diffRemovedTokenBackground;
+        }
+    }
+
+    .diff-marker {
+        background: @diffMarkerBackground;
+        color: @diffMarkerColor
+    }
+
+    .diff-marker td {
+        padding-left: 1em;
+    }
+
+    .line-a,
+    .line-b {
+        width: 3em;
+        text-align: right;
+        color: rgba(27, 31, 35, .3);
+    }
+
+    .marker {
+        width: 2.5em;
+        text-align: center;
+    }
+
+    .change {
+        text-align: left;
+    }
+
+    .diff-added .line-b:before,
+    .diff-removed .line-a:before,
+    .diff-unchanged .line-a:before,
+    .diff-unchanged .line-b:before {
+        content: attr(data-content);
+    }
+
+    .marker:before {
+        content: attr(data-content);
+    }
+}
+
+#githubEditor {
+    background-color: @githubBackgroundColor;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#githubArea {
+    height: 90%;
+    padding: 1rem;
+
+    .ui.divider {
+        margin-bottom: 5px;
+    }
+
+    .ui.segment.diff {
+        padding: 0;
+    }
+
+    .ui.segments {
+        margin: 1rem 0;
+    }
+
+    .diffheader>span {
+        font-weight: bold;
+        font-size: 1.2em;
+    }
+
+    .diffheader .ui.button {
+        float: right;
+        margin-top: -0.5em;
+    }
+
+    .ui.segment.diff svg {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+
+    .ui.segments.filediff {
+        background: @diffSegmentBackgroundColor;        
+    }
+
+    .legend > span:not(:first-child) {
+        margin-left: 0.5rem;
+    }
+
+    .legend span.icon {
+        width: 0.8rem;
+        height: 0.8rem;
+        display: inline-block;
+        border-radius: 2px;
+        margin-right: 0.25rem;
+    }
+
+    .legend span.added.icon {
+        background: linear-gradient(45deg, orange , yellow, green, cyan, blue, violet);
+    }
+
+    .legend span.deleted.icon {
+        background-color: #d0d04e;
+        background-image: linear-gradient(45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb),
+        linear-gradient(-45deg, #bbbbbb 25%, transparent 25%, transparent 75%, #bbbbbb 75%, #bbbbbb);
+        background-size: 4px 4px;
+    }
+
+    .legend span.notchanged.icon {
+        background: #d0d0d0;
+    }
+
+    .repo-branch {
+        opacity: 0.4;
+        cursor: pointer;
+    }
+
+    .join {
+        text-align: center;
+    }
+
+    .create-pr {
+        float: right;
+    }
+}

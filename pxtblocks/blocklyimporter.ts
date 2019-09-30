@@ -47,9 +47,9 @@ namespace pxt.blocks {
         }
     }
 
-    export function saveWorkspaceXml(ws: Blockly.Workspace): string {
-        let xml = Blockly.Xml.workspaceToDom(ws, true);
-        let text = Blockly.Xml.domToPrettyText(xml);
+    export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): string {
+        const xml = Blockly.Xml.workspaceToDom(ws, !keepIds);
+        const text = Blockly.Xml.domToText(xml);
         return text;
     }
 
@@ -65,7 +65,7 @@ namespace pxt.blocks {
     }
 
     export function getBlocksWithType(parent: Document | Element, type: string) {
-        return getChildrenWithAttr(parent, "block", "type", type);
+        return getChildrenWithAttr(parent, "block", "type", type).concat(getChildrenWithAttr(parent, "shadow", "type", type));
     }
 
     export function getChildrenWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {

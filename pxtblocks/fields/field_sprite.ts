@@ -13,6 +13,8 @@ namespace pxtblockly {
 
         initWidth: string;
         initHeight: string;
+
+        filter?: string;
     }
 
     interface ParsedSpriteEditorOptions {
@@ -20,6 +22,7 @@ namespace pxtblockly {
         initColor: number;
         initWidth: number;
         initHeight: number;
+        filter?: string;
     }
 
     // 32 is specifically chosen so that we can scale the images for the default
@@ -32,6 +35,7 @@ namespace pxtblockly {
 
     export class FieldSpriteEditor extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
@@ -59,7 +63,7 @@ namespace pxtblockly {
                 return;
             }
             // Build the DOM.
-            this.fieldGroup_ = Blockly.utils.createSvgElement('g', {}, null);
+            this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
             if (!this.visible_) {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
@@ -83,9 +87,7 @@ namespace pxtblockly {
          * @private
          */
         showEditor_() {
-            const windowSize = goog.dom.getViewportSize();
-            const scrollOffset = goog.style.getViewportPageOffset(document);
-
+            const { sizes, initColor, filter} = this.params;
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
@@ -104,11 +106,15 @@ namespace pxtblockly {
                 Blockly.DropDownDiv.hideIfOwner(this);
             });
 
-            this.editor.setActiveColor(this.params.initColor, true);
-            if (!this.params.sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
-                this.params.sizes.push([this.state.width, this.state.height]);
+            this.editor.setActiveColor(initColor, true);
+            if (!sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
+                sizes.push([this.state.width, this.state.height]);
             }
-            this.editor.setSizePresets(this.params.sizes);
+            this.editor.setSizePresets(sizes);
+
+            if (filter) {
+                this.editor.setGalleryFilter(filter);
+            }
 
             goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
             goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
@@ -123,7 +129,7 @@ namespace pxtblockly {
                 this.redrawPreview();
                 if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                     Blockly.Events.fire(new Blockly.Events.BlockChange(
-                        this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
+                        this.sourceBlock_, 'field', this.name, this.text_, this.getValue()));
                 }
 
                 goog.style.setHeight(contentDiv, null);
@@ -148,18 +154,19 @@ namespace pxtblockly {
             this.size_.width = TOTAL_WIDTH;
         }
 
-        getText() {
+        getValue() {
             return pxtsprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
         }
 
-        setText(newText: string) {
-            if (newText == null) {
+        doValueUpdate_(newValue: string) {
+            if (newValue == null) {
                 return;
             }
-            this.parseBitmap(newText);
+            this.value_ = newValue;
+            this.parseBitmap(newValue);
             this.redrawPreview();
 
-            super.setText(newText);
+            super.doValueUpdate_(newValue);
         }
 
         private redrawPreview() {
@@ -259,7 +266,7 @@ namespace pxtblockly {
             return parsed;
         }
 
-        if (opts.sizes != null) {
+        if (opts.sizes) {
             const pairs = opts.sizes.split(";");
             const sizes: [number, number][] = [];
             for (let i = 0; i < pairs.length; i++) {
@@ -288,6 +295,10 @@ namespace pxtblockly {
                 parsed.initWidth = sizes[0][0];
                 parsed.initHeight = sizes[0][1];
             }
+        }
+
+        if (opts.filter) {
+            parsed.filter = opts.filter;
         }
 
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);

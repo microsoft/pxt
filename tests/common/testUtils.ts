@@ -33,9 +33,17 @@ export const testAppTarget: pxt.TargetBundle = {
     blocksprj: undefined,
     runtime: {
         pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
+        breakBlock: true,
+        continueBlock: true,
         bannedCategories: ["banned"]
     },
     corepkg: undefined
+}
+
+export interface PyConverterResult {
+    python: string;
+    ts: string;
+    diagnostics: pxtc.KsDiagnostic[];
 }
 
 export function compareBaselines(a: string, b: string): boolean {
@@ -80,20 +88,20 @@ export function ts2pyAsync(f: string): Promise<string> {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
             // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = (pxt as any).py.decompileToPythonHelper(program, "main.ts");
+            const decompiled = (pxt as any).py.decompileToPython(program, "main.ts");
 
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];
             }
             else {
-                return Promise.reject(new Error("Could not conver ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
+                return Promise.reject(new Error("Could not convert ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
             }
         })
 }
 
-export function py2tsAsync(f: string): Promise<string> {
+export function py2tsAsync(f: string, dependency = "bare", allowErrors = false): Promise<PyConverterResult> {
     const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, "bare", true)
+    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, dependency, true)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);
@@ -108,8 +116,12 @@ export function py2tsAsync(f: string): Promise<string> {
 
             let success = diagnostics.length == 0
 
-            if (success) {
-                return opts.fileSystem["main.ts"];
+            if (success || allowErrors) {
+                return {
+                    python: input,
+                    ts: opts.fileSystem["main.ts"],
+                    diagnostics
+                };
             }
             else {
                 let partialOutput = generated["main.ts"]

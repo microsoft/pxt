@@ -7,6 +7,8 @@
 
 @primaryColor: @pink;
 @secondaryColor: @grey;
+@docsPrimaryColor    : #6C196C;
+@docsAccentColor     : #FC6483;
 
 @red:#A80000;
 @orange:#D83B01;
@@ -14,12 +16,12 @@
 @green:#107C10;
 @teal:#008272;
 @blue:#0078D7;
-@violet:#B4009E;
 @purple:#5C2D91;
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
 @lightGrey: #d9d9d9;
+@backgroundGrey: #F0F2F7;
 
 @greenTextColor: darken(@green, 5);
 
@@ -36,16 +38,16 @@
 @importGoogleFonts: false;
 
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
-@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Times New Roman", serif;
 
-@emSize      : 14px;
-@fontSize    : 12pt;
+@emSize      : 18px;
+@fontSize    : 18px;
 
 /*-------------------
    Links
 --------------------*/
 
-@linkColor           : #4183c4;
+@linkColor           : #3977b4;
 @linkHoverUnderline  : underline;
 
 /*-------------------
@@ -143,7 +145,7 @@ default semantic
 --------------------*/
 
 @mainMenuBackground: @white;
-@mainMenuInvertedBackground: @black;
+@mainMenuInvertedBackground: @backgroundGrey;
 @mainMenuTutorialBackground: @orange;
 
 @mainMenuHeight: 4.0rem;
@@ -216,6 +218,20 @@ default semantic
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
 @serialConsoleBackground: @simulatorBackground;
+
+/*-------------------
+   Github Diff editor
+--------------------*/
+@githubBackgroundColor: lighten(@simulatorBackground, 2);
+@diffSegmentBackgroundColor: @pageBackground;
+@diffRemovedBackground:#ffeef0;
+@diffAddedBackground: #e6ffed;
+@diffMarkerBackground: #f1f8ff;
+@diffMarkerColor: rgba(27,31,35,.7);
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);;
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);;
+
 
 /*-------------------
    Blockly

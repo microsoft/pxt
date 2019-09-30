@@ -153,30 +153,34 @@ namespace pxt.crowdin {
             else if (code == 404 && data.error.code == 17) {
                 return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
+            } else if (!data.success && data.error.code == 53) {
+                // file is being updated
+                return Promise.delay(5000) // wait 5s and try again
+                    .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200) {
                 return Promise.resolve()
             } else {
-                throw new Error(`Error, upload translation: ${filename}, ${resp}, ${JSON.stringify(data)}`)
+                throw new Error(`Error, upload translation: ${filename}, ${code}, ${JSON.stringify(data)}`)
             }
         }
 
         return startAsync();
     }
 
-    function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string, branch?: string) {
-        const n = files.name;
+    function flatten(allFiles: CrowdinFileInfo[], node: CrowdinFileInfo, parentDir: string, branch?: string) {
+        const n = node.name;
         const d = parentDir ? parentDir + "/" + n : n;
-        files.fullName = d;
-        files.branch = branch || "";
-        switch (files.node_type) {
+        node.fullName = d;
+        node.branch = branch || "";
+        switch (node.node_type) {
             case "file":
-                allFiles.push(files);
+                allFiles.push(node);
                 break;
             case "directory":
-                (files.files || []).forEach(f => flatten(allFiles, f, d));
+                (node.files || []).forEach(f => flatten(allFiles, f, d, branch));
                 break;
             case "branch":
-                (files.files || []).forEach(f => flatten(allFiles, f, parentDir, files.name));
+                (node.files || []).forEach(f => flatten(allFiles, f, parentDir, node.name));
                 break;
         }
     }
