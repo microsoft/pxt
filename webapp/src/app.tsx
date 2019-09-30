@@ -2695,6 +2695,7 @@ function initExtensionsAsync(): Promise<void> {
 
     pxt.debug('loading editor extensions...');
     const opts: pxt.editor.ExtensionOptions = {
+        projectView: theEditor,
         blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
         monacoToolbox: monacoToolbox.getToolboxDefinition()
     };
