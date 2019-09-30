@@ -18,7 +18,7 @@ If you want to help with translating the editor, please sign in to Crowdin (or j
 
 Interested in how localization works in MakeCode? Watch this video for an overview of the process.
 
-[MakeCode localization video](https://youtu.be/XpdUzpBVKFU)
+https://youtu.be/XpdUzpBVKFU
 
 ### ~
 
