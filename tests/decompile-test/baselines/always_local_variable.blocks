@@ -1,11 +1,16 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="typescript_statement">
-<mutation declaredvars="x" numlines="1" line0="let x &#61; 0" />
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
 <next>
 <block type="typescript_statement">
-<mutation numlines="3" line0="for &#40;&#59;&#59;&#41; &#123;" line1="    x&#43;&#43;&#59;" line2="&#125;" />
+<mutation numlines="3" error="for loops must have an initializer&#44; incrementor&#44; and condition" line0="for &#40;&#59;&#59;&#41; &#123;" line1="    x&#43;&#43;&#59;" line2="&#125;" />
 </block>
 </next>
 </block>

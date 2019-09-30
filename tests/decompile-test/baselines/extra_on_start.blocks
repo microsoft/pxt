@@ -1,9 +1,6 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="device_forever">
 <statement name="HANDLER">
-<block type="typescript_statement">
-<mutation numlines="3" error="Events must be top level" line0="basic.forever&#40;&#40;&#41; &#61;&#62; &#123;" line1="        i &#43;&#43;&#59;" line2="    &#125;&#41;&#59;" />
-<next>
 <block type="variables_change">
 <field name="VAR">i</field>
 <value name="VALUE">
@@ -11,8 +8,6 @@
 <field name="NUM">1</field>
 </shadow>
 </value>
-</block>
-</next>
 </block>
 </statement>
 </block>
