@@ -9,16 +9,15 @@ import { ImageCanvas } from './ImageCanvas';
 
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
-import { FieldEditorComponent } from '../../blocklyFieldView';
 
 import { dispatchSetInitialImage, dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom } from './actions/dispatch';
-import { Bitmap, imageLiteralToBitmap, bitmapToImageLiteral } from './store/bitmap';
+import { Bitmap, bitmapToImageLiteral } from './store/bitmap';
 
 export interface ImageEditorProps {
     singleFrame?: boolean;
 }
 
-export class ImageEditor extends React.Component<ImageEditorProps,{}> implements FieldEditorComponent {
+export class ImageEditor extends React.Component<ImageEditorProps,{}> {
     componentDidMount() {
         addKeyListener();
     }
@@ -43,9 +42,8 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> implements
         </Provider>
     }
 
-    init(value: string, close: () => void, options?: any) {
-        const bitmap = imageLiteralToBitmap(value);
-        store.dispatch(dispatchSetInitialImage({ bitmap: bitmap.data() }));
+    initSingleFrame(value: Bitmap, close: () => void, options?: any) {
+        store.dispatch(dispatchSetInitialImage({ bitmap: value.data() }));
     }
 
     onResize() {

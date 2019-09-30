@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
-import { Bitmap } from './ImageEditor/store/bitmap';
+import { Bitmap, imageLiteralToBitmap } from './ImageEditor/store/bitmap';
 import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorState {
@@ -71,10 +71,13 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
     }
 
     init(value: string, close: () => void, options?: any) {
-        if (this.ref) {
-            this.ref.init(value, close, options);
+        let bitmap = imageLiteralToBitmap(value);
+
+        if (bitmap.width === 0 || bitmap.height === 0) {
+            bitmap = new Bitmap(options.initWidth || 16, options.initHeight || 16)
         }
 
+        this.ref.initSingleFrame(bitmap, close, options);
         this.closeEditor = close;
 
         if (options) {

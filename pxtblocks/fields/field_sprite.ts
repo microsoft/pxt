@@ -91,6 +91,8 @@ namespace pxtblockly {
                 const result = fv.getResult();
 
                 if (result) {
+                    const old = this.getValue();
+
                     this.state = pxtsprite.imageLiteralToBitmap(result);
                     this.redrawPreview();
 
@@ -98,7 +100,7 @@ namespace pxtblockly {
 
                     if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                         Blockly.Events.fire(new Blockly.Events.BlockChange(
-                            this.sourceBlock_, 'field', this.name, this.text_, this.getText()));
+                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
                     }
                 }
             });
