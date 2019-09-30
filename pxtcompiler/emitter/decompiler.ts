@@ -2888,18 +2888,12 @@ ${output}</xml>`;
 
     function isAutoDeclaration(decl: VariableDeclaration) {
         if (decl.initializer) {
-            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword || isDefaultArray(decl.initializer)) {
+            if (decl.initializer.kind === SyntaxKind.NullKeyword) {
                 return true
             }
-            else if (isStringOrNumericLiteral(decl.initializer)) {
-                const text = decl.initializer.getText();
-                return text === "0" || isEmptyString(text);
-            }
-            else {
-                const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
-                if (callInfo && callInfo.isAutoCreate)
-                    return true
-            }
+            const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
+            if (callInfo && callInfo.isAutoCreate)
+                return true
         }
         return false;
     }
