@@ -139,6 +139,24 @@ Tutorial hints accept but do not require a closing ``#### ~`` tag. They terminat
 ### ~
 ```
 
+### Hero
+&nbsp;
+
+### ~hero
+
+# Hero Title 
+A brief description of the page
+
+### ~
+```
+### ~hero
+
+# Hero Title
+[brief description]
+
+### ~
+```
+
 ## Buttons
 
 As a navigation aid, the button macro is used to move to another page within the target's document tree.

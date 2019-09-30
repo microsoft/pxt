@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20px" height="20px" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>Shape</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Explorations" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Actions-Bar---option-B" transform="translate(-1289.000000, -101.000000)" fill-rule="nonzero">
+            <g id="print" transform="translate(1289.000000, 100.000000)">
+                <g id="Icons-/-add-v2" transform="translate(0.000000, 1.000000)">
+                    <path d="M15,0 L5,0 L5,5.19230769 L15,5.19230769 L15,0 Z M1.66666667,9.42307692 C1.66666667,8.83892959 2.11438192,8.36538462 2.66666667,8.36538462 C3.21895142,8.36538462 3.66666667,8.83892959 3.66666667,9.42307692 C3.66666667,10.0072243 3.21895142,10.4807692 2.66666667,10.4807692 C2.11438192,10.4807692 1.66666667,10.0072243 1.66666667,9.42307692 Z M14,17.8846154 L6,17.8846154 L6,12.5961538 L14,12.5961538 L14,17.8846154 Z M17,6.25 L3,6.25 C1.34314575,6.25 4.4408921e-16,7.67063493 0,9.42307692 L0,15.7692308 L4,15.7692308 L4,20 L16,20 L16,15.7692308 L20,15.7692308 L20,9.42307692 C20,7.67063493 18.6568542,6.25 17,6.25 Z" id="Shape"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
