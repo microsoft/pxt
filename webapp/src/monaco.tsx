@@ -86,7 +86,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     if (insertSnippet) {
                         let amend: EditAmendment = {
                             delLeft: position.column - 1,
-                            insertText: insertSnippet
+                            insertText: insertSnippet || ""
                         }
                         if (amend.delLeft > 0)
                             resultSnippet = `${amendmentMarker}${JSON.stringify(amend)}`
@@ -106,7 +106,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
-                        insertText: resultSnippet,
+                        insertText: resultSnippet || "",
                         // range: range,
                         // textEdit: {
                         //     text: snippet,
@@ -897,7 +897,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             {
                 identifier: { major: 0, minor: 0 },
                 range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                text: insertText,
+                text: insertText || "",
                 forceMoveMarkers: true,
                 isAutoWhitespaceEdit: true,
 
