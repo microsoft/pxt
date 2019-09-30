@@ -369,7 +369,7 @@ export class ProjectView
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
+            if (!this.state.active || this.state.collapseEditorTools)
                 return;
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
@@ -378,7 +378,7 @@ export class ProjectView
     private autoRunSimulator = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
+            if (!this.state.active || this.state.collapseEditorTools)
                 return;
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
@@ -1421,12 +1421,13 @@ export class ProjectView
         if (this.checkForHwVariant())
             return;
 
+        this.beforeCompile();
         if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
+            this.editor.beforeCompile();
             this.saveAndCompile();
             return;
         }
 
-        this.beforeCompile();
         let userContextWindow: Window = undefined;
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
@@ -2694,6 +2695,7 @@ function initExtensionsAsync(): Promise<void> {
 
     pxt.debug('loading editor extensions...');
     const opts: pxt.editor.ExtensionOptions = {
+        projectView: theEditor,
         blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
         monacoToolbox: monacoToolbox.getToolboxDefinition()
     };

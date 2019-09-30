@@ -256,6 +256,7 @@ namespace pxt.editor {
 
 
     export interface ExtensionOptions {
+        projectView: IProjectView;
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
     }
