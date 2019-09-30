@@ -1,6 +1,30 @@
 type Action = () => void;
 
 /**
+ * Constant representing Not-A-Number.
+ */
+const NaN = 0 / 0
+
+/**
+ * Constant representing positive infinity.
+ */
+const Infinity = 1 / 0
+
+function isNaN(x: number) {
+    x = +x // convert to number
+    return x !== x
+}
+
+namespace Number {
+    /**
+     * Check if a given value is of type Number and it is a NaN.
+     */
+    export function isNaN(x: any): boolean {
+        return typeof x == "number" && x !== x
+    }
+}
+
+/**
  * A dictionary from string key to string values
  */
 interface StringMap {

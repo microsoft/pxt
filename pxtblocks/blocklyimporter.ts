@@ -47,9 +47,9 @@ namespace pxt.blocks {
         }
     }
 
-    export function saveWorkspaceXml(ws: Blockly.Workspace): string {
-        let xml = Blockly.Xml.workspaceToDom(ws, true);
-        let text = Blockly.Xml.domToText(xml);
+    export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): string {
+        const xml = Blockly.Xml.workspaceToDom(ws, !keepIds);
+        const text = Blockly.Xml.domToText(xml);
         return text;
     }
 

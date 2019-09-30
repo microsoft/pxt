@@ -884,14 +884,14 @@ namespace pxt.blocks {
         initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
-            if (this.disabled != disabled) {
+        (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
+            if (this.disabled == enabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this, 'disabled', null, this.disabled, disabled));
+                    this, 'disabled', null, this.disabled, !enabled));
                 (Blockly as any).Events.recordUndo = oldRecordUndo;
-                this.disabled = disabled;
+                this.disabled = !enabled;
             }
         };
     }
@@ -1142,6 +1142,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1229,6 +1230,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1293,11 +1295,34 @@ namespace pxt.blocks {
                 });
 
                 setHelpResources(this,
-                    ts.pxtc.TS_BREAK_TYPE,
+                    ts.pxtc.TS_CONTINUE_TYPE,
                     continueBlockDef.name,
                     continueBlockDef.tooltip,
                     continueBlockDef.url,
                     color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        const collapsedColor = "#cccccc";
+        Blockly.Blocks[pxtc.COLLAPSED_BLOCK] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": "...",
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": collapsedColor
+                })
+                setHelpResources(this,
+                    ts.pxtc.COLLAPSED_BLOCK,
+                    "...",
+                    lf("a few blocks"),
+                    undefined,
+                    collapsedColor,
                     undefined/*colourSecondary*/,
                     undefined/*colourTertiary*/,
                     false/*undeletable*/
@@ -2616,7 +2641,7 @@ namespace pxt.blocks {
                 render();
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
-                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
                 // Create new text, line by line.
                 let lines = tip.split('\n');
                 for (let i = 0; i < lines.length; i++) {
@@ -2676,7 +2701,7 @@ namespace pxt.blocks {
             pxt.log(`missing jres icon ${id}`)
             return undefined;
         }
-        return new Blockly.FieldImage(url, 40, 40, Util.isUserLanguageRtl(), '');
+        return new Blockly.FieldImage(url, 40, 40, '', null, Util.isUserLanguageRtl());
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {

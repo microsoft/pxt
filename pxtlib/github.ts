@@ -803,6 +803,10 @@ namespace pxt.github {
 
     type UArray = Uint32Array | Uint16Array
 
+    function toLines(file: string) {
+        return file ? file.split(/\r?\n/) : []
+    }
+
     export interface DiffOptions {
         context?: number; // lines of context; defaults to 3
         ignoreWhitespace?: boolean;
@@ -816,8 +820,8 @@ namespace pxt.github {
             fileB = fileB.replace(/[\r\n]+$/, "")
         }
 
-        const a = fileA ? fileA.split(/\r?\n/) : []
-        const b = fileB ? fileB.split(/\r?\n/) : []
+        const a = toLines(fileA)
+        const b = toLines(fileB)
 
         const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
         const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array
@@ -893,6 +897,9 @@ namespace pxt.github {
         }
         diff.reverse()
 
+        if (options.context == Infinity)
+            return diff
+
         let aline = 1, bline = 1, idx = 0
         const shortDiff: string[] = []
         const context = options.context || 3
@@ -961,6 +968,100 @@ namespace pxt.github {
                 }
             }
             return null
+        }
+    }
+
+    // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
+    export function diff3(fileA: string, fileO: string, fileB: string,
+        lblA?: string, lblB?: string) {
+        // we're not showing these to users (yet anyways)
+        if (!lblA)
+            lblA = lf("Yours") // ours/HEAD
+        if (!lblB)
+            lblB = lf("Incoming") // theirs/upstream/origin
+
+        const ma = computeMatch(fileA)
+        const mb = computeMatch(fileB)
+        const fa = toLines(fileA)
+        const fb = toLines(fileB)
+        let numConflicts = 0
+
+        let r: string[] = []
+        let la = 0, lb = 0
+        for (let i = 0; i < ma.length - 1;) {
+            if (ma[i] == la && mb[i] == lb) {
+                r.push(fa[la])
+                la++
+                lb++
+                i++
+            } else {
+                let aSame = true
+                let bSame = true
+                let j = i
+                while (j < ma.length) {
+                    if (ma[j] != la + j - i)
+                        aSame = false
+                    if (mb[j] != lb + j - i)
+                        bSame = false
+                    if (ma[j] != null && mb[j] != null)
+                        break
+                    j++
+                }
+                U.assert(j < ma.length)
+                if (aSame) {
+                    while (lb < mb[j])
+                        r.push(fb[lb++])
+                } else if (bSame) {
+                    while (la < ma[j])
+                        r.push(fa[la++])
+                } else if (fa.slice(la, ma[j]).join("\n") == fb.slice(lb, mb[j]).join("\n")) {
+                    // false conflict - both are the same
+                    while (la < ma[j])
+                        r.push(fa[la++])
+                } else {
+                    numConflicts++
+                    r.push("<<<<<<< " + lblA)
+                    while (la < ma[j])
+                        r.push(fa[la++])
+                    r.push("=======")
+                    while (lb < mb[j])
+                        r.push(fb[lb++])
+                    r.push(">>>>>>> " + lblB)
+                }
+                i = j
+                la = ma[j]
+                lb = mb[j]
+            }
+        }
+
+        return { merged: r.join("\n"), numConflicts }
+
+        function computeMatch(fileA: string) {
+            const da = pxt.github.diff(fileO, fileA, { context: Infinity })
+            const ma: number[] = []
+
+            let aidx = 0
+            let oidx = 0
+
+            // console.log(da)
+            for (let l of da) {
+                if (l[0] == "+") {
+                    aidx++
+                } else if (l[0] == "-") {
+                    ma[oidx] = null
+                    oidx++
+                } else if (l[0] == " ") {
+                    ma[oidx] = aidx
+                    aidx++
+                    oidx++
+                } else {
+                    U.oops()
+                }
+            }
+
+            ma.push(aidx + 1) // terminator
+
+            return ma
         }
     }
 }

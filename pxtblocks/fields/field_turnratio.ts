@@ -35,7 +35,7 @@ namespace pxtblockly {
 
         createLabelDom_(labelText: string) {
             let labelContainer = document.createElement('div');
-            let svg = Blockly.utils.createSvgElement('svg', {
+            let svg = Blockly.utils.dom.createSvgElement('svg', {
                 'xmlns': 'http://www.w3.org/2000/svg',
                 'xmlns:html': 'http://www.w3.org/1999/xhtml',
                 'xmlns:xlink': 'http://www.w3.org/1999/xlink',
@@ -43,15 +43,15 @@ namespace pxtblockly {
                 'height': (FieldTurnRatio.HALF + FieldTurnRatio.HANDLE_RADIUS + 10) + 'px',
                 'width': (FieldTurnRatio.HALF * 2) + 'px'
             }, labelContainer);
-            let defs = Blockly.utils.createSvgElement('defs', {}, svg);
-            let marker = Blockly.utils.createSvgElement('marker', {
+            let defs = Blockly.utils.dom.createSvgElement('defs', {}, svg);
+            let marker = Blockly.utils.dom.createSvgElement('marker', {
                 'id': 'head',
                 'orient': "auto",
                 'markerWidth': '2',
                 'markerHeight': '4',
                 'refX': '0.1', 'refY': '1.5'
             }, defs);
-            let markerPath = Blockly.utils.createSvgElement('path', {
+            let markerPath = Blockly.utils.dom.createSvgElement('path', {
                 'd': 'M0,0 V3 L1.5,1.5 Z',
                 'fill': '#f12a21'
             }, marker);
@@ -61,7 +61,7 @@ namespace pxtblockly {
                 'style': 'font-size: 50px',
                 'class': 'sim-text inverted number'
             }) as SVGTextElement;
-            this.path_ = Blockly.utils.createSvgElement('path', {
+            this.path_ = Blockly.utils.dom.createSvgElement('path', {
                 'x1': FieldTurnRatio.HALF,
                 'y1': FieldTurnRatio.HALF,
                 'marker-end': 'url(#head)',

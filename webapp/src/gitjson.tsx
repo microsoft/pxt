@@ -7,8 +7,11 @@ import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
 import * as coretsx from "./coretsx";
 import * as data from "./data";
+import * as markedui from "./marked";
+import * as compiler from "./compiler";
 
 interface DiffCache {
+    file: pkg.File;
     gitFile: string;
     editorFile: string;
     diff: JSX.Element;
@@ -217,7 +220,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             disagreeLbl: lf("Cancel"),
             jsxd: () => <div className="grouped fields">
                 <label>{lf("Choose a release version that describes the changes you made to the code.")}
-                    <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn about version numbers.")} />
+                    {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
                 </label>
                 <div className="field">
                     <div className="ui radio checkbox">
@@ -338,12 +341,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private async commitCoreAsync() {
         const { header } = this.props.parent.state;
         const repo = header.githubId;
-        const msg = this.state.description || lf("Updates")
-        let commitId = await workspace.commitAsync(header, msg)
+        let commitId = await workspace.commitAsync(header, {
+            message: this.state.description
+        })
         if (commitId) {
             // merge failure; do a PR
             // we could ask the user, but it's unlikely they can do anything else to fix it
-            let prUrl = await workspace.prAsync(header, commitId, msg)
+            let prUrl = await workspace.prAsync(header, commitId,
+                this.state.description || lf("Commit conflict"))
             await dialogs.showPRDialogAsync(repo, prUrl)
             // when the dialog finishes, we pull again - it's possible the user
             // has resolved the conflict in the meantime
@@ -366,49 +371,122 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private showDiff(f: pkg.File) {
+    private lineDiff(lineA: string, lineB: string) {
+        const df = pxt.github.diff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
+            context: Infinity
+        })
+        const ja: JSX.Element[] = []
+        const jb: JSX.Element[] = []
+        for (let i = 0; i < df.length;) {
+            let j = i
+            const mark = df[i][0]
+            while (df[j] && df[j][0] == mark)
+                j++
+            const chunk = df.slice(i, j).map(s => s.slice(2)).join("")
+            if (mark == " ") {
+                ja.push(<code key={i} className="ch-common">{chunk}</code>)
+                jb.push(<code key={i} className="ch-common">{chunk}</code>)
+            } else if (mark == "-") {
+                ja.push(<code key={i} className="ch-removed">{chunk}</code>)
+            } else if (mark == "+") {
+                jb.push(<code key={i} className="ch-added">{chunk}</code>)
+            } else {
+                pxt.Util.oops()
+            }
+            i = j
+        }
+        return {
+            a: <div className="inline-diff">{ja}</div>,
+            b: <div className="inline-diff">{jb}</div>
+        }
+    }
+
+    private showDiff(isBlocksMode: boolean, f: pkg.File) {
         let cache = this.diffCache[f.name]
-        if (!cache) {
-            cache = {} as any
+        if (!cache || cache.file !== f) {
+            cache = { file: f } as any
             this.diffCache[f.name] = cache
         }
         if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
-        const classes: pxt.Map<string> = {
-            "@": "diff-marker",
-            " ": "diff-unchanged",
-            "+": "diff-added",
-            "-": "diff-removed",
-        }
-        const diffLines = pxt.github.diff(f.baseGitContent || "", f.content, { ignoreWhitespace: true })
-        let lnA = 0, lnB = 0
-        const diffJSX = isBlocks ? [] : diffLines.map(ln => {
-            const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
-            if (m) {
-                lnA = parseInt(m[1]) - 1
-                lnB = parseInt(m[2]) - 1
-            } else {
-                if (ln[0] != "+")
-                    lnA++
-                if (ln[0] != "-")
-                    lnB++
+        const baseContent = f.baseGitContent || "";
+        const content = f.content;
+        let legendJSX: JSX.Element;
+        let diffJSX: JSX.Element;
+        if (isBlocks) {
+            const markdown =
+                `
+\`\`\`diffblocksxml
+${baseContent}
+---------------------
+${content}
+\`\`\`
+`;
+            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            legendJSX = <p className="legend">
+                <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
+                <span><span className="deleted icon"></span>{lf("deleted")}</span>
+                <span><span className="notchanged icon"></span>{lf("not changed")}</span>
+                {sui.helpIconLink("/github/diff#blocks", lf("Learn about reading differences in blocks code."))}
+            </p >
+        } else {
+            const classes: pxt.Map<string> = {
+                "@": "diff-marker",
+                " ": "diff-unchanged",
+                "+": "diff-added",
+                "-": "diff-removed",
             }
-            return (
-                <tr key={lnA + lnB} className={classes[ln[0]]}>
-                    <td className="line-a" data-content={lnA}></td>
-                    <td className="line-b" data-content={lnB}></td>
-                    {ln[0] == "@"
-                        ? <td colSpan={2} className="change"><pre>{ln}</pre></td>
-                        : <td className="marker" data-content={ln[0]}></td>
-                    }
-                    {ln[0] == "@"
-                        ? undefined
-                        : <td className="change"><pre>{ln.slice(2)}</pre></td>
-                    }
-                </tr>)
-        })
+            const diffLines = pxt.github.diff(f.baseGitContent || "", f.content, { ignoreWhitespace: true })
+            let lnA = 0, lnB = 0
+            let lastMark = ""
+            let savedDiff: JSX.Element = null
+            const linesTSX = diffLines.map((ln, idx) => {
+                const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
+                if (m) {
+                    lnA = parseInt(m[1]) - 1
+                    lnB = parseInt(m[2]) - 1
+                } else {
+                    if (ln[0] != "+")
+                        lnA++
+                    if (ln[0] != "-")
+                        lnB++
+                }
+                const nextMark = diffLines[idx + 1] ? diffLines[idx + 1][0] : ""
+                const next2Mark = diffLines[idx + 2] ? diffLines[idx + 2][0] : ""
+                let currDiff = <code>{ln.slice(2)}</code>
+
+                if (savedDiff) {
+                    currDiff = savedDiff
+                    savedDiff = null
+                } else if (ln[0] == "-" && (lastMark == " " || lastMark == "@") && nextMark == "+"
+                    && (next2Mark == " " || next2Mark == "@" || next2Mark == "")) {
+                    const r = this.lineDiff(ln.slice(2), diffLines[idx + 1].slice(2))
+                    currDiff = r.a
+                    savedDiff = r.b
+                }
+                lastMark = ln[0]
+                return (
+                    <tr key={lnA + lnB} className={classes[ln[0]]}>
+                        <td className="line-a" data-content={lnA}></td>
+                        <td className="line-b" data-content={lnB}></td>
+                        {ln[0] == "@"
+                            ? <td colSpan={2} className="change"><code>{ln}</code></td>
+                            : <td className="marker" data-content={ln[0]}></td>
+                        }
+                        {ln[0] == "@"
+                            ? undefined
+                            : <td className="change">{currDiff}</td>
+                        }
+                    </tr>)
+            })
+            diffJSX = linesTSX.length ? <table className="diffview">
+                <tbody>
+                    {linesTSX}
+                </tbody>
+            </table> : undefined;
+        }
 
         let deletedFiles: string[] = []
         let addedFiles: string[] = []
@@ -418,10 +496,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
             addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
         }
+        // backing .ts for .blocks/.py files
+        let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        if (virtualF == f) virtualF = undefined;
 
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
         cache.revert = async () => {
+            pxt.tickEvent("github.revert", { start: 1 })
             const res = await core.confirmAsync({
                 header: lf("Would you like to revert changes to {0}?", f.name),
                 body: lf("Changes will be lost for good. No undo."),
@@ -433,6 +515,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             if (!res)
                 return
 
+            pxt.tickEvent("github.revert", { ok: 1 })
             this.setState({ needsCommitMessage: false }); // maybe we no longer do
 
             if (f.baseGitContent == null) {
@@ -451,6 +534,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 await this.props.parent.reloadHeaderAsync()
             } else {
                 await f.setContentAsync(f.baseGitContent)
+                // revert generated .ts file as well
+                if (virtualF)
+                    await virtualF.setContentAsync(virtualF.baseGitContent);
                 this.forceUpdate();
             }
         }
@@ -462,6 +548,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />
+                    {legendJSX}
                     {deletedFiles.length == 0 ? undefined :
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
@@ -470,14 +557,13 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <p>
                             {lf("Reverting this file will also remove: {0}", addedFiles.join(", "))}
                         </p>}
+                    {virtualF && !isBlocksMode ? <p>
+                        {lf("Reverting this file will also revert: {0}", virtualF.name)}
+                    </p> : undefined}
                 </div>
-                {isBlocks ? <div className="ui segment"><p>{lf("Some blocks changed")}</p></div> : diffJSX.length ?
+                {diffJSX ?
                     <div className="ui segment diff">
-                        <table className="diffview">
-                            <tbody>
-                                {diffJSX}
-                            </tbody>
-                        </table>
+                        {diffJSX}
                     </div>
                     :
                     <div className="ui segment">
@@ -524,8 +610,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         // TODO: disable commit changes if no changes available
         // TODO: commitAsync handle missing token or failed push
 
+        const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
-        const needsCommit = diffFiles.length > 0
+        const needsCommit = diffFiles.length > 0;
+        const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const { needsPull } = this.state;
         const githubId = this.parsedRepoId()
@@ -553,7 +641,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -563,14 +651,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
-                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon"/></span>
+                        <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
-                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
+                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
                     }
                     <div className="ui">
-                        {diffFiles.map(df => this.showDiff(df))}
+                        {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div>
 
                     {pxt.github.token ? dialogs.githubFooter("", () => this.props.parent.forceUpdate()) : undefined}
@@ -586,6 +674,7 @@ interface GitHubViewProps {
     master: boolean;
     parent: GithubComponent;
     gs: pxt.github.GitJson;
+    isBlocks: boolean;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -607,7 +696,9 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
         return <div>
             {needsToken ? <div className="ui info message join">
-                <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
+                <p>{lf("Host your code on GitHub and work together with friends on projects.")}
+                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
+                </p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
             </div> : undefined}
             {!needsToken && needsCommitMessage ? <div className="ui warning message">
@@ -639,13 +730,15 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId } = this.props;
+        const { githubId } = this.props;
         return <div>
             <div className="ui field">
                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
             </div>
             {<div className="field">
-                <p>{lf("Commit changes to the {0} branch.", githubId.tag || "master")}</p>
+                <p>{lf("Save your changes in GitHub.")}
+                    {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
+                </p>
             </div>}
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
@@ -676,11 +769,17 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
-            {master ?
+            {master ? gs.commit && gs.commit.tag ?
+                <div className="ui field">
+                    <p>{lf("Current release: {0}", gs.commit.tag)}
+                        {sui.helpIconLink("/github/release", lf("Learn about releases."))}
+                    </p>
+                </div>
+                :
                 <div className="ui field">
                     <p>
                         {lf("Bump up the version number and create a release on GitHub.")}
-                        <sui.Link href="https://makecode.com/extensions/versioning" icon="help circle" target="_blank" role="button" title={lf("Learn more about extension releases.")} />
+                        {sui.helpIconLink("/github/release#license", lf("Learn more about extension releases."))}
                     </p>
                     <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
                 </div> : undefined}
@@ -739,6 +838,7 @@ export class Editor extends srceditor.Editor {
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         // force refresh to ensure we have a view
         return super.loadFileAsync(file, hc)
+            .then(() => compiler.getBlocksAsync()) // make sure to load block definitions
             .then(() => this.parent.forceUpdate());
     }
 

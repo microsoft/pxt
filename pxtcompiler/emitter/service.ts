@@ -1185,6 +1185,12 @@ namespace ts.pxtc.service {
                     host.opts.skipPxtModulesEmit = true
             }
             res = compile(host.opts, service);
+            if (res.needsFullRecompile) {
+                pxt.log("trigering full recompile")
+                pxt.tickEvent("compile.fullrecompile")
+                host.opts.skipPxtModulesEmit = false
+                res = compile(host.opts, service);
+            }
             if (res.diagnostics.every(d => !isPxtModulesFilename(d.fileName)))
                 host.pxtModulesOK = currKey
         }

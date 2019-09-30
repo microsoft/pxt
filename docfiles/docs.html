@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="@locale@" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+<html lang="@locale@" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#"
+	xmlns:fb="http://www.facebook.com/2008/fbml">
 
 <head>
 	<meta charset="UTF-8">
@@ -7,6 +8,7 @@
 	<meta name="Description" content="@description@" />
 
 	<!-- @include meta.html -->
+
 	<!-- @include head.html -->
 
 </head>
@@ -17,33 +19,42 @@
 		@accMenu@
 	</div>
 
+	<!-- @include docsheader.html-->
 
-	<!-- @include tocheader.html -->
 
-	<div id="docs" class="pusher">
+	<button id="sticky-btn" style="display:none;"><i class="ellipsis vertical icon"></i></button>
+	<div id="docs" class="">
 
-		<!-- @include toc.html -->
+		<!-- @include tocheader.html -->
 
-		<div class="article" id="maincontent">
+		<div class="article pusher" id="maincontent">
 			<div class="article-inner">
 
 				<!-- @include header.html -->
 
-				<div class="main ui container fluid mainbody">
-					<!-- @include printbtn.html -->
-					@body@
-					<div class="hideprint">@github@</div>
+				<div class="main ui grid fluid mainbody full-width">
+					<div class="one wide computer column zero wide mobile column"></div>
+					<div id="content-column" class="ten wide computer column sixteen wide mobile column">
+						<!-- @include printbtn.html -->
+						@body@
+						<div class="hideprint">@github@</div>
+					</div>
+					<div id="sticky-column" class="four wide computer column zero wide mobile column">
+					</div>
+					<div class="one wide computer column zero wide mobile column"></div>
+
 				</div>
 
-				<!-- @include footer.html -->
+
 			</div>
 
 		</div>
+		<!-- @include footer.html -->
 
 	</div>
 
-
 	<!-- @include macros.html -->
+
 	<!-- @include tracking.html -->
 
 </body>

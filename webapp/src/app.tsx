@@ -1158,12 +1158,12 @@ export class ProjectView
             }).then(() => compiler.applyUpgradesAsync())
             .then(() => this.loadTutorialTemplateCodeAsync())
             .then(() => {
-                const e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 const main = pkg.getEditorPkg(pkg.mainPkg)
                 // override preferred editor if specified
                 if (pkg.mainPkg.config.preferredEditor)
                     h.editor = pkg.mainPkg.config.preferredEditor
                 let file = main.getMainFile();
+                const e = h.editor != pxt.BLOCKS_PROJECT_NAME && this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 if (e)
                     file = main.lookupFile(e.name) || file
 
@@ -1513,7 +1513,7 @@ export class ProjectView
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
-            pxt.tickEvent("import." + importer.id);
+            pxt.tickEvent("import",{ id : importer.id });
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             pxt.editor.initEditorExtensionsAsync()
@@ -3863,10 +3863,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         lang.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
-                        pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
+                        pxt.tickEvent("unavailablelocale", {lang : useLang,  force : (force ? "true" : "false")});
                     }
-                    pxt.tickEvent("locale." + pxt.Util.userLanguage() + (live ? ".live" : ""));
-
+                    pxt.tickEvent("locale", {lang : pxt.Util.userLanguage(), live : (live ? "true" : "false")});
                     // Download sim translations and save them in the sim
                     // don't wait!
                     ts.pxtc.Util.downloadTranslationsAsync(
