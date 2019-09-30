@@ -498,6 +498,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
+                                buttonLabel={scr.buttonLabel}
                                 label={scr.label}
                                 labelClass={scr.labelClass}
                                 tags={scr.tags}
@@ -519,6 +520,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             imageUrl={selectedElement.imageUrl}
                             largeImageUrl={selectedElement.largeImageUrl}
                             youTubeId={selectedElement.youTubeId}
+                            buttonLabel={selectedElement.buttonLabel}
                             scr={selectedElement}
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
@@ -626,6 +628,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     imageUrl?: string;
     largeImageUrl?: string;
     youTubeId?: string;
+    buttonLabel?: string;
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
@@ -708,14 +711,16 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
 
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial")
+        if (buttonLabel)
+        clickLabel = buttonLabel;
+        else if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
         else if (cardType == "codeExample" || cardType == "example")
             clickLabel = lf("Open Example");
