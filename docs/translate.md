@@ -14,6 +14,14 @@ The project below contains the resources from https://makecode.com and the menu 
 
 If you want to help with translating the editor, please sign in to Crowdin (or join first if you don't already have an account) and send us a translator request.
 
+### ~ hint
+
+Interested in how localization works in MakeCode? Watch this video for an overview of the process.
+
+https://youtu.be/XpdUzpBVKFU
+
+### ~
+
 ## Languages
 
 On the Crowdin [home page](https://crowdin.com/project/kindscript) are the all of the languages enabled for the MakeCode project. You go here first to choose the language or languages you wish to participate in for translation.
