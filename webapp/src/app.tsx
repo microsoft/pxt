@@ -369,7 +369,7 @@ export class ProjectView
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
+            if (!this.state.active || this.state.collapseEditorTools)
                 return;
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
@@ -378,7 +378,7 @@ export class ProjectView
     private autoRunSimulator = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
+            if (!this.state.active || this.state.collapseEditorTools)
                 return;
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
