@@ -262,7 +262,6 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 }
 
 interface TutorialCardState {
-    popout?: boolean;
     showHintTooltip?: boolean;
     showSeeMore?: boolean;
 }
@@ -336,17 +335,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
     }
 
-    setPopout() {
-        this.setState({ popout: true });
-    }
-
     private closeLightbox() {
         sounds.tutorialNext();
         document.documentElement.removeEventListener("keydown", this.closeLightboxOnEscape);
 
         // Hide lightbox
         this.props.parent.hideLightbox();
-        this.setState({ popout: false });
     }
 
     componentWillUpdate() {
@@ -376,19 +370,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     componentDidUpdate(prevProps: ISettingsProps, prevState: TutorialCardState) {
         const options = this.props.parent.state.tutorialOptions;
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
-        const tutorialOkRef = this.refs["tutorialok"] as sui.Button;
-        const okButton = ReactDOM.findDOMNode(tutorialOkRef) as HTMLElement;
-        if (prevState.popout != this.state.popout && this.state.popout) {
-            // Setup focus trap around the tutorial card and the ok button
-            tutorialCard.addEventListener('keydown', this.tutorialCardKeyDown);
-            okButton.addEventListener('keydown', this.okButtonKeyDown);
-            tutorialCard.focus();
-        } else if (prevState.popout != this.state.popout && !this.state.popout) {
-            // Unregister event handlers
-            tutorialCard.removeEventListener('keydown', this.tutorialCardKeyDown);
-            okButton.removeEventListener('keydown', this.okButtonKeyDown);
-            tutorialCard.focus();
-        }
+
         const step = this.props.parent.state.tutorialOptions.tutorialStep;
         if (step != this.lastStep) {
             const animationClasses = `fade ${step < this.lastStep ? "right" : "left"} in visible transition animating`;
@@ -562,8 +544,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                         {hasHint && <HintTooltip ref="hinttooltip" pokeUser={this.props.pokeUser} text={tutorialHintTooltip} onClick={hintOnClick} />}
                         {hasHint && <TutorialHint ref="tutorialhint" parent={this.props.parent} />}
                     </div>
-                    <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={hintOnClick} onKeyDown={sui.fireClickOnEnter}>
+                    <div ref="tutorialmessage" className={`tutorialmessage`} role="main" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
+                        onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
                         <div className="content">
                             <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
