@@ -4113,11 +4113,6 @@ ${lbl}: .short 0xffff
             markUsed(declList.declarations[0])
             const iterVar = emitVariableDeclaration(declList.declarations[0]) // c
             U.assert(!!iterVar || !bin.finalPass)
-            //Start with undefined
-            if (iterVar) {
-                proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
-                recordUse(declList.declarations[0], true)
-            }
             proc.stackEmpty()
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
@@ -4129,8 +4124,6 @@ ${lbl}: .short 0xffff
             let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
-
-            flushHoistedFunctionDefinitions()
 
             emitBrk(node);
 
@@ -4152,6 +4145,8 @@ ${lbl}: .short 0xffff
             // c = a[i]
             if (iterVar)
                 proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
+
+            flushHoistedFunctionDefinitions()
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);
