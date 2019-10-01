@@ -413,6 +413,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyDiv = document.getElementById('blocksEditor');
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
+        const hasCategories = (this.editor.options as any).hasCategories;
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
@@ -937,7 +938,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.clearCaches();
 
-        const hasCategories = this.shouldShowCategories();
+        const forceFlyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
+        const hasCategories = this.shouldShowCategories(!forceFlyoutOnly);
 
         // We might need to switch the toolbox type
         if ((this.editor.toolbox_ && hasCategories) || ((this.editor as any).flyout_ && !hasCategories)) {
@@ -966,7 +968,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.scrollCenter();
             if (hasCategories) {
                 // If we're switching from no toolbox to a toolbox, mount node
-                if (!this.toolbox) this.renderToolbox(true);
+                this.renderToolbox(true);
             }
         }
     }
@@ -1060,11 +1062,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return true;
     }
 
-    shouldShowCategories() {
+    shouldShowCategories(forceHasCategories?: boolean) {
         if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
             return this.parent.state.editorState.hasCategories;
         }
-        const blocklyOptions = this.getBlocklyOptions();
+        const blocklyOptions = this.getBlocklyOptions(forceHasCategories);
         return blocklyOptions.hasCategories;
     }
 
@@ -1346,7 +1348,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
-        if (this.editor.toolbox_) {
+        if ((!this.parent.state.editorState || this.parent.state.editorState.hasCategories !== false)
+            && this.editor.toolbox_) {
             const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
 
             // determine if the cached flyout exists and isn't stale
@@ -1384,8 +1387,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             newFlyout.scrollToStart();
         } else if ((this.editor as any).flyout_) {
-            (this.editor as any).show(xmlList);
-            (this.editor as any).scrollToStart();
+            (this.editor as any).flyout_.show(xmlList);
+            (this.editor as any).flyout_.scrollToStart();
         }
     }
 

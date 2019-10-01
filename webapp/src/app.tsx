@@ -1259,6 +1259,7 @@ export class ProjectView
                         blocks: usedBlocks,
                         defaultState: pxt.editor.FilterState.Hidden
                     }
+                    editorState.hasCategories = !(header.tutorial.metadata && header.tutorial.metadata.flyoutOnly);
                 }
                 this.setState({ editorState: editorState });
                 this.editor.filterToolbox(true);
@@ -4018,7 +4019,8 @@ function getTutorialOptions(md: string, tutorialId: string, filename: string, re
         tutorialCode: tutorialInfo.code,
         tutorialRecipe: !!recipe,
         templateCode: tutorialInfo.templateCode,
-        autoexpandStep: true
+        autoexpandStep: true,
+        metadata: tutorialInfo.metadata
     };
 
     return { options: tutorialOptions, editor: tutorialInfo.editor };
