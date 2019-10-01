@@ -6,7 +6,7 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
+@secondaryColor: rgba(0, 0, 0, 0.55);
 @docsPrimaryColor    : #6C196C;
 @docsAccentColor     : #FC6483;
 
@@ -25,7 +25,7 @@
 
 @greenTextColor: darken(@green, 5);
 
-@lightTextColor              : rgba(0, 0, 0, 0.68);
+@lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
