@@ -36,8 +36,8 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                     <CursorSizes />
                 </div>
                 <div className="spacer"/>
-                { singleFrame ? undefined : <div className="image-editor-seperator"/> }
-                { singleFrame ? undefined :
+                { !singleFrame && <div className="image-editor-seperator"/> }
+                { !singleFrame &&
                     <div className="timeline-controls">
                         <IconButton
                             onClick={this.togglePreviewAnimating}

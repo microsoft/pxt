@@ -23,7 +23,7 @@ export interface ToolInfo {
     hoverCursor?: ToolCursor;
     downCursor?: ToolCursor;
     hoverLayerCursor?: ToolCursor;
-    downLayerCursr?: ToolCursor;
+    downLayerCursor?: ToolCursor;
 }
 
 export const tools: ToolInfo[] = [
@@ -71,7 +71,7 @@ export const tools: ToolInfo[] = [
         title: lf("Marquee Tool"),
         hoverCursor: ToolCursor.Crosshair,
         hoverLayerCursor: ToolCursor.Grab,
-        downLayerCursr: ToolCursor.Grabbing
+        downLayerCursor: ToolCursor.Grabbing
     },
     {
         tool: ImageEditorTool.Pan,

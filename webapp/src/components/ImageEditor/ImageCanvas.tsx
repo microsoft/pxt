@@ -193,12 +193,12 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected updateCursor(isDown: boolean, inLayer: boolean) {
         const { tool } = this.props;
-        const def = tools.filter(td => td.tool === tool)[0];
+        const def = tools.find(td => td.tool === tool);
 
         if (!def) this.updateCursorCore(ToolCursor.Default)
         else if (inLayer) {
             if (isDown) {
-                this.updateCursorCore(def.downLayerCursr || def.hoverLayerCursor || def.downCursor || def.hoverCursor);
+                this.updateCursorCore(def.downLayerCursor || def.hoverLayerCursor || def.downCursor || def.hoverCursor);
             }
             else {
                 this.updateCursorCore(def.hoverLayerCursor || def.hoverCursor);

@@ -208,7 +208,7 @@ namespace pxtblockly {
         }
     }
 
-    function  parseFieldOptions(opts: FieldSpriteEditorOptions) {
+    function parseFieldOptions(opts: FieldSpriteEditorOptions) {
         const parsed: ParsedSpriteEditorOptions = {
             initColor: 1,
             initWidth: 16,
