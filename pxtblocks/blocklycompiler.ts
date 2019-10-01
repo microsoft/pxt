@@ -969,10 +969,12 @@ namespace pxt.blocks {
     function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
-        let valid = (x: string) => !e.renames.takenNames[x]
-        let name = "i";
-        for (let i = 0; !valid(name); i++)
-            name = "i" + i;
+        let valid = (x: string) => !lookup(e, b, x);
+
+        let name = "index";
+        // Start at 2 because index0 and index1 are bad names
+        for (let i = 2; !valid(name); i++)
+            name = "index" + i;
         return [
             mkText("for (let " + name + " = 0; "),
             mkInfix(mkText(name), "<", bound),
