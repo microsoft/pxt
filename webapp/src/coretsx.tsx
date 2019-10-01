@@ -135,7 +135,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                         onChange={this.handleInputChange}
                         value={inputValue}
                         placeholder={options.placeholder}
-                        aria-label={lf(`text prompt for {0}`, options.placeholder)}
+                        aria-label={options.placeholder}
                     />
                     {inputError ? <div className="ui error message">{inputError}</div> : undefined}
                 </div> : undefined}
