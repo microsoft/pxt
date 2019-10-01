@@ -252,7 +252,8 @@ span.highlight-line {
     padding: 0.5rem;
 }
 
-#tutorialcard .prevbutton, #tutorialcard .nextbutton {
+#tutorialcard .prevbutton,
+#tutorialcard .nextbutton {
     background: @tutorialSegmentBackground;
     z-index: 2;
 
@@ -261,13 +262,13 @@ span.highlight-line {
         margin: 0 auto 0.5em !important;
         color: @mainMenuTutorialBackground;
     }
-}
 
-#tutorialcard .prevbutton:hover, #tutorialcard .nextbutton:hover {
-    background-color: @lightGrey;
+    &:hover, &:focus {
+        background-color: @lightGrey;
 
-    > i, > span, > i.orange {
-        color: @black!important;
+        > i, > span, > i.orange {
+            color: @black!important;
+        }
     }
 }
 
