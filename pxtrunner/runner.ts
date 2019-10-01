@@ -499,7 +499,7 @@ namespace pxt.runner {
             backButton.addEventListener("click", () => {
                 goBack();
             });
-            pxsim.U.addClass(backButton, "disabled");
+            setElementDisabled(backButton, true);
         }
 
         function render(doctype: string, src: string) {
@@ -563,7 +563,7 @@ namespace pxt.runner {
             }
 
             if (history.length > 1) {
-                pxsim.U.removeClass(backButton, "disabled");
+                setElementDisabled(backButton, false);
             }
         }
 
@@ -576,7 +576,17 @@ namespace pxt.runner {
             }
 
             if (history.length <= 1) {
-                pxsim.U.addClass(backButton, "disabled");
+                setElementDisabled(backButton, true);
+            }
+        }
+
+        function setElementDisabled(el: HTMLElement, disabled: boolean) {
+            if (disabled) {
+                pxsim.U.addClass(el, "disabled");
+                el.setAttribute("aria-disabled", "true");
+            } else {
+                pxsim.U.removeClass(el, "disabled");
+                el.setAttribute("aria-disabled", "false");
             }
         }
 
