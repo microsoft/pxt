@@ -3,6 +3,7 @@ namespace pxtsprite {
         qName: string;
         src: string;
         alt: string;
+        tags: string[];
     }
 
     const COLUMNS = 4;
@@ -11,6 +12,7 @@ namespace pxtsprite {
         protected info: pxtc.BlocksInfo;
         protected contentDiv: HTMLDivElement;
         protected containerDiv: HTMLDivElement;
+        protected galleryItems: GalleryItem[];
 
         protected itemBorderColor: string;
         protected itemBackgroundColor: string;
@@ -39,6 +41,10 @@ namespace pxtsprite {
                     this.containerDiv.style.display = "none";
                 }
             });
+
+            this.contentDiv.addEventListener('wheel', e => {
+                e.stopPropagation();
+            }, true)
         }
 
         getElement() {
@@ -71,11 +77,47 @@ namespace pxtsprite {
             this.containerDiv.style.height = height + "px";
         }
 
+        setFilter(filter: string) {
+            const filterPieces = filter && filter.split(" ");
+            this.galleryItems = this.applyFilter(this.getGalleryItems("Image"), filterPieces);
+        }
+
+        protected applyFilter(target: GalleryItem[], tags: string[]) {
+            tags = tags
+                .filter(el => !!el)
+                .map(el => el.toLowerCase());
+            const includeTags = tags
+                .filter(tag => tag.indexOf("!") !== 0);
+            const excludeTags = tags
+                .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
+                .map(tag => tag.substring(1));
+
+            return target.filter(el => checkInclude(el) && checkExclude(el));
+
+            function checkInclude(item: GalleryItem) {
+                return includeTags.every(filterTag => {
+                    const optFilterTag = `?${filterTag}`;
+                    return item.tags.some(tag =>
+                        tag === filterTag || tag === optFilterTag
+                    )
+                });
+            }
+
+            function checkExclude(item: GalleryItem) {
+                return excludeTags.every(filterTag =>
+                    !item.tags.some(tag => tag === filterTag)
+                );
+            }
+        }
+
         protected buildDom() {
             while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
             const totalWidth = this.containerDiv.clientWidth - 17;
             const buttonWidth = (Math.floor(totalWidth / COLUMNS) - 8) + "px";
-            this.getGalleryItems("Image").forEach((item, i) => this.mkButton(item.src, item.alt, item.qName, i, buttonWidth));
+            if (!this.galleryItems) {
+                this.galleryItems = this.getGalleryItems("Image");
+            }
+            this.galleryItems.forEach((item, i) => this.mkButton(item.src, item.alt, item.qName, i, buttonWidth));
         }
 
         protected initStyles() {
@@ -172,10 +214,17 @@ namespace pxtsprite {
         protected getBitmap(qName: string) {
             const sym = this.info.apis.byQName[qName];
             const jresURL = sym.attributes.jresURL;
-            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
-            const magic = data.charCodeAt(0);
-            const w = data.charCodeAt(1);
-            const h = data.charCodeAt(2);
+            let data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            let magic = data.charCodeAt(0);
+            let w = data.charCodeAt(1);
+            let h = data.charCodeAt(2);
+
+            if (magic === 0x87) {
+                magic = 0xe0 | data.charCodeAt(1);
+                w = data.charCodeAt(2) | (data.charCodeAt(3) << 8);
+                h = data.charCodeAt(4) | (data.charCodeAt(5) << 8);
+                data = data.slice(4);
+            }
 
             const out = new Bitmap(w, h);
 
@@ -218,10 +267,16 @@ namespace pxtsprite {
             generateIcons(syms);
 
             return syms.map(sym => {
+                const splitTags = (sym.attributes.tags || "")
+                    .toLowerCase()
+                    .split(" ")
+                    .filter(el => !!el);
+
                 return {
                     qName: sym.qName,
                     src: sym.attributes.iconURL,
-                    alt: sym.qName
+                    alt: sym.qName,
+                    tags: splitTags
                 };
             });
         }

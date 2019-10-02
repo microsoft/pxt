@@ -235,9 +235,14 @@ namespace ts.pxtc.Util {
         return Object.keys(m || {}).map(k => m[k])
     }
 
-    export function pushRange<T>(trg: T[], src: T[]): void {
+    export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
+    }
+
+    // TS gets lost in type inference when this is passed an array
+    export function concatArrayLike<T>(arrays: ArrayLike<ArrayLike<T>>): T[] {
+        return concat(arrays as any)
     }
 
     export function concat<T>(arrays: T[][]): T[] {
@@ -417,6 +422,12 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function toSet<T>(arr: T[], f: (t: T) => string): pxt.Map<boolean> {
+        let r: pxt.Map<boolean> = {}
+        arr.forEach(e => { r[f(e)] = true })
+        return r
+    }
+
     export interface ArrayLike<T> {
         [index: number]: T;
         length: number;
@@ -475,6 +486,7 @@ namespace ts.pxtc.Util {
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
             if (callNow) func.apply(context, args);
+            return timeout;
         };
     }
 
@@ -791,6 +803,20 @@ namespace ts.pxtc.Util {
         return Math.round(now() / 1000)
     }
 
+    // node.js overrides this to use process.cpuUsage()
+    export let cpuUs = (): number => {
+        // current time in microseconds
+        const perf = typeof performance != "undefined" ?
+            performance.now.bind(performance) ||
+            (performance as any).moznow.bind(performance) ||
+            (performance as any).msNow.bind(performance) ||
+            (performance as any).webkitNow.bind(performance) ||
+            (performance as any).oNow.bind(performance) :
+            Date.now;
+        cpuUs = () => perf() * 1000;
+        return cpuUs();
+    }
+
     export function getMime(filename: string) {
         let m = /\.([a-zA-Z0-9]+)$/.exec(filename)
         if (m)
@@ -876,14 +902,58 @@ namespace ts.pxtc.Util {
 
     }
 
-    export function normalizeLanguageCode(code: string): string[] {
-        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
-        if (langParts && langParts[1] && langParts[2]) {
-            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
-        } else {
-            return [code.toLowerCase()];
-        }
+    export const pxtLangCookieId = "PXT_LANG";
+    export const langCookieExpirationDays = 30;
+
+    export interface Language {
+        englishName: string;
+        localizedName: string;
     }
+
+    export const allLanguages: pxt.Map<Language> = {
+        "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
+        "ar": { englishName: "Arabic", localizedName: "العربية" },
+        "bg": { englishName: "Bulgarian", localizedName: "български" },
+        "ca": { englishName: "Catalan", localizedName: "Català" },
+        "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "da": { englishName: "Danish", localizedName: "Dansk" },
+        "de": { englishName: "German", localizedName: "Deutsch" },
+        "el": { englishName: "Greek", localizedName: "Ελληνικά" },
+        "en": { englishName: "English", localizedName: "English" },
+        "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
+        "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
+        "fi": { englishName: "Finnish", localizedName: "Suomi" },
+        "fr": { englishName: "French", localizedName: "Français" },
+        "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "he": { englishName: "Hebrew", localizedName: "עברית" },
+        "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
+        "hu": { englishName: "Hungarian", localizedName: "Magyar" },
+        "hy-AM": { englishName: "Armenian (Armenia)", localizedName: "Հայերէն (Հայաստան)" },
+        "id": { englishName: "Indonesian", localizedName: "Bahasa Indonesia" },
+        "is": { englishName: "Icelandic", localizedName: "Íslenska" },
+        "it": { englishName: "Italian", localizedName: "Italiano" },
+        "ja": { englishName: "Japanese", localizedName: "日本語" },
+        "ko": { englishName: "Korean", localizedName: "한국어" },
+        "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
+        "nl": { englishName: "Dutch", localizedName: "Nederlands" },
+        "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "pl": { englishName: "Polish", localizedName: "Polski" },
+        "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
+        "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
+        "ro": { englishName: "Romanian", localizedName: "Română" },
+        "ru": { englishName: "Russian", localizedName: "Русский" },
+        "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+        "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
+        "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
+        "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+        "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
+        "tr": { englishName: "Turkish", localizedName: "Türkçe" },
+        "uk": { englishName: "Ukrainian", localizedName: "Українська" },
+        "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
+        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
+    };
 
     export function isLocaleEnabled(code: string): boolean {
         let [lang, baseLang] = normalizeLanguageCode(code);
@@ -902,10 +972,17 @@ namespace ts.pxtc.Util {
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code)[0];
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
+        if (code === "en-US")
+            code = "en"; // special case for built-in language
+        if (code === userLanguage() || (!isLocaleEnabled(code) && !force)) {
+            pxt.debug(`loc: ${code} (using built-in)`)
             return Promise.resolve();
+        }
 
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+        pxt.debug(`loc: ${code}`);
+        return downloadTranslationsAsync(targetId, baseUrl, code,
+            pxtBranch, targetBranch, live,
+            ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -914,32 +991,52 @@ namespace ts.pxtc.Util {
                         localizeLive = true;
                     }
                 }
-                return Promise.resolve();
+
+                // Download api translations
+                return !live ? ts.pxtc.Util.downloadTranslationsAsync(
+                    targetId, baseUrl, code,
+                    pxtBranch, targetBranch, live,
+                    ts.pxtc.Util.TranslationsKind.Apis)
+                    .then(trs => {
+                        if (trs)
+                            ts.pxtc.apiLocalizationStrings = trs;
+                    }) : Promise.resolve();
             });
     }
 
-    export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code)[0];
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
-            return Promise.resolve<pxt.Map<string>>(undefined);
-
-        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
+    export enum TranslationsKind {
+        Editor,
+        Sim,
+        Apis
     }
 
-    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
+        translationKind = translationKind || TranslationsKind.Editor;
         code = normalizeLanguageCode(code)[0];
-        let translationsCacheId = `${code}/${live}`;
+        if (code === "en-US" || code === "en") // shortcut
+            return Promise.resolve(undefined);
+
+        let translationsCacheId = `${code}/${live}/${translationKind}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = [
-            { branch: pxtBranch, path: "strings.json" },
-            { branch: targetBranch, path: targetId + "/target-strings.json" },
-            { branch: targetBranch, path: targetId + "/sim-strings.json" }
-        ];
+        let stringFiles: { branch: string, staticName: string, path: string }[];
+        switch (translationKind) {
+            case TranslationsKind.Editor:
+                stringFiles = [
+                    { branch: pxtBranch, staticName: "strings.json", path: "strings.json" },
+                    { branch: targetBranch, staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                ];
+                break;
+            case TranslationsKind.Sim:
+                stringFiles = [{ branch: targetBranch, staticName: "sim-strings.json", path: targetId + "/sim-strings.json" }];
+                break;
+            case TranslationsKind.Apis:
+                stringFiles = [{ branch: targetBranch, staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
+                break;
+        }
         let translations: pxt.Map<string>;
-
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             if (!translations) {
@@ -969,21 +1066,25 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false, translationKind);
                 }
 
                 return Promise.resolve(translations);
             });
         } else {
-            return Util.httpGetJsonAsync(baseUrl + "locales/" + code + "/strings.json")
-                .then(tr => {
-                    if (tr) {
-                        translations = tr;
-                        translationsCache()[translationsCacheId] = translations;
-                    }
-                }, e => {
-                    console.error('failed to load localizations')
-                })
+            return Promise.all(stringFiles.map(p =>
+                Util.httpGetJsonAsync(`${baseUrl}locales/${code}/${p.staticName}`)
+                    .catch(e => undefined))
+            ).then(resps => {
+                let tr: pxt.Map<string> = {};
+                resps.forEach(res => pxt.Util.jsonMergeFrom(tr, res));
+                if (Object.keys(tr).length) {
+                    translations = tr;
+                    translationsCache()[translationsCacheId] = translations;
+                }
+            }, e => {
+                console.error('failed to load localizations')
+            })
                 .then(() => translations);
         }
     }

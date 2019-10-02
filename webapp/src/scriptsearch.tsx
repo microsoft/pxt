@@ -50,6 +50,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.installGh = this.installGh.bind(this);
         this.addLocal = this.addLocal.bind(this);
         this.toggleExperiment = this.toggleExperiment.bind(this);
+        this.importExtensionFile = this.importExtensionFile.bind(this);
     }
 
     private hide() {
@@ -336,6 +337,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.forceUpdate();
     }
 
+    importExtensionFile() {
+        pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.showImportFileDialog({ extension: true });
+    }
+
     renderCore() {
         const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
 
@@ -346,6 +353,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const local = this.fetchLocal();
         const experiments = this.fetchExperiments();
         const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
+        const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showImportFile = mode == ScriptSearchMode.Extensions
+            && pxt.appTarget.appTheme.importExtensionFiles
+            && !disableFileAccessinMaciOs
+            && !searchFor;
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -359,8 +371,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 return abeta ? 1 : -1;
 
             // use weight if core packages
-            if (a.core && b.core && a.weight != b.weight)
-                return -(a.weight || 0) + (b.weight || 0);
+            const aweight = a.weight === undefined ? 50 : a.weight;
+            const bweight = b.weight === undefined ? 50 : b.weight;
+            if (aweight != bweight)
+                return -aweight + bweight;
 
             // alphabetical sort
             return pxt.Util.strcmp(a.name, b.name)
@@ -398,7 +412,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 description={description}>
                 <div className="ui">
                     {mode == ScriptSearchMode.Experiments ?
-                        <div className="ui message">
+                        <div className="ui message info">
                             <div className="header">{lf("WARNING: EXPERIMENTAL FEATURES AHEAD!")}</div>
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
@@ -433,6 +447,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addLocal}
                                     label={lf("Local")}
+                                    title={lf("Local GitHub extension")}
+                                    labelClass="blue right ribbon"
                                     role="link"
                                 />
                             )}
@@ -492,6 +508,16 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
+                            {showImportFile ? <codecard.CodeCardView
+                                ariaLabel={lf("Open files from your computer")}
+                                role="button"
+                                key={'import'}
+                                icon="upload ui cardimage"
+                                iconColor="secondary"
+                                name={lf("Import File...")}
+                                description={lf("Open files from your computer")}
+                                onClick={this.importExtensionFile}
+                            /> : undefined}
                         </div>
                     }
                     {isEmpty() ?

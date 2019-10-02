@@ -25,6 +25,44 @@ namespace ts.pxtc {
         "numops::neq": "!=",
     }
 
+    const shortNsCalls: pxt.Map<string> = {
+        "pxsim.Boolean_": "",
+        "pxsim.pxtcore": "",
+        "pxsim.String_": "",
+        "pxsim.ImageMethods": "",
+        "pxsim.Array_": "",
+        "pxsim.pxtrt": "",
+        "pxsim.numops": "",
+    }
+
+    const shortCalls: pxt.Map<string> = {
+        "pxsim.Array_.getAt": "",
+        "pxsim.Array_.length": "",
+        "pxsim.Array_.mk": "",
+        "pxsim.Array_.push": "",
+        "pxsim.Boolean_.bang": "",
+        "pxsim.String_.concat": "",
+        "pxsim.String_.stringConv": "",
+        "pxsim.numops.toBool": "",
+        "pxsim.numops.toBoolDecr": "",
+        "pxsim.pxtcore.mkAction": "",
+        "pxsim.pxtcore.mkClassInstance": "",
+        "pxsim.pxtrt.ldlocRef": "",
+        "pxsim.pxtrt.mapGetByString": "",
+        "pxsim.pxtrt.stclo": "",
+        "pxsim.pxtrt.stlocRef": "",
+    }
+
+    function shortCallsPrefix(m: pxt.Map<string>) {
+        let r = ""
+        for (let k of Object.keys(m)) {
+            const kk = k.replace(/\./g, "_")
+            m[k] = kk
+            r += `const ${kk} = ${k};\n`
+        }
+        return r
+    }
+
     export function isBuiltinSimOp(name: string) {
         return !!U.lookup(jsOpMap, name.replace(/\./g, "::"))
     }
@@ -33,41 +71,82 @@ namespace ts.pxtc {
         shimName = shimName.replace(/::/g, ".")
         if (shimName.slice(0, 4) == "pxt.")
             shimName = "pxtcore." + shimName.slice(4)
-        if (target.shortPointers)
-            shimName = shimName.replace(/^thumb\./, "avr.")
-        return "pxsim." + shimName
+        const r = "pxsim." + shimName
+        if (shortCalls.hasOwnProperty(r))
+            return shortCalls[r]
+        const idx = r.lastIndexOf(".")
+        if (idx > 0) {
+            const pref = r.slice(0, idx)
+            if (shortNsCalls.hasOwnProperty(pref))
+                return shortNsCalls[pref] + r.slice(idx)
+        }
+        return r
     }
 
     function vtableToJs(info: ClassInfo) {
-        let s = `var ${info.id}_VT = {\n` +
+        U.assert(info.classNo !== undefined)
+        U.assert(info.lastSubtypeNo !== undefined)
+        let s = `const ${info.id}_VT = mkVTable({\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
-            `  methods: [\n`
+            `  lastSubtypeNo: ${info.lastSubtypeNo},\n` +
+            `  methods: {\n`
         for (let m of info.vtable) {
-            s += `    ${m.label()},\n`
+            s += `    "${m.getName()}": ${m.label()},\n`
         }
-        s += "  ],\n"
+        s += "  },\n"
         s += "  iface: {\n"
         for (let m of info.itable) {
-            s += `    "${m.name}": ${m.proc ? m.proc.label() : "13"},\n`
+            s += `    "${m.name}": ${m.proc ? m.proc.label() : "null"},\n`
             if (m.setProc)
                 s += `    "set/${m.name}": ${m.setProc.label()},\n`
             else if (!m.proc)
-                s += `    "set/${m.name}": 13,\n`
+                s += `    "set/${m.name}": null,\n`
         }
         s += "  },\n"
         if (info.toStringMethod)
             s += "  toStringMethod: " + info.toStringMethod.label() + ",\n"
-        s += "};\n"
+        s += "});\n"
         return s
     }
 
+    const evalIfaceFields = [
+        "runtime",
+        "oops",
+        "doNothing",
+        "pxsim",
+        "globals",
+        "maybeYield",
+        "setupDebugger",
+        "isBreakFrame",
+        "breakpoint",
+        "trace",
+        "checkStack",
+        "leave",
+        "checkResumeConsumed",
+        "setupResume",
+        "setupLambda",
+        "checkSubtype",
+        "failedCast",
+        "buildResume",
+        "mkVTable"
+    ]
+
     export function jsEmit(bin: Binary) {
-        let jssource = "'use strict';\n"
-        if (!bin.target.jsRefCounting)
-            jssource += "pxsim.noRefCounting();\n"
-        jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
+        let jssource = "(function (ectx) {\n'use strict';\n"
+
+        for (let n of evalIfaceFields) {
+            jssource += `const ${n} = ectx.${n};\n`
+        }
+
+        jssource += `const __this = runtime;\n`
+        jssource += `const pxtrt = pxsim.pxtrt;\n`
+
+        jssource += `let yieldSteps = 1;\n`
+        jssource += `ectx.setupYield(function() { yieldSteps = 100; })\n`
+
+        jssource += "pxsim.setTitle(" + JSON.stringify(bin.getTitle()) + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
         for (let ce of bin.res.configData || []) {
@@ -77,35 +156,59 @@ namespace ts.pxtc {
         jssource += "pxsim.setConfigData(" +
             JSON.stringify(cfg, null, 1) + ", " +
             JSON.stringify(cfgKey, null, 1) + ");\n"
-        jssource += "pxsim.pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
+        jssource += "pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
 
         const perfCounters = bin.setPerfCounters(["SysScreen"])
         jssource += "__this.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
 
+        jssource += shortCallsPrefix(shortCalls)
+        jssource += shortCallsPrefix(shortNsCalls)
+
+        let cachedLen = 0
+        let newLen = 0
+
         bin.procs.forEach(p => {
-            jssource += "\n" + irToJS(bin, p) + "\n"
+            let curr: string
+            if (p.cachedJS) {
+                curr = p.cachedJS
+                cachedLen += curr.length
+            } else {
+                curr = irToJS(bin, p)
+                newLen += curr.length
+            }
+            jssource += "\n" + curr + "\n"
         })
+        jssource += U.values(bin.codeHelpers).join("\n") + "\n"
         bin.usedClassInfos.forEach(info => {
             jssource += vtableToJs(info)
         })
         if (bin.res.breakpoints)
-            jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
-        U.iterMap(bin.hexlits, (k, v) => {
-            jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
-        })
-        bin.writeFile(BINARY_JS, jssource)
+            jssource += `\nconst breakpoints = setupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
+
+        jssource += `\nreturn ${bin.procs[0] ? bin.procs[0].label() : "null"}\n})\n`
+
+        const total = jssource.length
+        const perc = (n: number) => ((100 * n) / total).toFixed(2) + "%"
+        const sizes = `// total=${jssource.length} new=${perc(newLen)} cached=${perc(cachedLen)} other=${perc(total - newLen - cachedLen)}\n`
+        bin.writeFile(BINARY_JS, sizes + jssource)
     }
 
     function irToJS(bin: Binary, proc: ir.Procedure): string {
+        if (proc.cachedJS)
+            return proc.cachedJS
+
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
-        let refCounting = !!bin.target.jsRefCounting
+        let exprStack: ir.Expr[] = []
+        let maxStack = 0
+        let localsCache: pxt.Map<boolean> = {}
+        let hexlits = ""
 
         writeRaw(`
-var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
-var r0 = s.r0, step = s.pc;
+function ${proc.label()}(s) {
+let r0 = s.r0, step = s.pc;
 s.pc = -1;
 `)
         if (proc.perfCounterNo) {
@@ -118,10 +221,6 @@ switch (step) {
   case 0:
 `)
 
-        //console.log(proc.toString())
-        proc.resolve()
-        //console.log("OPT", proc.toString())
-
         proc.locals.forEach(l => {
             write(`${locref(l)} = undefined;`)
         })
@@ -129,8 +228,7 @@ switch (step) {
         if (proc.args.length) {
             write(`if (s.lambdaArgs) {`)
             proc.args.forEach((l, i) => {
-                // TODO incr needed?
-                write(`  ${locref(l)} = ${refCounting ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
+                write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
             write(`}`)
@@ -141,41 +239,33 @@ switch (step) {
             emitInstanceOf(proc.classInfo, "validate")
         }
 
-        const jumpToNextInstructionMarker = -1
-
-
-        let exprStack: ir.Expr[] = []
-
         let lblIdx = 0
         let asyncContinuations: number[] = []
-        let prev: ir.Stmt
         for (let s of proc.body) {
-            // mark Jump-to-next-instruction
-            if (prev && prev.lbl == s &&
-                prev.stmtKind == ir.SK.Jmp &&
-                s.stmtKind == ir.SK.Label &&
-                prev.jmpMode == ir.JmpMode.Always &&
-                s.lblNumUses == 1) {
-                s.lblNumUses = jumpToNextInstructionMarker
-            }
-            if (s.stmtKind == ir.SK.Label)
+            if (s.stmtKind == ir.SK.Label && s.lblNumUses > 0)
                 s.lblId = ++lblIdx;
-            prev = s
         }
 
+        let idx = 0
         for (let s of proc.body) {
             switch (s.stmtKind) {
                 case ir.SK.Expr:
                     emitExpr(s.expr)
                     break;
                 case ir.SK.StackEmpty:
-                    for (let e of exprStack) {
-                        if (e.totalUses !== e.currUses) oops();
-                    }
-                    exprStack = [];
+                    stackEmpty();
                     break;
                 case ir.SK.Jmp:
-                    emitJmp(s);
+                    let isJmpNext = false
+                    for (let ii = idx + 1; ii < proc.body.length; ++ii) {
+                        if (proc.body[ii].stmtKind != ir.SK.Label)
+                            break
+                        if (s.lbl == proc.body[ii]) {
+                            isJmpNext = true
+                            break
+                        }
+                    }
+                    emitJmp(s, isJmpNext);
                     break;
                 case ir.SK.Label:
                     if (s.lblNumUses > 0)
@@ -186,7 +276,10 @@ switch (step) {
                     break;
                 default: oops();
             }
+            idx++
         }
+
+        stackEmpty();
 
         if (proc.perfCounterNo) {
             writeRaw(`__this.stopPerfCounter(${proc.perfCounterNo});\n`)
@@ -197,10 +290,38 @@ switch (step) {
         writeRaw(`} } }`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
+        info.argumentNames = proc.args && proc.args.map(a => a.getName());
+
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
+
+        writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
+        writeRaw(hexlits)
+
+        proc.cachedJS = resText
+
         return resText
+
+        // pre-create stack frame for this procedure with all the fields we need, so the
+        // Hidden Class in the JIT is initalized optimally
+        function fnctor(id: string, procname: string, numTmps: number, locals: string[]) {
+            let r = ""
+            r += `
+function ${id}(s) {
+    checkStack(s.depth);
+    return {
+        parent: s, fn: ${procname}, depth: s.depth + 1,
+        pc: 0, retval: undefined, r0: undefined, overwrittenPC: false, lambdaArgs: null,
+`
+            for (let i = 0; i < numTmps; ++i)
+                r += `  tmp_${i}: undefined,\n`
+            // this includes parameters
+            for (let l of locals)
+                r += `  ${l}: undefined,\n`
+            r += `} }\n`
+            return r
+        }
 
         function emitBreakpoint(s: ir.Stmt) {
             let id = s.breakpointInfo.id
@@ -218,7 +339,7 @@ switch (step) {
                 if (s.breakpointInfo.isDebuggerStmt)
                     write(brkCall)
                 else
-                    write(`if ((breakAlways && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
+                    write(`if ((breakpoints[0] && isBreakFrame(s)) || breakpoints[${id}]) ${brkCall}`)
             }
             writeRaw(`  case ${lbl}:`)
         }
@@ -228,11 +349,13 @@ switch (step) {
                 return "globals." + cell.uniqueName()
             else if (cell.iscap)
                 return `s.caps[${cell.index}]`
-            return "s." + cell.uniqueName()
+            const un = cell.uniqueName()
+            localsCache[un] = true
+            return "s." + un
         }
 
-        function emitJmp(jmp: ir.Stmt) {
-            if (jmp.lbl.lblNumUses == jumpToNextInstructionMarker) {
+        function emitJmp(jmp: ir.Stmt, isJmpNext: boolean) {
+            if (jmp.lbl.lblNumUses == ir.lblNumUsesJmpNext || isJmpNext) {
                 assert(jmp.jmpMode == ir.JmpMode.Always)
                 if (jmp.expr)
                     emitExpr(jmp.expr)
@@ -246,8 +369,6 @@ switch (step) {
                 if (jmp.expr)
                     emitExpr(jmp.expr)
                 write(trg)
-            } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
-                write(`if (r0 == (${emitExprInto(jmp.expr)})) ${trg}`)
             } else {
                 emitExpr(jmp.expr)
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
@@ -258,8 +379,23 @@ switch (step) {
             }
         }
 
-        function withRef(name: string, isRef: boolean) {
-            return name + (isRef ? "Ref" : "")
+        function canEmitInto(e: ir.Expr) {
+            switch (e.exprKind) {
+                case EK.NumberLiteral:
+                case EK.PointerLiteral:
+                case EK.SharedRef:
+                case EK.CellRef:
+                    return true
+                default:
+                    return false
+            }
+        }
+
+        function emitExprPossiblyInto(e: ir.Expr): string {
+            if (canEmitInto(e))
+                return emitExprInto(e)
+            emitExpr(e)
+            return "r0"
         }
 
         function emitExprInto(e: ir.Expr): string {
@@ -272,7 +408,16 @@ switch (step) {
                     else if (typeof e.data == "number") return e.data + ""
                     else throw oops("invalid data: " + typeof e.data);
                 case EK.PointerLiteral:
-                    return e.jsInfo;
+                    if (e.ptrlabel()) {
+                        return e.ptrlabel().lblId + "";
+                    } else if (e.hexlit()) {
+                        hexlits += `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`
+                        return e.data;
+                    } else if (typeof e.jsInfo == "string") {
+                        return e.jsInfo;
+                    } else {
+                        U.oops()
+                    }
                 case EK.SharedRef:
                     let arg = e.args[0]
                     U.assert(!!arg.currUses) // not first use
@@ -299,27 +444,15 @@ switch (step) {
                 case EK.Nop:
                     write("// nop")
                     break
-                case EK.Incr:
-                    emitExpr(e.args[0])
-                    if (refCounting)
-                        write(`pxtrt.incr(r0);`)
-                    break;
-                case EK.Decr:
-                    emitExpr(e.args[0])
-                    if (refCounting)
-                        write(`pxtrt.decr(r0);`)
-                    break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     let shimName = info.shimName
+                    let obj = emitExprPossiblyInto(e.args[0])
                     if (shimName) {
-                        assert(!refCounting)
-                        emitExpr(e.args[0])
-                        write(`r0 = r0${shimName};`)
+                        write(`r0 = ${obj}${shimName};`)
                         return
                     }
-                    emitExpr(e.args[0]);
-                    write(`r0 = r0.fields["${info.name}"];`)
+                    write(`r0 = ${obj}.fields["${info.name}"];`)
                     return
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
@@ -333,22 +466,23 @@ switch (step) {
                     return e.args.forEach(emitExpr)
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    emitInstanceOf(e.data, e.jsInfo)
+                    emitInstanceOf(e.data, e.jsInfo as string)
                     return
                 default:
                     write(`r0 = ${emitExprInto(e)};`)
             }
         }
 
-        function checkSubtype(info: ClassInfo) {
-            return `checkSubtype(r0, ${info.classNo}, ${info.lastSubtypeNo})`
+        function checkSubtype(info: ClassInfo, r0 = "r0") {
+            const vt = `${info.id}_VT`
+            return `checkSubtype(${r0}, ${vt})`
         }
 
-        function emitInstanceOf(info: ClassInfo, tp: string) {
+        function emitInstanceOf(info: ClassInfo, tp: string, r0 = "r0") {
             if (tp == "bool")
                 write(`r0 = ${checkSubtype(info)};`)
-            else if (tp == "validate" || tp == "validateDecr") {
-                write(`if (!${checkSubtype(info)}) failedCast(r0);`)
+            else if (tp == "validate") {
+                write(`if (!${checkSubtype(info, r0)}) failedCast(${r0});`)
             } else {
                 U.oops()
             }
@@ -362,20 +496,25 @@ switch (step) {
             if (arg.totalUses == 1)
                 return emitExpr(arg)
             else {
-                emitExpr(arg)
-                let idx = exprStack.length
+                const idx = exprStack.length
                 exprStack.push(arg)
-                write(`s.tmp_${idx} = r0;`)
+                let val = emitExprPossiblyInto(arg)
+                if (val != "r0")
+                    val = "r0 = " + val
+                write(`s.tmp_${idx} = ${val};`)
             }
         }
 
         function emitRtCall(topExpr: ir.Expr) {
-            let info = ir.flattenArgs(topExpr)
+            let info = ir.flattenArgs(topExpr.args)
 
             info.precomp.forEach(emitExpr)
 
             let name: string = topExpr.data
             let args = info.flattened.map(emitExprInto)
+
+            if (name == "langsupp::ignore")
+                return
 
             let text = ""
             if (name[0] == ".")
@@ -412,23 +551,44 @@ switch (step) {
         }
 
         function emitProcCall(topExpr: ir.Expr) {
-            let frameExpr = ir.rtcall("<frame>", [])
+            const procid = topExpr.data as ir.ProcId
+            const callproc = procid.proc
+
+            if (callproc && callproc.inlineBody)
+                return emitExpr(callproc.inlineSelf(topExpr.args))
+
+            const frameExpr = ir.rtcall("<frame>", [])
             frameExpr.totalUses = 1
             frameExpr.currUses = 0
-            let frameIdx = exprStack.length
+            const frameIdx = exprStack.length
             exprStack.push(frameExpr)
+            const frameRef = `s.tmp_${frameIdx}`
 
-            let procid = topExpr.data as ir.ProcId
-            let proc = procid.proc
-            let frameRef = `s.tmp_${frameIdx}`
-            let lblId = ++lblIdx
-            write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
+            const lblId = ++lblIdx
+            const isLambda = procid.virtualIndex == -1
 
-            let isLambda = procid.virtualIndex == -1
+            if (callproc)
+                write(`${frameRef} = ${callproc.label()}_mk(s);`)
+            else {
+                let id = "generic"
+                if (procid.ifaceIndex != null)
+                    id = "if_" + bin.ifaceMembers[procid.ifaceIndex]
+                else if (isLambda)
+                    id = "lambda"
+                else if (procid.virtualIndex != null)
+                    id = procid.classInfo.id + "_v" + procid.virtualIndex
+                else U.oops();
+                const argLen = topExpr.args.length
+                id += "_" + argLen + "_mk"
+                bin.recordHelper(proc.usingCtx, id, () => {
+                    const locals = U.range(argLen).map(i => "arg" + i)
+                    return fnctor(id, "null", 5, locals)
+                })
+                write(`${frameRef} = ${id}(s);`)
+            }
 
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
-                emitExpr(a)
                 let arg = `arg${i}`
                 if (isLambda) {
                     if (i == 0)
@@ -436,44 +596,53 @@ switch (step) {
                     else
                         arg = `arg${i - 1}`
                 }
-                write(`${frameRef}.${arg} = r0;`)
+                write(`${frameRef}.${arg} = ${emitExprPossiblyInto(a)};`)
             })
 
-            write(`s.pc = ${lblId};`)
+            let callIt = `s.pc = ${lblId}; return ${frameRef};`
+
             if (procid.ifaceIndex != null) {
+                U.assert(callproc == null)
                 let isSet = false
+                const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
+                U.assert(!!ifaceFieldName)
                 if (procid.mapMethod) {
-                    write(`if (${frameRef}.arg0.vtable === 42) {`)
+                    write(`if (!${frameRef}.arg0.vtable.iface) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
-                    args.splice(1, 0, procid.ifaceIndex.toString())
-                    write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
-                    write(`  ${frameRef}.fn = doNothing;`)
+                    args.splice(1, 0, JSON.stringify(ifaceFieldName))
+                    write(`  s.retval = ${shimToJs(procid.mapMethod)}ByString(${args.join(", ")});`)
                     write(`} else {`)
                     if (/Set/.test(procid.mapMethod))
                         isSet = true
                 }
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
-                write(`if (${frameRef}.fn === 13) {`)
-                let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`)
+                let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
                 if (isSet) {
-                    write(`  ${fld} = ${frameRef}.arg1;`)
+                    write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
+                    write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
                 } else {
-                    write(`  s.retval = ${fld};`)
+                    write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
                 }
-                write(`  ${frameRef}.fn = doNothing;`)
-                write(`}`)
+                write(`else { ${callIt} }`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
+                callIt = ""
             } else if (procid.virtualIndex == -1) {
                 // lambda call
+                U.assert(callproc == null)
                 write(`setupLambda(${frameRef}, ${frameRef}.argL);`)
             } else if (procid.virtualIndex != null) {
+                U.assert(callproc == null)
                 assert(procid.virtualIndex >= 0)
-                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods[${procid.virtualIndex}];`)
+                emitInstanceOf(procid.classInfo, "validate", frameRef + ".arg0")
+                const meth = procid.classInfo.vtable[procid.virtualIndex]
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.methods.${meth.getName()};`)
+            } else {
+                U.assert(callproc != null)
             }
-            write(`return actionCall(${frameRef})`)
+
+            if (callIt) write(callIt)
             writeRaw(`  case ${lblId}:`)
             write(`r0 = s.retval;`)
 
@@ -483,12 +652,12 @@ switch (step) {
         function bitSizeConverter(b: BitSize) {
             switch (b) {
                 case BitSize.None: return ""
-                case BitSize.Int8: return "pxsim.pxtrt.toInt8"
-                case BitSize.Int16: return "pxsim.pxtrt.toInt16"
-                case BitSize.Int32: return "pxsim.pxtrt.toInt32"
-                case BitSize.UInt8: return "pxsim.pxtrt.toUInt8"
-                case BitSize.UInt16: return "pxsim.pxtrt.toUInt16"
-                case BitSize.UInt32: return "pxsim.pxtrt.toUInt32"
+                case BitSize.Int8: return "pxtrt.toInt8"
+                case BitSize.Int16: return "pxtrt.toInt16"
+                case BitSize.Int32: return "pxtrt.toInt32"
+                case BitSize.UInt8: return "pxtrt.toUInt8"
+                case BitSize.UInt16: return "pxtrt.toUInt16"
+                case BitSize.UInt32: return "pxtrt.toUInt32"
                 default: throw oops()
             }
         }
@@ -497,8 +666,8 @@ switch (step) {
             switch (trg.exprKind) {
                 case EK.CellRef:
                     let cell = trg.data as ir.Cell
-                    emitExpr(src)
-                    write(`${locref(cell)} = ${bitSizeConverter(cell.bitSize)}(r0);`)
+                    let src2 = emitExprPossiblyInto(src)
+                    write(`${locref(cell)} = ${bitSizeConverter(cell.bitSize)}(${src2});`)
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
@@ -510,5 +679,15 @@ switch (step) {
                 default: oops();
             }
         }
+
+        function stackEmpty() {
+            for (let e of exprStack) {
+                if (e.totalUses !== e.currUses)
+                    oops();
+            }
+            maxStack = Math.max(exprStack.length, maxStack);
+            exprStack = [];
+        }
     }
+
 }

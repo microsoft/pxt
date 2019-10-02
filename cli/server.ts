@@ -8,7 +8,6 @@ import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
 import * as hid from './hid';
-import * as serial from './serial';
 import * as net from 'net';
 
 import U = pxt.Util;
@@ -63,6 +62,7 @@ const statAsync = Promise.promisify(fs.stat)
 const readdirAsync = Promise.promisify(fs.readdir)
 const readFileAsync = Promise.promisify(fs.readFile)
 const writeFileAsync: any = Promise.promisify(fs.writeFile)
+const unlinkAsync: any = Promise.promisify(fs.unlink)
 
 function existsAsync(fn: string): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
@@ -114,7 +114,7 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         files: []
     };
 
-    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON])) {
+    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON, pxt.SIMSTATE_JSON])) {
         let st = await statOptAsync(path.join(dirname, fn))
         let ff: FsFile = {
             name: fn,
@@ -122,6 +122,9 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         }
 
         let thisFileContents = st && fileContents
+
+        if (!st && fn == pxt.SIMSTATE_JSON)
+            continue
 
         if (fn == pxt.github.GIT_JSON) {
             // skip .git.json altogether if missing
@@ -164,7 +167,7 @@ function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, ico
         const data = m[2];
         const fn = path.join(dirname, name + "." + ext);
         console.log(`writing ${fn}`)
-        return writeFileAsync(fn, new Buffer(data, 'base64'));
+        return writeFileAsync(fn, Buffer.from(data, 'base64'));
     }
 
     return Promise.all([
@@ -177,7 +180,7 @@ function writePkgAssetAsync(logicalDirname: string, data: any) {
     const dirname = path.join(userProjectsDir, logicalDirname, "assets")
 
     nodeutil.mkdirP(dirname)
-    return writeFileAsync(dirname + "/" + data.name, new Buffer(data.data, data.encoding || "base64"))
+    return writeFileAsync(dirname + "/" + data.name, Buffer.from(data.data, data.encoding || "base64"))
         .then(() => ({
             name: data.name
         }))
@@ -213,7 +216,8 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             let d = f.name.replace(/\/[^\/]*$/, "")
             if (d != f.name)
                 nodeutil.mkdirP(path.join(dirname, d))
-            return writeFileAsync(path.join(dirname, f.name), f.content)
+            const fn = path.join(dirname, f.name)
+            return f.content == null ? unlinkAsync(fn) : writeFileAsync(fn, f.content)
         }))
         .then(() => {
             if (data.header)
@@ -279,7 +283,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
     const cmd = meth + " " + elts[1]
-
     const readJsonAsync = () =>
         nodeutil.readResAsync(req)
             .then(buf => JSON.parse(buf.toString("utf8")))
@@ -309,9 +312,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             .then(d => writePkgAssetAsync(innerPath, d))
     else if (cmd == "GET pkgasset")
         return readAssetsAsync(innerPath)
-    else if (cmd == "POST deploy" && pxt.commands.deployCoreAsync)
+    else if (cmd == "POST deploy" && pxt.commands.hasDeployFn())
         return readJsonAsync()
-            .then(pxt.commands.deployCoreAsync)
+            .then(pxt.commands.deployAsync)
             .then((boardCount) => {
                 return {
                     boardCount: boardCount
@@ -601,7 +604,7 @@ function initSocketServer(wsPort: number, hostname: string) {
                                 })
 
                             case "send":
-                                sock.write(new Buffer(msg.arg.data, msg.arg.encoding || "utf8"))
+                                sock.write(Buffer.from(msg.arg.data, msg.arg.encoding || "utf8"))
                                 return {}
                             default: // unknown message
                                 pxt.log(`unknown tcp message ${msg.op}`)
@@ -733,17 +736,7 @@ function sendSerialMsg(msg: string) {
 }
 
 function initSerialMonitor() {
-    serial.monitorSerial(function (info, buffer) {
-        //console.log(`data received: ${buffer.length} bytes`);
-        if (wsSerialClients.length == 0) return;
-        // send it to ws clients
-        let msg = JSON.stringify({
-            type: 'serial',
-            id: info.pnpId,
-            data: buffer.toString('utf8')
-        })
-        sendSerialMsg(msg)
-    })
+    // TODO HID
 }
 
 export interface ServeOptions {
@@ -780,8 +773,27 @@ function certificateTestAsync(): Promise<string> {
 function scriptPageTestAsync(id: string) {
     return Cloud.privateGetAsync(id)
         .then((info: Cloud.JsonScript) => {
+            // if running against old cloud, infer 'thumb' field
+            // can be removed after new cloud deployment
+            if (info.thumb !== undefined)
+                return info
+            return Cloud.privateGetTextAsync(id + "/thumb")
+                .then(_ => {
+                    info.thumb = true
+                    return info
+                }, _ => {
+                    info.thumb = false
+                    return info
+                })
+        })
+        .then((info: Cloud.JsonScript) => {
+            let infoA = info as any
+            infoA.cardLogo = info.thumb
+                ? Cloud.apiRoot + id + "/thumb"
+                : pxt.appTarget.appTheme.thumbLogo || pxt.appTarget.appTheme.cardLogo
             let html = pxt.docs.renderMarkdown({
-                template: expandDocFileTemplate("script.html"),
+                template: expandDocFileTemplate(pxt.appTarget.appTheme.leanShare
+                    ? "leanscript.html" : "script.html"),
                 markdown: "",
                 theme: pxt.appTarget.appTheme,
                 pubinfo: info as any,
@@ -851,6 +863,21 @@ function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
     return undefined;
 }
 
+const compiledCache: pxt.Map<string> = {}
+export async function compileScriptAsync(id: string) {
+    if (compiledCache[id])
+        return compiledCache[id]
+    const scrText = await Cloud.privateGetAsync(id + "/text")
+    const res = await pxt.simpleCompileAsync(scrText, {})
+    let r = ""
+    if (res.errors)
+        r = `throw new Error(${JSON.stringify(res.errors)})`
+    else
+        r = res.outfiles["binary.js"]
+    compiledCache[id] = r
+    return r
+}
+
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
@@ -916,6 +943,17 @@ export function serveAsync(options: ServeOptions) {
                 res.setHeader("Location", trg)
                 error(302, "Redir: " + trg)
                 return
+            }
+
+            if (/^\d\d\d[\d\-]*$/.test(elts[1]) && elts[2] == "js") {
+                return compileScriptAsync(elts[1])
+                    .then(data => {
+                        res.writeHead(200, { 'Content-Type': 'application/javascript' })
+                        res.end(data)
+                    }, err => {
+                        error(500)
+                        console.log(err.stack)
+                    })
             }
 
             if (!isAuthorizedLocalRequest(req)) {

@@ -136,11 +136,13 @@ namespace pxt.vs {
                 enabled: false
             },
             autoIndent: true,
+            useTabStops: true,
             dragAndDrop: true,
             matchBrackets: true,
             occurrencesHighlight: false,
             quickSuggestionsDelay: 200,
             theme: inverted ? 'vs-dark' : 'vs',
+            renderIndentGuides: true,
             //accessibilitySupport: 'on',
             accessibilityHelpUrl: "" //TODO: Add help url explaining how to use the editor with a screen reader
         });

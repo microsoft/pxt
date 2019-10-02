@@ -2,7 +2,10 @@ namespace pxtsprite {
     // These are the characters used to output literals (but we support aliases for some of these)
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
 
-    export type Coord = [number, number];
+    export interface Coord {
+        x: number,
+        y: number
+    }
 
     /**
      * 16-color sprite
@@ -41,10 +44,14 @@ namespace pxtsprite {
             return sub;
         }
 
-        apply(change: Bitmap) {
+        apply(change: Bitmap, transparent = false) {
+            let current: number;
             for (let c = 0; c < change.width; c++) {
                 for (let r = 0; r < change.height; r++) {
-                    this.set(change.x0 + c, change.y0 + r, change.get(c, r));
+                    current = change.get(c, r);
+
+                    if (!current && transparent) continue;
+                    this.set(change.x0 + c, change.y0 + r, current);
                 }
             }
         }

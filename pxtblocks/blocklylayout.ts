@@ -230,8 +230,8 @@ namespace pxt.blocks.layout {
     }
 
     export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
-        Blockly.utils.removeClass(svg as Element, "blocklySvg");
-        Blockly.utils.addClass(svg as Element, "blocklyPreview");
+        pxt.BrowserUtils.removeClass(svg, "blocklySvg");
+        pxt.BrowserUtils.addClass(svg, "blocklyPreview");
 
         pxt.U.toArray(svg.querySelectorAll('.blocklyMainBackground,.blocklyScrollbarBackground'))
             .forEach(el => { if (el) el.parentNode.removeChild(el) });
@@ -414,7 +414,7 @@ namespace pxt.blocks.layout {
             }
             const f = formattable(block);
 
-            if (block.type === pxtc.ON_START_TYPE) {
+            if (!onStart && !block.disabled && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
                 onStart = f;
             }
             else {
@@ -513,7 +513,7 @@ namespace pxt.blocks.layout {
 
         function moveFormattable(f: Formattable, x: number, y: number) {
             const bounds = f.value.getBoundingRectangle();
-            f.value.moveBy(x - bounds.topLeft.x, y - bounds.topLeft.y);
+            f.value.moveBy(x - bounds.left, y - bounds.top);
         }
     }
 

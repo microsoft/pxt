@@ -73,7 +73,7 @@ namespace pxt {
         }
 
         commonDownloadAsync(): Promise<Map<string>> {
-            let proto = this.verProtocol()
+            const proto = this.verProtocol()
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
@@ -81,10 +81,16 @@ namespace pxt {
                     .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
                     .then(resp => resp.files)
             } else if (proto == "embed") {
-                let resp = pxt.getEmbeddedScript(this.verArgument())
+                const resp = pxt.getEmbeddedScript(this.verArgument())
                 return Promise.resolve(resp)
-            } else
-                return Promise.resolve(null as Map<string>)
+            } else if (proto == "pkg") {
+                // the package source is serialized in a file in the package itself
+                const pkgFilesSrc = this.readFile(this.verArgument());
+                const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
+                if (!pkgFilesJson)
+                    pxt.log(`unable to find ${this.verArgument()}`)
+                return Promise.resolve(pkgFilesJson)
+            } else return Promise.resolve(null as Map<string>)
         }
 
         host() { return this.parent._host }
@@ -143,7 +149,7 @@ namespace pxt {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
                     let js: Map<JRes> = JSON.parse(this.readFile(f))
-                    let base = js["*"]
+                    let base: JRes = js["*"] || {} as any
                     for (let k of Object.keys(js)) {
                         if (k == "*") continue
                         let v = js[k]
@@ -557,8 +563,7 @@ namespace pxt {
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
-                        let addPackagesPromise = Promise.resolve();
-                        Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
+                        return Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
                                 .then((conflicts) => {
@@ -760,6 +765,39 @@ namespace pxt {
             return this._jres
         }
 
+        // undefined == uncached
+        // null == cached but no hit
+        // array == means something go found...
+        private _resolvedBannedCategories: string[];
+        resolveBannedCategories(): string[] {
+            if (this._resolvedBannedCategories !== undefined)
+                return this._resolvedBannedCategories; // cache hit
+
+            let bannedCategories: string[] = [];
+            if (pxt.appTarget && pxt.appTarget.runtime
+                && pxt.appTarget.runtime.bannedCategories
+                && pxt.appTarget.runtime.bannedCategories.length) {
+                bannedCategories = pxt.appTarget.runtime.bannedCategories.slice();
+                // scan for unbanned categories
+                Object.keys(this.deps)
+                    .map(dep => this.deps[dep])
+                    .filter(dep => !!dep)
+                    .map(pk => pxt.Util.jsonTryParse(pk.readFile(pxt.CONFIG_NAME)) as pxt.PackageConfig)
+                    .filter(config => config && config.requiredCategories)
+                    .forEach(config => config.requiredCategories.forEach(rc => {
+                        const i = bannedCategories.indexOf(rc);
+                        if (i > -1)
+                            bannedCategories.splice(i, 1);
+                    }));
+                this._resolvedBannedCategories = bannedCategories;
+            }
+
+            this._resolvedBannedCategories = bannedCategories;
+            if (!this._resolvedBannedCategories.length)
+                this._resolvedBannedCategories = null;
+            return this._resolvedBannedCategories;
+        }
+
         getCompileOptionsAsync(target: pxtc.CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
@@ -781,6 +819,7 @@ namespace pxt {
 
             return this.loadAsync()
                 .then(() => {
+                    opts.bannedCategories = this.resolveBannedCategories();
                     opts.target.preferredEditor = this.getPreferredEditor()
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
@@ -791,14 +830,19 @@ namespace pxt {
                         : Promise.resolve<pxtc.HexInfo>(null))
                         .then(inf => {
                             ext = U.flatClone(ext)
-                            delete ext.compileData;
-                            delete ext.generatedFiles;
-                            delete ext.extensionFiles;
+                            if (!target.keepCppFiles) {
+                                delete ext.compileData;
+                                delete ext.generatedFiles;
+                                delete ext.extensionFiles;
+                            }
                             opts.extinfo = ext
                             opts.hexinfo = inf
                         })
                 })
-                .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
+                .then(() =>
+                    appTarget.compile.shortPointers || appTarget.compile.nativeType == "vm" ||
+                        this.config.binaryonly || !opts.target.isNative ? null
+                        : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
                         const headerString = JSON.stringify({

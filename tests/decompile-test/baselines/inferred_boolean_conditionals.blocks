@@ -1,0 +1,29 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="controls_if">
+<mutation elseif="0" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="test_inferred_boolean_argument_output">
+</block>
+</value>
+<statement name="DO0">
+</statement>
+<next>
+<block type="controls_if">
+<mutation elseif="0" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="typescript_expression">
+<field name="EXPRESSION">testNamespace.inferredNumberOutput&#40;&#41;</field>
+</block>
+</value>
+<statement name="DO0">
+</statement>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

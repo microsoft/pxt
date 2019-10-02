@@ -30,7 +30,7 @@ function getBMPSerialPortsAsync(): Promise<string[]> {
                         const pid = parseInt(m[3], 16)
                         const mi = parseInt(m[4], 16)
                         if (vid == 0x1d50 && pid == 0x6018 && mi == 0) {
-                            res.push(comp)
+                            res.push("\\\\.\\" + comp)
                         }
                     }
                 })
@@ -93,7 +93,7 @@ class SerialIO implements pxt.TCPIO {
                             this.onData(bb)
                         loop()
                     } else {
-                        let msg = "GDB read error, nb=" + nb + err.message
+                        let msg = "GDB read error, nb=" + nb + (err ? err.message : "no err")
                         if (this.trace) pxt.log(msg)
                         else pxt.debug(msg)
                         setTimeout(loop, 500)
@@ -168,8 +168,10 @@ function getOpenOcdPath(cmds = "") {
     if (fs.existsSync("/usr/bin/openocd")) {
         openocdPath = "/usr/"
         gccPath = "/usr/"
-    }
-    else {
+    } else if (fs.existsSync("/usr/local/bin/openocd")) {
+        openocdPath = "/usr/local/"
+        gccPath = "/usr/local/"
+    } else {
         for (let ardV = 15; ardV < 50; ++ardV) {
             for (let d of dirs) {
                 pkgDir = path.join(d + ardV, "/packages/arduino/")
@@ -233,9 +235,8 @@ ${cmds}
 function codalBin() {
     let cs = pxt.appTarget.compileService
 
-    return cs.codalBinary ?
-        buildengine.thisBuild.buildPath + "/build/" + cs.codalBinary :
-        "built/yt/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "");
+    return buildengine.thisBuild.buildPath + "/build/" + (cs.codalBinary ? cs.codalBinary :
+        cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, ""));
 }
 
 let cachedMap = ""
@@ -248,10 +249,12 @@ function getMap() {
 
 function mangle(symbolName: string) {
     let m = /(.*)::(.*)/.exec(symbolName)
-    return "_ZN" + m[1].length + m[1] + "L" + m[2].length + m[2] + "E"
+    if (m)
+        return "_ZN" + m[1].length + m[1] + "L" + m[2].length + m[2] + "E"
+    return "_ZL" + symbolName.length + symbolName
 }
 
-function findAddr(symbolName: string) {
+function findAddr(symbolName: string, opt = false) {
     if (!addrCache) {
         addrCache = {}
         let bss = ""
@@ -276,8 +279,9 @@ function findAddr(symbolName: string) {
     if (addr) {
         return addr
     } else {
-        fatal(`Can't find ${symbolName} symbol in map`)
-        return -1
+        if (!opt)
+            fatal(`Can't find ${symbolName} symbol in map`)
+        return null
     }
 }
 
@@ -365,8 +369,8 @@ function VAR_BLOCK_WORDS(vt: number) {
 export async function dumpheapAsync() {
     await initGdbServerAsync()
 
-    let memStart = findAddr("_sdata")
-    let memEnd = findAddr("_estack")
+    let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
+    let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
     let mem = await getMemoryAsync(memStart, memEnd - memStart)
     let heapDesc = findAddr("heap")
@@ -389,7 +393,7 @@ export async function dumpheapAsync() {
     let numFibers = 0
     let numListeners = 0
     for (let q of ["runQueue", "sleepQueue", "waitQueue", "fiberPool", "idleFiber"]) {
-        let addr = findAddr("codal::" + q)
+        let addr = findAddr("codal::" + q, true) || findAddr(q)
         for (let ptr = read32(addr); ptr; ptr = read32(ptr + 6 * 4)) {
             pointerClassification[hex(ptr)] = "Fiber/" + q
             pointerClassification[hex(read32(ptr))] = "Fiber/TCB/" + q
@@ -401,17 +405,19 @@ export async function dumpheapAsync() {
         }
     }
 
-    let messageBus = read32(findAddr("codal::EventModel::defaultEventBus"))
-    for (let ptr = read32(messageBus + 20); ptr; ptr = read32(ptr + 36)) {
-        numListeners++
-        pointerClassification[hex(ptr)] = "codal::Listener"
-    }
-    for (let ptr = read32(messageBus + 24); ptr; ptr = read32(ptr + 16)) {
-        pointerClassification[hex(ptr)] = "codal::EventQueueItem"
-    }
+    let messageBus = read32(findAddr("codal::EventModel::defaultEventBus", true))
+    if (messageBus) {
+        for (let ptr = read32(messageBus + 20); ptr; ptr = read32(ptr + 36)) {
+            numListeners++
+            pointerClassification[hex(ptr)] = "codal::Listener"
+        }
+        for (let ptr = read32(messageBus + 24); ptr; ptr = read32(ptr + 16)) {
+            pointerClassification[hex(ptr)] = "codal::EventQueueItem"
+        }
 
-    for (let ptr = read32(findAddr("pxt::handlerBindings")); ptr; ptr = read32(ptr)) {
-        pointerClassification[hex(ptr)] = "pxt::HandlerBinding"
+        for (let ptr = read32(findAddr("pxt::handlerBindings")); ptr; ptr = read32(ptr)) {
+            pointerClassification[hex(ptr)] = "pxt::HandlerBinding"
+        }
     }
 
     console.log(`heaps at ${hex(heapDesc)}, num=${heapNum}`)
@@ -900,6 +906,11 @@ export async function startAsync(gdbArgs: string[]) {
         monResetHalt = "run"
     }
 
+    let mapsrc = ""
+    if (/docker/.test(buildengine.thisBuild.buildPath)) {
+        mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
     let toolPaths = getOpenOcdPath()
 
     if (!bmpMode) {
@@ -910,13 +921,14 @@ export async function startAsync(gdbArgs: string[]) {
 
     let binfo = getBootInfo()
 
-    let goToApp = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
+    let goToApp = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.app}` : ""
     let goToBl = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
 
     // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
         `
 ${trg}
+${mapsrc}
 define rst
   set confirm off
   ${goToApp}

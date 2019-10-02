@@ -2,6 +2,11 @@
 /// <reference path='../built/pxtcompiler.d.ts' />
 
 namespace pxt.py {
+    export enum VarModifier {
+        NonLocal,
+        Global
+    }
+
     export interface ParameterDesc extends pxtc.ParameterDesc {
         pyType?: Type;
     }
@@ -14,6 +19,8 @@ namespace pxt.py {
         pyAST?: AST;
         isProtected?: boolean;
         moduleTypeMarker?: {};
+
+        declared?: number; // A reference to the current iteration; used for detecting duplicate functions
     }
 
     export interface TypeOptions {
@@ -22,6 +29,7 @@ namespace pxt.py {
         moduleType?: SymbolInfo; // class/static member type
         primType?: string;
         typeArgs?: Type[];
+        anyType?: boolean;
     }
 
     export interface Type extends TypeOptions {
@@ -35,6 +43,12 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
+        modifier?: VarModifier;
+
+        /* usage information */
+        firstRefPos?: number;
+        firstAssignPos?: number;
+        firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -54,6 +68,7 @@ namespace pxt.py {
     export interface Expr extends AST {
         tsType?: Type;
         symbolInfo?: SymbolInfo;
+        inCalledPosition?: boolean; // it's an f in f(...)
         _exprBrand: void;
     }
 
@@ -148,6 +163,7 @@ namespace pxt.py {
     export interface ScopeDef extends Stmt {
         vars?: Map<SymbolInfo>;
         parent?: ScopeDef;
+        blockDepth?: number;
     }
 
     export interface FunctionDef extends Symbol, ScopeDef {
@@ -158,6 +174,7 @@ namespace pxt.py {
         decorator_list: Expr[];
         returns?: Expr;
         alwaysThrows?: boolean;
+        callers?: Expr[];
     }
     export interface AsyncFunctionDef extends Stmt {
         kind: "AsyncFunctionDef";
@@ -176,6 +193,7 @@ namespace pxt.py {
         decorator_list: Expr[];
         baseClass?: ClassDef;
         isEnum?: boolean;
+        isNamespace?: boolean;
     }
     export interface Return extends Stmt {
         kind: "Return";
@@ -404,7 +422,7 @@ namespace pxt.py {
     }
     export interface Constant extends Expr {
         kind: "Constant";
-        value: any; // ??? 
+        value: any; // ???
     }
 
     // the following expression can appear in assignment context

@@ -14,7 +14,6 @@ namespace pxsim {
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
-        autoRun?: boolean;
     }
 
     export enum SimulatorState {
@@ -50,6 +49,9 @@ namespace pxsim {
         refCountingDebug?: boolean;
         version?: string;
         clickTrigger?: boolean;
+        breakOnStart?: boolean;
+        storedState?: Map<any>;
+        autoRun?: boolean;
     }
 
     export interface HwDebugger {
@@ -64,7 +66,8 @@ namespace pxsim {
         private _currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
-        public runOptions: SimulatorRunOptions = {};
+        private breakpointsSet = false;
+        private _runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
@@ -76,7 +79,11 @@ namespace pxsim {
         }
 
         isDebug() {
-            return this.runOptions && !!this.runOptions.debug;
+            return this._runOptions && !!this._runOptions.debug;
+        }
+
+        hasParts(): boolean {
+            return this._runOptions && this._runOptions.parts && !!this._runOptions.parts.length;
         }
 
         setDirty() {
@@ -90,6 +97,11 @@ namespace pxsim {
 
         setPending() {
             this.setState(SimulatorState.Pending);
+        }
+
+        focus() {
+            const frame = this.simFrames()[0];
+            if (frame) frame.focus();
         }
 
         private setStarting() {
@@ -149,9 +161,10 @@ namespace pxsim {
                     break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.autoRun)
-                        ? this.stoppedClass : this.invalidatedClass);
-                    if (!this.options.autoRun) {
+                    pxsim.U.addClass(frame,
+                        (this.state == SimulatorState.Stopped || (this._runOptions && this._runOptions.autoRun))
+                            ? this.stoppedClass : this.invalidatedClass);
+                    if (!this._runOptions || !this._runOptions.autoRun) {
                         icon.style.display = '';
                         icon.className = 'videoplay xicon icon';
                     } else
@@ -160,8 +173,8 @@ namespace pxsim {
                     this.scheduleFrameCleanup();
                     break;
                 default:
-                    U.removeClass(frame, this.stoppedClass);
-                    U.removeClass(frame, this.invalidatedClass);
+                    pxsim.U.removeClass(frame, this.stoppedClass);
+                    pxsim.U.removeClass(frame, this.invalidatedClass);
                     icon.style.display = 'none';
                     loader.style.display = 'none';
                     break;
@@ -271,6 +284,7 @@ namespace pxsim {
                     else
                         this.start();
                 }
+                frame.focus()
                 return false;
             }
             wrapper.appendChild(i);
@@ -280,7 +294,7 @@ namespace pxsim {
             i.style.display = "none";
             wrapper.appendChild(l);
 
-            if (this.runOptions)
+            if (this._runOptions)
                 this.applyAspectRatioToFrame(frame);
 
             return wrapper;
@@ -311,13 +325,19 @@ namespace pxsim {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
-            this.runOptions = undefined; // forget about program
+            this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;
             this.runId = undefined;
         }
 
         public mute(mute: boolean) {
+            if (this._currentRuntime)
+                this._currentRuntime.mute = mute;
             this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
+        public stopSound() {
+            this.postMessage({ type: 'stopsound' } as pxsim.SimulatorStopSoundMessage)
         }
 
         public isLoanedSimulator(el: HTMLElement) {
@@ -367,13 +387,13 @@ namespace pxsim {
         }
 
         private applyAspectRatio(ratio?: number) {
-            if (!ratio && !this.runOptions) return;
+            if (!ratio && !this._runOptions) return;
             const frames = this.simFrames();
             frames.forEach(frame => this.applyAspectRatioToFrame(frame, ratio));
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            const r = ratio || this.runOptions.aspectRatio;
+            const r = ratio || this._runOptions.aspectRatio;
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }
@@ -415,7 +435,7 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
-            this.runOptions = opts;
+            this._runOptions = opts;
             this.runId = this.nextId();
             // store information
             this._currentRuntime = {
@@ -432,7 +452,9 @@ namespace pxsim {
                 localizedStrings: opts.localizedStrings,
                 refCountingDebug: opts.refCountingDebug,
                 version: opts.version,
-                clickTrigger: opts.clickTrigger
+                clickTrigger: opts.clickTrigger,
+                breakOnStart: opts.breakOnStart,
+                storedState: opts.storedState
             }
             this.start();
         }
@@ -440,6 +462,10 @@ namespace pxsim {
         public restart() {
             this.stop();
             this.start();
+        }
+
+        public areBreakpointsSet() {
+            return this.breakpointsSet;
         }
 
         private start() {
@@ -450,10 +476,12 @@ namespace pxsim {
 
             if (!this._currentRuntime) return; // nothing to do
 
+            this.breakpointsSet = false;
+
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this.runOptions && this.runOptions.light);
+                let wrapper = this.createFrame(this._runOptions && this._runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
@@ -527,7 +555,7 @@ namespace pxsim {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
-                    this.handleMessage(ev.data, ev.source)
+                    this.handleMessage(ev.data, ev.source as Window)
                 }
                 window.addEventListener('message', this.listener, false);
             }
@@ -571,6 +599,7 @@ namespace pxsim {
         }
 
         public setBreakpoints(breakPoints: number[]) {
+            this.breakpointsSet = true;
             this.postDebuggerMessage("config", { setBreakpoints: breakPoints })
         }
 

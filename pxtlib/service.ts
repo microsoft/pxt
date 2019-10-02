@@ -11,21 +11,27 @@ namespace ts.pxtc {
     export const HANDLER_COMMENT = "code goes here"; // TODO: Localize? (adding lf doesn't work because this is run before translations are downloaded)
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_DEBUGGER_TYPE = "debugger_keyword";
+    export const TS_BREAK_TYPE = "break_keyword";
+    export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
+    export const COLLAPSED_BLOCK = "pxt_collapsed_block"
     export const BINARY_JS = "binary.js";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
+    export const BINARY_PXT64 = "binary.pxt64";
 
     export const NATIVE_TYPE_THUMB = "thumb";
+    export const NATIVE_TYPE_VM = "vm";
 
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
         enumsByName: pxt.Map<EnumInfo>;
+        kindsByName: pxt.Map<KindInfo>;
     }
 
     export interface EnumInfo {
@@ -37,6 +43,15 @@ namespace ts.pxtc {
         firstValue?: number;
         initialMembers: string[];
         promptHint: string;
+    }
+
+    export interface KindInfo {
+        name: string;
+        memberName: string;
+        createFunctionName: string;
+        blockId: string;
+        promptHint: string;
+        initialMembers: string[];
     }
 
     export interface CompletionEntry {
@@ -66,6 +81,7 @@ namespace ts.pxtc {
 
     export interface FunctionLocationInfo extends LocationInfo {
         functionName: string;
+        argumentNames?: string[];
     }
 
     export interface KsDiagnostic extends LocationInfo {
@@ -91,6 +107,7 @@ namespace ts.pxtc {
         blocksInfo?: BlocksInfo;
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
+        needsFullRecompile?: boolean;
         // client options
         saveOnly?: boolean;
         userContextWindow?: Window;
@@ -227,6 +244,7 @@ namespace ts.pxtc {
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
         const enumsByName: pxt.Map<EnumInfo> = {};
+        const kindsByName: pxt.Map<KindInfo> = {};
 
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
@@ -273,6 +291,7 @@ namespace ts.pxtc {
                     },
                     name: tp,
                     namespace: s.namespace,
+                    fileName: s.fileName,
                     qName: `${mkey}.${tp}`,
                     pkg: s.pkg,
                     kind: SymbolKind.Property,
@@ -348,6 +367,34 @@ namespace ts.pxtc {
                 };
             }
 
+            if (s.attributes.shim === "KIND_GET" && s.attributes.blockId) {
+                const kindNamespace = s.attributes.kindNamespace || s.attributes.blockNamespace || s.namespace;
+
+                if (kindsByName[kindNamespace]) {
+                    console.warn(`More than one block defined for kind ${kindNamespace}`);
+                    continue;
+                }
+
+                const initialMembers: string[] = [];
+                if (info.byQName[kindNamespace]) {
+                    for (const api of pxtc.Util.values(info.byQName)) {
+                        if (api.namespace === kindNamespace && api.attributes.isKind) {
+                            initialMembers.push(api.name);
+                        }
+                    }
+                }
+
+
+                kindsByName[kindNamespace] = {
+                    blockId: s.attributes.blockId,
+                    name: kindNamespace,
+                    memberName: s.attributes.kindMemberName || kindNamespace,
+                    initialMembers: initialMembers,
+                    promptHint: s.attributes.enumPromptHint || Util.lf("Create a new kind..."),
+                    createFunctionName: s.attributes.kindCreateFunction || "create"
+                };
+            }
+
             if (s.attributes.blockCombine) {
                 if (!/@set/.test(s.name)) {
                     addCombined("get", s)
@@ -395,19 +442,15 @@ namespace ts.pxtc {
             }
         }
 
-        if (pxt.appTarget && pxt.appTarget.runtime && Array.isArray(pxt.appTarget.runtime.bannedCategories)) {
-            filterCategories(pxt.appTarget.runtime.bannedCategories)
-        }
-
-        if (categoryFilters) {
+        if (categoryFilters)
             filterCategories(categoryFilters);
-        }
 
         return {
             apis: info,
             blocks,
             blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
-            enumsByName
+            enumsByName,
+            kindsByName
         }
 
         function filterCategories(banned: string[]) {
@@ -420,6 +463,8 @@ namespace ts.pxtc {
         }
     }
 
+    export let apiLocalizationStrings: pxt.Map<string> = {};
+
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
@@ -427,6 +472,8 @@ namespace ts.pxtc {
         const errors: pxt.Map<number> = {};
         return mainPkg.localizationStringsAsync(lang)
             .then(loc => Util.values(apis.byQName).forEach(fn => {
+                if (apiLocalizationStrings)
+                    Util.jsonMergeFrom(loc, apiLocalizationStrings);
                 const jsDoc = loc[fn.qName]
                 if (jsDoc) {
                     fn.attributes.jsDoc = jsDoc;
@@ -460,7 +507,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = 1);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
@@ -483,7 +530,7 @@ namespace ts.pxtc {
         let cs = pxt.appTarget.compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
-        const docker = cs.buildEngine == "dockermake";
+        const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross";
         const r: ExtensionInfo = {
             functions: [],
             generatedFiles: {},
@@ -514,7 +561,8 @@ namespace ts.pxtc {
         "decompileIndirectFixedInstances",
         "topblock",
         "callInDebugger",
-        "duplicateShadowOnDrag"
+        "duplicateShadowOnDrag",
+        "argsNullable"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -537,6 +585,8 @@ namespace ts.pxtc {
                         } else {
                             res.paramDefl[n.slice(0, n.length - 5)] = v
                         }
+                        if (!res.explicitDefaults) res.explicitDefaults = []
+                        res.explicitDefaults.push(n.slice(0, n.length - 5))
                     } else if (U.endsWith(n, ".shadow")) {
                         if (!res._shadowOverrides) res._shadowOverrides = {};
                         res._shadowOverrides[n.slice(0, n.length - 7)] = v;
@@ -598,6 +648,7 @@ namespace ts.pxtc {
             doccmt = doccmt.replace(/^\s*@param\s+(\w+)\s+(.*)$/mg, (full: string, name: string, desc: string) => {
                 res.paramHelp[name] = desc
                 if (!res.paramDefl[name]) {
+                    // these don't add to res.explicitDefaults
                     let m = /\beg\.?:\s*(.+)/.exec(desc);
                     if (m && m[1]) {
                         let defaultValue = /(?:"([^"]*)")|(?:'([^']*)')|(?:([^\s,]+))/g.exec(m[1]);
@@ -1311,6 +1362,7 @@ namespace ts.pxtc.service {
         blocks?: BlocksOptions;
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
+        runtime?: pxt.RuntimeOptions;
     }
 
     export interface SnippetOptions {

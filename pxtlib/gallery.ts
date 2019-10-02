@@ -43,7 +43,7 @@ namespace pxt.gallery {
         if (!m) return undefined;
 
         const dependencies = parsePackagesFromMarkdown(md);
-        const src = m[2];
+        let src = m[2];
         const features = parseFeaturesFromMarkdown(md);
         return {
             name,

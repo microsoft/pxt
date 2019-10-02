@@ -23,8 +23,10 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
-    if (output) // helpful for debugging
-        pxt.debug(output);
+    // people often ask about where to look for errors, and many will look in the console
+    // the output.txt has usability issues
+    if (output)
+        pxt.log(output);
 
     if (!output)
         output = U.lf("Everything seems fine!\n")
@@ -32,7 +34,25 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
-    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
+    const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+    f.numDiagnosticsOverride = errors.length
+    reportDiagnosticErrors(errors);
+}
+
+let lastErrorCounts: string = "";
+function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
+    // report to analytics;
+    if (errors && errors.length) {
+        const counts: pxt.Map<number> = {};
+        errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
+        const errorCounts = JSON.stringify(errors);
+        if (errorCounts !== lastErrorCounts) {
+            pxt.tickEvent("diagnostics", counts);
+            lastErrorCounts = errorCounts;
+        }
+    } else {
+        lastErrorCounts = "";
+    }
 }
 
 let noOpAsync = new Promise<any>(() => { })
@@ -53,20 +73,23 @@ export interface CompileOptions {
     trace?: boolean;
     native?: boolean;
     debug?: boolean;
+    debugExtensionCode?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
 }
 
 export let emptyProgram =
-    `'use strict';
-__this.setupPerfCounters([]);
-entryPoint = function (s) {
+    `(function (ectx) {
+'use strict';
+ectx.runtime.setupPerfCounters([]);
+ectx.setupDebugger(1)
+return function (s) {
     // START
-    __this.kill()
-    return leave(s, s.r0)
+    ectx.runtime.kill()
+    return ectx.leave(s, s.r0)
 }
-setupDebugger(1)
+})
 `
 
 export function emptyCompileResult(): pxtc.CompileResult {
@@ -89,7 +112,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
-                opts.justMyCode = true;
+                opts.justMyCode = !options.debugExtensionCode;
                 opts.testMode = true;
             }
             if (options.trace) {
@@ -164,7 +187,8 @@ export function completionsAsync(fileName: string, position: number, fileContent
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
-        position
+        position,
+        runtime: pxt.appTarget.runtime
     });
 }
 
@@ -198,7 +222,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
@@ -213,7 +237,6 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
             if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
                 opts.sourceFiles.push(snippetBlocks);
             }
-
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
         }).then(resp => {
@@ -222,7 +245,7 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
+    return workerOpAsync("decompile", { options: opts, fileName: fileName })
 }
 
 export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
@@ -238,6 +261,28 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> 
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
             return resp
+        })
+}
+
+export function decompilePythonSnippetAsync(code: string): Promise<string> {
+    const snippetTs = "main.ts";
+    const snippetPy = "main.py";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.fileSystem[snippetTs] = code;
+            opts.fileSystem[snippetPy] = "";
+
+            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
+                opts.sourceFiles.push(snippetTs);
+            }
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            opts.ast = true;
+            return pyDecompileCoreAsync(opts, snippetTs)
+        }).then(resp => {
+            return resp.outfiles[snippetPy]
         })
 }
 
@@ -289,7 +334,10 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
         .then(() => {
             searchFor.localizedApis = cachedApis;
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
-            return workerOpAsync("apiSearch", { search: searchFor, blocks: blocksOptions() });
+            return workerOpAsync("apiSearch", {
+                search: searchFor,
+                blocks: blocksOptions()
+            });
         });
 }
 
@@ -312,7 +360,10 @@ export function formatAsync(input: string, pos: number) {
 }
 
 export function snippetAsync(qName: string, python?: boolean) {
-    return workerOpAsync("snippet", { snippet: { qName, python } });
+    return workerOpAsync("snippet", {
+        snippet: { qName, python },
+        runtime: pxt.appTarget.runtime
+    });
 }
 
 export function typecheckAsync() {
@@ -338,7 +389,8 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
         : getApisInfoAsync().then(info => {
-            cachedBlocks = pxtc.getBlocksInfo(info);
+            const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+            cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
             return cachedBlocks;
         });
 }
@@ -592,8 +644,8 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {
-    if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
-        return { bannedCategories: pxt.appTarget.runtime.bannedCategories };
-    }
+    const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+    if (bannedCategories)
+        return {  bannedCategories };
     return undefined;
 }

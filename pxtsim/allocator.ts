@@ -14,6 +14,7 @@ namespace pxsim {
     export interface AllocatorResult {
         partsAndWires: PartAndWiresInst[];
         requiresBreadboard?: boolean;
+        hideBreadboard?: boolean;
         parts: pxsim.visuals.IBoardPart<any>[];
         wires: pxsim.visuals.Wire[];
     }
@@ -535,7 +536,7 @@ namespace pxsim {
         private getBoardGroundPin(): string {
             let pin = this.opts.boardDef.groundPins && this.opts.boardDef.groundPins[0] || null;
             if (!pin) {
-                console.log("No available ground pin on board!");
+                console.debug("No available ground pin on board!");
                 //TODO
             }
             return pin;
@@ -543,7 +544,7 @@ namespace pxsim {
         private getBoardThreeVoltPin(): string {
             let pin = this.opts.boardDef.threeVoltPins && this.opts.boardDef.threeVoltPins[0] || null;
             if (!pin) {
-                console.log("No available 3.3V pin on board!");
+                console.debug("No available 3.3V pin on board!");
                 //TODO
             }
             return pin;
@@ -551,7 +552,7 @@ namespace pxsim {
         private getBoardFiveVoltPin(): string {
             let pin = this.opts.boardDef.fiveVoltPins && this.opts.boardDef.fiveVoltPins[0] || null;
             if (!pin) {
-                console.log("No available 5V pin on board!");
+                console.debug("No available 5V pin on board!");
                 //TODO
             }
             return pin;
@@ -756,7 +757,7 @@ namespace pxsim {
                 const all = [basicWires].concat(partsAndWires)
                     .filter(pw => pw.assembly && pw.assembly.length); // only keep steps with something to do
                 // hide breadboard if not used
-                const requiresBreadboard = all.some(r =>
+                const hideBreadboard = !all.some(r =>
                     (r.part && r.part.breadboardConnections && r.part.breadboardConnections.length > 0)
                     || r.wires && r.wires.some(w => (w.end.type == "breadboard" && (<BBLoc>w.end).style != "croc") || (w.start.type == "breadboard" && (<BBLoc>w.start).style != "croc")));
 
@@ -764,7 +765,7 @@ namespace pxsim {
                     partsAndWires: all,
                     wires: [],
                     parts: [],
-                    requiresBreadboard: requiresBreadboard
+                    hideBreadboard
                 }
             } else {
                 return {

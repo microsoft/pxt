@@ -85,14 +85,27 @@ namespace pxt.blocks {
         children: Scope[];
     }
 
+    export enum BlockDeclarationType {
+        None = 0,
+        Argument,
+        Assigned,
+        Implicit
+    }
+
+    export interface BlockDiagnostic {
+        blockId: string;
+        message: string;
+    }
+
     export interface VarInfo {
         name: string;
         id: number;
 
         escapedName?: string;
         type?: Point;
-        alreadyDeclared?: boolean;
+        alreadyDeclared?: BlockDeclarationType;
         firstReference?: Blockly.Block;
+        isAssigned?: boolean;
     }
 
     function find(p: Point): Point {
@@ -420,7 +433,7 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
-                            if (call.attrs.shim === "ENUM_GET") return;
+                            if (call.attrs.shim === "ENUM_GET" || call.attrs.shim === "KIND_GET") return;
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
@@ -703,7 +716,7 @@ namespace pxt.blocks {
     }
 
     function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
             return `${escapeVarName(a.name, e)}: ${a.type}`;
@@ -729,12 +742,12 @@ namespace pxt.blocks {
     }
 
     function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const name = escapeVarName(b.getField("function_name").getText(), e, true);
         const externalInputs = !b.getInputsInline();
         const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
             return {
                 actualName: a.name,
-                definitionName: a .id
+                definitionName: a.id
             };
         });
 
@@ -877,6 +890,7 @@ namespace pxt.blocks {
         renames: RenameMap;
         stats: pxt.Map<number>;
         enums: pxtc.EnumInfo[];
+        kinds: pxtc.KindInfo[];
         idToScope: pxt.Map<Scope>;
         blockDeclarations: pxt.Map<VarInfo[]>;
         blocksInfo: pxtc.BlocksInfo;
@@ -905,6 +919,7 @@ namespace pxt.blocks {
             },
             stats: {},
             enums: [],
+            kinds: [],
             idToScope: {},
             blockDeclarations: {},
             allVariables: [],
@@ -969,10 +984,12 @@ namespace pxt.blocks {
     function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
-        let valid = (x: string) => !e.renames.takenNames[x]
-        let name = "i";
-        for (let i = 0; !valid(name); i++)
-            name = "i" + i;
+        let valid = (x: string) => !lookup(e, b, x);
+
+        let name = "index";
+        // Start at 2 because index0 and index1 are bad names
+        for (let i = 2; !valid(name); i++)
+            name = "index" + i;
         return [
             mkText("for (let " + name + " = 0; "),
             mkInfix(mkText(name), "<", bound),
@@ -1077,8 +1094,10 @@ namespace pxt.blocks {
 
         let bindString = binding.escapedName + " = ";
 
+        binding.isAssigned = true;
+
         if (isDef) {
-            binding.alreadyDeclared = true;
+            binding.alreadyDeclared = BlockDeclarationType.Assigned;
             const declaredType = getConcreteType(binding.type);
 
             bindString = `let ${binding.escapedName} = `;
@@ -1141,7 +1160,7 @@ namespace pxt.blocks {
             }
 
             if (p.shadowOptions && p.shadowOptions.toString && returnType(e, target) !== pString) {
-                return H.mkSimpleCall("+", [H.mkStringLiteral(""), compileExpression(e, target, comments)]);
+                return H.mkSimpleCall("+", [H.mkStringLiteral(""), H.mkParenthesizedExpression(compileExpression(e, target, comments))]);
             }
 
             return compileExpression(e, target, comments)
@@ -1157,6 +1176,10 @@ namespace pxt.blocks {
             const enumName = func.attrs.enumName;
             const enumMember = b.getFieldValue("MEMBER").replace(/^\d+/, "");
             return H.mkPropertyAccess(enumMember, mkText(enumName));
+        }
+        else if (func.attrs.shim === "KIND_GET") {
+            const info = e.kinds.filter(k => k.blockId === func.attrs.blockId)[0];
+            return H.mkPropertyAccess(b.getFieldValue("MEMBER"), mkText(info.name));
         }
         else {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
@@ -1363,6 +1386,12 @@ namespace pxt.blocks {
             case pxtc.TS_DEBUGGER_TYPE:
                 r = compileDebuggeStatementBlock(e, b);
                 break;
+            case pxtc.TS_BREAK_TYPE:
+                r = compileBreakStatementBlock(e, b);
+                break;
+            case pxtc.TS_CONTINUE_TYPE:
+                r = compileContinueStatementBlock(e, b);
+                break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) r = [compileCall(e, b, comments)];
@@ -1396,7 +1425,7 @@ namespace pxt.blocks {
         if (firstBlock && e.blockDeclarations[firstBlock.id]) {
             e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
                 stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
-                varInfo.alreadyDeclared = true;
+                varInfo.alreadyDeclared = BlockDeclarationType.Implicit;
             });
         }
         return mkBlock(stmts);
@@ -1428,6 +1457,14 @@ namespace pxt.blocks {
             ]
         }
         return [];
+    }
+
+    function compileBreakStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("break;\n")]
+    }
+
+    function compileContinueStatementBlock(e: Environment, b: Blockly.Block) {
+        return [mkText("continue;\n")]
     }
 
     function prefixWithSemicolon(n: JsNode) {
@@ -1482,10 +1519,18 @@ namespace pxt.blocks {
                 Object.keys(blockInfo.enumsByName).forEach(k => e.enums.push(blockInfo.enumsByName[k]));
             }
 
+            if (blockInfo.kindsByName) {
+                Object.keys(blockInfo.kindsByName).forEach(k => e.kinds.push(blockInfo.kindsByName[k]));
+            }
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
-                        pxt.reportError("blocks", "function already defined", { "details": fn.attributes.blockId });
+                        pxt.reportError("blocks", "function already defined", {
+                            "details": fn.attributes.blockId,
+                            "qualifiedName": fn.qName,
+                            "packageName": fn.pkg,
+                        });
                         return;
                     }
                     e.renames.takenNames[fn.namespace] = true;
@@ -1508,7 +1553,7 @@ namespace pxt.blocks {
 
             w.getTopBlocks(false).filter(isFunctionDefinition).forEach(b => {
                 // Add functions to the rename map to prevent name collisions with variables
-                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getFieldValue("function_name");
+                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getField("function_name").getText();
                 escapeVarName(name, e, true);
             });
         }
@@ -1538,7 +1583,7 @@ namespace pxt.blocks {
         }
     }
 
-    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): JsNode[] {
+    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
         try {
             // all compiled top level blocks are events
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
@@ -1626,8 +1671,37 @@ namespace pxt.blocks {
                 }
             });
 
+            e.kinds.forEach(info => {
+                const models = w.getVariablesOfType("KIND_" + info.name);
+                if (models && models.length) {
+                    const userDefined = models.map(m => m.name).filter(n => info.initialMembers.indexOf(n) === -1);
+
+                    if (userDefined.length) {
+                        stmtsEnums.push(mkGroup([
+                            mkText(`namespace ${info.name}`),
+                            mkBlock(userDefined.map(varName => mkStmt(mkText(`export const ${varName} = ${info.name}.${info.createFunctionName}()`))))
+                        ]));
+                    }
+                }
+            });
+
             const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
-            return stmtsEnums.concat(leftoverVars.concat(stmtsMain));
+
+            const diags: BlockDiagnostic[] = [];
+
+            e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
+                const t = getConcreteType(v.type);
+
+                // The primitive types all get initializers set to default values, other types are set to null
+                if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
+
+                diags.push({
+                    blockId: v.firstReference && v.firstReference.id,
+                    message: lf("Variable '{0}' is never assigned", v.name)
+                });
+            });
+
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1641,7 +1715,7 @@ namespace pxt.blocks {
             removeAllPlaceholders();
         }
 
-        return [] // unreachable
+        return [null, null] // unreachable
     }
 
     export function callKey(e: Environment, b: Blockly.Block): string {
@@ -1662,7 +1736,7 @@ namespace pxt.blocks {
 
     function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlocks: Blockly.Block[]) {
         // unset disabled
-        allBlocks.forEach(b => b.setDisabled(false));
+        allBlocks.forEach(b => b.setEnabled(true));
 
         // update top blocks
         const events: Map<Blockly.Block> = {};
@@ -1671,9 +1745,9 @@ namespace pxt.blocks {
             const otherEvent = events[key];
             if (otherEvent) {
                 // another block is already registered
-                block.setDisabled(true);
+                block.setEnabled(false);
             } else {
-                block.setDisabled(false);
+                block.setEnabled(true);
                 events[key] = block;
             }
         }
@@ -1694,7 +1768,7 @@ namespace pxt.blocks {
                 // all non-events are disabled
                 let t = b;
                 while (t) {
-                    t.setDisabled(true);
+                    t.setEnabled(false);
                     t = t.getNextBlock();
                 }
             }
@@ -1705,6 +1779,7 @@ namespace pxt.blocks {
         source: string;
         sourceMap: SourceInterval[];
         stats: pxt.Map<number>;
+        diagnostics: BlockDiagnostic[];
     }
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
@@ -1726,12 +1801,12 @@ namespace pxt.blocks {
 
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
-        const nodes = compileWorkspace(e, b, blockInfo);
-        const result = tdASTtoTS(e, nodes);
+        const [nodes, diags] = compileWorkspace(e, b, blockInfo);
+        const result = tdASTtoTS(e, nodes, diags);
         return result;
     }
 
-    function tdASTtoTS(env: Environment, app: JsNode[]): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
         let res = flattenNode(app)
 
         // Note: the result of format is not used!
@@ -1740,7 +1815,8 @@ namespace pxt.blocks {
             return {
                 source: res.output,
                 sourceMap: res.sourceMap,
-                stats: env.stats
+                stats: env.stats,
+                diagnostics: diags || []
             };
         })
 
@@ -1922,8 +1998,8 @@ namespace pxt.blocks {
             const size = block.getHeightWidth();
             return {
                 id: block.id,
-                x: bounds.topLeft.x,
-                y: bounds.topLeft.y,
+                x: bounds.left,
+                y: bounds.top,
                 width: size.width,
                 height: size.height
             }
@@ -1939,8 +2015,8 @@ namespace pxt.blocks {
             const bounds = comment.getBoundingRectangle();
             const size = comment.getHeightWidth();
 
-            const x = bounds.topLeft.x;
-            const y = bounds.topLeft.y;
+            const x = bounds.left;
+            const y = bounds.top;
 
             let parent: Rect;
 
@@ -2129,7 +2205,7 @@ namespace pxt.blocks {
                     const varNames = declaredVars.split(",");
                     varNames.forEach(vName => {
                         const info = findOrDeclareVariable(vName, currentScope);
-                        info.alreadyDeclared = true;
+                        info.alreadyDeclared = BlockDeclarationType.Argument;
                     });
                 }
             }
@@ -2159,7 +2235,7 @@ namespace pxt.blocks {
                     };
 
                     vars.forEach(v => {
-                        v.alreadyDeclared = true;
+                        v.alreadyDeclared = BlockDeclarationType.Assigned;
                         parentScope.declaredVars[v.name] = v;
                     });
 

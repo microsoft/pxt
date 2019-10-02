@@ -30,11 +30,39 @@ namespace pxt.blocks {
     export const optionalDummyInputPrefix = "0_optional_dummy";
     export const optionalInputWithFieldPrefix = "0_optional_field";
 
-    // Matches arrays and tuple types
-    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
-    export function isArrayType(type: string) {
-        return arrayTypeRegex.test(type);
+    // Matches arrays
+    export function isArrayType(type: string): string {
+        const arrayTypeRegex = /^(?:Array<(.+)>)|(?:(.+)\[\])|(?:\[.+\])$/;
+        let parsed = arrayTypeRegex.exec(type);
+        if (parsed) {
+            // Is an array, returns what type it is an array of
+            if (parsed[1]) {
+                // Is an array with form Array<type>
+                return parsed[1];
+            } else {
+                // Is an array with form type[]
+                return parsed[2];
+            }
+        } else {
+            // Not an array
+            return undefined;
+        }
     }
+
+    // Matches tuples
+    export function isTupleType(type: string): string[] {
+        const tupleTypeRegex = /^\[(.+)\]$/;
+        let parsed = tupleTypeRegex.exec(type);
+        if (parsed) {
+            // Returns an array containing the types of the tuple
+            return parsed[1].split(/,\s*/);
+        } else {
+            // Not a tuple
+            return undefined;
+        }
+    }
+
+    const primitiveTypeRegex = /^(string|number|boolean)$/;
 
     type NamedField = { field: Blockly.Field, name?: string };
 
@@ -104,14 +132,41 @@ namespace pxt.blocks {
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
 
-        const shadow = document.createElement(isVariable ? "block" : "shadow");
+        const isArray = isArrayType(p.type);
+
+        const shadow = document.createElement(isVariable || isArray ? "block" : "shadow");
+
         value.appendChild(shadow);
 
-        const typeInfo = typeDefaults[p.type];
+        const typeInfo = typeDefaults[isArray || p.type];
 
-        shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
+        shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
+        if (isArray) {
+            // if an array of booleans, numbers, or strings
+            if (typeInfo && !shadowId) {
+                let fieldValues: string[];
+
+                switch (isArray) {
+                    case "number":
+                        fieldValues = ["1", "2", "3"];
+                        break;
+                    case "string":
+                        fieldValues = ["a", "b", "c"];
+                        break;
+                    case "boolean":
+                        fieldValues = ["FALSE", "FALSE", "FALSE"];
+                        break;
+                }
+                buildArrayShadow(shadow, typeInfo.block, typeInfo.field, fieldValues);
+                return value;
+            }
+            else if (shadowId && defaultValue) {
+                buildArrayShadow(shadow, defaultValue);
+                return value;
+            }
+        }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
@@ -185,6 +240,30 @@ namespace pxt.blocks {
         return value;
     }
 
+    function buildArrayShadow(shadow: Element, blockType: string, fieldName?: string, fieldValues?: string[]) {
+        const itemCount = fieldValues ? fieldValues.length : 2;
+        const mut = document.createElement('mutation');
+        mut.setAttribute("items", "" + itemCount);
+        shadow.appendChild(mut);
+
+        for (let i = 0; i < itemCount; i++) {
+            const innerValue = document.createElement("value");
+            innerValue.setAttribute("name", "ADD" + i);
+            const innerShadow = document.createElement("shadow");
+            innerShadow.setAttribute("type", blockType);
+            if (fieldName) {
+                const field = document.createElement("field");
+                field.setAttribute("name", fieldName);
+                if (fieldValues) {
+                    field.appendChild(document.createTextNode(fieldValues[i]));
+                }
+                innerShadow.appendChild(field);
+            }
+            innerValue.appendChild(innerShadow);
+            shadow.appendChild(innerValue);
+        }
+    }
+
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
         const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
@@ -245,7 +324,10 @@ namespace pxt.blocks {
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
-                (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
+                (primitiveTypeRegex.test(pr.type)
+                    || primitiveTypeRegex.test(isArrayType(pr.type))
+                    || pr.shadowBlockId
+                    || pr.defaultValue))
                 .forEach(pr => {
                     block.appendChild(createShadowValue(info, pr));
                 })
@@ -480,7 +562,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                             const getOptions = fieldRow.saveOptions();
-                            el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            if (getOptions) {
+                                el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            }
                         }
                     })
                 })
@@ -491,7 +575,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                             const options = JSON.parse(saved.getAttribute(`customfield`));
-                            fieldRow.restoreOptions(options);
+                            if (options) {
+                                fieldRow.restoreOptions(options);
+                            }
                         }
                     })
                 })
@@ -526,7 +612,7 @@ namespace pxt.blocks {
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip(fn.attributes.jsDoc);
+        block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
@@ -534,7 +620,7 @@ namespace pxt.blocks {
             const inputs = splitInputs(def);
             const imgConv = new ImageConverter()
 
-            if (fn.attributes.shim === "ENUM_GET") {
+            if (fn.attributes.shim === "ENUM_GET" || fn.attributes.shim === "KIND_GET") {
                 if (comp.parameters.length > 1 || comp.thisParameter) {
                     console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
                     return;
@@ -559,6 +645,13 @@ namespace pxt.blocks {
                         fields.push({
                             name: "MEMBER",
                             field: new pxtblockly.FieldUserEnum(info.enumsByName[fn.attributes.enumName])
+                        });
+                        return;
+                    }
+                    else if (fn.attributes.shim === "KIND_GET") {
+                        fields.push({
+                            name: "MEMBER",
+                            field: new pxtblockly.FieldKind(info.kindsByName[fn.attributes.kindNamespace || fn.attributes.blockNamespace || fn.namespace])
                         });
                         return;
                     }
@@ -675,27 +768,13 @@ namespace pxt.blocks {
                             inputName = defName;
                             if (instance && part.name === "this") {
                                 inputCheck = pr.type;
-                            } else if (pr.type == "number") {
-                                if (pr.shadowBlockId && pr.shadowBlockId == "value") {
-                                    inputName = undefined;
-                                    fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
-                                }
-                                else {
-                                    inputCheck = "Number"
-                                }
-                            } else if (pr.type == "boolean") {
-                                inputCheck = "Boolean"
-                            } else if (pr.type == "string") {
-                                if (pr.shadowOptions && pr.shadowOptions.toString) {
-                                    inputCheck = undefined;
-                                }
-                                else {
-                                    inputCheck = "String"
-                                }
-                            } else if (pr.type == "any") {
+                            } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
+                                inputName = undefined;
+                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                            } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
+                                inputCheck = getBlocklyCheckForType(pr.type, info);
                             }
                         }
                     }
@@ -775,7 +854,6 @@ namespace pxt.blocks {
      */
     export function initialize(blockInfo: pxtc.BlocksInfo) {
         init();
-        initTooltip(blockInfo);
         initJresIcons(blockInfo);
     }
 
@@ -803,16 +881,17 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+        initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
-            if (this.disabled != disabled) {
+        (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
+            if (this.disabled == enabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this, 'disabled', null, this.disabled, disabled));
+                    this, 'disabled', null, this.disabled, !enabled));
                 (Blockly as any).Events.recordUndo = oldRecordUndo;
-                this.disabled = disabled;
+                this.disabled = !enabled;
             }
         };
     }
@@ -825,36 +904,54 @@ namespace pxt.blocks {
      *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
      */
     function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
-        switch (type) {
-            // Blockly capitalizes primitive types for its builtin math/string/logic blocks
-            case "number": return ["Number"];
-            case "string": return ["String"];
-            case "boolean": return ["Boolean"];
-            case "any": return null;
-            case "void": return undefined
-            default:
-                if (type !== "T") {
+        const types = type.split(/\s*\|\s*/);
+        const output = [];
+        for (const subtype of types) {
+            switch (subtype) {
+                // Blockly capitalizes primitive types for its builtin math/string/logic blocks
+                case "number":
+                    output.push("Number");
+                    break;
+                case "string":
+                    output.push("String");
+                    break;
+                case "boolean":
+                    output.push("Boolean");
+                    break;
+                case "T":
+                // The type is generic, so accept any checks. This is mostly used with functions that
+                // get values from arrays. This could be improved if we ever add proper type
+                // inference for generic types
+                case "any":
+                    return null;
+                case "void":
+                    return undefined;
+                default:
                     // We add "Array" to the front for array types so that they can be connected
                     // to the blocks that accept any array (e.g. length, push, pop, etc)
-                    const opt_check = isArrayType(type) ? ["Array"] : [];
+                    if (isArrayType(subtype)) {
+                        if (types.length > 1) {
+                            // type inference will potentially break non-trivial arrays in intersections
+                            // until we have better type handling in blocks,
+                            // so escape and allow any block to be dropped in.
+                            return null;
+                        } else {
+                            output.push("Array");
+                        }
+                    }
 
                     // Blockly has no concept of inheritance, so we need to add all
                     // super classes to the check array
-                    const si_r = info.apis.byQName[type];
+                    const si_r = info.apis.byQName[subtype];
                     if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
-                        opt_check.push(...si_r.extendsTypes);
+                        output.push(...si_r.extendsTypes);
                     } else {
-                        opt_check.push(type);
+                        output.push(subtype);
                     }
-
-                    return opt_check;
-                } else {
-                    // The type is generic, so accept any checks. This is mostly used with functions that
-                    // get values from arrays. This could be improved if we ever add proper type
-                    // inference for generic types
-                    return null;
-                }
+            }
         }
+
+        return output;
     }
 
     function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
@@ -1045,6 +1142,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1132,6 +1230,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1153,6 +1252,83 @@ namespace pxt.blocks {
                 }
             }
         };
+
+        // break statement
+        const breakBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
+        Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": breakBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    breakBlockDef.name,
+                    breakBlockDef.tooltip,
+                    breakBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        // continue statement
+        const continueBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
+        Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": continueBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_CONTINUE_TYPE,
+                    continueBlockDef.name,
+                    continueBlockDef.tooltip,
+                    continueBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        const collapsedColor = "#cccccc";
+        Blockly.Blocks[pxtc.COLLAPSED_BLOCK] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": "...",
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": collapsedColor
+                })
+                setHelpResources(this,
+                    ts.pxtc.COLLAPSED_BLOCK,
+                    "...",
+                    lf("a few blocks"),
+                    undefined,
+                    collapsedColor,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
@@ -1188,12 +1364,12 @@ namespace pxt.blocks {
                     trashIcon.style.display = 'block';
                     blocklyTreeRoot.style.opacity = `${opacity}`;
                     if (distance < 50) {
-                        blocklyToolboxDiv.classList.add('blocklyToolboxDeleting');
+                        pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                     }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
-                    blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                    pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                 }
             }
             return blockDrag.call(this, e, currentDragDeltaXY);
@@ -1214,7 +1390,7 @@ namespace pxt.blocks {
             if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
-                blocklyToolboxDiv.classList.remove('blocklyToolboxDeleting');
+                pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
             }
         }
     }
@@ -1878,6 +2054,7 @@ namespace pxt.blocks {
         msg.RENAME_VARIABLE = lf("Rename variable...");
         msg.DELETE_VARIABLE = lf("Delete the \"%1\" variable");
         msg.DELETE_VARIABLE_CONFIRMATION = lf("Delete %1 uses of the \"%2\" variable?");
+        msg.NEW_VARIABLE_DROPDOWN = lf("New variable...");
 
         // builtin variables_set
         const variablesSetId = "variables_set";
@@ -1918,6 +2095,9 @@ namespace pxt.blocks {
 
         // New variable dialog
         msg.NEW_VARIABLE_TITLE = lf("New variable name:");
+
+        // Rename variable dialog
+        msg.RENAME_VARIABLE_TITLE = lf("Rename all '%1' variables to:");
     }
 
     function initFunctions() {
@@ -1969,7 +2149,6 @@ namespace pxt.blocks {
         Blockly.Blocks['procedures_callnoreturn'] = {
             init: function () {
                 let nameField = new pxtblockly.FieldProcedure('');
-                nameField.setSourceBlock(this);
                 this.appendDummyInput('TOPROW')
                     .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE'])
                     .appendField(nameField, 'NAME');
@@ -2164,6 +2343,7 @@ namespace pxt.blocks {
             workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
                 let promptAndCheckWithAlert = (defaultName: string) => {
                     Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
+                        pxt.tickEvent('blocks.makeafunction');
                         // Merge runs of whitespace.  Strip leading and trailing whitespace.
                         // Beyond this, all names are legal.
                         if (newFunc) {
@@ -2259,7 +2439,7 @@ namespace pxt.blocks {
             // The logic for setting the output check relies on the internals of PXT
             // too much to be refactored into pxt-blockly, so we need to monkey patch
             // it here
-            Blockly.Blocks["argument_reporter_custom"].domToMutation = function(xmlElement: Element) {
+            Blockly.Blocks["argument_reporter_custom"].domToMutation = function (xmlElement: Element) {
                 const typeName = xmlElement.getAttribute('typename');
                 this.typeName_ = typeName;
 
@@ -2390,7 +2570,7 @@ namespace pxt.blocks {
         Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
     }
 
-    function initTooltip(blockInfo: pxtc.BlocksInfo) {
+    function initTooltip() {
 
         const renderTip = (el: any) => {
             if (el.disabled)
@@ -2461,7 +2641,7 @@ namespace pxt.blocks {
                 render();
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
-                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
                 // Create new text, line by line.
                 let lines = tip.split('\n');
                 for (let i = 0; i < lines.length; i++) {
@@ -2521,7 +2701,7 @@ namespace pxt.blocks {
             pxt.log(`missing jres icon ${id}`)
             return undefined;
         }
-        return new Blockly.FieldImage(url, 40, 40, Util.isUserLanguageRtl(), '');
+        return new Blockly.FieldImage(url, 40, 40, '', null, Util.isUserLanguageRtl());
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
@@ -2573,7 +2753,7 @@ namespace pxt.blocks {
     }
 
     function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
-        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
+        return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
     }
 
     export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {

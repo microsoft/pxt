@@ -6,6 +6,7 @@ import * as core from "./core";
 interface CoreDialogState {
     visible?: boolean;
     inputValue?: string;
+    inputError?: string;
 }
 
 export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogState> {
@@ -20,7 +21,8 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
     constructor(props: core.PromptOptions) {
         super(props);
         this.state = {
-            inputValue: props.initialValue
+            inputValue: props.initialValue,
+            inputError: undefined
         }
 
         this.hide = this.hide.bind(this);
@@ -82,15 +84,18 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
 
     handleInputChange(v: React.ChangeEvent<any>) {
         const options = this.props;
-        if (options.onInputChanged) {
+        if (options.onInputChanged)
             options.onInputChanged(v.target.value);
+        let inputError: string;
+        if (options.onInputValidation) {
+            inputError = options.onInputValidation(v.target.value);
         }
-        this.setState({ inputValue: v.target.value });
+        this.setState({ inputValue: v.target.value, inputError });
     }
 
     render() {
         const options = this.props;
-        const { inputValue } = this.state;
+        const { inputValue, inputError } = this.state;
         const size: any = options.size === undefined ? 'small' : options.size;
 
         const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
@@ -102,7 +107,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
             if (!btn.className) btn.className = "approve positive";
             if (btn.approveButton) this.okButton = btn;
         })
-        if (options.type == 'prompt' && this.okButton) this.okButton.disabled = !inputValue;
+        if (options.type == 'prompt' && this.okButton) this.okButton.disabled = !inputValue || !!inputError;
 
         const classes = sui.cx([
             'coredialog',
@@ -122,9 +127,20 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
-                    <input autoFocus type="text" ref="promptInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
+                    <input
+                        autoFocus
+                        className={`ui input ${inputError ? "error" : ""}`}
+                        type="text"
+                        ref="promptInput"
+                        onChange={this.handleInputChange}
+                        value={inputValue}
+                        placeholder={options.placeholder}
+                        aria-label={options.placeholder}
+                    />
+                    {inputError ? <div className="ui error message">{inputError}</div> : undefined}
                 </div> : undefined}
                 {options.jsx}
+                {options.jsxd ? options.jsxd() : undefined}
                 {options.body ? <p>{options.body}</p> : undefined}
                 {options.copyable ? <div className="ui fluid action input">
                     <input ref="linkinput" className="linkinput" readOnly spellCheck={false} type="text" value={`${options.copyable}`} />
@@ -139,6 +155,11 @@ let currentDialog: CoreDialog;
 
 export function dialogIsShowing() {
     return !!currentDialog;
+}
+
+export function forceUpdate() {
+    if (currentDialog)
+        currentDialog.forceUpdate();
 }
 
 export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<void> {

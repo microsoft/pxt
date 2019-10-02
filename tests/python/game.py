@@ -1,3 +1,7 @@
+@namespace
+class SpriteKind:
+  Taco = 123
+
 class Foo:
   def qux2(self):
     z = 12
@@ -29,9 +33,9 @@ class SpriteKind(Enum):
     Food = 3
 
 ii = img("""
-. . . .
-. a . .
-. b b .
+    . . . .
+    . a . .
+    . b b .
 """)
 hbuf = hex("a007")
 hbuf2 = b'\xB0\x07'
@@ -67,3 +71,7 @@ def spawn_enemy():
     projectile.set_kind(SpriteKind.Enemy)
     projectile.x = math.random_range(10, 150)
 game.on_update_interval(500, spawn_enemy)
+
+def qq():
+    pass
+qq()

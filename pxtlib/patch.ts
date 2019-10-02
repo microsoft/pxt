@@ -29,14 +29,23 @@ namespace pxt.patching {
     }
 
     export function patchJavaScript(pkgTargetVersion: string, fileContents: string): string {
-        const upgrades = pxt.patching.computePatches(pkgTargetVersion, "api");
+        const upgrades = pxt.patching.computePatches(pkgTargetVersion);
         let updatedContents = fileContents;
         if (upgrades) {
-            upgrades.forEach(rule => {
-                for (const match in rule.map) {
+            upgrades.filter(u => u.type === "api").forEach(rule => {
+                Object.keys(rule.map).forEach(match => {
                     const regex = new RegExp(match, 'g');
                     updatedContents = updatedContents.replace(regex, rule.map[match]);
-                }
+                });
+            });
+            upgrades.filter(u => u.type === "userenum").forEach(rule => {
+                Object.keys(rule.map).forEach(enumName => {
+                    const declRegex = new RegExp("enum\\s+" + enumName + "\\s*{", 'gm');
+                    updatedContents = updatedContents.replace(declRegex, `enum ${rule.map[enumName]} {`);
+
+                    const usageRegex = new RegExp(`(^|[^_a-zA-Z0-9])${enumName}(\\s*\\.)`, 'g');
+                    updatedContents = updatedContents.replace(usageRegex, `$1${rule.map[enumName]}$2`);
+                });
             });
         }
         return updatedContents;

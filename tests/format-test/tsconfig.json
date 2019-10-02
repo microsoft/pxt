@@ -4,10 +4,15 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "outDir": "../../built/tests/format-test",
+        "outDir": "../../built/tests",
         "newLine": "LF",
         "module": "commonjs",
-        "types": ["chai", "mocha", "node", "bluebird"],
+        "types": [
+            "chai",
+            "mocha",
+            "node",
+            "bluebird"
+        ],
         "sourceMap": false
     },
     "files": [

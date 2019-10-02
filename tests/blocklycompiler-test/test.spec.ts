@@ -185,7 +185,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
                 return Promise.reject("Could not compile");
 
             // decompile to blocks
-            let apis = pxtc.getApiInfo(opts, resp.ast);
+            let apis = pxtc.getApiInfo(resp.ast, opts.jres);
             let blocksInfo = pxtc.getBlocksInfo(apis);
             pxt.blocks.initializeAndInject(blocksInfo);
 
@@ -225,7 +225,7 @@ function blockTestAsync(name: string) {
             }
 
             chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
-        }, err => fail('Compiling blocks failed'));
+        }, err => fail('Compiling blocks failed with error: ' + err));
 }
 
 describe("blockly compiler", function () {
@@ -460,6 +460,12 @@ describe("blockly compiler", function () {
             it("should compile values even if they are invalid", done => {
                 blockTestAsync("enum_define_bit_mask_bad_values").then(done, done);
             });
+        });
+    });
+
+    describe("compiling KIND_GET blocks", () => {
+        it("should declare namespaces for declared kinds", done =>{
+            blockTestAsync("sprite_kind").then(done, done);
         });
     });
 

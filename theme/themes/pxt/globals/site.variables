@@ -6,7 +6,9 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
+@secondaryColor: rgba(0, 0, 0, 0.55);
+@docsPrimaryColor    : #6C196C;
+@docsAccentColor     : #FC6483;
 
 @red:#A80000;
 @orange:#D83B01;
@@ -14,16 +16,16 @@
 @green:#107C10;
 @teal:#008272;
 @blue:#0078D7;
-@violet:#B4009E;
 @purple:#5C2D91;
 @pink:#E2008C;
 @brown:#00BCF2;
 @grey:#505050;
 @lightGrey: #d9d9d9;
+@backgroundGrey: #F0F2F7;
 
 @greenTextColor: darken(@green, 5);
 
-@lightTextColor              : rgba(0, 0, 0, 0.68);
+@lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
@@ -36,23 +38,32 @@
 @importGoogleFonts: false;
 
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
-@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Times New Roman", serif;
 
-@emSize      : 14px;
-@fontSize    : 12pt;
+@emSize      : 18px;
+@fontSize    : 18px;
 
 /*-------------------
    Links
 --------------------*/
 
-@linkColor           : #4183c4;
+@linkColor           : #3977b4;
 @linkHoverUnderline  : underline;
 
 /*-------------------
    Breakpoints
 --------------------*/
 
+@tabletBreakpoint: 814px; // iPhone X landscape is 812px;
 /*
+default semantic
+@mobileBreakpoint            : 320px;
+@tabletBreakpoint            : 768px;
+@computerBreakpoint          : 992px;
+@largeMonitorBreakpoint      : 1200px;
+@widescreenMonitorBreakpoint : 1920px;
+
+// experiment
 @mobileBreakpoint            : unit( (63 * @emSize), px);
 @tabletBreakpoint            : unit( (79 * @emSize), px);
 @computerBreakpoint          : unit( (91 * @emSize), px);
@@ -134,12 +145,13 @@
 --------------------*/
 
 @mainMenuBackground: @white;
-@mainMenuInvertedBackground: @black;
+@mainMenuInvertedBackground: @backgroundGrey;
 @mainMenuTutorialBackground: @orange;
 
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
+@thinMenuHeight: 3rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;
@@ -206,6 +218,20 @@
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
 @serialConsoleBackground: @simulatorBackground;
+
+/*-------------------
+   Github Diff editor
+--------------------*/
+@githubBackgroundColor: lighten(@simulatorBackground, 2);
+@diffSegmentBackgroundColor: @pageBackground;
+@diffRemovedBackground:#ffeef0;
+@diffAddedBackground: #e6ffed;
+@diffMarkerBackground: #f1f8ff;
+@diffMarkerColor: rgba(27,31,35,.7);
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);;
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);;
+
 
 /*-------------------
    Blockly
@@ -300,7 +326,9 @@
 @debugArrayVariable: #663905;
 @debugSpriteVariable: blue;
 
+@debugVariableOdd: #fafafa;
+@debugVariableEven: #f0f0f0;
+@debugVariableFrozen: #eee;
+
 @DebuggerBackgroundPrimaryColor: #e67e22;
 @DebuggerBackgroundSecondaryColor: lightgreen;
-
-@debuggerVariableExplorerBackground: white;

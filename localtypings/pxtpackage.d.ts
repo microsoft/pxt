@@ -1,6 +1,7 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
+    type CodeCardEditorType = "blocks" | "js" | "py";
 
     interface Map<T> {
         [index: string]: T;
@@ -67,6 +68,9 @@ declare namespace pxt {
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
         skipLocalization?: boolean;
+        snippetBuilders?: SnippetConfig[];
+        experimentalHw?: boolean;
+        requiredCategories?: string[]; // ensure that those block categories are visible
     }
 
     interface PackageExtension {
@@ -127,6 +131,7 @@ declare namespace pxt {
         feedbackUrl?: string;
         responsive?: boolean;
         cardType?: CodeCardType;
+        editor?: CodeCardEditorType;
 
         header?: string;
         any?: number;
@@ -157,5 +162,86 @@ declare namespace pxt {
         icon?: string; // URL (usually data-URI) for the icon
         namespace?: string; // used to construct id
         mimeType: string;
+    }
+
+    type SnippetOutputType = 'blocks'
+    type SnippetOutputBehavior = /*assumed default*/'merge' | 'replace'
+    interface SnippetConfig {
+        name: string;
+        namespace: string;
+        group?: string;
+        label: string;
+        outputType: SnippetOutputType;
+        outputBehavior?: SnippetOutputBehavior;
+        initialOutput?: string;
+        questions: SnippetQuestions[];
+    }
+
+    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+
+    interface SnippetGoToOptions {
+        question?: number;
+        validate?: SnippetValidate;
+        parameters?: SnippetParameters[]; // Answer token with corresponding question
+    }
+
+    interface SnippetOutputOptions {
+        type: 'error' | 'hint';
+        output: string;
+    }
+
+    interface SnippetParameters {
+        token?: string;
+        answer?: string;
+        question: number;
+    }
+
+    interface SnippetInputAnswerSingular {
+        answerToken: string;
+        defaultAnswer: SnippetAnswerTypes;
+    }
+
+    interface SnippetInputAnswerPlural {
+        answerTokens: string[];
+        defaultAnswers: SnippetAnswerTypes[];
+    }
+
+    interface SnippetInputOtherType {
+        type: string;
+    }
+
+    interface SnippetInputNumberType {
+        type: 'number' | 'positionPicker';
+        max?: number;
+        min?: number;
+    }
+
+    interface SnippetInputDropdownType {
+        type: "dropdown";
+        options: pxt.Map<string>;
+    }
+
+    type SnippetQuestionInput = { label?: string; }
+        & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType)
+
+    interface SnippetValidateRegex {
+        token: string;
+        regex: string;
+        match?: SnippetParameters;
+        noMatch?: SnippetParameters;
+    }
+
+    interface SnippetValidate {
+        regex?: SnippetValidateRegex;
+    }
+
+    interface SnippetQuestions {
+        title: string;
+        output?: string;
+        errorMessage?: string;
+        goto?: SnippetGoToOptions;
+        inputs: SnippetQuestionInput[];
+        hint?: string;
     }
 }

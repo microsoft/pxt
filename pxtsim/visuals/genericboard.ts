@@ -143,7 +143,7 @@ namespace pxsim.visuals {
                 "y": "0px"
             });
             if (props.wireframe)
-                svg.addClass(this.element, "sim-board-outline")
+                pxsim.U.addClass(this.element, "sim-board-outline")
             this.style = <SVGStyleElement>svg.child(this.element, "style", {});
             this.style.textContent += BOARD_SYTLE;
             this.defs = <SVGDefsElement>svg.child(this.element, "defs", {});
@@ -220,7 +220,7 @@ namespace pxsim.visuals {
                 });
                 let pins = gridRes.allPins;
                 let pinsG = gridRes.g;
-                svg.addClass(gridRes.g, "sim-board-pin-group");
+                pxsim.U.addClass(gridRes.g, "sim-board-pin-group");
                 return gridRes;
             };
             let pinBlocks = visDef.pinBlocks.map(mkPinBlockGrid);
@@ -260,9 +260,9 @@ namespace pxsim.visuals {
             };
             const mkLabel = (pinX: number, pinY: number, txt: string, pos: "above" | "below"): GridLabel => {
                 let el = mkLabelTxtEl(pinX, pinY, PIN_LBL_SIZE, txt, pos);
-                svg.addClass(el, "sim-board-pin-lbl");
+                pxsim.U.addClass(el, "sim-board-pin-lbl");
                 let hoverEl = mkLabelTxtEl(pinX, pinY, PIN_LBL_HOVER_SIZE, txt, pos);
-                svg.addClass(hoverEl, "sim-board-pin-lbl-hover");
+                pxsim.U.addClass(hoverEl, "sim-board-pin-lbl-hover");
                 let label: GridLabel = { el: el, hoverEl: hoverEl, txt: txt };
                 return label;
             }
@@ -333,10 +333,10 @@ namespace pxsim.visuals {
             let lbl = this.findPinLabel(pinNm);
             let pin = this.findPin(pinNm);
             if (lbl && pin) {
-                svg.addClass(lbl.el, "highlight");
-                svg.addClass(lbl.hoverEl, "highlight");
-                svg.addClass(pin.el, "highlight");
-                svg.addClass(pin.hoverEl, "highlight");
+                pxsim.U.addClass(lbl.el, "highlight");
+                pxsim.U.addClass(lbl.hoverEl, "highlight");
+                pxsim.U.addClass(pin.el, "highlight");
+                pxsim.U.addClass(pin.hoverEl, "highlight");
             }
         }
     }

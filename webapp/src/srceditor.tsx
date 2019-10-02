@@ -36,13 +36,18 @@ export class Editor implements pxt.editor.IEditor {
         return this.currSource
     }
 
+    getStyle(style?: any) {
+        let display = { display: this.isVisible ? "block" : "none" };
+        return Object.assign(display, style);
+    }
+
     getId() {
         return "editor"
     }
 
-    displayOuter() {
+    displayOuter(style?: any) {
         return (
-            <div className='full-abs' key={this.getId() } id={this.getId() } style={{ display: this.isVisible ? "block" : "none" }}>
+            <div className='full-abs' key={this.getId() } id={this.getId() } style={this.getStyle(style)}>
                 {this.display() }
             </div>
         )
@@ -119,13 +124,17 @@ export class Editor implements pxt.editor.IEditor {
         return true
     }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
+    filterToolbox(showCategories?: boolean) {
     }
 
     insertBreakpoint() {
     }
 
     updateBreakpoints() {
+    }
+
+    getBreakpoints(): number[] {
+        return [];
     }
 
     updateToolbox() {

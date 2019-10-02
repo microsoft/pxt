@@ -182,6 +182,8 @@ namespace pxtsprite {
         cy: number;
         root: svg.Group;
         clickHandler: () => void;
+        private _title: string;
+        private _shortcut: string;
 
         constructor(root: svg.Group, cx: number, cy: number) {
             this.root = root;
@@ -212,7 +214,17 @@ namespace pxtsprite {
         }
 
         public title(text: string) {
-            this.root.title(text);
+            this._title = text;
+            this.setRootTitle();
+        }
+
+        public shortcut(text: string) {
+            this._shortcut = text;
+            this.setRootTitle();
+        }
+
+        private setRootTitle() {
+            this.root.title(this._title + (this._shortcut ? " (" + this._shortcut + ")" : ""));
         }
 
         public setDisabled(disabled: boolean) {
@@ -428,11 +440,13 @@ namespace pxtsprite {
 
             this.undo = new TextButton(undo, "\uf118", "sprite-editor-xicon");
             this.undo.onClick(() => this.host.undo());
+            this.undo.title(lf("Undo"));
             this.root.appendChild(this.undo.getElement());
 
 
             this.redo = new TextButton(redo, "\uf111", "sprite-editor-xicon");
             this.redo.onClick(() => this.host.redo());
+            this.redo.title(lf("Redo"));
             this.root.appendChild(this.redo.getElement());
         }
 

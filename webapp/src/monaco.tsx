@@ -2,17 +2,23 @@
 /// <reference path="../../built/pxteditor.d.ts" />
 
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import * as pkg from "./package";
 import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as snippets from "./monacoSnippets"
+import * as pyhelper from "./monacopyhelper";
+import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
+import { BreakpointCollection } from "./monacoDebugger";
+import { DebuggerCallStack } from "./debuggerCallStack";
+import { DebuggerToolbox } from "./debuggerToolbox";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -66,13 +72,20 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
+                    const snippet = this.python ? si.pySnippet : si.snippet;
+                    const label = this.python
+                        ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
+                        : (completions.isMemberCompletion ? si.name : si.qName);
+                    const documentation = pxt.Util.rlf(si.attributes.jsDoc);
+                    const block = pxt.Util.rlf(si.attributes.block);
                     return {
-                        label: this.python ? (completions.isMemberCompletion ? si.pyName : si.pyQName) : (completions.isMemberCompletion ? si.name : si.qName),
+                        label,
                         kind: this.tsKindToMonacoKind(si.kind),
-                        documentation: si.attributes.jsDoc,
+                        documentation,
                         detail: this.python ? si.pySnippet : si.snippet,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${this.python ? si.pySnippet : si.snippet}`
+                        sortText: `${tosort(i)} ${snippet}`,
+                        filterText: `${label} ${documentation} ${block}`
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -96,8 +109,10 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
 class SignatureHelper implements monaco.languages.SignatureHelpProvider {
     signatureHelpTriggerCharacters: string[] = ["(", ","];
 
-    constructor(public editor: Editor, public python: boolean) {
+    protected isPython: boolean = false;
 
+    constructor(public editor: Editor, public python: boolean) {
+        this.isPython = python;
     }
 
     /**
@@ -111,14 +126,17 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym || !sym.parameters) return null;
+                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
+                let paramInfo: monaco.languages.ParameterInformation[] =
+                    sym.parameters.map(p => ({
+                        label: `${p.name}: ${this.isPython ? p.pyTypeString : p.type}`,
+                        documentation: pxt.Util.rlf(p.description)
+                    }))
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
-                        label: sym.name,
-                        documentation: sym.attributes.jsDoc,
-                        parameters: sym.parameters.map(p => ({
-                            label: p.name,
-                            documentation: p.name + ": " + p.type
-                        }))
+                        label: `${this.isPython && sym.pyName ? sym.pyName : sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
+                        documentation,
+                        parameters: paramInfo
                     }],
                     activeSignature: 0,
                     activeParameter: r.auxResult
@@ -146,12 +164,29 @@ class HoverProvider implements monaco.languages.HoverProvider {
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym) return null;
+                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 const res: monaco.languages.Hover = {
-                    contents: [sym.pyQName + " " + sym.attributes.jsDoc],
+                    contents: [`**${sym.pyQName}**`, documentation],
                     range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
                 }
                 return res
             });
+    }
+}
+
+class FormattingProvider implements monaco.languages.DocumentRangeFormattingEditProvider {
+    protected isPython: boolean = false;
+
+    constructor(public editor: Editor, public python: boolean) {
+        this.isPython = python;
+    }
+
+    provideDocumentRangeFormattingEdits(model: monaco.editor.IReadOnlyModel, range: monaco.Range, options: monaco.languages.FormattingOptions, token: monaco.CancellationToken): monaco.Thenable<monaco.editor.ISingleEditOperation[]> {
+        return Promise.resolve().then(p => {
+            return this.isPython
+                ? pyhelper.provideDocumentRangeFormattingEdits(model, range, options, token)
+                : null;
+        });
     }
 }
 
@@ -160,8 +195,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     currFile: pkg.File;
     fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
-    public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    private _loadMonacoPromise: Promise<void>;
+    nsMap: pxt.Map<toolbox.BlockDefinition[]>;
     giveFocusOnLoading: boolean = false;
 
     protected fieldEditors: FieldEditorManager;
@@ -169,6 +203,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
+    protected callStackView: DebuggerCallStack;
+    protected breakpoints: BreakpointCollection;
+    protected debuggerToolbox: DebuggerToolbox;
+
+    private loadMonacoPromise: Promise<void>;
+    private diagSnapshot: string[];
+    private annotationLines: number[];
+    private editorViewZones: number[];
+    private highlightDecorations: string[] = [];
+    private highlightedBreakpoint: number;
+
+    private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -351,16 +397,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return compiler.decompileAsync(blockFile)
     }
 
-    private handleToolboxRef = (c: toolbox.Toolbox) => {
-        this.toolbox = c;
-    }
-
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
-                <div className={`monacoToolboxDiv ${this.toolbox && !this.toolbox.state.visible ? 'invisible' : ''}`}>
+                {this.isVisible && <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
-                </div>
+                    <div id="monacoDebuggerToolbox"></div>
+                </div>}
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
         )
@@ -446,12 +489,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        if (this._loadMonacoPromise) this.defineEditorTheme(hc, true);
+        if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
     beforeCompile() {
-        if (this.editor)
-            this.editor.getAction('editor.action.formatDocument').run();
+        // this triggers a text change wich stops the simulator async
+        //if (this.editor)
+        //    this.editor.getAction('editor.action.formatDocument').run();
     }
 
     isIncomplete() {
@@ -482,9 +526,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public loadMonacoAsync(): Promise<void> {
-        if (!this._loadMonacoPromise)
-            this._loadMonacoPromise = this.createLoadMonacoPromise();
-        return this._loadMonacoPromise;
+        if (!this.loadMonacoPromise)
+            this.loadMonacoPromise = this.createLoadMonacoPromise();
+        return this.loadMonacoPromise;
     }
 
     private createLoadMonacoPromise(): Promise<void> {
@@ -631,6 +675,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
+            monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
 
             this.editorViewZones = [];
 
@@ -767,27 +812,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
                 return;
             }
-            const line = e.target.position.lineNumber;
-            const model = this.editor.getModel();
-            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
-            if (decorations.length) {
-                const lineInfo = this.fieldEditors.getInfoForLine(line);
-                if (lineInfo) {
-                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
-                        this.feWidget.close();
-                        this.activeRangeID = null;
-                        return;
-                    }
-                    else {
-                        this.activeRangeID = lineInfo.id;
-                    }
-
-                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
-                    if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
-                    }
-                }
-            }
+            this.handleGutterClick(e);
         });
     }
 
@@ -796,12 +821,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
-    private hideFlyout() {
+    public hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
         if (flyout) {
             pxsim.U.clear(flyout);
             flyout.style.display = 'none';
+            flyout.removeEventListener("wheel", this.handleFlyoutScroll, true);
         }
 
         // Hide the current toolbox category
@@ -819,12 +845,33 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
-        if (this.toolbox)
+        if (this.toolbox) {
             this.toolbox.setState({
                 loading: false,
                 categories: this.getAllCategories(),
                 showSearchBox: this.shouldShowSearch()
             })
+        }
+
+        const container = document.getElementById('monacoDebuggerToolbox');
+        if (!container || !this.blockInfo) return;
+
+        const debugging = this.isDebugging();
+        const debuggerToolbox = debugging ? <DebuggerToolbox
+            ref={this.handleDebugToolboxRef}
+            parent={this.parent}
+            apis={this.blockInfo.apis.byQName}
+            openLocation={this.revealBreakpointLocation}
+            showCallStack /> : <div />;
+
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.debuggerToolbox = null;
+            this.toolbox.show();
+        }
+
+        ReactDOM.render(debuggerToolbox, container);
     }
 
     private getFoldingController(): FoldingController {
@@ -889,7 +936,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
                 this.fileType = mode
 
-                const readOnly = file.isReadonly() || pxt.shell.isReadOnly();
+                const readOnly = file.isReadonly() || pxt.shell.isReadOnly() || this.isDebugging();
                 this.editor.updateOptions({ readOnly: readOnly });
 
                 let proto = "pkg:" + file.getName();
@@ -914,6 +961,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())
+
+                if (this.breakpoints) {
+                    this.breakpoints.loadBreakpointsForFile(file, this.editor);
+                    const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
+                    if (loc && loc.fileName === file.getTypeScriptName()) {
+                        this.highilightStatementCore(loc, true);
+                    }
+                }
 
                 if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
@@ -996,7 +1051,35 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (!pos || Object.keys(pos).length === 0) return;
         this.editor.setPosition(pos)
-        this.editor.setScrollPosition(pos as monaco.editor.INewScrollPosition)
+        this.editor.setScrollPosition({
+            scrollTop: this.editor.getTopForLineNumber(pos.lineNumber)
+        });
+    }
+
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+        if (this.isDebugging()) {
+            if (!this.breakpoints) {
+                this.breakpoints = new BreakpointCollection(breakpoints);
+                this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
+            }
+
+            if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
+            if (this.feWidget) this.feWidget.close();
+            if (this.editor) this.editor.updateOptions({ readOnly: true });
+        }
+        else {
+            if (this.editor) {
+                this.editor.updateOptions({
+                    readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
+                });
+            }
+
+            if (this.breakpoints) {
+                this.breakpoints.dispose();
+                this.breakpoints = undefined;
+            }
+            this.updateFieldEditors();
+        }
     }
 
     setDiagnostics(file: pkg.File, snapshot: string[]) {
@@ -1006,13 +1089,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.forceDiagnosticsUpdate()
     }
 
-    private diagSnapshot: string[];
-    private annotationLines: number[];
-    private editorViewZones: number[];
-
     updateDiagnostics() {
         if (this.needsDiagUpdate())
             this.forceDiagnosticsUpdate();
+    }
+
+    getBreakpoints() {
+        return this.breakpoints ? this.breakpoints.getActiveBreakpoints() : [];
+    }
+
+    private sendBreakpoints() {
+        if (this.breakpoints) {
+            simulator.driver.setBreakpoints(this.getBreakpoints());
+        }
     }
 
     private needsDiagUpdate() {
@@ -1077,7 +1166,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
+        if (!this.hasFieldEditors || !this.editor || pxt.shell.isReadOnly() || this.isDebugging()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1138,11 +1227,34 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return Promise.resolve();
     }
 
-    private highlightDecorations: string[] = [];
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
-        if (!stmt) this.clearHighlightedStatements();
-        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor)
+        if (!stmt) {
+            this.clearHighlightedStatements();
+            if (this.debuggerToolbox) this.debuggerToolbox.setBreakpoint(null);
             return false;
+        }
+        else if (!this.editor) {
+            return false;
+        }
+
+        if (this.currFile.getTypeScriptName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
+            this.parent.setFile(lookupFile(stmt.fileName))
+        }
+        else if (!this.highilightStatementCore(stmt, !!brk)) {
+            return false;
+        }
+
+        this.highlightedBreakpoint = brk.breakpointId;
+
+        if (brk && this.isDebugging() && this.debuggerToolbox) {
+            this.debuggerToolbox.setBreakpoint(brk);
+            this.resize();
+        }
+
+        return true;
+    }
+
+    protected highilightStatementCore(stmt: pxtc.LocationInfo, centerOnLocation = false) {
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
         if (!position || !end) return false;
@@ -1152,10 +1264,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
-        if (brk) {
-            // center on statement
-            this.editor.revealPositionInCenter(position);
-        }
+
+        if (centerOnLocation) this.editor.revealPositionInCenter(position);
+
         return true;
     }
 
@@ -1363,6 +1474,62 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.createMonacoBlocks(this, monacoFlyout, ns, blocks, color, filters, categoryState);
     }
 
+    protected handleGutterClick(e: monaco.editor.IEditorMouseEvent) {
+        const line = e.target.position.lineNumber;
+
+        if (this.isDebugging()) {
+            // Set/unset the nearest breakpoint;
+            if (this.breakpoints) {
+                this.breakpoints.toggleBreakpointAt(line);
+                this.sendBreakpoints();
+            }
+        }
+        else if (this.fieldEditors) {
+            // Open/close any field editors in range
+            const model = this.editor.getModel();
+            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
+            if (decorations.length) {
+                const lineInfo = this.fieldEditors.getInfoForLine(line);
+                if (lineInfo) {
+                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
+                        this.feWidget.close();
+                        this.activeRangeID = null;
+                        return;
+                    }
+                    else {
+                        this.activeRangeID = lineInfo.id;
+                    }
+
+                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
+                    if (fe) {
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
+                    }
+                }
+            }
+        }
+    }
+
+    protected revealBreakpointLocation = (id: number, frameIndex: number) => {
+        if (!this.breakpoints) return;
+
+        const loc = this.breakpoints.getLocationOfBreakpoint(id);
+        if (!loc) return;
+
+        this.highlightedBreakpoint = id;
+
+        if (this.currFile.getTypeScriptName() !== loc.fileName) {
+            const mainPkg = pkg.mainEditorPkg()
+            if (lookupFile(loc.fileName)) {
+                this.parent.setFile(lookupFile(loc.fileName))
+            }
+        }
+        else {
+            this.highilightStatementCore(loc, true);
+        }
+
+        if (this.debuggerToolbox) this.debuggerToolbox.setState({ currentFrame: frameIndex });
+    }
+
     private showSearchFlyout() {
         let monacoBlocks: HTMLDivElement[] = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
@@ -1465,6 +1632,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoFlyout.style.display = 'block';
         monacoFlyout.className = 'monacoFlyout';
         monacoFlyout.style.transform = 'none';
+        monacoFlyout.addEventListener("wheel", this.handleFlyoutScroll, true);
         pxsim.U.clear(monacoFlyout);
 
         return monacoFlyout;
@@ -1492,12 +1660,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
             return w2 > w1 ? 1 : -1;
         }).map(fn => {
-            let monacoBlockDisabled = false;
-            const fnState = filters ? (filters.fns && filters.fns[fn.name] != undefined ? filters.fns[fn.name] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
-            monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
+            if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
+                fnState = filters.fns[fn.name];
+            } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
+                fnState = filters.blocks[fn.attributes.blockId];
+            } else if (categoryState !== undefined) {
+                fnState = categoryState;
+            }
             if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
-            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled); // try this
+            const monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled);
         })
         monacoEditor.attachMonacoBlockAccessibility(monacoBlocks);
     }
@@ -1551,7 +1725,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelIcon.setAttribute('role', 'presentation');
             labelIcon.style.display = 'inline-block';
             labelIcon.style.color = `${pxt.toolbox.convertColor(iconColor)}`;
-            if (icon.length === 1) {
+            if (icon && icon.length === 1) {
                 labelIcon.textContent = icon;
             }
             labelDiv.appendChild(labelIcon);
@@ -1608,6 +1782,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return undefined;
         const qName = fn.qName;
         const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
+        const snippet = isPython ? fn.pySnippet : fn.snippet;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
@@ -1623,7 +1798,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         color = pxt.toolbox.convertColor(color);
 
         const methodToken = document.createElement('span');
-        methodToken.textContent = fn.snippetOnly ? fn.snippet : snippetName;
+        methodToken.textContent = fn.snippetOnly ? snippet : snippetName;
         monacoBlock.appendChild(methodToken);
 
         if (!isDisabled) {
@@ -1632,11 +1807,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
                 monacoEditor.hideFlyout();
 
-                let snip = isPython ? fn.pySnippet : fn.snippet;
-                let p = snip ? Promise.resolve(snip) : compiler.snippetAsync(qName, isPython);
-                p.done(snippet => {
+                let p = snippet ? Promise.resolve(snippet) : compiler.snippetAsync(qName, isPython);
+                p.done(snip => {
                     let currPos = monacoEditor.editor.getPosition();
-                    this.insertSnippet(currPos, snippet);
+                    this.insertSnippet(currPos, snip);
                     // Fire a create event
                     workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
                 });
@@ -1647,7 +1821,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
-                const snippet = isPython ? fn.pySnippet : fn.snippet;
                 if (!snippet)
                     e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
                 else
@@ -1757,7 +1930,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
-                this.fieldEditors.clearRanges(this.editor);
+                if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
                 resolve(afterRange);
             });
 
@@ -1770,6 +1943,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
         });
     }
+
+    private isDebugging() {
+        return this.parent.state.debugging;
+    }
+
+    private handleToolboxRef = (c: toolbox.Toolbox) => {
+        this.toolbox = c;
+    }
+
+    private handleDebugToolboxRef = (ref: DebuggerToolbox) => {
+        if (ref) {
+            this.debuggerToolbox = ref;
+            if (this.isDebugging()) this.updateToolbox();
+        }
+    }
 }
 
 function rangeToSelection(range: monaco.IRange): monaco.Selection {
@@ -1780,4 +1968,15 @@ function createIndent(length: number) {
     let res = '';
     for (let i = 0; i < length; i++) res += " ";
     return res;
+}
+
+function lookupFile(file: string): pkg.File {
+    const mPkg = pkg.mainEditorPkg();
+    if (mPkg.files[file]) return mPkg.files[file];
+
+    const found = mPkg.lookupFile(file);
+
+    if (found) return found;
+
+    return undefined;
 }

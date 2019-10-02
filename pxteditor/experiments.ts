@@ -95,6 +95,53 @@ namespace pxt.editor.experiments {
                 name: lf("WebUSB Download"),
                 description: lf("Automatically try to download via WebUSB"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/5344"
+            },
+            {
+                id: "qrCode",
+                name: lf("Shared QR Code"),
+                description: lf("Generate a QR Code form the shared project url"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5456"
+            },
+            {
+                id: "importExtensionFiles",
+                name: lf("Import Extension Files"),
+                description: lf("Import Extensions from compiled project files")
+            },
+            {
+                id: "debugExtensionCode",
+                name: lf("Debug Extension Code"),
+                description: lf("Use the JavaScript debugger to debug extension code")
+            },
+            {
+                id: "snippetBuilder",
+                name: lf("Snippet Builder"),
+                description: lf("Try out the new snippet dialogs.")
+            },
+            {
+                id: "experimentalHw",
+                name: lf("Experimental Hardware"),
+                description: lf("Enable support for hardware marked 'experimental' in the hardware seletion dialog")
+            },
+            {
+                id: "recipes",
+                name: lf("Tutorials in Context"),
+                description: lf("Micro-tutorials running within your program."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5646"
+            },
+            {
+                id: "checkForHwVariantWebUSB",
+                name: lf("Detect Hardware with WebUSB"),
+                description: lf("When compiling, use WebUSB to detect hardware configuration.")
+            },
+            {
+                id: "alwaysGithubItem",
+                name: lf("Always GitHub"),
+                description: lf("Always show GitHub item in Explorer view, even if token is not available.")
+            },
+            {
+                id: "alwaysGithubItemBlocks",
+                name: lf("Always GitHub Blocks"),
+                description: lf("Always show GitHub item in Explorer view for blocks, even if token is not available.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
