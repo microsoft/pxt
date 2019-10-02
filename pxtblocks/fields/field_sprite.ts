@@ -143,7 +143,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                const data = this.renderPreview();
+                const data = bitmapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode);
                 const img = new svg.Image()
                     .src(data)
                     .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
@@ -160,55 +160,9 @@ namespace pxtblockly {
                 this.state = bmp;
             }
         }
-
-        /**
-         * Scales the image to 32x32 and returns a data uri. In light mode the preview
-         * is drawn with no transparency (alpha is filled with background color)
-         */
-        private renderPreview() {
-            const colors = pxt.appTarget.runtime.palette.slice(1);
-            const canvas = document.createElement("canvas");
-            canvas.width = PREVIEW_WIDTH;
-            canvas.height = PREVIEW_WIDTH;
-
-            // Works well for all of our default sizes, does not work well if the size is not
-            // a multiple of 2 or is greater than 32 (i.e. from the decompiler)
-            const cellSize = Math.min(PREVIEW_WIDTH / this.state.width, PREVIEW_WIDTH / this.state.height);
-
-            // Center the image if it isn't square
-            const xOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.width / this.state.height))) / 2), 0);
-            const yOffset = Math.max(Math.floor((PREVIEW_WIDTH * (1 - (this.state.height / this.state.width))) / 2), 0);
-
-            let context: CanvasRenderingContext2D;
-            if (this.lightMode) {
-                context = canvas.getContext("2d", { alpha: false });
-                context.fillStyle = "#dedede";
-                context.fillRect(0, 0, PREVIEW_WIDTH, PREVIEW_WIDTH);
-            }
-            else {
-                context = canvas.getContext("2d");
-            }
-
-            for (let c = 0; c < this.state.width; c++) {
-                for (let r = 0; r < this.state.height; r++) {
-                    const color = this.state.get(c, r);
-
-                    if (color) {
-                        context.fillStyle = colors[color - 1];
-                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
-                    }
-                    else if (this.lightMode) {
-                        context.fillStyle = "#dedede";
-                        context.fillRect(xOffset + c * cellSize, yOffset + r * cellSize, cellSize, cellSize);
-                    }
-                }
-            }
-
-            return canvas.toDataURL();
-        }
     }
 
-    function  parseFieldOptions(opts: FieldSpriteEditorOptions) {
+    function parseFieldOptions(opts: FieldSpriteEditorOptions) {
         const parsed: ParsedSpriteEditorOptions = {
             initColor: 1,
             initWidth: 16,

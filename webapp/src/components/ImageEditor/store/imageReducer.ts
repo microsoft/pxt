@@ -139,7 +139,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 present: state.future[state.future.length - 1],
                 future: state.future.slice(0, state.future.length - 1),
             };
-        case actions.SET_INITIAL_IMAGE:
+        case actions.SET_INITIAL_FRAMES:
             return {
                 ...state,
                 past: [],
@@ -167,7 +167,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     aspectRatioLocked: false,
 
                     currentFrame: 0,
-                    frames: [action.image],
+                    frames: action.frames,
                     interval: 200
                 },
                 future: []

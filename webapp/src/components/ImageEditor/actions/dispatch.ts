@@ -27,5 +27,5 @@ export const dispatchChangeZoom = (zoom: number) => ({ type: actions.CHANGE_CANV
 
 export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FOREGROUND_BACKGROUND });
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })
-export const dispatchSetInitialImage = (image: ImageState) => ({ type: actions.SET_INITIAL_IMAGE, image });
+export const dispatchSetInitialFrames = (frames: ImageState[]) => ({ type: actions.SET_INITIAL_FRAMES, frames });
 export const dispatchSetInitialState = (state: ImageEditorStore) => ({ type: actions.SET_INITIAL_STATE, state });

@@ -175,7 +175,15 @@ export function init() {
         }
 
         current = new FieldEditorView(document.getElementById("blocks-editor-field-div") as HTMLDivElement);
-        current.injectElement(<ImageFieldEditor ref={ refHandler } />);
+
+        switch (fieldEditorId) {
+            case "image-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
+                break;
+            case "animation-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
+                break;
+        }
 
         if (cachedBounds) current.resize(cachedBounds);
 

@@ -10,7 +10,7 @@ import { ImageCanvas } from './ImageCanvas';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
-import { dispatchSetInitialImage, dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom } from './actions/dispatch';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames } from './actions/dispatch';
 import { Bitmap, bitmapToImageLiteral } from './store/bitmap';
 
 export interface ImageEditorProps {
@@ -42,19 +42,28 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         </Provider>
     }
 
-    initSingleFrame(value: Bitmap, close: () => void, options?: any) {
-        store.dispatch(dispatchSetInitialImage({ bitmap: value.data() }));
+    initSingleFrame(value: Bitmap, options?: any) {
+        store.dispatch(dispatchSetInitialFrames([{ bitmap: value.data() }]));
+    }
+
+    initAnimation(frames: Bitmap[], options?: any) {
+        store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() }))));
     }
 
     onResize() {
         store.dispatch(dispatchChangeZoom(0));
     }
 
-    getValue() {
+    getCurrentFrame() {
         const state = store.getState();
         const currentFrame = state.present.frames[state.present.currentFrame];
 
         return bitmapToImageLiteral(Bitmap.fromData(currentFrame.bitmap), "ts");
+    }
+
+    getAllFrames() {
+        const state = store.getState();
+        return "[" + state.present.frames.map(frame => bitmapToImageLiteral(Bitmap.fromData(frame.bitmap), "ts")).join(",") + "]";
     }
 
     getPersistentData() {
