@@ -6,9 +6,13 @@
 *******************************/
 
 @primaryColor: @pink;
+<<<<<<< HEAD
 @secondaryColor: rgba(0, 0, 0, 0.55);
 @docsPrimaryColor    : #6C196C;
 @docsAccentColor     : #FC6483;
+=======
+@secondaryColor: @grey;
+>>>>>>> parent of 1f0f6083a... revert revert of "First Pass on Docs Redesign" (#5955)
 
 @red:#A80000;
 @orange:#D83B01;
@@ -21,7 +25,6 @@
 @brown:#00BCF2;
 @grey:#505050;
 @lightGrey: #d9d9d9;
-@backgroundGrey: #F0F2F7;
 
 @greenTextColor: darken(@green, 5);
 
@@ -38,9 +41,13 @@
 @importGoogleFonts: false;
 
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+<<<<<<< HEAD
+=======
+@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+>>>>>>> parent of 1f0f6083a... revert revert of "First Pass on Docs Redesign" (#5955)
 
-@emSize      : 18px;
-@fontSize    : 18px;
+@emSize      : 14px;
+@fontSize    : 12pt;
 
 /*-------------------
    Links
@@ -144,7 +151,7 @@ default semantic
 --------------------*/
 
 @mainMenuBackground: @white;
-@mainMenuInvertedBackground: @backgroundGrey;
+@mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 
 @mainMenuHeight: 4.0rem;

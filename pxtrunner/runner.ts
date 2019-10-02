@@ -773,41 +773,10 @@ ${linkString}
     </div>
 </aside>
 
-<aside id=hero class=box>
-    <div class="ui hero">
-        <div class="main-description">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
 <aside id=hint class=box>
-    <div class="ui info message">
+    <div class="ui icon green message">
         <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=reminder class=box>
-    <div class="ui warning message">
-        <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=alert class=box>
-    <div class="ui negative message">
-        <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=tip class=box>
-    <div class="ui positive message">
-        <div class="content">
+            <div class="header">Hint</div>
             @BODY@
         </div>
     </div>
