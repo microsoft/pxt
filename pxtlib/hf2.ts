@@ -13,6 +13,7 @@ namespace pxt {
         RefRefLocal = 7,
         RefMap = 8,
         RefMImage = 9, // microbit-specific
+        MMap = 10, // linux, mostly ev3
         User0 = 16,
     }
 }
