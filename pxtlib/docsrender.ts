@@ -373,6 +373,7 @@ namespace pxt.docs {
             if (title) {
                 out += ' title="' + title + '"';
             }
+            out += ' loading="lazy"'
             out += (this as any).options.xhtml ? '/>' : '>';
             return out;
         }
