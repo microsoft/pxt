@@ -369,7 +369,7 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-            let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
+            let out = '<img class="ui centered image" loading="lazy" src="' + href + '" alt="' + text + '"';
             if (title) {
                 out += ' title="' + title + '"';
             }
