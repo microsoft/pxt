@@ -211,6 +211,7 @@ svg {
 
 /* breadcrumbs in inverted view */
 .inverted .ui.breadcrumb a, .inverted .ui.breadcrumb .icon {
+    /* TODO: extract to site.variables */
     color: white;
 }
 
@@ -463,19 +464,6 @@ button.sticky-close {
 
 #breadcrumb-container .ui.breadcrumb:first-child {
     margin-top: -66px;
-}
-
-#breadcrumb-container .ui.breadcrumb a {
-    color: #f5f5f5;
-}
-
-#breadcrumb-container .ui.breadcrumb .divider {
-    color: #f5f5f5;
-    margin-right: .25rem;
-}
-
-#breadcrumb-container .ui.breadcrumb a.active {
-    color: #fff;
 }
 
 #docs .ui.cards {

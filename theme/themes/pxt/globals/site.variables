@@ -353,11 +353,15 @@ default semantic
 @docsHeadingColor: #292A33;
 
 /* Text Font */
-@docsReadingText: 'Helvetica', 'Helvetica Neue', 'Arial', Sans-serif;
 @docsPageFont: 'Helvetica', 'Helvetica Neue', 'Arial', Sans-serif;
+@docsReadingText: @docsPageFont;
 
 /* Link color */
 @docsLinkColor: #3977b4;
+
+/* Breadcrumb */
+@docsBreadcrumbColor: whitesmoke;
+@docsBreadcrumbActiveColor: #fff;
 
 /* Code segment */
 @docsSegementBackgroundColor: #f7f7f7;

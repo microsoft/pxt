@@ -127,8 +127,8 @@
 }
 
 #docs {
-    position: relative;
     width: 100%;
+    position: relative;
     height: 100%;
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont;
@@ -402,15 +402,14 @@
     /* Breadcrumb */
     .ui.breadcrumb {
         .divider {
-        color: whitesmoke;
-        margin-right: .25rem;
-        margin-right: .25rem;
+            color: @docsBreadcrumbColor;
+            margin-right: .25rem;
         }
         a {
-            color: whitesmoke;
+            color: @docsBreadcrumbColor;
         }
         a.active {
-            color: white;
+            color: @docsBreadcrumbActiveColor;
         }
     }
 
@@ -1034,7 +1033,7 @@
         display: block !important;
     }
     #breadcrumb-container {
-        font-family: 'Helvetica Neue',Arial,Helvetica,sans-serif;
+        font-family: @docsPageFont;
         position: fixed;
         z-index: 1;
         width: 100%;
