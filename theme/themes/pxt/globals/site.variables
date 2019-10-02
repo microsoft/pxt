@@ -6,7 +6,7 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
+@secondaryColor: rgba(0, 0, 0, 0.55);
 
 @red:#A80000;
 @orange:#D83B01;
