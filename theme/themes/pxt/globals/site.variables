@@ -38,6 +38,7 @@
 @importGoogleFonts: false;
 
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Times New Roman", serif;
 
 @emSize      : 18px;
 @fontSize    : 18px;
