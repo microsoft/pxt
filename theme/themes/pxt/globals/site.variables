@@ -345,6 +345,10 @@ default semantic
 @docsSecondaryColor: fadeout(@docsPrimaryColor, 10%);
 @docsHeroColor: fadeout(@docsPrimaryColor, 7%);
 
+/* Menus */
+@docsHamburgerBackgroundColor: white;
+@docsHamburgerColor: @docsPrimaryColor;
+
 /* Text color */
 @docsHeadingColor: #292A33;
 
