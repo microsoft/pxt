@@ -495,7 +495,7 @@ function setStickyColumn() {
         closeBtnIcon.className = 'icon close';
         closeBtn.appendChild(closeBtnIcon);
         closeBtn.style.display = 'none';
-        closeBtn.className = 'sticky-close';
+        closeBtn.className = 'sticky-close hideprint';
         closeBtn.onclick = function () {
             // resets default style for mobile behavior
             document.querySelector('#sticky-btn').style.zIndex = 100;
