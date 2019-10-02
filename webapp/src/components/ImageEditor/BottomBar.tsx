@@ -80,7 +80,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     />
                 </div>
                 { !singleFrame && <div className="image-editor-seperator"/> }
-                { singleFrame ? undefined : <div>
+                { !singleFrame && <div>
                     <IconButton
                         onClick={dispatchToggleOnionSkinEnabled}
                         iconClass="ms-Icon ms-Icon--MapLayers"
