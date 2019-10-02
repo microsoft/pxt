@@ -578,6 +578,7 @@ namespace pxsim {
         id: string;
         globals: any = {};
         currFrame: StackFrame;
+        otherFrames: StackFrame[] = [];
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
@@ -997,6 +998,17 @@ namespace pxsim {
                 }
             }
 
+            function removeFrame(p: StackFrame) {
+                const frames = __this.otherFrames
+                for (let i = 0; i < frames.length; ++i) {
+                    if (frames[i] === p) {
+                        frames.splice(i, 1)
+                        return
+                    }
+                }
+                U.userError("frame cannot be removed!")
+            }
+
             function loop(p: StackFrame) {
                 if (__this.dead) {
                     console.log("Runtime terminated")
@@ -1004,6 +1016,7 @@ namespace pxsim {
                 }
                 U.assert(!__this.loopLock)
                 __this.perfStartRuntime()
+                removeFrame(p)
                 try {
                     runtime = __this
                     while (!!p) {
@@ -1078,6 +1091,7 @@ namespace pxsim {
                     depth: 0,
                     pc: 0
                 }
+                __this.otherFrames = [frame]
                 loop(actionCall(frame))
             }
 
@@ -1118,6 +1132,7 @@ namespace pxsim {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
                 let start = Date.now()
+                __this.otherFrames.push(s)
                 let fn = (v: any) => {
                     if (__this.dead) return;
                     if (__this.loopLock) {
@@ -1143,6 +1158,8 @@ namespace pxsim {
                         // to grow unbounded.
                         let lock = {}
                         __this.loopLock = lock
+                        removeFrame(s)
+                        __this.otherFrames.push(frame)
                         return U.nextTick(() => {
                             U.assert(__this.loopLock === lock)
                             __this.loopLock = null
