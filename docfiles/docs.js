@@ -488,7 +488,7 @@ function setStickyColumn() {
             linkList.appendChild(item);
         });
         var wrapper = document.createElement('div');
-        wrapper.className = 'sticky-list';
+        wrapper.className = 'sticky-list hideprint';
         // mobile sticky close button
         var closeBtn = document.createElement('button');
         var closeBtnIcon = document.createElement('i');
