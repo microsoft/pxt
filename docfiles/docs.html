@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="@locale@" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+<html lang="@locale@" xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#"
+	xmlns:fb="http://www.facebook.com/2008/fbml">
 
 <head>
 	<meta charset="UTF-8">
@@ -20,7 +21,7 @@
 
 	<!-- @include docsheader.html-->
 
-	
+
 	<button id="sticky-btn" style="display:none;"><i class="ellipsis vertical icon"></i></button>
 	<div id="docs" class="">
 
@@ -34,25 +35,26 @@
 				<div class="main ui grid fluid mainbody full-width">
 					<div class="one wide computer column zero wide mobile column"></div>
 					<div id="content-column" class="ten wide computer column sixteen wide mobile column">
-					@printBtn@ @body@
-					<div class="hideprint">@github@</div>
+						<!-- @include printbtn.html -->
+						@body@
+						<div class="hideprint">@github@</div>
 					</div>
-					<div id="sticky-column" class="four wide computer column zero wide mobile column">	
+					<div id="sticky-column" class="four wide computer column zero wide mobile column">
 					</div>
 					<div class="one wide computer column zero wide mobile column"></div>
-					
+
 				</div>
 
-			
+
 			</div>
-        
+
 		</div>
 		<!-- @include footer.html -->
 
 	</div>
 
 	<!-- @include macros.html -->
-	
+
 	<!-- @include tracking.html -->
 
 </body>

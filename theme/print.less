@@ -5,13 +5,12 @@
 @media only print {
     *,
     *:before,
-    *:after,
+    b*:after,
     *:first-letter,
     p:first-line,
     div:first-line,
     blockquote:first-line,
     li:first-line {
-        background: transparent !important;
         color: #000 !important;
         box-shadow: none !important;
         text-shadow: none !important;
@@ -19,6 +18,9 @@
     }
     .injectionDiv {
         overflow: hidden !important;
+    }
+    body:not(.print-color) .ui.cardimage{
+        background: none !important;
     }
 
     #docs {
@@ -68,8 +70,12 @@
             box-shadow: none !important;
         }
         /* images */
-        .ui.image {
-            max-width: 60%;
+        body:not(.print-color) .ui.cardimage{
+            background: none !important;
+            color: #000 !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            overflow: visible !important;
         }
 
         .mainbody .ui.segment, pre {
@@ -99,20 +105,20 @@
     }
 
     /** blockly **/
-    .blocklyPath {
+    body:not(.print-color) .blocklyPath {
         stroke-width: 3px !important;
         stroke: black !important;
         fill: white !important;
     }
-    .blocklyBlockBackground, .blocklyLedOff {
+    body:not(.print-color) .blocklyBlockBackground, body:not(.print-color) .blocklyLedOff {
         stroke-width: 2px !important;
         stroke: black !important;
         fill: white !important;        
     }
-    .blocklyText, .blocklyDropdownText {
+    body:not(.print-color) .blocklyText, body:not(.print-color) .blocklyDropdownText {
         fill: black !important;
     }
-    .blocklyLedOn {
+    body:not(.print-color) .blocklyLedOn {
         stroke-width: 2px !important;
         stroke: black !important;
         fill: black !important;

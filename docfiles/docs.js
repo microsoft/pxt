@@ -57,21 +57,21 @@ function setupSidebar() {
     // do not use pxt.appTarget in this function
     var tocMenu = document.querySelectorAll('#docsMobile div.ui.list.menuContainer.toc > div.item');
     var tocMenuArray = Array.prototype.slice.call(tocMenu)
-    tocMenuArray.forEach(function(item) {
+    tocMenuArray.forEach(function (item) {
         // Sets each TOC parent item an accordion behaviour to match style
         item.className = 'ui accordion item visible';
-        item.setAttribute('role','tree');
+        item.setAttribute('role', 'tree');
         var icon = item.firstElementChild;
         icon.className = 'dropdown icon chevron right';
         var anchor = icon.nextElementSibling;
-        anchor.setAttribute('role','treeitem');
+        anchor.setAttribute('role', 'treeitem');
         anchor.setAttribute('aria-expanded', 'false');
         var menu = anchor.nextElementSibling;
         menu.className = 'content';
         var menuChildren = Array.prototype.slice.call(menu.children)
-        menuChildren.forEach(function(el) {
-            if (el.tagName == 'DIV'){
-                el.setAttribute('role','');
+        menuChildren.forEach(function (el) {
+            if (el.tagName == 'DIV') {
+                el.setAttribute('role', '');
                 el.className = 'accordion item visible';
             }
         });
@@ -95,8 +95,8 @@ function setupSidebar() {
                 document.querySelector("#docs .ui.grid.mainbody").classList.add('content-width');
                 // For mobile if user is at bottom scroll to top
                 if (window.innerWidth < 970) {
-                   document.body.scrollTop = 0;
-                   if (window.navigator.userAgent.indexOf('Edge') !== -1) {
+                    document.body.scrollTop = 0;
+                    if (window.navigator.userAgent.indexOf('Edge') !== -1) {
                         document.querySelector('#docs').scrollIntoView();
                     }
                 }
@@ -107,17 +107,17 @@ function setupSidebar() {
                 document.querySelector('#togglesidebar > i').classList.remove('close');
                 document.querySelector('#togglesidebar > i').classList.add('content');
                 document.querySelector("#docs .ui.grid.mainbody").classList.remove('content-width');
-                document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width'); 
+                document.querySelector("#docs .ui.grid.mainbody").classList.add('full-width');
             },
             onVisible: function () {
                 // add proper responsive behavior for Desktops and cancels it for mobile
-                if (window.innerWidth > 970) { 
-                     document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'none' : false;
+                if (window.innerWidth > 970) {
+                    document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'none' : false;
                 }
             },
             onHide: function () {
                 // add proper responsive behavior for Desktops and cancels it for mobile
-                if (window.innerWidth > 970) { 
+                if (window.innerWidth > 970) {
                     document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'block' : false;
                 }
             },
@@ -237,9 +237,24 @@ function setupSemantic() {
         }).appendTo(outer);
     });
 
-    $('#printbtn').on("click", function () {
-        window.print();
-    })
+    $('#printbtn').dropdown({
+        action: function (text, value) {
+
+            switch (value) {
+                case 'color':
+                    document.querySelector('body').classList.add("print-color");
+                    break;
+                case 'bw':
+                    document.querySelector('body').classList.remove("print-color");
+                    break;
+                default:
+                    console.log('print');
+            }
+
+            window.print();
+            $('#printbtn').dropdown("hide");
+        }
+    });
 
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
@@ -295,7 +310,7 @@ function renderSnippets() {
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
-                    staticPythonClass: 'lang-spy', 
+                    staticPythonClass: 'lang-spy',
                     shuffleClass: 'lang-shuffle',
                     simulatorClass: 'lang-sim',
                     linksClass: 'lang-cards',
@@ -320,16 +335,16 @@ function setElementsVisibility() {
     var printBtn = document.querySelector('#printbtn');
     var stickyColumn = document.querySelector('#sticky-column');
 
-    if (document.querySelector(".ui.hero") !== null){
+    if (document.querySelector(".ui.hero") !== null) {
         printBtn.style.display = 'none';
     }
-    if (breadcrumb.children.length === 0){
+    if (breadcrumb.children.length === 0) {
         breadcrumb.style.display = 'none';
     }
-    
+
     setStickyColumn();
-    
-    if (stickyColumn.children.length === 0){
+
+    if (stickyColumn.children.length === 0) {
         stickyColumn.style.display = 'none';
         var classString = document.querySelector('#content-column').className;
         document.querySelector('#content-column').className = classString.replace('ten', 'fourteen');
@@ -345,7 +360,7 @@ function setElementsVisibility() {
 
 function setDocumentationMode(type) {
     // handles if the content should have a 100% width or has a sidebar present
-    if (type === 0){
+    if (type === 0) {
         document.querySelector('div.main.ui.grid.fluid.mainbody').classList.remove('content-width');
         document.querySelector('div.main.ui.grid.fluid.mainbody').classList.add('full-width');
     } else {
@@ -354,11 +369,11 @@ function setDocumentationMode(type) {
     }
 }
 
-function setupMenu(menu) {   
+function setupMenu(menu) {
     // creates the global menu based on the app.Target.appTheme.docMenu array
     // appends new elements to header menu
     var docsMenu = document.querySelector('#docs-type');
-    menu.forEach(function(item) {
+    menu.forEach(function (item) {
         var menuItem = document.createElement('a');
         menuItem.rel = 'noopener';
         menuItem.target = '_self';
@@ -369,7 +384,7 @@ function setupMenu(menu) {
     });
     // appends new elements to the footer navigation menu
     var docnav = document.querySelector('.docnav');
-    menu.forEach(function(item) {
+    menu.forEach(function (item) {
         var menuItem = document.createElement('a');
         menuItem.rel = 'noopener';
         menuItem.target = '_self';
@@ -380,7 +395,7 @@ function setupMenu(menu) {
     });
     // appends new elements to the mobile global menu
     var mobileMenu = document.querySelector('#docsMobile .activities');
-    menu.forEach(function(item) {
+    menu.forEach(function (item) {
         var menuItem = document.createElement('a');
         menuItem.rel = 'noopener';
         menuItem.target = '_self';
@@ -394,7 +409,7 @@ function setupMenu(menu) {
     var mobileSearchBox = document.querySelector('#tocsearch2');
     mobileSearchBox.click = function (e) { e.stopPropagation(); }
     mobileSearchBox.onscroll = function (e) { e.stopPropagation(); }
-    var mobileSearchBtn= document.querySelector('#mobile-search-icon');
+    var mobileSearchBtn = document.querySelector('#mobile-search-icon');
     mobileSearchBtn.onclick = function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -406,10 +421,10 @@ function setupMenu(menu) {
             searchBox.style.opacity = '1';
             document.querySelector('#sticky-btn').style.zIndex = 0;
             document.querySelector('.sticky-list').style.display = 'none';
-        }  
+        }
     }
     // handles the close search button in mobile
-    var closeMobileSearch= document.querySelector('#mobile-search-close');
+    var closeMobileSearch = document.querySelector('#mobile-search-close');
     closeMobileSearch.onclick = function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -426,7 +441,7 @@ function setupMenu(menu) {
 
 function responsiveHideElements() {
     // Add Responsive Adjustments depending on screen size 
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         // manages responsive behavior that media queries cannot
         responsiveElements();
     });
@@ -436,31 +451,31 @@ function responsiveHideElements() {
 
 function responsiveElements() {
     // Desktop default (loading) state
-    if (window.innerWidth > 970){
+    if (window.innerWidth > 970) {
         document.querySelector('#printbtn') !== null && document.querySelector(".ui.hero") === null ? document.querySelector('#printbtn').style.display = 'block' : false;
         document.querySelector('#tocsearch2').style.display = 'none';
         document.querySelector('.sticky-close') !== null ? document.querySelector('.sticky-close').style.display = 'none' : false;
         document.querySelector('#sticky-btn').style.zIndex = 0;
         document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'block' : false;
-        document.querySelector('.article-inner').insertBefore(document.querySelector('#breadcrumb-container'), this.document.querySelector('.mainbody'));  
+        document.querySelector('.article-inner').insertBefore(document.querySelector('#breadcrumb-container'), this.document.querySelector('.mainbody'));
     }
     // Mobile default (loading) state
-    if (window.innerWidth < 970){
+    if (window.innerWidth < 970) {
         document.querySelector('#printbtn') !== null && document.querySelector(".ui.hero") !== null ? document.querySelector('#printbtn').style.display = 'none' : false;
         document.querySelector('#tocsearch2').style.display = 'block';
         document.querySelector('#mobile-search-icon').className = 'mobile-only-open';
         document.querySelector('#mobile-search-close').className = 'mobile-only-close';
         document.querySelector('#sticky-btn').style.zIndex = 100;
         document.querySelector('.sticky-list') !== null ? document.querySelector('.sticky-list').style.display = 'none' : false;
-        document.querySelector('#root').insertBefore(document.querySelector('#breadcrumb-container'),document.querySelector('#docs-header'));
+        document.querySelector('#root').insertBefore(document.querySelector('#breadcrumb-container'), document.querySelector('#docs-header'));
     }
 }
 
 // Handles the behavior of the quick jump sticky list in content
 function setStickyColumn() {
-        // it takes only h2 headings from markdown to make the list
-        var headings = document.querySelectorAll('.ui.text > h2');
-        if (headings.length > 2) {
+    // it takes only h2 headings from markdown to make the list
+    var headings = document.querySelectorAll('.ui.text > h2');
+    if (headings.length > 2) {
         var stickyColumn = document.querySelector('#sticky-column');
         var linkList = document.createElement('ul');
         var title = document.createElement('h3');
@@ -468,10 +483,10 @@ function setStickyColumn() {
         title.className = 'title';
         linkList.appendChild(title);
         var headingsArray = Array.prototype.slice.call(headings)
-        headingsArray.forEach(function(heading) {
+        headingsArray.forEach(function (heading) {
             var item = document.createElement('a');
             item.textContent = heading.textContent;
-            item.onclick = function(e) {
+            item.onclick = function (e) {
                 e.preventDefault();
                 $("html, body").stop().animate({
                     scrollTop: $(heading).offset().top
@@ -481,8 +496,8 @@ function setStickyColumn() {
                 }
                 // resets default style for mobile behavior
                 if (window.innerWidth < 970) {
-                document.querySelector('#sticky-btn').style.zIndex = 100;
-                document.querySelector('.sticky-list').style.display = 'none';
+                    document.querySelector('#sticky-btn').style.zIndex = 100;
+                    document.querySelector('.sticky-list').style.display = 'none';
                 }
             }
             linkList.appendChild(item);
@@ -509,22 +524,22 @@ function setStickyColumn() {
 
         // click event for sticky close button (mobile)
         var stickyBtn = document.querySelector('#sticky-btn');
-        stickyBtn.onclick = function(e) {
+        stickyBtn.onclick = function (e) {
             e.preventDefault();
             e.stopPropagation();
             e.currentTarget.style.zIndex = 0;
             var stickyList = document.querySelector('.sticky-list');
             var stickyCloseBtn = document.querySelector('.sticky-close');
             if (stickyList !== null && stickyCloseBtn !== null) {
-            stickyList.style.display = 'block';
-            stickyCloseBtn.style.display = 'block';
+                stickyList.style.display = 'block';
+                stickyCloseBtn.style.display = 'block';
             }
         }
     } else {
         //For mobile disable ellipsis button
         document.querySelector('#sticky-btn').setAttribute('disabled', true);
     }
-        
+
 }
 
 $(document).ready(function () {
