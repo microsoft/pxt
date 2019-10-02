@@ -168,7 +168,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
 
                     currentFrame: 0,
                     frames: action.frames,
-                    interval: 200
+                    interval: action.interval
                 },
                 future: []
             }

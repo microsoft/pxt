@@ -42,12 +42,12 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         </Provider>
     }
 
-    initSingleFrame(value: Bitmap, options?: any) {
-        store.dispatch(dispatchSetInitialFrames([{ bitmap: value.data() }]));
+    initSingleFrame(value: Bitmap) {
+        store.dispatch(dispatchSetInitialFrames([{ bitmap: value.data() }], 100));
     }
 
-    initAnimation(frames: Bitmap[], options?: any) {
-        store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() }))));
+    initAnimation(frames: Bitmap[], interval: number) {
+        store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
     onResize() {
@@ -64,6 +64,10 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
     getAllFrames() {
         const state = store.getState();
         return "[" + state.present.frames.map(frame => bitmapToImageLiteral(Bitmap.fromData(frame.bitmap), "ts")).join(",") + "]";
+    }
+
+    getInterval() {
+        return store.getState().present.interval;
     }
 
     getPersistentData() {

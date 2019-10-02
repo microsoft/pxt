@@ -96,7 +96,7 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
 
     getValue() {
         if (this.ref) {
-            return this.props.singleFrame ? this.ref.getCurrentFrame() : this.ref.getAllFrames()
+            return this.props.singleFrame ? this.ref.getCurrentFrame() : (this.ref.getAllFrames() + this.ref.getInterval());
         }
         return "";
     }
@@ -128,17 +128,20 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
             bitmap = new Bitmap(options.initWidth || 16, options.initHeight || 16)
         }
 
-        this.ref.initSingleFrame(bitmap, options);
+        this.ref.initSingleFrame(bitmap);
     }
 
     protected initAnimation(value: string, options?: any) {
-        let frames = parseImageArrayString(value);
+        const frameString = value.substring(0, value.lastIndexOf("]") + 1);
+        const intervalString = value.substring(frameString.length);
+
+        let frames = parseImageArrayString(frameString);
 
         if (!frames || !frames.length || frames[0].width === 0 && frames[0].height === 0) {
             frames = [new Bitmap(options.initWidth || 16, options.initHeight || 16)];
         }
 
-        this.ref.initAnimation(frames, options);
+        this.ref.initAnimation(frames, Number(intervalString));
     }
 
     protected toggleGallery = () => {
