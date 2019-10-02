@@ -487,48 +487,13 @@
         padding-left: 0px;
     }
 
-    .icon-add-fill(@src, @fill-new) {
-        @data-uri: data-uri('image/svg+xml;charset=UTF-8', '@{src}');
-        @replace-default: escape('<path ');
-        @replace-new: escape('<path fill="@{fill-new}" ');
-        @replace-src: replace('@{data-uri}', @replace-default, @replace-new, 'g');
-        background-image: e(@replace-src);
-    }
 
-    /* Edit Icon */
-    div.menu > a.item > i.edit.icon {
+
+    #printbtn i.icon.print {
         background: no-repeat center;
-        .icon-add-fill('../docs/static/logo/icons/editor.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.edit.icon:before {
-        content: "";
-    }
-
-    /* Download Icon */
-    div.menu > a.item > i.download.icon {
-        background: no-repeat center;
-        .icon-add-fill('../docs/static/logo/icons/download.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.download.icon:before {
-        content: "";
-    }
-
-    /* Javascript Icon */
-    div.menu > a.item > i.icon.xicon.js {
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
         color: @docsPrimaryColor;
-        font-size: 16px;
-    }
-
-    div.menu > a.item > i.icon.xicon.js:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        &:before {
-            color: white;
-        }
+        height: 1.3em;
+        width: 1.4em;
     }
 
     #printbtn.circular.ui.icon.right.floated.button {
@@ -538,68 +503,12 @@
         box-shadow: none;
         padding: .5em;
     }
-
-    /* Print Icon */
-    #printbtn i.icon.print {
-        background: no-repeat center;
-        background-size: contain;
-        .icon-add-fill('../docs/static/logo/icons/print.svg', @docsPrimaryColor);
-        height: 1.3em;
-        width: 1.4em;
-    }
-
-    #printbtn i.icon.print:before {
-        content: "" !important;
-    }
-
-    /* Python Icon */
-    div.menu > a.item > i.icon.xicon.python {
+    
+    div.menu > a.item > i.icon {
         background: no-repeat center;
         border: 1px solid @docsPrimaryColor;
         color: @docsPrimaryColor;
-        font-size: 16px;     
-    }
-
-    div.menu > a.item > i.icon.xicon.python:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        &:before {
-            color: white;
-        }
-    }
-
-    /* Blocks Icon */
-    div.menu > a.item > i.icon.xicon.blocks {
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
-        .icon-add-fill('../docs/static/logo/icons/blocks-v2.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.icon.xicon.blocks:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/blocks-v1.svg')
-    }
-
-    div.menu > a.item > i.icon.xicon.blocks:before {
-        content: "" !important;
-    }
-
-     /* Play in Emulator Icon */
-    div.menu > a.item > i.play.icon{ 
-        background: no-repeat center;
-        border: 1px solid @docsPrimaryColor;
-        .icon-add-fill('../docs/static/logo/icons/emulator-v2.svg', @docsPrimaryColor);
-    }
-
-    div.menu > a.item > i.play.icon:hover {
-        background: no-repeat center;
-        background-color: @docsPrimaryColor;
-        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/emulator-v1.svg')
-    }
-
-    div.menu > a.item > i.play.icon:before {
-        content: "" !important;
+        font-size: 16px;
     }
 
     div.menu > a.item > i + span {

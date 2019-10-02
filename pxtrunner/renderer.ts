@@ -4,6 +4,9 @@ namespace pxt.runner {
     const JS_ICON = "icon xicon js";
     const PY_ICON = "icon xicon python";
     const BLOCKS_ICON = "icon xicon blocks"
+    const EDIT_ICON = "icon edit";
+    const DOWNLOAD_ICON = "icon download";
+    const PLAY_ICON = "icon play";
 
     export interface ClientRenderOptions {
         snippetClass?: string;
@@ -102,7 +105,7 @@ namespace pxt.runner {
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
-            const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
+            const $editBtn = snippetBtn(lf("Edit"), EDIT_ICON).click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
                 decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                 decompileResult.package.compressToFileAsync()
@@ -129,7 +132,7 @@ namespace pxt.runner {
 
         // runner menu
         if (woptions.run && !theme.hideDocsSimulator) {
-            let $runBtn = snippetBtn(lf("Run"), "play icon").click(() => {
+            let $runBtn = snippetBtn(lf("Run"), PLAY_ICON).click(() => {
                 pxt.tickEvent("docs.btn", { button: "sim" });
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
@@ -147,7 +150,7 @@ namespace pxt.runner {
         }
 
         if (woptions.hexname && woptions.hex) {
-            let $hexBtn = snippetBtn(lf("Download"), "download icon").click(() => {
+            let $hexBtn = snippetBtn(lf("Download"), DOWNLOAD_ICON).click(() => {
                 pxt.tickEvent("docs.btn", { button: "hex" });
                 BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
             })
