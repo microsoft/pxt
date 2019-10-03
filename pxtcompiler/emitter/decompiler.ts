@@ -2878,7 +2878,7 @@ ${output}</xml>`;
 
     function isAutoDeclaration(decl: VariableDeclaration) {
         if (decl.initializer) {
-            if (isTopLevelNode(decl) && decl.initializer.kind === SyntaxKind.NullKeyword) {
+            if (decl.initializer.kind === SyntaxKind.NullKeyword && isTopLevelNode(decl)) {
                 return true
             }
             const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
