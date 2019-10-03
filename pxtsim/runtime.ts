@@ -192,6 +192,7 @@ namespace pxsim {
         tryFrame?: TryFrame;
         thrownValue?: any;
         hasThrownValue?: boolean;
+        threadId?: number;
         // ... plus locals etc, added dynamically
     }
 
@@ -630,6 +631,25 @@ namespace pxsim {
             return null
         }
 
+        threadInfo() {
+            const frames = this.otherFrames.slice()
+            if (this.currFrame && frames.indexOf(this.currFrame) < 0)
+                frames.unshift(this.currFrame)
+            let info = ""
+            for (let f of frames) {
+                let p = f
+                while (p.parent)
+                    p = p.parent
+                info += `Thread ${p.threadId}:\n`
+                for (let s of getBreakpointMsg(f, f.lastBrkId).msg.stackframes) {
+                    let fi = s.funcInfo
+                    info += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
+                }
+                info += "\n"
+            }
+            return info
+        }
+
         // communication
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
@@ -782,6 +802,7 @@ namespace pxsim {
             this.id = msg.id
             this.refCountingDebug = !!msg.refCountingDebug;
 
+            let threadId = 0
             let breakpoints: Uint8Array = null
             let currResume: ResumeFn;
             let dbgHeap: Map<any>;
@@ -843,6 +864,7 @@ namespace pxsim {
                 const lock = new Object();
                 const pc = s.pc;
                 __this.loopLock = lock;
+                __this.otherFrames.push(s)
                 return () => {
                     if (__this.dead) return;
                     U.assert(s.pc == pc);
@@ -1000,7 +1022,7 @@ namespace pxsim {
 
             function removeFrame(p: StackFrame) {
                 const frames = __this.otherFrames
-                for (let i = 0; i < frames.length; ++i) {
+                for (let i = frames.length - 1; i >= 0; --i) {
                     if (frames[i] === p) {
                         frames.splice(i, 1)
                         return
@@ -1072,6 +1094,7 @@ namespace pxsim {
                     parent: null,
                     pc: 0,
                     depth: 0,
+                    threadId: ++threadId,
                     fn: () => {
                         if (cb) cb(frame.retval)
                         return null
