@@ -1903,7 +1903,7 @@ namespace pxt.blocks {
             else
                 tp = ": " + tpname
         }
-        return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
+        return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl, mkText(" //pxtGenerated"))
     }
 
     function countOptionals(b: Blockly.Block) {

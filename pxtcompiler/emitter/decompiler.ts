@@ -2396,20 +2396,20 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkVariableDeclaration(n: ts.VariableDeclaration, env: DecompilerEnv) {
-            let check: string;
-
+        function checkVariableDeclaration(n: ts.VariableDeclaration, env: DecompilerEnv): string | undefined {
             if (n.name.kind !== SK.Identifier) {
-                check = Util.lf("Variable declarations may not use binding patterns");
+                return Util.lf("Variable declarations may not use binding patterns");
             }
-            else if (!n.initializer) {
-                check = Util.lf("Variable declarations must have an initializer");
+            if (!n.initializer) {
+                return Util.lf("Variable declarations must have an initializer");
             }
-            else if (!isAutoDeclaration(n)) {
-                check = checkExpression(n.initializer, env);
+            if (isAutoDeclaration(n)) {
+                return undefined;
             }
-
-            return check;
+            if (n.type && !isBlocklyType(n.type)) {
+                return Util.lf("Variable type is not supported by Blockly");
+            }
+            return checkExpression(n.initializer, env);
         }
 
         function checkVariableStatement(n: ts.VariableStatement, env: DecompilerEnv) {
@@ -2878,12 +2878,19 @@ ${output}</xml>`;
 
     function isAutoDeclaration(decl: VariableDeclaration) {
         if (decl.initializer) {
-            if (decl.initializer.kind === SyntaxKind.NullKeyword && isTopLevelNode(decl)) {
-                return true
+            if (isTopLevelNode(decl)) {
+                const sourceFileText = decl.getSourceFile().getFullText();
+                const commentRanges = ts.getTrailingCommentRanges(sourceFileText, decl.getEnd());
+                if (Array.isArray(commentRanges) && commentRanges.length === 1 &&
+                    commentRanges[0].kind === SK.SingleLineCommentTrivia &&
+                    sourceFileText.substring(commentRanges[0].pos, commentRanges[0].end) === "//pxtGenerated") {
+                    return true;
+                }
             }
             const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
-            if (callInfo && callInfo.isAutoCreate)
-                return true
+            if (callInfo && callInfo.isAutoCreate) {
+                return true;
+            }
         }
         return false;
     }
@@ -2948,6 +2955,19 @@ ${output}</xml>`;
                 return false;
             }
             return true;
+        }
+    }
+
+    function isBlocklyType(n: TypeNode): boolean {
+        switch (n.kind) {
+            case SK.BooleanKeyword:
+            case SK.NumberKeyword:
+            case SK.StringKeyword:
+                return true;
+            case SK.ArrayType:
+                return isBlocklyType((n as ArrayTypeNode).elementType);
+            default:
+                return false;
         }
     }
 
