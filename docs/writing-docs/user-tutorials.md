@@ -56,6 +56,12 @@ You can override the markdown file from the project used for the content of the 
 where MakeCode will load the ``filename.md`` file from the project. Don't forget to add this file in the
 ``files`` list in ``pxt.json``.
 
+### Localization
+
+Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 
+where ``filename`` is the name of the tutorial in the default locale. ``icocode`` can be the 
+region specific language code or language neutral. MakeCode will pick the best match.
+
 ### Repository as extension
 
 If the tutorial repository contains JavaScript files (``.ts``),

@@ -3014,7 +3014,13 @@ export class ProjectView
                     }
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
-                    const md = gh.files[(ghid.fileName || "README") + ".md"];
+                    // if non-default language, find localized file if any
+                    const mfn = (ghid.fileName || "README") + ".md";
+                    const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+                    const md = 
+                        (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
+                        || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
+                        || gh.files[mfn]
                     if (!md)
                         throw new Error(lf("Tutorial content not found"));
                     return md;
