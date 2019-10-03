@@ -8,6 +8,13 @@ namespace pxsim {
             super();
         }
 
+        scan(mark: (path: string, v: any) => void) {
+            for (let i = 0; i < this.data.length; ++i)
+                mark("[" + i + "]", this.data[i])
+        }
+        gcKey() { return "[...]" }
+        gcSize() { return this.data.length + 2 }
+
         toArray(): any[] {
             return this.data.slice(0);
         }
@@ -399,6 +406,13 @@ namespace pxsim {
         constructor(public data: Uint8Array) {
             super();
         }
+
+        scan(mark: (path: string, v: any) => void) {
+            // nothing to do
+        }
+
+        gcKey() { return "Buffer" }
+        gcSize() { return 2 + (this.data.length + 3 >> 2) }
 
         print() {
             // console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)

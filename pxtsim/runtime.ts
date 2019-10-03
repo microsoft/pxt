@@ -558,6 +558,13 @@ namespace pxsim {
         return mapVTable
     }
 
+    export function functionName(fn: LabelFn) {
+        const fi = (fn as any).info
+        if (fi)
+            return `${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})`
+        return "()"
+    }
+
     export class Runtime {
         public board: BaseBoard;
         numGlobals = 1000;
@@ -631,16 +638,142 @@ namespace pxsim {
             return null
         }
 
-        threadInfo() {
+        traceObjects() {
+            interface ObjDesc {
+                obj: RefObject
+                pointers: [ObjDesc, string][]
+                path: string
+            }
+
+            const visited: Map<ObjDesc> = {}
+
+            function scan(name: string, v: any, par: ObjDesc = null): void {
+                if (!(v instanceof RefObject))
+                    return
+                const obj = v as RefObject
+                const ex = visited[obj.id]
+                if (ex) {
+                    if (par)
+                        ex.pointers.push([par, name])
+                    return
+                }
+                const here: ObjDesc = { obj, path: null, pointers: [[par, name]] }
+                visited[obj.id] = here
+                obj.scan((subpath, v) => {
+                    if (v instanceof RefObject && !visited[v.id])
+                        scan(subpath, v, here)
+                })
+            }
+
+            for (let k of Object.keys(this.globals)) {
+                scan(k.replace(/___\d+$/, ""), this.globals[k])
+            }
+
             const frames = this.otherFrames.slice()
             if (this.currFrame && frames.indexOf(this.currFrame) < 0)
                 frames.unshift(this.currFrame)
+
+            for (const thread of this.getThreads()) {
+                const thrPath = "Thread-" + this.rootFrame(thread).threadId
+                for (let s = thread; s; s = s.parent) {
+                    const path = thrPath + "." + functionName(s.fn)
+                    for (let k of Object.keys(s)) {
+                        if (/^(r0|arg\d+|.*___\d+)/.test(k)) {
+                            const v = (s as any)[k]
+                            if (v instanceof RefObject) {
+                                k = k.replace(/___.*/, "")
+                                scan(path + "." + k, v)
+                            }
+                        }
+                    }
+                    if (s.caps) {
+                        for (let c of s.caps)
+                            scan(path + ".cap", c)
+                    }
+                }
+            }
+
+            const allObjects = Object.keys(visited).map(k => visited[k])
+            allObjects.sort((a, b) => b.obj.gcSize() - a.obj.gcSize())
+
+            const setPath = (inf:ObjDesc) => {
+                if (inf.path != null)
+                    return
+                let short = ""
+                inf.path = "(cycle)"
+                for (let [par,name] of inf.pointers) {
+                    if (par == null) {
+                        inf.path = name
+                        return
+                    }
+                    setPath(par)
+                    const newPath = par.path + "." + name
+                    if (!short || short.length > newPath.length)
+                        short = newPath
+                }
+                inf.path = short
+            }
+
+            allObjects.forEach(setPath)
+
+            const stt = {
+                count: 0,
+                size: 0,
+                name: "TOTAL"
+            }
+
+            const statsByType: Map<{ count: number, size: number, name: string }> = {
+                "TOTAL": stt
+            }
+            const allStats = [stt]
+            for (const inf of allObjects) {
+                const sz = inf.obj.gcSize()
+                const key = inf.obj.gcKey()
+                if (!statsByType.hasOwnProperty(key)) {
+                    allStats.push(statsByType[key] = {
+                        count: 0,
+                        size: 0,
+                        name: key
+                    })
+                }
+                const st = statsByType[key]
+                st.size += sz
+                st.count++
+                stt.size += sz
+                stt.count++
+            }
+            allStats.sort((a, b) => a.size - b.size)
+            let info = ""
+            const fmt = (n: number) => ("        " + n.toString()).slice(-7)
+            for (const st of allStats) {
+                info += fmt(st.size * 4) + fmt(st.count) + " " + st.name + "\n"
+            }
+            info += "\nLarge objects:\n"
+            for (const inf of allObjects.slice(0, 20)) {
+                info += fmt(inf.obj.gcSize() * 4) + " " + inf.obj.gcKey() + " " + inf.path + "\n"
+            }
+            return info
+        }
+
+        getThreads() {
+            const frames = this.otherFrames.slice()
+            if (this.currFrame && frames.indexOf(this.currFrame) < 0)
+                frames.unshift(this.currFrame)
+            return frames
+        }
+
+        rootFrame(f: StackFrame) {
+            let p = f
+            while (p.parent)
+                p = p.parent
+            return p
+        }
+
+        threadInfo() {
+            const frames = this.getThreads()
             let info = ""
             for (let f of frames) {
-                let p = f
-                while (p.parent)
-                    p = p.parent
-                info += `Thread ${p.threadId}:\n`
+                info += `Thread ${this.rootFrame(f).threadId}:\n`
                 for (let s of getBreakpointMsg(f, f.lastBrkId).msg.stackframes) {
                     let fi = s.funcInfo
                     info += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
