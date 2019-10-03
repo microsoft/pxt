@@ -78,10 +78,7 @@ namespace pxtblockly {
             if (!this.path_) {
                 return;
             }
-            let v = goog.math.clamp(parseFloat(this.getText()), -200, 200);
-            if (isNaN(v)) {
-                v = 0;
-            }
+            let v = goog.math.clamp(this.getValue() || 0, -200, 200);
             const x = v / 100;
             const nx = Math.max(-1, Math.min(1, x));
             const theta = Math.max(nx) * Math.PI / 2;
