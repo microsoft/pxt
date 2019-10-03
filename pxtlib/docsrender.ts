@@ -20,7 +20,9 @@ namespace pxt.docs {
         "short": stdSetting,
         "description": "<!-- desc -->",
         "activities": "<!-- activities -->",
-        "explicitHints": "<!-- hints -->"
+        "explicitHints": "<!-- hints -->",
+        "flyoutOnly": "<!-- flyout -->",
+        "hideIteration": "<!-- iter -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {

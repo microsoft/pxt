@@ -10,6 +10,7 @@ import * as md from "./marked";
 import * as compiler from "./compiler";
 import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
+import { PlayButton } from "./simtoolbar";
 import { ProjectView } from "./app";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
@@ -508,16 +509,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
-        const hasPrevious = tutorialReady && currentStep != 0;
-        const hasNext = tutorialReady && currentStep != maxSteps - 1;
-        const hasFinish = !lockedEditor && currentStep == maxSteps - 1;
+        const hideIteration =  metadata && metadata.hideIteration;
+        const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
+        const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
 
         let tutorialAriaLabel = '',
@@ -556,6 +558,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron orange large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {hasFinish ? <sui.Button icon="left checkmark" className={`orange right attached ${!tutorialReady ? 'disabled' : ''}`} text={lf("Finish")} ariaLabel={lf("Finish the tutorial.")} onClick={this.finishTutorial} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {hideIteration && pxt.appTarget.appTheme.bigRunButton && <PlayButton parent={this.props.parent} className="big-play-button massive" simState={this.props.parent.state.simState} debugging={this.props.parent.state.debugging} />}
             </div>
         </div>;
     }

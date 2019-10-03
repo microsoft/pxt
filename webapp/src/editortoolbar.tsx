@@ -138,6 +138,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
+        const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
         const collapsed = (hideEditorFloats || collapseEditorTools) && (!tutorial || headless);
@@ -187,7 +188,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             <div className="column mobile only">
                 {collapsed ?
                     <div className="ui grid">
-                        {!targetTheme.bigRunButton && <div className="left aligned column six wide">
+                        {!targetTheme.bigRunButton && !hideIteration && <div className="left aligned column six wide">
                             <div className="ui icon small buttons">
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
                             </div>
@@ -199,7 +200,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     {showUndoRedo && <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='mobile' />}
                                 </div>}
                             {showZoomControls && <div className="ui icon small buttons">{this.getZoomControl(mobile)}</div>}
-                            {targetTheme.bigRunButton &&
+                            {targetTheme.bigRunButton && !hideIteration &&
                                 <div className="big-play-button-wrapper">
                                     <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='mobile' />
                                 </div>}
@@ -245,7 +246,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         <div className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
                             {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(tablet)}</div>}
                             {showZoomControls && <div className="ui icon small buttons">{this.getZoomControl(tablet)}</div>}
-                            {targetTheme.bigRunButton &&
+                            {targetTheme.bigRunButton && !hideIteration &&
                                 <div className="big-play-button-wrapper">
                                     <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='tablet' />
                                 </div>}
@@ -278,7 +279,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         <div className="column">
                                             {showUndoRedo && <div className="ui icon large buttons">{this.getUndoRedo(tablet)}</div>}
                                             {showZoomControls && <div className="ui icon large buttons">{this.getZoomControl(tablet)}</div>}
-                                            {targetTheme.bigRunButton &&
+                                            {targetTheme.bigRunButton && !hideIteration &&
                                                 <div className="big-play-button-wrapper">
                                                     <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='tablet' />
                                                 </div>}
@@ -316,7 +317,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div id="editorToolbarArea" className="column right aligned">
                         {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(computer)}</div>}
                         {showZoomControls && <div className="ui icon small buttons">{this.getZoomControl(computer)}</div>}
-                        {targetTheme.bigRunButton &&
+                        {targetTheme.bigRunButton && !hideIteration &&
                             <div className="big-play-button-wrapper">
                                 <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='computer' />
                             </div>}

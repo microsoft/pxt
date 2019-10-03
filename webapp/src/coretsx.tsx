@@ -127,7 +127,16 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
-                    <input autoFocus className={`ui input ${inputError ? "error" : ""}`} type="text" ref="promptInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
+                    <input
+                        autoFocus
+                        className={`ui input ${inputError ? "error" : ""}`}
+                        type="text"
+                        ref="promptInput"
+                        onChange={this.handleInputChange}
+                        value={inputValue}
+                        placeholder={options.placeholder}
+                        aria-label={options.placeholder}
+                    />
                     {inputError ? <div className="ui error message">{inputError}</div> : undefined}
                 </div> : undefined}
                 {options.jsx}

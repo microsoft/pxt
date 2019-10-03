@@ -795,11 +795,14 @@ declare namespace pxt.tutorial {
         activities: TutorialActivityInfo[];
         code: string; // all code
         templateCode?: string;
+        metadata?: TutorialMetadata;
     }
 
     interface TutorialMetadata {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
+        flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        hideIteration?: boolean; // hide step control in tutorial
     }
 
     interface TutorialStepInfo {
@@ -834,6 +837,7 @@ declare namespace pxt.tutorial {
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
+        metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

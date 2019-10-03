@@ -499,7 +499,7 @@ namespace pxt.runner {
             backButton.addEventListener("click", () => {
                 goBack();
             });
-            pxsim.U.addClass(backButton, "disabled");
+            setElementDisabled(backButton, true);
         }
 
         function render(doctype: string, src: string) {
@@ -563,7 +563,7 @@ namespace pxt.runner {
             }
 
             if (history.length > 1) {
-                pxsim.U.removeClass(backButton, "disabled");
+                setElementDisabled(backButton, false);
             }
         }
 
@@ -576,7 +576,17 @@ namespace pxt.runner {
             }
 
             if (history.length <= 1) {
-                pxsim.U.addClass(backButton, "disabled");
+                setElementDisabled(backButton, true);
+            }
+        }
+
+        function setElementDisabled(el: HTMLElement, disabled: boolean) {
+            if (disabled) {
+                pxsim.U.addClass(el, "disabled");
+                el.setAttribute("aria-disabled", "true");
+            } else {
+                pxsim.U.removeClass(el, "disabled");
+                el.setAttribute("aria-disabled", "false");
             }
         }
 
@@ -763,41 +773,10 @@ ${linkString}
     </div>
 </aside>
 
-<aside id=hero class=box>
-    <div class="ui hero">
-        <div class="main-description">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
 <aside id=hint class=box>
-    <div class="ui info message">
+    <div class="ui icon green message">
         <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=reminder class=box>
-    <div class="ui warning message">
-        <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=alert class=box>
-    <div class="ui negative message">
-        <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=tip class=box>
-    <div class="ui positive message">
-        <div class="content">
+            <div class="header">Hint</div>
             @BODY@
         </div>
     </div>
