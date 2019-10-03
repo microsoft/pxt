@@ -10,8 +10,12 @@ body#root {
     list-style-type: none;
 }
 
+#docs ol {
+    padding-left: 1em;
+}
+
 #docs ul li:before {
-  margin: 0 1em; 
+  margin-right: 1em;
   content: "\25CF";
 }
 
@@ -357,6 +361,10 @@ svg {
         margin-bottom: 2em;
         padding-left: 2em;
         padding-right: 2em;
+    }
+
+    #docs .ui.container.mainbody {
+        margin-left: 0 !important;
     }
 }
 
