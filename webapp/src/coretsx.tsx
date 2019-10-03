@@ -97,6 +97,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         const options = this.props;
         const { inputValue, inputError } = this.state;
         const size: any = options.size === undefined ? 'small' : options.size;
+        const escapable = !options.hideCancel || options.hasCloseIcon;
 
         const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
         buttons.forEach(btn => {
@@ -121,9 +122,10 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 defaultOpen={true} buttons={buttons}
                 dimmer={true} closeIcon={options.hasCloseIcon}
                 header={options.header}
-                closeOnDimmerClick={!options.hideCancel}
-                closeOnDocumentClick={!options.hideCancel}
-                closeOnEscape={!options.hideCancel}
+                // these three \/ should probably be changed
+                closeOnDimmerClick={escapable}
+                closeOnDocumentClick={escapable}
+                closeOnEscape={escapable}
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
