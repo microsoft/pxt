@@ -168,6 +168,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && Blockly.DropDownDiv.isVisible();
     }
 
+    beforeCompile() {
+        // close all field editors to make sure
+        // that all changes are commited
+        // it is quite common for users to click download
+        // while a field editor is still opened and the changes are not commited
+        if (typeof Blockly === "undefined") return;
+
+        Blockly.DropDownDiv.hide();
+        Blockly.WidgetDiv.hide();
+    }
+
     private saveBlockly(): string {
         // make sure we don't return an empty document before we get started
         // otherwise it may get saved and we're in trouble
