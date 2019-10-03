@@ -526,3 +526,11 @@ declare namespace Math {
     //% shim=Math_::idiv
     function idiv(x: number, y: number): number;
 }
+
+declare namespace _lifecycle {
+    //% shim=__lifecycle::onCodeStart
+    export function onCodeStart(arg: any): void;
+
+    //% shim=__lifecycle::onCodeStop
+    export function onCodeStop(arg: any): void;
+}
