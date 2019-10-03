@@ -3017,7 +3017,7 @@ export class ProjectView
                     // if non-default language, find localized file if any
                     const mfn = (ghid.fileName || "README") + ".md";
                     const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
-                    const md = 
+                    const md =
                         (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
                         || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
                         || gh.files[mfn]
