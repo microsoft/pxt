@@ -512,6 +512,7 @@ namespace pxt.github {
         project?: string;
         fullName: string;
         tag?: string;
+        fileName?: string;
     }
 
     export enum GitRepoStatus {
@@ -688,22 +689,27 @@ namespace pxt.github {
         return r;
     }
 
+    // parse https://github.com/[company]/[project](/filepath)(#tag)
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
 
         repo = repo.replace(/^github:/i, "")
         repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
+
         let m = /([^#]+)(#(.*))?/.exec(repo)
         const tag = m ? m[3] : null;
         let owner: string;
         let project: string;
         let fullName: string;
+        let fileName: string;
         if (m) {
-            fullName = m[1].toLowerCase();
             const parts = fullName.split('/');
             owner = parts[0];
             project = parts[1];
+            fullName = `${owner}/${project}`;
+            if (parts.length > 2)
+                fileName = parts.slice(2).join('/');
         } else {
             fullName = repo.toLowerCase();
         }
@@ -711,7 +717,8 @@ namespace pxt.github {
             owner,
             project,
             fullName,
-            tag
+            tag,
+            fileName
         }
     }
 

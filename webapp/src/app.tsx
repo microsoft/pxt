@@ -3006,7 +3006,10 @@ export class ProjectView
                     dependencies = pxtJson.dependencies || {};
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
-                    return gh.files["README.md"];
+                    const md = gh.files[(ghid.fileName || "README") + ".md"];
+                    if (!md)
+                        throw new Error(lf("Tutorial content not found"));
+                    return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
