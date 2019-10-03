@@ -821,7 +821,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         return (
             <div
                 id={id}
-                tabIndex={tabIndex !== null ? tabIndex : -1}
+                tabIndex={tabIndex != null ? tabIndex : -1}
                 className={classes}
                 onClick={this.handleClick}
                 onKeyDown={fireClickOnEnter}
