@@ -1164,7 +1164,7 @@ ${output}</xml>`;
                             getComments(parent || node);
                             return getNext();
                         }
-                        stmt = getVariableDeclarationStatement(node as ts.VariableDeclaration);
+                        stmt = getVariableDeclarationStatement(decl);
                         break;
                     case SK.WhileStatement:
                         stmt = getWhileStatement(node as ts.WhileStatement);
@@ -2144,7 +2144,7 @@ ${output}</xml>`;
             let text = ""
             let currentLine = ""
 
-            const isTopLevel = isTopLevelComment(node);
+            const isTopLevel = isTopLevelNode(node);
 
             for (const commentRange of commentRanges) {
                 let commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
@@ -2180,16 +2180,6 @@ ${output}</xml>`;
             text += currentLine
 
             return text.trim()
-
-            function isTopLevelComment(n: Node): boolean {
-                const [parent,] = getParent(n);
-                if (!parent || parent.kind == SK.SourceFile) return true;
-                // Expression statement
-                if (parent.kind == SK.ExpressionStatement) return isTopLevelComment(parent);
-                // Variable statement
-                if (parent.kind == SK.VariableDeclarationList) return isTopLevelComment(parent.parent);
-                return false;
-            }
 
             function appendMatch(line: string, lineno: number, lineslen: number, regex: RegExp) {
                 const match = regex.exec(line)
@@ -2874,13 +2864,23 @@ ${output}</xml>`;
 
     function isAutoDeclaration(decl: VariableDeclaration) {
         if (decl.initializer) {
-            if (decl.initializer.kind === SyntaxKind.NullKeyword) {
+            if (isTopLevelNode(decl) && decl.initializer.kind === SyntaxKind.NullKeyword) {
                 return true
             }
             const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
             if (callInfo && callInfo.isAutoCreate)
                 return true
         }
+        return false;
+    }
+
+    function isTopLevelNode(n: Node): boolean {
+        const [parent,] = getParent(n);
+        if (!parent || parent.kind == SK.SourceFile) return true;
+        // Expression statement
+        if (parent.kind == SK.ExpressionStatement) return isTopLevelNode(parent);
+        // Variable statement
+        if (parent.kind == SK.VariableDeclarationList) return isTopLevelNode(parent.parent);
         return false;
     }
 
