@@ -1514,7 +1514,7 @@ export class ProjectView
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
-            pxt.tickEvent("import",{ id : importer.id });
+            pxt.tickEvent("import", { id: importer.id });
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             pxt.editor.initEditorExtensionsAsync()
@@ -2988,7 +2988,7 @@ export class ProjectView
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
                 });
-        } else if (!!ghid) {
+        } else if (!!ghid && ghid.owner && ghid.project) {
             p = pxt.packagesConfigAsync()
                 .then(config => {
                     const status = pxt.github.repoStatus(ghid, config);
@@ -3004,10 +3004,27 @@ export class ProjectView
                 })
                 .then(gh => {
                     const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
-                    dependencies = pxtJson.dependencies || {};
+                    // if there is any .ts file in the tutorial repo,
+                    // add as a dependency itself
+                    if (pxtJson.files.find(f => /\.ts/.test(f))) {
+                        dependencies = {}
+                        dependencies[ghid.project] = pxt.github.toGithubDependencyPath(ghid);
+                    }
+                    else {// just use dependencies from the tutorial
+                        dependencies = pxtJson.dependencies || {};
+                    }
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
-                    return gh.files["README.md"];
+                    // if non-default language, find localized file if any
+                    const mfn = (ghid.fileName || "README") + ".md";
+                    const lang = pxt.Util.normalizeLanguageCode(pxt.Util.userLanguage());
+                    const md =
+                        (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
+                        || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
+                        || gh.files[mfn]
+                    if (!md)
+                        throw new Error(lf("Tutorial content not found"));
+                    return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3864,9 +3881,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         lang.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
-                        pxt.tickEvent("unavailablelocale", {lang : useLang,  force : (force ? "true" : "false")});
+                        pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
                     }
-                    pxt.tickEvent("locale", {lang : pxt.Util.userLanguage(), live : (live ? "true" : "false")});
+                    pxt.tickEvent("locale", { lang: pxt.Util.userLanguage(), live: (live ? "true" : "false") });
                     // Download sim translations and save them in the sim
                     // don't wait!
                     ts.pxtc.Util.downloadTranslationsAsync(
