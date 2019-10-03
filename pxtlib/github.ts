@@ -698,13 +698,14 @@ namespace pxt.github {
         repo = repo.replace(/\.git\b/i, "")
 
         let m = /([^#]+)(#(.*))?/.exec(repo)
+        const nameAndFile = m ? m[1] : null;
         const tag = m ? m[3] : null;
         let owner: string;
         let project: string;
         let fullName: string;
         let fileName: string;
         if (m) {
-            const parts = fullName.split('/');
+            const parts = nameAndFile.split('/');
             owner = parts[0];
             project = parts[1];
             fullName = `${owner}/${project}`;
