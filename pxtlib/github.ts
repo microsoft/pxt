@@ -724,7 +724,7 @@ namespace pxt.github {
     }
 
     export function toGithubDependencyPath(id: ParsedRepo): string {
-        let r = "gitub:" + id.fullName;
+        let r = "github:" + id.fullName;
         if (id.tag) r += "#" + id.tag;
         return r;
     }
