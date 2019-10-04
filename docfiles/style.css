@@ -184,6 +184,7 @@ svg {
 
 .pusher .article {
     position: absolute;
+    /* match with menu bar height */
     top: 3em;
     right: 0;
     left: 0;
