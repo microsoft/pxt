@@ -219,23 +219,39 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        const job = renderQueue.shift();
-        if (!job) return Promise.resolve(); // done
-
-        const { el, options, render } = job;
-        return pxt.runner.decompileToBlocksAsync(el.text(), options)
-            .then(r => {
-                const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
-                if (errors && errors.length)
-                    errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
-                render(el, r);
-            }, e => {
-                pxt.reportException(e);
-                el.append($('<div/>').addClass("ui segment warning").text(e.message));
-            }).finally(() => {
-                el.removeClass("lang-shadow");
-                return consumeRenderQueueAsync();
+        let existingFilters: string[] = [];
+        return consumeNext()
+            .then(() => {
+                // TODO: this will probably break something? look into its
+                Blockly.Workspace.getAll().forEach(el => el.dispose())
             });
+
+        function consumeNext(): Promise<void> {
+            const job = renderQueue.shift();
+            if (!job) return Promise.resolve(); // done
+
+            const { el, options, render } = job;
+            return pxt.runner.decompileToBlocksAsync(el.text(), options)
+                .then(r => {
+                    const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
+                    if (errors && errors.length)
+                        errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
+                    r.blocksSvg.querySelectorAll("defs *").forEach(el => {
+                        if (existingFilters.indexOf(el.id) !== -1) {
+                            el.remove();
+                        } else {
+                            existingFilters.push(el.id);
+                        }
+                    });
+                    render(el, r);
+                }, e => {
+                    pxt.reportException(e);
+                    el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                }).finally(() => {
+                    el.removeClass("lang-shadow");
+                    return consumeNext();
+                });
+        }
     }
 
     function renderNextSnippetAsync(cls: string,
