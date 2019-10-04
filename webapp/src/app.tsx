@@ -3291,13 +3291,16 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
+        const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
         const simDebug = !!targetTheme.debugger || inDebugMode;
+        const flyoutOnly = this.state.editorState && !this.state.editorState.hasCategories;
 
-        const { hideMenuBar, hideEditorToolbar, transparentEditorToolbar } = targetTheme;
+        const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
+        const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration;
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
@@ -3341,6 +3344,8 @@ export class ProjectView
             greenScreen ? "greenscreen" : "",
             logoWide ? "logo-wide" : "",
             isHeadless ? "headless" : "",
+            flyoutOnly ? "flyoutOnly" : "",
+            hideTutorialIteration ? "hideIteration" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
