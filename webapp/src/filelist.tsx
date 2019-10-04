@@ -165,7 +165,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
-            hideCancel: true,
             hasCloseIcon: true,
             onInputValidation: (v) => {
                 if (!v)
