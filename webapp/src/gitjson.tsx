@@ -71,8 +71,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 "my_feature, add-colors, fix_something"),
             agreeLbl: lf("Create"),
             initialValue: initialBranchName,
+            hasCloseIcon: true,
             onInputValidation: v => {
-                if (/[^\w]/.test(v))
+                if (/[^\w\-]/.test(v))
                     return lf("Don't use spaces or special characters.")
                 return undefined;
             }
