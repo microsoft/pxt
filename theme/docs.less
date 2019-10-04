@@ -46,6 +46,14 @@
     h1 {
         margin-bottom: .85em;
     }
+    h2 {
+        margin-top: 1.5em;
+
+        &:not(:first-of-type) {
+            padding-top: 1.5em;
+            border-top: 2px solid fade(@docsHeadingColor, 15%);
+        }
+    }
     /* Text color */
     p, ul li {
         color: @docsTextColor;
