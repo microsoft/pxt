@@ -137,8 +137,8 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                         placeholder={options.placeholder}
                         aria-label={options.placeholder}
                     />
-                    {inputError ? <div className="ui error message">{inputError}</div> : undefined}
                 </div> : undefined}
+                {inputError ? <div className="ui error message">{inputError}</div> : undefined}
                 {options.jsx}
                 {options.jsxd ? options.jsxd() : undefined}
                 {options.body ? <p>{options.body}</p> : undefined}
