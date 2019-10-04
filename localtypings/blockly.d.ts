@@ -155,6 +155,7 @@ declare module Blockly {
         hasCategories?: boolean;
         trashcan?: boolean;
         collapse?: boolean;
+        inline?: boolean;
         comments?: boolean;
         disable?: boolean;
         scrollbars?: boolean;
@@ -177,6 +178,11 @@ declare module Blockly {
             minScale?: number;
             scaleSpeed?: number;
             startScale?: number;
+        };
+        move?: {
+            scrollbars?: boolean;
+            wheel?: boolean;
+            drag?: boolean;
         };
         enableRealTime?: boolean;
         rtl?: boolean;
@@ -8903,12 +8909,17 @@ declare module Blockly {
             getNumRestrictor(opt_min: number|string|any /*undefined*/, opt_max: number|string|any /*undefined*/, opt_precision: number|string|any /*undefined*/): RegExp;
     
             /**
-             * Set the constraints for this field.
-             * @param {number=} opt_min Minimum number allowed.
-             * @param {number=} opt_max Maximum number allowed.
-             * @param {number=} opt_precision Step allowed between numbers
+             * Set the maximum, minimum and precision constraints on this field.
+             * Any of these properties may be undefiend or NaN to be disabled.
+             * Setting precision (usually a power of 10) enforces a minimum step between
+             * values. That is, the user's value will rounded to the closest multiple of
+             * precision. The least significant digit place is inferred from the precision.
+             * Integers values can be enforces by choosing an integer precision.
+             * @param {number|string|undefined} min Minimum value.
+             * @param {number|string|undefined} max Maximum value.
+             * @param {number|string|undefined} precision Precision for value.
              */
-            setConstraints_(opt_min?: number, opt_max?: number, opt_precision?: number): void;
+            setConstraints_(min: number|string|any /*undefined*/, max: number|string|any /*undefined*/, precision: number|string|any /*undefined*/): void;
     
             /**
              * Show the inline free-text editor on top of the text and the num-pad if
