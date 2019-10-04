@@ -126,12 +126,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
         await core.confirmAsync({
             header: lf("Switch to a different branch"),
+            hasCloseIcon: true,
             hideAgree: true,
+            hideCancel: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
                     {branchList.map(r =>
-                        <div key={r.name} className="item">
+                        <div key={r.name} className="item link">
                             <i className="large github middle aligned icon"></i>
                             <div className="content">
                                 <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>
