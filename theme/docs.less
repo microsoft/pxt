@@ -48,10 +48,16 @@
     }
     h2 {
         margin-top: 1.5em;
+        margin-bottom: .75em;
 
         &:not(:first-child) {
             padding-top: 1.5em;
             border-top: 2px solid fade(@docsHeadingColor, 15%);
+        }
+        &+h2 {
+            padding-top: 0 !important;
+            margin-top: -.75em !important;
+            border-top: none !important;
         }
     }
     /* Text color */
