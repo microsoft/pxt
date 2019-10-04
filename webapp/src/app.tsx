@@ -2983,7 +2983,12 @@ export class ProjectView
                     filename = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
                     reportId = scriptId;
-                    return files["README.md"];
+                    const md = files["README.md"];
+                    if (md) {
+                        pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
+                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
+                    }
+                    return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
                     core.handleNetworkError(e);
@@ -3021,9 +3026,11 @@ export class ProjectView
                     const md =
                         (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
                         || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
-                        || gh.files[mfn]
-                    if (!md)
-                        throw new Error(lf("Tutorial content not found"));
+                        || gh.files[mfn];
+                    if (md) {
+                        pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
+                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
+                    }
                     return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
