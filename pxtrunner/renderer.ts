@@ -224,16 +224,15 @@ namespace pxt.runner {
 
         const { el, options, render } = job;
         return pxt.runner.decompileToBlocksAsync(el.text(), options)
-            .then((r) => {
+            .then(r => {
                 const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
                 if (errors && errors.length)
                     errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
                 render(el, r);
-                el.removeClass("lang-shadow");
-                return consumeRenderQueueAsync();
-            }).catch(e => {
+            }, e => {
                 pxt.reportException(e);
                 el.append($('<div/>').addClass("ui segment warning").text(e.message));
+            }).finally(() => {
                 el.removeClass("lang-shadow");
                 return consumeRenderQueueAsync();
             });
