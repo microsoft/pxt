@@ -222,7 +222,6 @@ namespace pxt.runner {
         let existingFilters: string[] = [];
         return consumeNext()
             .then(() => {
-                // TODO: this will probably break something? look into its
                 Blockly.Workspace.getAll().forEach(el => el.dispose())
             });
 
@@ -234,8 +233,11 @@ namespace pxt.runner {
             return pxt.runner.decompileToBlocksAsync(el.text(), options)
                 .then(r => {
                     const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
-                    if (errors && errors.length)
+                    if (errors && errors.length) {
                         errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
+                    }
+
+                    // filter out any blockly definitions from the svg that would be duplicates on the page
                     r.blocksSvg.querySelectorAll("defs *").forEach(el => {
                         if (existingFilters.indexOf(el.id) !== -1) {
                             el.remove();
