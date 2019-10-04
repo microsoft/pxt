@@ -3021,9 +3021,12 @@ export class ProjectView
                     const md =
                         (lang && lang[1] && gh.files[`_locales/${lang[0]}-${lang[1]}/${mfn}`])
                         || (lang && lang[0] && gh.files[`_locales/${lang[0]}/${mfn}`])
-                        || gh.files[mfn]
+                        || gh.files[mfn];
                     if (!md)
                         throw new Error(lf("Tutorial content not found"));
+
+                    pxt.Util.jsonMergeFrom(dependencies, pxt.gallery.parsePackagesFromMarkdown(md));
+                    features = pxt.gallery.parseFeaturesFromMarkdown(md);
                     return md;
                 }).catch((e) => {
                     core.errorNotification(tutorialErrorMessage);
