@@ -14,16 +14,16 @@
 @docsLinkColor: #3977b4;
 
 /* Code segment */
-@docsSegementBackgroundColor: #f7f7f7;
-@docsSegementBackgroundColorValid: #edf9ef;
-@docsSegementBackgroundColorInvalid: #fbf3f4;
+@docsSegmentBackgroundColor: #f7f7f7;
+@docsSegmentBackgroundColorValid: #edf9ef;
+@docsSegmentBackgroundColorInvalid: #fbf3f4;
 
 /* Card */
 @docsCardBackgroundColor: white;
 @docsCardColor: @docsTextColor;
 @docsCardHeaderColor: @docsTextColor;
 @docsCardContentColor: @docsTextColor;
-@docsCardImageBackgroundColor: rgba(0,0,0,.05);
+@docsCardImageBackgroundColor: rgba(0, 0, 0, .05);
 
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
@@ -64,18 +64,26 @@
     }
     /* Code segments */
     .mainbody .ui.segment, pre {
-        background: @docsSegementBackgroundColor !important;
+        background: @docsSegmentBackgroundColor !important;
         border-radius: 0 !important;
         border: 0 !important;
         margin-bottom: 1.275em;
         box-shadow: none;
         tab-size: 4;
+
+        .subheading {
+            text-align: right;
+            border-top: 1px solid rgba(0, 0, 0, .3);
+            color: rgba(0, 0, 0, .5);
+            margin-top: .5em;
+            text-transform: uppercase;
+        }
     }
     .mainbody div.codewidget.valid, code.valid{
-        background: @docsSegementBackgroundColorValid !important;
+        background: @docsSegmentBackgroundColorValid !important;
     }
     .mainbody div.codewidget.invalid, code.invalid{
-        background: @docsSegementBackgroundColorInvalid !important;
+        background: @docsSegmentBackgroundColorInvalid !important;
     }
 
     .mainbody div.codewidget.valid, .mainbody div.codewidget.invalid {
@@ -114,7 +122,7 @@
             .item:hover, .item:focus {
                 border-radius: 2px;
                 outline: none;
-                background: rgba(0,0,0,.1);
+                background: @docsSegmentBackgroundColor;
             }
         }
 
