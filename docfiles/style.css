@@ -180,9 +180,9 @@ svg {
 
 .pusher .article {
     position: absolute;
-    top: 0;
+    top: 3em;
     right: 0;
-    left: 300px;
+    left: 0;
     bottom: 0;
     overflow-y: auto;
     -webkit-box-flex: 1;
@@ -213,17 +213,72 @@ svg {
 #pagemenu .ui.item .header {
     padding: 0;
 }
-
+/* 
 .fixed.menu > .container {
     margin-left: 0em !important;
     margin-right: 0em !important;
     width: 100% !important;
     max-width: none !important;
-}
+} */
 
-.fixed.menu > .container > .item {
-    margin: 10px;
+/* Top bar menu */
+.fixed.menu {
+    min-height: 0;
+    height: 3em;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
+/* first children are left & right div wrappers */
+.fixed.menu div {
+    display:flex;
+    flex-direction: inherit;
+    align-items: inherit;
+}
+.fixed.menu:after,
+.fixed.menu .item:before {
+    /* semantic loves to add pseudo elements; 
+    disable these ones because they interfere with flex-box */
+    content:none;
+}
+/* items like hamburger, logo, name, search etc. */
+.fixed.menu .item {
+    /* padding:1em; */
+    padding-left: 1em;
+    padding-right: 1em;
+    /* margin:0; */
+}
+/* icon & target label */
+.fixed.menu .item div ~ div {
+    padding-left: 0.5em;
+}
+/* target icon & name */
+.fixed.menu .item.label {
+    padding:0;
+}
+.fixed.menu .item.label {
+    padding:0;
+}
+/* hamburger */
+.fixed.menu .item.icon {
+    padding:0;
+    width: 3em;
+    height: 3em;
+    /* background-color: green; */
+}
+/* Search box */
+.fixed.menu .search div.input {
+    min-width: 14em;
+    height: 2.5em;
+}
+.fixed.menu .search input {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+/* .fixed.menu > .container > .item.logo > * {
+    margin-right: 10px;
+} */
 
 /* breadcrumbs in inverted view */
 .inverted .ui.breadcrumb a, .inverted .ui.breadcrumb .icon {
@@ -296,58 +351,53 @@ svg {
     display: none;
 }
 
+/* TODO(dz): */
 @media only screen and (max-width: 1144px) {
-    .pusher > .toc {
-        width: 200px;
-        position: absolute;
-        top: 0;
-        left: -300px;
-        bottom: 0;
-        z-index: 1;
-        overflow-y: auto;
-    }
-    .navigation.navigation-prev {
-        left: 200px;
-    }
-    .pusher > .toc {
-        display: none;
-    }
     .hidemobile {
         display: none !important;
     }
     .showmobile {
         display: block;
     }
-    .pusher .article {
-        left: 0;
-    }
-    .navigation.navigation-next {
-        margin-right: 0;
-    }
-    .ui.container.mainbody {
-        margin-top: 5rem;
-        margin-left: 0!important;
-        margin-right: 0!important;
-        padding-left: 1em;
-        padding-right: 1em;
-    }
-    .navigation {
-        position: relative; /* IE doesn't support static */
-        position: static;
-        top: auto;
-        max-width: 48%;
-        width: 50%;
-        display: inline-block !important;
-    }
-    .navigation.navigation-prev {
-        left: 0px;
-    }
-    .ui.vertical.segment.footer {
-        margin-top: 4rem;
-    }
 }
 
-@media only screen and (min-width: 1145px) {
+.navigation.navigation-prev {
+    left: 200px;
+}
+/* .pusher > .toc {
+    display: none;
+} */
+.navigation.navigation-next {
+    margin-right: 0;
+}
+.ui.container.mainbody {
+    margin-left: 0!important;
+    margin-right: 0!important;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+.ui.sidebar {
+    /* match with menu bar height */
+    top: 3em;
+}
+.navigation {
+    position: relative;
+    position: static;
+    top: auto;
+    max-width: 48%;
+    width: 50%;
+    display: inline-block !important;
+}
+.navigation.navigation-prev {
+    left: 0px;
+}
+.ui.vertical.segment.footer {
+    margin-top: 4rem;
+}
+/* } */
+
+/* TODO(dz): */
+/* @media only screen and (min-width: 1145px) {
     .fixed.main.menu {
         display: none;
     }
@@ -358,7 +408,7 @@ svg {
         padding-left: 2em;
         padding-right: 2em;
     }
-}
+} */
 
 /**
 print only stuff
