@@ -219,7 +219,7 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        let existingFilters: Map<Element> = {};
+        const existingFilters: Map<Element> = {};
         return consumeNext()
             .then(() => {
                 Blockly.Workspace.getAll().forEach(el => el.dispose())
