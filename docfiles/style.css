@@ -185,7 +185,7 @@ svg {
 .pusher .article {
     position: absolute;
     /* match with menu bar height */
-    top: 3em;
+    top: 3.5em;
     right: 0;
     left: 0;
     bottom: 0;
@@ -222,7 +222,7 @@ svg {
 /* Top bar menu */
 .fixed.menu {
     min-height: 0;
-    height: 3em;
+    height: 3.5em;
     display:flex;
     flex-direction: row;
     justify-content: space-between;
@@ -259,8 +259,8 @@ svg {
 /* hamburger */
 .fixed.menu .item.icon {
     padding:0;
-    width: 3em;
-    height: 3em;
+    width: 3.5em;
+    height: 3.5em;
 }
 /* Search box */
 .fixed.menu .search div.input {
@@ -366,7 +366,7 @@ svg {
 }
 .ui.sidebar {
     /* match with menu bar height */
-    top: 3em;
+    top: 3.5em;
 }
 .navigation {
     position: relative;
