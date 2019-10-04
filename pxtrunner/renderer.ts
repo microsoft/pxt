@@ -219,7 +219,7 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        let existingFilters: string[] = [];
+        let existingFilters: Map<Element> = {};
         return consumeNext()
             .then(() => {
                 Blockly.Workspace.getAll().forEach(el => el.dispose())
@@ -239,10 +239,10 @@ namespace pxt.runner {
 
                     // filter out any blockly definitions from the svg that would be duplicates on the page
                     r.blocksSvg.querySelectorAll("defs *").forEach(el => {
-                        if (existingFilters.indexOf(el.id) !== -1) {
+                        if (existingFilters[el.id]) {
                             el.remove();
                         } else {
-                            existingFilters.push(el.id);
+                            existingFilters[el.id] = el;
                         }
                     });
                     render(el, r);
