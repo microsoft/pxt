@@ -103,6 +103,25 @@
     code.lang-typescript, code.lang-python {
         overflow-wrap: break-word;
     }
+    .codesnippet {
+        padding-top: 1em;
+
+        .ui.tabular.menu {
+            border: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+
+            .item:hover, .item:focus {
+                border-radius: 2px;
+                outline: none;
+                background: rgba(0,0,0,.1);
+            }
+        }
+
+        .ui.segment, pre {
+            margin-top: -0.75em;
+        }
+    }
     /* Cards */
     .ui.card {
         padding: 0 !important;

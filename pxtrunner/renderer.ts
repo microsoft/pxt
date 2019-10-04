@@ -154,12 +154,14 @@ namespace pxt.runner {
             $menu.append($hexBtn);
         }
 
-        let r = [$c];
+        let r = $(`<div class=codesnippet></div>`);
         // don't add menu if empty
-        if ($menu.children().length) r.push($h);
+        if ($menu.children().length)
+            r.append($h);
+        r.append($c);
 
         // inject container
-        $container.replaceWith(r as any);
+        $container.replaceWith(r);
 
         function appendBlocksButton() {
             if (!$svg) return;
