@@ -49,7 +49,7 @@
     h2 {
         margin-top: 1.5em;
 
-        &:not(:first-of-type) {
+        &:not(:first-child) {
             padding-top: 1.5em;
             border-top: 2px solid fade(@docsHeadingColor, 15%);
         }
@@ -81,16 +81,16 @@
 
         .subheading {
             text-align: right;
-            border-top: 1px solid rgba(0, 0, 0, .3);
-            color: rgba(0, 0, 0, .5);
+            border-top: 1px solid fade(@docsTextColor, 50%);
+            color: fade(@docsTextColor, 70%);
             margin-top: .5em;
             text-transform: uppercase;
         }
     }
-    .mainbody div.codewidget.valid, code.valid{
+    .mainbody div.codewidget.valid, code.valid {
         background: @docsSegmentBackgroundColorValid !important;
     }
-    .mainbody div.codewidget.invalid, code.invalid{
+    .mainbody div.codewidget.invalid, code.invalid {
         background: @docsSegmentBackgroundColorInvalid !important;
     }
 
