@@ -245,7 +245,9 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     if (!options.buttons) options.buttons = []
 
     let result = options.initialValue || "";
-    let cancelled: boolean = false;
+    let oked: boolean = false;
+    if (options.hasCloseIcon)
+        options.hideCancel = true;
 
     options.onInputChanged = (v: string) => { result = v };
 
@@ -254,25 +256,13 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             label: options.agreeLbl || lf("Go ahead!"),
             className: options.agreeClass,
             icon: options.agreeIcon || "checkmark",
-            approveButton: true
+            approveButton: true,
+            onclick: () => { oked = true }
         })
     }
 
-    if (!options.hideCancel) {
-        // Replace the default cancel button with our own
-        options.buttons.push({
-            label: options.disagreeLbl || lf("Cancel"),
-            className: (options.disagreeClass || "cancel"),
-            icon: options.disagreeIcon || "cancel",
-            onclick: () => {
-                cancelled = true;
-            }
-        });
-        options.hideCancel = true;
-    }
-
     return dialogAsync(options)
-        .then(() => cancelled ? null : result);
+        .then(() => oked ? result : null);
 }
 
 ///////////////////////////////////////////////////////////
