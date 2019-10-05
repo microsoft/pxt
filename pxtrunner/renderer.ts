@@ -344,7 +344,8 @@ namespace pxt.runner {
             const s = r.compilePython;
             if (s && s.success) {
                 const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
-                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python').text(s.outfiles["main.py"]);
+                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python highlight').text(s.outfiles["main.py"]);
+                highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
         }, { package: options.package, snippetMode: true });
