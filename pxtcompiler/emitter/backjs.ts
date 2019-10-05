@@ -86,11 +86,14 @@ namespace ts.pxtc {
     function vtableToJs(info: ClassInfo) {
         U.assert(info.classNo !== undefined)
         U.assert(info.lastSubtypeNo !== undefined)
+        let maxBg = parseInt(info.attrs.maxBgInstances)
+        if (!maxBg) maxBg = null
         let s = `const ${info.id}_VT = mkVTable({\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
             `  lastSubtypeNo: ${info.lastSubtypeNo},\n` +
+            `  maxBgInstances: ${maxBg},\n` +
             `  methods: {\n`
         for (let m of info.vtable) {
             s += `    "${m.getName()}": ${m.label()},\n`
