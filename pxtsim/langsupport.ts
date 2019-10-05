@@ -117,6 +117,7 @@ namespace pxsim {
         classNo: number;
         lastSubtypeNo: number;
         iface?: Map<any>;
+        maxBgInstances?: number;
     }
 
     export class RefRecord extends RefObject {

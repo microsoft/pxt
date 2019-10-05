@@ -548,7 +548,8 @@ namespace pxsim {
             methods: src.methods,
             iface: src.iface,
             lastSubtypeNo: src.lastSubtypeNo,
-            toStringMethod: src.toStringMethod
+            toStringMethod: src.toStringMethod,
+            maxBgInstances: src.maxBgInstances,
         };
     }
 
@@ -563,6 +564,23 @@ namespace pxsim {
         if (fi)
             return `${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})`
         return "()"
+    }
+
+    interface ObjDesc {
+        obj: RefObject
+        pointers: [ObjDesc, string][]
+        path: string
+    }
+
+    interface TypeStats {
+        count: number
+        size: number
+        name: string
+    }
+
+    interface HeapSnapshot {
+        visited: Map<ObjDesc>
+        statsByType: Map<TypeStats>
     }
 
     export class Runtime {
@@ -590,6 +608,7 @@ namespace pxsim {
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
+        private heapSnapshots: HeapSnapshot[] = [];
 
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
@@ -639,13 +658,25 @@ namespace pxsim {
         }
 
         traceObjects() {
-            interface ObjDesc {
-                obj: RefObject
-                pointers: [ObjDesc, string][]
-                path: string
+            const visited: Map<ObjDesc> = {}
+
+            while (this.heapSnapshots.length > 2)
+                this.heapSnapshots.shift()
+
+
+            const stt: TypeStats = {
+                count: 0,
+                size: 0,
+                name: "TOTAL"
+            }
+            const statsByType: Map<TypeStats> = {
+                "TOTAL": stt
             }
 
-            const visited: Map<ObjDesc> = {}
+            this.heapSnapshots.push({
+                visited,
+                statsByType
+            })
 
             function scan(name: string, v: any, par: ObjDesc = null): void {
                 if (!(v instanceof RefObject))
@@ -698,12 +729,12 @@ namespace pxsim {
             const allObjects = Object.keys(visited).map(k => visited[k])
             allObjects.sort((a, b) => b.obj.gcSize() - a.obj.gcSize())
 
-            const setPath = (inf:ObjDesc) => {
+            const setPath = (inf: ObjDesc) => {
                 if (inf.path != null)
                     return
                 let short = ""
                 inf.path = "(cycle)"
-                for (let [par,name] of inf.pointers) {
+                for (let [par, name] of inf.pointers) {
                     if (par == null) {
                         inf.path = name
                         return
@@ -718,15 +749,6 @@ namespace pxsim {
 
             allObjects.forEach(setPath)
 
-            const stt = {
-                count: 0,
-                size: 0,
-                name: "TOTAL"
-            }
-
-            const statsByType: Map<{ count: number, size: number, name: string }> = {
-                "TOTAL": stt
-            }
             const allStats = [stt]
             for (const inf of allObjects) {
                 const sz = inf.obj.gcSize()
@@ -745,16 +767,41 @@ namespace pxsim {
                 stt.count++
             }
             allStats.sort((a, b) => a.size - b.size)
-            let info = ""
+            let objTable = ""
             const fmt = (n: number) => ("        " + n.toString()).slice(-7)
             for (const st of allStats) {
-                info += fmt(st.size * 4) + fmt(st.count) + " " + st.name + "\n"
+                objTable += fmt(st.size * 4) + fmt(st.count) + " " + st.name + "\n"
             }
-            info += "\nLarge objects:\n"
-            for (const inf of allObjects.slice(0, 20)) {
-                info += fmt(inf.obj.gcSize() * 4) + " " + inf.obj.gcKey() + " " + inf.path + "\n"
+            const objInfo = (inf: ObjDesc) =>
+                fmt(inf.obj.gcSize() * 4) + " " + inf.obj.gcKey() + " " + inf.path
+
+            const large = allObjects.slice(0, 20).map(objInfo).join("\n")
+
+            let leaks = ""
+            if (this.heapSnapshots.length >= 3) {
+                const v0 = this.heapSnapshots[this.heapSnapshots.length - 3].visited
+                const v1 = this.heapSnapshots[this.heapSnapshots.length - 2].visited
+                const isBgInstance = (obj: RefObject) => {
+                    if (!(obj instanceof RefRecord))
+                        return false
+                    if (obj.vtable && obj.vtable.maxBgInstances) {
+                        if (statsByType[obj.gcKey()].count <= obj.vtable.maxBgInstances)
+                            return true
+                    }
+                    return false
+                }
+                const leakObjs = allObjects
+                    .filter(inf => !v0[inf.obj.id] && v1[inf.obj.id])
+                    .filter(inf => !isBgInstance(inf.obj))
+                leaks = leakObjs
+                    .map(objInfo).join("\n")
             }
-            return info
+
+            return (
+                "Threads:\n" + this.threadInfo() +
+                "\n\nSummary:\n" + objTable +
+                "\n\nLarge Objects:\n" + large +
+                "\n\nNew Objects:\n" + leaks)
         }
 
         getThreads() {
