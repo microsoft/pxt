@@ -35,6 +35,19 @@ namespace pxt.crowdin {
         validatedOnly?: boolean;
     }
 
+    export function downloadTranslationAsync(branch: string, prj: string, key: string, filename: string, lang: string, options: DownloadOptions = {}): Promise<string> {
+        filename = normalizeFileName(filename);
+        const exportFileUri = apiUri(branch, prj, key, "export-file", {
+            file: filename,
+            language: lang,
+            export_translated_only: options.translatedOnly ? "1" : "0",
+            export_approved_only: options.validatedOnly ? "1" : "0"
+        });
+        return Util.httpGetTextAsync(exportFileUri).then((transationsText) => {
+            return transationsText;
+        });
+    }
+
     export function downloadTranslationsAsync(branch: string, prj: string, key: string, filename: string, options: DownloadOptions = {}): Promise<Map<Map<string>>> {
         const q: Map<string> = { json: "true" }
         const infoUri = apiUri(branch, prj, key, "info", q);

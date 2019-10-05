@@ -4,11 +4,9 @@ import * as http from 'http';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
-import * as child_process from 'child_process';
-import * as os from 'os';
-import * as util from 'util';
 import * as hid from './hid';
 import * as net from 'net';
+import * as crowdin from './crowdin';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -278,7 +276,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    //const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query)
+    const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query)
     const innerPath = elts.slice(2).join("/").replace(/^\//, "")
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
@@ -336,7 +334,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
+        return readMdAsync(
+            innerPath.slice(pxt.appTarget.id.length + 1), 
+            opts["lang"] as string);
     }
     else if (cmd == "GET config" && new RegExp(`${pxt.appTarget.id}\/targetconfig(\/v[0-9.]+)?$`).test(innerPath)) {
         // target config
@@ -831,10 +831,14 @@ function pkgPageTestAsync(id: string) {
         })
 }
 
-function readMd(pathname: string): string {
-    const content = nodeutil.resolveMd(root, pathname);
-    if (content) return content;
-    return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
+function readMdAsync(pathname: string, lang: string): Promise<string> {
+    if (!lang || lang == "en") {
+        const content = nodeutil.resolveMd(root, pathname);
+        if (content) return Promise.resolve(content);
+        // ask makecode cloud for translations
+        return pxt.Cloud.markdownAsync(pathname, lang, true);
+    }
+    return Promise.resolve(`# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join(""));
 }
 
 function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
@@ -1113,23 +1117,25 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const md = readMd(pathname);
-            const mdopts = <pxt.docs.RenderOptions>{
-                template: expandDocFileTemplate("docs.html"),
-                markdown: md,
-                theme: pxt.appTarget.appTheme,
-                filepath: pathname,
-                TOC: resolveTOC(pathname),
-                pubinfo: {}
-            };
-            if (opts["lang"])
-                mdopts.pubinfo["locale"] = opts["lang"] as string;
-            if (opts["translate"])
-                mdopts.pubinfo["incontexttranslations"] = "1";
-            let html = pxt.docs.renderMarkdown(mdopts)
-            sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
+            const lang = opts["lang"] as string;
+            readMdAsync(pathname, lang)
+                .then(md => {
+                    const mdopts = <pxt.docs.RenderOptions>{
+                        template: expandDocFileTemplate("docs.html"),
+                        markdown: md,
+                        theme: pxt.appTarget.appTheme,
+                        filepath: pathname,
+                        TOC: resolveTOC(pathname),
+                        pubinfo: {
+                            locale: lang
+                        }
+                    };
+                    if (opts["translate"])
+                        mdopts.pubinfo["incontexttranslations"] = "1";
+                    let html = pxt.docs.renderMarkdown(mdopts)
+                    sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
+                });
         }
-
         return
     });
 
