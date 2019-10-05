@@ -193,6 +193,10 @@ function setupSemantic() {
         window.print();
     })
 
+    $('#translatebtn').on("click", function() {
+        window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? "&" : "?") + "translate=1"        
+    })
+
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
