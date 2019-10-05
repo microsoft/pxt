@@ -66,3 +66,9 @@ in S0, but is present in both S1 and S2.
 Additionally, if there is no more than `maxBgInstances` (which is set in `//%...` comments on
 class definition and defaults to zero) of objects of given
 type in S2, the object is not considered new.
+
+The profiler doesn't currently track strings and numbers.
+Also, the memory reported for arrays is a low bound (the memory allocated is larger due
+to growth factor of arrays).
+Finally, on hardware heap fragmentation might mean less memory is available than
+one would think.
