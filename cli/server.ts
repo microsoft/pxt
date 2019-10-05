@@ -835,10 +835,13 @@ function readMdAsync(pathname: string, lang: string): Promise<string> {
     if (!lang || lang == "en") {
         const content = nodeutil.resolveMd(root, pathname);
         if (content) return Promise.resolve(content);
+        return Promise.resolve(`# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join(""));
+    } else {
         // ask makecode cloud for translations
-        return pxt.Cloud.markdownAsync(pathname, lang, true);
+        const mdpath = pathname.replace(/^\//, '');
+        console.log(`reading translation ${lang} for ${mdpath}`)
+        return pxt.Cloud.markdownAsync(mdpath, lang, true);
     }
-    return Promise.resolve(`# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join(""));
 }
 
 function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
