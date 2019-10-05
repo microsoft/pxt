@@ -56,7 +56,7 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content typescript"><div><i class="ui icon xicon typescript"/>JavaScript</div></div>').append($js));
+        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
         highlight($js);
     }
 
