@@ -56,12 +56,12 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>${lf("JavaScript")}</div></div>`).append($js));
+        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>JavaScript</div></div>`).append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>${lf("Python")}</div></div>`).append($py));
+        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>Python</div></div>`).append($py));
         highlight($py);
     }
 
