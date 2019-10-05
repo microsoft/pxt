@@ -394,6 +394,49 @@ svg {
     margin-left: 0 !important;
 }
 
+/* Sidebar TOC */
+.sidebar.menu .item:before {
+    content:none;
+    width: 0;
+    height: 0;
+}
+.sidebar.menu .item,
+.sidebar.menu .accordion .title {
+    padding: 0.8rem;
+    padding-left: 2rem;
+    display: flex;
+    flex-direction: row;
+}
+.sidebar.menu .accordion.item {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar.menu .accordion.item .title .icon {
+    font-size: 0.8em;
+    width: 2rem;
+    margin: 0;
+    transform: translateY(0.2rem);
+}
+.sidebar.menu .accordion.item .title.active .icon {
+    transform: translateY(0.2rem) rotate(90deg);
+}
+.sidebar.menu .accordion.item .title {
+    display: flex;
+    padding-left: 0rem;
+}
+/* indented content */
+.sidebar.menu .accordion.item .content:not(.style) {
+    padding-left: 2rem;
+}
+.sidebar.menu a {
+    color: hsla(0,0%,100%,.9);
+}
+/* TODO(dz): full chevron */
+.sidebar.menu .icon {
+    color: hsla(0,0%,100%,.9);
+}
+
 /**
 print only stuff
 **/
