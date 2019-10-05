@@ -56,7 +56,7 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
+        $parent.append($('<div class="ui content typescript"><div><i class="ui icon xicon typescript"/>JavaScript</div></div>').append($js));
         highlight($js);
     }
 
@@ -343,7 +343,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.staticPythonClass, (c, r) => {
             const s = r.compilePython;
             if (s && s.success) {
-                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
+                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript highlight');
                 const $py = c.clone().removeClass('lang-shadow').addClass('lang-python highlight').text(s.outfiles["main.py"]);
                 highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
