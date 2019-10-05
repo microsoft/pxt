@@ -1129,7 +1129,8 @@ export function serveAsync(options: ServeOptions) {
                         filepath: pathname,
                         TOC: resolveTOC(pathname),
                         pubinfo: {
-                            locale: lang
+                            locale: lang,
+                            crowdinproject: pxt.appTarget.appTheme.crowdinProject
                         }
                     };
                     if (opts["translate"])
