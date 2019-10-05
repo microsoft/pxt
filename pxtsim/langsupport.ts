@@ -73,13 +73,9 @@ namespace pxsim {
             throw U.userError("scan not implemented")
         }
 
-        gcKey(): string {
-            throw U.userError("gcKey not implemented")
-        }
-
-        gcSize(): number {
-            throw U.userError("gcSize not implemented")
-        }
+        gcKey(): string { throw U.userError("gcKey not implemented") }
+        gcSize(): number { throw U.userError("gcSize not implemented") }
+        gcIsStatic() { return false }
 
         print() {
             if (runtime && runtime.refCountingDebug)

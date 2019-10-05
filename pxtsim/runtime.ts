@@ -651,6 +651,8 @@ namespace pxsim {
                 if (!(v instanceof RefObject))
                     return
                 const obj = v as RefObject
+                if (obj.gcIsStatic())
+                    return
                 const ex = visited[obj.id]
                 if (ex) {
                     if (par)
