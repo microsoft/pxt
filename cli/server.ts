@@ -839,7 +839,6 @@ function readMdAsync(pathname: string, lang: string): Promise<string> {
     } else {
         // ask makecode cloud for translations
         const mdpath = pathname.replace(/^\//, '');
-        console.log(`reading translation ${lang} for ${mdpath}`)
         return pxt.Cloud.markdownAsync(mdpath, lang, true);
     }
 }
