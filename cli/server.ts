@@ -1120,7 +1120,7 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const lang = opts["lang"] as string;
+            const lang = opts["translate"] ? "pxt" : opts["lang"] as string;
             readMdAsync(pathname, lang)
                 .then(md => {
                     const mdopts = <pxt.docs.RenderOptions>{
