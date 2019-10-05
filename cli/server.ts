@@ -278,7 +278,7 @@ function getCachedHexAsync(sha: string): Promise<any> {
 }
 
 function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elts: string[]): Promise<any> {
-    const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query)
+    //const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query)
     const innerPath = elts.slice(2).join("/").replace(/^\//, "")
     const filename = path.resolve(path.join(userProjectsDir, innerPath))
     const meth = req.method.toUpperCase()
@@ -355,14 +355,13 @@ export function lookupDocFile(name: string) {
     return null
 }
 
-export function expandHtml(html: string) {
+export function expandHtml(html: string, params?: pxt.Map<string>) {
     let theme = U.flatClone(pxt.appTarget.appTheme)
     html = expandDocTemplateCore(html)
-    let params: pxt.Map<string> = {
-        name: pxt.appTarget.appTheme.title,
-        description: pxt.appTarget.appTheme.description,
-        locale: pxt.appTarget.appTheme.defaultLocale || "en"
-    };
+    params = params || {};
+    params["name"] = params["name"] || pxt.appTarget.appTheme.title;
+    params["description"] = params["description"] || pxt.appTarget.appTheme.description;
+    params["locale"] = params["locale"] || pxt.appTarget.appTheme.defaultLocale || "en"
 
     // page overrides
     let m = /<title>([^<>@]*)<\/title>/.exec(html)
@@ -925,6 +924,10 @@ export function serveAsync(options: ServeOptions) {
         }
 
         let pathname = decodeURI(url.parse(req.url).pathname);
+        const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
+        const htmlParams: pxt.Map<string> = {};
+        if (opts["lang"])
+            htmlParams["locale"] = opts["lang"] as string;
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
@@ -1102,7 +1105,7 @@ export function serveAsync(options: ServeOptions) {
 
         if (webFile) {
             if (/\.html$/.test(webFile)) {
-                let html = expandHtml(fs.readFileSync(webFile, "utf8"))
+                let html = expandHtml(fs.readFileSync(webFile, "utf8"), htmlParams)
                 sendHtml(html)
             } else {
                 sendFile(webFile)
@@ -1116,8 +1119,13 @@ export function serveAsync(options: ServeOptions) {
                 markdown: md,
                 theme: pxt.appTarget.appTheme,
                 filepath: pathname,
-                TOC: resolveTOC(pathname)
+                TOC: resolveTOC(pathname),
+                pubinfo: {}
             };
+            if (opts["lang"])
+                mdopts.pubinfo["locale"] = opts["lang"] as string;
+            if (opts["translate"])
+                mdopts.pubinfo["incontexttranslations"] = "1";
             let html = pxt.docs.renderMarkdown(mdopts)
             sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
         }
