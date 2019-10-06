@@ -723,7 +723,7 @@ namespace pxt.blocks {
             }
         }
 
-        if (pxt.Util.userLanguage() == "pxt") {
+        if (pxt.Util.isTranslationLanguage()) {
             Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
                 const locBlock = b.block.message0;
                 const node = document.createElement("input") as HTMLInputElement;
@@ -734,7 +734,7 @@ namespace pxt.blocks {
                     if (locBlock == node.value)
                         return;
                     b.translationId = locBlock;
-                    b.block.message0 = node.value;
+                    b.block.message0 = Util.rlf(node.value);
                     node.remove();
                     observer.disconnect();
                 });

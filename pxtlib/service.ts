@@ -497,7 +497,7 @@ namespace ts.pxtc {
                 }
 
                 let p = Promise.resolve();
-                if (locBlock && pxt.Util.userLanguage() == "pxt") {
+                if (locBlock && pxt.Util.isTranslationLanguage()) {
                     fn.attributes.translationId = locBlock;
                     const node = document.createElement("input") as HTMLInputElement;
                     node.type = "text";
@@ -508,7 +508,7 @@ namespace ts.pxtc {
                         const observer = new MutationObserver(() => {
                             if (locBlock == node.value)
                                 return;
-                            locBlock = node.value;
+                            locBlock = Util.rlf(node.value); // get rid of {id}...
                             node.remove();
                             observer.disconnect();
                             resolve();

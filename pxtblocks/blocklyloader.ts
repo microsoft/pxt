@@ -432,7 +432,7 @@ namespace pxt.blocks {
             }
         }
 
-        if (pxt.Util.userLanguage() == "pxt") {
+        if (pxt.Util.isTranslationLanguage()) {
             cachedBlock.block.customContextMenu = (options: any[]) => {
                 if (fn.attributes.translationId) {
                     options.push({
@@ -1002,7 +1002,7 @@ namespace pxt.blocks {
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
-        if (pxt.Util.userLanguage() == "pxt") {
+        if (pxt.Util.isTranslationLanguage()) {
             block.customContextMenu = (options: any[]) => {
                 const blockd = pxt.blocks.getBlockDefinition(block.type);
                 if (blockd && blockd.translationId) {
