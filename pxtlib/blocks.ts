@@ -721,5 +721,24 @@ namespace pxt.blocks {
                 message0: Util.lf("continue")
             }
         }
+
+        if (pxt.Util.userLanguage() == "pxt") {
+            Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
+                const locBlock = b.block.message0;
+                const node = document.createElement("input") as HTMLInputElement;
+                node.type = "text";
+                node.setAttribute("class", "hidden");
+                node.value = locBlock;
+                const observer = new MutationObserver(() => {
+                    if (locBlock == node.value)
+                        return;
+                    b.block.message0 = node.value;
+                    node.remove();
+                    observer.disconnect();
+                });
+                observer.observe(node, { attributes: true });
+                document.body.appendChild(node);
+            })
+        }
     }
 }
