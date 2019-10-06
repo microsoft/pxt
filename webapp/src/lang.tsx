@@ -45,6 +45,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
 
         this.hide = this.hide.bind(this);
         this.changeLanguage = this.changeLanguage.bind(this);
+        this.translateEditor = this.translateEditor.bind(this);
     }
 
     languageList(): string[] {
@@ -52,6 +53,12 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return pxt.appTarget.appTheme.availableLocales;
         }
         return defaultLanguages;
+    }
+
+    translateEditor() {
+        pxt.tickEvent("translate.editor")
+        const sep = window.location.href.indexOf("?") < 0 ? "?" : "&";
+        window.location.href = window.location.href + sep + "translate=1"
     }
 
     changeLanguage(langId: string) {
@@ -119,6 +126,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                         <br /><br />
                         <a href="/translate" target="_blank" rel="noopener noreferrer"
                             aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
+                        | <a onClick={this.translateEditor}>{lf("Translate the editor")}</a>
                     </p> : undefined}
             </sui.Modal>
         );
