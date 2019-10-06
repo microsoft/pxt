@@ -432,6 +432,20 @@ namespace pxt.blocks {
             }
         }
 
+        if (pxt.Util.userLanguage() == "pxt") {
+            cachedBlock.block.customContextMenu = (options: any[]) => {
+                if (fn.attributes.translationId) {
+                    options.push({
+                        enabled: true,
+                        text: fn.attributes.translationId,
+                        callback: function () {
+                            // do nothing
+                        }
+                    })
+                }
+            }
+        }
+
         cachedBlocks[id] = cachedBlock;
         Blockly.Blocks[id] = cachedBlock.block;
 
