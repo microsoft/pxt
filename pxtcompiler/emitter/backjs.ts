@@ -413,7 +413,7 @@ function ${id}(s) {
                 case EK.PointerLiteral:
                     if (e.ptrlabel()) {
                         return e.ptrlabel().lblId + "";
-                    } else if (e.hexlit()) {
+                    } else if (e.hexlit() != null) {
                         hexlits += `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`
                         return e.data;
                     } else if (typeof e.jsInfo == "string") {
