@@ -93,7 +93,7 @@ namespace pxt.tutorial {
         markdown.replace(_h2Regex, function(match, name, activity) {
             let i = activityInfo.length;
             activityInfo.push({
-                name: name || lf("Activity ") + i,
+                name: name || lf("Activity {0}", i),
                 step: stepInfo.length
             })
 

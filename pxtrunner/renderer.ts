@@ -343,8 +343,10 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.staticPythonClass, (c, r) => {
             const s = r.compilePython;
             if (s && s.success) {
-                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
-                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python').text(s.outfiles["main.py"]);
+                const $js = c.clone().removeClass('lang-shadow').addClass('highlight');
+                const $py = $js.clone().addClass('lang-python').text(s.outfiles["main.py"]);
+                $js.addClass('lang-typescript');
+                highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
         }, { package: options.package, snippetMode: true });

@@ -922,7 +922,7 @@ export class NewProjectNameDialog extends ExitAndSaveDialog {
 
     actions(): sui.ModalButton[] {
         return [{
-            label: lf("Create!"),
+            label: lf("Create"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
