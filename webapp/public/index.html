@@ -8,7 +8,10 @@
 	<!-- @ifdef incontexttranslations -->
 	<script type="text/javascript">
 		var _jipt = [];
-		_jipt.push(['project', 'kindscript']);
+        _jipt.push(['project', 'kindscript']);
+        _jipt.push(['escape', function() {
+            window.location.href = window.location.href.replace(/[$\?]translate=1/, '');
+        }]);
 		</script>
 	<script type="text/javascript" src="//cdn.crowdin.com/jipt/jipt.js"></script>
 	<!-- @endif -->
