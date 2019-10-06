@@ -70,7 +70,7 @@ function setupSidebar() {
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
-                document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
+                $(".sidebar .focused").focus();
                 scrollActiveHeaderIntoView();
             },
             onHidden: function () {
@@ -237,6 +237,8 @@ function setupBlocklyAsync() {
 }
 
 function renderSnippets() {
+    if (!ksRunnerReady) return; // probably in pxt docs
+
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
         setupBlocklyAsync()
