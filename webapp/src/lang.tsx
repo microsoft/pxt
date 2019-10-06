@@ -126,7 +126,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                         <br /><br />
                         <a href="/translate" target="_blank" rel="noopener noreferrer"
                             aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
-                        | <a onClick={this.translateEditor}>{lf("Translate the editor")}</a>
+                        | <div className="ui link" role="button" onClick={this.translateEditor}>{lf("Translate the editor")}</div>
                     </p> : undefined}
             </sui.Modal>
         );

@@ -102,6 +102,9 @@ namespace pxt.blocks {
         // lower case first character
         nb = nb.replace(/^[A-Z]/, (m) => m.toLowerCase());
 
+        // replace _ with space
+        nb = nb.replace(/_+/g, ' ');
+
         return nb;
     }
 
