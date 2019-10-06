@@ -497,17 +497,23 @@ namespace ts.pxtc {
                 }
 
                 let p = Promise.resolve();
-                if (locBlock) {
+                if (locBlock && pxt.Util.userLanguage() == "pxt") {
                     fn.attributes.translationId = locBlock;
                     const node = document.createElement("input") as HTMLInputElement;
+                    node.type = "text";
+                    node.id = locBlock;
                     node.setAttribute("class", "hidden");
                     node.value = locBlock;
                     p = new Promise((resolve, reject) => {
-                        node.onchange = () => {
+                        const observer = new MutationObserver(() => {
+                            if (locBlock == node.value)
+                                return;
                             locBlock = node.value;
                             node.remove();
+                            observer.disconnect();
                             resolve();
-                        }
+                        });
+                        observer.observe(node, { attributes: true });
                     })
                     document.body.appendChild(node);
                 }
