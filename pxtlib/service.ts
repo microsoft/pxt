@@ -496,28 +496,45 @@ namespace ts.pxtc {
                     }
                 }
 
-                if (nsDoc) {
-                    // Check for "friendly namespace"
-                    if (fn.attributes.block) {
-                        fn.attributes.block = locBlock || fn.attributes.block;
-                    } else {
-                        fn.attributes.block = nsDoc;
-                    }
+                let p = Promise.resolve();
+                if (locBlock) {
+                    fn.attributes.translationId = locBlock;
+                    const node = document.createElement("input") as HTMLInputElement;
+                    node.setAttribute("class", "hidden");
+                    node.value = locBlock;
+                    p = new Promise((resolve, reject) => {
+                        node.onchange = () => {
+                            locBlock = node.value;
+                            node.remove();
+                            resolve();
+                        }
+                    })
+                    document.body.appendChild(node);
                 }
-                else if (fn.attributes.block && locBlock) {
-                    const ps = pxt.blocks.compileInfo(fn);
-                    const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
-                    fn.attributes._untranslatedBlock = oldBlock;
-                    if (oldBlock != fn.attributes.block) {
-                        const locps = pxt.blocks.compileInfo(fn);
-                        if (JSON.stringify(ps) != JSON.stringify(locps)) {
-                            pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
-                            fn.attributes.block = oldBlock;
+                return p.then(() => {
+                    if (nsDoc) {
+                        // Check for "friendly namespace"
+                        if (fn.attributes.block) {
+                            fn.attributes.block = locBlock || fn.attributes.block;
+                        } else {
+                            fn.attributes.block = nsDoc;
                         }
                     }
-                }
-                updateBlockDef(fn.attributes);
+                    else if (fn.attributes.block && locBlock) {
+                        const ps = pxt.blocks.compileInfo(fn);
+                        const oldBlock = fn.attributes.block;
+                        fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
+                        fn.attributes._untranslatedBlock = oldBlock;
+                        if (oldBlock != fn.attributes.block) {
+                            const locps = pxt.blocks.compileInfo(fn);
+                            if (JSON.stringify(ps) != JSON.stringify(locps)) {
+                                pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
+                                fn.attributes.block = oldBlock;
+                            }
+                        }
+                    }
+                    updateBlockDef(fn.attributes);
+                })
             }))
             .then(() => apis)
             .finally(() => {
