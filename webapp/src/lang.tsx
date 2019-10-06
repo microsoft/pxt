@@ -58,7 +58,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
     translateEditor() {
         pxt.tickEvent("translate.editor.incontext")
         const sep = window.location.href.indexOf("?") < 0 ? "?" : "&";
-        window.location.href = window.location.href + sep + "translate=1"
+        window.location.href = window.location.pathname + sep + "translate=1" + (window.location.hash || "");
     }
 
     changeLanguage(langId: string) {
@@ -124,9 +124,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 {targetTheme.crowdinProject ?
                     <p>
                         <br /><br />
-                        <a href="/translate" target="_blank" rel="noopener noreferrer"
-                            aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
-                        | <div className="ui link" role="button" onClick={this.translateEditor}>{lf("Translate the editor")}</div>
+                        <span className="ui link" aria-label={lf("Help us translate")} onClick={this.translateEditor}>{lf("Translate the editor")}</span>
                     </p> : undefined}
             </sui.Modal>
         );

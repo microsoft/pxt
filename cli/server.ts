@@ -374,7 +374,7 @@ export function expandHtml(html: string, params?: pxt.Map<string>) {
         theme: theme,
         // Note that breadcrumb and filepath expansion are not supported in the cloud
         // so we don't do them here either.
-    }    
+    }
     pxt.docs.prepTemplate(d)
     d.html = pxt.docs.renderConditionalMacros(d.html, params);
     return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
@@ -936,9 +936,10 @@ export function serveAsync(options: ServeOptions) {
         if (opts["translate"]) {
             htmlParams["incontexttranslations"] = "1";
             opts["lang"] = pxt.Util.TRANSLATION_LOCALE;
+            opts["forcelang"] = pxt.Util.TRANSLATION_LOCALE;
         }
-        if (opts["lang"])
-            htmlParams["locale"] = opts["lang"] as string;
+        if (opts["lang"] || opts["forcelang"])
+            htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string); 
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
@@ -1083,7 +1084,12 @@ export function serveAsync(options: ServeOptions) {
         for (let dir of dd) {
             let filename = path.resolve(path.join(dir, pathname))
             if (nodeutil.fileExistsSync(filename)) {
-                sendFile(filename)
+                if (/\.html$/.test(filename)) {
+                    let html = expandHtml(fs.readFileSync(filename, "utf8"), htmlParams)
+                    sendHtml(html)
+                } else {
+                    sendFile(filename)
+                }
                 return;
             }
         }
