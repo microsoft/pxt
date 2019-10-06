@@ -131,6 +131,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let editorDiv = document.getElementById("blocksEditor");
             editorDiv.appendChild(loadingDimmer);
 
+            compiler.clearCaches(); // ensure that we refresh the blocks list
             this.loadingXmlPromise = this.loadBlocklyAsync()
                 .then(() => compiler.getBlocksAsync())
                 .then(bi => {
