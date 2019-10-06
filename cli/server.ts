@@ -335,7 +335,7 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
         return readMdAsync(
-            innerPath.slice(pxt.appTarget.id.length + 1), 
+            innerPath.slice(pxt.appTarget.id.length + 1),
             opts["lang"] as string);
     }
     else if (cmd == "GET config" && new RegExp(`${pxt.appTarget.id}\/targetconfig(\/v[0-9.]+)?$`).test(innerPath)) {
