@@ -56,7 +56,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
     }
 
     translateEditor() {
-        pxt.tickEvent("translate.editor")
+        pxt.tickEvent("translate.editor.incontext")
         const sep = window.location.href.indexOf("?") < 0 ? "?" : "&";
         window.location.href = window.location.href + sep + "translate=1"
     }

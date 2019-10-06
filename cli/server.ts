@@ -374,8 +374,9 @@ export function expandHtml(html: string, params?: pxt.Map<string>) {
         theme: theme,
         // Note that breadcrumb and filepath expansion are not supported in the cloud
         // so we don't do them here either.
-    }
+    }    
     pxt.docs.prepTemplate(d)
+    d.html = pxt.docs.renderConditionalMacros(d.html, params);
     return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
 }
 
@@ -932,6 +933,10 @@ export function serveAsync(options: ServeOptions) {
         let pathname = decodeURI(url.parse(req.url).pathname);
         const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
         const htmlParams: pxt.Map<string> = {};
+        if (opts["translate"]) {
+            htmlParams["incontexttranslations"] = "1";
+            opts["lang"] = pxt.Util.TRANSLATION_LOCALE;
+        }
         if (opts["lang"])
             htmlParams["locale"] = opts["lang"] as string;
 
