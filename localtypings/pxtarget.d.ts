@@ -551,6 +551,7 @@ declare namespace ts.pxtc {
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
         argsNullable?: boolean; // allow NULL to be passed to C++ shim function
+        maxBgInstances?: string; // if there's less than that number of instances of the current class, it's not reported as a mem leak
 
         // on class
         snippet?: string; // value used to generate TS snippet
