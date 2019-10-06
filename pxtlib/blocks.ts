@@ -276,6 +276,7 @@ namespace pxt.blocks {
         block?: Map<string>;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
+        translationId?: string;
     }
 
     let _blockDefinitions: Map<BlockDefinition>;
@@ -732,6 +733,7 @@ namespace pxt.blocks {
                 const observer = new MutationObserver(() => {
                     if (locBlock == node.value)
                         return;
+                    b.translationId = locBlock;
                     b.block.message0 = node.value;
                     node.remove();
                     observer.disconnect();
