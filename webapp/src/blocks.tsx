@@ -400,7 +400,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         for (const block in deprecatedMap) {
             if (deprecatedMap[block] !== 0) {
-                pxt.tickEvent("blocks.usingDeprecated", {block : block, count : deprecatedMap[block] });
+                pxt.tickEvent("blocks.usingDeprecated", { block: block, count: deprecatedMap[block] });
             }
         }
     }
@@ -444,7 +444,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Need to bump suffix in flyout
                     this.clearFlyoutCaches();
                 }
-                pxt.tickEvent("blocks.create", {"block": blockId});
+                pxt.tickEvent("blocks.create", { "block": blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
@@ -692,6 +692,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this._loadBlocklyPromise)
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
+                    // Initialize the "Make a function" button
+                    Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
+                        Promise.delay(10)
+                            .then(() => {
+                                if (!this.functionsDialog) {
+                                    const wrapper = document.body.appendChild(document.createElement('div'));
+                                    this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog), wrapper) as CreateFunctionDialog;
+                                }
+                                this.functionsDialog.show(mutation, cb, this.editor);
+                            });
+                    }
+
                     pxt.blocks.openHelpUrl = (url: string) => {
                         pxt.tickEvent("blocks.help", { url }, { interactiveConsent: true });
                         const m = /^\/pkg\/([^#]+)#(.+)$/.exec(url);
@@ -749,19 +761,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
                     .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
-
-                // Initialize the "Make a function" button
-                Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
-                    Promise.resolve()
-                        .delay(10)
-                        .then(() => {
-                            if (!this.functionsDialog) {
-                                const wrapper = document.body.appendChild(document.createElement('div'));
-                                this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog), wrapper) as CreateFunctionDialog;
-                            }
-                            this.functionsDialog.show(mutation, cb, this.editor);
-                        });
-                }
             })
     }
 
