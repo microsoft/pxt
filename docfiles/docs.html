@@ -35,7 +35,10 @@
 				<!-- @include header.html -->
 
 				<div class="main ui container fluid mainbody">
-					@printBtn@ @body@
+					<button id="printbtn" class="circular ui icon right floated button hideprint hidemobile" title="Print" aria-label="Print">
+						<i class="icon print"></i>
+					</button>							
+					@body@
 					<div class="hideprint">@github@</div>
 				</div>
 
