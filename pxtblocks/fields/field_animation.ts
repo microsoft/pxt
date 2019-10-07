@@ -86,7 +86,7 @@ namespace pxtblockly {
 
         showEditor_() {
             (this.params as any).blocksInfo = this.blocksInfo;
-            const fv = pxt.react.getFieldEditorView("animation-editor", this.getText() + this.getParentInterval(), this.params);
+            const fv = pxt.react.getFieldEditorView("animation-editor", this.getValue() + this.getParentInterval(), this.params);
 
             if (this.undoRedoState) {
                 fv.restorePersistentData(this.undoRedoState);
