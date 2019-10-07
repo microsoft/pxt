@@ -262,6 +262,17 @@ svg {
     width: 3.5em;
     height: 3.5em;
 }
+.fixed.menu .item.icon:hover {
+    padding:0;
+    width: 3.5em;
+    height: 3.5em;
+}
+.fixed.menu .item.icon:hover {
+    background-color: hsla(0,0%,0%,.1);
+}
+.fixed.menu.inverted .item.icon:hover {
+    background-color: hsla(0,0%,100%,.1);
+}
 /* Search box */
 .fixed.menu .search div.input {
     min-width: 14em;
