@@ -1130,7 +1130,7 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const lang = opts["translate"] ? "pxt" : opts["lang"] as string;
+            const lang = opts["lang"] as string || opts["forcelang"] as string;
             readMdAsync(pathname, lang)
                 .then(md => {
                     const mdopts = <pxt.docs.RenderOptions>{
@@ -1146,7 +1146,7 @@ export function serveAsync(options: ServeOptions) {
                     };
                     if (opts["translate"])
                         mdopts.pubinfo["incontexttranslations"] = "1";
-                    let html = pxt.docs.renderMarkdown(mdopts)
+                    const html = pxt.docs.renderMarkdown(mdopts)
                     sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
                 });
         }
