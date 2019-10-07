@@ -527,10 +527,10 @@ declare namespace Math {
     function idiv(x: number, y: number): number;
 }
 
-declare namespace _lifecycle {
-    //% shim=__lifecycle::onCodeStart
-    export function onCodeStart(arg: any): void;
+declare namespace control {
+    //% shim=_control::_onCodeStart
+    export function _onCodeStart(arg: any): void;
 
-    //% shim=__lifecycle::onCodeStop
-    export function onCodeStop(arg: any): void;
+    //% shim=_control::_onCodeStop
+    export function _onCodeStop(arg: any): void;
 }

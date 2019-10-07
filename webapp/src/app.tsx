@@ -1891,12 +1891,12 @@ export class ProjectView
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
                 let codeStart = "_onCodeStart.ts";
-                files[codeStart] = "_lifecycle.onCodeStart('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStart) + "')";
+                files[codeStart] = "control._onCodeStart('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStart) + "')";
                 cfg.files.splice(cfg.files.indexOf("main.ts"), 0, codeStart);
             }
             if (options.tutorial.metadata.codeStop) {
                 let codeStop = "_onCodeStop.ts";
-                files[codeStop] = "_lifecycle.onCodeStop('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStop) + "')";
+                files[codeStop] = "control._onCodeStop('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStop) + "')";
                 cfg.files.push(codeStop);
             }
         }
