@@ -868,13 +868,14 @@ export function promptTranslateBlock(blockid: string, blockTranslationId: string
         hideCancel: true,
         hideAgree: true,
         hasCloseIcon: true,
+        helpUrl: "/translate",
         jsx: <div>
             <div>
             {lf("Update the block translation below.")} 
             {lf("Do not translate variable names (%name, $name).")}
-            {lf("Once validated, translations may take 24h to be active.")}
+            {lf("Once validated in Crowdin, translations may take 24h to be active.")}
             </div>
-            <div className="blocktranslationtext">{blockTranslationId}</div>
+            <div className="ui basic segment">{blockTranslationId}</div>
         </div>
     }).done();
 }
