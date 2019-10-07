@@ -344,7 +344,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         };
 
-        if (pxt.Util.isTranslationLanguage())
+        if (pxt.Util.isTranslationMode())
             pxt.blocks.promptTranslateBlock = dialogs.promptTranslateBlock;
     }
 
@@ -1239,7 +1239,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.abstractShowFlyout(treeRow)) {
             // Cache blocks xml list for later
             // don't cache when translating
-            if (!pxt.Util.isTranslationLanguage())
+            if (!pxt.Util.isTranslationMode())
                 this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
 
             this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
