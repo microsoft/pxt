@@ -20,7 +20,9 @@ namespace pxt.docs {
         "short": stdSetting,
         "description": "<!-- desc -->",
         "activities": "<!-- activities -->",
-        "explicitHints": "<!-- hints -->"
+        "explicitHints": "<!-- hints -->",
+        "flyoutOnly": "<!-- flyout -->",
+        "hideIteration": "<!-- iter -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -367,10 +369,11 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-            let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
+            let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
             if (title) {
                 out += ' title="' + title + '"';
             }
+            out += ' loading="lazy"';
             out += (this as any).options.xhtml ? '/>' : '>';
             return out;
         }

@@ -14,16 +14,16 @@
 @docsLinkColor: #3977b4;
 
 /* Code segment */
-@docsSegementBackgroundColor: #f7f7f7;
-@docsSegementBackgroundColorValid: #edf9ef;
-@docsSegementBackgroundColorInvalid: #fbf3f4;
+@docsSegmentBackgroundColor: #f7f7f7;
+@docsSegmentBackgroundColorValid: #edf9ef;
+@docsSegmentBackgroundColorInvalid: #fbf3f4;
 
 /* Card */
 @docsCardBackgroundColor: white;
 @docsCardColor: @docsTextColor;
 @docsCardHeaderColor: @docsTextColor;
 @docsCardContentColor: @docsTextColor;
-@docsCardImageBackgroundColor: rgba(0,0,0,.05);
+@docsCardImageBackgroundColor: rgba(0, 0, 0, .05);
 
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
@@ -46,6 +46,20 @@
     h1 {
         margin-bottom: .85em;
     }
+    h2 {
+        margin-top: 1.5em;
+        margin-bottom: .75em;
+
+        &:not(:first-child) {
+            padding-top: 1.5em;
+            border-top: 2px solid fade(@docsHeadingColor, 15%);
+        }
+        &+h2 {
+            padding-top: 0 !important;
+            margin-top: -.75em !important;
+            border-top: none !important;
+        }
+    }
     /* Text color */
     p, ul li {
         color: @docsTextColor;
@@ -64,18 +78,27 @@
     }
     /* Code segments */
     .mainbody .ui.segment, pre {
-        background: @docsSegementBackgroundColor !important;
+        background: @docsSegmentBackgroundColor !important;
         border-radius: 0 !important;
         border: 0 !important;
         margin-bottom: 1.275em;
         box-shadow: none;
         tab-size: 4;
+
+        .subheading {
+            text-align: right;
+            border-top: 1px solid fade(@docsTextColor, 50%);
+            color: fade(@docsTextColor, 70%);
+            margin-top: 1em;
+            padding-top: .5em;
+            text-transform: uppercase;
+        }
     }
-    .mainbody div.codewidget.valid, code.valid{
-        background: @docsSegementBackgroundColorValid !important;
+    .mainbody div.codewidget.valid, code.valid {
+        background: @docsSegmentBackgroundColorValid !important;
     }
-    .mainbody div.codewidget.invalid, code.invalid{
-        background: @docsSegementBackgroundColorInvalid !important;
+    .mainbody div.codewidget.invalid, code.invalid {
+        background: @docsSegmentBackgroundColorInvalid !important;
     }
 
     .mainbody div.codewidget.valid, .mainbody div.codewidget.invalid {
@@ -102,6 +125,21 @@
     }
     code.lang-typescript, code.lang-python {
         overflow-wrap: break-word;
+    }
+    .codesnippet {
+        padding-top: 1em;
+
+        .ui.tabular.menu {
+            border: none;
+            margin-bottom: -1.5em;
+            padding-bottom: 0;
+
+            .item:hover, .item:focus {
+                border-radius: 2px;
+                outline: none;
+                background: @docsSegmentBackgroundColor;
+            }
+        }
     }
     /* Cards */
     .ui.card {

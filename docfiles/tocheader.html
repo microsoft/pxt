@@ -1,36 +1,32 @@
-<div class="ui vertical accent @tocclass@ sidebar menu left hideprint">
-    <div class="item">
-        <a href="/" class="header focused" tabindex="0" title="Go to editor">
-            @targetlogo@
-        </a>
-        Documentation
-    </div>
-    <div class="item search">
-        <form id="tocsearch1" role="form" method="get" action="https://www.bing.com/search">
-            <div class="ui fluid icon input">
-                <input type="hidden" name="q1" value="site:@homeurl@" />
-                @searchBar1@
+<div class="ui fixed accent borderless @tocclass@ main menu hideprint">
+    <div>
+        @sidebarToggle@
+        <div class="item">
+            <div>
+                <a href="/" class="header" tabindex="0" title="Go to editor">
+                    @targetlogo@
+                </a>
             </div>
-        </form>
+            <div>
+                @targetname@
+            </div>
+        </div>
     </div>
+    <div>
+        <div class="item hidemobile">
+            <form id="tocsearch1" class="search" role="form" method="get" action="https://www.bing.com/search">
+                <div class="ui fluid icon input">
+                    <input type="hidden" name="q1" value="site:@homeurl@" />
+                    @searchBar1@
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="ui vertical accent @tocclass@ sidebar menu left hideprint">
     <!-- TOC Menu (tocheader.html) -->
     <div class="menuContainer">
         @TOC@
     </div>
-</div>
-
-<div class="ui fixed accent borderless @tocclass@ main menu hideprint">
-  <div class="ui container">
-    @sidebarToggle@
-
-    <div class="item">
-        @breadcrumb@
-    </div>
-    
-    <div class="right menu">
-        <a href="/" class="header item" tabindex="0" title="Go to editor">
-            @targetlogo@
-        </a>
-    </div>
-  </div>
 </div>

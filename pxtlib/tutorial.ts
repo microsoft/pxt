@@ -3,7 +3,8 @@ namespace pxt.tutorial {
     const _h3Regex = /^###[^#](.*)$([\s\S]*?)(?=^###[^#]|$(?![\r\n]))/gmi;
 
     export function parseTutorial(tutorialmd: string): TutorialInfo {
-        const {steps, activities} = parseTutorialMarkdown(tutorialmd);
+        const metadata = parseTutorialMetadata(tutorialmd);
+        const {steps, activities} = parseTutorialMarkdown(tutorialmd, metadata);
         const title = parseTutorialTitle(tutorialmd);
         if (!steps)
             return undefined; // error parsing steps
@@ -49,7 +50,8 @@ namespace pxt.tutorial {
             steps: steps,
             activities: activities,
             code,
-            templateCode
+            templateCode,
+            metadata
         };
 
         function checkTutorialEditor(expected: string) {
@@ -68,8 +70,7 @@ namespace pxt.tutorial {
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
-        const metadata = parseTutorialMetadata(tutorialmd);
+    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         tutorialmd = stripHiddenSnippets(tutorialmd);
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
@@ -92,7 +93,7 @@ namespace pxt.tutorial {
         markdown.replace(_h2Regex, function(match, name, activity) {
             let i = activityInfo.length;
             activityInfo.push({
-                name: name || lf("Activity ") + i,
+                name: name || lf("Activity {0}", i),
                 step: stepInfo.length
             })
 
@@ -176,7 +177,12 @@ namespace pxt.tutorial {
         const m: any = {};
 
         tutorialmd.replace(metadataRegex, function (f, k, v) {
-            m[k] = v;
+            try {
+                m[k] = JSON.parse(v);
+            } catch {
+                m[k] = v;
+            }
+
             return "";
         });
 

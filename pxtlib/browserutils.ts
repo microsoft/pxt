@@ -250,7 +250,7 @@ namespace pxt.BrowserUtils {
         if (!hasLoggedBrowser) {
             pxt.log(`Browser: ${browser()} ${versionString} on ${os()}`)
             if (!isSupported) {
-                pxt.tickEvent("browser.unsupported", {useragent : navigator.userAgent})
+                pxt.tickEvent("browser.unsupported", { useragent: navigator.userAgent })
             }
             hasLoggedBrowser = true
         }
@@ -886,6 +886,8 @@ namespace pxt.BrowserUtils {
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
     let _translationDbPromise: Promise<ITranslationDb>;
     export function translationDbAsync(): Promise<ITranslationDb> {
+        if (pxt.Util.isNodeJS)
+            return Promise.resolve(new MemTranslationDb());
         // try indexed db
         if (!_translationDbPromise)
             _translationDbPromise = IndexedDbTranslationDb.createAsync()
