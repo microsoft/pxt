@@ -729,21 +729,11 @@ namespace pxt.blocks {
 
         if (pxt.Util.isTranslationLanguage()) {
             Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
-                const locBlock = b.block.message0;
-                const node = document.createElement("input") as HTMLInputElement;
-                node.type = "text";
-                node.setAttribute("class", "hidden");
-                node.value = locBlock;
-                const observer = new MutationObserver(() => {
-                    if (locBlock == node.value)
-                        return;
-                    b.translationId = locBlock;
-                    b.block.message0 = Util.rlf(node.value);
-                    node.remove();
-                    observer.disconnect();
-                });
-                observer.observe(node, { attributes: true });
-                document.body.appendChild(node);
+                pxt.crowdin.inContextLoadAsync(b.block.message0)
+                    .done(r => {
+                        b.translationId = b.block.message0;
+                        b.block.message0 = r;
+                    });
             })
         }
     }
