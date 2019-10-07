@@ -376,7 +376,6 @@ export function expandHtml(html: string, params?: pxt.Map<string>) {
         // so we don't do them here either.
     }
     pxt.docs.prepTemplate(d)
-    d.html = pxt.docs.renderConditionalMacros(d.html, params);
     return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
 }
 
