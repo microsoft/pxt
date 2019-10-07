@@ -436,12 +436,20 @@ svg {
     display: flex;
     padding-left: 0rem;
 }
+.sidebar.menu .accordion.item {
+    margin: 0;
+}
+.sidebar.menu a.item.active,
+.sidebar.menu .accordion .title.active {
+    background-color: hsla(0,0%,0%,.05);
+}
+.sidebar.menu.inverted a.item.active,
+.sidebar.menu.inverted .accordion .title.active {
+    background-color: hsla(0,0%,100%,.05);
+}
 .sidebar.menu a.item:hover,
 .sidebar.menu .accordion .title:hover {
     background-color: hsla(0,0%,0%,.1);
-}
-.sidebar.menu .accordion.item {
-    margin: 0;
 }
 .sidebar.menu.inverted a.item:hover,
 .sidebar.menu.inverted .accordion .title:hover {
