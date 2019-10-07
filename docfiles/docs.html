@@ -7,6 +7,16 @@
 	<title>@name@</title>
 	<meta name="Description" content="@description@" />
 
+	<!-- @ifdef incontexttranslations -->
+	<script type="text/javascript">
+		var _jipt = [];
+		_jipt.push(['project', '@crowdinproject@']);
+		_jipt.push(['escape', function () {
+			window.location.href = window.location.href.replace(/[$\?]translate=1/, '');
+		}]);
+	</script>
+	<script type="text/javascript" src="//cdn.crowdin.com/jipt/jipt.js"></script>
+	<!-- @endif -->
 	<!-- @include meta.html -->
 	<!-- @include head.html -->
 
@@ -28,7 +38,11 @@
 				<!-- @include header.html -->
 
 				<div class="main ui container fluid mainbody">
-					@printBtn@ @body@
+					<button id="printbtn" class="circular ui icon right floated button hideprint hidemobile"
+						title="Print" aria-label="Print">
+						<i class="icon print"></i>
+					</button>
+					@body@
 					<div class="hideprint">@github@</div>
 				</div>
 

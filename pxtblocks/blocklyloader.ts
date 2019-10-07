@@ -2,6 +2,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+    export let promptTranslateBlock: (blockId: string, blockTranslationId: string) => void;
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -429,6 +430,21 @@ namespace pxt.blocks {
             block: {
                 codeCard: mkCard(fn, blockXml),
                 init: function () { initBlock(this, info, fn, comp) }
+            }
+        }
+
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
+            cachedBlock.block.customContextMenu = (options: any[]) => {
+                if (fn.attributes.translationId) {
+                    options.push({
+                        enabled: true,
+                        text: lf("Translate this block"),
+                        callback: function () {
+                            pxt.blocks.promptTranslateBlock(id, fn.attributes.translationId);
+                        }
+                    })
+                }
             }
         }
 
@@ -988,6 +1004,21 @@ namespace pxt.blocks {
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
+            block.customContextMenu = (options: any[]) => {
+                const blockd = pxt.blocks.getBlockDefinition(block.type);
+                if (blockd && blockd.translationId) {
+                    options.push({
+                        enabled: true,
+                        text: lf("Translate this block"),
+                        callback: function () {
+                            pxt.blocks.promptTranslateBlock(id, blockd.translationId);
+                        }
+                    })
+                }
+            };
+        }
     }
 
     export function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {

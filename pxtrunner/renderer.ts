@@ -41,10 +41,6 @@ namespace pxt.runner {
         hex?: string;
     }
 
-    function appendBlocks($parent: JQuery, $svg: JQuery) {
-        $parent.append($('<div class="ui content blocks"/>').append($svg));
-    }
-
     function highlight($js: JQuery) {
         if (typeof hljs !== "undefined") {
             if ($js.hasClass("highlight"))
@@ -55,13 +51,17 @@ namespace pxt.runner {
         }
     }
 
+    function appendBlocks($parent: JQuery, $svg: JQuery) {
+        $parent.append($(`<div class="ui content blocks"/>`).append($svg));
+    }
+
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
+        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>JavaScript</div></div>`).append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/>Python</div></div>').append($py));
+        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>Python</div></div>`).append($py));
         highlight($py);
     }
 
@@ -154,12 +154,14 @@ namespace pxt.runner {
             $menu.append($hexBtn);
         }
 
-        let r = [$c];
+        let r = $(`<div class=codesnippet></div>`);
         // don't add menu if empty
-        if ($menu.children().length) r.push($h);
+        if ($menu.children().length)
+            r.append($h);
+        r.append($c);
 
         // inject container
-        $container.replaceWith(r as any);
+        $container.replaceWith(r);
 
         function appendBlocksButton() {
             if (!$svg) return;
@@ -343,8 +345,10 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.staticPythonClass, (c, r) => {
             const s = r.compilePython;
             if (s && s.success) {
-                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
-                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python').text(s.outfiles["main.py"]);
+                const $js = c.clone().removeClass('lang-shadow').addClass('highlight');
+                const $py = $js.clone().addClass('lang-python').text(s.outfiles["main.py"]);
+                $js.addClass('lang-typescript');
+                highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
         }, { package: options.package, snippetMode: true });

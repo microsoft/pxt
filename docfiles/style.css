@@ -439,12 +439,10 @@ svg {
 .sidebar.menu .accordion.item {
     margin: 0;
 }
-.sidebar.menu a.item.active,
-.sidebar.menu .accordion .title.active {
+.sidebar.menu a.item.active {
     background-color: hsla(0,0%,0%,.05);
 }
-.sidebar.menu.inverted a.item.active,
-.sidebar.menu.inverted .accordion .title.active {
+.sidebar.menu.inverted a.item.active {
     background-color: hsla(0,0%,100%,.05);
 }
 .sidebar.menu a.item:hover,

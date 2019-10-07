@@ -5,7 +5,7 @@ namespace pxtblockly {
     import svg = pxt.svgUtil;
 
     export interface FieldSpriteEditorOptions {
-        // Format is semicolon separated pairs, e.g. "width,height;width,height;..."
+        // Deprecated
         sizes: string;
 
         // Index of initial color (defaults to 1)
@@ -18,7 +18,6 @@ namespace pxtblockly {
     }
 
     interface ParsedSpriteEditorOptions {
-        sizes: [number, number][];
         initColor: number;
         initWidth: number;
         initHeight: number;
@@ -39,11 +38,9 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private editor: pxtsprite.SpriteEditor;
         private state: pxtsprite.Bitmap;
         private lightMode: boolean;
-        private undoStack: pxtsprite.CanvasState[];
-        private redoStack: pxtsprite.CanvasState[];
+        private undoRedoState: any;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -82,70 +79,33 @@ namespace pxtblockly {
             (this as any).mouseDownWrapper_ = Blockly.bindEventWithChecks_((this as any).getClickTarget_(), "mousedown", this, (this as any).onMouseDown_)
         }
 
-        /**
-         * Show the inline free-text editor on top of the text.
-         * @private
-         */
         showEditor_() {
-            const { sizes, initColor, filter} = this.params;
-            // If there is an existing drop-down someone else owns, hide it immediately and clear it.
-            Blockly.DropDownDiv.hideWithoutAnimation();
-            Blockly.DropDownDiv.clearContent();
+            (this.params as any).blocksInfo = this.blocksInfo;
+            const fv = pxt.react.getFieldEditorView("image-editor", this.getText(), this.params);
 
-            let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
-
-            this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
-            this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
-
-            this.editor.render(contentDiv);
-            this.editor.rePaint();
-
-            this.editor.onClose(() => {
-                this.undoStack = this.editor.getUndoStack();
-                this.redoStack = this.editor.getRedoStack();
-                Blockly.DropDownDiv.hideIfOwner(this);
-            });
-
-            this.editor.setActiveColor(initColor, true);
-            if (!sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
-                sizes.push([this.state.width, this.state.height]);
-            }
-            this.editor.setSizePresets(sizes);
-
-            if (filter) {
-                this.editor.setGalleryFilter(filter);
+            if (this.undoRedoState) {
+                fv.restorePersistentData(this.undoRedoState);
             }
 
-            goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
-            goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
-            goog.style.setStyle(contentDiv, "overflow", "hidden");
-            goog.style.setStyle(contentDiv, "max-height", "500px");
-            pxt.BrowserUtils.addClass(contentDiv.parentElement, "sprite-editor-dropdown")
+            fv.onHide(() => {
+                const result = fv.getResult();
 
-            Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
-            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
-                this.editor.closeEditor();
-                this.state = this.editor.bitmap().image;
-                this.redrawPreview();
-                if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
-                    Blockly.Events.fire(new Blockly.Events.BlockChange(
-                        this.sourceBlock_, 'field', this.name, this.text_, this.getValue()));
+                if (result) {
+                    const old = this.getValue();
+
+                    this.state = pxtsprite.imageLiteralToBitmap(result);
+                    this.redrawPreview();
+
+                    this.undoRedoState = fv.getPersistentData();
+
+                    if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
+                        Blockly.Events.fire(new Blockly.Events.BlockChange(
+                            this.sourceBlock_, 'field', this.name, old, this.getValue()));
+                    }
                 }
-
-                goog.style.setHeight(contentDiv, null);
-                goog.style.setWidth(contentDiv, null);
-                goog.style.setStyle(contentDiv, "overflow", null);
-                goog.style.setStyle(contentDiv, "max-height", null);
-                pxt.BrowserUtils.removeClass(contentDiv.parentElement, "sprite-editor-dropdown");
-                this.editor.removeKeyListeners();
             });
 
-            this.editor.addKeyListeners();
-            this.editor.layout();
-        }
-
-        private isInFlyout() {
-            return ((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
+            fv.show();
         }
 
         render_() {
@@ -250,13 +210,6 @@ namespace pxtblockly {
 
     function parseFieldOptions(opts: FieldSpriteEditorOptions) {
         const parsed: ParsedSpriteEditorOptions = {
-            sizes: [
-                [8, 8],
-                [8, 16],
-                [16, 16],
-                [16, 32],
-                [32, 32],
-            ],
             initColor: 1,
             initWidth: 16,
             initHeight: 16,
@@ -291,7 +244,6 @@ namespace pxtblockly {
                 sizes.push([width, height]);
             }
             if (sizes.length > 0) {
-                parsed.sizes = sizes;
                 parsed.initWidth = sizes[0][0];
                 parsed.initHeight = sizes[0][1];
             }
