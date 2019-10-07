@@ -124,7 +124,8 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 {targetTheme.crowdinProject ?
                     <p>
                         <br /><br />
-                        <sui.Button aria-label={lf("Help us translate")} onClick={this.translateEditor} text={lf("Translate the editor")} />
+                        {!pxt.BrowserUtils.isIE() ? <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> : undefined }
+                        <sui.Link aria-label={lf("Learn about translations")} href="/translate" text={lf("Learn about translations")} target="_blank" />
                     </p> : undefined}
             </sui.Modal>
         );
