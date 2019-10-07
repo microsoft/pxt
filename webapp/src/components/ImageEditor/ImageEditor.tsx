@@ -12,6 +12,7 @@ import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
 import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames } from './actions/dispatch';
 import { Bitmap, bitmapToImageLiteral } from './store/bitmap';
+import { EditorState } from './store/imageReducer';
 
 export interface ImageEditorProps {
     singleFrame?: boolean;
@@ -70,12 +71,12 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         return store.getState().present.interval;
     }
 
-    getPersistentData() {
+    getPersistentData(): EditorState {
         const state = store.getState();
-        return state;
+        return state.editor;
     }
 
-    restorePersistentData(oldValue: any) {
+    restorePersistentData(oldValue: EditorState) {
         if (oldValue) {
             store.dispatch(dispatchSetInitialState(oldValue));
         }

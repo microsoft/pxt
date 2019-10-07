@@ -117,7 +117,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             };
         case actions.SET_INITIAL_STATE:
             return {
-                ...action.state
+                ...state,
+                editor: action.state
             };
         case actions.UNDO_IMAGE_EDIT:
             if (!state.past.length) return state;

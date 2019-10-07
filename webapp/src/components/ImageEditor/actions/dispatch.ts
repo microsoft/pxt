@@ -1,5 +1,5 @@
 import * as actions from './types'
-import { ImageEditorTool, CursorSize, ImageEditorStore } from '../store/imageReducer';
+import { ImageEditorTool, CursorSize, EditorState } from '../store/imageReducer';
 import { ImageState } from '../store/bitmap';
 
 export const dispatchChangeImageTool = (tool: ImageEditorTool) => ({ type: actions.CHANGE_IMAGE_TOOL, tool });
@@ -28,4 +28,4 @@ export const dispatchChangeZoom = (zoom: number) => ({ type: actions.CHANGE_CANV
 export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FOREGROUND_BACKGROUND });
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })
 export const dispatchSetInitialFrames = (frames: ImageState[], interval: number) => ({ type: actions.SET_INITIAL_FRAMES, frames, interval });
-export const dispatchSetInitialState = (state: ImageEditorStore) => ({ type: actions.SET_INITIAL_STATE, state });
+export const dispatchSetInitialState = (state: EditorState) => ({ type: actions.SET_INITIAL_STATE, state });
