@@ -939,7 +939,7 @@ export function serveAsync(options: ServeOptions) {
             opts["forcelang"] = pxt.Util.TRANSLATION_LOCALE;
         }
         if (opts["lang"] || opts["forcelang"])
-            htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string); 
+            htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string);
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
