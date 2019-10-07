@@ -130,7 +130,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                         else {
                             this.scrollOffset = 0;
                         }
-                        this.frameScroller.style.marginTop = this.scrollOffset + "px";
+                        this.frameScroller.parentElement.scrollTop = -this.scrollOffset;
                     }
                     catch (e) {
                         // Some browsers throw if you get the bounds while not in the dom. Ignore it.
@@ -170,7 +170,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
                 else {
                     this.scrollOffset = 0;
                 }
-                this.frameScroller.style.marginTop = this.scrollOffset + "px";
+                this.frameScroller.parentElement.scrollTop = -this.scrollOffset;
             }
             catch (e) {
                 // Some browsers throw if you get the bounds while not in the dom. Ignore it.

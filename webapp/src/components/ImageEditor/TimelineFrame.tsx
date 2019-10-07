@@ -16,6 +16,14 @@ interface TimelineFrameState {
     index: number;
 }
 
+/**
+ * This is a scaling factor for all of the pixels in the canvas. Scaling is not needed for browsers
+ * that support "image-rendering: pixelated," so only scale for Microsoft Edge and Chrome on MacOS.
+ *
+ * Chrome on MacOS should be fixed in the next release: https://bugs.chromium.org/p/chromium/issues/detail?id=134040
+ */
+const SCALE = ((pxt.BrowserUtils.isMac() && pxt.BrowserUtils.isChrome()) || pxt.BrowserUtils.isEdge()) ? 25 : 1;
+
 export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineFrameState> {
     protected canvas: HTMLCanvasElement;
 
@@ -79,8 +87,8 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
         const frameIndex = animating ? Math.min(Math.max(0, this.state.index), frames.length - 1) : 0;
         const imageState = frames[frameIndex];
 
-        this.canvas.height = imageState.bitmap.height;
-        this.canvas.width = imageState.bitmap.width;
+        this.canvas.height = imageState.bitmap.height * SCALE;
+        this.canvas.width = imageState.bitmap.width * SCALE;
 
         const bitmap = Bitmap.fromData(imageState.bitmap);
         this.drawBitmap(bitmap);
@@ -120,10 +128,10 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
 
                 if (index) {
                     context.fillStyle = colors[index];
-                    context.fillRect(x + x0, y + y0, 1, 1);
+                    context.fillRect((x + x0) * SCALE, (y + y0) * SCALE, SCALE, SCALE);
                 }
                 else {
-                    if (!transparent) context.clearRect(x + x0, y + y0, 1, 1);
+                    if (!transparent) context.clearRect((x + x0) * SCALE, (y + y0) * SCALE, SCALE, SCALE);
                 }
             }
         }
