@@ -193,8 +193,8 @@ function setupSemantic() {
         window.print();
     })
 
-    $('#translatebtn').on("click", function() {
-        window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? "&" : "?") + "translate=1"        
+    $('#translatebtn').on("click", function () {
+        window.location.href = window.location.href.replace(/#.*/, '') + (window.location.href.indexOf('?') > -1 ? "&" : "?") + "translate=1"
     })
 
     if (/browsers$/i.test(window.location.href))
@@ -247,7 +247,7 @@ function renderSnippets() {
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
-                    staticPythonClass: 'lang-spy', 
+                    staticPythonClass: 'lang-spy',
                     shuffleClass: 'lang-shuffle',
                     simulatorClass: 'lang-sim',
                     linksClass: 'lang-cards',

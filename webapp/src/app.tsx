@@ -3870,14 +3870,24 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
-            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+            const href = window.location.href;
+            let live = false;
+            let force = false;
+            let useLang: string = undefined;
+            if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
+                console.log(`translation mode`);
+                live = force = true;
+                useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
+            } else {
+                const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+                if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
+                    pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+                }
+                useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                const locstatic = /staticlang=1/i.test(window.location.href);
+                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
+                force = !!mlang && !!mlang[2];
             }
-            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            const locstatic = /staticlang=1/i.test(window.location.href);
-            const live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
-            const force = !!mlang && !!mlang[2];
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
             const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;
