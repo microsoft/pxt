@@ -86,7 +86,7 @@ namespace ts.pxtc.ir {
 
         hexlit() {
             const anyJs = this.jsInfo as any
-            if (anyJs.hexlit)
+            if (anyJs.hexlit != null)
                 return anyJs.hexlit
             return null
         }

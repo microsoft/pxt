@@ -167,20 +167,20 @@ namespace pxt.crowdin {
         return startAsync();
     }
 
-    function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string, branch?: string) {
-        const n = files.name;
+    function flatten(allFiles: CrowdinFileInfo[], node: CrowdinFileInfo, parentDir: string, branch?: string) {
+        const n = node.name;
         const d = parentDir ? parentDir + "/" + n : n;
-        files.fullName = d;
-        files.branch = branch || "";
-        switch (files.node_type) {
+        node.fullName = d;
+        node.branch = branch || "";
+        switch (node.node_type) {
             case "file":
-                allFiles.push(files);
+                allFiles.push(node);
                 break;
             case "directory":
-                (files.files || []).forEach(f => flatten(allFiles, f, d));
+                (node.files || []).forEach(f => flatten(allFiles, f, d, branch));
                 break;
             case "branch":
-                (files.files || []).forEach(f => flatten(allFiles, f, parentDir, files.name));
+                (node.files || []).forEach(f => flatten(allFiles, f, parentDir, node.name));
                 break;
         }
     }
@@ -259,5 +259,26 @@ namespace pxt.crowdin {
                 const allFiles = filterAndFlattenFiles(info.files);
                 return allFiles;
             });
+    }
+
+    export function inContextLoadAsync(text: string): Promise<string> {
+        const node = document.createElement("input") as HTMLInputElement;
+        node.type = "text";
+        node.setAttribute("class", "hidden");
+        node.value = text;
+        let p = new Promise<string>((resolve, reject) => {
+            const observer = new MutationObserver(() => {
+                if (text == node.value)
+                    return;
+                const r = Util.rlf(node.value); // get rid of {id}...
+                node.remove();
+                observer.disconnect();
+                resolve(r);
+            });
+            observer.observe(node, { attributes: true });
+        })
+        document.body.appendChild(node);
+
+        return p;
     }
 }

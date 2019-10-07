@@ -86,11 +86,14 @@ namespace ts.pxtc {
     function vtableToJs(info: ClassInfo) {
         U.assert(info.classNo !== undefined)
         U.assert(info.lastSubtypeNo !== undefined)
+        let maxBg = parseInt(info.attrs.maxBgInstances)
+        if (!maxBg) maxBg = null
         let s = `const ${info.id}_VT = mkVTable({\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
             `  classNo: ${info.classNo},\n` +
             `  lastSubtypeNo: ${info.lastSubtypeNo},\n` +
+            `  maxBgInstances: ${maxBg},\n` +
             `  methods: {\n`
         for (let m of info.vtable) {
             s += `    "${m.getName()}": ${m.label()},\n`
@@ -410,7 +413,7 @@ function ${id}(s) {
                 case EK.PointerLiteral:
                     if (e.ptrlabel()) {
                         return e.ptrlabel().lblId + "";
-                    } else if (e.hexlit()) {
+                    } else if (e.hexlit() != null) {
                         hexlits += `const ${e.data} = pxsim.BufferMethods.createBufferFromHex("${e.hexlit()}")\n`
                         return e.data;
                     } else if (typeof e.jsInfo == "string") {

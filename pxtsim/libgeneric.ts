@@ -8,6 +8,13 @@ namespace pxsim {
             super();
         }
 
+        scan(mark: (path: string, v: any) => void) {
+            for (let i = 0; i < this.data.length; ++i)
+                mark("[" + i + "]", this.data[i])
+        }
+        gcKey() { return "[...]" }
+        gcSize() { return this.data.length + 2 }
+
         toArray(): any[] {
             return this.data.slice(0);
         }
@@ -396,9 +403,18 @@ namespace pxsim {
 
 
     export class RefBuffer extends RefObject {
+        isStatic = false
         constructor(public data: Uint8Array) {
             super();
         }
+
+        scan(mark: (path: string, v: any) => void) {
+            // nothing to do
+        }
+
+        gcKey() { return "Buffer" }
+        gcSize() { return 2 + (this.data.length + 3 >> 2) }
+        gcIsStatic() { return this.isStatic }
 
         print() {
             // console.log(`RefBuffer id:${this.id} refs:${this.refcnt} len:${this.data.length} d0:${this.data[0]}`)
@@ -523,6 +539,7 @@ namespace pxsim {
             let r = createBuffer(hex.length >> 1)
             for (let i = 0; i < hex.length; i += 2)
                 r.data[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+            r.isStatic = true
             return r
         }
 

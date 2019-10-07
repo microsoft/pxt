@@ -68,7 +68,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     <IconButton
                         onClick={dispatchToggleAspectRatioLocked}
                         iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
-                        title={aspectRatioLocked ? lf("Unlock Apect Ratio") : lf("Lock Aspect Ratio")}
+                        title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
                         toggle={!aspectRatioLocked}
                     />
 
@@ -79,8 +79,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         onBlur={this.handleDimensionalBlur}
                     />
                 </div>
-                { singleFrame ? undefined : <div className="image-editor-seperator"/> }
-                { singleFrame ? undefined : <div>
+                { !singleFrame && <div className="image-editor-seperator"/> }
+                { !singleFrame && <div>
                     <IconButton
                         onClick={dispatchToggleOnionSkinEnabled}
                         iconClass="ms-Icon ms-Icon--MapLayers"

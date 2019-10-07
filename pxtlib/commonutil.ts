@@ -83,6 +83,11 @@ namespace ts.pxtc.Util {
         return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
     }
 
+    export const TRANSLATION_LOCALE = "pxt";
+    export function isTranslationMode(): boolean {
+        return userLanguage() == TRANSLATION_LOCALE;
+    }
+
     export function _localize(s: string) {
         // Needs to be test in localhost / CLI
         /*if (!_didSetlocalizations && !_didReportLocalizationsNotSet) {

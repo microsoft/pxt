@@ -3,6 +3,15 @@
 Translations of text in the editor, in blocks, and documentation managed by [Crowdin](https://crowdin.com/project/kindscript), a translation management platform. It is free to join
 and you can volunteer to translate parts of the web site. Translation into different languages is done by the work of people all over the world who volunteer to help MakeCode be accessible to as many people as possible.
 
+### ~ hint
+
+Interested in how localization works in MakeCode? Watch this video for an overview of the process.
+
+https://youtu.be/XpdUzpBVKFU
+
+### ~
+
+
 ## #promo
 
 ## Localized MakeCode

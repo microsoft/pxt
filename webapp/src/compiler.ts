@@ -620,10 +620,14 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
 
 export function newProjectAsync() {
+    clearCaches();
+    return workerOpAsync("reset", {});
+}
+
+export function clearCaches() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
-    return workerOpAsync("reset", {});
 }
 
 export function getPackagesWithErrors(): pkg.EditorPackage[] {
