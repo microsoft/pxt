@@ -416,25 +416,42 @@ svg {
     font-size: 0.8em;
     width: 2rem;
     margin: 0;
-    transform: translateY(0.2rem);
+    transform: translateY(0.1rem);
 }
 .sidebar.menu .accordion.item .title.active .icon {
-    transform: translateY(0.2rem) rotate(90deg);
+    transform: translateY(0.1rem) rotate(90deg);
 }
 .sidebar.menu .accordion.item .title {
     display: flex;
     padding-left: 0rem;
 }
+.sidebar.menu a.item:hover,
+.sidebar.menu .accordion .title:hover {
+    background-color: hsla(0,0%,0%,.1);
+}
+.sidebar.menu.inverted a.item:hover,
+.sidebar.menu.inverted .accordion .title:hover {
+    background-color: hsla(0,0%,100%,.1);
+}
+.sidebar.menu a,
+.sidebar.menu .icon {
+    color: hsla(0,0%,0%,.9);
+}
+.sidebar.menu.inverted a,
+.sidebar.menu.inverted .icon {
+    color: hsla(0,0%,100%,.9);
+}
+.sidebar.menu a:hover,
+.sidebar.menu .title:hover a {
+    text-decoration: underline;
+}
+.sidebar.menu.vertical .item:before {
+    /* remove gray divider lines */
+    content: none;
+}
 /* indented content */
 .sidebar.menu .accordion.item .content:not(.style) {
     padding-left: 2rem;
-}
-.sidebar.menu a {
-    color: hsla(0,0%,100%,.9);
-}
-/* TODO(dz): full chevron */
-.sidebar.menu .icon {
-    color: hsla(0,0%,100%,.9);
 }
 
 /**
