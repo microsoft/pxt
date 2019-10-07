@@ -195,7 +195,7 @@ namespace pxt.runner {
         let live = false;
         let force = false;
         let lang: string = undefined;
-        if (/[&?]translate=1/.test(href)) {
+        if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
             lang = ts.pxtc.Util.TRANSLATION_LOCALE;
             live = true;
             force = true;

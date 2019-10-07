@@ -497,7 +497,7 @@ namespace ts.pxtc {
                 }
 
                 let p = Promise.resolve();
-                if (locBlock && pxt.Util.isTranslationLanguage()) {
+                if (locBlock && pxt.Util.isTranslationMode()) {
                     fn.attributes.translationId = locBlock;
                     p = p.then(() => pxt.crowdin.inContextLoadAsync(locBlock))
                         .then(r => { locBlock = r; });

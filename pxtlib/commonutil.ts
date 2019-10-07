@@ -84,7 +84,7 @@ namespace ts.pxtc.Util {
     }
 
     export const TRANSLATION_LOCALE = "pxt";
-    export function isTranslationLanguage(): boolean {
+    export function isTranslationMode(): boolean {
         return userLanguage() == TRANSLATION_LOCALE;
     }
 

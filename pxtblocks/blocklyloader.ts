@@ -433,7 +433,8 @@ namespace pxt.blocks {
             }
         }
 
-        if (pxt.Util.isTranslationLanguage() && pxt.blocks.promptTranslateBlock) {
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
             cachedBlock.block.customContextMenu = (options: any[]) => {
                 if (fn.attributes.translationId) {
                     options.push({
@@ -1003,7 +1004,8 @@ namespace pxt.blocks {
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
-        if (pxt.Util.isTranslationLanguage()) {
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
             block.customContextMenu = (options: any[]) => {
                 const blockd = pxt.blocks.getBlockDefinition(block.type);
                 if (blockd && blockd.translationId) {
@@ -1011,7 +1013,7 @@ namespace pxt.blocks {
                         enabled: true,
                         text: lf("Translate this block"),
                         callback: function () {
-                            promptTranslateBlock(id, blockd.translationId);
+                            pxt.blocks.promptTranslateBlock(id, blockd.translationId);
                         }
                     })
                 }

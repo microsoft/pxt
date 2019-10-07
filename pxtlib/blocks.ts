@@ -727,7 +727,7 @@ namespace pxt.blocks {
             }
         }
 
-        if (pxt.Util.isTranslationLanguage()) {
+        if (pxt.Util.isTranslationMode()) {
             Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
                 pxt.crowdin.inContextLoadAsync(b.block.message0)
                     .done(r => {

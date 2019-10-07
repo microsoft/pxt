@@ -3872,7 +3872,7 @@ document.addEventListener("DOMContentLoaded", () => {
             let live = false;
             let force = false;
             let useLang: string = undefined;
-            if (/[&?]translate=1/.test(href)) {
+            if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
                 console.log(`translation mode`);
                 live = force = true;
                 useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
