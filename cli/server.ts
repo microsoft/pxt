@@ -933,11 +933,6 @@ export function serveAsync(options: ServeOptions) {
         let pathname = decodeURI(url.parse(req.url).pathname);
         const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
         const htmlParams: pxt.Map<string> = {};
-        if (opts["translate"]) {
-            htmlParams["incontexttranslations"] = "1";
-            opts["lang"] = pxt.Util.TRANSLATION_LOCALE;
-            opts["forcelang"] = pxt.Util.TRANSLATION_LOCALE;
-        }
         if (opts["lang"] || opts["forcelang"])
             htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string);
 
@@ -1130,7 +1125,9 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const lang = opts["lang"] as string || opts["forcelang"] as string;
+            const lang = (opts["translate"] && ts.pxtc.Util.TRANSLATION_LOCALE) 
+                || opts["lang"] as string 
+                || opts["forcelang"] as string;
             readMdAsync(pathname, lang)
                 .then(md => {
                     const mdopts = <pxt.docs.RenderOptions>{
