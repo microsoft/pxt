@@ -124,7 +124,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 {targetTheme.crowdinProject ?
                     <p>
                         <br /><br />
-                        <span className="ui button link" aria-label={lf("Help us translate")} onClick={this.translateEditor}>{lf("Translate the editor")}</span>
+                        <sui.Button aria-label={lf("Help us translate")} onClick={this.translateEditor} text={lf("Translate the editor")} />
                     </p> : undefined}
             </sui.Modal>
         );
