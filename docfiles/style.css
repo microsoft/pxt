@@ -15,8 +15,8 @@ body#root {
 }
 
 #docs ul li:before {
-  margin-right: 1em;
-  content: "\25CF";
+    margin-right: 1em;
+    content: "\25CF";
 }
 
 #docs ul li.checked:before {
@@ -79,7 +79,7 @@ div.blocks-svg-list > svg {
 }
 
 code {
-        white-space: pre-wrap;
+    white-space: pre-wrap;
 }
 code.lang-ghost, code.lang-config, code.lang-package 
 { display: none;}
@@ -115,15 +115,6 @@ code.lang-spy
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
-}
-
-/* Limit width of text so that it's readable
- */
- 
-.ui.text p,
-.ui.text li,
-.ui.container.mainbody {
-    max-width: 1100px !important;
 }
 
 /* wrap cards header */
@@ -377,8 +368,9 @@ svg {
     padding-right: 2em;
 }
 
+/* Limit width of content so that it is readable */
 #docs .article .article-inner div {
-    max-width: 1100px;
+    max-width: 1100px !important;
     margin-left: 0 !important;
 }
 
