@@ -932,8 +932,8 @@ export function serveAsync(options: ServeOptions) {
         let pathname = decodeURI(url.parse(req.url).pathname);
         const opts: pxt.Map<string | string[]> = querystring.parse(url.parse(req.url).query);
         const htmlParams: pxt.Map<string> = {};
-        if (opts["lang"])
-            htmlParams["locale"] = opts["lang"] as string;
+        if (opts["lang"] || opts["forcelang"])
+            htmlParams["locale"] = (opts["lang"] as string || opts["forcelang"] as string);
 
         if (pathname == "/") {
             res.writeHead(301, { location: '/index.html' })
@@ -1078,7 +1078,12 @@ export function serveAsync(options: ServeOptions) {
         for (let dir of dd) {
             let filename = path.resolve(path.join(dir, pathname))
             if (nodeutil.fileExistsSync(filename)) {
-                sendFile(filename)
+                if (/\.html$/.test(filename)) {
+                    let html = expandHtml(fs.readFileSync(filename, "utf8"), htmlParams)
+                    sendHtml(html)
+                } else {
+                    sendFile(filename)
+                }
                 return;
             }
         }
@@ -1119,7 +1124,9 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const lang = opts["translate"] ? "pxt" : opts["lang"] as string;
+            const lang = (opts["translate"] && ts.pxtc.Util.TRANSLATION_LOCALE)
+                || opts["lang"] as string
+                || opts["forcelang"] as string;
             readMdAsync(pathname, lang)
                 .then(md => {
                     const mdopts = <pxt.docs.RenderOptions>{
@@ -1135,7 +1142,7 @@ export function serveAsync(options: ServeOptions) {
                     };
                     if (opts["translate"])
                         mdopts.pubinfo["incontexttranslations"] = "1";
-                    let html = pxt.docs.renderMarkdown(mdopts)
+                    const html = pxt.docs.renderMarkdown(mdopts)
                     sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
                 });
         }

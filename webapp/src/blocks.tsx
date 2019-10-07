@@ -10,7 +10,8 @@ import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
 import * as simulator from "./simulator";
-import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
+import * as dialogs from "./dialogs";
+import { CreateFunctionDialog } from "./createFunction";
 import { initializeSnippetExtensions } from './snippetBuilder';
 
 import Util = pxt.Util;
@@ -342,6 +343,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 callback(value);
             })
         };
+
+        if (pxt.Util.isTranslationMode())
+            pxt.blocks.promptTranslateBlock = dialogs.promptTranslateBlock;
     }
 
     private initBlocklyToolbox() {
@@ -1234,7 +1238,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (this.abstractShowFlyout(treeRow)) {
             // Cache blocks xml list for later
-            this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
+            // don't cache when translating
+            if (!pxt.Util.isTranslationMode())
+                this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
 
             this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
         }
