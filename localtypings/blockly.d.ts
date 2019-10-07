@@ -8577,6 +8577,14 @@ declare module Blockly {
             EDITABLE: boolean;
     
             /**
+             *  * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
+    
+            /**
              * Used to tell if the field needs to be rendered the next time the block is
              * rendered. Image fields are statically sized, and only need to be
              * rendered at initialization.
