@@ -447,7 +447,7 @@ namespace pxt.docs {
                     return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
                 })
 
-        
+
         template = renderConditionalMacros(template, pubinfo);
 
         if (opts.locale)
