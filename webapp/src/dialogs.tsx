@@ -861,3 +861,20 @@ export function showCloudSignInDialog() {
         })
     }
 }
+
+export function promptTranslateBlock(blockid: string, blockTranslationId: string) {
+    core.confirmAsync({
+        header: lf("Translate this block"),
+        hideCancel: true,
+        hideAgree: true,
+        hasCloseIcon: true,
+        jsx: <div>
+            <div>
+            {lf("Update the block translation below.")} 
+            {lf("Do not translate variable names (%name, $name).")}
+            {lf("Once validated, translations may take 24h to be active.")}
+            </div>
+            <div className="blocktranslationtext">{blockTranslationId}</div>
+        </div>
+    }).done();
+}

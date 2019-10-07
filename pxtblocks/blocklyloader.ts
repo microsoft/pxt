@@ -2,6 +2,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+    export let promptTranslateBlock: (blockId: string, blockTranslationId: string) => void;
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -432,14 +433,14 @@ namespace pxt.blocks {
             }
         }
 
-        if (pxt.Util.isTranslationLanguage()) {
+        if (pxt.Util.isTranslationLanguage() && pxt.blocks.promptTranslateBlock) {
             cachedBlock.block.customContextMenu = (options: any[]) => {
                 if (fn.attributes.translationId) {
                     options.push({
                         enabled: true,
-                        text: fn.attributes.translationId,
+                        text: lf("Translate this block"),
                         callback: function () {
-                            // do nothing
+                            pxt.blocks.promptTranslateBlock(id, fn.attributes.translationId);
                         }
                     })
                 }
@@ -1008,9 +1009,9 @@ namespace pxt.blocks {
                 if (blockd && blockd.translationId) {
                     options.push({
                         enabled: true,
-                        text: blockd.translationId,
+                        text: lf("Translate this block"),
                         callback: function () {
-                            // do nothing
+                            promptTranslateBlock(id, blockd.translationId);
                         }
                     })
                 }
