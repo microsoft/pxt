@@ -1125,8 +1125,8 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            const lang = (opts["translate"] && ts.pxtc.Util.TRANSLATION_LOCALE) 
-                || opts["lang"] as string 
+            const lang = (opts["translate"] && ts.pxtc.Util.TRANSLATION_LOCALE)
+                || opts["lang"] as string
                 || opts["forcelang"] as string;
             readMdAsync(pathname, lang)
                 .then(md => {
