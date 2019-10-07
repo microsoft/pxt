@@ -88,7 +88,7 @@ function setupSidebar() {
         .accordion({
             closeNested: true,
             selector: {
-                trigger: '.title .icon'
+                trigger: '> .title'
             }
         });
 
@@ -241,7 +241,7 @@ function renderSnippets() {
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
-                    staticPythonClass: 'lang-spy', 
+                    staticPythonClass: 'lang-spy',
                     shuffleClass: 'lang-shuffle',
                     simulatorClass: 'lang-sim',
                     linksClass: 'lang-cards',
