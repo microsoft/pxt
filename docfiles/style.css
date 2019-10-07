@@ -180,31 +180,19 @@ svg {
     position: relative;
     width: 100%;
     height: 100%;
+    overflow: scroll;
 }
 
 .pusher .article {
     position: absolute;
     /* match with menu bar height */
     top: 3.5em;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    overflow-y: auto;
     -webkit-box-flex: 1;
 
     -webkit-flex: 1 1 auto;
         -ms-flex: 1 1 auto;
             flex: 1 1 auto;
     min-width: 0px;
-}
-
-.pusher .article-inner {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    overflow-y: auto;
 }
 
 .ui.vertical.menu .menu .item {
@@ -358,12 +346,6 @@ svg {
 .navigation.navigation-next {
     margin-right: 0;
 }
-.ui.container.mainbody {
-    margin-left: 0!important;
-    margin-right: 0!important;
-    padding-left: 1em;
-    padding-right: 1em;
-}
 .ui.sidebar {
     /* match with menu bar height */
     top: 3.5em;
@@ -383,15 +365,34 @@ svg {
     margin-top: 4rem;
 }
 
-.mainbody {
-    margin-top: 2em;
-    margin-bottom: 2em;
-    padding-left: 2em;
+.article {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 7.5% 1fr;
+}
+
+.article-inner {
+    grid-column: 2;
+    padding-left: 0;
     padding-right: 2em;
 }
 
-#docs .ui.container.mainbody {
+#docs .article .article-inner div {
+    max-width: 1100px;
     margin-left: 0 !important;
+}
+
+.article-inner .column {
+    padding-left: 0 !important;
+}
+
+@media only screen and (max-width: 813px) {
+    .article {
+        grid-template-columns: 0 1fr;
+    }
+    #docs .article .article-inner > div {
+        margin-left: 1em !important;
+    }
 }
 
 /**
@@ -402,15 +403,17 @@ print only stuff
 }
 
 @media only print {
-    .pusher .article {
-        left: 0;
-        position: relative;
-    }
-    .pusher .article-inner {
-        position: relative;
-    }
     .pusher {
         background: transparent !important;
+    }
+    .pusher .article {
+        top: 0;
+    }
+    .pusher .article-inner {
+        grid-template-columns: 0 1fr;
+        position: relative;
+        padding-left: 0em;
+        margin-top: 0;
     }
     .showprint {
         display: block !important;
@@ -418,7 +421,7 @@ print only stuff
     .hideprint,
     .ui.embed > .icon,
     .ui.docbutton {
-        display:none !important;
+        display: none !important;
     }
     body.pushable {
         background: #fff !important;        
