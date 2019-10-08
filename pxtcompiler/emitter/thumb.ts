@@ -27,7 +27,7 @@ namespace ts.pxtc.thumb {
         "r8": 8,
         "r9": 9,
         "r10": 10,
-        "r11": 10,
+        "r11": 11,
         "r12": 12,
         "sp": 13,
         "r13": 13,
@@ -94,7 +94,7 @@ namespace ts.pxtc.thumb {
             this.addInst("add   $r2, $r3", 0x4400, 0xff00);
             this.addInst("add   $r5, pc, $i1", 0xa000, 0xf800);
             this.addInst("add   $r5, sp, $i1", 0xa800, 0xf800);
-            this.addInst("add   sp, $i2", 0xb000, 0xff80).canBeShared = true;
+            this.addInst("add   sp, $i2", 0xb000, 0xff80);
             this.addInst("adds  $r0, $r1, $i3", 0x1c00, 0xfe00);
             this.addInst("adds  $r0, $r1, $r4", 0x1800, 0xfe00);
             this.addInst("adds  $r01, $r4", 0x1800, 0xfe00);
@@ -118,8 +118,8 @@ namespace ts.pxtc.thumb {
             this.addInst("ldr   $r0, [$r1, $r4]", 0x5800, 0xfe00);
             this.addInst("ldr   $r5, [pc, $i1]", 0x4800, 0xf800);
             this.addInst("ldr   $r5, $la", 0x4800, 0xf800);
-            this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800).canBeShared = true;
-            this.addInst("ldr   $r5, [sp]", 0x9800, 0xf800).canBeShared = true;
+            this.addInst("ldr   $r5, [sp, $i1]", 0x9800, 0xf800);
+            this.addInst("ldr   $r5, [sp]", 0x9800, 0xf800);
             this.addInst("ldrb  $r0, [$r1, $i4]", 0x7800, 0xf800);
             this.addInst("ldrb  $r0, [$r1, $r4]", 0x5c00, 0xfe00);
             this.addInst("ldrh  $r0, [$r1, $i7]", 0x8800, 0xf800);
@@ -150,11 +150,11 @@ namespace ts.pxtc.thumb {
             this.addInst("stm   $r5!, $rl0", 0xc000, 0xf800);
             this.addInst("stmia $r5!, $rl0", 0xc000, 0xf800); // alias for stm
             this.addInst("stmea $r5!, $rl0", 0xc000, 0xf800); // alias for stm
-            this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800).canBeShared = true;
-            this.addInst("str   $r0, [$r1]", 0x6000, 0xf800).canBeShared = true;
+            this.addInst("str   $r0, [$r1, $i5]", 0x6000, 0xf800);
+            this.addInst("str   $r0, [$r1]", 0x6000, 0xf800);
             this.addInst("str   $r0, [$r1, $r4]", 0x5000, 0xfe00);
-            this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800).canBeShared = true;
-            this.addInst("str   $r5, [sp]", 0x9000, 0xf800).canBeShared = true;
+            this.addInst("str   $r5, [sp, $i1]", 0x9000, 0xf800);
+            this.addInst("str   $r5, [sp]", 0x9000, 0xf800);
             this.addInst("strb  $r0, [$r1, $i4]", 0x7000, 0xf800);
             this.addInst("strb  $r0, [$r1, $r4]", 0x5400, 0xfe00);
             this.addInst("strh  $r0, [$r1, $i7]", 0x8000, 0xf800);

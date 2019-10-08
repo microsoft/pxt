@@ -43,7 +43,6 @@ namespace ts.pxtc.assembler {
         public friendlyFmt: string;
         public code: string;
         protected ei: AbstractProcessor;
-        public canBeShared = false;
 
         constructor(ei: AbstractProcessor, format: string, public opcode: number, public mask: number, public is32bit: boolean) {
             assert((opcode & mask) == opcode)
