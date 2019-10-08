@@ -125,9 +125,9 @@ namespace ts.pxtc {
         }
 
         // run post-processing code last, if present
-        const post_idx = opts.sourceFiles.indexOf("_onCodeStop.ts")
-        if (post_idx >= 0) {
-            opts.sourceFiles.splice(post_idx, 1)
+        const postIdx = opts.sourceFiles.indexOf("_onCodeStop.ts")
+        if (postIdx >= 0) {
+            opts.sourceFiles.splice(postIdx, 1)
             opts.sourceFiles.push("_onCodeStop.ts")
         }
 
