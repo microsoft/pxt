@@ -436,7 +436,7 @@ svg {
 }
 .sidebar.menu .accordion.item .title {
     display: flex;
-    padding-left: 0rem;
+    padding-left: 0;
 }
 .sidebar.menu .accordion.item {
     margin: 0;
