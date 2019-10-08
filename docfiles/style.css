@@ -441,4 +441,10 @@ print only stuff
     body.pushable {
         background: #fff !important;        
     }
+    .codesnippet .blocks-svg-list,
+    .codesnippet code,
+    pre {
+        max-height: inherit;
+        overflow: inherit;
+    }
 }
