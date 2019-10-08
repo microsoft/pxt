@@ -20,7 +20,7 @@ namespace pxtblockly {
          * @constructor
          */
         constructor(value_: any, params: any, opt_validator?: Function) {
-            super(String(value_), '0', '255', null, '10', 'Color', opt_validator);
+            super(String(value_), '0', '255', '1', '10', 'Color', opt_validator);
             this.params = params;
             if (this.params['min']) this.min_ = parseFloat(this.params['min']);
             if (this.params['max']) this.max_ = parseFloat(this.params['max']);
