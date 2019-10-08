@@ -22,7 +22,11 @@ https://youtu.be/OugXfqhWUQo
 
 ### ~ hint
 
-In context translations are not supported in Internet Explorer.
+In context translation are still being rolled out in editors. It might not be available in your MakeCode editor yet.
+
+### Supported editors
+
+* [Maker](https://maker.makecode.com/beta?translate=1) (docs & editor)
 
 ### ~
 
@@ -55,13 +59,6 @@ and click **Translate this bloc**
 You will be prompted with a dialog that contains the block translatable string.
 
 ![](/static/blog/translations-in-context/block.png)
-
-### Supported editors
-
-* [micro:bit (beta)](https://makecode.microbit.org/beta?translate=1) (editor only)
-* [Adafruit (beta)](https://makecode.adafruit.com/beta?translate=1) (editor only)
-* [Arcade (beta)](https://arcade.makecode.com/beta?translate=1) (editor only)
-* [Maker](https://maker.makecode.com/beta?translate=1) (docs & editor)
 
 ## Translation roles
 
