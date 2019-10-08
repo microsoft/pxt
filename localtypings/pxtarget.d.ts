@@ -511,6 +511,7 @@ declare namespace ts.pxtc {
         undeletable?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string; // format of the block, used at namespace level for category name
+        translationId?: string; // in-context translation id
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
         blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
@@ -804,6 +805,8 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
+        codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
     }
 
     interface TutorialStepInfo {

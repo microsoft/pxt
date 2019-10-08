@@ -22,7 +22,9 @@ namespace pxt.docs {
         "activities": "<!-- activities -->",
         "explicitHints": "<!-- hints -->",
         "flyoutOnly": "<!-- flyout -->",
-        "hideIteration": "<!-- iter -->"
+        "hideIteration": "<!-- iter -->",
+        "codeStart": "<!-- start -->",
+        "codeStop": "<!-- stop -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -159,8 +161,7 @@ namespace pxt.docs {
                 NAME: m.name,
             }
             if (m.subitems) {
-                if (lev == 0) templ = menus["top-dropdown"]
-                else templ = menus["inner-dropdown"]
+                templ = menus["toc-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -217,14 +218,11 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                if (lev == 0) {
-                    if (m.name !== "") {
-                        templ = toc["top-dropdown"]
-                    } else {
-                        templ = toc["top-dropdown-noHeading"]
-                    }
-                } else if (lev == 1) templ = toc["inner-dropdown"]
-                else templ = toc["nested-dropdown"]
+                if (m.name !== "") {
+                    templ = toc["toc-dropdown"]
+                } else {
+                    templ = toc["toc-dropdown-noHeading"]
+                }
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -398,6 +396,17 @@ namespace pxt.docs {
         }
     }
 
+    export function renderConditionalMacros(template: string, pubinfo: Map<string>): string {
+        return template
+            .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
+                (full, cond, sym, inner) => {
+                    if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
+                        return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
+                    else
+                        return `<!-- ${cond} ${sym} endif -->`
+                });
+    }
+
     export function renderMarkdown(opts: RenderOptions): string {
         let hasPubInfo = true
 
@@ -436,14 +445,8 @@ namespace pxt.docs {
                     return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
                 })
 
-        template = template
-            .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
-                (full, cond, sym, inner) => {
-                    if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
-                        return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
-                    else
-                        return `<!-- ${cond} ${sym} endif -->`
-                })
+
+        template = renderConditionalMacros(template, pubinfo);
 
         if (opts.locale)
             template = translate(template, opts.locale).text

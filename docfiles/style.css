@@ -241,6 +241,17 @@ svg {
     width: 3.5em;
     height: 3.5em;
 }
+.fixed.menu .item.icon:hover {
+    padding:0;
+    width: 3.5em;
+    height: 3.5em;
+}
+.fixed.menu .item.icon:hover {
+    background-color: hsla(0,0%,0%,.1);
+}
+.fixed.menu.inverted .item.icon:hover {
+    background-color: hsla(0,0%,100%,.1);
+}
 /* Search box */
 .fixed.menu .search div.input {
     min-width: 14em;
@@ -310,8 +321,16 @@ svg {
     border-radius: 0;
 }
 
-.ui.menu.tocmenu .menuContainer {
-    margin-bottom: 45px;
+.sidebar.menu .menuContainer {
+    /* extra padding at the bottom
+     so we can always scroll a little past the content*/
+    margin-bottom: 5rem;
+}
+
+.ui.menu.sidebar .menuContainer {
+    /* match with menu bar height */
+    max-height: calc(100% - 3.5rem);
+    overflow-y: scroll;
 }
 
 .cc-banner {
@@ -388,6 +407,81 @@ svg {
     #docs .article .article-inner > div {
         margin-left: 1em !important;
     }
+}
+
+/* Sidebar TOC */
+.sidebar.menu .item:before {
+    content:none;
+    width: 0;
+    height: 0;
+}
+.sidebar.menu .item,
+.sidebar.menu .accordion .title {
+    padding: 0.8rem;
+    padding-left: 2rem;
+    display: flex;
+    flex-direction: row;
+}
+.sidebar.menu .accordion.item {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar.menu .accordion.item .title .icon {
+    font-size: 0.8em;
+    width: 2rem;
+    margin: 0;
+    transform: translateY(0.1rem);
+}
+.sidebar.menu .accordion.item .title.active .icon {
+    transform: translateY(0.1rem) rotate(90deg);
+}
+.sidebar.menu .accordion.item .title {
+    display: flex;
+    padding-left: 0;
+}
+.sidebar.menu .accordion.item {
+    margin: 0;
+}
+.sidebar.menu a.item.active {
+    background-color: hsla(0,0%,0%,.05);
+}
+.sidebar.menu.inverted a.item.active {
+    background-color: hsla(0,0%,100%,.05);
+}
+.sidebar.menu a.item:hover,
+.sidebar.menu .accordion .title:hover {
+    background-color: hsla(0,0%,0%,.1);
+}
+.sidebar.menu.inverted a.item:hover,
+.sidebar.menu.inverted .accordion .title:hover {
+    background-color: hsla(0,0%,100%,.1);
+}
+.sidebar.menu a,
+.sidebar.menu .icon {
+    color: hsla(0,0%,0%,.9);
+}
+.sidebar.menu.inverted a,
+.sidebar.menu.inverted .icon {
+    color: hsla(0,0%,100%,.9);
+}
+.sidebar.menu a:hover,
+.sidebar.menu .title:hover a {
+    text-decoration: underline;
+}
+.sidebar.menu.vertical .item:before {
+    /* remove gray divider lines */
+    content: none;
+}
+/* indented content
+    Note: we're annoyingly specific with these selectors 
+    because we need to override Semantic's default behavior
+*/
+.sidebar.menu .accordion.item .content:not(.style),
+.sidebar.menu .accordion.item .accordion .title~.content:not(.ui), 
+.sidebar.menu .accordion.item .title~.content:not(.ui)
+ {
+    padding-left: 2rem;
 }
 
 /**

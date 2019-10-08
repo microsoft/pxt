@@ -98,6 +98,10 @@ namespace pxt.blocks {
 
         // remove spaces before after pipe
         nb = nb.replace(/\s*\|\s*/g, '|');
+
+        // lower case first character
+        nb = nb.replace(/^[A-Z]/, (m) => m.toLowerCase());
+
         return nb;
     }
 
@@ -276,6 +280,7 @@ namespace pxt.blocks {
         block?: Map<string>;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
+        translationId?: string;
     }
 
     let _blockDefinitions: Map<BlockDefinition>;
@@ -720,6 +725,16 @@ namespace pxt.blocks {
             block: {
                 message0: Util.lf("continue")
             }
+        }
+
+        if (pxt.Util.isTranslationMode()) {
+            Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
+                pxt.crowdin.inContextLoadAsync(b.block.message0)
+                    .done(r => {
+                        b.translationId = b.block.message0;
+                        b.block.message0 = r;
+                    });
+            })
         }
     }
 }

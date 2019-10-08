@@ -1163,7 +1163,7 @@ namespace pxsim {
                 switch (msg.subtype) {
                     case "config":
                         let cfg = msg as DebuggerConfigMessage
-                        if (cfg.setBreakpoints) {
+                        if (cfg.setBreakpoints && breakpoints) {
                             breakpoints.fill(0)
                             for (let n of cfg.setBreakpoints)
                                 breakpoints[n] = 1
