@@ -8,7 +8,7 @@ and you can volunteer to translate parts of the web site.
 
 ## Crowdin project
 
-The project below contains the resources from https://makecode.com and the menu items of @homeurl@.
+The Crowdin translation project below contains both the resources and menu items from @homeurl@.
 
 * [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
 
@@ -16,15 +16,17 @@ If you want to help with translating the editor, please sign in to Crowdin (or j
 
 ## Translations in context
 
-MakeCode provides [in context translations](https://support.crowdin.com/in-context-localization/) which allow to perform the translations from within the editor itself (or the documentation page).
+MakeCode has the capability for [in context translations](https://support.crowdin.com/in-context-localization/). This allows you to perform translations to text content right at the place where you see it in the editor (or in a documentation page).
 
 https://youtu.be/OugXfqhWUQo
 
 ### ~ hint
 
-In context translation are still being rolled out in editors. It might not be available in your MakeCode editor yet.
+#### In context suppport
 
-### Supported editors
+In context translation is still being rolled out into the editors. It might not be available for your MakeCode editor yet.
+
+### Currently supported editors
 
 * [Maker](https://maker.makecode.com/beta?translate=1) (docs & editor)
 
@@ -32,33 +34,36 @@ In context translation are still being rolled out in editors. It might not be av
 
 ### Documentation translation
 
-In the documentation page, click on the **Translate this page** in the footer (you can try to translate this blog post).
+In a documentation page, click on the **Translate this page** in the footer (you can even try to translate this blog post).
 
 ![Link to enable translation mode in the documentation](/static/blog/translations-in-context/docsbutton.png)
 
-Each piece of text that can be translated will have a colored border and an icon to edit the translation.
-Red border means no translation, blue translation but not validated, green validated translation.
+Each portion of text that is available for translation will have a colored border and an icon to edit the translation. The colored borders mean:
+
+* Red border: the text has no translation
+* Blue border: the text has a translation but it isn't validated/approved
+* Green border: the text has a valdated/approved translation
 
 ![A paragraph of text translated using Crowdin](/static/blog/translations-in-context/docstr.png)
 
 ### Editor translation
 
-To enter the translation mode in the editor, go the gearwheel menu, click **Languages** then the **Translate the editor** button at the bottom.
+To enter translation mode in the editor, go the gearwheel menu, click **Languages** and then click the **Translate the editor** button at the bottom.
 
 ![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
 
-The in context translations mostly work the same as a documentation page. For user interface elements, simply click on the icon to translate them.
+The in context translations, for the most part, work the same as for a documentation page. For user interface elements, simply click on the icon to translate them.
 
 ![An example of incontext translations](/static/blog/translations-in-context/home.png)
 
 For blocks, go to the context menu
-and click **Translate this bloc**
+and click **Translate this block**.
 
-![](/static/blog/translations-in-context/contextmenu.png)
+![Blocks context menu with translate option](/static/blog/translations-in-context/contextmenu.png)
 
 You will be prompted with a dialog that contains the block translatable string.
 
-![](/static/blog/translations-in-context/block.png)
+![Translation dialog](/static/blog/translations-in-context/block.png)
 
 ## Translation roles
 
