@@ -5,6 +5,10 @@ import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { Bitmap, imageLiteralToBitmap } from './ImageEditor/store/bitmap';
 import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
+export interface ImageFieldEditorProps {
+    singleFrame: boolean;
+}
+
 export interface ImageFieldEditorState {
     galleryVisible: boolean;
     galleryFilter?: string;
@@ -17,12 +21,12 @@ interface GalleryItem {
     tags: string[];
 }
 
-export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState> implements FieldEditorComponent {
+export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent {
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
 
-    constructor(props: {}) {
+    constructor(props: ImageFieldEditorProps) {
         super(props);
 
         this.state = {
@@ -45,14 +49,14 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
                 </div>
             </div>
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={true} />
+                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} />
                 <ImageEditorGallery
                     items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")}
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
                 {!this.state.galleryVisible && <button
-                    className="image-editor-confirm ui small button"
+                    className={`image-editor-confirm ui small button ${this.props.singleFrame ? "" : "animation"}`}
                     title={lf("Done")}
                     onClick={this.onDoneClick}>
                         {lf("Done")}
@@ -71,14 +75,13 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
     }
 
     init(value: string, close: () => void, options?: any) {
-        let bitmap = imageLiteralToBitmap(value);
-
-        if (bitmap.width === 0 || bitmap.height === 0) {
-            bitmap = new Bitmap(options.initWidth || 16, options.initHeight || 16)
-        }
-
-        this.ref.initSingleFrame(bitmap, close, options);
         this.closeEditor = close;
+        if (this.props.singleFrame) {
+            this.initSingleFrame(value, options);
+        }
+        else {
+            this.initAnimation(value, options);
+        }
 
         if (options) {
             this.blocksInfo = options.blocksInfo;
@@ -93,7 +96,7 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
 
     getValue() {
         if (this.ref) {
-            return this.ref.getValue();
+            return this.props.singleFrame ? this.ref.getCurrentFrame() : (this.ref.getAllFrames() + this.ref.getInterval());
         }
         return "";
     }
@@ -116,6 +119,29 @@ export class ImageFieldEditor extends React.Component<{}, ImageFieldEditorState>
         if (this.ref) {
             this.ref.onResize();
         }
+    }
+
+    protected initSingleFrame(value: string, options?: any) {
+        let bitmap = imageLiteralToBitmap(value);
+
+        if (bitmap.width === 0 || bitmap.height === 0) {
+            bitmap = new Bitmap(options.initWidth || 16, options.initHeight || 16)
+        }
+
+        this.ref.initSingleFrame(bitmap);
+    }
+
+    protected initAnimation(value: string, options?: any) {
+        const frameString = value.substring(0, value.lastIndexOf("]") + 1);
+        const intervalString = value.substring(frameString.length);
+
+        let frames = parseImageArrayString(frameString);
+
+        if (!frames || !frames.length || frames[0].width === 0 && frames[0].height === 0) {
+            frames = [new Bitmap(options.initWidth || 16, options.initHeight || 16)];
+        }
+
+        this.ref.initAnimation(frames, Number(intervalString));
     }
 
     protected toggleGallery = () => {
@@ -323,4 +349,9 @@ function tickImageEditorEvent(event: string) {
     pxt.tickEvent("image.editor", {
         action: event
     });
+}
+
+function parseImageArrayString(str: string) {
+    str = str.replace(/[\[\]]/mg, "");
+    return str.split(",").map(s => imageLiteralToBitmap(s));
 }

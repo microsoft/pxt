@@ -62,8 +62,8 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         pxt.BrowserUtils.addClass(this.overlayDiv, "blocks-editor-field-overlay")
         this.contentDiv.parentElement.appendChild(this.overlayDiv);
 
-        this.overlayDiv.addEventListener("click", this.handleOutsideClick);
-        document.addEventListener("click", this.handleOutsideClick);
+        this.overlayDiv.addEventListener("mousedown", this.handleOutsideClick);
+        document.addEventListener("mousedown", this.handleOutsideClick);
     }
 
     hide() {
@@ -76,7 +76,7 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         this.contentDiv.style.display = "none";
 
         this.overlayDiv.parentElement.removeChild(this.overlayDiv);
-        document.removeEventListener("click", this.handleOutsideClick);
+        document.removeEventListener("mousedown", this.handleOutsideClick);
 
         if (this.hideCallback) this.hideCallback();
     }
@@ -175,7 +175,15 @@ export function init() {
         }
 
         current = new FieldEditorView(document.getElementById("blocks-editor-field-div") as HTMLDivElement);
-        current.injectElement(<ImageFieldEditor ref={ refHandler } />);
+
+        switch (fieldEditorId) {
+            case "image-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={true} />);
+                break;
+            case "animation-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
+                break;
+        }
 
         if (cachedBounds) current.resize(cachedBounds);
 

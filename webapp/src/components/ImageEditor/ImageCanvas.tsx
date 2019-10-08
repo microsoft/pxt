@@ -71,13 +71,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
         // bindGestureEvents(this.floatingLayer, this);
 
-        (this.refs["canvas-bounds"] as HTMLDivElement).addEventListener("wheel", ev => {
+        const canvasBounds = this.refs["canvas-bounds"] as HTMLDivElement;
+
+        canvasBounds.addEventListener("wheel", ev => {
             this.updateZoom(ev.deltaY / 30, ev.clientX, ev.clientY);
             ev.preventDefault();
         });
 
-        (this.refs["canvas-bounds"] as HTMLDivElement).addEventListener("mousemove", ev => {
+        canvasBounds.addEventListener("mousemove", ev => {
             if (!this.edit) this.updateCursorLocation(ev);
+        });
+
+        canvasBounds.addEventListener("mouseout", ev => {
+            if (!this.edit) this.updateCursorLocation(null);
         });
 
         const { imageState } = this.props;
@@ -172,6 +178,12 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected updateCursorLocation(coord: ClientCoordinates): boolean {
+        if (!coord) {
+            this.cursorLocation = null;
+            if (!this.edit) this.redraw();
+            return false;
+        }
+
         if (this.canvas) {
             const rect = this.canvas.getBoundingClientRect();
             const x = Math.floor(((coord.clientX - rect.left) / rect.width) * this.imageWidth);
@@ -179,6 +191,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             if (!this.cursorLocation || x !== this.cursorLocation[0] || y !== this.cursorLocation[1]) {
                 this.cursorLocation = [x, y];
+
+                if (!this.edit) this.redraw();
 
                 this.updateCursor(!!this.edit, this.editState.inFloatingLayer(x, y));
                 return true;
@@ -251,12 +265,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 layerOffsetY: this.editState.layerOffsetY,
                 floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data()
             });
-
         }
     }
 
     protected redraw() {
-        const { imageState, prevFrame: nextFrame, onionSkinEnabled } = this.props;
+        const { imageState, prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth } = this.props;
 
         if (this.canvas) {
             this.imageWidth = imageState.bitmap.width;
@@ -288,6 +301,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             else {
                 this.drawBitmap(this.editState.image);
                 this.redrawFloatingLayer(this.editState);
+
+                if (this.cursorLocation && this.shouldDrawCursor()) {
+                    this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, selectedColor );
+                }
             }
 
             // Only redraw checkerboard if the image size has changed
@@ -313,7 +330,6 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                     }
                 }
             }
-
         }
     }
 
@@ -366,6 +382,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                     if (!transparent) context.clearRect((x + x0) * SCALE, (y + y0) * SCALE, SCALE, SCALE);
                 }
             }
+        }
+    }
+
+    protected drawCursor(top: number, left: number, width: number, color: number) {
+        const context = this.canvas.getContext("2d");
+        context.imageSmoothingEnabled = false;
+
+        if (color) {
+            context.fillStyle = this.props.colors[color]
+            context.fillRect(top * SCALE, left * SCALE, width * SCALE, width * SCALE);
+        }
+        else {
+            context.clearRect(top * SCALE, left * SCALE, width * SCALE, width * SCALE);
         }
     }
 
@@ -487,6 +516,18 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
+
+    protected shouldDrawCursor() {
+        switch (this.props.tool) {
+            case ImageEditorTool.Fill:
+            case ImageEditorTool.Marquee:
+            case ImageEditorTool.Pan:
+            case ImageEditorTool.ColorSelect:
+                return false;
+            default:
+                return true;
+        }
+    }
 }
 
 
