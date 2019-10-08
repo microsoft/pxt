@@ -469,10 +469,17 @@ svg {
     /* remove gray divider lines */
     content: none;
 }
-/* indented content */
-.sidebar.menu .accordion.item .content:not(.style) {
+/* indented content
+    Note: we're annoyingly specific with these selectors 
+    because we need to override Semantic's default behavior
+*/
+.sidebar.menu .accordion.item .content:not(.style),
+.sidebar.menu .accordion.item .accordion .title~.content:not(.ui), 
+.sidebar.menu .accordion.item .title~.content:not(.ui)
+ {
     padding-left: 2rem;
 }
+
 
 /**
 print only stuff
