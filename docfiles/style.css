@@ -359,13 +359,12 @@ svg {
 .article {
     display: grid;
     width: 100%;
-    grid-template-columns: 7.5% 1fr;
+    grid-template-columns: 7.5% 1fr 1em;
 }
 
 .article-inner {
     grid-column: 2;
     padding-left: 0;
-    padding-right: 2em;
 }
 
 /* Limit width of content so that it is readable */
@@ -380,7 +379,7 @@ svg {
 
 @media only screen and (max-width: 813px) {
     .article {
-        grid-template-columns: 0 1fr;
+        grid-template-columns: 0 1fr 0;
     }
     #docs .article .article-inner > div {
         margin-left: 1em !important;
@@ -402,9 +401,8 @@ print only stuff
         top: 0;
     }
     .pusher .article-inner {
-        grid-template-columns: 0 1fr;
+        grid-template-columns: 0 1fr 0;
         position: relative;
-        padding-left: 0em;
         margin-top: 0;
     }
     .showprint {
