@@ -9,7 +9,7 @@ it can be very tricky to find which strings to translate first.
 
 To address the issues above, **we have added [in context translations](https://support.crowdin.com/in-context-localization/)** which allow to perform the translations from within the editor itself (or the documentation page). No need to go through the Crowdin web site anymore.
 
-![An example of incontext translations](/static/blog/translations-in-context/home.png)
+https://youtu.be/OugXfqhWUQo
 
 ## Documentation translation
 
@@ -28,7 +28,11 @@ To enter the translation mode in the editor, go the gearwheel menu, click **Lang
 
 ![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
 
-The in context translations mostly work the same as a documentation page. For blocks, go to the context menu
+The in context translations mostly work the same as a documentation page. For user interface elements, simply click on the icon to translate them.
+
+![An example of incontext translations](/static/blog/translations-in-context/home.png)
+
+For blocks, go to the context menu
 and click **Translate this bloc**
 
 ![](/static/blog/translations-in-context/contextmenu.png)

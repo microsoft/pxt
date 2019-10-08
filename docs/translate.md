@@ -18,7 +18,7 @@ If you want to help with translating the editor, please sign in to Crowdin (or j
 
 MakeCode provides [in context translations](https://support.crowdin.com/in-context-localization/) which allow to perform the translations from within the editor itself (or the documentation page).
 
-![An example of incontext translations](/static/blog/translations-in-context/home.png)
+https://youtu.be/OugXfqhWUQo
 
 ### ~ hint
 
@@ -43,7 +43,11 @@ To enter the translation mode in the editor, go the gearwheel menu, click **Lang
 
 ![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
 
-The in context translations mostly work the same as a documentation page. For blocks, go to the context menu
+The in context translations mostly work the same as a documentation page. For user interface elements, simply click on the icon to translate them.
+
+![An example of incontext translations](/static/blog/translations-in-context/home.png)
+
+For blocks, go to the context menu
 and click **Translate this bloc**
 
 ![](/static/blog/translations-in-context/contextmenu.png)
