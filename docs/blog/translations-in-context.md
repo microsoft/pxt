@@ -47,7 +47,7 @@ You will be prompted with a dialog that contains the block translatable string.
 
 ## Roll-out
 
-The in-context translations are available in the beta editions of these editors.
+The in context translations are available in the beta editions of these editors.
 
 * `/beta` version of [micro:bit editor](https://makecode.microbit.org/beta)
 * `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
