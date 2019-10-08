@@ -283,7 +283,12 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return { ...state, cursorSize: action.cursorSize };
         case actions.CHANGE_SELECTED_COLOR:
             tickEvent(`foreground-color-${action.selectedColor}`);
-            return { ...state, selectedColor: action.selectedColor };
+
+            // If the selected tool is the eraser, make sure to switch to pencil
+            return { ...state,
+                selectedColor: action.selectedColor,
+                tool: state.tool === ImageEditorTool.Erase ? ImageEditorTool.Paint : state.tool
+            };
         case actions.CHANGE_CURSOR_LOCATION:
             return { ...state, cursorLocation: action.cursorLocation };
         case actions.CHANGE_BACKGROUND_COLOR:
