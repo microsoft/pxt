@@ -351,6 +351,10 @@ namespace pxt.editor {
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
+
+        // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
+        onCodeStart?: () => void;
+        onCodeStop?: () => void;
     }
 
     export interface FieldExtensionOptions {
