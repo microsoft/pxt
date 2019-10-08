@@ -298,7 +298,6 @@
     }
 
     .footer {
-        background: #292A33;
         margin-left: 0;
         margin-right: 0;
         margin-top: 3em;
@@ -319,9 +318,10 @@
             }
         }
 
-        // .divider {
-        //     color:
-        // }
+        .divider {
+            border-top: 1px solid rgba(255,255,255,0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
         .ui.divided.horizontal.list > .item:not(:first-child) {
             border-left: 1px solid rgba(255, 255, 255, .4);
@@ -329,6 +329,11 @@
 
         span.item {
             color: rgba(255, 255, 255, .6);
+        }
+
+        span.item,
+        img {
+            vertical-align: middle;
         }
 
         &> .ui.container {

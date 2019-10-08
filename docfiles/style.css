@@ -400,6 +400,12 @@ svg {
     margin-left: 0 !important;
 }
 
+#docs .footer,
+.ui.menu.fixed,
+.ui.menu.sidebar {
+    background: #292A33;
+}
+
 /**
 print only stuff
 **/
