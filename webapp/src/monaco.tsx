@@ -428,42 +428,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.showPackageDialog();
     }
 
-    private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
+    private defineEditorTheme(hc?: boolean) {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
-        const invertedColorluminosityMultipler = 0.6;
         let rules: monaco.editor.ITokenThemeRule[] = [];
-        if (!hc && withNamespaces) {
-            const colors: pxt.Map<string> = {};
-            this.getNamespaces().forEach((ns) => {
-                const metaData = this.getNamespaceAttrs(ns);
-                const blocks = snippets.isBuiltin(ns) ?
-                    snippets.getBuiltinCategory(ns).blocks.concat(this.nsMap[ns] || []) : this.nsMap[ns];
-
-                if (metaData.color && blocks) {
-                    let hexcolor = fixColor(metaData.color);
-                    blocks.forEach((fn) => {
-                        rules.push({ token: `identifier.ts ${fn.name}`, foreground: hexcolor });
-                    });
-                    rules.push({ token: `identifier.ts ${ns}`, foreground: hexcolor });
-                    colors[ns] = metaData.color;
-                }
-            })
-
-            rules.push({ token: `identifier.ts if`, foreground: '5B80A5', });
-            rules.push({ token: `identifier.ts else`, foreground: '5B80A5', });
-            rules.push({ token: `identifier.ts while`, foreground: '5BA55B', });
-            rules.push({ token: `identifier.ts for`, foreground: '5BA55B', });
-
-            const pauseUntil = pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock;
-            if (pauseUntil) {
-                const call = pauseUntil.callName || "pauseUntil";
-                const color = pauseUntil.color || colors[pauseUntil.category];
-
-                if (color) {
-                    rules.push({ token: `identifier.ts ${call}`, foreground: fixColor(color) });
-                }
-            }
-        }
 
         const colors = pxt.appTarget.appTheme.monacoColors || {};
         monaco.editor.defineTheme('pxtTheme', {
@@ -473,11 +440,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             colors: hc ? {} : colors
         });
         monaco.editor.setTheme('pxtTheme');
-
-        function fixColor(hexcolor: string) {
-            hexcolor = pxt.toolbox.convertColor(hexcolor);
-            return (inverted ? pxt.toolbox.fadeColor(hexcolor, invertedColorluminosityMultipler, true) : hexcolor).replace('#', '');
-        }
     }
 
     saveToTypeScriptAsync() {
@@ -502,7 +464,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
+        if (this.loadMonacoPromise) this.defineEditorTheme(hc);
     }
 
     beforeCompile() {
@@ -1049,7 +1011,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.nsMap = this.partitionBlocks();
             this.updateToolbox();
             pxt.vs.syncModels(pkg.mainPkg, this.extraLibs, file.getName(), file.isReadonly())
-            this.defineEditorTheme(hc, true);
+            this.defineEditorTheme(hc);
         });
     }
 

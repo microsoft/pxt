@@ -429,55 +429,6 @@ namespace pxt.runner {
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
-    function renderNamespaces(options: ClientRenderOptions): Promise<void> {
-        if (pxt.appTarget.id == "core") return Promise.resolve();
-
-        return pxt.runner.decompileToBlocksAsync('', options)
-            .then((r) => {
-                let res: pxt.Map<string> = {};
-                const info = r.compileBlocks.blocksInfo;
-                info.blocks.forEach(fn => {
-                    const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                    if (!res[ns]) {
-                        const nsn = info.apis.byQName[ns];
-                        if (nsn && nsn.attributes.color)
-                            res[ns] = nsn.attributes.color;
-                    }
-                });
-                let nsStyleBuffer = '';
-                Object.keys(res).forEach(ns => {
-                    const color = res[ns] || '#dddddd';
-                    nsStyleBuffer += `
-                        span.docs.${ns.toLowerCase()} {
-                            background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
-                        }
-                    `;
-                })
-                return nsStyleBuffer;
-            })
-            .then((nsStyleBuffer) => {
-                Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                    const color = pxt.toolbox.getNamespaceColor(ns);
-                    nsStyleBuffer += `
-                        span.docs.${ns.toLowerCase()} {
-                            background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
-                        }
-                    `;
-                })
-                return nsStyleBuffer;
-            })
-            .then((nsStyleBuffer) => {
-                // Inject css
-                let nsStyle = document.createElement('style');
-                nsStyle.id = "namespaceColors";
-                nsStyle.type = 'text/css';
-                let head = document.head || document.getElementsByTagName('head')[0];
-                head.appendChild(nsStyle);
-                nsStyle.appendChild(document.createTextNode(nsStyleBuffer));
-            });
-    }
 
     function renderInlineBlocksAsync(options: pxt.blocks.BlocksRenderOptions): Promise<void> {
         options = Util.clone(options);
@@ -896,7 +847,6 @@ namespace pxt.runner {
         renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
-            .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
