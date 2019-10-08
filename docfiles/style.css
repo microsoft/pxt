@@ -335,6 +335,12 @@ svg {
     margin-bottom: 45px;
 }
 
+.ui.menu.sidebar .menuContainer {
+    /* match with menu bar height */
+    max-height: calc(100% - 3.5rem);
+    overflow-y: scroll;
+}
+
 .cc-banner {
     display: none;
 }

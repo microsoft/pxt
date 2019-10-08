@@ -22,7 +22,9 @@ namespace pxt.docs {
         "activities": "<!-- activities -->",
         "explicitHints": "<!-- hints -->",
         "flyoutOnly": "<!-- flyout -->",
-        "hideIteration": "<!-- iter -->"
+        "hideIteration": "<!-- iter -->",
+        "codeStart": "<!-- start -->",
+        "codeStop": "<!-- stop -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {

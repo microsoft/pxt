@@ -578,12 +578,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     zoomIn() {
         if (!this.editor) return;
-        this.editor.zoomCenter(2);
+        this.editor.zoomCenter(0.8);
     }
 
     zoomOut() {
         if (!this.editor) return;
-        this.editor.zoomCenter(-2);
+        this.editor.zoomCenter(-0.8);
     }
 
     setScale(scale: number) {
@@ -945,13 +945,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 colour: pxt.appTarget.appTheme.coloredToolbox,
                 inverted: pxt.appTarget.appTheme.invertedToolbox
             },
+            move: {
+                wheel: true
+            },
             zoom: {
                 enabled: false,
                 controls: false,
-                wheel: true,
                 maxScale: 2.5,
                 minScale: .2,
-                scaleSpeed: 1.05,
+                scaleSpeed: 1.5,
                 startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.9
             },
             rtl: Util.isUserLanguageRtl()

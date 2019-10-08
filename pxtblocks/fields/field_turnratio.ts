@@ -25,7 +25,7 @@ namespace pxtblockly {
          * @constructor
          */
         constructor(value_: any, params: FieldTurnRatioOptions, opt_validator?: Function) {
-            super(String(value_), '-200', '200', null, '10', 'TurnRatio', opt_validator);
+            super(String(value_), '-200', '200', '1', '10', 'TurnRatio', opt_validator);
             this.params = params;
             (this as any).sliderColor_ = '#a8aaa8';
         }

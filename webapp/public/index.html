@@ -12,10 +12,18 @@
         _jipt.push(['escape', function() {
             window.location.href = window.location.href.replace(/[$\?]translate=1/, '');
         }]);
-        let s = document.createElement("script");
-        s.setAttribute("type", "text/javascript");
-        s.setAttribute("src", "//cdn.crowdin.com/jipt/jipt.js");
-        document.head.insertBefore(s, document.head.firstElementChild);
+        _jipt.push(['before_dom_insert', function(text, node, attribute) {
+            if (text)
+                text = text.replace(/^\{(id|loc):[^\}]+\}/g, '');
+            return text;
+        }]);
+        // inject crowdin
+        (function _() {
+            var s = document.createElement("script");
+            s.setAttribute("type", "text/javascript");
+            s.setAttribute("src", "//cdn.crowdin.com/jipt/jipt.js");
+            document.head.insertBefore(s, document.head.firstElementChild);
+        })();
     }
 	</script>
 
