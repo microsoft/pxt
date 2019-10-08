@@ -66,6 +66,18 @@ code.hljs {
     padding: 0 !important;
 }
 
+.codesnippet .blocks-svg-list,
+.codesnippet code {
+    max-height: 35em;
+    overflow-y: scroll;
+    overflow-x: overlay;
+}
+
+pre {
+    max-height: 50em;
+    overflow: hidden;
+}
+
 .ui[class*="5:3"].embed {
     padding-bottom: 83%;
     background:transparent !important;
