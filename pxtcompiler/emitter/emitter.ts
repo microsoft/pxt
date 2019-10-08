@@ -2030,7 +2030,7 @@ ${lbl}: .short 0xffff
             let decl = getDeclCore(node)
             markUsed(decl)
 
-            if (!decl && node.kind == SK.PropertyAccessExpression) {
+            if (!decl && node && node.kind == SK.PropertyAccessExpression) {
                 const namedNode = node as PropertyAccessExpression
                 decl = {
                     kind: SK.PropertySignature,
