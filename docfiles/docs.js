@@ -237,7 +237,7 @@ function setupBlocklyAsync() {
 }
 
 function renderSnippets() {
-    if (!ksRunnerReady) return; // probably in pxt docs
+    if (typeof ksRunnerReady === "undefined") return; // probably in pxt docs
 
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
