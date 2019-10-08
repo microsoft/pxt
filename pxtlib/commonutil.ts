@@ -182,7 +182,7 @@ namespace ts.pxtc.Util {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
         }
 
-        lfmt = lfmt.replace(/\{(id|loc):[^\}]+\}/g, '');
+        lfmt = lfmt.replace(/^\{(id|loc):[^\}]+\}/g, '');
 
         return fmt_va(lfmt, args);
     }

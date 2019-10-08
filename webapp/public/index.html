@@ -14,7 +14,7 @@
         }]);
         _jipt.push(['before_dom_insert', function(text, node, attribute) {
             if (text)
-                text = text.replace(/\{(id|loc):[^\}]+\}/g, '');
+                text = text.replace(/^\{(id|loc):[^\}]+\}/g, '');
             return text;
         }]);
         // inject crowdin
