@@ -7,7 +7,7 @@ Unfortunately, they also reminded us that translation was not as smooth as can b
 MakeCode uses [Crowdin](https://crowdin.com/) to manage the localization of all content, APIs and documentation. With so much content,
 it can be very tricky to find which strings to translate first.
 
-To address the issues above, we integrated the [in context translations](https://support.crowdin.com/in-context-localization/) from Crowdin which allow to perform the translations from within the editor itself (or the documentation page). No need to go through the Crowdin web site anymore.
+To address the issues above, **we have added [in context translations](https://support.crowdin.com/in-context-localization/)** which allow to perform the translations from within the editor itself (or the documentation page). No need to go through the Crowdin web site anymore.
 
 ![An example of incontext translations](/static/blog/translations-in-context/home.png)
 
