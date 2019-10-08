@@ -49,6 +49,7 @@ import * as serialindicator from "./serialindicator"
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
+import * as blocklyFieldView from "./blocklyFieldView";
 
 type IAppProps = pxt.editor.IAppProps;
 type IAppState = pxt.editor.IAppState;
@@ -1888,6 +1889,18 @@ export class ProjectView
             cfg.files.push("main.py");
             files["main.py"] = "\n";
         }
+        if (options.tutorial && options.tutorial.metadata) {
+            if (options.tutorial.metadata.codeStart) {
+                let codeStart = "_onCodeStart.ts";
+                files[codeStart] = "control._onCodeStart('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStart) + "')";
+                cfg.files.splice(cfg.files.indexOf("main.ts"), 0, codeStart);
+            }
+            if (options.tutorial.metadata.codeStop) {
+                let codeStop = "_onCodeStop.ts";
+                files[codeStop] = "control._onCodeStop('" + pxt.U.htmlEscape(options.tutorial.metadata.codeStop) + "')";
+                cfg.files.push(codeStop);
+            }
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
@@ -3291,13 +3304,16 @@ export class ProjectView
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
+        const hideTutorialIteration = inTutorial && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
         const simDebug = !!targetTheme.debugger || inDebugMode;
+        const flyoutOnly = this.state.editorState && !this.state.editorState.hasCategories;
 
-        const { hideMenuBar, hideEditorToolbar, transparentEditorToolbar } = targetTheme;
+        const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
+        const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration;
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
@@ -3341,6 +3357,8 @@ export class ProjectView
             greenScreen ? "greenscreen" : "",
             logoWide ? "logo-wide" : "",
             isHeadless ? "headless" : "",
+            flyoutOnly ? "flyoutOnly" : "",
+            hideTutorialIteration ? "hideIteration" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -3834,6 +3852,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initLogin();
     hash = parseHash();
     appcache.init(() => theEditor.reloadEditor());
+    blocklyFieldView.init();
 
     pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
@@ -3863,14 +3882,24 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
-            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-            if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
-                pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+            const href = window.location.href;
+            let live = false;
+            let force = false;
+            let useLang: string = undefined;
+            if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
+                console.log(`translation mode`);
+                live = force = true;
+                useLang = ts.pxtc.Util.TRANSLATION_LOCALE;
+            } else {
+                const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+                if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
+                    pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
+                }
+                useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                const locstatic = /staticlang=1/i.test(window.location.href);
+                live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
+                force = !!mlang && !!mlang[2];
             }
-            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            const locstatic = /staticlang=1/i.test(window.location.href);
-            const live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
-            const force = !!mlang && !!mlang[2];
             const targetId = pxt.appTarget.id;
             const baseUrl = config.commitCdnUrl;
             const pxtBranch = pxt.appTarget.versions.pxtCrowdinBranch;

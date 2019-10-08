@@ -70,7 +70,7 @@ function setupSidebar() {
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
-                document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
+                $(".sidebar .focused").focus();
                 scrollActiveHeaderIntoView();
             },
             onHidden: function () {
@@ -193,6 +193,10 @@ function setupSemantic() {
         window.print();
     })
 
+    $('#translatebtn').on("click", function () {
+        window.location.href = window.location.href.replace(/#.*/, '') + (window.location.href.indexOf('?') > -1 ? "&" : "?") + "translate=1"
+    })
+
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
@@ -233,6 +237,8 @@ function setupBlocklyAsync() {
 }
 
 function renderSnippets() {
+    if (!ksRunnerReady) return; // probably in pxt docs
+
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
         setupBlocklyAsync()
@@ -241,7 +247,7 @@ function renderSnippets() {
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
-                    staticPythonClass: 'lang-spy', 
+                    staticPythonClass: 'lang-spy',
                     shuffleClass: 'lang-shuffle',
                     simulatorClass: 'lang-sim',
                     linksClass: 'lang-cards',

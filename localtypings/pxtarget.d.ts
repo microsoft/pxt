@@ -511,6 +511,7 @@ declare namespace ts.pxtc {
         undeletable?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string; // format of the block, used at namespace level for category name
+        translationId?: string; // in-context translation id
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
         blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
@@ -551,6 +552,7 @@ declare namespace ts.pxtc {
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
         argsNullable?: boolean; // allow NULL to be passed to C++ shim function
+        maxBgInstances?: string; // if there's less than that number of instances of the current class, it's not reported as a mem leak
 
         // on class
         snippet?: string; // value used to generate TS snippet
@@ -803,6 +805,8 @@ declare namespace pxt.tutorial {
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
         flyoutOnly?: boolean; // no categories, display all blocks in flyout
         hideIteration?: boolean; // hide step control in tutorial
+        codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
+        codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
     }
 
     interface TutorialStepInfo {

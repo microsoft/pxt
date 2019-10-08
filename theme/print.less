@@ -21,6 +21,15 @@
         overflow: hidden !important;
     }
 
+    /* bigger fonts */
+    body {
+        color: #000 !important; /* explicit colors */
+        background: #fff !important;        
+        font-size: 12pt;
+        line-height: 1.3;
+        position: inherit !important;
+    }        
+    
     #docs {
         position: inherit !important; /* otherwise prints a single page */
 
@@ -34,13 +43,6 @@
         ul, ol, dl {
             page-break-before: avoid !important;
         }
-        /* bigger fonts */
-        body {
-            color: #000 !important; /* explicit colors */
-            background: #fff !important;        
-            font-size: 12pt;
-            line-height: 1.3;
-        }        
         /* hide videos */
         div.ui.embed.mdvid {
             display: none !important;
@@ -93,8 +95,8 @@
     /* page margins */
     @page {
         margin-top: 2cm;
-        margin-left: 2.5cm;
-        margin-right: 2.5cm;
+        margin-left: 2cm;
+        margin-right: 2cm;
         margin-bottom: 2cm;
     }
 
