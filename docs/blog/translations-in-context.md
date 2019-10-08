@@ -19,8 +19,6 @@ In a documentation page, click on the **Translate this page** link in the footer
 
 ![Link to enable translation mode in the documentation](/static/blog/translations-in-context/docsbutton.png)
 
-Each piece of text that can be translated will have a colored border and an icon to edit the translation.
-
 Each portion of text that is available for translation will have a colored border and an icon to edit the translation. The colored borders mean:
 
 * Red border: the text has no translation
