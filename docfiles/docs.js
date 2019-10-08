@@ -135,12 +135,22 @@ function setupSemantic() {
     $.fn.embed.settings.templates.placeholder = function (image, icon) {
         var html = '';
         if (icon) {
-            html += '<i class="' + icon + ' icon"></i>';
+            html += '<i class="' + icon.replace(/[^\w ]*/g, '') + ' icon"></i>';
         }
         if (image) {
             //Remove the timestamp from the YouTube source URL
             image = image.replace(/\#t=([0-9]+m)?([0-9]+s)?/, "");
-            html += '<img class="placeholder" src="' + image + '">';
+
+            html += `<div class="placeholder" style="
+    background-image: url(${encodeURI(image)});
+    background-size: cover;
+    background-position: 50% 50%;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top:  0;
+    left:  0;
+"></div>`
         }
         return html;
     };
@@ -165,7 +175,7 @@ function setupSemantic() {
             src += (/\?/.test(url) ? '&' : '?') + parameters;
         }
         return ''
-            + '<iframe src="' + src + '"'
+            + '<iframe src="' + encodeURI(src) + '"'
             + ' width="100%" height="100%"'
             + ' frameborder="0" scrolling="no" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>'
             ;
