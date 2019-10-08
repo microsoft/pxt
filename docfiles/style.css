@@ -311,9 +311,6 @@ svg {
 }
 
 .ui.menu.tocmenu .menuContainer {
-    overflow-y: scroll;
-    /* match with menu bar height */
-    max-height: calc(100% - 3.5rem);
     margin-bottom: 45px;
 }
 
