@@ -262,7 +262,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
         }
         else if (this.refs["floating-frame"]) {
             const floating = this.refs["floating-frame"] as HTMLDivElement;
-            floating.style.top = scrollY + this.scrollOffset + "px";
+            floating.style.top = scrollY + "px";
 
             this.setState({ dropPreviewIndex: index });
         }
