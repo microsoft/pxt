@@ -1,13 +1,5 @@
 # Microsoft MakeCode Blog
 
-## [Translations In Context](/blog/translations-in-context)
-
-November 8th, 2019 by [pelikhan](https://github.com/pelikhan)
-
-Lost in translation with MakeCode? Try the new in-context translations.
-**[Continue reading this blog post](/blog/translations-in-context)**
-
-
 ## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
 
 September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
