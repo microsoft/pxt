@@ -88,7 +88,7 @@ function setupSidebar() {
         .accordion({
             closeNested: true,
             selector: {
-                trigger: '.title .icon'
+                trigger: '> .title'
             }
         });
 
