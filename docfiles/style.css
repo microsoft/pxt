@@ -342,8 +342,10 @@ svg {
     border-radius: 0;
 }
 
-.ui.menu.tocmenu .menuContainer {
-    margin-bottom: 45px;
+.sidebar.menu .menuContainer {
+    /* extra padding at the bottom
+     so we can always scroll a little past the content*/
+    margin-bottom: 5rem;
 }
 
 .cc-banner {
