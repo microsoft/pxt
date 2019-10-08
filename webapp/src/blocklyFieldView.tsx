@@ -62,8 +62,8 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         pxt.BrowserUtils.addClass(this.overlayDiv, "blocks-editor-field-overlay")
         this.contentDiv.parentElement.appendChild(this.overlayDiv);
 
-        this.overlayDiv.addEventListener("click", this.handleOutsideClick);
-        document.addEventListener("click", this.handleOutsideClick);
+        this.overlayDiv.addEventListener("mousedown", this.handleOutsideClick);
+        document.addEventListener("mousedown", this.handleOutsideClick);
     }
 
     hide() {
@@ -76,7 +76,7 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         this.contentDiv.style.display = "none";
 
         this.overlayDiv.parentElement.removeChild(this.overlayDiv);
-        document.removeEventListener("click", this.handleOutsideClick);
+        document.removeEventListener("mousedown", this.handleOutsideClick);
 
         if (this.hideCallback) this.hideCallback();
     }
