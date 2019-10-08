@@ -20,6 +20,12 @@ MakeCode provides [in context translations](https://support.crowdin.com/in-conte
 
 ![An example of incontext translations](/static/blog/translations-in-context/home.png)
 
+### ~ hint
+
+In context translations are not supported in Internet Explorer.
+
+### ~
+
 ### Documentation translation
 
 In the documentation page, click on the **Translate this page** in the footer (you can try to translate this blog post).
