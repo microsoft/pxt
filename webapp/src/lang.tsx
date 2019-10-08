@@ -121,6 +121,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                         )}
                     </div>
                 </div>
+                <br/>
                 {targetTheme.crowdinProject ?
                     <div className="ui">
                         {!pxt.BrowserUtils.isIE() ? <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> : undefined }
