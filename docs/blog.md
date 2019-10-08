@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Translations in Context](/blog/translations-in-context)
+
+October 8, 2018 by [pelikhan](https://github.com/pelikhan)
+
+Last week, we had the good fortune of meeting plenty of MakeCode users at micro:bit live.
+With many of the participants coming from a non-English speaking background, it reminded me again of how important it is to localize the editors.
+**[Continue reading this blog post](/blog/translations-in-context)**
+
 ## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
 
 September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
