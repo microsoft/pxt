@@ -397,11 +397,11 @@ svg {
     margin-left: 0 !important;
 }
 
-#docs .footer,
+/* #docs .footer,
 .ui.menu.fixed,
 .ui.menu.sidebar {
-    background: #292A33;
-}
+    background: hsl(257, 15%, 20%);
+} */
 
 .article-inner .column {
     padding-left: 0 !important;

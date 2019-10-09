@@ -6,6 +6,7 @@
 @docsBackgroundColor: white;
 @docsTextColor: #333;
 @docsLineHeight: 1.7;
+@docsHeaderHue: 257;
 
 /* Text color */
 @docsHeadingColor: @docsTextColor;
@@ -27,6 +28,13 @@
 
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
+
+#docs .footer,
+.ui.menu.fixed,
+.ui.menu.sidebar {
+    /** TODO: invert sidebar (use shades of this color as emphasis color against light background) **/
+    background: hsl(@docsHeaderHue, 15%, 20%);
+}
 
 #docs {
     background-color: @docsBackgroundColor;
