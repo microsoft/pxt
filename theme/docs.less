@@ -355,6 +355,83 @@
     }
 }
 
+
+.sidebar.menu {
+    /* Sidebar TOC */
+    .item:before {
+        content:none;
+        width: 0;
+        height: 0;
+    }
+    .item,
+    .accordion .title {
+        padding: 0.8rem;
+        padding-left: 2rem;
+        display: flex;
+        flex-direction: row;
+    }
+    .accordion.item {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .accordion.item .title .icon {
+        font-size: 0.8em;
+        width: 2rem;
+        margin: 0;
+        transform: translateY(0.1rem);
+    }
+    .accordion.item .title.active .icon {
+        transform: translateY(0.1rem) rotate(90deg);
+    }
+    .accordion.item .title {
+        display: flex;
+        padding-left: 0;
+    }
+    .accordion.item {
+        margin: 0;
+    }
+    a.item.active {
+        background-color: hsla(0,0%,0%,.05);
+    }
+    &.inverted a.item.active {
+        background-color: hsla(0,0%,100%,.05);
+    }
+    a.item:hover,
+    .accordion .title:hover {
+        background-color: hsla(0,0%,0%,.1);
+    }
+    &.inverted a.item:hover,
+    &.inverted .accordion .title:hover {
+        background-color: hsla(0,0%,100%,.1);
+    }
+    a,
+    .icon {
+        color: hsla(0,0%,0%,.9);
+    }
+    &.inverted a,
+    &.inverted .icon {
+        color: hsla(0,0%,100%,.9);
+    }
+    a:hover,
+    .title:hover a {
+        text-decoration: underline;
+    }
+    &.vertical .item:before {
+        /* remove gray divider lines */
+        content: none;
+    }
+    /* indented content
+        Note: we're annoyingly specific with these selectors 
+        because we need to override Semantic's default behavior
+    */
+    .accordion.item .content:not(.style),
+    .accordion.item .accordion .title~.content:not(.ui), 
+    .accordion.item .title~.content:not(.ui) {
+        padding-left: 2rem;
+    }
+}
+
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;
 }
