@@ -330,8 +330,8 @@ namespace pxt.runner {
                 trs.append($(`<div class="ui header"><i class="ui xicon globe" /></div>`));
                 if (symbolInfo.attributes.translationId)
                     trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
-                trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
-                //if (symbolInfo.attributes.jsDoc) trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
+                if (symbolInfo.attributes.jsDoc)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
                 trs.insertAfter(c);
             }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
