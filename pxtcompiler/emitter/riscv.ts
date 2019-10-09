@@ -379,22 +379,6 @@ namespace ts.pxtc.riscv {
             return l - pc;
         }
 
-        public isPop(opcode: number): boolean {
-            return opcode == 0xbc00;
-        }
-
-        public isPush(opcode: number): boolean {
-            return opcode == 0xb400;
-        }
-
-        public isAddSP(opcode: number): boolean {
-            return opcode == 0xb000;
-        }
-
-        public isSubSP(opcode: number): boolean {
-            return opcode == 0xb080;
-        }
-
         public registerNo(actual: string) {
             if (!actual) return null;
             actual = actual.toLowerCase()
