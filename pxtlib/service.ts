@@ -482,7 +482,7 @@ namespace ts.pxtc {
                 if (locJsDoc) {
                     fn.attributes.jsDoc = locJsDoc;
                     if (fn.parameters)
-                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || attrLocs[`${langLower}|param|${pi.name}`] || pi.description);
                 }
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
                 let locBlock = loc[`${fn.qName}|block`] || attrLocs[attrBlockLocsKey];
@@ -593,9 +593,17 @@ namespace ts.pxtc {
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (!v) v = "";
-                    if (U.startsWith(n, "block.")) {
+                    if (U.startsWith(n, "loc.block.")) {
                         if (!res.locs) res.locs = {};
-                        res.locs[n.slice("block.".length).toLowerCase() + "|block"] = v;
+                        res.locs[n.slice("loc.block.".length).toLowerCase() + "|block"] = v;
+                    } else if (U.startsWith(n, "loc.jsdoc.")) {
+                        if (!res.locs) res.locs = {};
+                        res.locs[n.slice("loc.jsdoc.".length).toLowerCase() + "|jsdoc"] = v;
+                    } else if (U.contains(n, ".loc.")) {
+                        if (!res.locs) res.locs = {};
+                        const p = n.slice(0, n.indexOf('.loc.'));
+                        const l = n.slice(n.indexOf('.loc.') + '.loc'.length);
+                        res.locs[p + "|param|" + l] = v;
                     } else if (U.endsWith(n, ".defl")) {
                         if (v.indexOf(" ") > -1) {
                             res.paramDefl[n.slice(0, n.length - 5)] = `"${v}"`

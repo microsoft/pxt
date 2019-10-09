@@ -455,8 +455,8 @@ describe("comment attribute parser", () => {
              * Bla
              */
             //% block="$micros $whatever=oldShadowBlock"
-            //% block.fr="FRENCH"
-            //% block.es="SPANISH"
+            //% loc.block.fr="FRENCH"
+            //% loc.block.es="SPANISH"
         `)._def;
 
         checkLoc("fr", "FRENCH");
