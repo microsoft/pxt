@@ -105,7 +105,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
             },
             onDragStart: coord => {
                 last = coord.clientY;
-                addClass(this.frameScroller, "scrolling");
+                pxt.BrowserUtils.addClass(this.frameScroller, "scrolling");
 
                 const parent = this.frameScroller.getBoundingClientRect();
                 const scrollY = coord.clientY - parent.top;
@@ -142,7 +142,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
             },
             onDragEnd: () => {
                 last = null;
-                removeClass(this.frameScroller, "scrolling");
+                pxt.BrowserUtils.removeClass(this.frameScroller, "scrolling");
                 this.dragEnd = true;
 
                 if (this.state.isMovingFrame) {
@@ -265,40 +265,6 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
             floating.style.top = scrollY + "px";
 
             this.setState({ dropPreviewIndex: index });
-        }
-    }
-}
-
-export function addClass(el: SVGElement | HTMLElement, classes: string) {
-    classes
-        .split(/\s+/)
-        .forEach(cls => addSingleClass(el, cls));
-
-    function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
-        if (el.classList) {
-            el.classList.add(cls);
-        } else {
-            const classes = (el.className + "").split(/\s+/);
-            if (classes.indexOf(cls) < 0) {
-                el.className.baseVal += " " + cls;
-            }
-        }
-    }
-}
-
-export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-    classes
-        .split(/\s+/)
-        .forEach(cls => removeSingleClass(el, cls));
-
-    function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
-        if (el.classList) {
-            el.classList.remove(cls);
-        } else {
-            el.className.baseVal = (el.className + "")
-                .split(/\s+/)
-                .filter(c => c != cls)
-                .join(" ");
         }
     }
 }
