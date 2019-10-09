@@ -1,7 +1,11 @@
-namespace ts.pxtc {
+import { SK, parseComments, getName, getExplicitDefault, isStatic, isObjectType } from "./emitter";
+import { Declaration, TypeChecker, TypeNode, TypeFormatFlags, FunctionLikeDeclaration, ClassLikeDeclaration, SyntaxKind, FunctionTypeNode, TypeFlags, Program, VariableStatement, ModuleDeclaration, ModuleBlock, InterfaceDeclaration, ClassDeclaration, EnumDeclaration, LanguageServiceHost, CompilerOptions, IScriptSnapshot, ScriptSnapshot, LanguageService, CompletionInfo, SymbolFlags, ParameterDeclaration, Type } from "../ext-typescript/lib/tsserverlibrary";
+import { getTsCompilerOptions, timesToMs, decompile, patchUpDiagnostics, runConversionsAndStoreResults, compile, isPxtModulesFilename } from "./driver";
+import { processorInlineAssemble } from "./hexfile";
+import Fuse = require("fuse");
 
-    export const placeholderChar = "◊";
-    export const defaultImgLit = `
+export const placeholderChar = "◊";
+export const defaultImgLit = `
 . . . . .
 . . . . .
 . . # . .
@@ -9,691 +13,691 @@ namespace ts.pxtc {
 . . . . .
 `
 
-    export interface FunOverride {
-        n: string;
-        t: any;
-        scale?: number;
-    }
+export interface FunOverride {
+    n: string;
+    t: any;
+    scale?: number;
+}
 
-    export const ts2PyFunNameMap: pxt.Map<FunOverride> = {
-        "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
-        "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
-        "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
-        "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword },
-        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
-        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
-        ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
-        ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
-        ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
-        ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
-        "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
-        "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
-        "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
-        "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
-        "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
-        ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
-        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
-    }
+export const ts2PyFunNameMap: pxt.Map<FunOverride> = {
+    "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
+    "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
+    "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
+    "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword },
+    "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
+    "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
+    ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
+    ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
+    ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
+    ".charCodeAt(0)": { n: "ord", t: ts.SyntaxKind.NumberKeyword },
+    "pins.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+    "pins.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+    "control.createBuffer": { n: "bytearray", t: ts.SyntaxKind.Unknown },
+    "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
+    "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
+    ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
+    "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
+}
 
-    function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
-        if (p.initializer) return p.initializer
-        if (p.default) return p.default
-        if (p.type == "number") return "0"
-        if (p.type == "boolean") return "false"
-        else if (p.type == "string") {
-            if (imgLit) {
-                imgLit = false
-                return "`" + defaultImgLit + cursorMarker + "`";
+function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
+    if (p.initializer) return p.initializer
+    if (p.default) return p.default
+    if (p.type == "number") return "0"
+    if (p.type == "boolean") return "false"
+    else if (p.type == "string") {
+        if (imgLit) {
+            imgLit = false
+            return "`" + defaultImgLit + cursorMarker + "`";
+        }
+        return `"${cursorMarker}"`
+    }
+    let si = apis ? pxt.U.lookup(apis.byQName, p.type) : undefined;
+    if (si && si.kind == SymbolKind.Enum) {
+        let en = pxt.U.values(apis.byQName).filter(e => e.namespace == p.type)[0]
+        if (en)
+            return en.namespace + "." + en.name;
+    }
+    let m = /^\((.*)\) => (.*)$/.exec(p.type)
+    if (m)
+        return `(${m[1]}) => {\n    ${cursorMarker}\n}`
+    return placeholderChar;
+}
+
+export function renderCall(apiInfo: pxtc.ApisInfo, si: SymbolInfo): string {
+    return `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
+}
+
+export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
+    if (si.parameters) {
+        let imgLit = !!si.attributes.imageLiteral
+        return "(" + si.parameters
+            .filter(p => !p.initializer)
+            .map(p => renderDefaultVal(apis, p, imgLit, cursorMarker)).join(", ") + ")"
+    }
+    return '';
+}
+
+export function snakify(s: string) {
+    const up = s.toUpperCase()
+    const lo = s.toLowerCase()
+
+    // if the name is all lowercase or all upper case don't do anything
+    if (s == up || s == lo)
+        return s
+
+    // if the name already has underscores (not as first character), leave it alone
+    if (s.lastIndexOf("_") > 0)
+        return s
+
+    const isUpper = (i: number) => s[i] != lo[i]
+    const isLower = (i: number) => s[i] != up[i]
+    //const isDigit = (i: number) => /\d/.test(s[i])
+
+    let r = ""
+    let i = 0
+    while (i < s.length) {
+        let upperMode = isUpper(i)
+        let j = i
+        while (j < s.length) {
+            if (upperMode && isLower(j)) {
+                // ABCd -> AB_Cd
+                if (j - i > 2) {
+                    j--
+                    break
+                } else {
+                    // ABdefQ -> ABdef_Q
+                    upperMode = false
+                }
             }
-            return `"${cursorMarker}"`
+            // abcdE -> abcd_E
+            if (!upperMode && isUpper(j)) {
+                break
+            }
+            j++
         }
-        let si = apis ? Util.lookup(apis.byQName, p.type) : undefined;
-        if (si && si.kind == SymbolKind.Enum) {
-            let en = Util.values(apis.byQName).filter(e => e.namespace == p.type)[0]
-            if (en)
-                return en.namespace + "." + en.name;
+        if (r) r += "_"
+        r += s.slice(i, j)
+        i = j
+    }
+    return r
+}
+
+export function emitType(s: ts.TypeNode): string {
+    if (!s || !s.kind) return null;
+    switch (s.kind) {
+        case ts.SyntaxKind.StringKeyword:
+            return "str"
+        case ts.SyntaxKind.NumberKeyword:
+            // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
+            return "number"
+        case ts.SyntaxKind.BooleanKeyword:
+            return "bool"
+        case ts.SyntaxKind.VoidKeyword:
+            return "None"
+        case ts.SyntaxKind.FunctionType:
+            return emitFuncType(s as ts.FunctionTypeNode)
+        case ts.SyntaxKind.ArrayType: {
+            let t = s as ts.ArrayTypeNode
+            let elType = emitType(t.elementType)
+            return `List[${elType}]`
         }
-        let m = /^\((.*)\) => (.*)$/.exec(p.type)
-        if (m)
-            return `(${m[1]}) => {\n    ${cursorMarker}\n}`
-        return placeholderChar;
+        case ts.SyntaxKind.TypeReference: {
+            let t = s as ts.TypeReferenceNode
+            let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
+            return `${nm}`
+        }
+        default:
+            pxt.tickEvent("depython.todo", { kind: s.kind })
+            return `(TODO: Unknown TypeNode kind: ${s.kind})`
+    }
+    // // TODO translate type
+    // return s.getText()
+}
+
+function emitFuncType(s: ts.FunctionTypeNode): string {
+    let returnType = emitType(s.type)
+    let params = s.parameters
+        .map(p => p.type) // python type syntax doesn't allow names
+        .map(emitType)
+
+    // "Real" python expects this to be "Callable[[arg1, arg2], ret]", we're intentionally changing to "(arg1, arg2) -> ret"
+    return `(${params.join(", ")}) -> ${returnType}`
+}
+
+function getSymbolKind(node: ts.Node) {
+    switch (node.kind) {
+        case SK.MethodDeclaration:
+        case SK.MethodSignature:
+            return SymbolKind.Method;
+        case SK.PropertyDeclaration:
+        case SK.PropertySignature:
+        case SK.GetAccessor:
+        case SK.SetAccessor:
+            return SymbolKind.Property;
+        case SK.Constructor:
+        case SK.FunctionDeclaration:
+            return SymbolKind.Function;
+        case SK.VariableDeclaration:
+            return SymbolKind.Variable;
+        case SK.ModuleDeclaration:
+            return SymbolKind.Module;
+        case SK.EnumDeclaration:
+            return SymbolKind.Enum;
+        case SK.EnumMember:
+            return SymbolKind.EnumMember;
+        case SK.ClassDeclaration:
+            return SymbolKind.Class;
+        case SK.InterfaceDeclaration:
+            return SymbolKind.Interface;
+        default:
+            return SymbolKind.None
+    }
+}
+
+function isExported(decl: Declaration) {
+    if (decl.modifiers && decl.modifiers.some(m => m.kind == SK.PrivateKeyword || m.kind == SK.ProtectedKeyword))
+        return false;
+
+    let symbol = decl.symbol
+
+    if (!symbol)
+        return false;
+
+    while (true) {
+        let parSymbol: Symbol = (symbol as any).parent
+        if (parSymbol) symbol = parSymbol
+        else break
     }
 
-    export function renderCall(apiInfo: pxtc.ApisInfo, si: SymbolInfo): string {
-        return `${si.namespace}.${si.name}${renderParameters(apiInfo, si)};`;
-    }
+    let topDecl = symbol.valueDeclaration || symbol.declarations[0]
 
-    export function renderParameters(apis: pxtc.ApisInfo, si: SymbolInfo, cursorMarker: string = ''): string {
-        if (si.parameters) {
-            let imgLit = !!si.attributes.imageLiteral
-            return "(" + si.parameters
-                .filter(p => !p.initializer)
-                .map(p => renderDefaultVal(apis, p, imgLit, cursorMarker)).join(", ") + ")"
+    if (topDecl.kind == SK.VariableDeclaration)
+        topDecl = topDecl.parent.parent as Declaration
+
+    if (topDecl.parent && topDecl.parent.kind == SK.SourceFile)
+        return true;
+    else
+        return false;
+}
+
+function isReadonly(decl: Declaration) {
+    return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
+}
+
+function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: ts.Node): SymbolInfo {
+    function typeOf(tn: TypeNode, n: ts.Node, stripParams = false) {
+        let t = typechecker.getTypeAtLocation(n)
+        if (!t) return "None"
+        if (stripParams) {
+            t = t.getCallSignatures()[0].getReturnType()
         }
-        return '';
+        const readableName = typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
+
+        // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
+        // type checking we do in the blocks
+        // This can be a number literal '7' or a union type of them '0 | 1 | 2'
+        if (/^\d/.test(readableName)) {
+            return "number";
+        }
+
+        if (readableName == "this") {
+            return getFullName(typechecker, t.symbol);
+        }
+
+        return readableName;
     }
 
-    export function snakify(s: string) {
-        const up = s.toUpperCase()
-        const lo = s.toLowerCase()
+    let kind = getSymbolKind(stmt)
+    if (kind != SymbolKind.None) {
+        let decl: FunctionLikeDeclaration = stmt as any;
+        let attributes = parseComments(decl)
 
-        // if the name is all lowercase or all upper case don't do anything
-        if (s == up || s == lo)
-            return s
+        if (attributes.weight < 0)
+            return null;
 
-        // if the name already has underscores (not as first character), leave it alone
-        if (s.lastIndexOf("_") > 0)
-            return s
+        let m = /^(.*)\.(.*)/.exec(qName)
+        let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
 
-        const isUpper = (i: number) => s[i] != lo[i]
-        const isLower = (i: number) => s[i] != up[i]
-        //const isDigit = (i: number) => /\d/.test(s[i])
+        let pkg: string = null
 
-        let r = ""
-        let i = 0
-        while (i < s.length) {
-            let upperMode = isUpper(i)
-            let j = i
-            while (j < s.length) {
-                if (upperMode && isLower(j)) {
-                    // ABCd -> AB_Cd
-                    if (j - i > 2) {
-                        j--
-                        break
-                    } else {
-                        // ABdefQ -> ABdef_Q
-                        upperMode = false
+        let src = getSourceFileOfNode(stmt)
+        if (src) {
+            let m = /^pxt_modules\/([^\/]+)/.exec(src.fileName)
+            if (m)
+                pkg = m[1]
+        }
+
+        let extendsTypes: string[] = undefined
+
+        if (kind == SymbolKind.Class || kind == SymbolKind.Interface) {
+            let cl = stmt as ClassLikeDeclaration
+            extendsTypes = []
+            if (cl.heritageClauses)
+                for (let h of cl.heritageClauses) {
+                    if (h.types) {
+                        for (let t of h.types) {
+                            extendsTypes.push(typeOf(t, t))
+                        }
                     }
                 }
-                // abcdE -> abcd_E
-                if (!upperMode && isUpper(j)) {
-                    break
-                }
-                j++
-            }
-            if (r) r += "_"
-            r += s.slice(i, j)
-            i = j
         }
+
+        if (kind == SymbolKind.Enum || kind === SymbolKind.EnumMember) {
+            (extendsTypes || (extendsTypes = [])).push("Number");
+        }
+
+        let r: SymbolInfo = {
+            kind,
+            qName,
+            namespace: m ? m[1] : "",
+            name: m ? m[2] : qName,
+            fileName: stmt.getSourceFile().fileName,
+            attributes,
+            pkg,
+            extendsTypes,
+            retType:
+                stmt.kind == SyntaxKind.Constructor ? "void" :
+                    kind == SymbolKind.Module ? "" :
+                        typeOf(decl.type, decl, hasParams),
+            parameters: !hasParams ? null : pxt.U.toArray(decl.parameters).map((p, i) => {
+                let n = getName(p)
+                let desc = attributes.paramHelp[n] || ""
+                let minVal = attributes.paramMin && attributes.paramMin[n];
+                let maxVal = attributes.paramMax && attributes.paramMax[n];
+                let m = /\beg\.?:\s*(.+)/.exec(desc)
+                let props: PropertyDesc[];
+                let parameters: PropertyDesc[];
+                if (p.type && p.type.kind === SK.FunctionType) {
+                    const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
+                    const callbackParameters = callBackSignature.getParameters();
+                    if (attributes.mutate === "objectdestructuring") {
+                        pxt.U.assert(callbackParameters.length > 0);
+                        props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
+                            return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
+                        });
+                    }
+                    else {
+                        parameters = callbackParameters.map((sym, i) => {
+                            return {
+                                name: sym.getName(),
+                                type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                            };
+                        });
+                    }
+                }
+                let options: pxt.Map<PropertyOption> = {};
+                const paramType = typechecker.getTypeAtLocation(p);
+                let isEnum = paramType && !!(paramType.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral));
+
+                if (attributes.block && attributes.paramShadowOptions) {
+                    const argNames: string[] = []
+                    attributes.block.replace(/%(\w+)/g, (f, n) => {
+                        argNames.push(n)
+                        return ""
+                    });
+                    if (attributes.paramShadowOptions[argNames[i]]) {
+                        options['fieldEditorOptions'] = { value: attributes.paramShadowOptions[argNames[i]] }
+                    }
+                }
+                if (minVal) options['min'] = { value: minVal };
+                if (maxVal) options['max'] = { value: maxVal };
+                return {
+                    name: n,
+                    description: desc,
+                    type: typeOf(p.type, p),
+                    pyTypeString: emitType(p.type),
+                    initializer:
+                        p.initializer ? p.initializer.getText() :
+                            getExplicitDefault(attributes, n) ||
+                            (p.questionToken ? "undefined" : undefined),
+                    default: attributes.paramDefl[n],
+                    properties: props,
+                    handlerParameters: parameters,
+                    options: options,
+                    isEnum
+                }
+            }),
+            snippet: ts.isFunctionLike(stmt) ? null : undefined
+        }
+
+        switch (r.kind) {
+            case SymbolKind.EnumMember:
+                r.pyName = snakify(r.name).toUpperCase()
+                break
+            case SymbolKind.Variable:
+            case SymbolKind.Method:
+            case SymbolKind.Property:
+            case SymbolKind.Function:
+                r.pyName = snakify(r.name).toLowerCase()
+                break
+            case SymbolKind.Enum:
+            case SymbolKind.Class:
+            case SymbolKind.Interface:
+            case SymbolKind.Module:
+            default:
+                r.pyName = r.name
+                break
+        }
+
+        if (stmt.kind === SK.GetAccessor ||
+            ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
+            r.isReadOnly = true
+        }
+
         return r
     }
+    return null;
+}
 
-    export function emitType(s: ts.TypeNode): string {
-        if (!s || !s.kind) return null;
-        switch (s.kind) {
-            case ts.SyntaxKind.StringKeyword:
-                return "str"
-            case ts.SyntaxKind.NumberKeyword:
-                // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
-                return "number"
-            case ts.SyntaxKind.BooleanKeyword:
-                return "bool"
-            case ts.SyntaxKind.VoidKeyword:
-                return "None"
-            case ts.SyntaxKind.FunctionType:
-                return emitFuncType(s as ts.FunctionTypeNode)
-            case ts.SyntaxKind.ArrayType: {
-                let t = s as ts.ArrayTypeNode
-                let elType = emitType(t.elementType)
-                return `List[${elType}]`
-            }
-            case ts.SyntaxKind.TypeReference: {
-                let t = s as ts.TypeReferenceNode
-                let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
-                return `${nm}`
-            }
-            default:
-                pxt.tickEvent("depython.todo", { kind: s.kind })
-                return `(TODO: Unknown TypeNode kind: ${s.kind})`
+export interface GenDocsOptions {
+    package?: boolean;
+    locs?: boolean;
+    docs?: boolean;
+    pxtsnippet?: pxt.SnippetConfig[]; // extract localizable strings from pxtsnippets.json files
+}
+
+export function genDocs(pkg: string, apiInfo: ApisInfo, options: GenDocsOptions = {}): pxt.Map<string> {
+    pxt.debug(`generating docs for ${pkg}`)
+    pxt.debug(JSON.stringify(Object.keys(apiInfo.byQName), null, 2))
+
+    const files: pxt.Map<string> = {};
+    const infos = pxt.U.values(apiInfo.byQName);
+    const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember)
+        .sort(compareSymbols);
+
+    const snippetStrings: pxt.Map<string> = {};
+    const locStrings: pxt.Map<string> = {};
+    const jsdocStrings: pxt.Map<string> = {};
+    const writeLoc = (si: SymbolInfo) => {
+        if (!options.locs || !si.qName) {
+            return;
         }
-        // // TODO translate type
-        // return s.getText()
-    }
-
-    function emitFuncType(s: ts.FunctionTypeNode): string {
-        let returnType = emitType(s.type)
-        let params = s.parameters
-            .map(p => p.type) // python type syntax doesn't allow names
-            .map(emitType)
-
-        // "Real" python expects this to be "Callable[[arg1, arg2], ret]", we're intentionally changing to "(arg1, arg2) -> ret"
-        return `(${params.join(", ")}) -> ${returnType}`
-    }
-
-    function getSymbolKind(node: Node) {
-        switch (node.kind) {
-            case SK.MethodDeclaration:
-            case SK.MethodSignature:
-                return SymbolKind.Method;
-            case SK.PropertyDeclaration:
-            case SK.PropertySignature:
-            case SK.GetAccessor:
-            case SK.SetAccessor:
-                return SymbolKind.Property;
-            case SK.Constructor:
-            case SK.FunctionDeclaration:
-                return SymbolKind.Function;
-            case SK.VariableDeclaration:
-                return SymbolKind.Variable;
-            case SK.ModuleDeclaration:
-                return SymbolKind.Module;
-            case SK.EnumDeclaration:
-                return SymbolKind.Enum;
-            case SK.EnumMember:
-                return SymbolKind.EnumMember;
-            case SK.ClassDeclaration:
-                return SymbolKind.Class;
-            case SK.InterfaceDeclaration:
-                return SymbolKind.Interface;
-            default:
-                return SymbolKind.None
+        if (/^__/.test(si.name))
+            return; // skip functions starting with __
+        pxt.debug(`loc: ${si.qName}`)
+        // must match blockly loader
+        if (si.kind != SymbolKind.EnumMember) {
+            const ns = ts.pxtc.blocksCategory(si);
+            if (ns)
+                locStrings[`{id:category}${ns}`] = ns;
         }
+        if (si.attributes.jsDoc)
+            jsdocStrings[si.qName] = si.attributes.jsDoc;
+        if (si.attributes.block)
+            locStrings[`${si.qName}|block`] = si.attributes.block;
+        if (si.attributes.group)
+            locStrings[`{id:group}${si.attributes.group}`] = si.attributes.group;
+        if (si.attributes.subcategory)
+            locStrings[`{id:subcategory}${si.attributes.subcategory}`] = si.attributes.subcategory;
+        if (si.parameters)
+            si.parameters.filter(pi => !!pi.description).forEach(pi => {
+                jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
+            })
+    }
+    const mapLocs = (m: pxt.Map<string>, name: string) => {
+        if (!options.locs) return;
+        const locs: pxt.Map<string> = {};
+        Object.keys(m).sort().forEach(l => locs[l] = m[l]);
+        files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
+    }
+    for (const info of infos) {
+        const isNamespace = info.kind == SymbolKind.Module;
+        if (isNamespace) {
+            if (!infos.filter(si => si.namespace == info.name && !!si.attributes.jsDoc)[0])
+                continue; // nothing in namespace
+            if (!info.attributes.block) info.attributes.block = info.name; // reusing this field to store localized namespace name
+        }
+        writeLoc(info);
+    }
+    if (options.locs)
+        enumMembers.forEach(em => {
+            if (em.attributes.block) locStrings[`${em.qName}|block`] = em.attributes.block;
+            if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
+        });
+    mapLocs(locStrings, "");
+    mapLocs(jsdocStrings, "-jsdoc");
+    // Localize pxtsnippets.json files
+    if (options.pxtsnippet) {
+        options.pxtsnippet.forEach(snippet => localizeSnippet(snippet, snippetStrings));
+        mapLocs(snippetStrings, "-snippet");
     }
 
-    function isExported(decl: Declaration) {
-        if (decl.modifiers && decl.modifiers.some(m => m.kind == SK.PrivateKeyword || m.kind == SK.ProtectedKeyword))
-            return false;
+    return files;
+}
 
-        let symbol = decl.symbol
+function localizeSnippet(snippet: pxt.SnippetConfig, locs: pxt.Map<string>) {
+    const localizableQuestionProperties = ['label', 'title', 'hint', 'errorMessage']; // TODO(jb) provide this elsewhere
+    locs[snippet.label] = snippet.label;
+    snippet.questions.forEach((question: pxt.Map<any>) => {
+        localizableQuestionProperties.forEach((prop) => {
+            if (question[prop]) {
+                locs[question[prop]] = question[prop];
+            }
+        });
+    })
+}
 
-        if (!symbol)
-            return false;
+export function hasBlock(sym: SymbolInfo): boolean {
+    return !!sym.attributes.block && !!sym.attributes.blockId;
+}
 
-        while (true) {
-            let parSymbol: Symbol = (symbol as any).parent
-            if (parSymbol) symbol = parSymbol
-            else break
+let symbolKindWeight: pxt.Map<number>;
+export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
+    let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
+    if (c) return c;
+
+    if (!symbolKindWeight) {
+        symbolKindWeight = {};
+        symbolKindWeight[SymbolKind.Variable] = 100;
+        symbolKindWeight[SymbolKind.Module] = 101;
+        symbolKindWeight[SymbolKind.Function] = 99;
+        symbolKindWeight[SymbolKind.Property] = 98;
+        symbolKindWeight[SymbolKind.Method] = 97;
+        symbolKindWeight[SymbolKind.Class] = 89;
+        symbolKindWeight[SymbolKind.Enum] = 81;
+        symbolKindWeight[SymbolKind.EnumMember] = 80;
+    }
+
+    // favor functions
+    c = -(symbolKindWeight[l.kind] || 0) + (symbolKindWeight[r.kind] || 0);
+    if (c) return c;
+
+    c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+    if (c) return c;
+
+    return pxt.U.strcmp(l.name, r.name);
+}
+
+
+export function getApiInfo(program: Program, jres?: pxt.Map<pxt.JRes>, legacyOnly = false): ApisInfo {
+    return internalGetApiInfo(program, jres, legacyOnly).apis;
+}
+
+export function internalGetApiInfo(program: Program, jres?: pxt.Map<pxt.JRes>, legacyOnly = false) {
+    const res: ApisInfo = {
+        byQName: {},
+        jres: jres
+    }
+    const qNameToNode: pxt.Map<Declaration> = {};
+    const typechecker = program.getTypeChecker()
+    const collectDecls = (stmt: ts.Node) => {
+        if (stmt.kind == SK.VariableStatement) {
+            let vs = stmt as VariableStatement
+            vs.declarationList.declarations.forEach(collectDecls)
+            return
         }
 
-        let topDecl = symbol.valueDeclaration || symbol.declarations[0]
-
-        if (topDecl.kind == SK.VariableDeclaration)
-            topDecl = topDecl.parent.parent as Declaration
-
-        if (topDecl.parent && topDecl.parent.kind == SK.SourceFile)
-            return true;
-        else
-            return false;
-    }
-
-    function isReadonly(decl: Declaration) {
-        return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
-    }
-
-    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
-        function typeOf(tn: TypeNode, n: Node, stripParams = false) {
-            let t = typechecker.getTypeAtLocation(n)
-            if (!t) return "None"
-            if (stripParams) {
-                t = t.getCallSignatures()[0].getReturnType()
-            }
-            const readableName = typechecker.typeToString(t, undefined, TypeFormatFlags.UseFullyQualifiedType)
-
-            // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
-            // type checking we do in the blocks
-            // This can be a number literal '7' or a union type of them '0 | 1 | 2'
-            if (/^\d/.test(readableName)) {
-                return "number";
-            }
-
-            if (readableName == "this") {
-                return getFullName(typechecker, t.symbol);
-            }
-
-            return readableName;
-        }
-
-        let kind = getSymbolKind(stmt)
-        if (kind != SymbolKind.None) {
-            let decl: FunctionLikeDeclaration = stmt as any;
-            let attributes = parseComments(decl)
-
-            if (attributes.weight < 0)
-                return null;
-
-            let m = /^(.*)\.(.*)/.exec(qName)
-            let hasParams = kind == SymbolKind.Function || kind == SymbolKind.Method
-
-            let pkg: string = null
-
-            let src = getSourceFileOfNode(stmt)
-            if (src) {
-                let m = /^pxt_modules\/([^\/]+)/.exec(src.fileName)
-                if (m)
-                    pkg = m[1]
-            }
-
-            let extendsTypes: string[] = undefined
-
-            if (kind == SymbolKind.Class || kind == SymbolKind.Interface) {
-                let cl = stmt as ClassLikeDeclaration
-                extendsTypes = []
-                if (cl.heritageClauses)
-                    for (let h of cl.heritageClauses) {
-                        if (h.types) {
-                            for (let t of h.types) {
-                                extendsTypes.push(typeOf(t, t))
-                            }
-                        }
-                    }
-            }
-
-            if (kind == SymbolKind.Enum || kind === SymbolKind.EnumMember) {
-                (extendsTypes || (extendsTypes = [])).push("Number");
-            }
-
-            let r: SymbolInfo = {
-                kind,
-                qName,
-                namespace: m ? m[1] : "",
-                name: m ? m[2] : qName,
-                fileName: stmt.getSourceFile().fileName,
-                attributes,
-                pkg,
-                extendsTypes,
-                retType:
-                    stmt.kind == SyntaxKind.Constructor ? "void" :
-                        kind == SymbolKind.Module ? "" :
-                            typeOf(decl.type, decl, hasParams),
-                parameters: !hasParams ? null : Util.toArray(decl.parameters).map((p, i) => {
-                    let n = getName(p)
-                    let desc = attributes.paramHelp[n] || ""
-                    let minVal = attributes.paramMin && attributes.paramMin[n];
-                    let maxVal = attributes.paramMax && attributes.paramMax[n];
-                    let m = /\beg\.?:\s*(.+)/.exec(desc)
-                    let props: PropertyDesc[];
-                    let parameters: PropertyDesc[];
-                    if (p.type && p.type.kind === SK.FunctionType) {
-                        const callBackSignature = typechecker.getSignatureFromDeclaration(p.type as FunctionTypeNode);
-                        const callbackParameters = callBackSignature.getParameters();
-                        if (attributes.mutate === "objectdestructuring") {
-                            assert(callbackParameters.length > 0);
-                            props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
-                                return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
-                            });
-                        }
-                        else {
-                            parameters = callbackParameters.map((sym, i) => {
-                                return {
-                                    name: sym.getName(),
-                                    type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
-                                };
-                            });
-                        }
-                    }
-                    let options: pxt.Map<PropertyOption> = {};
-                    const paramType = typechecker.getTypeAtLocation(p);
-                    let isEnum = paramType && !!(paramType.flags & (TypeFlags.Enum | TypeFlags.EnumLiteral));
-
-                    if (attributes.block && attributes.paramShadowOptions) {
-                        const argNames: string[] = []
-                        attributes.block.replace(/%(\w+)/g, (f, n) => {
-                            argNames.push(n)
-                            return ""
-                        });
-                        if (attributes.paramShadowOptions[argNames[i]]) {
-                            options['fieldEditorOptions'] = { value: attributes.paramShadowOptions[argNames[i]] }
-                        }
-                    }
-                    if (minVal) options['min'] = { value: minVal };
-                    if (maxVal) options['max'] = { value: maxVal };
-                    return {
-                        name: n,
-                        description: desc,
-                        type: typeOf(p.type, p),
-                        pyTypeString: emitType(p.type),
-                        initializer:
-                            p.initializer ? p.initializer.getText() :
-                                getExplicitDefault(attributes, n) ||
-                                (p.questionToken ? "undefined" : undefined),
-                        default: attributes.paramDefl[n],
-                        properties: props,
-                        handlerParameters: parameters,
-                        options: options,
-                        isEnum
-                    }
-                }),
-                snippet: ts.isFunctionLike(stmt) ? null : undefined
-            }
-
-            switch (r.kind) {
-                case SymbolKind.EnumMember:
-                    r.pyName = snakify(r.name).toUpperCase()
-                    break
-                case SymbolKind.Variable:
-                case SymbolKind.Method:
-                case SymbolKind.Property:
-                case SymbolKind.Function:
-                    r.pyName = snakify(r.name).toLowerCase()
-                    break
-                case SymbolKind.Enum:
-                case SymbolKind.Class:
-                case SymbolKind.Interface:
-                case SymbolKind.Module:
-                default:
-                    r.pyName = r.name
-                    break
-            }
-
-            if (stmt.kind === SK.GetAccessor ||
-                ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
-                r.isReadOnly = true
-            }
-
-            return r
-        }
-        return null;
-    }
-
-    export interface GenDocsOptions {
-        package?: boolean;
-        locs?: boolean;
-        docs?: boolean;
-        pxtsnippet?: pxt.SnippetConfig[]; // extract localizable strings from pxtsnippets.json files
-    }
-
-    export function genDocs(pkg: string, apiInfo: ApisInfo, options: GenDocsOptions = {}): pxt.Map<string> {
-        pxt.debug(`generating docs for ${pkg}`)
-        pxt.debug(JSON.stringify(Object.keys(apiInfo.byQName), null, 2))
-
-        const files: pxt.Map<string> = {};
-        const infos = Util.values(apiInfo.byQName);
-        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember)
-            .sort(compareSymbols);
-
-        const snippetStrings: pxt.Map<string> = {};
-        const locStrings: pxt.Map<string> = {};
-        const jsdocStrings: pxt.Map<string> = {};
-        const writeLoc = (si: SymbolInfo) => {
-            if (!options.locs || !si.qName) {
+        if (isExported(stmt as Declaration)) {
+            if (!stmt.symbol) {
+                console.warn("no symbol", stmt)
                 return;
             }
-            if (/^__/.test(si.name))
-                return; // skip functions starting with __
-            pxt.debug(`loc: ${si.qName}`)
-            // must match blockly loader
-            if (si.kind != SymbolKind.EnumMember) {
-                const ns = ts.pxtc.blocksCategory(si);
-                if (ns)
-                    locStrings[`{id:category}${ns}`] = ns;
-            }
-            if (si.attributes.jsDoc)
-                jsdocStrings[si.qName] = si.attributes.jsDoc;
-            if (si.attributes.block)
-                locStrings[`${si.qName}|block`] = si.attributes.block;
-            if (si.attributes.group)
-                locStrings[`{id:group}${si.attributes.group}`] = si.attributes.group;
-            if (si.attributes.subcategory)
-                locStrings[`{id:subcategory}${si.attributes.subcategory}`] = si.attributes.subcategory;
-            if (si.parameters)
-                si.parameters.filter(pi => !!pi.description).forEach(pi => {
-                    jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
-                })
-        }
-        const mapLocs = (m: pxt.Map<string>, name: string) => {
-            if (!options.locs) return;
-            const locs: pxt.Map<string> = {};
-            Object.keys(m).sort().forEach(l => locs[l] = m[l]);
-            files[pkg + name + "-strings.json"] = JSON.stringify(locs, null, 2);
-        }
-        for (const info of infos) {
-            const isNamespace = info.kind == SymbolKind.Module;
-            if (isNamespace) {
-                if (!infos.filter(si => si.namespace == info.name && !!si.attributes.jsDoc)[0])
-                    continue; // nothing in namespace
-                if (!info.attributes.block) info.attributes.block = info.name; // reusing this field to store localized namespace name
-            }
-            writeLoc(info);
-        }
-        if (options.locs)
-            enumMembers.forEach(em => {
-                if (em.attributes.block) locStrings[`${em.qName}|block`] = em.attributes.block;
-                if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
-            });
-        mapLocs(locStrings, "");
-        mapLocs(jsdocStrings, "-jsdoc");
-        // Localize pxtsnippets.json files
-        if (options.pxtsnippet) {
-            options.pxtsnippet.forEach(snippet => localizeSnippet(snippet, snippetStrings));
-            mapLocs(snippetStrings, "-snippet");
-        }
-
-        return files;
-    }
-
-    function localizeSnippet(snippet: pxt.SnippetConfig, locs: pxt.Map<string>) {
-        const localizableQuestionProperties = ['label', 'title', 'hint', 'errorMessage']; // TODO(jb) provide this elsewhere
-        locs[snippet.label] = snippet.label;
-        snippet.questions.forEach((question: pxt.Map<any>) => {
-            localizableQuestionProperties.forEach((prop) => {
-                if (question[prop]) {
-                    locs[question[prop]] = question[prop];
-                }
-            });
-        })
-    }
-
-    export function hasBlock(sym: SymbolInfo): boolean {
-        return !!sym.attributes.block && !!sym.attributes.blockId;
-    }
-
-    let symbolKindWeight: pxt.Map<number>;
-    export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
-        let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
-        if (c) return c;
-
-        if (!symbolKindWeight) {
-            symbolKindWeight = {};
-            symbolKindWeight[SymbolKind.Variable] = 100;
-            symbolKindWeight[SymbolKind.Module] = 101;
-            symbolKindWeight[SymbolKind.Function] = 99;
-            symbolKindWeight[SymbolKind.Property] = 98;
-            symbolKindWeight[SymbolKind.Method] = 97;
-            symbolKindWeight[SymbolKind.Class] = 89;
-            symbolKindWeight[SymbolKind.Enum] = 81;
-            symbolKindWeight[SymbolKind.EnumMember] = 80;
-        }
-
-        // favor functions
-        c = -(symbolKindWeight[l.kind] || 0) + (symbolKindWeight[r.kind] || 0);
-        if (c) return c;
-
-        c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
-        if (c) return c;
-
-        return U.strcmp(l.name, r.name);
-    }
-
-
-    export function getApiInfo(program: Program, jres?: pxt.Map<pxt.JRes>, legacyOnly = false): ApisInfo {
-        return internalGetApiInfo(program, jres, legacyOnly).apis;
-    }
-
-    export function internalGetApiInfo(program: Program, jres?: pxt.Map<pxt.JRes>, legacyOnly = false) {
-        const res: ApisInfo = {
-            byQName: {},
-            jres: jres
-        }
-        const qNameToNode: pxt.Map<Declaration> = {};
-        const typechecker = program.getTypeChecker()
-        const collectDecls = (stmt: Node) => {
-            if (stmt.kind == SK.VariableStatement) {
-                let vs = stmt as VariableStatement
-                vs.declarationList.declarations.forEach(collectDecls)
-                return
-            }
-
-            if (isExported(stmt as Declaration)) {
-                if (!stmt.symbol) {
-                    console.warn("no symbol", stmt)
-                    return;
-                }
-                let qName = getFullName(typechecker, stmt.symbol)
-                if (stmt.kind == SK.SetAccessor)
-                    qName += "@set" // otherwise we get a clash with the getter
-                qNameToNode[qName] = stmt as Declaration;
-                let si = createSymbolInfo(typechecker, qName, stmt)
-                if (si) {
-                    let existing = U.lookup(res.byQName, qName)
-                    if (existing) {
-                        // we can have a function and an interface of the same name
-                        if (existing.kind == SymbolKind.Interface && si.kind != SymbolKind.Interface) {
-                            // save existing entry
-                            res.byQName[qName + "@type"] = existing
-                        } else if (existing.kind != SymbolKind.Interface && si.kind == SymbolKind.Interface) {
-                            res.byQName[qName + "@type"] = si
-                            si = existing
-                        } else {
-                            si.attributes = parseCommentString(
-                                existing.attributes._source + "\n" +
-                                si.attributes._source)
-                            if (existing.extendsTypes) {
-                                si.extendsTypes = si.extendsTypes || []
-                                existing.extendsTypes.forEach(t => {
-                                    if (si.extendsTypes.indexOf(t) === -1) {
-                                        si.extendsTypes.push(t);
-                                    }
-                                })
-                            }
+            let qName = getFullName(typechecker, stmt.symbol)
+            if (stmt.kind == SK.SetAccessor)
+                qName += "@set" // otherwise we get a clash with the getter
+            qNameToNode[qName] = stmt as Declaration;
+            let si = createSymbolInfo(typechecker, qName, stmt)
+            if (si) {
+                let existing = pxt.U.lookup(res.byQName, qName)
+                if (existing) {
+                    // we can have a function and an interface of the same name
+                    if (existing.kind == SymbolKind.Interface && si.kind != SymbolKind.Interface) {
+                        // save existing entry
+                        res.byQName[qName + "@type"] = existing
+                    } else if (existing.kind != SymbolKind.Interface && si.kind == SymbolKind.Interface) {
+                        res.byQName[qName + "@type"] = si
+                        si = existing
+                    } else {
+                        si.attributes = parseCommentString(
+                            existing.attributes._source + "\n" +
+                            si.attributes._source)
+                        if (existing.extendsTypes) {
+                            si.extendsTypes = si.extendsTypes || []
+                            existing.extendsTypes.forEach(t => {
+                                if (si.extendsTypes.indexOf(t) === -1) {
+                                    si.extendsTypes.push(t);
+                                }
+                            })
                         }
                     }
-                    if (stmt.parent &&
-                        (stmt.parent.kind == SK.ClassDeclaration || stmt.parent.kind == SK.InterfaceDeclaration) &&
-                        !isStatic(stmt as Declaration))
-                        si.isInstance = true
-                    res.byQName[qName] = si
                 }
-            }
-
-            if (stmt.kind == SK.ModuleDeclaration) {
-                let mod = <ModuleDeclaration>stmt
-                if (mod.body.kind == SK.ModuleBlock) {
-                    let blk = <ModuleBlock>mod.body
-                    blk.statements.forEach(collectDecls)
-                } else if (mod.body.kind == SK.ModuleDeclaration) {
-                    collectDecls(mod.body)
-                }
-            } else if (stmt.kind == SK.InterfaceDeclaration) {
-                let iface = stmt as InterfaceDeclaration
-                iface.members.forEach(collectDecls)
-            } else if (stmt.kind == SK.ClassDeclaration) {
-                let iface = stmt as ClassDeclaration
-                iface.members.forEach(collectDecls)
-            } else if (stmt.kind == SK.EnumDeclaration) {
-                let e = stmt as EnumDeclaration
-                e.members.forEach(collectDecls)
+                if (stmt.parent &&
+                    (stmt.parent.kind == SK.ClassDeclaration || stmt.parent.kind == SK.InterfaceDeclaration) &&
+                    !isStatic(stmt as Declaration))
+                    si.isInstance = true
+                res.byQName[qName] = si
             }
         }
 
-        for (let srcFile of program.getSourceFiles()) {
-            srcFile.statements.forEach(collectDecls)
+        if (stmt.kind == SK.ModuleDeclaration) {
+            let mod = <ModuleDeclaration>stmt
+            if (mod.body.kind == SK.ModuleBlock) {
+                let blk = <ModuleBlock>mod.body
+                blk.statements.forEach(collectDecls)
+            } else if (mod.body.kind == SK.ModuleDeclaration) {
+                collectDecls(mod.body)
+            }
+        } else if (stmt.kind == SK.InterfaceDeclaration) {
+            let iface = stmt as InterfaceDeclaration
+            iface.members.forEach(collectDecls)
+        } else if (stmt.kind == SK.ClassDeclaration) {
+            let iface = stmt as ClassDeclaration
+            iface.members.forEach(collectDecls)
+        } else if (stmt.kind == SK.EnumDeclaration) {
+            let e = stmt as EnumDeclaration
+            e.members.forEach(collectDecls)
+        }
+    }
+
+    for (let srcFile of program.getSourceFiles()) {
+        srcFile.statements.forEach(collectDecls)
+    }
+
+    let toclose: SymbolInfo[] = []
+
+    // store qName in symbols
+    for (let qName in res.byQName) {
+        let si = res.byQName[qName]
+        si.qName = qName;
+        si.attributes._source = null
+        if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
+
+        let jrname = si.attributes.jres
+        if (jrname) {
+            if (jrname == "true") jrname = qName
+            let jr = pxt.U.lookup(jres || {}, jrname)
+            if (jr && jr.icon && !si.attributes.iconURL) {
+                si.attributes.iconURL = jr.icon
+            }
+            if (jr && jr.data && !si.attributes.jresURL) {
+                si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
+            }
         }
 
-        let toclose: SymbolInfo[] = []
-
-        // store qName in symbols
-        for (let qName in res.byQName) {
-            let si = res.byQName[qName]
-            si.qName = qName;
-            si.attributes._source = null
-            if (si.extendsTypes && si.extendsTypes.length) toclose.push(si)
-
-            let jrname = si.attributes.jres
-            if (jrname) {
-                if (jrname == "true") jrname = qName
-                let jr = U.lookup(jres || {}, jrname)
-                if (jr && jr.icon && !si.attributes.iconURL) {
-                    si.attributes.iconURL = jr.icon
-                }
-                if (jr && jr.data && !si.attributes.jresURL) {
-                    si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
-                }
-            }
-
-            if (si.pyName) {
-                let override = U.lookup(ts2PyFunNameMap, si.qName);
-                if (override && override.n) {
-                    si.pyQName = override.n;
-                } else if (si.namespace) {
-                    let par = res.byQName[si.namespace]
-                    if (par) {
-                        si.pyQName = par.pyQName + "." + si.pyName
-                    } else {
-                        // shouldn't happen
-                        pxt.log("namespace missing: " + si.namespace)
-                        si.pyQName = si.namespace + "." + si.pyName
-                    }
+        if (si.pyName) {
+            let override = pxt.U.lookup(ts2PyFunNameMap, si.qName);
+            if (override && override.n) {
+                si.pyQName = override.n;
+            } else if (si.namespace) {
+                let par = res.byQName[si.namespace]
+                if (par) {
+                    si.pyQName = par.pyQName + "." + si.pyName
                 } else {
-                    si.pyQName = si.pyName
+                    // shouldn't happen
+                    pxt.log("namespace missing: " + si.namespace)
+                    si.pyQName = si.namespace + "." + si.pyName
                 }
+            } else {
+                si.pyQName = si.pyName
             }
-        }
-
-        // transitive closure of inheritance
-        let closed: pxt.Map<boolean> = {}
-        let closeSi = (si: SymbolInfo) => {
-            if (U.lookup(closed, si.qName)) return;
-            closed[si.qName] = true
-            let mine: pxt.Map<boolean> = {}
-            mine[si.qName] = true
-            for (let e of si.extendsTypes || []) {
-                mine[e] = true
-                let psi = res.byQName[e]
-                if (psi) {
-                    closeSi(psi)
-                    for (let ee of psi.extendsTypes) mine[ee] = true
-                }
-            }
-            si.extendsTypes = Object.keys(mine)
-        }
-        toclose.forEach(closeSi)
-
-        if (legacyOnly) {
-            // conflicts with pins.map()
-            delete res.byQName["Array.map"]
-        }
-
-        return {
-            apis: res,
-            decls: qNameToNode
         }
     }
 
-    export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
-        if ((symbol as any).isBogusSymbol)
-            return symbol.name
-        return typechecker.getFullyQualifiedName(symbol);
+    // transitive closure of inheritance
+    let closed: pxt.Map<boolean> = {}
+    let closeSi = (si: SymbolInfo) => {
+        if (pxt.U.lookup(closed, si.qName)) return;
+        closed[si.qName] = true
+        let mine: pxt.Map<boolean> = {}
+        mine[si.qName] = true
+        for (let e of si.extendsTypes || []) {
+            mine[e] = true
+            let psi = res.byQName[e]
+            if (psi) {
+                closeSi(psi)
+                for (let ee of psi.extendsTypes) mine[ee] = true
+            }
+        }
+        si.extendsTypes = Object.keys(mine)
+    }
+    toclose.forEach(closeSi)
+
+    if (legacyOnly) {
+        // conflicts with pins.map()
+        delete res.byQName["Array.map"]
     }
 
-    /*
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
-        const typechecker = program.getTypeChecker()
+    return {
+        apis: res,
+        decls: qNameToNode
+    }
+}
 
-        for (let s of symbols) {
-            let qName = getFullName(typechecker, s)
-            const gsi = Util.lookup(apiInfo.byQName, qName);
+export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
+    if ((symbol as any).isBogusSymbol)
+        return symbol.name
+    return typechecker.getFullyQualifiedName(symbol);
+}
 
-            // filter out symbols starting with __
-            if (gsi && /^__/.test(gsi.name))
-                continue;
+/*
+export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
+    const typechecker = program.getTypeChecker()
 
-            if (!r.isMemberCompletion && gsi)
-                continue; // global symbol
+    for (let s of symbols) {
+        let qName = getFullName(typechecker, s)
+        const gsi = pxt.U.lookup(apiInfo.byQName, qName);
 
-            if (Util.lookup(r.entries, qName))
-                continue;
+        // filter out symbols starting with __
+        if (gsi && /^__/.test(gsi.name))
+            continue;
 
-            const decl = s.valueDeclaration || (s.declarations || [])[0]
-            if (!decl) continue;
+        if (!r.isMemberCompletion && gsi)
+            continue; // global symbol
 
-            const si = createSymbolInfo(typechecker, qName, decl)
-            if (!si) continue;
+        if (Util.lookup(r.entries, qName))
+            continue;
 
-            si.isContextual = true;
+        const decl = s.valueDeclaration || (s.declarations || [])[0]
+        if (!decl) continue;
 
-            r.entries[qName] = si;
-        }
-    }*/
+        const si = createSymbolInfo(typechecker, qName, decl)
+        if (!si) continue;
+
+        si.isContextual = true;
+
+        r.entries[qName] = si;
+    }
+}*/
 }
 
 
@@ -729,7 +733,7 @@ namespace ts.pxtc.service {
         }
 
         setOpts(o: CompileOptions) {
-            Util.iterMap(o.fileSystem, (fn, v) => {
+            pxt.U.iterMap(o.fileSystem, (fn, v) => {
                 if (this.opts.fileSystem[fn] != v) {
                     this.fileVersions[fn] = (this.fileVersions[fn] || 0) + 1
                 }
@@ -743,7 +747,7 @@ namespace ts.pxtc.service {
         }
 
         getScriptFileNames(): string[] {
-            return this.opts.sourceFiles.filter(f => U.endsWith(f, ".ts"));
+            return this.opts.sourceFiles.filter(f => pxt.U.endsWith(f, ".ts"));
         }
 
         getScriptVersion(fileName: string): string {
@@ -779,7 +783,7 @@ namespace ts.pxtc.service {
     }
 
     let lastApiInfo: CachedApisInfo;
-    let lastBlocksInfo: BlocksInfo;
+    let lastBlocksInfo: pxtc.BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
     let lastProjectFuse: Fuse<ProjectSearchInfo>;
@@ -821,11 +825,11 @@ namespace ts.pxtc.service {
         }
     }
 
-    function addApiInfo(opts: CompileOptions) {
+    function addApiInfo(opts: pxtc.CompileOptions) {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             if (!lastApiInfo)
                 lastApiInfo = internalGetApiInfo(service.getProgram(), opts.jres)
-            opts.apisInfo = U.clone(lastApiInfo.apis)
+            opts.apisInfo = pxt.U.clone(lastApiInfo.apis)
         }
     }
 
@@ -845,7 +849,7 @@ namespace ts.pxtc.service {
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
-            let opts = U.flatClone(host.opts)
+            let opts = pxt.U.flatClone(host.opts)
             opts.fileSystem[v.fileName] = src
             addApiInfo(opts);
             opts.syntaxInfo = {
@@ -896,7 +900,7 @@ namespace ts.pxtc.service {
                 isTypeLocation: false
             }
 
-            let opts = U.flatClone(host.opts)
+            let opts = pxt.U.flatClone(host.opts)
             opts.fileSystem[v.fileName] = src
             addApiInfo(opts);
             opts.syntaxInfo = {
@@ -1164,7 +1168,7 @@ namespace ts.pxtc.service {
 
     function runConversionsAndCompileUsingService() {
         addApiInfo(host.opts)
-        const prevFS = U.flatClone(host.opts.fileSystem);
+        const prevFS = pxt.U.flatClone(host.opts.fileSystem);
         let res = runConversionsAndStoreResults(host.opts);
         const newFS = host.opts.fileSystem
         host.opts.fileSystem = prevFS
@@ -1378,7 +1382,7 @@ namespace ts.pxtc.service {
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis.byQName[element.namespace];
                 if (nsInfo.attributes.fixedInstances) {
-                    let instances = Util.values(apis.byQName)
+                    let instances = pxt.U.values(apis.byQName)
                     let getExtendsTypesFor = function (name: string) {
                         return instances
                             .filter(v => v.extendsTypes)
@@ -1523,4 +1527,3 @@ namespace ts.pxtc.service {
             return "0";
         }
     }
-}

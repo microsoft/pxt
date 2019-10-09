@@ -84,7 +84,7 @@ namespace ts.pxtc {
         argumentNames?: string[];
     }
 
-    export interface KsDiagnostic extends LocationInfo {
+    export interface pxtc.KsDiagnostic extends LocationInfo {
         code: number;
         category: DiagnosticCategory;
         messageText: string | DiagnosticMessageChain;
@@ -98,7 +98,7 @@ namespace ts.pxtc {
 
     export interface CompileResult {
         outfiles: pxt.Map<string>;
-        diagnostics: KsDiagnostic[];
+        diagnostics: pxtc.KsDiagnostic[];
         success: boolean;
         times: pxt.Map<number>;
         //ast?: Program; // Not needed, moved to pxtcompiler

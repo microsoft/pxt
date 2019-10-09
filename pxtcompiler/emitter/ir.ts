@@ -1,9 +1,15 @@
+/// <reference path="../../localtypings/pxtarget.d.ts"/>
+
+import { FieldAccessInfo, getDeclName, ClassInfo, VariableAddInfo, isInPxtModules, setCellProps, FunctionAddInfo, PxtNode, isStackMachine, getFunctionLabel, pxtcTarget } from "./emitter";
+
+import { Declaration, Identifier } from "../ext-typescript/lib/tsserverlibrary";
+
 // TODO remove decr() on variable init
 // TODO figure out why undefined initializer generates code
 
-namespace ts.pxtc.ir {
+export namespace ir {
     let U = pxtc.Util;
-    let assert = U.assert;
+    let assert = pxt.U.assert;
 
     export enum EK {
         None,
@@ -52,7 +58,7 @@ namespace ts.pxtc.ir {
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public irCurrUses: number;
-        public callingConvention = CallingConvention.Plain;
+        public callingConvention = pxtc.ir.CallingConvention.Plain;
         public mask: MaskInfo;
         public isStringLiteral: boolean;
 
@@ -154,7 +160,7 @@ namespace ts.pxtc.ir {
                 case EK.Store:
                     return true;
 
-                default: throw oops();
+                default: throw pxtc.oops();
             }
         }
     }
@@ -184,7 +190,7 @@ namespace ts.pxtc.ir {
         public lblStackSize: number;
         public jmpMode: JmpMode;
         public lblId: number;
-        public breakpointInfo: Breakpoint;
+        public breakpointInfo: pxtc.Breakpoint;
         public stmtNo: number;
         public findIdx: number;
         // after this jump, the expression will no longer be used and can be cleared from the stack
@@ -251,7 +257,7 @@ namespace ts.pxtc.ir {
                     case EK.Store:
                         return `{ ${str(e.args[0])} := ${str(e.args[1])} }`
 
-                    default: throw oops();
+                    default: throw pxtc.oops();
                 }
             } else {
                 let stmt = n as Stmt
@@ -270,7 +276,7 @@ namespace ts.pxtc.ir {
                                 return `    if (! ${inner}) ${fin}`
                             case JmpMode.IfNotZero:
                                 return `    if (${inner}) ${fin}`
-                            default: throw oops();
+                            default: throw pxtc.oops();
                         }
                     case ir.SK.StackEmpty:
                         return "    ;\n"
@@ -278,7 +284,7 @@ namespace ts.pxtc.ir {
                         return "    // brk " + (stmt.breakpointInfo.id) + "\n"
                     case ir.SK.Label:
                         return stmt.lblName + ":\n"
-                    default: throw oops();
+                    default: throw pxtc.oops();
                 }
 
             }
@@ -292,7 +298,7 @@ namespace ts.pxtc.ir {
         _isGlobal = false;
         _debugType = "?";
         isUserVariable = false;
-        bitSize = BitSize.None;
+        bitSize = pxtc.BitSize.None;
         repl: Expr;
         replUses: number;
 
@@ -311,7 +317,7 @@ namespace ts.pxtc.ir {
             return getDeclName(this.def)
         }
 
-        getDebugInfo(): CellInfo {
+        getDebugInfo(): pxtc.CellInfo {
             return {
                 name: this.getName(),
                 type: this._debugType,
@@ -343,8 +349,8 @@ namespace ts.pxtc.ir {
         load() {
             let r = this.loadCore()
 
-            if (target.isNative && this.bitSize != BitSize.None) {
-                if (this.bitSize == BitSize.UInt32)
+            if (pxtcTarget.isNative && this.bitSize != pxtc.BitSize.None) {
+                if (this.bitSize == pxtc.BitSize.UInt32)
                     return rtcall("pxt::fromUInt", [r])
                 return rtcall("pxt::fromInt", [r])
             }
@@ -367,8 +373,8 @@ namespace ts.pxtc.ir {
             if (this.isByRefLocal()) {
                 return rtcall("pxtrt::stlocRef", [this.loadCore(), src])
             } else {
-                if (target.isNative && this.bitSize != BitSize.None) {
-                    let cnv = this.bitSize == BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
+                if (pxtcTarget.isNative && this.bitSize != pxtc.BitSize.None) {
+                    let cnv = this.bitSize == pxtc.BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
                     return this.storeDirect(rtcall(cnv, [src], 1))
                 }
 
@@ -471,7 +477,7 @@ namespace ts.pxtc.ir {
                 return inner() + 8
                 */
             default:
-                throw U.oops()
+                throw pxt.U.oops()
         }
     }
 
@@ -496,7 +502,7 @@ namespace ts.pxtc.ir {
                 e.args[0] = inlineSubst(e.args[0])
                 return e
             default:
-                throw U.oops()
+                throw pxt.U.oops()
         }
     }
 
@@ -510,7 +516,7 @@ namespace ts.pxtc.ir {
         args: Cell[] = [];
         parent: Procedure = null;
         debugInfo: ProcDebugInfo = null;
-        fillDebugInfo: (th: assembler.File) => void = null;
+        fillDebugInfo: (th: pxtc.assembler.File) => void = null;
         classInfo: ClassInfo = null;
         perfCounterName: string = null;
         perfCounterNo = 0;
@@ -626,7 +632,7 @@ namespace ts.pxtc.ir {
 
         inlineSelf(args: ir.Expr[]) {
             const { precomp, flattened } = flattenArgs(args)
-            U.assert(flattened.length == this.args.length)
+            pxt.U.assert(flattened.length == this.args.length)
             this.args.map((a, i) => {
                 a.repl = flattened[i]
                 a.replUses = 0
@@ -658,7 +664,7 @@ namespace ts.pxtc.ir {
             // also the first SharedRef is replaced with SharedDef
             let refdef = (e: Expr): Expr => {
                 switch (e.exprKind) {
-                    case EK.SharedDef: throw U.oops();
+                    case EK.SharedDef: throw pxt.U.oops();
                     case EK.SharedRef:
                         let arg = e.args[0]
                         if (!arg.totalUses) {
@@ -709,8 +715,8 @@ namespace ts.pxtc.ir {
                     case EK.SharedDef:
                         let arg = e.args[0]
                         //console.log(arg)
-                        U.assert(arg.totalUses < 0, "arg.totalUses < 0")
-                        U.assert(arg.currUses === 0, "arg.currUses === 0")
+                        pxt.U.assert(arg.totalUses < 0, "arg.totalUses < 0")
+                        pxt.U.assert(arg.currUses === 0, "arg.currUses === 0")
                         // if there is just one usage, strip the SharedDef
                         if (arg.totalUses == -1)
                             return cntuses(arg)
@@ -719,7 +725,7 @@ namespace ts.pxtc.ir {
                             arg.totalUses = 1;
                         break;
                     case EK.SharedRef:
-                        U.assert(e.args[0].totalUses > 0, "e.args[0].totalUses > 0")
+                        pxt.U.assert(e.args[0].totalUses > 0, "e.args[0].totalUses > 0")
                         e.args[0].totalUses++;
                         return e;
                     case EK.PointerLiteral:
@@ -741,9 +747,9 @@ namespace ts.pxtc.ir {
                         iterargs(e, sharedincr)
                     case EK.SharedRef:
                         let arg = e.args[0]
-                        U.assert(arg.totalUses > 0, "arg.totalUses > 0")
+                        pxt.U.assert(arg.totalUses > 0, "arg.totalUses > 0")
                         if (arg.totalUses == 1) {
-                            U.assert(e.exprKind == EK.SharedDef)
+                            pxt.U.assert(e.exprKind == EK.SharedDef)
                             return arg
                         }
                         arg.irCurrUses++
@@ -765,7 +771,7 @@ namespace ts.pxtc.ir {
                 return true
             })
 
-            let lbls = U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
+            let lbls = pxt.U.toDictionary(this.body.filter(s => s.stmtKind == ir.SK.Label), s => s.lblName)
 
             for (let i = 0; i < this.body.length; ++i)
                 this.body[i].stmtNo = i
@@ -780,8 +786,8 @@ namespace ts.pxtc.ir {
                     case ir.SK.Expr:
                         break;
                     case ir.SK.Jmp:
-                        s.lbl = U.lookup(lbls, s.lblName)
-                        if (!s.lbl) oops("missing label: " + s.lblName)
+                        s.lbl = pxt.U.lookup(lbls, s.lblName)
+                        if (!s.lbl) pxtc.oops("missing label: " + s.lblName)
                         if (!s.lbl.lblNumUses) s.lbl.lblNumUses = 1
                         else s.lbl.lblNumUses++
                         break;
@@ -789,7 +795,7 @@ namespace ts.pxtc.ir {
                     case ir.SK.Label:
                     case ir.SK.Breakpoint:
                         break;
-                    default: oops();
+                    default: pxtc.oops();
                 }
             }
 
@@ -908,7 +914,7 @@ namespace ts.pxtc.ir {
     }
 
     export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
-        if (U.startsWith(name, "@nomask@")) {
+        if (pxt.U.startsWith(name, "@nomask@")) {
             name = name.slice(8)
             mask = 0
         }
@@ -922,7 +928,7 @@ namespace ts.pxtc.ir {
     export function flattenArgs(args: ir.Expr[], reorder = false) {
         let didStateUpdate = reorder ? args.some(a => a.canUpdateCells()) : false
         let complexArgs: ir.Expr[] = []
-        for (let a of U.reversed(args)) {
+        for (let a of pxt.U.reversed(args)) {
             if (a.isStateless()) continue
             if (a.exprKind == EK.CellRef && !didStateUpdate) continue
             if (a.canUpdateCells()) didStateUpdate = true

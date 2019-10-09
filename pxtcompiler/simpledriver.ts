@@ -54,13 +54,13 @@ namespace pxt {
     export function prepPythonOptions(opts: pxtc.CompileOptions) {
         // this is suboptimal, but we need apisInfo for the python converter
         if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            const opts2 = U.clone(opts)
+            const opts2 = pxt.U.clone(opts)
             opts2.ast = true
             opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             //opts2.noEmit = true
             // remove previously converted .ts files, so they don't end up in apisinfo
             for (let f of opts2.sourceFiles) {
-                if (U.endsWith(f, ".py"))
+                if (pxt.U.endsWith(f, ".py"))
                     opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
             }
             const res = pxtc.compile(opts2)
@@ -106,7 +106,7 @@ namespace pxt {
             return
         pxt.debug(`applying TS patches relative to ${version}`)
         for (let fn of Object.keys(opts.fileSystem)) {
-            if (fn.indexOf("/") == -1 && U.endsWith(fn, ".ts")) {
+            if (fn.indexOf("/") == -1 && pxt.U.endsWith(fn, ".ts")) {
                 const ts = opts.fileSystem[fn]
                 const ts2 = pxt.patching.patchJavaScript(version, ts)
                 if (ts != ts2) {

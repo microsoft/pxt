@@ -1,7 +1,7 @@
-/// <reference path="../../built/typescriptServices.d.ts"/>
+import { Diagnostic, FileReference, DiagnosticMessage, CommentRange, SyntaxKind, Declaration, SymbolWriter, ScriptReferenceHost, SourceFile, WriteFileCallback, ResolvedModule, DeclarationName, DiagnosticMessageChain, TextSpan, NodeFlags, Block, ReturnStatement, YieldExpression, VariableLikeDeclaration, AccessorDeclaration, ClassLikeDeclaration, FunctionLikeDeclaration, MethodDeclaration, TypeNode, EntityName, Expression, CallLikeExpression, PropertyAccessExpression, ElementAccessExpression, ModuleDeclaration, ImportEqualsDeclaration, CallExpression, JSDocTypeTag, JSDocReturnTag, JSDocTemplateTag, ParameterDeclaration, JSDocParameterTag, SignatureDeclaration, BindingPattern, Identifier, StringLiteral, LiteralExpression, ExpressionWithTypeArguments, NodeArray, InterfaceDeclaration, HeritageClause, TextRange, QualifiedName, CompilerOptions, ScriptTarget, ModuleKind, ConstructorDeclaration } from "../ext-typescript/lib/tsserverlibrary";
 
 declare namespace ts {
-    function getNodeId(node: Node): number;
+    function getNodeId(node: ts.Node): number;
     interface Node extends TextRange {
         symbol?: Symbol;                // Symbol declared by node (initialized by binding)
     }
@@ -20,7 +20,7 @@ declare namespace ts {
         diagnosticMessage?: DiagnosticMessage;
         isNoDefaultLib?: boolean;
     }
-    interface SynthesizedNode extends Node {
+    interface SynthesizedNode extends ts.Node {
         leadingCommentRanges?: CommentRange[];
         trailingCommentRanges?: CommentRange[];
         startsOnNewLine: boolean;
@@ -39,64 +39,64 @@ declare namespace ts {
     }
     function getSingleLineStringWriter(): StringSymbolWriter;
     function releaseStringWriter(writer: StringSymbolWriter): void;
-    function getFullWidth(node: Node): number;
+    function getFullWidth(node: ts.Node): number;
     function arrayIsEqualTo<T>(array1: T[], array2: T[], equaler?: (a: T, b: T) => boolean): boolean;
     function hasResolvedModule(sourceFile: SourceFile, moduleNameText: string): boolean;
     function getResolvedModule(sourceFile: SourceFile, moduleNameText: string): ResolvedModule;
     function setResolvedModule(sourceFile: SourceFile, moduleNameText: string, resolvedModule: ResolvedModule): void;
-    function containsParseError(node: Node): boolean;
-    function getSourceFileOfNode(node: Node): SourceFile;
+    function containsParseError(node: ts.Node): boolean;
+    function getSourceFileOfNode(node: ts.Node): SourceFile;
     function getStartPositionOfLine(line: number, sourceFile: SourceFile): number;
-    function nodePosToString(node: Node): string;
-    function getStartPosOfNode(node: Node): number;
-    function nodeIsMissing(node: Node): boolean;
-    function nodeIsPresent(node: Node): boolean;
-    function getTokenPosOfNode(node: Node, sourceFile?: SourceFile): number;
-    function getNonDecoratorTokenPosOfNode(node: Node, sourceFile?: SourceFile): number;
-    function getSourceTextOfNodeFromSourceFile(sourceFile: SourceFile, node: Node, includeTrivia?: boolean): string;
-    function getTextOfNodeFromSourceText(sourceText: string, node: Node): string;
-    function getTextOfNode(node: Node, includeTrivia?: boolean): string;
+    function nodePosToString(node: ts.Node): string;
+    function getStartPosOfNode(node: ts.Node): number;
+    function nodeIsMissing(node: ts.Node): boolean;
+    function nodeIsPresent(node: ts.Node): boolean;
+    function getTokenPosOfNode(node: ts.Node, sourceFile?: SourceFile): number;
+    function getNonDecoratorTokenPosOfNode(node: ts.Node, sourceFile?: SourceFile): number;
+    function getSourceTextOfNodeFromSourceFile(sourceFile: SourceFile, node: ts.Node, includeTrivia?: boolean): string;
+    function getTextOfNodeFromSourceText(sourceText: string, node: ts.Node): string;
+    function getTextOfNode(node: ts.Node, includeTrivia?: boolean): string;
     function escapeIdentifier(identifier: string): string;
     function unescapeIdentifier(identifier: string): string;
     function makeIdentifierFromModuleName(moduleName: string): string;
     function isBlockOrCatchScoped(declaration: Declaration): boolean;
-    function getEnclosingBlockScopeContainer(node: Node): Node;
+    function getEnclosingBlockScopeContainer(node: ts.Node): ts.Node;
     function isCatchClauseVariableDeclaration(declaration: Declaration): boolean;
     function declarationNameToString(name: DeclarationName): string;
-    function createDiagnosticForNode(node: Node, message: DiagnosticMessage, arg0?: any, arg1?: any, arg2?: any): Diagnostic;
-    function createDiagnosticForNodeFromMessageChain(node: Node, messageChain: DiagnosticMessageChain): Diagnostic;
+    function createDiagnosticForNode(node: ts.Node, message: DiagnosticMessage, arg0?: any, arg1?: any, arg2?: any): Diagnostic;
+    function createDiagnosticForNodeFromMessageChain(node: ts.Node, messageChain: DiagnosticMessageChain): Diagnostic;
     function getSpanOfTokenAtPosition(sourceFile: SourceFile, pos: number): TextSpan;
-    function getErrorSpanForNode(sourceFile: SourceFile, node: Node): TextSpan;
+    function getErrorSpanForNode(sourceFile: SourceFile, node: ts.Node): TextSpan;
     function isExternalModule(file: SourceFile): boolean;
     function isExternalOrCommonJsModule(file: SourceFile): boolean;
     function isDeclarationFile(file: SourceFile): boolean;
-    function isConstEnumDeclaration(node: Node): boolean;
-    function getCombinedNodeFlags(node: Node): NodeFlags;
-    function isConst(node: Node): boolean;
-    function isLet(node: Node): boolean;
-    function isPrologueDirective(node: Node): boolean;
-    function getLeadingCommentRangesOfNode(node: Node, sourceFileOfNode: SourceFile): CommentRange[];
-    function getLeadingCommentRangesOfNodeFromText(node: Node, text: string): CommentRange[];
-    function getJsDocComments(node: Node, sourceFileOfNode: SourceFile): CommentRange[];
-    function getJsDocCommentsFromText(node: Node, text: string): CommentRange[];
+    function isConstEnumDeclaration(node: ts.Node): boolean;
+    function getCombinedNodeFlags(node: ts.Node): NodeFlags;
+    function isConst(node: ts.Node): boolean;
+    function isLet(node: ts.Node): boolean;
+    function isPrologueDirective(node: ts.Node): boolean;
+    function getLeadingCommentRangesOfNode(node: ts.Node, sourceFileOfNode: SourceFile): CommentRange[];
+    function getLeadingCommentRangesOfNodeFromText(node: ts.Node, text: string): CommentRange[];
+    function getJsDocComments(node: ts.Node, sourceFileOfNode: SourceFile): CommentRange[];
+    function getJsDocCommentsFromText(node: ts.Node, text: string): CommentRange[];
     let fullTripleSlashReferencePathRegEx: RegExp;
     let fullTripleSlashAMDReferencePathRegEx: RegExp;
-    function isTypeNode(node: Node): boolean;
+    function isTypeNode(node: ts.Node): boolean;
     function forEachReturnStatement<T>(body: Block, visitor: (stmt: ReturnStatement) => T): T;
     function forEachYieldExpression(body: Block, visitor: (expr: YieldExpression) => void): void;
-    function isVariableLike(node: Node): node is VariableLikeDeclaration;
-    function isAccessor(node: Node): node is AccessorDeclaration;
-    function isClassLike(node: Node): node is ClassLikeDeclaration;
-    function isFunctionLike(node: Node): node is FunctionLikeDeclaration;
+    function isVariableLike(node: ts.Node): node is VariableLikeDeclaration;
+    function isAccessor(node: ts.Node): node is AccessorDeclaration;
+    function isClassLike(node: ts.Node): node is ClassLikeDeclaration;
+    function isFunctionLike(node: ts.Node): node is FunctionLikeDeclaration;
     function isFunctionLikeKind(kind: SyntaxKind): boolean;
-    function introducesArgumentsExoticObject(node: Node): boolean;
-    function isIterationStatement(node: Node, lookInLabeledStatements: boolean): boolean;
-    function isFunctionBlock(node: Node): boolean;
-    function isObjectLiteralMethod(node: Node): node is MethodDeclaration;
+    function introducesArgumentsExoticObject(node: ts.Node): boolean;
+    function isIterationStatement(node: ts.Node, lookInLabeledStatements: boolean): boolean;
+    function isFunctionBlock(node: ts.Node): boolean;
+    function isObjectLiteralMethod(node: ts.Node): node is MethodDeclaration;
     // function isIdentifierTypePredicate(predicate: TypePredicate): predicate is IdentifierTypePredicate;
-    function getContainingFunction(node: Node): FunctionLikeDeclaration;
-    function getContainingClass(node: Node): ClassLikeDeclaration;
-    function getThisContainer(node: Node, includeArrowFunctions: boolean): Node;
+    function getContainingFunction(node: ts.Node): FunctionLikeDeclaration;
+    function getContainingClass(node: ts.Node): ClassLikeDeclaration;
+    function getThisContainer(node: ts.Node, includeArrowFunctions: boolean): ts.Node;
     /**
       * Given an super call\property node returns a closest node where either
       * - super call\property is legal in the node and not legal in the parent node the node.
@@ -105,60 +105,60 @@ declare namespace ts {
       * - super call\property is definitely illegal in the node (but might be legal in some subnode)
       *   i.e. super property access is illegal in function declaration but can be legal in the statement list
       */
-    function getSuperContainer(node: Node, stopOnFunctions: boolean): Node;
+    function getSuperContainer(node: ts.Node, stopOnFunctions: boolean): ts.Node;
     function getEntityNameFromTypeNode(node: TypeNode): EntityName | Expression;
     function getInvokedExpression(node: CallLikeExpression): Expression;
-    function nodeCanBeDecorated(node: Node): boolean;
-    function nodeIsDecorated(node: Node): boolean;
-    function isPropertyAccessExpression(node: Node): node is PropertyAccessExpression;
-    function isElementAccessExpression(node: Node): node is ElementAccessExpression;
-    function isExpression(node: Node): boolean;
+    function nodeCanBeDecorated(node: ts.Node): boolean;
+    function nodeIsDecorated(node: ts.Node): boolean;
+    function isPropertyAccessExpression(node: ts.Node): node is PropertyAccessExpression;
+    function isElementAccessExpression(node: ts.Node): node is ElementAccessExpression;
+    function isExpression(node: ts.Node): boolean;
     function isExternalModuleNameRelative(moduleName: string): boolean;
     function isInstantiatedModule(node: ModuleDeclaration, preserveConstEnums: boolean): boolean;
-    function isExternalModuleImportEqualsDeclaration(node: Node): boolean;
-    function getExternalModuleImportEqualsDeclarationExpression(node: Node): Expression;
-    function isInternalModuleImportEqualsDeclaration(node: Node): node is ImportEqualsDeclaration;
+    function isExternalModuleImportEqualsDeclaration(node: ts.Node): boolean;
+    function getExternalModuleImportEqualsDeclarationExpression(node: ts.Node): Expression;
+    function isInternalModuleImportEqualsDeclaration(node: ts.Node): node is ImportEqualsDeclaration;
     function isSourceFileJavaScript(file: SourceFile): boolean;
-    function isInJavaScriptFile(node: Node): boolean;
+    function isInJavaScriptFile(node: ts.Node): boolean;
     /**
      * Returns true if the node is a CallExpression to the identifier 'require' with
      * exactly one string literal argument.
      * This function does not test if the node is in a JavaScript file or not.
     */
-    function isRequireCall(expression: Node): expression is CallExpression;
-    // function getSpecialPropertyAssignmentKind(expression: Node): SpecialPropertyAssignmentKind;
-    function getExternalModuleName(node: Node): Expression;
-    function hasQuestionToken(node: Node): boolean;
-    function isJSDocConstructSignature(node: Node): boolean;
-    function getJSDocTypeTag(node: Node): JSDocTypeTag;
-    function getJSDocReturnTag(node: Node): JSDocReturnTag;
-    function getJSDocTemplateTag(node: Node): JSDocTemplateTag;
+    function isRequireCall(expression: ts.Node): expression is CallExpression;
+    // function getSpecialPropertyAssignmentKind(expression: ts.Node): SpecialPropertyAssignmentKind;
+    function getExternalModuleName(node: ts.Node): Expression;
+    function hasQuestionToken(node: ts.Node): boolean;
+    function isJSDocConstructSignature(node: ts.Node): boolean;
+    function getJSDocTypeTag(node: ts.Node): JSDocTypeTag;
+    function getJSDocReturnTag(node: ts.Node): JSDocReturnTag;
+    function getJSDocTemplateTag(node: ts.Node): JSDocTemplateTag;
     function getCorrespondingJSDocParameterTag(parameter: ParameterDeclaration): JSDocParameterTag;
     function hasRestParameter(s: SignatureDeclaration): boolean;
     function isRestParameter(node: ParameterDeclaration): boolean;
     function isLiteralKind(kind: SyntaxKind): boolean;
     function isTextualLiteralKind(kind: SyntaxKind): boolean;
     function isTemplateLiteralKind(kind: SyntaxKind): boolean;
-    function isBindingPattern(node: Node): node is BindingPattern;
-    function isNodeDescendentOf(node: Node, ancestor: Node): boolean;
-    function isInAmbientContext(node: Node): boolean;
-    function isDeclaration(node: Node): boolean;
-    function isStatement(n: Node): boolean;
-    function isClassElement(n: Node): boolean;
-    function isDeclarationName(name: Node): name is Identifier | StringLiteral | LiteralExpression;
+    function isBindingPattern(node: ts.Node): node is BindingPattern;
+    function isNodeDescendentOf(node: ts.Node, ancestor: ts.Node): boolean;
+    function isInAmbientContext(node: ts.Node): boolean;
+    function isDeclaration(node: ts.Node): boolean;
+    function isStatement(n: ts.Node): boolean;
+    function isClassElement(n: ts.Node): boolean;
+    function isDeclarationName(name: ts.Node): name is Identifier | StringLiteral | LiteralExpression;
     function isIdentifierName(node: Identifier): boolean;
-    function isAliasSymbolDeclaration(node: Node): boolean;
+    function isAliasSymbolDeclaration(node: ts.Node): boolean;
     function getClassExtendsHeritageClauseElement(node: ClassLikeDeclaration): ExpressionWithTypeArguments;
     function getClassImplementsHeritageClauseElements(node: ClassLikeDeclaration): NodeArray<ExpressionWithTypeArguments>;
     function getInterfaceBaseTypeNodes(node: InterfaceDeclaration): NodeArray<ExpressionWithTypeArguments>;
     function getHeritageClause(clauses: NodeArray<HeritageClause>, kind: SyntaxKind): HeritageClause;
     function tryResolveScriptReference(host: ScriptReferenceHost, sourceFile: SourceFile, reference: FileReference): SourceFile;
-    function getAncestor(node: Node, kind: SyntaxKind): Node;
+    function getAncestor(node: ts.Node, kind: SyntaxKind): ts.Node;
     function getFileReferenceFromReferencePath(comment: string, commentRange: CommentRange): ReferencePathMatchResult;
     function isKeyword(token: SyntaxKind): boolean;
     function isTrivia(token: SyntaxKind): boolean;
-    function isAsyncFunctionLike(node: Node): boolean;
-    function isStringOrNumericLiteral(node: Node): boolean;
+    function isAsyncFunctionLike(node: ts.Node): boolean;
+    function isStringOrNumericLiteral(node: ts.Node): boolean;
     /**
      * A declaration has a dynamic name if both of the following are true:
      *   1. The declaration has a computed property name
@@ -179,11 +179,11 @@ declare namespace ts {
     /**
      * Includes the word "Symbol" with unicode escapes
      */
-    function isESSymbolIdentifier(node: Node): boolean;
+    function isESSymbolIdentifier(node: ts.Node): boolean;
     function isModifierKind(token: SyntaxKind): boolean;
     function isParameterDeclaration(node: VariableLikeDeclaration): boolean;
-    function getRootDeclaration(node: Node): Node;
-    function nodeStartsNewLexicalEnvironment(n: Node): boolean;
+    function getRootDeclaration(node: ts.Node): ts.Node;
+    function nodeStartsNewLexicalEnvironment(n: ts.Node): boolean;
     /**
      * Creates a shallow, memberwise clone of a node. The "kind", "pos", "end", "flags", and "parent"
      * properties are excluded by default, and can be provided via the "location", "flags", and
@@ -193,16 +193,16 @@ declare namespace ts {
      * @param flags The NodeFlags to use for the cloned node.
      * @param parent The parent for the new node.
      */
-    function cloneNode<T extends Node>(node: T, location?: TextRange, flags?: NodeFlags, parent?: Node): T;
+    function cloneNode<T extends ts.Node>(node: T, location?: TextRange, flags?: NodeFlags, parent?: ts.Node): T;
     /**
      * Creates a deep clone of an EntityName, with new parent pointers.
      * @param node The EntityName to clone.
      * @param parent The parent for the cloned node.
      */
-    function cloneEntityName(node: EntityName, parent?: Node): EntityName;
-    function isQualifiedName(node: Node): node is QualifiedName;
-    function nodeIsSynthesized(node: Node): boolean;
-    function createSynthesizedNode(kind: SyntaxKind, startsOnNewLine?: boolean): Node;
+    function cloneEntityName(node: EntityName, parent?: ts.Node): EntityName;
+    function isQualifiedName(node: ts.Node): node is QualifiedName;
+    function nodeIsSynthesized(node: ts.Node): boolean;
+    function createSynthesizedNode(kind: SyntaxKind, startsOnNewLine?: boolean): ts.Node;
     function createSynthesizedNodeArray(): NodeArray<any>;
     function createDiagnosticCollection(): DiagnosticCollection;
     /**
@@ -215,7 +215,7 @@ declare namespace ts {
     function escapeNonAsciiCharacters(s: string): string;
     interface EmitTextWriter {
         write(s: string): void;
-        writeTextOfNode(text: string, node: Node): void;
+        writeTextOfNode(text: string, node: ts.Node): void;
         writeLine(): void;
         increaseIndent(): void;
         decreaseIndent(): void;
@@ -270,10 +270,10 @@ declare namespace ts {
     function modifierToFlag(token: SyntaxKind): NodeFlags;
     function isLeftHandSideExpression(expr: Expression): boolean;
     function isAssignmentOperator(token: SyntaxKind): boolean;
-    function isExpressionWithTypeArgumentsInClassExtendsClause(node: Node): boolean;
+    function isExpressionWithTypeArgumentsInClassExtendsClause(node: ts.Node): boolean;
     function isSupportedExpressionWithTypeArguments(node: ExpressionWithTypeArguments): boolean;
-    function isRightSideOfQualifiedNameOrPropertyAccess(node: Node): boolean;
-    function isEmptyObjectLiteralOrArrayLiteral(expression: Node): boolean;
+    function isRightSideOfQualifiedNameOrPropertyAccess(node: ts.Node): boolean;
+    function isEmptyObjectLiteralOrArrayLiteral(expression: ts.Node): boolean;
     function getLocalSymbolForExportDefault(symbol: Symbol): Symbol;
     function hasJavaScriptFileExtension(fileName: string): boolean;
     /**
@@ -287,4 +287,5 @@ declare namespace ts {
     function convertToBase64(input: string): string;
     function convertToRelativePath(absoluteOrRelativePath: string, basePath: string, getCanonicalFileName: (path: string) => string): string;
     function getNewLineCharacter(options: CompilerOptions): string;
+
 }
