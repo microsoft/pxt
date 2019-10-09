@@ -120,14 +120,27 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
 
     protected resizeContentCore = () => {
         this.resizeFrameRef = undefined;
+        const bounds = this.editorBounds;
 
-        const padding = this.editorBounds.width < 500 ? 0 : Math.max(this.editorBounds.width, this.editorBounds.height) / 30;
+        let horizontalPadding = 20;
+        let verticalPadding = 20;
+
+
+        if (bounds.width - (horizontalPadding * 2) < 500) {
+            horizontalPadding = 0;
+            verticalPadding = 0;
+        }
+
+        if (bounds.height - (verticalPadding * 2) < 610) {
+            verticalPadding = Math.min(bounds.height - 610, 0) / 2;
+            horizontalPadding = 0;
+        }
 
         this.contentBounds = {
-            left: this.editorBounds.left + padding,
-            top: this.editorBounds.top + padding,
-            width: this.editorBounds.width - padding * 2,
-            height: this.editorBounds.height - padding * 2
+            left: bounds.left + horizontalPadding,
+            top: bounds.top + verticalPadding,
+            width: bounds.width - horizontalPadding * 2,
+            height: bounds.height - verticalPadding * 2
         };
 
         this.contentDiv.style.left = this.contentBounds.left + "px";
@@ -135,10 +148,10 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         this.contentDiv.style.width = this.contentBounds.width + "px";
         this.contentDiv.style.height = this.contentBounds.height + "px";
 
-        this.overlayDiv.style.left = this.editorBounds.left + "px";
-        this.overlayDiv.style.top = this.editorBounds.top + "px";
-        this.overlayDiv.style.width = this.editorBounds.width + "px";
-        this.overlayDiv.style.height = this.editorBounds.height + "px";
+        this.overlayDiv.style.left = bounds.left + "px";
+        this.overlayDiv.style.top = bounds.top + "px";
+        this.overlayDiv.style.width = bounds.width + "px";
+        this.overlayDiv.style.height = bounds.height + "px";
 
         if (this.componentRef && this.visible && this.componentRef.onResize) {
             this.componentRef.onResize();
