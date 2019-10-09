@@ -383,7 +383,7 @@ svg {
 }
 
 /* Limit width of content so that it is readable */
-#docs .article .article-inner div {
+#docs .article .article-inner > div {
     max-width: 1100px !important;
     margin-left: 0 !important;
 }
