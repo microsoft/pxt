@@ -602,8 +602,8 @@ namespace ts.pxtc {
                     } else if (U.contains(n, ".loc.")) {
                         if (!res.locs) res.locs = {};
                         const p = n.slice(0, n.indexOf('.loc.'));
-                        const l = n.slice(n.indexOf('.loc.') + '.loc'.length);
-                        res.locs[p + "|param|" + l] = v;
+                        const l = n.slice(n.indexOf('.loc.') + '.loc.'.length);
+                        res.locs[l + "|param|" + p] = v;
                     } else if (U.endsWith(n, ".defl")) {
                         if (v.indexOf(" ") > -1) {
                             res.paramDefl[n.slice(0, n.length - 5)] = `"${v}"`
