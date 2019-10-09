@@ -450,7 +450,7 @@ describe("comment attribute parser", () => {
     });
 
     it("should allow block.LOCALE", () => {
-        const parsed = pxtc.parseCommentString(`
+        const parsed = ts.pxtc.parseCommentString(`
             /**
              * Bla
              */
@@ -459,7 +459,7 @@ describe("comment attribute parser", () => {
             //% block.loc.es="SPANISH $bar"
             //% jsdoc.loc.fr="bli"
             //% bar.loc.fr="bah"
-        `)._def;
+        `);
 
         checkLoc("fr", "FRENCH");
         checkLoc("es", "SPANISH");
