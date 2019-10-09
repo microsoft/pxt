@@ -30,10 +30,12 @@
 @docsCardHoverBorderColor: #1dacf4;
 
 #docs .footer,
-.ui.menu.fixed,
-.ui.menu.sidebar {
-    /** TODO: invert sidebar (use shades of this color as emphasis color against light background) **/
+.ui.menu.fixed {
     background: hsl(@docsHeaderHue, 15%, 20%);
+}
+
+.ui.menu.sidebar {
+    background: #EFEFEF;
 }
 
 #docs {
@@ -356,19 +358,24 @@
 }
 
 
-.sidebar.menu {
+.ui.sidebar.menu.left {
+    padding-left: 1em;
+
     /* Sidebar TOC */
     .item:before {
-        content:none;
+        content: none;
         width: 0;
         height: 0;
     }
     .item,
     .accordion .title {
         padding: 0.8rem;
-        padding-left: 2rem;
+        padding-left: 1rem;
         display: flex;
         flex-direction: row;
+    }
+    .item {
+        color: hsla(0,0%,0%,.9);
     }
     .accordion.item {
         padding: 0;
@@ -377,7 +384,7 @@
     }
     .accordion.item .title .icon {
         font-size: 0.8em;
-        width: 2rem;
+        width: 1rem;
         margin: 0;
         transform: translateY(0.1rem);
     }
@@ -392,26 +399,26 @@
         margin: 0;
     }
     a.item.active {
-        background-color: hsla(0,0%,0%,.05);
+        background-color: hsla(0,0%,100%,.05);
     }
     &.inverted a.item.active {
-        background-color: hsla(0,0%,100%,.05);
+        background-color: hsla(0,0%,0%,.05);
     }
     a.item:hover,
     .accordion .title:hover {
-        background-color: hsla(0,0%,0%,.1);
+        background-color: hsla(0,0%,100%,.1);
     }
     &.inverted a.item:hover,
     &.inverted .accordion .title:hover {
-        background-color: hsla(0,0%,100%,.1);
+        background-color: hsla(0,0%,0%,.1);
     }
     a,
     .icon {
-        color: hsla(0,0%,0%,.9);
+        color: hsla(0,0%,100%,.9);
     }
     &.inverted a,
     &.inverted .icon {
-        color: hsla(0,0%,100%,.9);
+        color: hsla(0,0%,0%,.9);
     }
     a:hover,
     .title:hover a {
@@ -428,7 +435,7 @@
     .accordion.item .content:not(.style),
     .accordion.item .accordion .title~.content:not(.ui), 
     .accordion.item .title~.content:not(.ui) {
-        padding-left: 2rem;
+        padding-left: 1rem;
     }
 }
 
