@@ -68,6 +68,27 @@ let theEditor: ProjectView;
 let hash: { cmd: string, arg: string };
 let pendingEditorRequests: ((p: ProjectView) => void)[];
 
+// TS 3.5 test (true IIF >3.5)
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log(1 in [...Array(5)])
+console.log(1 in [...Array(5)])
+console.log(1 in [...Array(5)])
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+console.log("#########################")
+
 function getEditorAsync() {
     if (theEditor) return Promise.resolve(theEditor);
     if (!pendingEditorRequests) pendingEditorRequests = [];
@@ -3423,7 +3444,7 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")}>
+                {showEditorToolbar ? <div id="editortools" role="complementary" aria-label={lf("Editor toolbar")} style={{ "background": "blue" }}>
                     <editortoolbar.EditorToolbar ref="editortools" parent={this} />
                 </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
