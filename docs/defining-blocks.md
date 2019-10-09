@@ -118,24 +118,24 @@ a mapping between the block field names and the function names.
 
 ## Custom block localization
 
-You can override the value used in ``block`` for a particular locale by provide a ``loc.block.LOCALE`` entry.
+You can override the value used in ``block`` for a particular locale by provide a ``block.loc.LOCALE`` entry.
 
 ```
-loc.block.LOCALE = blocksyntax
+block.loc.LOCALE = blocksyntax
 ```
 
 For example,
 
 ```typescript-ignore
 //% block="square $x"
-//% loc.block.fr="$x au carré"
+//% block.loc.fr="$x au carré"
 function square(x: number): number {}
 ```
 
 You can also override the ``jsDoc`` description and parameter info.
 
 ```
-loc.jsdoc.LOCALE = translated jsdoc
+jsdoc.loc.LOCALE = translated jsdoc
 PARAM.loc.LOCALE = parameter jsdoc
 ```
 
@@ -145,9 +145,9 @@ PARAM.loc.LOCALE = parameter jsdoc
     @param x the number to square
 **/
 //% block="square $x"
-//% loc.block.fr="$x au carré"
-//% loc.jsdoc.fr="Calcule le carré de x"
-//% x.param.fr="le nombre"
+//% block.loc.fr="$x au carré"
+//% jsdoc.loc.fr="Calcule le carré de x"
+//% x.loc.fr="le nombre"
 function square(x: number): number {}
 ```
 

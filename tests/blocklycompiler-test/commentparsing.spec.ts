@@ -454,17 +454,21 @@ describe("comment attribute parser", () => {
             /**
              * Bla
              */
-            //% block="$micros $whatever=oldShadowBlock"
-            //% loc.block.fr="FRENCH"
-            //% loc.block.es="SPANISH"
+            //% block="foo $bar"
+            //% block.loc.fr="FRENCH $bar"
+            //% block.loc.es="SPANISH $bar"
+            //% jsdoc.loc.fr="bli"
+            //% bar.loc.fr="bah"
         `)._def;
 
         checkLoc("fr", "FRENCH");
         checkLoc("es", "SPANISH");
 
         function checkLoc(name: string, shadow: string) {
-            chai.assert(parsed.locs["fr|block"] == "FRENCH");
-            chai.assert(parsed.locs["es|block"] == "SPANISH");
+            chai.assert(parsed.locs["fr|block"] == "FRENCH $bar");
+            chai.assert(parsed.locs["es|block"] == "SPANISH $bar");
+            chai.assert(parsed.locs["fr|jsdoc"] == "bli");
+            chai.assert(parsed.locs["fr|param|bar"] == "bah");
         }
     });
 
