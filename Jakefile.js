@@ -8,7 +8,7 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 var strpSrcMap = ju.strpSrcMap;
 
-function tscIn(task, dir, builtDir) {
+function tscIn(task, dir, builtDir = "built") {
     let command = 'node ' + path.relative(dir, './node_modules/typescript/bin/tsc')
     if (process.env.sourceMaps === 'true') {
         command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
@@ -45,7 +45,7 @@ function setupTest(taskName, testFolder, testFile) {
     })
 
     file("built/tests/" + testFolder + "/" + testFile, ['default'], { async: true }, function () {
-        cmdIn(this, "tests/" + testFolder, 'node ../../node_modules/typescript/bin/tsc')
+        tscIn(this, "tests/" + testFolder)
     });
 
     ju.catFiles('built/tests/' + testFolder + '/runner.js', [
@@ -191,11 +191,11 @@ task("karma-debug", ["blocklycompilertest"], function () {
 });
 
 task("blocklycompilertest", ["default"], { async: true }, function () {
-    cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
+    tscIn(this, "tests/blocklycompiler-test")
 })
 
 file("built/tests/blocksrunner.js", ["built/pxtlib.js", "built/pxtcompiler.js", "built/pxtblocks.js", "built/pxteditor.js"], { async: true }, function () {
-    cmdIn(this, "tests/blocks-test", "node ../../node_modules/typescript/bin/tsc")
+    tscIn(this, "tests/blocks-test")
 })
 
 task("travis", ["lint", "test", "upload"])
