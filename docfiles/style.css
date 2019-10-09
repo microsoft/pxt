@@ -322,17 +322,9 @@ svg {
 }
 
 .sidebar.menu .menuContainer {
-    /* extra padding at the bottom
-     so we can always scroll a little past the content*/
-    margin-bottom: 5rem;
+    /* a bit of extra padding at the bottom to make scrolling feel nicer */
+    margin-bottom: 0.5em;
 }
-
-.ui.menu.sidebar .menuContainer {
-    /* match with menu bar height */
-    max-height: calc(100% - 3.5rem);
-    overflow-y: scroll;
-}
-
 .cc-banner {
     display: none;
 }
@@ -359,6 +351,7 @@ svg {
 .ui.sidebar {
     /* match with menu bar height */
     top: 3.5em;
+    max-height: calc(100% - 3.5rem);
 }
 .navigation {
     position: relative;
