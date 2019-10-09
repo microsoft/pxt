@@ -127,9 +127,9 @@ file('built/pxt.d.ts', ['built/cli.js'], function () {
 file('built/target.js', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, ".", "node built/pxt.js buildtarget");
 })
-file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
+file('built/typescriptServices.d.ts', ['pxtcompiler/ext-typescript/lib/typescriptServices.d.ts'], function () {
     if (!fs.existsSync("built")) fs.mkdirSync("built");
-    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+    jake.cpR('pxtcompiler/ext-typescript/lib/typescriptServices.d.ts', "built/")
 })
 
 file('built/pxt-common.json', expand(['libs/pxt-common', 'libs/pxt-python'], ".ts"), function () {
