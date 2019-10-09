@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "5.25.5",
+  "version": "5.25.6",
   "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -84,8 +84,7 @@
     "jake": "8.0.16",
     "jquery": "3.3.1",
     "monaco-editor": "0.10.0",
-    "pouchdb": "5.4.5",
-    "pxt-blockly": "2.1.4",
+    "pxt-blockly": "2.1.5",
     "pxt-monaco-typescript": "2.3.5",
     "react": "16.8.3",
     "react-dom": "16.3.1",
