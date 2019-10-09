@@ -593,12 +593,12 @@ namespace ts.pxtc {
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (!v) v = "";
-                    if (U.startsWith(n, "loc.block.")) {
+                    if (U.startsWith(n, "block.loc.")) {
                         if (!res.locs) res.locs = {};
-                        res.locs[n.slice("loc.block.".length).toLowerCase() + "|block"] = v;
-                    } else if (U.startsWith(n, "loc.jsdoc.")) {
+                        res.locs[n.slice("block.loc.".length).toLowerCase() + "|block"] = v;
+                    } else if (U.startsWith(n, "jsdoc.loc.")) {
                         if (!res.locs) res.locs = {};
-                        res.locs[n.slice("loc.jsdoc.".length).toLowerCase() + "|jsdoc"] = v;
+                        res.locs[n.slice("jsdoc.loc.".length).toLowerCase() + "|jsdoc"] = v;
                     } else if (U.contains(n, ".loc.")) {
                         if (!res.locs) res.locs = {};
                         const p = n.slice(0, n.indexOf('.loc.'));
