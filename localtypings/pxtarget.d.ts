@@ -567,6 +567,7 @@ declare namespace ts.pxtc {
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
         topblock?: boolean;
         topblockWeight?: number;
+        locs?: pxt.Map<string>;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
