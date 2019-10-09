@@ -389,6 +389,9 @@
         margin: 0;
         transform: translateY(0.1rem);
     }
+    .title.active {
+        padding-bottom: 0;
+    }
     .accordion.item .title.active .icon {
         transform: translateY(0.1rem) rotate(90deg);
     }
@@ -432,6 +435,7 @@
     .title:hover a,
     .title:focus a {
         text-decoration: underline;
+        color: hsl(@docsHeaderHue, 35%, 30%)
     }
     &.vertical .item:before {
         /* remove gray divider lines */
