@@ -21,8 +21,6 @@ function tscIn(task, dir, builtDir) {
 }
 
 function compileDir(name, deps) {
-    // TODO(dz):
-    console.log(`###compileDir(${name}, ${deps})`)
     if (!deps) deps = []
     let dd = expand([name].concat(deps))
     let out = 'built/' + name + '.js';
