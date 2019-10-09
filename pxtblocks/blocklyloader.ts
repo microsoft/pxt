@@ -2851,6 +2851,7 @@ namespace pxt.blocks {
             (varField as any).initModel();
             const model = (varField as any).getVariable();
             model.name = newName;
+            varField.setText(newName);
             varField.setValue(model.getId());
         }
     }
