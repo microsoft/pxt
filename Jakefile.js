@@ -49,7 +49,7 @@ function setupTest(taskName, testFolder, testFile) {
     });
 
     ju.catFiles('built/tests/' + testFolder + '/runner.js', [
-        "node_modules/typescript/lib/typescript.js",
+        "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
@@ -106,7 +106,7 @@ task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
 })
 
 ju.catFiles('built/pxt.js', [
-    "node_modules/typescript/lib/typescript.js",
+    "pxtcompiler/ext-typescript/lib/typescript.js",
     "built/pxtlib.js",
     "built/pxtcompiler.js",
     "built/pxtpy.js",
@@ -364,7 +364,7 @@ file("built/web/pxtlib.js", [
         "getCompletionData"
     ]
 
-    let ts = fs.readFileSync("node_modules/typescript/lib/typescript.js", "utf8")
+    let ts = fs.readFileSync("pxtcompiler/ext-typescript/lib/typescript.js", "utf8")
     ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
         f => f + " " + additionalExports.map(s => s + ": ts.Completions." + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)
