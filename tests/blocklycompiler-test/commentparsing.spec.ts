@@ -448,6 +448,26 @@ describe("comment attribute parser", () => {
             chai.assert(parsed.parts.filter(p => p.kind === "param" && p.name === name && p.shadowBlockId == shadow).length === 1);
         }
     });
+
+    it("should allow block.LOCALE", () => {
+        const parsed = pxtc.parseCommentString(`
+            /**
+             * Bla
+             */
+            //% block="$micros $whatever=oldShadowBlock"
+            //% block.fr="FRENCH"
+            //% block.es="SPANISH"
+        `)._def;
+
+        checkLoc("fr", "FRENCH");
+        checkLoc("es", "SPANISH");
+
+        function checkLoc(name: string, shadow: string) {
+            chai.assert(parsed.locs["fr|block"] == "FRENCH");
+            chai.assert(parsed.locs["es|block"] == "SPANISH");
+        }
+    });
+
 });
 
 function brk(): pxtc.BlockBreak {

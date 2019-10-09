@@ -116,6 +116,22 @@ a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
 * Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
 
+## Custom block localization
+
+You can override the value used in ``block`` for a particular locale by provide a ``block.LOCALE`` entry.
+
+```
+block.LOCALE = blocksyntax
+```
+
+For example,
+
+```typescript-ignore
+//% block="square $x"
+//% block.fr="$x au carré"
+function square(x: number): number {}
+```
+
 ## Supported types
 
 The following [types](/playground#basic-types) are supported in function signatures that are meant to be exported:
