@@ -324,6 +324,16 @@ namespace pxt.runner {
             // TODO python
             const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
+            // add an html widge that allows to translate the block
+            if (pxt.Util.isTranslationMode()) {
+                const trs = $('<div class="ui segment" />');
+                trs.append($(`<div class="ui header"><i class="ui xicon globe" /></div>`));
+                if (symbolInfo.attributes.translationId)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
+                if (symbolInfo.attributes.jsDoc)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
+                trs.insertAfter(c);
+            }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
