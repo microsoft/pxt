@@ -28,7 +28,10 @@ In context translation is still being rolled out into the editors. It might not 
 
 ### Currently supported editors
 
-* [Maker](https://maker.makecode.com/beta?translate=1) (docs & editor)
+* `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
+* `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
+* `/beta` version of [LEGO - EV3](https://makecode.mindstorms.com/beta)
+* The [Maker Editor](https://maker.makecode.com)
 
 ### ~
 
