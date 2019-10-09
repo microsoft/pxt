@@ -161,3 +161,52 @@
         </div>
     </div>
 </aside>
+
+<!-- TODO: duplicates of above for compatability with docsrender.ts;
+    remove with pxtlib/docsrender.ts TOC TODOs after cloud bump. -->
+<aside id=top-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=top-dropdown-noheading class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="dropdown icon"></i>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=inner-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=nested-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
