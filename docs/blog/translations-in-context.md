@@ -13,11 +13,11 @@ To address the issues just mentioned, **we've added [in context translations](ht
 
 https://youtu.be/OugXfqhWUQo
 
-## Documentation translation
+## Editor translation
 
-In a documentation page, click on the **Translate this page** link in the footer (you can also try to translate this blog post).
+To enter translation mode in the editor, go the gearwheel menu, click **Languages** and then click the **Translate the editor** button at the bottom.
 
-![Link to enable translation mode in the documentation](/static/blog/translations-in-context/docsbutton.png)
+![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
 
 Each portion of text that is available for translation will have a colored border and an icon to edit the translation. The colored borders mean:
 
@@ -25,15 +25,7 @@ Each portion of text that is available for translation will have a colored borde
 * Blue border: the text has a translation but it isn't validated/approved
 * Green border: the text has a valdated/approved translation
 
-![A paragraph of text translated using Crowdin](/static/blog/translations-in-context/docstr.png)
-
-## Editor translation
-
-To enter translation mode in the editor, go the gearwheel menu, click **Languages** and then click the **Translate the editor** button at the bottom.
-
-![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
-
-The in context translations, for the most part, work the same as for a documentation page. For user interface elements, simply click on the icon to translate them.
+For user interface elements, simply click on the icon to translate them.
 
 ![An example of incontext translations](/static/blog/translations-in-context/home.png)
 
