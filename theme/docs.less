@@ -30,11 +30,11 @@
 @docsCardHoverBorderColor: #1dacf4;
 
 #docs .footer,
-.ui.menu.fixed {
+.ui.menu.fixed.docs {
     background: hsl(@docsHeaderHue, 15%, 20%);
 }
 
-.ui.menu.sidebar {
+.ui.menu.sidebar.docs {
     background: #EFEFEF;
 }
 
@@ -168,9 +168,11 @@
         .content .ui.description {
             color: @docsCardContentColor;
         }
-    }
-    .ui.card:hover {
-        border: 2px solid @docsCardHoverBorderColor;
+
+        &:hover,
+        &:focus {
+            border: 2px solid @docsCardHoverBorderColor;
+        }
     }
 
     /* Breadcrumb */
@@ -357,8 +359,7 @@
     }
 }
 
-
-.ui.sidebar.menu.left {
+.ui.sidebar.menu.docs {
     padding-left: 1em;
 
     /* Sidebar TOC */
@@ -404,13 +405,17 @@
     &.inverted a.item.active {
         background-color: hsla(0,0%,0%,.05);
     }
-    a.item:hover,
-    .accordion .title:hover {
-        background-color: hsla(0,0%,100%,.1);
+    a.item,
+    .accordion .title {
+        &:hover, &:focus {
+            background-color: hsla(0,0%,100%,.1);
+        }
     }
-    &.inverted a.item:hover,
-    &.inverted .accordion .title:hover {
-        background-color: hsla(0,0%,0%,.1);
+    &.inverted a.item,
+    &.inverted .accordion .title {
+        &:hover, &:focus {
+            background-color: hsla(0,0%,0%,.1);
+        }
     }
     a,
     .icon {
@@ -421,7 +426,9 @@
         color: hsla(0,0%,0%,.9);
     }
     a:hover,
-    .title:hover a {
+    a:focus,
+    .title:hover a,
+    .title:focus a {
         text-decoration: underline;
     }
     &.vertical .item:before {
