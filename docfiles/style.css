@@ -374,6 +374,7 @@ svg {
     width: 100%;
     -ms-grid-columns: 7.5% 1fr 1em;
     grid-template-columns: 7.5% 1fr 1em;
+    -ms-grid-template-rows: 1fr auto;
     grid-template-rows: 1fr auto;
 }
 
@@ -384,7 +385,9 @@ svg {
 }
 
 #docs .footer {
+    -ms-grid-row: 2;
     grid-row: 2;
+    -ms-grid-column: span 3;
     grid-column: span 3;
 }
 
