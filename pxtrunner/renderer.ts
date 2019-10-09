@@ -325,11 +325,11 @@ namespace pxt.runner {
             const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             // add an html widge that allows to translate the block
-            if (pxt.Util.isTranslationMode()) {
+            if (pxt.Util.isTranslationMode() && symbolInfo.attributes.translationId) {
                 const trs = $('<div class="ui segment" />');
-                trs.append($('<div class="ui label">translate this block</div>'));
-                if (symbolInfo.attributes.block) trs.append($('<div class="ui message">').text(symbolInfo.attributes.block));
-                if (symbolInfo.attributes.jsDoc) trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
+                trs.append($(`<div class="ui header">${lf("Translate this block")}</div>`));
+                trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
+                //if (symbolInfo.attributes.jsDoc) trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
                 trs.insertAfter(c);
             }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
