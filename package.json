@@ -81,7 +81,7 @@
     "@types/chai": "4.0.6",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
-    "@types/jquery": "3.2.16",
+    "@types/jquery": "^3.3.31",
     "@types/marked": "0.3.0",
     "@types/mocha": "2.2.44",
     "@types/node": "8.0.53",
@@ -111,7 +111,7 @@
     "smoothie": "1.35.0",
     "tslint": "^5.9.1",
     "tslint-microsoft-contrib": "^5.0.3",
-    "typescript": "2.9.1",
+    "typescript": "^3.6.3",
     "uglifyify": "4.0.5",
     "webfonts-generator": "^0.4.0"
   },
