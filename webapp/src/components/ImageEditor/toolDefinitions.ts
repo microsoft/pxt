@@ -631,5 +631,8 @@ export class MarqueeEdit extends SelectionEdit {
                 state.copyToLayer(tl.x, tl.y, br.x - tl.x + 1, br.y - tl.y + 1, true);
             }
         }
+        else if (!this.isMove) {
+            state.mergeFloatingLayer();
+        }
     }
 }
