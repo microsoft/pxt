@@ -396,6 +396,7 @@ svg {
 
 .article-inner .column {
     padding-left: 0 !important;
+    margin-left: 0 !important;
 }
 
 @media only screen and (max-width: 813px) {
