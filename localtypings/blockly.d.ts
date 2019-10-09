@@ -8918,16 +8918,83 @@ declare module Blockly {
     
             /**
              * Set the maximum, minimum and precision constraints on this field.
-             * Any of these properties may be undefiend or NaN to be disabled.
+             * Any of these properties may be undefined or NaN to be disabled.
              * Setting precision (usually a power of 10) enforces a minimum step between
              * values. That is, the user's value will rounded to the closest multiple of
              * precision. The least significant digit place is inferred from the precision.
              * Integers values can be enforces by choosing an integer precision.
-             * @param {number|string|undefined} min Minimum value.
-             * @param {number|string|undefined} max Maximum value.
-             * @param {number|string|undefined} precision Precision for value.
+             * @param {?(number|string|undefined)} min Minimum value.
+             * @param {?(number|string|undefined)} max Maximum value.
+             * @param {?(number|string|undefined)} precision Precision for value.
              */
             setConstraints_(min: number|string|any /*undefined*/, max: number|string|any /*undefined*/, precision: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the minimum value this field can contain. Updates the value to reflect.
+             * @param {?(number|string|undefined)} min Minimum value.
+             */
+            setMin(min: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the minimum value this field can contain. Called internally to avoid
+             * value updates.
+             * @param {?(number|string|undefined)} min Minimum value.
+             * @private
+             */
+            setMinInternal_(min: number|string|any /*undefined*/): void;
+    
+            /**
+             * Returns the current minimum value this field can contain. Default is
+             * -Infinity.
+             * @return {number} The current minimum value this field can contain.
+             */
+            getMin(): number;
+    
+            /**
+             * Sets the maximum value this field can contain. Updates the value to reflect.
+             * @param {?(number|string|undefined)} max Maximum value.
+             */
+            setMax(max: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the maximum value this field can contain. Called internally to avoid
+             * value updates.
+             * @param {?(number|string|undefined)} max Maximum value.
+             * @private
+             */
+            setMaxInternal_(max: number|string|any /*undefined*/): void;
+    
+            /**
+             * Returns the current maximum value this field can contain. Default is
+             * Infinity.
+             * @return {number} The current maximum value this field can contain.
+             */
+            getMax(): number;
+    
+            /**
+             * Sets the precision of this field's value, i.e. the number to which the
+             * value is rounded. Updates the field to reflect.
+             * @param {?(number|string|undefined)} precision The number to which the
+             *    field's value is rounded.
+             */
+            setPrecision(precision: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the precision of this field's value. Called internally to avoid
+             * value updates.
+             * @param {?(number|string|undefined)} precision The number to which the
+             *    field's value is rounded.
+             * @private
+             */
+            setPrecisionInternal_(precision: number|string|any /*undefined*/): void;
+    
+            /**
+             * Returns the current precision of this field. The precision being the
+             * number to which the field's value is rounded. A precision of 0 means that
+             * the value is not rounded.
+             * @return {number} The number to which this field's value is rounded.
+             */
+            getPrecision(): number;
     
             /**
              * Show the inline free-text editor on top of the text and the num-pad if

@@ -117,7 +117,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             };
         case actions.SET_INITIAL_STATE:
             return {
-                ...action.state
+                ...state,
+                editor: action.state,
+                past: action.past || state.past,
+                future: action.past ? [] : state.future
             };
         case actions.UNDO_IMAGE_EDIT:
             if (!state.past.length) return state;
@@ -139,7 +142,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 present: state.future[state.future.length - 1],
                 future: state.future.slice(0, state.future.length - 1),
             };
-        case actions.SET_INITIAL_IMAGE:
+        case actions.SET_INITIAL_FRAMES:
             return {
                 ...state,
                 past: [],
@@ -167,8 +170,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     aspectRatioLocked: false,
 
                     currentFrame: 0,
-                    frames: [action.image],
-                    interval: 200
+                    frames: action.frames,
+                    interval: action.interval
                 },
                 future: []
             }
@@ -280,7 +283,12 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return { ...state, cursorSize: action.cursorSize };
         case actions.CHANGE_SELECTED_COLOR:
             tickEvent(`foreground-color-${action.selectedColor}`);
-            return { ...state, selectedColor: action.selectedColor };
+
+            // If the selected tool is the eraser, make sure to switch to pencil
+            return { ...state,
+                selectedColor: action.selectedColor,
+                tool: state.tool === ImageEditorTool.Erase ? ImageEditorTool.Paint : state.tool
+            };
         case actions.CHANGE_CURSOR_LOCATION:
             return { ...state, cursorLocation: action.cursorLocation };
         case actions.CHANGE_BACKGROUND_COLOR:

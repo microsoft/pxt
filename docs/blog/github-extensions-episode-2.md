@@ -6,6 +6,8 @@ In the [previous "episode"](/blog/github-packages) of the GitHub authoring serie
 
 ## Create a GitHub repository from any project
 
+https://youtu.be/GQ8SV7gS4Bg
+
 So it started with a few blocks, but now your project is becoming big...so big, that you want to host in a GitHub repository. To support this scenario, we have added a "create GitHub repository" button under the simulator.
 
 ![A 'create Github repository' button](/static/blog/github-extensions-reloaded/createrepo.png)

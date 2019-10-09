@@ -3134,6 +3134,16 @@ ${output}</xml>`;
         switch (node.kind) {
             case SK.ParenthesizedExpression:
                 return isLiteralNode((node as ts.ParenthesizedExpression).expression)
+            case SK.ArrayLiteralExpression:
+                const arr = node as ts.ArrayLiteralExpression;
+
+                // Check to make sure all array elements are literals or tagged template literals (e.g. img``)
+                for (const el of arr.elements) {
+                    if (!isLiteralNode(el) && el.kind !== SK.TaggedTemplateExpression) {
+                        return false;
+                    }
+                }
+                return true;
             case SK.NumericLiteral:
             case SK.StringLiteral:
             case SK.NoSubstitutionTemplateLiteral:

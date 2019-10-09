@@ -1,55 +1,51 @@
 # Translations in Context
 
-Last week, we were lucky to meet plenty of MakeCode users at [micro:bit live](https://www.microbit.org/en/2019-04-12-microbit-live/). 
-With many participants from non-English speaking languages, it reminded has important it is to localize the editors. 
-Unfortunately, they also reminded us that translation was not as smooth as can be. 
+Posted on October 8, 2018 by [pelikhan](https://github.com/pelikhan)
 
-MakeCode uses [Crowdin](https://crowdin.com/) to manage the localization of all content, APIs and documentation. With so much content,
-it can be very tricky to find which strings to translate first.
+Last week, we had the good fortune of meeting plenty of MakeCode users at [micro:bit live](https://www.microbit.org/en/2019-04-12-microbit-live/). 
+With many of the participants coming from a non-English speaking background, it reminded me again of how important it is to localize the editors. 
+Unfortunately, it was also noted to us that the translation process was not as smooth as could be. 
 
-To address the issues above, **we have added [in context translations](https://support.crowdin.com/in-context-localization/)** which allow to perform the translations from within the editor itself (or the documentation page). No need to go through the Crowdin web site anymore.
+MakeCode uses [Crowdin](https://crowdin.com/) to manage the localization of all content, APIs, and documentation. With so much content,
+it can be very tricky to locate and begin translating the strings we're interested in.
+
+To address the issues just mentioned, **we've added [in context translations](https://support.crowdin.com/in-context-localization/)** which allow translations of the strings from within the editor itself (or in a documentation page). No need to go on to the Crowdin web site anymore and navigate to the proper strings.
 
 https://youtu.be/OugXfqhWUQo
 
-## Documentation translation
-
-In the documentation page, click on the **Translate this page** in the footer (you can try to translate this blog post).
-
-![Link to enable translation mode in the documentation](/static/blog/translations-in-context/docsbutton.png)
-
-Each piece of text that can be translated will have a colored border and an icon to edit the translation.
-Red border means no translation, blue translation but not validated, green validated translation.
-
-![A paragraph of text translated using Crowdin](/static/blog/translations-in-context/docstr.png)
-
 ## Editor translation
 
-To enter the translation mode in the editor, go the gearwheel menu, click **Languages** then the **Translate the editor** button at the bottom.
+To enter translation mode in the editor, go the gearwheel menu, click **Languages** and then click the **Translate the editor** button at the bottom.
 
 ![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
 
-The in context translations mostly work the same as a documentation page. For user interface elements, simply click on the icon to translate them.
+Each portion of text that is available for translation will have a colored border and an icon to edit the translation. The colored borders mean:
+
+* Red border: the text has no translation
+* Blue border: the text has a translation but it isn't validated/approved
+* Green border: the text has a valdated/approved translation
+
+For user interface elements, simply click on the icon to translate them.
 
 ![An example of incontext translations](/static/blog/translations-in-context/home.png)
 
-For blocks, go to the context menu
-and click **Translate this bloc**
+For blocks, go to the context menu and click **Translate this block**.
 
-![](/static/blog/translations-in-context/contextmenu.png)
+![Blocks context menu with translate option](/static/blog/translations-in-context/contextmenu.png)
 
 You will be prompted with a dialog that contains the block translatable string.
 
-![](/static/blog/translations-in-context/block.png)
+![Translation dialog](/static/blog/translations-in-context/block.png)
 
 ## Roll-out
 
-The in-context translations are available in the beta of these editors.
+The in context translations are available in the beta editions of these editors.
 
-* `/beta` version of [micro:bit editor](https://makecode.microbit.org/beta)
 * `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
 * `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
+* `/beta` version of [LEGO - EV3](https://makecode.mindstorms.com/beta)
 * The [Maker Editor](https://maker.makecode.com)
 
 ## Feedback?
 
-Drop us a note in the MakeCode forums at https://forum.makecode.com 
+Drop us a note in the MakeCode forums at https://forum.makecode.com with any comments.

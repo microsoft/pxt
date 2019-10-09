@@ -433,7 +433,7 @@ namespace pxt.blocks {
             if (Util.listsEqual(this.currentlyVisible, this.parameters)) {
                 return;
             }
-            const dummyInput = this.block.inputList.filter(i => i.name === MutatorHelper.mutatedVariableInputName)[0];
+            const dummyInput = this.block.inputList.find(i => i.name === MutatorHelper.mutatedVariableInputName);
 
             if (this.prefix && this.currentlyVisible.length === 0) {
                 dummyInput.appendField(this.prefix, DestructuringMutator.prefixLabel);
