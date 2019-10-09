@@ -461,16 +461,11 @@ describe("comment attribute parser", () => {
             //% bar.loc.fr="bah"
         `);
 
-        checkLoc("fr", "FRENCH");
-        checkLoc("es", "SPANISH");
-
-        function checkLoc(name: string, shadow: string) {
-            chai.assert(parsed.locs["fr|block"] == "FRENCH $bar");
-            chai.assert(parsed.locs["es|block"] == "SPANISH $bar");
-            chai.assert(parsed.locs["fr|jsdoc"] == "bli");
-            chai.assert(parsed.locs["fr|param|bar"] == "bah");
-        }
-    });
+        chai.assert(parsed.locs["fr|block"] == "FRENCH $bar");
+        chai.assert(parsed.locs["es|block"] == "SPANISH $bar");
+        chai.assert(parsed.locs["fr|jsdoc"] == "bli");
+        chai.assert(parsed.locs["fr|param|bar"] == "bah");
+});
 
 });
 
