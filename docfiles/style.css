@@ -15,8 +15,8 @@ body#root {
 }
 
 #docs ul li:before {
-  margin-right: 1em;
-  content: "\25CF";
+    margin-right: 1em;
+    content: "\25CF";
 }
 
 #docs ul li.checked:before {
@@ -79,7 +79,7 @@ div.blocks-svg-list > svg {
 }
 
 code {
-        white-space: pre-wrap;
+    white-space: pre-wrap;
 }
 code.lang-ghost, code.lang-config, code.lang-package 
 { display: none;}
@@ -115,15 +115,6 @@ code.lang-spy
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
-}
-
-/* Limit width of text so that it's readable
- */
- 
-.ui.text p,
-.ui.text li,
-.ui.container.mainbody {
-    max-width: 1100px !important;
 }
 
 /* wrap cards header */
@@ -180,31 +171,19 @@ svg {
     position: relative;
     width: 100%;
     height: 100%;
+    overflow: scroll;
 }
 
 .pusher .article {
     position: absolute;
     /* match with menu bar height */
     top: 3.5em;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    overflow-y: auto;
     -webkit-box-flex: 1;
 
     -webkit-flex: 1 1 auto;
         -ms-flex: 1 1 auto;
             flex: 1 1 auto;
     min-width: 0px;
-}
-
-.pusher .article-inner {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    overflow-y: auto;
 }
 
 .ui.vertical.menu .menu .item {
@@ -343,17 +322,9 @@ svg {
 }
 
 .sidebar.menu .menuContainer {
-    /* extra padding at the bottom
-     so we can always scroll a little past the content*/
-    margin-bottom: 5rem;
+    /* a bit of extra padding at the bottom to make scrolling feel nicer */
+    margin-bottom: 0.5em;
 }
-
-.ui.menu.sidebar .menuContainer {
-    /* match with menu bar height */
-    max-height: calc(100% - 3.5rem);
-    overflow-y: scroll;
-}
-
 .cc-banner {
     display: none;
 }
@@ -377,15 +348,10 @@ svg {
 .navigation.navigation-next {
     margin-right: 0;
 }
-.ui.container.mainbody {
-    margin-left: 0!important;
-    margin-right: 0!important;
-    padding-left: 1em;
-    padding-right: 1em;
-}
 .ui.sidebar {
     /* match with menu bar height */
     top: 3.5em;
+    max-height: calc(100% - 3.5rem);
 }
 .navigation {
     position: relative;
@@ -402,15 +368,38 @@ svg {
     margin-top: 4rem;
 }
 
-.mainbody {
-    margin-top: 2em;
-    margin-bottom: 2em;
-    padding-left: 2em;
-    padding-right: 2em;
+.article {
+    display: -ms-grid;
+    display: grid;
+    width: 100%;
+    -ms-grid-columns: 7.5% 1fr 1em;
+    grid-template-columns: 7.5% 1fr 1em;
 }
 
-#docs .ui.container.mainbody {
+.article-inner {
+    -ms-grid-column: 2;
+    grid-column: 2;
+    padding-left: 0;
+}
+
+/* Limit width of content so that it is readable */
+#docs .article .article-inner > div {
+    max-width: 1100px !important;
     margin-left: 0 !important;
+}
+
+.article-inner .column {
+    padding-left: 0 !important;
+}
+
+@media only screen and (max-width: 813px) {
+    .article {
+        -ms-grid-columns: 0 1fr 0;
+        grid-template-columns: 0 1fr 0;
+    }
+    #docs .article .article-inner > div {
+        margin-left: 1em !important;
+    }
 }
 
 /* Sidebar TOC */
@@ -488,7 +477,6 @@ svg {
     padding-left: 2rem;
 }
 
-
 /**
 print only stuff
 **/
@@ -497,15 +485,17 @@ print only stuff
 }
 
 @media only print {
-    .pusher .article {
-        left: 0;
-        position: relative;
-    }
-    .pusher .article-inner {
-        position: relative;
-    }
     .pusher {
         background: transparent !important;
+    }
+    .pusher .article {
+        top: 0;
+    }
+    .pusher .article-inner {
+        -ms-grid-columns: 0 1fr 0;
+        grid-template-columns: 0 1fr 0;
+        position: relative;
+        margin-top: 0;
     }
     .showprint {
         display: block !important;
@@ -513,7 +503,7 @@ print only stuff
     .hideprint,
     .ui.embed > .icon,
     .ui.docbutton {
-        display:none !important;
+        display: none !important;
     }
     body.pushable {
         background: #fff !important;        
