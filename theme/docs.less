@@ -318,14 +318,14 @@
         a.item {
             color: #72a3d3;
             i.icon {
-                width: auto !important;
+                width: auto;
                 padding: 0 .25em !important;
-                color: rgba(255, 255, 255, .6) !important;
+                color: rgba(255, 255, 255, .6);
             }
 
             &:hover, &:focus {
                 i.icon {
-                    color: rgba(255, 255, 255, 0.8) !important;
+                    color: rgba(255, 255, 255, 0.8);
                 }
             }
         }
@@ -421,9 +421,11 @@
     .icon {
         color: hsla(0,0%,100%,.9);
     }
-    &.inverted a,
-    &.inverted .icon {
+    &.inverted a {
         color: hsla(0,0%,0%,.9);
+    }
+    &.inverted .icon {
+        color: hsla(0,0%,0%,.7);
     }
     a:hover,
     a:focus,
