@@ -360,7 +360,7 @@
 }
 
 .ui.sidebar.menu.docs {
-    padding-left: 1em;
+    padding-left: 0.5em;
 
     /* Sidebar TOC */
     .item:before {
@@ -376,7 +376,7 @@
         flex-direction: row;
     }
     .item {
-        color: hsla(0,0%,0%,.9);
+        padding-left: 1.25em;
     }
     .accordion.item {
         padding: 0;
@@ -385,12 +385,12 @@
     }
     .accordion.item .title .icon {
         font-size: 0.8em;
+        font-weight: 600;
         width: 1rem;
-        margin: 0;
         transform: translateY(0.1rem);
     }
-    .title.active {
-        padding-bottom: 0;
+    .content {
+        padding-top: 0;
     }
     .accordion.item .title.active .icon {
         transform: translateY(0.1rem) rotate(90deg);
@@ -428,7 +428,7 @@
         color: hsla(0,0%,0%,.9);
     }
     &.inverted .icon {
-        color: hsla(0,0%,0%,.7);
+        color: hsl(@docsHeaderHue, 45%, 40%);
     }
     a:hover,
     a:focus,
@@ -448,7 +448,7 @@
     .accordion.item .content:not(.style),
     .accordion.item .accordion .title~.content:not(.ui), 
     .accordion.item .title~.content:not(.ui) {
-        padding-left: 1rem;
+        padding: 0 0 0 0.75rem;
     }
 }
 
