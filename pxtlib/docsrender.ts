@@ -222,23 +222,11 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6013,
-                 * swap templ assignments below with the commented out version, and remove
-                 * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
-                 * docfiles/macros.html **/
-                if (lev == 0) {
-                    if (m.name !== "") {
-                        templ = toc["top-dropdown"]
-                    } else {
-                        templ = toc["top-dropdown-noHeading"]
-                    }
-                } else if (lev == 1) templ = toc["inner-dropdown"]
-                else templ = toc["nested-dropdown"]
-                // if (m.path !== "") {
-                //     templ = toc["toc-dropdown"]
-                // } else {
-                //     templ = toc["toc-dropdown-noLink"]
-                // }
+                if (m.path !== "") {
+                    templ = toc["toc-dropdown"]
+                } else {
+                    templ = toc["toc-dropdown-noLink"]
+                }
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
