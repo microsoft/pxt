@@ -133,7 +133,7 @@ namespace pxt {
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
-                // https://github.com/Microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
+                // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
                 const mainBlocks = this.readFile("main.blocks");
                 const mainTs = this.readFile("main.ts");
                 if (!mainBlocks && mainTs)

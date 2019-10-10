@@ -1,6 +1,6 @@
 # Features of the JavaScript Editor
 
-The JavaScript editor extends the features and functionality of the [Monaco Editor](https://github.com/Microsoft/monaco-editor), the editor that powers Visual Studio Code.
+The JavaScript editor extends the features and functionality of the [Monaco Editor](https://github.com/microsoft/monaco-editor), the editor that powers Visual Studio Code.
 
 Here is a list of some of the features supported by the Editor:
 

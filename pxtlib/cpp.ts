@@ -441,7 +441,7 @@ namespace pxt.cpp {
             // special handling of C++ namespace that ends with Methods (e.g. FooMethods)
             // such a namespace will be converted into a TypeScript interface
             // this enables simple objects with methods to be defined. See, for example:
-            // https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
+            // https://github.com/microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
             // within that namespace, the first parameter of each function should have
             // the type Foo
             function interfaceName() {

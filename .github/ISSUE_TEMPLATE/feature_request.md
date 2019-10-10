@@ -7,15 +7,15 @@ about: Suggest an idea for this project
 **First**, check if this repo is the right one to file the feature request report.
 
 **[micro:bit](https://makecode.microbit.org)**
-- Issue tracker [Microsoft/pxt-microbit](https://github.com/Microsoft/pxt-microbit/issues/new?labels=enhancement&template=feature_request.md).
+- Issue tracker [Microsoft/pxt-microbit](https://github.com/microsoft/pxt-microbit/issues/new?labels=enhancement&template=feature_request.md).
 - Have a question? Check out the [micro:bit Support Forums](https://support.microbit.org/).
 
 **[Adafruit - Circuit Playground Express](https://makecode.adafruit.com)**
-- Issue tracker [Microsoft/pxt-adafruit](https://github.com/Microsoft/pxt-adafruit/issues/new?labels=enhancement&template=feature_request.md).
+- Issue tracker [Microsoft/pxt-adafruit](https://github.com/microsoft/pxt-adafruit/issues/new?labels=enhancement&template=feature_request.md).
 - Have a question? Check out the [Adafruit Support Forums](https://www.adafruit.com/support).
 
 **[Lego - EV3](https://makecode.mindstorms.com)**
-- Issue tracker [Microsoft/pxt-ev3](https://github.com/Microsoft/pxt-ev3/issues/new?labels=enhancement&template=feature_request.md).
+- Issue tracker [Microsoft/pxt-ev3](https://github.com/microsoft/pxt-ev3/issues/new?labels=enhancement&template=feature_request.md).
 - Need support? Check out the [Lego support site](https://www.lego.com/en-us/service).
 
 **Minecraft**
@@ -24,10 +24,10 @@ about: Suggest an idea for this project
 - File feature request in this repo.
 
 **[MakeCode Arcade](https://arcade.makecode.com)**
-- Issue tracker [Microsoft/pxt-arcade](https://github.com/Microsoft/pxt-arcade/issues/new?labels=enhancement&template=feature_request.md).
+- Issue tracker [Microsoft/pxt-arcade](https://github.com/microsoft/pxt-arcade/issues/new?labels=enhancement&template=feature_request.md).
 
 **[Chibitronics - Chibi Chip](https://makecode.chibitronics.com)**
-- Issue tracker [Microsoft/pxt-chibitronics](https://github.com/Microsoft/pxt-chibitronics/issues/new?labels=enhancement&template=feature_request.md).
+- Issue tracker [Microsoft/pxt-chibitronics](https://github.com/microsoft/pxt-chibitronics/issues/new?labels=enhancement&template=feature_request.md).
 
 **I'm a developer!**
 - Have a question? Ask it on [stack overflow](https://stackoverflow.com/), we monitor the ``makecode`` tag.

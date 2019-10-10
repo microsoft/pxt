@@ -230,7 +230,7 @@ regular code, here they are. The reason is that pulses occur around every ~1300
 cycles (48MHz / 38kHz). Thus, a delay of 1000 cycles (typical for software
 floating point) is quite significant. Thus, I ended up disabling or enabling
 the TCC every 250us by going down straight to hardware (see `setTCC0` in
-[infrared/samd21.cpp](https://github.com/Microsoft/pxt-common-packages/tree/master/libs/infrared/samd21.cpp#L80)).
+[infrared/samd21.cpp](https://github.com/microsoft/pxt-common-packages/tree/master/libs/infrared/samd21.cpp#L80)).
 
 ### DMESG, EIC and IRQs
 

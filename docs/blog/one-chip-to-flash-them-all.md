@@ -4,7 +4,7 @@
 
 **Posted on March 28, 2017 by [mmoskal](https://github.com/mmoskal)**
 
-**This post is about UF2 file format. For technical spec see [this repo](https://github.com/Microsoft/uf2).**
+**This post is about UF2 file format. For technical spec see [this repo](https://github.com/microsoft/uf2).**
 
 In the maker's world we often use devices of similar power to the ones used in
 personal computers 30 years ago.
@@ -18,7 +18,7 @@ we get a sizable bump in performance and
 with a few wires and a $20 board we can use source-level step-by-step debugging.
 And this is all before we even get into haircuts or quality of coffee!
 
-The [PXT](https://github.com/Microsoft/pxt) (Microsoft Programming Experience Toolkit) framework, 
+The [PXT](https://github.com/microsoft/pxt) (Microsoft Programming Experience Toolkit) framework, 
 on which [Microsoft MakeCode](https://makecode.com)
 is based, is pushing some of these changes further - with a user-friendly
 approach, where people can start learning by building code with visual blocks, and then
@@ -185,7 +185,7 @@ Interestingly, you can also get upper 4 bits every now and then, but it's really
 12 bits of overlap in the wonderful segment-addressing mode of early x86 chips.
 
 At this point it was clear (at least to me) that the world needed another file format.
-And thus [USB Flashing Format (UF2)](https://github.com/Microsoft/uf2) was born. 
+And thus [USB Flashing Format (UF2)](https://github.com/microsoft/uf2) was born. 
 It consists of 512 byte blocks, where each block contains:
 * magic numbers at the beginning and end (to heuristically distinguish it from any other data 
   the OS writes)
@@ -234,7 +234,7 @@ The problem was that compiling just the ASF version of MSC and CDC together resu
 way over the 8KB limit.
 Thus, I needed to simplify and cut down the code to size, reimplementing a few things on the way.
 
-The result is the [UF2-SAMD21 bootloader](https://github.com/Microsoft/uf2-samd21), 
+The result is the [UF2-SAMD21 bootloader](https://github.com/microsoft/uf2-samd21), 
 supporting a number of SAMD21 boards including
 Arduino Zero and MKR1000, as well as [Adafruit Feather M0 Express](https://www.adafruit.com/products/3403) and upcoming Metro M0 Express and Circuit Playground Express.
 The boards are supported with essentially the same code base, except that for some of the boards
@@ -280,7 +280,7 @@ This is great. However, if you put your breakpoints in USB handling routines, th
 responses will not reach the OS fast enough, and it will disable the device,
 thinking it locked up.
 A nice logging infrastructure is therefore critical. I used a 4KB in-memory buffer,
-and then an [OpenOCD script](https://github.com/Microsoft/uf2-samd21/blob/master/scripts/dbgtool.js) 
+and then an [OpenOCD script](https://github.com/microsoft/uf2-samd21/blob/master/scripts/dbgtool.js) 
 to dump it. You can also just print the buffer from GDB.
 You could use a serial line connected to your debugger, but it's unclear it will
 be fast enough for USB responses.
@@ -312,7 +312,7 @@ And some SAMD21-specific:
   this needs to be disabled for HID and MSC bulk transfers
 * do not use `at91samd bootloader` command of OpenOCD for setting fuses - 
   it is buggy and will almost brick your board;
-  you can use [this script](https://github.com/Microsoft/uf2-samd21/blob/master/scripts/fuses.tcl)
+  you can use [this script](https://github.com/microsoft/uf2-samd21/blob/master/scripts/fuses.tcl)
   instead
 * do not write any additional memory locations between starting a flash write and executing a flash write 
   command
