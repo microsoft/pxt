@@ -161,13 +161,17 @@ namespace pxt.docs {
                 NAME: m.name,
             }
             if (m.subitems) {
-                /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6013,
-                 * swap templ assignments below with the commented out version, and remove
-                 * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
-                 * docfiles/macros.html **/
-                if (lev == 0) templ = menus["top-dropdown"]
-                else templ = menus["inner-dropdown"]
-                // templ = menus["toc-dropdown"]
+                if (!!menus["toc-dropdown"]) {
+                    templ = menus["toc-dropdown"]
+                }
+                else {
+                    /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6058,
+                     * swap templ assignments below with the commented out version, and remove
+                     * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
+                     * docfiles/macros.html **/
+                    if (lev == 0) templ = menus["top-dropdown"]
+                    else templ = menus["inner-dropdown"]
+                }
                 mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -222,10 +226,28 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                if (m.path !== "") {
-                    templ = toc["toc-dropdown"]
-                } else {
-                    templ = toc["toc-dropdown-noLink"]
+                if (!!toc["toc-dropdown"]) {
+                    // if macros support "toc-*", use them
+                    if (m.name !== "") {
+                        templ = toc["toc-dropdown"]
+                    } else {
+                        templ = toc["toc-dropdown-noLink"]
+                    }
+                }
+                else {
+                    // if macros don't support "toc-*"
+                    /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6058,
+                     * delete this else branch, and remove
+                     * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
+                     * docfiles/macros.html **/
+                    if (lev == 0) {
+                        if (m.name !== "") {
+                            templ = toc["top-dropdown"]
+                        } else {
+                            templ = toc["top-dropdown-noHeading"]
+                        }
+                    } else if (lev == 1) templ = toc["inner-dropdown"]
+                    else templ = toc["nested-dropdown"]
                 }
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
