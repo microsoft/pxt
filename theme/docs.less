@@ -378,6 +378,9 @@
     .item {
         padding-left: 1.25em;
     }
+    .content {
+        border-left: 1px solid hsla(@docsHeaderHue, 45%, 40%, 0.3);
+    }
     .accordion.item {
         padding: 0;
         display: flex;
@@ -385,7 +388,7 @@
     }
     .accordion.item .title .icon {
         font-size: 0.8em;
-        font-weight: 600;
+        font-weight: 700;
         width: 1rem;
         transform: translateY(0.1rem);
     }
@@ -448,7 +451,8 @@
     .accordion.item .content:not(.style),
     .accordion.item .accordion .title~.content:not(.ui), 
     .accordion.item .title~.content:not(.ui) {
-        padding: 0 0 0 0.75rem;
+        padding: 0 0 0 0.25rem;
+        margin: 0 0 0 0.5rem;
     }
 }
 
