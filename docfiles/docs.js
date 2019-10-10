@@ -96,8 +96,9 @@ function setupSidebar() {
     for (var i = 0; i < accordions.length; i++) {
         var nodes = accordions.item(i).getElementsByClassName("title");
         for (var j = 0; j < nodes.length; j++) {
-            var hrefNode = nodes.item(j).getElementsByTagName("a").item(0);
-            var iNode = nodes.item(j).getElementsByTagName("i").item(0);
+            var menuItem = nodes.item(j);
+            var hrefNode = menuItem.getElementsByTagName("a").item(0);
+            var iNode = menuItem.getElementsByTagName("i").item(0);
             iNode.onclick = function (e) {
                 if (hrefNode.hasAttribute("aria-expanded") && hrefNode.getAttribute("aria-expanded") === "true") {
                     hrefNode.setAttribute("aria-expanded", "false");
@@ -105,6 +106,10 @@ function setupSidebar() {
                     hrefNode.setAttribute("aria-expanded", "true");
                 }
             };
+            if (!hrefNode) {
+                hrefNode = menuItem;
+                menuItem.setAttribute("tabindex", "0");
+            }
             hrefNode.onkeydown = function (e) {
                 var charCode = (typeof e.which == "number") ? e.which : e.keyCode
                 if (charCode === 39) { // Right key
