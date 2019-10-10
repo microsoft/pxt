@@ -6,7 +6,6 @@
 @docsBackgroundColor: white;
 @docsTextColor: #333;
 @docsLineHeight: 1.7;
-@docsHeaderHue: 257;
 
 /* Text color */
 @docsHeadingColor: @docsTextColor;
@@ -31,7 +30,7 @@
 
 #docs .footer,
 .ui.menu.fixed.docs {
-    background: hsl(@docsHeaderHue, 15%, 20%);
+    background: hsl(@docsHue, 15%, 20%);
 }
 
 .ui.menu.sidebar.docs {
@@ -381,7 +380,7 @@
         color: hsla(0,0%,0%,.9) !important;
     }
     .content {
-        border-left: 1px solid hsla(@docsHeaderHue, 45%, 40%, 0.3);
+        border-left: 1px solid hsla(@docsHue, 45%, 40%, 0.3);
     }
     .accordion.item {
         padding: 0;
@@ -432,14 +431,14 @@
         color: hsla(0,0%,0%,.9);
     }
     &.inverted .icon {
-        color: hsl(@docsHeaderHue, 45%, 40%);
+        color: hsl(@docsHue, 45%, 40%);
     }
     a:hover,
     a:focus,
     .title:hover a,
     .title:focus a {
         text-decoration: underline;
-        color: hsl(@docsHeaderHue, 35%, 30%)
+        color: hsl(@docsHue, 35%, 30%)
     }
     &.vertical .item:before {
         /* remove gray divider lines */
