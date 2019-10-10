@@ -202,7 +202,6 @@ namespace pxt.docs {
         };
         TOC.forEach(isCurrentTOC)
 
-        let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
             let templ = toc["item"]
             let mparams: Map<string> = {
@@ -215,7 +214,6 @@ namespace pxt.docs {
             if (tocPath.indexOf(m) >= 0) {
                 mparams["ACTIVE"] = 'active';
                 mparams["EXPANDED"] = 'true';
-                currentTocEntry = m;
                 breadcrumb.push({
                     name: m.name,
                     href: m.path
