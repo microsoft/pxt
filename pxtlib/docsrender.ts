@@ -869,7 +869,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let tokens = markedInstance.lexer(summaryMD, options);
         let wasListStart = false
         tokens.forEach((token: any) => {
-            console.dir(token)
             switch (token.type) {
                 case "heading":
                     if (token.depth == 3) {
