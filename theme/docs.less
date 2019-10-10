@@ -29,12 +29,12 @@
 @docsCardHoverBorderColor: #1dacf4;
 
 #docs .footer,
-.ui.menu.fixed.docs {
+.ui.menu.fixed.docs,
+#docs {
     background: hsl(@docsHue, 15%, 20%);
 }
 
 #docs {
-    background-color: @docsBackgroundColor;
     font-family: @docsPageFont !important;
     color: @docsTextColor;
     * {
@@ -43,6 +43,9 @@
         -webkit-text-size-adjust: none;
         -webkit-touch-callout: none;
         -webkit-font-smoothing: antialiased;
+    }
+    #maincontent {
+        background-color: @docsBackgroundColor;
     }
     h1, h2, h3, h4, h5, h6 {
         font-family: @docsHeaderFont !important;
