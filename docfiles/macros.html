@@ -110,26 +110,6 @@
     <div class="divider"></div>
 </aside>
 
-<aside id=toc-dropdown class=menu>
-    <nav div class="ui simple dropdown item" title="@TITLE@">
-        @NAME@
-        <i class="dropdown icon"></i>
-        <div class="menu">
-            @ITEMS@
-        </div>
-    </nav>
-</aside>
-
-<aside id=toc-dropdown class=menu>
-    <nav class="item" title="@TITLE@">
-        <i class="dropdown icon"></i> @NAME@
-        <div class="menu">
-            @ITEMS@
-        </div>
-    </nav>
-</aside>
-
-
 <!-- TOC in the sidebar -->
 <aside id=item class=toc>
     <a class="item @ACTIVE@" href="@LINK@" role="menuitem">@NAME@</a>
@@ -151,10 +131,59 @@
     </div>
 </aside>
 
-<aside id=toc-dropdown-noheading class=toc>
+<aside id=toc-dropdown-noHeading class=toc>
     <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
         <div class="@ACTIVE@ title">
-            <i class="dropdown icon"></i>
+            <i class="right chevron icon"></i>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<!-- TODO: duplicates of above for compatability with docsrender.ts;
+    remove with pxtlib/docsrender.ts TOC TODOs after cloud bump. -->
+<aside id=top-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=top-dropdown-noHeading class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=inner-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
+        </div>
+        <div class="@ACTIVE@ content">
+            @ITEMS@
+        </div>
+    </div>
+</aside>
+
+<aside id=nested-dropdown class=toc>
+    <div class="ui @tocclass@ accordion item visible" title="@TITLE@">
+        <div class="@ACTIVE@ title">
+            <i class="right chevron icon"></i>
+            <a class="header" role="treeitem" aria-expanded="@EXPANDED@" href="@LINK@">@NAME@</a>
         </div>
         <div class="@ACTIVE@ content">
             @ITEMS@
