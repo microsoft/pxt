@@ -33,10 +33,6 @@
     background: hsl(@docsHue, 15%, 20%);
 }
 
-.ui.menu.sidebar.docs {
-    background: #EFEFEF;
-}
-
 #docs {
     background-color: @docsBackgroundColor;
     font-family: @docsPageFont !important;
@@ -358,6 +354,7 @@
 }
 
 .ui.sidebar.menu.docs {
+    background: #EFEFEF;
     padding-left: 0.5em;
 
     /* Sidebar TOC */
@@ -376,7 +373,7 @@
     .item {
         padding-left: 1.25em;
     }
-    &.inverted .active.item {
+    .active.item {
         color: hsla(0,0%,0%,.9) !important;
     }
     .content {
@@ -407,30 +404,18 @@
         margin: 0;
     }
     a.item.active {
-        background-color: hsla(0,0%,100%,.05);
-    }
-    &.inverted a.item.active {
         background-color: hsla(0,0%,0%,.05);
     }
     a.item,
     .accordion .title {
         &:hover, &:focus {
-            background-color: hsla(0,0%,100%,.1);
-        }
-    }
-    &.inverted a.item,
-    &.inverted .accordion .title {
-        &:hover, &:focus {
             background-color: hsla(0,0%,0%,.1);
         }
     }
-    a, .icon {
-        color: hsla(0,0%,100%,.9);
-    }
-    &.inverted a {
+    a {
         color: hsla(0,0%,0%,.9);
     }
-    &.inverted .icon {
+    .icon {
         color: hsl(@docsHue, 45%, 40%);
     }
     a:hover,
