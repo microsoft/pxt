@@ -28,18 +28,13 @@
 @docsCardBorderColor: #e9eef2;
 @docsCardHoverBorderColor: #1dacf4;
 
-.docs.fixed.main.menu {
-    .item,
-    .item>a:not(.ui) {
-        background: transparent;
-        color: hsla(0,0%,100%,.9);
-    }
-}
-
 #docs .footer,
 .ui.menu.fixed.docs,
 #docs {
     background: hsl(@docsHue, 15%, 20%);
+    &.lighttoc {
+        background: hsl(@docsHue, 25%, 85%);
+    }
 }
 
 #docs {
@@ -291,7 +286,7 @@
         margin-bottom: 0;
 
         a.item {
-            color: #72a3d3;
+            color: rgba(18, 74, 130, 1.0);
 
             i.icon {
                 width: auto;
@@ -330,6 +325,33 @@
 
         .poweredBy .item {
             padding-right: .5em;
+        }
+        &.lighttoc {
+            a.item {
+                color: rgb(22, 83, 130);
+
+                i.icon {
+                    color: rgba(0, 0, 0, .6);
+                }
+
+                &:hover, &:focus {
+                    i.icon {
+                        color: rgba(0, 0, 0, 0.8);
+                    }
+                }
+            }
+            .divider {
+                border-top: 1px solid rgba(0,0,0,0.3);
+                border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            }
+
+            .ui.divided.horizontal.list > .item:not(:first-child) {
+                border-left: 1px solid rgba(0, 0, 0, .4);
+            }
+
+            span.item {
+                color: rgba(0, 0, 0, .6);
+            }
         }
     }
 }
@@ -411,11 +433,11 @@
         content: none;
     }
     /* indented content
-        Note: we're annoyingly specific with these selectors 
+        Note: we're annoyingly specific with these selectors
         because we need to override Semantic's default behavior
     */
     .accordion.item .content:not(.style),
-    .accordion.item .accordion .title~.content:not(.ui), 
+    .accordion.item .accordion .title~.content:not(.ui),
     .accordion.item .title~.content:not(.ui) {
         padding: 0 0 0 0.25rem;
         margin: 0 0 0 0.5rem;

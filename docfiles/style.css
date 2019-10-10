@@ -1,5 +1,5 @@
 body#root {
-    font-size: 12pt;    
+    font-size: 12pt;
 }
 
 #docs ul {
@@ -30,7 +30,7 @@ body#root {
 #root .editor-image {
     margin: 2em auto;
     display: block;
-    max-width: 80%;    
+    max-width: 80%;
 }
 
 pre {
@@ -52,7 +52,7 @@ code {
 }
 
 p code, li code {
-    background-color: rgba(0,0,0,0.04);    
+    background-color: rgba(0,0,0,0.04);
 }
 
 p code:before, p code:after,
@@ -81,7 +81,7 @@ div.blocks-svg-list > svg {
 code {
     white-space: pre-wrap;
 }
-code.lang-ghost, code.lang-config, code.lang-package 
+code.lang-ghost, code.lang-config, code.lang-package
 { display: none;}
 
 code.lang-block::before,
@@ -191,7 +191,7 @@ svg {
 }
 
 #pagemenu {
-    border-radius: 0;    
+    border-radius: 0;
 }
 
 #pagemenu .ui.item .header {
@@ -215,7 +215,7 @@ svg {
 }
 .fixed.menu:after,
 .fixed.menu .item:before {
-    /* semantic loves to add pseudo elements; 
+    /* semantic loves to add pseudo elements;
     disable these ones because they interfere with flex-box */
     content:none;
 }
@@ -441,6 +441,6 @@ print only stuff
         display: none !important;
     }
     body.pushable {
-        background: #fff !important;        
+        background: #fff !important;
     }
 }
