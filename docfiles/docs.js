@@ -281,7 +281,7 @@ function renderSnippets() {
     });
 }
 
-function getCookieLang() {    
+function getCookieLang() {
     const cookiePropRegex = new RegExp(pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)+ "=(.*?)(?:;|$)")
     const cookieValue = cookiePropRegex.exec(document.cookie);
     return cookieValue && cookieValue[1] || null;
@@ -320,7 +320,7 @@ function languageOption(code) {
     cardEl.dataset.lang = code;
     cardEl.setAttribute('role', 'link');
     cardEl.setAttribute('aria-label', locale.englishName);
-    cardEl.setAttribute('tab-index', '0');
+    cardEl.setAttribute('tabindex', '0');
     cardEl.appendChild(contentEl);
 
     return cardEl;
@@ -336,13 +336,13 @@ function setupLangPicker() {
         var localesContainer = document.querySelector("#availablelocales");
         locales = availableLocales.map(function(e) { return languageOption(e) });
         locales.forEach(function(card) { localesContainer.appendChild(card) });
-   
-        document.querySelector("#langpicker").onclick = function() { 
-            $('.ui.modal').modal('show'); 
+
+        document.querySelector("#langpicker").onclick = function() {
+            $('.ui.modal').modal('show');
         };
 
-        document.querySelector(".closeIcon").onclick = function() { 
-            $('.ui.modal').modal('hide'); 
+        document.querySelector(".closeIcon").onclick = function() {
+            $('.ui.modal').modal('hide');
         };
 
         var langOptions = document.querySelectorAll(".langoption");
@@ -358,7 +358,7 @@ function setupLangPicker() {
                     pxt.tickEvent("menu.lang.changelang." + langId);
                     // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
                     // In docs we currently don't have access to pxt.winrt
-                    location.reload(); 
+                    location.reload();
                 } else {
                     pxt.tickEvent("menu.lang.samelang." + langId);
                     $('.ui.modal').modal('hide');
