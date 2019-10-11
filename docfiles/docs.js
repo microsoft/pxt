@@ -340,13 +340,13 @@ function setupLangPicker() {
 
         var langPicker = document.querySelector("#langpicker");
         langPicker.onclick = function() {
-            $('#langmodal').modal('show');
+            $(modalContainer).modal('show');
         }
         langPicker.onkeydown = handleEnterKey;
 
         var closeIcon = document.querySelector(".closeIcon");
         closeIcon.onclick = function() {
-            $('#langmodal').modal('hide');
+            $(modalContainer).modal('hide');
         }
         closeIcon.onkeydown = handleEnterKey;
 
