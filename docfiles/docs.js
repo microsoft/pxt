@@ -333,8 +333,10 @@ function setupLangPicker() {
 
     if (appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
-        var locales = appTheme.availableLocales.map(function(e) { return languageOption(e) });
-        locales.forEach(function(card) { localesContainer.appendChild(card) });
+        appTheme.availableLocales.forEach(function(locale) {
+            var card = languageOption(locale);
+            localesContainer.appendChild(card);
+        });
 
         var langPicker = document.querySelector("#langpicker");
         langPicker.onclick = function() {
