@@ -327,7 +327,6 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-
     var availableLocales = pxt.appTarget.appTheme.availableLocales;
     var locales;
     var initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
