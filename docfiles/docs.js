@@ -333,21 +333,27 @@ function setupLangPicker() {
     if (appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
         var locales = appTheme.availableLocales.map(function(e) { return languageOption(e) });
+        var modalContainer = document.querySelector("#langmodal")
         locales.forEach(function(card) { localesContainer.appendChild(card) });
 
         var langPicker = document.querySelector("#langpicker");
         langPicker.onclick = function() {
-            $('.ui.modal.lang').modal('show');
+            $('#langmodal').modal('show');
         }
         langPicker.onkeydown = handleEnterKey;
 
         var closeIcon = document.querySelector(".closeIcon");
         closeIcon.onclick = function() {
-            $('.ui.modal.lang').modal('hide');
+            $('#langmodal').modal('hide');
         }
         closeIcon.onkeydown = handleEnterKey;
 
-        var langOptions = document.querySelectorAll(".langoption");
+        var buttons = modalContainer.querySelectorAll(".ui.button");
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].onkeydown = handleEnterKey;
+        }
+
+        var langOptions = modalContainer.querySelectorAll(".langoption");
 
         for (var i = 0; i < langOptions.length; i++) {
             var currentOption = langOptions[i];
