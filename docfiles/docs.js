@@ -379,7 +379,7 @@ function setupLangPicker() {
             currentOption.onkeydown = handleEnterKey;
         }
     } else {
-        // remove the lang picker
+        // remove the locale picker and modal if unavailable in this editor
         document.querySelector("#langpicker").remove();
         modalContainer.remove();
     }
