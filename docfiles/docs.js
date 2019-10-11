@@ -329,11 +329,11 @@ function languageOption(code) {
 function setupLangPicker() {
     var appTheme = pxt.appTarget.appTheme
     var initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
+    var modalContainer = document.querySelector("#langmodal")
 
     if (appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
         var locales = appTheme.availableLocales.map(function(e) { return languageOption(e) });
-        var modalContainer = document.querySelector("#langmodal")
         locales.forEach(function(card) { localesContainer.appendChild(card) });
 
         var langPicker = document.querySelector("#langpicker");
@@ -376,9 +376,9 @@ function setupLangPicker() {
             currentOption.onkeydown = handleEnterKey;
         }
     } else {
-        // TODO: Handle language when there is no availableLocales (makecode.com/docs)
-        // For now just removing the button as it wouldn't do anything / feels broken
-        $('#langpicker').remove();
+        // remove the lang picker
+        document.querySelector("#langpicker").remove();
+        modalContainer.remove();
     }
 }
 
