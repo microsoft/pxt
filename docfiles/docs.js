@@ -347,7 +347,7 @@ function setupLangPicker() {
 
         var langOptions = document.querySelectorAll(".langoption");
 
-        for(var x=0; x<langOptions.length; x++) {
+        for (var x = 0; x < langOptions.length; x++) {
             langOptions[x].addEventListener("click", function(e) {
                 var langId = e.currentTarget.dataset.lang;
                 if (!pxt.Util.allLanguages[langId]) {
