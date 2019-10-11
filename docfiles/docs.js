@@ -364,6 +364,10 @@ function setupLangPicker() {
                 }
             });
         }
+    } else {
+        // TODO: Handle language when there is no availableLocales (makecode.com/docs)
+        // For now just removing the button as it wouldn't do anything / feels broken
+        $('#langpicker').remove();
     }
 }
 
