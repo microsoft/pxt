@@ -332,6 +332,10 @@
     }
 }
 
+.docs.ui.modal.lang .ui.button {
+    margin-top: 1.5em;
+}
+
 .ui.sidebar.menu.docs {
     background: #EFEFEF;
     padding-left: 0.5em;
@@ -409,11 +413,11 @@
         content: none;
     }
     /* indented content
-        Note: we're annoyingly specific with these selectors 
+        Note: we're annoyingly specific with these selectors
         because we need to override Semantic's default behavior
     */
     .accordion.item .content:not(.style),
-    .accordion.item .accordion .title~.content:not(.ui), 
+    .accordion.item .accordion .title~.content:not(.ui),
     .accordion.item .title~.content:not(.ui) {
         padding: 0 0 0 0.25rem;
         margin: 0 0 0 0.5rem;
