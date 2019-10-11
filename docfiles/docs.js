@@ -282,8 +282,8 @@ function renderSnippets() {
 }
 
 function getCookieLang() {
-    const cookiePropRegex = new RegExp(pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)+ "=(.*?)(?:;|$)")
-    const cookieValue = cookiePropRegex.exec(document.cookie);
+    var cookiePropRegex = new RegExp(pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)+ "=(.*?)(?:;|$)")
+    var cookieValue = cookiePropRegex.exec(document.cookie);
     return cookieValue && cookieValue[1] || null;
 }
 
@@ -293,7 +293,7 @@ function setCookieLang(langId) {
     }
     if (langId !== getCookieLang()) {
         pxt.tickEvent("menu.lang.setcookielang." + langId);
-        const expiration = new Date();
+        var expiration = new Date();
         expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
         document.cookie = `${pxt.Util.pxtLangCookieId}=${langId};expires=${expiration.toUTCString()};path=/`;
     }
