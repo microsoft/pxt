@@ -338,6 +338,29 @@ function setupLangPicker() {
             localesContainer.appendChild(card);
         });
 
+        var disabledTabIndexAttribute = "disabledtabindex";
+
+        $(modalContainer).modal({
+            onShow: function() {
+                const focusableElements = document.querySelectorAll('a, button, input, [tabindex]:not([tabindex="-1"])');
+                for (var i = 0; i < focusableElements.length; i++) {
+                    var el = focusableElements[i];
+                    if (!modal.contains(el)) {
+                        el.setAttribute(disabledTabIndexAttribute, el.getAttribute("tabindex") || "0");
+                        el.setAttribute("tabindex", "-1");
+                    }
+                }
+            },
+            onHide: function(){
+                const returnFocusTo = document.querySelectorAll("[disabledtabindex]");
+                for (var i = 0; i < returnFocusTo.length; i++) {
+                    var el = returnFocusTo[i];
+                    el.setAttribute("tabindex", el.getAttribute(disabledTabIndexAttribute));
+                    el.setAttribute(disabledTabIndexAttribute, undefined);
+                }
+            }
+        });
+
         var langPicker = document.querySelector("#langpicker");
         langPicker.onclick = function() {
             $(modalContainer).modal('show');
