@@ -295,7 +295,7 @@ function setCookieLang(langId) {
         pxt.tickEvent("menu.lang.setcookielang." + langId);
         const expiration = new Date();
         expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
-        document.cookie = pxt.Util.pxtLangCookieId + "=" + langId + ";expires=" + expiration.toUTCString() + ";path=/";
+        document.cookie = `${pxt.Util.pxtLangCookieId}=${langId};expires=${expiration.toUTCString()};path=/`;
     }
 }
 
