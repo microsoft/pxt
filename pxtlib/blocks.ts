@@ -98,6 +98,10 @@ namespace pxt.blocks {
 
         // remove spaces before after pipe
         nb = nb.replace(/\s*\|\s*/g, '|');
+
+        // lower case first character
+        nb = nb.replace(/^[A-Z]/, (m) => m.toLowerCase());
+
         return nb;
     }
 
@@ -276,6 +280,7 @@ namespace pxt.blocks {
         block?: Map<string>;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
+        translationId?: string;
     }
 
     let _blockDefinitions: Map<BlockDefinition>;
@@ -703,5 +708,33 @@ namespace pxt.blocks {
                 message0: Util.lf("pause until %1")
             }
         };
+        _blockDefinitions[pxtc.TS_BREAK_TYPE] = {
+            name: Util.lf("break"),
+            tooltip: Util.lf("Break out of the current loop or switch"),
+            url: '/blocks/loops/break',
+            category: 'loops',
+            block: {
+                message0: Util.lf("break")
+            }
+        }
+        _blockDefinitions[pxtc.TS_CONTINUE_TYPE] = {
+            name: Util.lf("continue"),
+            tooltip: Util.lf("Skip current iteration and continues with the next iteration in the loop"),
+            url: '/blocks/loops/continue',
+            category: 'loops',
+            block: {
+                message0: Util.lf("continue")
+            }
+        }
+
+        if (pxt.Util.isTranslationMode()) {
+            Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
+                pxt.crowdin.inContextLoadAsync(b.block.message0)
+                    .done(r => {
+                        b.translationId = b.block.message0;
+                        b.block.message0 = r;
+                    });
+            })
+        }
     }
 }

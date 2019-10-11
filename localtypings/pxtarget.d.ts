@@ -103,6 +103,8 @@ declare namespace pxt {
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
+        breakBlock?: boolean;
+        continueBlock?: boolean;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
@@ -345,6 +347,8 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
+        alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
+        alwaysGithubItem?: boolean; // show Github item; even when token is not available
     }
 
     interface SocialOptions {
@@ -507,6 +511,7 @@ declare namespace ts.pxtc {
         undeletable?: boolean;
         callingConvention: ir.CallingConvention;
         block?: string; // format of the block, used at namespace level for category name
+        translationId?: string; // in-context translation id
         blockId?: string; // unique id of the block
         blockGap?: string; // pixels in toolbox after the block is inserted
         blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
@@ -547,6 +552,7 @@ declare namespace ts.pxtc {
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
         argsNullable?: boolean; // allow NULL to be passed to C++ shim function
+        maxBgInstances?: string; // if there's less than that number of instances of the current class, it's not reported as a mem leak
 
         // on class
         snippet?: string; // value used to generate TS snippet
@@ -561,6 +567,7 @@ declare namespace ts.pxtc {
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
         topblock?: boolean;
         topblockWeight?: number;
+        locs?: pxt.Map<string>;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -791,11 +798,16 @@ declare namespace pxt.tutorial {
         activities: TutorialActivityInfo[];
         code: string; // all code
         templateCode?: string;
+        metadata?: TutorialMetadata;
     }
 
     interface TutorialMetadata {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
+        flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        hideIteration?: boolean; // hide step control in tutorial
+        codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
+        codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
     }
 
     interface TutorialStepInfo {
@@ -830,6 +842,7 @@ declare namespace pxt.tutorial {
         tutorialRecipe?: boolean; // micro tutorial running within the context of a script
         templateCode?: string;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
+        metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

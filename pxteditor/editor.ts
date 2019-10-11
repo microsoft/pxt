@@ -74,7 +74,6 @@ namespace pxt.editor {
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
-        updatingEditorFile?: boolean;
         pokeUserComponent?: string;
 
         highContrast?: boolean;
@@ -189,7 +188,6 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
-        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -353,6 +351,10 @@ namespace pxt.editor {
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
+
+        // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
+        onCodeStart?: () => void;
+        onCodeStop?: () => void;
     }
 
     export interface FieldExtensionOptions {

@@ -59,16 +59,16 @@ and might not be available in your editor.
 * using generic functions as values and nested generic functions
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * exceptions (`throw`, `try ... catch`, `try ... finally`)
-
-The following used to be disallowed, but should be supported now,
-though they require testing:
-
 * downcasts of a superclass to a subclass
 * function parameter bi-variance
 * explicit or implicit use of the `any` type
 * `union` or `intersection` types
 * using a generic function as a value
 * class inheritance for generic classes and methods
+* `delete` statement (on object created with `{...}`)
+* object destructuring with initializers
+* shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
+* computed property names (`{[foo()]: 1, bar: 2}`)
 
 ## Unsupported language features
 
@@ -80,11 +80,8 @@ Static TypeScript has *nominal typing* for classes, rather than the *structural 
 * `this` used outside of a method
 * function overloading
 
-We generally stay away from the more dynamic parts of JavaScript.  Things you may miss and we may implement:
+Things you may miss and we may implement:
 
-* object destructuring with initializers
-* shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
-* `delete` statement (on object literals)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays
 * `new` on non-class types
@@ -97,13 +94,40 @@ unlikely to miss it):
 * file-based modules (`import * from ...`, `module.exports` etc); we do support namespaces
 * `yield` expression and ``function*``
 * `await` expression and `async function`
-* tagged templates ``tag `text ${expression} more text` ``; regular templates are supported
+* tagged templates ``tag `text ${expression} more text` `` are limited to special compiler features
+  like image literals; regular templates are supported
 * `with` statement
 * `eval`
 * `for ... in` statements (`for ... of` is supported)
 * prototype-based inheritance; `this` pointer outside classes
 * `arguments` keyword; `.apply` method
 * JSX (HTML fragments as part of JavaScript)
+
+Static TypeScript has somewhat stricter ideas of scoping than regular TypeScript.
+In particular `var` is not allowed (`let` and `const` are supported),
+and identifiers defined with `function` can only be used after all variables
+from outer scopes have been defined.
+(The closure objects for functions that are used before definition
+is constructed right after last used variable have been defined.
+For functions defined before usage, the closure is constructed at the
+point of definition.)
+Both of the following examples will yield a compile error.
+```typescript
+function foo1() {
+    bar()
+    let x = 1
+    function bar() {
+        let y = x // runtime error in JavaScript
+    } 
+}
+function foo1() {
+    const tmp = bar
+    let x = 1
+    tmp() // no runtime error in JavaScript
+    function bar() { let y = x } 
+}
+```
+
 
 For JS-only targets we may implement the following:
 
@@ -135,6 +159,15 @@ monkey-patch these.
 
 Finally, classes are currently not extensible with arbitrary fields.
 We might lift this in future.
+
+`Object.keys(x)` is not yet supported when `x` is dynamically a class type.
+It is supported when `x` was created with an object literal (eg., `{}` or `{ a: 1, b: "foo" }`).
+The order in which properties are returned is order of insertion with no
+special regard for keys that looks like integer (JavaScript has 
+[really counter-intuitive behavior](https://www.stefanjudis.com/today-i-learned/property-order-is-predictable-in-javascript-objects-since-es2015/)
+here).
+When we support `Object.keys()` on class types, the order will be the static order of
+field definition.
 
 ## Execution environments
 
@@ -246,6 +279,4 @@ and dynamic maps.
   we could make it equivalent to JavaScript's `x.foo.bind(x)`
 * `Object.keys()` is currently not implemented for classes; when it will be
   the order of fields will be static declaration order
-* the `delete` statement is currently disallowed; it can be implemented
-  rather easily, though on classes it will just assign `undefined`
 * how to validate types of C++ classes (Pin mostly)?

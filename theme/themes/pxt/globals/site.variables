@@ -6,7 +6,7 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
+@secondaryColor: rgba(0, 0, 0, 0.55);
 
 @red:#A80000;
 @orange:#D83B01;
@@ -22,7 +22,7 @@
 
 @greenTextColor: darken(@green, 5);
 
-@lightTextColor              : rgba(0, 0, 0, 0.68);
+@lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
@@ -215,6 +215,20 @@ default semantic
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
 @serialConsoleBackground: @simulatorBackground;
+
+/*-------------------
+   Github Diff editor
+--------------------*/
+@githubBackgroundColor: lighten(@simulatorBackground, 2);
+@diffSegmentBackgroundColor: @pageBackground;
+@diffRemovedBackground:#ffeef0;
+@diffAddedBackground: #e6ffed;
+@diffMarkerBackground: #f1f8ff;
+@diffMarkerColor: rgba(27,31,35,.7);
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);;
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);;
+
 
 /*-------------------
    Blockly

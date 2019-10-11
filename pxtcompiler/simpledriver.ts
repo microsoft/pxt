@@ -135,8 +135,8 @@ namespace pxt {
 
     export function setupSimpleCompile() {
         if (typeof global != "undefined" && !global.btoa) {
-            global.btoa = function (str: string) { return new Buffer(str, "binary").toString("base64"); }
-            global.atob = function (str: string) { return new Buffer(str, "base64").toString("binary"); }
+            global.btoa = function (str: string) { return Buffer.from(str, "binary").toString("base64"); }
+            global.atob = function (str: string) { return Buffer.from(str, "base64").toString("binary"); }
         }
         if (typeof pxtTargetBundle != "undefined") {
             pxt.debug("setup app bundle")

@@ -414,7 +414,7 @@ namespace pxt.blocks.layout {
             }
             const f = formattable(block);
 
-            if (block.type === pxtc.ON_START_TYPE) {
+            if (!onStart && !block.disabled && block.type === pxtc.ON_START_TYPE) { // there might be duplicate on-start blocks
                 onStart = f;
             }
             else {
@@ -513,7 +513,7 @@ namespace pxt.blocks.layout {
 
         function moveFormattable(f: Formattable, x: number, y: number) {
             const bounds = f.value.getBoundingRectangle();
-            f.value.moveBy(x - bounds.topLeft.x, y - bounds.topLeft.y);
+            f.value.moveBy(x - bounds.left, y - bounds.top);
         }
     }
 

@@ -69,6 +69,14 @@ namespace pxsim {
 
         destroy() { }
 
+        scan(mark: (path: string, v: any) => void) {
+            throw U.userError("scan not implemented")
+        }
+
+        gcKey(): string { throw U.userError("gcKey not implemented") }
+        gcSize(): number { throw U.userError("gcSize not implemented") }
+        gcIsStatic() { return false }
+
         print() {
             if (runtime && runtime.refCountingDebug)
                 console.log(`RefObject id:${this.id}`)
@@ -109,11 +117,20 @@ namespace pxsim {
         classNo: number;
         lastSubtypeNo: number;
         iface?: Map<any>;
+        maxBgInstances?: number;
     }
 
     export class RefRecord extends RefObject {
         fields: any = {};
         vtable: VTable;
+
+        scan(mark: (path: string, v: any) => void) {
+            for (let k of Object.keys(this.fields))
+                mark(k, this.fields[k])
+        }
+
+        gcKey() { return this.vtable.name }
+        gcSize() { return this.vtable.numFields + 1 }
 
         destroy() {
             this.fields = null
@@ -130,6 +147,14 @@ namespace pxsim {
         fields: any[] = [];
         len: number
         func: LabelFn;
+
+        scan(mark: (path: string, v: any) => void) {
+            for (let i = 0; i < this.fields.length; ++i)
+                mark("_cap" + i, this.fields[i])
+        }
+
+        gcKey() { return pxsim.functionName(this.func) }
+        gcSize() { return this.fields.length + 3 }
 
         isRef(idx: number) {
             check(0 <= idx && idx < this.fields.length)
@@ -260,6 +285,13 @@ namespace pxsim {
     export class RefRefLocal extends RefObject {
         v: any = null;
 
+        scan(mark: (path: string, v: any) => void) {
+            mark("*", this.v)
+        }
+
+        gcKey() { return "LOC" }
+        gcSize() { return 2 }
+
         destroy() {
         }
 
@@ -277,6 +309,14 @@ namespace pxsim {
     export class RefMap extends RefObject {
         vtable = mkMapVTable();
         data: MapEntry[] = [];
+
+        scan(mark: (path: string, v: any) => void) {
+            for (let d of this.data) {
+                mark(d.key, d.val)
+            }
+        }
+        gcKey() { return "{...}" }
+        gcSize() { return this.data.length * 2 + 4 }
 
         findIdx(key: string) {
             for (let i = 0; i < this.data.length; ++i) {
@@ -485,6 +525,7 @@ namespace pxsim {
         }
 
         export function mapGetByString(map: RefMap, key: string) {
+            key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
                 return r.fields[key]
@@ -496,10 +537,20 @@ namespace pxsim {
             return (map.data[i].val);
         }
 
+        export function mapDeleteByString(map: RefMap, key: string) {
+            if (!(map instanceof RefMap))
+                pxtrt.panic(923)
+            let i = map.findIdx(key);
+            if (i >= 0)
+                map.data.splice(i, 1)
+            return true
+        }
+
         export const mapSetGeneric = mapSetByString
         export const mapGetGeneric = mapGetByString
 
         export function mapSetByString(map: RefMap, key: string, val: any) {
+            key += ""
             if (map instanceof RefRecord) {
                 let r = map as RefRecord
                 r.fields[key] = val

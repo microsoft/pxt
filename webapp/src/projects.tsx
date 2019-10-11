@@ -414,7 +414,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         {cards.map((scr, index) =>
                             <ProjectsCodeCard
                                 className="example"
-                                key={path + scr.name}
+                                key={path + (scr.name || scr.url)}
                                 name={scr.name}
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
@@ -461,7 +461,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     </div>
                 </div> : undefined}
                 {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
-                    const boardsvg = pxt.bundledSvg(scr.board);
                     const tutorialStep =
                         scr.tutorial ? scr.tutorial.tutorialStep
                             : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1
@@ -474,8 +473,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        className={boardsvg && scr.board ? "file board" : scr.githubId ? "file github" : "file"}
-                        imageUrl={boardsvg}
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
@@ -522,8 +519,21 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
     }
 
     renderCore() {
-        const { scr, onCardClick, onLabelClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick}
+        let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, ...rest } = this.props;
+
+        // compute icon
+        if (scr && cardType == "file") {
+            if (scr.githubId)
+                className = 'file github ' + className;
+            else if (scr.board) {
+                className = 'file board ' + className;
+                imageUrl = pxt.bundledSvg(scr.board)
+            }
+            else
+                className = 'file ' + className;
+        }
+
+        return <codecard.CodeCardView className={className} imageUrl={imageUrl} cardType={cardType} {...rest} onClick={this.handleClick}
             onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
 }
@@ -714,7 +724,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     }
 
     private cloneGithub() {
-        pxt.tickEvent("projects.clonegithub", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.projects.clone", undefined, { interactiveConsent: true });
         this.hide();
         this.props.parent.showImportGithubDialog();
     }
@@ -912,7 +922,7 @@ export class NewProjectNameDialog extends ExitAndSaveDialog {
 
     actions(): sui.ModalButton[] {
         return [{
-            label: lf("Create!"),
+            label: lf("Create"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'

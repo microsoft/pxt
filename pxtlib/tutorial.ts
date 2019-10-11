@@ -3,8 +3,9 @@ namespace pxt.tutorial {
     const _h3Regex = /^###[^#](.*)$([\s\S]*?)(?=^###[^#]|$(?![\r\n]))/gmi;
 
     export function parseTutorial(tutorialmd: string): TutorialInfo {
-        const {steps, activities} = parseTutorialMarkdown(tutorialmd);
-        const title = parseTutorialTitle(tutorialmd);
+        const { metadata, body } = parseTutorialMetadata(tutorialmd);
+        const { steps, activities } = parseTutorialMarkdown(body, metadata);
+        const title = parseTutorialTitle(body);
         if (!steps)
             return undefined; // error parsing steps
 
@@ -14,7 +15,7 @@ namespace pxt.tutorial {
         let code = '';
         let templateCode: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-        tutorialmd
+        body
             .replace(/((?!.)\s)+/g, "\n")
             .replace(regex, function (m0, m1, m2) {
                 switch (m1) {
@@ -49,7 +50,8 @@ namespace pxt.tutorial {
             steps: steps,
             activities: activities,
             code,
-            templateCode
+            templateCode,
+            metadata
         };
 
         function checkTutorialEditor(expected: string) {
@@ -68,8 +70,7 @@ namespace pxt.tutorial {
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialMarkdown(tutorialmd: string): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
-        const metadata = parseTutorialMetadata(tutorialmd);
+    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
         tutorialmd = stripHiddenSnippets(tutorialmd);
         if (metadata && metadata.activities) {
             // tutorial with "## ACTIVITY", "### STEP" syntax
@@ -79,7 +80,7 @@ namespace pxt.tutorial {
             let steps = parseTutorialSteps(tutorialmd, null, metadata);
 
             // old: "### STEP" syntax (no activity header guaranteed)
-            if (!steps || steps.length <= 1) steps = parseTutorialSteps(tutorialmd, _h3Regex, metadata);
+            if (!steps || steps.length < 1) steps = parseTutorialSteps(tutorialmd, _h3Regex, metadata);
 
             return {steps: steps, activities: null};
         }
@@ -92,7 +93,7 @@ namespace pxt.tutorial {
         markdown.replace(_h2Regex, function(match, name, activity) {
             let i = activityInfo.length;
             activityInfo.push({
-                name: name || lf("Activity ") + i,
+                name: name || lf("Activity {0}", i),
                 step: stepInfo.length
             })
 
@@ -171,16 +172,21 @@ namespace pxt.tutorial {
         Parses metadata at the beginning of tutorial markown. Metadata is a key-value
         pair in the format: `### @KEY VALUE`
     */
-    function parseTutorialMetadata(tutorialmd: string): TutorialMetadata {
+    function parseTutorialMetadata(tutorialmd: string): {metadata: TutorialMetadata, body: string} {
         const metadataRegex = /### @(\S+) ([ \S]+)/gi;
         const m: any = {};
 
-        tutorialmd.replace(metadataRegex, function (f, k, v) {
-            m[k] = v;
+        const body = tutorialmd.replace(metadataRegex, function (f, k, v) {
+            try {
+                m[k] = JSON.parse(v);
+            } catch {
+                m[k] = v;
+            }
+
             return "";
         });
 
-        return m as TutorialMetadata;
+        return { metadata: (m as TutorialMetadata), body};
     }
 
     export function highlight(pre: HTMLPreElement): void {

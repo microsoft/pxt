@@ -225,7 +225,7 @@ function blockTestAsync(name: string) {
             }
 
             chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
-        }, err => fail('Compiling blocks failed'));
+        }, err => fail('Compiling blocks failed with error: ' + err));
 }
 
 describe("blockly compiler", function () {
