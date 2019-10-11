@@ -327,27 +327,31 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var availableLocales = pxt.appTarget.appTheme.availableLocales;
-    var locales;
+    var appTheme = pxt.appTarget.appTheme
     var initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
-    if (pxt.appTarget.appTheme && availableLocales && pxt.appTarget.appTheme.selectLanguage) {
 
+    if (appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
-        locales = availableLocales.map(function(e) { return languageOption(e) });
+        var locales = appTheme.availableLocales.map(function(e) { return languageOption(e) });
         locales.forEach(function(card) { localesContainer.appendChild(card) });
 
-        document.querySelector("#langpicker").onclick = function() {
-            $('.ui.modal').modal('show');
-        };
+        var langPicker = document.querySelector("#langpicker");
+        langPicker.onclick = function() {
+            $('.ui.modal.lang').modal('show');
+        }
+        langPicker.onkeydown = handleEnterKey;
 
-        document.querySelector(".closeIcon").onclick = function() {
-            $('.ui.modal').modal('hide');
-        };
+        var closeIcon = document.querySelector(".closeIcon");
+        closeIcon.onclick = function() {
+            $('.ui.modal.lang').modal('hide');
+        }
+        closeIcon.onkeydown = handleEnterKey;
 
         var langOptions = document.querySelectorAll(".langoption");
 
-        for (var x = 0; x < langOptions.length; x++) {
-            langOptions[x].addEventListener("click", function(e) {
+        for (var i = 0; i < langOptions.length; i++) {
+            var currentOption = langOptions[i];
+            currentOption.onclick =  function(e) {
                 var langId = e.currentTarget.dataset.lang;
                 if (!pxt.Util.allLanguages[langId]) {
                     return;
@@ -362,7 +366,8 @@ function setupLangPicker() {
                     pxt.tickEvent("menu.lang.samelang." + langId);
                     $('.ui.modal').modal('hide');
                 }
-            });
+            }
+            currentOption.onkeydown = handleEnterKey;
         }
     } else {
         // TODO: Handle language when there is no availableLocales (makecode.com/docs)
