@@ -7,18 +7,19 @@ namespace pxtblockly {
 
     export class FieldCustomMelody<U extends Blockly.FieldCustomOptions> extends Blockly.Field implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
+
         protected params: U;
-        private title: string = "- - - - - - - -";
         private melody: pxtmelody.MelodyArray;
         private soundingKeys: number = 0;
         private numRow: number = 8;
         private numCol: number = 8;
         private tempo: number = 120;
         private stringRep: string;
-        private oneNotePerCol: boolean = true;
         private isPlaying: boolean = false;
         private timeouts: number[] = []; // keep track of timeouts
         private invalidString: string;
+        private prevString: string;
 
         // DOM references
         private topDiv: HTMLDivElement;
@@ -29,8 +30,6 @@ namespace pxtblockly {
         private playButton: HTMLButtonElement;
         private playIcon: HTMLElement;
         private tempoInput: HTMLInputElement;
-        private tempoDiv: HTMLDivElement;
-        private tempoLabel: HTMLLabelElement;
 
         // grid elements
         private static CELL_WIDTH = 25;
@@ -41,6 +40,14 @@ namespace pxtblockly {
         private cells: SVGRectElement[][];
         private static VIEWBOX_WIDTH: number;
         private static VIEWBOX_HEIGHT: number;
+
+        // preview field elements
+        private static COLOR_BLOCK_WIDTH = 10;
+        private static COLOR_BLOCK_HEIGHT = 20;
+        private static COLOR_BLOCK_X = 20;
+        private static COLOR_BLOCK_Y = 5;
+        private static COLOR_BLOCK_SPACING = 2;
+        private static MUSIC_ICON_WIDTH = 20;
 
         // Use toggle from sprite editor
         private toggle: pxtsprite.Toggle;
@@ -71,43 +78,76 @@ namespace pxtblockly {
             this.gallery = new pxtmelody.MelodyGallery();
             this.renderEditor(contentDiv);
 
+            this.prevString = this.getValue();
+
+            // The webapp listens to this event and stops the simulator so that you don't get the melody
+            // playing twice (once in the editor and once when the code runs in the sim)
+            Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", false, true))
+
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
                 this.onEditorClose();
                 // revert all style attributes for dropdown div
                 pxt.BrowserUtils.removeClass(contentDiv, "melody-content-div");
                 pxt.BrowserUtils.removeClass(contentDiv.parentElement, "melody-editor-dropdown");
+
+                Blockly.Events.fire(new Blockly.Events.Ui(this.sourceBlock_, "melody-editor", true, false))
             });
         }
 
-        getText() {
+        getValue() {
             this.stringRep = this.getTypeScriptValue();
             return this.stringRep;
         }
 
-        setText(newText: string) {
-            if (newText == null || newText == "" || newText == "\"\"" || (this.stringRep && this.stringRep === newText)) { // ignore empty strings
+        doValueUpdate_(newValue: string) {
+            if (newValue == null || newValue == "" || newValue == "\"\"" || (this.stringRep && this.stringRep === newValue)) { // ignore empty strings
                 return;
             }
-            this.stringRep = newText;
-            this.parseTypeScriptValue(newText);
+            this.stringRep = newValue;
+            this.parseTypeScriptValue(newValue);
+            super.doValueUpdate_(this.getValue());
         }
-
 
         // This will be run when the field is created (i.e. when it appears on the workspace)
         protected onInit() {
             this.render_();
             this.createMelodyIfDoesntExist();
-            this.updateFieldLabel();
+
+            if (this.invalidString) {
+                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
+            } else {
+                if (!this.fieldGroup_) {
+                    // Build the DOM.
+                    this.fieldGroup_ = Blockly.utils.dom.createSvgElement('g', {}, null);
+                }
+                if (!this.visible_) {
+                    (this.fieldGroup_ as any).style.display = 'none';
+                }
+
+                (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
+                this.updateFieldLabel();
+            }
+        }
+
+        render_() {
+            super.render_();
+            if (!this.invalidString) {
+                this.size_.width = FieldCustomMelody.MUSIC_ICON_WIDTH + (FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * this.numCol;
+            }
+            this.sourceBlock_.setColour("#ffffff");
         }
 
         // Render the editor that will appear in the dropdown div when the user clicks on the field
         protected renderEditor(div: HTMLDivElement) {
+            let color = this.getDropdownBackgroundColour();
+            let secondaryColor = this.getDropdownBorderColour();
+
             this.topDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.topDiv, "melody-top-bar-div")
 
             // Same toggle set up as sprite editor
             this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
-            this.toggle = new pxtsprite.Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: "#B4009E" });
+            this.toggle = new pxtsprite.Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
                     this.hideGallery();
@@ -124,6 +164,7 @@ namespace pxtblockly {
 
             this.editorDiv = document.createElement("div");
             pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
+            this.editorDiv.style.setProperty("background-color", secondaryColor);
 
             this.gridDiv = this.createGridDisplay();
             this.editorDiv.appendChild(this.gridDiv);
@@ -132,13 +173,12 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.bottomDiv, "melody-bottom-bar-div");
 
             this.doneButton = document.createElement("button");
-            this.doneButton.id = "melody-done-button";
-            pxt.BrowserUtils.addClass(this.doneButton, "ui button");
-            this.doneButton.innerText = "Done";
+            pxt.BrowserUtils.addClass(this.doneButton, "melody-confirm-button");
+            this.doneButton.innerText = lf("Done");
             this.doneButton.addEventListener("click", () => this.onDone());
+            this.doneButton.style.setProperty("background-color", color);
 
             this.playButton = document.createElement("button");
-            pxt.BrowserUtils.addClass(this.playButton, "ui icon button");
             this.playButton.id = "melody-play-button";
             this.playButton.addEventListener("click", () => this.togglePlay());
 
@@ -147,24 +187,15 @@ namespace pxtblockly {
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
             this.playButton.appendChild(this.playIcon);
 
-            this.tempoDiv = document.createElement("div");
-            this.tempoDiv.id = "melody-tempo-div";
-
-            this.tempoLabel = document.createElement("label");
-            this.tempoLabel.id = "melody-tempo-label";
-            this.tempoLabel.innerText = "Tempo";
-
             this.tempoInput = document.createElement("input");
             pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
             this.tempoInput.type = "number";
-            this.tempoInput.value = this.tempo + "";
+            this.tempoInput.title = lf("tempo");
             this.tempoInput.id = "melody-tempo-input";
             this.tempoInput.addEventListener("input", () => this.setTempo(+this.tempoInput.value));
+            this.syncTempoField(true);
 
-            this.tempoDiv.appendChild(this.tempoLabel);
-            this.tempoDiv.appendChild(this.tempoInput);
-
-            this.bottomDiv.appendChild(this.tempoDiv);
+            this.bottomDiv.appendChild(this.tempoInput);
             this.bottomDiv.appendChild(this.playButton);
             this.bottomDiv.appendChild(this.doneButton);
             this.editorDiv.appendChild(this.bottomDiv);
@@ -179,6 +210,13 @@ namespace pxtblockly {
                 this.gallery.stopMelody();
             }
             this.clearDomReferences();
+
+            if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.getValue() !== this.prevString) {
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this.sourceBlock_, 'field', this.name, this.prevString, this.getValue()));
+            }
+
+            this.prevString = undefined;
         }
 
         // when click done
@@ -196,8 +234,6 @@ namespace pxtblockly {
             this.playButton = null;
             this.playIcon = null;
             this.tempoInput = null;
-            this.tempoDiv = null;
-            this.tempoLabel = null;
             this.elt = null;
             this.cells = null;
             this.toggle = null;
@@ -214,7 +250,6 @@ namespace pxtblockly {
                 return "\"" + this.melody.getStringRepresentation() + "\"";
             }
             return "";
-
         }
 
         // This should parse the string returned by getTypeScriptValue() and restore the state based on that
@@ -224,16 +259,21 @@ namespace pxtblockly {
                 value = value.slice(1, -1); // remove the boundary quotes
                 value = value.trim(); // remove boundary white space
                 this.createMelodyIfDoesntExist();
-                this.updateFieldLabel();
                 let notes: string[] = value.split(" ");
 
+                notes.forEach(n => {
+                    if (!this.isValidNote(n)) throw new Error(lf("Invalid note '{0}'. Notes can be C D E F G A B C5", n));
+                });
+
+                this.melody.resetMelody();
+
                 for (let j = 0; j < notes.length; j++) {
-                    if (!this.isValidNote(notes[j])) throw new Error("Invalid note: " + notes[j] + " Notes can be C D E F G A B C5");
                     if (notes[j] != "-") {
                         let rowPos: number = pxtmelody.noteToRow(notes[j]);
                         this.melody.updateMelody(rowPos, j);
                     }
                 }
+                this.updateFieldLabel();
             } catch (e) {
                 pxt.log(e)
                 this.invalidString = oldValue;
@@ -257,7 +297,7 @@ namespace pxtblockly {
 
         // The width of the preview on the block itself
         protected getPreviewWidth(): number {
-            this.updateWidth();
+            this.updateSize_();
             return this.size_.width;
         }
 
@@ -267,21 +307,35 @@ namespace pxtblockly {
         }
 
         protected getDropdownBackgroundColour() {
-            return this.sourceBlock_.getColour();
+            return this.sourceBlock_.parentBlock_.getColour();
         }
 
         protected getDropdownBorderColour() {
-            //return this.sourceBlock_.getColourSecondary();
-            return "#4f0643";
+            return this.sourceBlock_.parentBlock_.getColourTertiary();
         }
 
         private updateFieldLabel(): void {
-            if (this.invalidString) {
-                Blockly.FieldLabel.prototype.setText.call(this, pxt.Util.lf("Invalid Input"));
-                return;
+            if (!this.fieldGroup_) return;
+            pxsim.U.clear(this.fieldGroup_);
+
+            let musicIcon = pxtsprite.mkText("\uf001")
+                .appendClass("melody-editor-field-icon")
+                .at(6, 15);
+            this.fieldGroup_.appendChild(musicIcon.el);
+
+            let notes = this.melody.getStringRepresentation().trim().split(" ");
+
+            for (let i = 0; i < notes.length; i++) {
+                let className = pxtmelody.getColorClass(pxtmelody.noteToRow(notes[i]));
+                const cb = new svg.Rect()
+                    .at((FieldCustomMelody.COLOR_BLOCK_WIDTH + FieldCustomMelody.COLOR_BLOCK_SPACING) * i + FieldCustomMelody.COLOR_BLOCK_X, FieldCustomMelody.COLOR_BLOCK_Y)
+                    .size(FieldCustomMelody.COLOR_BLOCK_WIDTH, FieldCustomMelody.COLOR_BLOCK_HEIGHT)
+                    .stroke("#898989", 1)
+                    .corners(3, 2);
+
+                pxt.BrowserUtils.addClass(cb.el, className);
+                this.fieldGroup_.appendChild(cb.el);
             }
-            this.title = this.melody.getStringRepresentation().trim();
-            Blockly.FieldLabel.prototype.setText.call(this, this.title);
         }
 
         private setTempo(tempo: number): void {
@@ -290,7 +344,7 @@ namespace pxtblockly {
                 this.tempoInput.value = this.tempo + "";
                 return
             }
-            // update tempo and duration values and display to reflect new tempo
+            // update tempo and display to reflect new tempo
             if (this.tempo != tempo) {
                 this.tempo = tempo;
                 if (this.melody) {
@@ -298,6 +352,38 @@ namespace pxtblockly {
                 }
                 if (this.tempoInput) {
                     this.tempoInput.value = this.tempo + "";
+                }
+                this.syncTempoField(false);
+            }
+        }
+
+        // sync value from tempo field on block with tempo in field editor
+        private syncTempoField(blockToEditor: boolean): void {
+            const s = this.sourceBlock_;
+            if (s.parentBlock_) {
+                const p = s.parentBlock_;
+                for (const input of p.inputList) {
+                    if (input.name === "tempo") {
+                        const tempoBlock = input.connection.targetBlock();
+                        if (tempoBlock) {
+                            if (blockToEditor)
+                                if (tempoBlock.getFieldValue("SLIDER")) {
+                                    this.tempoInput.value = tempoBlock.getFieldValue("SLIDER");
+                                    this.tempo = +this.tempoInput.value;
+                                } else {
+                                    this.tempoInput.value = this.tempo + "";
+                                }
+                            else { // Editor to block
+                                if (tempoBlock.type === "math_number_minmax") {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "SLIDER")
+                                }
+                                else {
+                                    tempoBlock.setFieldValue(this.tempoInput.value, "NUM")
+                                }
+                            }
+                        }
+                        break;
+                    }
                 }
             }
         }
@@ -316,62 +402,51 @@ namespace pxtblockly {
         }
 
         private onNoteSelect(row: number, col: number): void {
-            let selectedNote = this.cells[row][col];
-            // play sound if selected
-            if (!this.melody.getValue(row, col)) {
-                this.playNote(row);
-                pxt.BrowserUtils.removeClass(selectedNote, "melody-default");
-                pxt.BrowserUtils.addClass(selectedNote, pxtmelody.getColorClass(row));
-                if (this.oneNotePerCol) { // clear all other notes in col
-                    for (let i = 0; i < this.numRow; i++) {
-                        if (this.melody.getValue(i, col)) {
-                            // remove current color class
-                            pxt.BrowserUtils.removeClass(this.cells[i][col], pxtmelody.getColorClass(i));
-                            // update melody array
-                            this.melody.updateMelody(i, col);
-                            // set color to default
-                            pxt.BrowserUtils.addClass(this.cells[i][col], "melody-default");
-                        }
-                    }
-                }
-            } else { // when note is unselected
-                pxt.BrowserUtils.removeClass(selectedNote, pxtmelody.getColorClass(row));
-                pxt.BrowserUtils.addClass(selectedNote, "melody-default");
-            }
             // update melody array
             this.invalidString = null;
             this.melody.updateMelody(row, col);
+
+            if (this.melody.getValue(row, col) && !this.isPlaying) {
+                this.playNote(row, col);
+            }
+
+            this.updateGrid();
             this.updateFieldLabel();
         }
 
+        private updateGrid() {
+            for (let row = 0; row < this.numRow; row++) {
+                const rowClass = pxtmelody.getColorClass(row);
+
+                for (let col = 0; col < this.numCol; col++) {
+                    const cell = this.cells[row][col];
+
+                    if (this.melody.getValue(row, col)) {
+                        pxt.BrowserUtils.removeClass(cell, "melody-default");
+                        pxt.BrowserUtils.addClass(cell, rowClass);
+                    }
+                    else {
+                        pxt.BrowserUtils.addClass(cell, "melody-default");
+                        pxt.BrowserUtils.removeClass(cell, rowClass);
+                    }
+                }
+            }
+        }
+
         private playNote(rowNumber: number, colNumber?: number): void {
-            let tone: number = 0;
             let count: number = ++this.soundingKeys;
 
-            switch (rowNumber) {
-                case 0: tone = 523; break; // Tenor C
-                case 1: tone = 494; break; // Middle B
-                case 2: tone = 440; break; // Middle A
-                case 3: tone = 392; break; // Middle G
-                case 4: tone = 349; break; // Middle F
-                case 5: tone = 330; break; // Middle E
-                case 6: tone = 294; break; // Middle D
-                case 7: tone = 262; break; // Middle C 
-            }
-
-            if (this.isPlaying) { // when melody is playing
-                // start note
+            if (this.isPlaying) {
                 this.timeouts.push(setTimeout(() => {
-                    pxt.AudioContextManager.tone(tone);
+                    this.playToneCore(rowNumber);
                 }, colNumber * this.getDuration()));
-                // stop note
+
                 this.timeouts.push(setTimeout(() => {
                     pxt.AudioContextManager.stop();
                 }, (colNumber + 1) * this.getDuration()));
-            } else { // when a single note is selected
-                // start note
-                pxt.AudioContextManager.tone(tone);
-                // stop note
+            }
+            else {
+                this.playToneCore(rowNumber);
                 this.timeouts.push(setTimeout(() => {
                     if (this.soundingKeys == count)
                         pxt.AudioContextManager.stop();
@@ -379,9 +454,59 @@ namespace pxtblockly {
             }
         }
 
+        protected queueToneForColumn(column: number, delay: number, duration: number) {
+            const start = setTimeout(() => {
+                ++this.soundingKeys;
+                pxt.AudioContextManager.stop();
+
+                for (let i = 0; i < this.numRow; i++) {
+                    if (this.melody.getValue(i, column)) {
+                        this.playToneCore(i);
+                    }
+                }
+                this.highlightColumn(column, true);
+                this.timeouts = this.timeouts.filter(t => t !== start);
+            }, delay);
+
+            const end = setTimeout(() => {
+                // pxt.AudioContextManager.stop();
+                this.timeouts = this.timeouts.filter(t => t !== end);
+                this.highlightColumn(column, false);
+            }, delay + duration)
+
+            this.timeouts.push(start);
+            this.timeouts.push(end);
+        }
+
+        protected playToneCore(row: number) {
+            let tone: number = 0;
+
+            switch (row) {
+                case 0: tone = 523; break; // Tenor C
+                case 1: tone = 494; break; // Middle B
+                case 2: tone = 440; break; // Middle A
+                case 3: tone = 392; break; // Middle G
+                case 4: tone = 349; break; // Middle F
+                case 5: tone = 330; break; // Middle E
+                case 6: tone = 294; break; // Middle D
+                case 7: tone = 262; break; // Middle C
+            }
+
+            pxt.AudioContextManager.tone(tone);
+        }
+
+        private highlightColumn(col: number, on: boolean) {
+            const cells = this.cells.map(row => row[col]);
+
+            cells.forEach(cell => {
+                if (on) pxt.BrowserUtils.addClass(cell, "playing")
+                else pxt.BrowserUtils.removeClass(cell, "playing")
+            });
+        }
+
         private createGridDisplay(): SVGSVGElement {
             FieldCustomMelody.VIEWBOX_WIDTH = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numCol + FieldCustomMelody.CELL_VERTICAL_MARGIN;
-            if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 30;
+            if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
             FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_HORIZONTAL_MARGIN) * this.numRow + FieldCustomMelody.CELL_HORIZONTAL_MARGIN;
             this.elt = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}"/>`);
 
@@ -396,24 +521,6 @@ namespace pxtblockly {
                 }
             }
             return this.elt;
-        }
-
-        private updateGridDisplay() {
-            for (let i = 0; i < this.numCol; i++) {
-                for (let j = 0; j < this.numRow; j++) {
-                    let cell = this.cells[j][i];
-                    // update color if necessary
-                    if (this.melody.getValue(j, i) && !pxt.BrowserUtils.containsClass(cell, pxtmelody.getColorClass(j))) {
-                        pxt.BrowserUtils.addClass(cell, pxtmelody.getColorClass(j));
-                        pxt.BrowserUtils.removeClass(cell, "melody-default");
-                        // reset to default if not selected
-                    } else if (!this.melody.getValue(j, i) && pxt.BrowserUtils.containsClass(cell, pxtmelody.getColorClass(j))) {
-                        pxt.BrowserUtils.removeClass(cell, pxtmelody.getColorClass(j));
-                        pxt.BrowserUtils.addClass(cell, "melody-default");
-                    }
-
-                }
-            }
         }
 
         private createCell(x: number, y: number) {
@@ -447,29 +554,31 @@ namespace pxtblockly {
         }
 
         private togglePlay() {
-            if (pxt.BrowserUtils.containsClass(this.playIcon, "play icon")) {
-                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
-                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            if (!this.isPlaying) {
                 this.isPlaying = true;
                 this.playMelody();
             } else {
+                this.stopMelody();
+            }
+
+            this.updatePlayButton();
+        }
+
+        private updatePlayButton() {
+            if (this.isPlaying) {
+                pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
+                pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            }
+            else {
                 pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
                 pxt.BrowserUtils.addClass(this.playIcon, "play icon");
-                this.stopMelody();
             }
         }
 
         private playMelody() {
             if (this.isPlaying) {
                 for (let i = 0; i < this.numCol; i++) {
-                    for (let j = 0; j < this.numRow; j++) {
-                        if (this.melody.getValue(j, i)) {
-                            if (this.oneNotePerCol) {
-                                this.playNote(j, i);
-                                break;
-                            } // will support playing multiple notes in the future
-                        }
-                    }
+                    this.queueToneForColumn(i, i * this.getDuration(), this.getDuration());
                 }
                 this.timeouts.push(setTimeout( // call the melody again after it finishes
                     () => this.playMelody(), (this.numCol) * this.getDuration()));
@@ -483,18 +592,21 @@ namespace pxtblockly {
                 while (this.timeouts.length) clearTimeout(this.timeouts.shift());
                 pxt.AudioContextManager.stop();
                 this.isPlaying = false;
+
+                this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell, "playing")));
             }
         }
 
         private showGallery() {
             this.stopMelody();
+            this.updatePlayButton();
             this.gallery.show((result: string) => {
                 if (result) {
                     this.melody.parseNotes(result);
                     this.gallery.hide();
                     this.toggle.toggle();
                     this.updateFieldLabel();
-                    this.updateGridDisplay();
+                    this.updateGrid();
                 }
             });
         }

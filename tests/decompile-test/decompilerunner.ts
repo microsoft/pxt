@@ -18,8 +18,8 @@ function initGlobals() {
     g.pxt = pxt;
     g.ts = ts;
     g.pxtc = pxtc;
-    g.btoa = (str: string) => new Buffer(str, "binary").toString("base64");
-    g.atob = (str: string) => new Buffer(str, "base64").toString("binary");
+    g.btoa = (str: string) => Buffer.from(str, "binary").toString("base64");
+    g.atob = (str: string) => Buffer.from(str, "base64").toString("binary");
 }
 
 initGlobals();
@@ -105,7 +105,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
     return util.getTestCompileOptsAsync({ "main.ts": tsMain }, dependency, true)
         .then(opts => {
-            const decompiled = pxtc.decompile(opts, "main.ts", true);
+            const decompiled = pxtc.decompile(pxtc.getTSProgram(opts), opts, "main.ts", true);
             if (decompiled.success) {
                 return decompiled.outfiles["main.blocks"];
             }

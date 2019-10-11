@@ -296,6 +296,13 @@ declare interface String {
     //% block="split %this=text|at %separator"
     split(separator?: string, limit?: number): string[];
 
+    /**
+     * Converts the string to lower case characters.
+     */
+    //% helper=stringToLowerCase
+    //% help=text/to-lower-case
+    toLowerCase(): string;
+
     [index: number]: string;
 }
 
@@ -518,4 +525,12 @@ declare namespace Math {
      */
     //% shim=Math_::idiv
     function idiv(x: number, y: number): number;
+}
+
+declare namespace control {
+    //% shim=_control::_onCodeStart
+    export function _onCodeStart(arg: any): void;
+
+    //% shim=_control::_onCodeStop
+    export function _onCodeStop(arg: any): void;
 }

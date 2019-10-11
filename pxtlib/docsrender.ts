@@ -18,7 +18,13 @@ namespace pxt.docs {
     let stdsettings: Map<string> = {
         "parent": stdSetting,
         "short": stdSetting,
-        "description": "<!-- desc -->"
+        "description": "<!-- desc -->",
+        "activities": "<!-- activities -->",
+        "explicitHints": "<!-- hints -->",
+        "flyoutOnly": "<!-- flyout -->",
+        "hideIteration": "<!-- iter -->",
+        "codeStart": "<!-- start -->",
+        "codeStop": "<!-- stop -->"
     }
 
     function replaceAll(replIn: string, x: string, y: string) {
@@ -155,8 +161,13 @@ namespace pxt.docs {
                 NAME: m.name,
             }
             if (m.subitems) {
+                /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6013,
+                 * swap templ assignments below with the commented out version, and remove
+                 * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
+                 * docfiles/macros.html **/
                 if (lev == 0) templ = menus["top-dropdown"]
                 else templ = menus["inner-dropdown"]
+                // templ = menus["toc-dropdown"]
                 mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -191,7 +202,6 @@ namespace pxt.docs {
         };
         TOC.forEach(isCurrentTOC)
 
-        let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
             let templ = toc["item"]
             let mparams: Map<string> = {
@@ -204,7 +214,6 @@ namespace pxt.docs {
             if (tocPath.indexOf(m) >= 0) {
                 mparams["ACTIVE"] = 'active';
                 mparams["EXPANDED"] = 'true';
-                currentTocEntry = m;
                 breadcrumb.push({
                     name: m.name,
                     href: m.path
@@ -213,6 +222,10 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
+                /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6013,
+                 * swap templ assignments below with the commented out version, and remove
+                 * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
+                 * docfiles/macros.html **/
                 if (lev == 0) {
                     if (m.name !== "") {
                         templ = toc["top-dropdown"]
@@ -221,6 +234,11 @@ namespace pxt.docs {
                     }
                 } else if (lev == 1) templ = toc["inner-dropdown"]
                 else templ = toc["nested-dropdown"]
+                // if (m.name !== "") {
+                //     templ = toc["toc-dropdown"]
+                // } else {
+                //     templ = toc["toc-dropdown-noHeading"]
+                // }
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -280,9 +298,10 @@ namespace pxt.docs {
         `
         params['accMenu'] = accMenuHtml;
 
+        const printButtonTitleText = lf("Print this page")
         // Add print button
         const printBtnHtml = `
-            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${lf("Print this page")}">
+            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${printButtonTitleText}" aria-label="${printButtonTitleText}">
                 <i class="icon print"></i>
             </button>
         `
@@ -364,10 +383,11 @@ namespace pxt.docs {
 
     export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
-            let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
+            let out = '<img class="ui image" src="' + href + '" alt="' + text + '"';
             if (title) {
                 out += ' title="' + title + '"';
             }
+            out += ' loading="lazy"';
             out += (this as any).options.xhtml ? '/>' : '>';
             return out;
         }
@@ -390,6 +410,17 @@ namespace pxt.docs {
                 text = text.replace(/@(fullscreen|unplugged)/g, '');
             return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
         }
+    }
+
+    export function renderConditionalMacros(template: string, pubinfo: Map<string>): string {
+        return template
+            .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
+                (full, cond, sym, inner) => {
+                    if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
+                        return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
+                    else
+                        return `<!-- ${cond} ${sym} endif -->`
+                });
     }
 
     export function renderMarkdown(opts: RenderOptions): string {
@@ -430,14 +461,8 @@ namespace pxt.docs {
                     return "<!-- include " + fn + " -->\n" + cont + "\n<!-- end include -->\n"
                 })
 
-        template = template
-            .replace(/<!--\s*@(ifn?def)\s+(\w+)\s*-->([^]*?)<!--\s*@endif\s*-->/g,
-                (full, cond, sym, inner) => {
-                    if ((cond == "ifdef" && pubinfo[sym]) || (cond == "ifndef" && !pubinfo[sym]))
-                        return `<!-- ${cond} ${sym} -->${inner}<!-- endif -->`
-                    else
-                        return `<!-- ${cond} ${sym} endif -->`
-                })
+
+        template = renderConditionalMacros(template, pubinfo);
 
         if (opts.locale)
             template = translate(template, opts.locale).text
@@ -521,15 +546,29 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
             (f, pref, addr) => pref + '/static/' + addr + '"')
 
         let endBox = ""
+        let boxSize = 0;
+        function appendEndBox(size: number, box: string, html: string): string {
+            let r = html;
+            if (size <= boxSize) {
+                r = endBox + r;
+                endBox = "";
+                boxSize = 0;
+            }
+            return r;
+        }
 
-        html = html.replace(/<h\d[^>]+>\s*([~@])\s*(.*?)<\/h\d>/g, (f, tp, body) => {
+        html = html.replace(/<h(\d)[^>]+>\s*([~@])?\s*(.*?)<\/h\d>/g, (f, lvl, tp, body) => {
             let m = /^(\w+)\s+(.*)/.exec(body)
             let cmd = m ? m[1] : body
             let args = m ? m[2] : ""
             let rawArgs = args
             args = html2Quote(args)
             cmd = html2Quote(cmd)
-            if (tp == "@") {
+            lvl = parseInt(lvl);
+
+            if (!tp) {
+                return appendEndBox(lvl, endBox, f);
+            } else if (tp == "@") {
                 let expansion = U.lookup(d.settings, cmd)
                 if (expansion != null) {
                     pubinfo[cmd] = args
@@ -547,7 +586,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     CMD: cmd
                 }
 
-                return injectHtml(expansion, ivars, ["ARGS", "CMD"])
+                return appendEndBox(lvl, endBox, injectHtml(expansion, ivars, ["ARGS", "CMD"]))
             } else {
                 if (!cmd) {
                     let r = endBox
@@ -558,8 +597,14 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 let box = U.lookup(d.boxes, cmd)
                 if (box) {
                     let parts = box.split("@BODY@")
-                    endBox = parts[1]
-                    return parts[0].replace("@ARGS@", args)
+                    let r = appendEndBox(lvl, endBox, parts[0].replace("@ARGS@", args));
+                    endBox = parts[1];
+
+                    let attrs = box.match(/data-[^>\s]+/ig);
+                    if (attrs && attrs.indexOf('data-inferred') >= 0) {
+                        boxSize = lvl;
+                    }
+                    return r;
                 } else {
                     if (opts.throwOnError)
                         U.userError(`Unknown box: ~ ${cmd}`);
@@ -567,6 +612,8 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                 }
             }
         })
+
+        if (endBox) html = html + endBox;
 
         if (!pubinfo["title"]) {
             let titleM = /<h1[^<>]*>([^<>]+)<\/h1>/.exec(html)

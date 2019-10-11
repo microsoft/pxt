@@ -8,8 +8,7 @@
 @inlineBlockColor: #D83B01;
 @highlightLineColor: #fcfc90;
 @tutorialCardHeight: 8rem;
-@tutorialCardExpandedHeight: 22rem;
-@seeMoreButtonHeight: 3.5rem;
+@seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
@@ -19,10 +18,6 @@
 *******************************/
 .tutorial #maineditor .full-abs {
     top: @tutorialCardHeight;
-}
-
-.tutorial.tutorialExpanded #maineditor .full-abs {
-    top: calc(@tutorialCardExpandedHeight - 0.5rem);
 }
 
 .tutorial #maineditor #monacoEditor {
@@ -66,7 +61,7 @@
 }
 
 .tutorial.tutorialExpanded #tutorialcard {
-    height: @tutorialCardExpandedHeight;
+    max-height: 20rem;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -133,7 +128,7 @@ body#docs.tutorial {
 }
 
 .tutorial.tutorialExpanded #tutorialcard .ui.buttons {
-    height: calc(@tutorialCardExpandedHeight - 1.5rem);
+    height: 100%;
 }
 
 #tutorialcard .ui.tutorialsegment {
@@ -151,14 +146,13 @@ body#docs.tutorial {
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
-    height: calc(@tutorialCardExpandedHeight - 5rem);
+    height: calc(~'100% + 2px');
     overflow-y: auto;
 }
 
 #tutorialcard .tutorialmessage .content p,
 .tutorialhint p {
-    line-height: 30px !important;
-    margin-bottom: 30px;
+    line-height: 1.7em !important;
     color: @tutorialSegmentColor;
 }
 
@@ -166,13 +160,12 @@ body#docs.tutorial {
     width: ~'calc(100% - @{avatarMargin} - 0.5rem)';
     padding: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
-    margin-bottom: 1rem;
     margin-left: @avatarMargin + 0.35rem;
     overflow: hidden;
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage {
-    height: calc(@tutorialCardExpandedHeight - 1.5rem);
+    height: 100%;
 }
 
 #root.dimmable.dimmed .ui.segment.message {
@@ -374,6 +367,14 @@ span.highlight-line {
     color: @white;
 }
 
+.hideIteration .avatar-container .tooltip {
+    left: 4.5rem;
+}
+
+.hideIteration .avatar-container .tooltip:before {
+    left: 27%;
+}
+
 #tutorialcard:not(.showTooltip) .tooltip,
 #tutorialcard:not(.showTooltip) .tooltip:before {
     display: none;
@@ -383,9 +384,49 @@ span.highlight-line {
         See More Button
 *******************************/
 #tutorialcard.seemore {
-    .tutorialmessage .content {
-        height: calc(@tutorialCardHeight - 1rem - @seeMoreButtonHeight);
+    .tutorialsegment > button {
+        position: relative;
+        top: -1rem;
+        width: auto;
+        margin: auto;
+        padding: 0.5rem 0.8rem;
     }
+}
+
+/*******************************
+      Tutorial Activity UI
+*******************************/
+#tutorialsteps {
+    padding: 1em 0px;
+}
+
+#tutorialsteps .step-label {
+    margin: 0 1em;
+}
+
+#tutorialsteps .button.nextbutton .text {
+    margin-right: 0.5em;
+}
+
+#tutorialdropdown > .text {
+    margin: 0.5em;
+}
+
+/*******************************
+        Progress Circle
+*******************************/
+.progresscircle {
+    position: absolute;
+    width: 2.4em;
+    height: 2.4em;
+    margin-top: -0.345em;
+    margin-left: -0.2em;
+}
+
+.progresscircle path {
+    stroke: @white;
+    fill: none;
+    stroke-linecap: round;
 }
 
 
@@ -468,6 +509,10 @@ span.highlight-line {
 @media only screen and (max-width: @largestTabletScreen) {
     .avatar-container .tooltip {
         left: 5rem;
+    }
+
+    #tutorialdropdown {
+        width: auto;
     }
 }
 

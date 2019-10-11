@@ -66,10 +66,14 @@ namespace pxt.editor {
         fullscreen?: boolean;
         mute?: boolean;
         embedSimView?: boolean;
+        editorPosition?: {
+            lineNumber: number;
+            column: number;
+            file: IFile;
+        }; // ensure that this line is visible when loading the editor
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
-        updatingEditorFile?: boolean;
         pokeUserComponent?: string;
 
         highContrast?: boolean;
@@ -170,6 +174,7 @@ namespace pxt.editor {
         loadHeaderAsync(h: pxt.workspace.Header): Promise<void>;
         reloadHeaderAsync(): Promise<void>;
         importProjectAsync(prj: pxt.workspace.Project, editorState?: pxt.editor.EditorState): Promise<void>;
+        importTutorialAsync(markdown: string): Promise<void>;
         overrideTypescriptFile(text: string): void;
         overrideBlocksFile(text: string): void;
 
@@ -183,7 +188,6 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
-        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -191,8 +195,9 @@ namespace pxt.editor {
         updateHeaderNameAsync(name: string): Promise<void>;
         compile(): void;
 
-        setFile(fn: IFile): void;
-        setSideFile(fn: IFile): void;
+        setFile(fn: IFile, line?: number): void;
+        setSideFile(fn: IFile, line?: number): void;
+        navigateToError(diag: pxtc.KsDiagnostic): void;
         setSideDoc(path: string, blocksEditor?: boolean): void;
         setSideMarkdown(md: string): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
@@ -271,7 +276,7 @@ namespace pxt.editor {
 
         showReportAbuse(): void;
         showLanguagePicker(): void;
-        showShareDialog(): void;
+        showShareDialog(title?: string): void;
         showAboutDialog(): void;
 
         showImportUrlDialog(): void;
@@ -288,6 +293,8 @@ namespace pxt.editor {
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
+
+        askForProjectNameAsync(): Promise<string>;
 
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
@@ -344,6 +351,10 @@ namespace pxt.editor {
 
         // Used with the @tutorialCompleted macro. See docs/writing-docs/tutorials.md for more info
         onTutorialCompleted?: () => void;
+
+        // Used with @codeStart, @codeStop metadata (MINECRAFT HOC ONLY)
+        onCodeStart?: () => void;
+        onCodeStop?: () => void;
     }
 
     export interface FieldExtensionOptions {

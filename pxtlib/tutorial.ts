@@ -1,10 +1,11 @@
-/**
- * Any changes in this file need to be ported over to /docs/static/tutorial-tool/tutorial.ts
- */
 namespace pxt.tutorial {
+    const _h2Regex = /^##[^#](.*)$([\s\S]*?)(?=^##[^#]|$(?![\r\n]))/gmi;
+    const _h3Regex = /^###[^#](.*)$([\s\S]*?)(?=^###[^#]|$(?![\r\n]))/gmi;
+
     export function parseTutorial(tutorialmd: string): TutorialInfo {
-        const steps = parseTutorialSteps(tutorialmd);
-        const title = parseTutorialTitle(tutorialmd);
+        const { metadata, body } = parseTutorialMetadata(tutorialmd);
+        const { steps, activities } = parseTutorialMarkdown(body, metadata);
+        const title = parseTutorialTitle(body);
         if (!steps)
             return undefined; // error parsing steps
 
@@ -14,7 +15,7 @@ namespace pxt.tutorial {
         let code = '';
         let templateCode: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-        tutorialmd
+        body
             .replace(/((?!.)\s)+/g, "\n")
             .replace(regex, function (m0, m1, m2) {
                 switch (m1) {
@@ -47,8 +48,10 @@ namespace pxt.tutorial {
             editor: editor || pxt.BLOCKS_PROJECT_NAME,
             title: title,
             steps: steps,
+            activities: activities,
             code,
-            templateCode
+            templateCode,
+            metadata
         };
 
         function checkTutorialEditor(expected: string) {
@@ -67,92 +70,123 @@ namespace pxt.tutorial {
         return title && title.length > 1 ? title[1] : null;
     }
 
-    function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
-        const metadata = parseTutorialMetadata(tutorialmd);
-        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+    function parseTutorialMarkdown(tutorialmd: string, metadata: TutorialMetadata): {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+        tutorialmd = stripHiddenSnippets(tutorialmd);
+        if (metadata && metadata.activities) {
+            // tutorial with "## ACTIVITY", "### STEP" syntax
+            return parseTutorialActivities(tutorialmd, metadata);
+        } else {
+            // tutorial with "## STEP" syntax
+            let steps = parseTutorialSteps(tutorialmd, null, metadata);
 
-        // Download tutorial markdown
-        let steps = tutorialmd.split(/^##[^#].*$/gmi);
-        let newAuthoring = true;
-        if (steps.length <= 1) {
-            // try again, using old logic.
-            steps = tutorialmd.split(/^###[^#].*$/gmi);
-            newAuthoring = false;
+            // old: "### STEP" syntax (no activity header guaranteed)
+            if (!steps || steps.length < 1) steps = parseTutorialSteps(tutorialmd, _h3Regex, metadata);
+
+            return {steps: steps, activities: null};
         }
-        if (steps[0].indexOf("# Not found") == 0) {
+    }
+
+    function parseTutorialActivities(markdown: string, metadata: TutorialMetadata):  {steps: TutorialStepInfo[], activities: TutorialActivityInfo[]} {
+        let stepInfo: TutorialStepInfo[] = [];
+        let activityInfo: TutorialActivityInfo[] = [];
+
+        markdown.replace(_h2Regex, function(match, name, activity) {
+            let i = activityInfo.length;
+            activityInfo.push({
+                name: name || lf("Activity {0}", i),
+                step: stepInfo.length
+            })
+
+            let steps = parseTutorialSteps(activity, _h3Regex, metadata);
+            steps = steps.map(step => {
+                step.activity = i;
+                return step;
+            })
+            stepInfo = stepInfo.concat(steps);
+
+            return "";
+        })
+
+        return {steps: stepInfo, activities: activityInfo};
+    }
+
+    function parseTutorialSteps(markdown: string, regex?: RegExp, metadata?: TutorialMetadata): TutorialStepInfo[] {
+        // use regex override if present
+        let stepRegex = regex || _h2Regex;
+
+        let stepInfo: TutorialStepInfo[] = [];
+        markdown.replace(stepRegex, function (match, flags, step) {
+            step = step.trim();
+            let {header, hint} = parseTutorialHint(step, metadata && metadata.explicitHints);
+            let info: TutorialStepInfo = {
+                fullscreen: /@(fullscreen|unplugged)/.test(flags),
+                unplugged: /@unplugged/.test(flags),
+                tutorialCompleted: /@tutorialCompleted/.test(flags),
+                contentMd: step,
+                headerContentMd: header,
+                hintContentMd: hint,
+                hasHint: hint && hint.length > 0
+            }
+            stepInfo.push(info);
+            return "";
+        });
+
+        if (markdown.indexOf("# Not found") == 0) {
             pxt.debug(`tutorial not found`);
             return undefined;
         }
-        let stepInfo: TutorialStepInfo[] = [];
-        tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
-            let info: TutorialStepInfo = {
-                fullscreen: /@(fullscreen|unplugged)/.test(s),
-                unplugged: /@unplugged/.test(s),
-                tutorialCompleted: /@tutorialCompleted/.test(s)
-            }
-            stepInfo.push(info);
-            return ""
-        });
 
-        if (steps.length < 1)
-            return undefined; // Promise.resolve();
-        steps = steps.slice(1, steps.length); // Remove tutorial title
-
-        for (let i = 0; i < steps.length; i++) {
-            const stepContent = steps[i].trim();
-            const contentLines = stepContent.split('\n');
-            const info = stepInfo[i];
-
-            info.headerContentMd = contentLines[0];
-            info.contentMd = stepContent;
-
-            let hintContentMd;
-            if (metadata && metadata.v == 2) {
-                // v2: hint is explicitly defined in HTML comment form: <!-- HINT TEXT -->
-                const hintTextRegex = /<!--([\s\S]*?)-->/i;
-                info.headerContentMd = stepContent.replace(hintTextRegex, function (f, m) {
-                    hintContentMd = m;
-                    return "";
-                });
-            } else {
-                // v1: everything after the first ``` section OR the first image is treated as a "hint"
-                const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
-                let hintText = stepContent.match(hintTextRegex);
-                if (hintText && hintText.length > 2) {
-                    info.headerContentMd = hintText[1];
-                    hintContentMd = hintText[2];
-                }
-            }
-
-            // remove hidden snippets from the hint
-            if (hintContentMd) {
-                hintContentMd = hintContentMd.replace(hiddenSnippetRegex, '');
-                info.hintContentMd = hintContentMd;
-            }
-
-            info.hasHint = hintContentMd && hintContentMd.length > 1;
-        }
         return stepInfo;
     }
 
-    /*
-        Parses metadata table at the beginning of tutorial markown. Expects a series of
-        key-value pairs, in "| key | value |\n" format.
-    */
-    function parseTutorialMetadata(tutorialmd: string): TutorialMetadata {
-        let m: any = {};
-
-        const tableRegex = /(?:\|[\s\S]+?\|[\s\S]+?\|\n)*/i;
-        const keyValueRegex = /\|([\s\S]+?)\|([\s\S]+?)\|\n/gi;
-
-        const table = tutorialmd.match(tableRegex)[0];
-        table.replace(keyValueRegex, function (f, k, v) {
-                m[k.trim()] = v.trim();
+    function parseTutorialHint(step: string, explicitHints?: boolean): {header: string, hint: string} {
+        let header = step, hint;
+        if (explicitHints) {
+            // hint is explicitly set with hint syntax "#### ~ tutorialhint" and terminates at the next heading
+            const hintTextRegex = /#+ ~ tutorialhint([\s\S]*)/i;
+            header = step.replace(hintTextRegex, function (f, m) {
+                hint = m;
                 return "";
             });
+        } else {
+            // everything after the first ``` section OR the first image is treated as a "hint"
+            const hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
+            let hintText = step.match(hintTextRegex);
+            if (hintText && hintText.length > 2) {
+                header = hintText[1].trim();
+                hint = hintText[2].trim();
+            }
+        }
 
-        const metadata = m as TutorialMetadata;
-        return metadata && metadata.v ? metadata :  null;
+        return {header: header, hint: hint};
+    }
+
+    /* Remove hidden snippets from text */
+    function stripHiddenSnippets(str: string): string {
+        if (!str) return null;
+        const hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
+        return str.replace(hiddenSnippetRegex, '').trim();
+    }
+
+    /*
+        Parses metadata at the beginning of tutorial markown. Metadata is a key-value
+        pair in the format: `### @KEY VALUE`
+    */
+    function parseTutorialMetadata(tutorialmd: string): {metadata: TutorialMetadata, body: string} {
+        const metadataRegex = /### @(\S+) ([ \S]+)/gi;
+        const m: any = {};
+
+        const body = tutorialmd.replace(metadataRegex, function (f, k, v) {
+            try {
+                m[k] = JSON.parse(v);
+            } catch {
+                m[k] = v;
+            }
+
+            return "";
+        });
+
+        return { metadata: (m as TutorialMetadata), body};
     }
 
     export function highlight(pre: HTMLPreElement): void {
@@ -182,41 +216,5 @@ namespace pxt.tutorial {
                 pre.appendChild(document.createTextNode(line + '\n'));
             }
         }
-    }
-
-    /**
-     * This is a temporary hack to automatically patch examples and tutorials while
-     * the pxt-arcade APIs are being updated. This should be removed once that upgrade is
-     * complete.
-     *
-     * @param inputJS The snippet of js (or markdown with js snippets) to upgrade
-     */
-    export function patchArcadeSnippets(inputJS: string): string {
-        if (pxt.appTarget.id !== "arcade" && pxt.appTarget.id !== "pxt-32") return inputJS;
-
-        const declRegex = /enum\s+SpriteKind\s*{((?:[^}]|\s)+)}/gm;
-        const builtin = ["Player", "Projectile", "Enemy", "Food"]
-        const match = declRegex.exec(inputJS);
-
-        if (match) {
-            const referencedNames = match[1].split(/(?:\s|,)+/)
-                .map(n => n.trim())
-                .filter(n => /[a-zA-Z]+/.test(n))
-                .filter(n => builtin.indexOf(n) === -1);
-
-            if (referencedNames.length) {
-                return inputJS.replace(declRegex,
-`
-namespace SpriteKind {
-${referencedNames.map(rn => "    export const " + rn + " = SpriteKind.create()").join("\n")}
-}
-`)
-            }
-            else {
-                return inputJS.replace(declRegex, "");
-            }
-        }
-
-        return inputJS;
     }
 }

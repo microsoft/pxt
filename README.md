@@ -90,6 +90,23 @@ npm install -g svgo
 svgo svgicons/myicon.svg
 ```
 
+### Documentation Highlighting
+
+In the documentation, highlighting of code snippets uses highlight.js (hljs).
+Currently, the following languages are included:
+
+* TypeScript
+* Python
+* JavaScript
+* HTML,XML
+* Markdown
+
+If you need to add other languages or update existing ones,
+you can find the distribution at [https://highlightjs.org/download/](https://highlightjs.org/download/);
+select all the languages you want to include (including the ones above!),
+download and unzip,
+and finally copy over `highlight.pack.js` into `webapp/public/highlight.js/`.
+
 ## Tests
 
 The tests are located in the `tests/` subdirectory and are a combination of node and

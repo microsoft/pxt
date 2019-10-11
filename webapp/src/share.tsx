@@ -41,6 +41,7 @@ export interface ShareEditorState {
     recordingState?: ShareRecordingState;
     recordError?: string;
     qrCodeUri?: string;
+    title?: string;
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
@@ -55,7 +56,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             advancedMenu: false,
             screenshotUri: undefined,
             recordingState: ShareRecordingState.None,
-            recordError: undefined
+            recordError: undefined,
+            title: undefined
         }
 
         this.hide = this.hide.bind(this);
@@ -86,11 +88,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             projectNameChanged: false,
             recordingState: ShareRecordingState.None,
             recordError: undefined,
-            qrCodeUri: undefined
+            qrCodeUri: undefined,
+            title: undefined
         });
     }
 
-    show(header: pxt.workspace.Header) {
+    show(header: pxt.workspace.Header, title?: string) {
         // TODO investigate why edge does not render well
         // upon hiding dialog, the screen does not redraw properly
         const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
@@ -106,7 +109,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubId: undefined,
             sharingError: false,
             screenshotUri: undefined,
-            qrCodeUri: undefined
+            qrCodeUri: undefined,
+            title
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
@@ -174,6 +178,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.recordingState != nextState.recordingState
             || this.state.screenshotUri != nextState.screenshotUri
             || this.state.qrCodeUri != nextState.qrCodeUri
+            || this.state.title != nextState.title
             ;
     }
 
@@ -295,7 +300,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri, title } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -417,7 +422,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             <sui.Modal isOpen={visible} className="sharedialog"
                 size={thumbnails ? "" : "small"}
                 onClose={this.hide}
-                dimmer={true} header={lf("Share Project")}
+                dimmer={true} header={title || lf("Share Project")}
                 closeIcon={true} buttons={actions}
                 closeOnDimmerClick
                 closeOnDocumentClick
@@ -447,15 +452,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                     (screenshotUri && !screenshotMessage)
                                         ? <img className="ui small centered image" src={screenshotUri} alt={lf("Recorded gif")} />
                                         : <p className="no-select">{screenshotMessage}</p>}</div> : undefined}
+                            <p className="ui tiny message info">{disclaimer}</p>
                         </div>
                     </div> : undefined}
-                    {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
+                    {action && !this.loanedSimulator ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
                     {this.state.sharingError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
+                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} autoFocus={!pxt.BrowserUtils.isMobile()} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {qrCodeUri ?
                             <img className="ui tiny image floated right" alt={lf("QR Code of the saved program")} src={qrCodeUri} />

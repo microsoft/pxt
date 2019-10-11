@@ -10,6 +10,7 @@ var targets = [
     {
         name: "Minecraft",
         id: "minecraft",
+        shareUrl: "https://minecraft.makecode.com/",
         endpoints: [
             {
                 name: "nether",
@@ -23,51 +24,49 @@ var targets = [
                 name: "released",
                 url: "https://minecraft.makecode.com?ipc=1&inGame=1&controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
+        ]
     }, {
         name: "Arcade",
         id: "arcade",
+        shareUrl: "https://arcade.makecode.com/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://arcade.makecode.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://arcade.makecode.com?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"device\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
+        ]
     }, {
-        name: "Adafruit",
+        name: "Adafruit Circuit Playground Express",
         id: "adafruit",
+        shareUrl: "https://makecode.adafruit.com/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://makecode.adafruit.com/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.adafruit.com?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"circuit-playground\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"tsprj\"\n}"
+        ]
     }, {
-        name: "Micro:bit",
+        name: "micro:bit",
         id: "microbit",
+        shareUrl: "https://makecode.microbit.org/",
         endpoints: [
             {
-                name: "beta",
+                name: "",
                 url: "https://makecode.microbit.org/beta?controller=1"
-            },
-            {
-                name: "released",
-                url: "https://makecode.microbit.org?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"core\": \"*\",\n        \"radio\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ],\n    \"preferredEditor\": \"blocksprj\"\n}"
+        ]
     }, {
+        name: "Maker",
+        id: "maker",
+        shareUrl: "https://maker.makecode.com/",
+        endpoints: [
+            {
+                name: "",
+                url: "https://maker.makecode.com/?controller=1"
+            }
+        ]
+    }/* not supported
+    , {
         name: "LEGO EV3",
         id: "ev3",
         endpoints: [
@@ -79,13 +78,82 @@ var targets = [
                 name: "released",
                 url: "https://makecode.mindstorms.com?controller=1"
             }
-        ],
-        config: "{\n    \"name\": \"Untitled\",\n    \"dependencies\": {\n        \"ev3\": \"*\"\n    },\n    \"description\": \"\",\n    \"files\": [\n        \"main.blocks\",\n        \"main.ts\",\n        \"README.md\"\n    ]\n}"
-    }
+        ]
+    } */
 ];
+
+function shareScript(md, done) {
+    function request(url, data) {
+        var client = new XMLHttpRequest();
+        var resolved = false;
+        client.onreadystatechange = () => {
+            if (resolved) return // Safari/iOS likes to call this thing more than once
+            if (client.readyState == 4) {
+                resolved = true;
+                var resp = {
+                    statusCode: client.status,
+                    headers: {},
+                    buffer: client.responseBody || client.response,
+                    text: client.responseText,
+                }
+                const allHeaders = client.getAllResponseHeaders();
+                allHeaders.split(/\r?\n/).forEach(l => {
+                    var m = /^\s*([^:]+): (.*)/.exec(l)
+                    if (m) resp.headers[m[1].toLowerCase()] = m[2]
+                })
+
+                // resolve
+                if ((resp.statusCode != 200 && resp.statusCode != 304) && !options.allowHttpErrors) {
+                    var msg = `Bad HTTP status code: ${resp.statusCode} at ${options.url}; message: ${(resp.text || "").slice(0, 500)}`;
+                    var err = new Error(msg)
+                    err.statusCode = resp.statusCode
+                    done(undefined, err);
+                } else {
+                    if (resp.text && /application\/json/.test(resp.headers["content-type"]))
+                    resp.json = JSON.parse(resp.text)                
+                    // show dialog
+                    done(resp);
+                }
+            }
+        }
+        var buf = JSON.stringify(data)
+        client.open("POST", url);
+        client.setRequestHeader("content-type", "application/json; charset=utf8")
+        client.send(buf);
+    }
+
+    const title = /^#\s([\s\w]*)$/m.exec(md);
+    const name = title ? title[1] : "Tutorial";
+    request("https://makecode.com/api/scripts", {
+        name: name,
+        target: selectedTarget.id,
+        description: "Made with ❤️ in Microsoft MakeCode Arcade.",
+        editor: "blocksprj",
+        text: {
+            "README.md": md,
+            "main.blocks": "",
+            "main.ts": "",
+            "pxt.json": JSON.stringify({
+                    name: name,
+                    dependencies: {
+                        "core": "*"
+                    },
+                    description: "",
+                    files: [
+                        "main.blocks",
+                        "main.ts",
+                        "README.md"
+                    ]
+                })
+        },
+        meta: { }
+    });
+}
+
+
 var selectedEndpoint;
-var selectedConfig;
 var selectedId;
+var selectedTarget;
 editor.onDidChangeModelContent(debounce(function () {
     localStorage.setItem(STORAGE_KEY, editor.getValue());
 }, 500));
@@ -95,208 +163,36 @@ loadIframe(localStorage.getItem(ENDPOINT_KEY));
 initDropdown();
 document.getElementById("run-button").addEventListener("click", function () {
     var md = editor.getValue();
-    var proj = createProject(md);
-    sendMessage("importproject", proj);
+    sendMessage("importtutorial", md);
+});
+document.getElementById("share-button").addEventListener("click", function () {
+    var btn = document.getElementById("share-button");
+    var out = document.getElementById("share-output");
+    btn.className += " loading";
+    var md = editor.getValue();
+    shareScript(md, function(resp, err) {
+        btn.className = btn.className.replace("loading", "");
+        if (resp && resp.json) {
+            out.value = selectedTarget.shareUrl +  "#tutorial:" + resp.json.id;
+            out.focus();
+            out.select();
+        } else if (err)
+            out.value = err.message;
+        else
+            out.value = "Oops, something went wrong.";
+    });
 });
 window.addEventListener("message", receiveMessage, false);
-function createProject(md) {
-    return {
-        "text": {
-            "main.blocks": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <block type=\"pxt-on-start\" id=\",{,HjW]u:lVGcDRS_Cu|\" x=\"-247\" y=\"113\"></block>\n</xml>",
-            "main.ts": "\n",
-            "README.md": " ",
-            "pxt.json": selectedConfig
-        },
-        "header": createHeader(md)
-    };
-}
-function createHeader(md) {
-    var tutorialInfo = pxt.tutorial.parseTutorial(md);
-    var tutorialOptions = {
-        tutorial: "test",
-        tutorialName: tutorialInfo.title || "filename",
-        tutorialStep: 0,
-        tutorialReady: true,
-        tutorialHintCounter: 0,
-        tutorialStepInfo: tutorialInfo.steps,
-        tutorialMd: md,
-        tutorialCode: tutorialInfo.code,
-        tutorialRecipe: false,
-        templateCode: tutorialInfo.templateCode
-    };
-    var header = {
-        blobCurrent: false,
-        editor: "blocksprj",
-        githubCurrent: false,
-        id: "2159df60-887b-4097-47d5-d0a45bb1ab01",
-        meta: {},
-        modificationTime: 1562968671,
-        name: "test-project",
-        path: "test-project",
-        pubCurrent: false,
-        pubId: "",
-        recentUse: 1562968671,
-        target: selectedId,
-        tutorial: tutorialOptions
-    };
-    return header;
-}
-var pxt;
-(function (pxt) {
-    var tutorial;
-    (function (tutorial) {
-        function parseTutorial(tutorialmd) {
-            var steps = parseTutorialSteps(tutorialmd);
-            var title = parseTutorialTitle(tutorialmd);
-            if (!steps)
-                return undefined; // error parsing steps
-            // collect code and infer editor
-            var editor = undefined;
-            var regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
-            var code = '';
-            var templateCode;
-            // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-            tutorialmd
-                .replace(/((?!.)\s)+/g, "\n")
-                .replace(regex, function (m0, m1, m2) {
-                switch (m1) {
-                    case "block":
-                    case "blocks":
-                    case "filterblocks":
-                        if (!checkTutorialEditor("blocksprj"))
-                            return undefined;
-                        break;
-                    case "spy":
-                        if (!checkTutorialEditor("pyprj"))
-                            return undefined;
-                        break;
-                    case "typescript":
-                    case "ts":
-                    case "javascript":
-                    case "js":
-                        if (!checkTutorialEditor("tsprj"))
-                            return undefined;
-                        break;
-                    case "template":
-                        templateCode = m2;
-                        break;
-                }
-                code += "\n { \n " + m2 + "\n } \n";
-                return "";
-            });
-            return {
-                editor: "",
-                title: title,
-                steps: steps,
-                code: code,
-                templateCode: templateCode
-            };
-            function checkTutorialEditor(expected) {
-                if (editor && editor != expected) {
-                    console.debug("tutorial ambiguous: contains snippets of different types");
-                    return false;
-                }
-                else {
-                    editor = expected;
-                    return true;
-                }
-            }
-        }
-        tutorial.parseTutorial = parseTutorial;
-        function parseTutorialTitle(tutorialmd) {
-            var title = tutorialmd.match(/^#[^#](.*)$/mi);
-            return title && title.length > 1 ? title[1] : null;
-        }
-        function parseTutorialSteps(tutorialmd) {
-            var hiddenSnippetRegex = /```(filterblocks|package|ghost|config|template)\s*\n([\s\S]*?)\n```/gmi;
-            var hintTextRegex = /(^[\s\S]*?\S)\s*((```|\!\[[\s\S]+?\]\(\S+?\))[\s\S]*)/mi;
-            // Download tutorial markdown
-            var steps = tutorialmd.split(/^##[^#].*$/gmi);
-            var newAuthoring = true;
-            if (steps.length <= 1) {
-                // try again, using old logic.
-                steps = tutorialmd.split(/^###[^#].*$/gmi);
-                newAuthoring = false;
-            }
-            if (steps[0].indexOf("# Not found") == 0) {
-                console.debug("tutorial not found");
-                return undefined;
-            }
-            var stepInfo = [];
-            tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, function (f, s) {
-                var info = {
-                    fullscreen: /@(fullscreen|unplugged)/.test(s),
-                    unplugged: /@unplugged/.test(s),
-                    tutorialCompleted: /@tutorialCompleted/.test(s)
-                };
-                stepInfo.push(info);
-                return "";
-            });
-            if (steps.length < 1)
-                return undefined; // Promise.resolve();
-            steps = steps.slice(1, steps.length); // Remove tutorial title
-            for (var i = 0; i < steps.length; i++) {
-                var stepContent = steps[i].trim();
-                var contentLines = stepContent.split('\n');
-                stepInfo[i].headerContentMd = contentLines[0];
-                stepInfo[i].contentMd = stepContent;
-                // everything after the first ``` section OR the first image is currently treated as a "hint"
-                var hintText = stepContent.match(hintTextRegex);
-                var blockSolution = void 0;
-                if (hintText && hintText.length > 2) {
-                    stepInfo[i].headerContentMd = hintText[1];
-                    blockSolution = hintText[2];
-                    if (blockSolution) {
-                        // remove hidden snippets from the hint
-                        blockSolution = blockSolution.replace(hiddenSnippetRegex, '');
-                        stepInfo[i].blockSolution = blockSolution;
-                    }
-                }
-                stepInfo[i].hasHint = blockSolution && blockSolution.length > 1;
-            }
-            return stepInfo;
-        }
-        function highlight(pre) {
-            var text = pre.textContent;
-            if (!/@highlight/.test(text)) // shortcut, nothing to do
-                return;
-            // collapse image python/js literales
-            text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, "\"\"\" \"\"\"");
-            text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
-            // render lines
-            pre.textContent = ""; // clear up and rebuild
-            var lines = text.split('\n');
-            for (var i = 0; i < lines.length; ++i) {
-                var line = lines[i];
-                if (/@highlight/.test(line)) {
-                    // highlight next line
-                    line = lines[++i];
-                    if (line !== undefined) {
-                        var span = document.createElement("span");
-                        span.className = "highlight-line";
-                        span.textContent = line;
-                        pre.appendChild(span);
-                    }
-                }
-                else {
-                    pre.appendChild(document.createTextNode(line + '\n'));
-                }
-            }
-        }
-        tutorial.highlight = highlight;
-    })(tutorial = pxt.tutorial || (pxt.tutorial = {}));
-})(pxt || (pxt = {}));
 var pendingMsgs = {};
-function sendMessage(action, proj) {
+function sendMessage(action, md) {
     console.log('send ' + action);
     var msg = {
         type: "pxteditor",
         id: Math.random().toString(),
         action: action
     };
-    if (action == 'importproject') {
-        var prj = JSON.parse(JSON.stringify(proj));
-        msg.project = prj;
+    if (action == 'importtutorial') {
+        msg.markdown = md;
         msg.response = true;
     }
     else if (action == 'renderblocks') {
@@ -357,21 +253,6 @@ function debounce(func, wait, immediate) {
         return timeout;
     };
 }
-function fixURL(url) {
-    if (url.indexOf("http") === -1) {
-        url = "https://" + url;
-    }
-    if (url.indexOf("#") !== -1) {
-        url = url.split("#")[0];
-    }
-    if (url.indexOf("?") === -1) {
-        url += "?";
-    }
-    if (url.indexOf("controller=1") === -1) {
-        url += "controller=1";
-    }
-    return url;
-}
 function initDropdown() {
     var s = document.getElementById("endpoint-select");
     for (var _i = 0, targets_1 = targets; _i < targets_1.length; _i++) {
@@ -389,7 +270,7 @@ function initDropdown() {
     });
 }
 function loadIframe(selected) {
-    if (selectedConfig && selected === selectedEndpoint)
+    if (selected === selectedEndpoint)
         return;
     for (var _i = 0, targets_2 = targets; _i < targets_2.length; _i++) {
         var target = targets_2[_i];
@@ -398,8 +279,8 @@ function loadIframe(selected) {
             if (!selected || selected === target.name + "-" + endpoint.name) {
                 iframe.setAttribute("src", endpoint.url);
                 selectedEndpoint = target.name + "-" + endpoint.name;
-                selectedConfig = target.config;
                 selectedId = target.id;
+                selectedTarget = target;
                 return;
             }
         }

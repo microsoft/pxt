@@ -1,0 +1,22 @@
+{
+    "name": "testBlocks",
+    "description": "Project that defines a variety of blocks to be used in decompiler test cases",
+    "files": [
+        "basic.ts",
+        "banned.ts",
+        "blockCombine.ts",
+        "enums.ts",
+        "mb.ts",
+        "expandableBlocks.ts",
+        "fixedInstance.ts",
+        "constantShim.ts",
+        "cp.ts",
+        "templateStrings.ts",
+        "classHandlerParameter.ts",
+        "globals.ts",
+        "spritekind.ts"
+    ],
+    "public": true,
+    "dependencies": {},
+    "installedVersion": "file:."
+}

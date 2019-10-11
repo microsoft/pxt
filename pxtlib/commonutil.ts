@@ -83,6 +83,11 @@ namespace ts.pxtc.Util {
         return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
     }
 
+    export const TRANSLATION_LOCALE = "pxt";
+    export function isTranslationMode(): boolean {
+        return userLanguage() == TRANSLATION_LOCALE;
+    }
+
     export function _localize(s: string) {
         // Needs to be test in localhost / CLI
         /*if (!_didSetlocalizations && !_didReportLocalizationsNotSet) {
@@ -177,7 +182,7 @@ namespace ts.pxtc.Util {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
         }
 
-        lfmt = lfmt.replace(/\{(id|loc):[^\}]+\}/g, '');
+        lfmt = lfmt.replace(/^\{(id|loc):[^\}]+\}/g, '');
 
         return fmt_va(lfmt, args);
     }
@@ -208,6 +213,61 @@ namespace ts.pxtc.Util {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e
+    }
+
+    export function isPyLangPref(): boolean {
+        return localStorage.getItem("editorlangpref") == "py";
+    }
+
+    export function getEditorLanguagePref(): string {
+        return localStorage.getItem("editorlangpref");
+    }
+
+    export function setEditorLanguagePref(lang: string): void {
+        localStorage.setItem("editorlangpref", lang);
+    }
+
+    // small deep equals for primitives, objects, arrays. returns error message
+    export function deq(a: any, b: any): string {
+        if (a === b) return null;
+        if (!a || !b) return "Null value";
+
+        if (typeof a == 'object' && typeof b == 'object') {
+            if (Array.isArray(a)) {
+                if (!Array.isArray(b)) {
+                    return "Expected array";
+                }
+
+                if (a.length != b.length) {
+                    return "Expected array of length " + a.length + ", got " + b.length;
+                }
+
+                for (let i = 0; i < a.length; i++) {
+                    if (deq(a[i], b[i]) != null) {
+                        return "Expected array value " + a[i] + " got " + b[i];
+                    }
+                }
+                return null;
+            }
+
+            let ak = Object.keys(a);
+            let bk = Object.keys(a);
+            if (ak.length != bk.length) {
+                return "Expected " + ak.length + " keys, got " + bk.length;
+            }
+
+            for (let i = 0; i < ak.length; i++) {
+                if (!Object.prototype.hasOwnProperty.call(b, ak[i])) {
+                    return "Missing key " + ak[i];
+                } else if (deq(a[ak[i]], b[ak[i]]) != null) {
+                    return "Expected value of " + ak[i] + " to be " + a[ak[i]] + ", got " + b[ak[i]];
+                }
+            }
+
+            return null;
+        }
+
+        return "Unable to compare " + a + ", " + b;
     }
 }
 

@@ -80,7 +80,9 @@
             tsprj: undefined,
             blocksprj: undefined,
             runtime: {
-                pauseUntilBlock: { category: "Loops", color: "0x0000ff" }
+                pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
+                breakBlock: { category: "Loops", color: "0x0000ff" },
+                continueBlock: { category: "Loops", color: "0x0000ff" }
             },
             corepkg: undefined
         });
@@ -114,7 +116,7 @@
                         }
 
                         var file = resp.ast.getSourceFile("main.ts");
-                        var apiInfo = pxtc.getApiInfo(opts, resp.ast);
+                        var apiInfo = pxtc.getApiInfo(resp.ast);
                         var blockInfo = pxtc.getBlocksInfo(apiInfo);
 
                         // Initialize blocks in Blockly
@@ -144,7 +146,7 @@
                             var ns = k;
                             var blocks = nsMap[ns];
 
-                            // Go through every block and get it's toolbox xml. 
+                            // Go through every block and get it's toolbox xml.
                             blocks.forEach(fn => {
                                 if (fn.attributes.debug && !pxt.options.debug) return;
                                 if (fn.attributes.deprecated || fn.attributes.blockHidden) return;
@@ -172,8 +174,8 @@
                         let svgDiv = document.getElementById('svg');
                         //svgDiv.appendChild(svg);
 
-                        // Initialize blockly with these blocks. 
-                        var editor = Blockly.inject(svgDiv, 
+                        // Initialize blockly with these blocks.
+                        var editor = Blockly.inject(svgDiv,
                             {
                                 scrollbars: true,
                                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",

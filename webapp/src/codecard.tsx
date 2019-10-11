@@ -70,6 +70,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const className = card.className;
         const cardType = card.cardType;
         const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
+        const ariaLabel = card.ariaLabel || card.title || card.shortName || card.name;
 
         const descriptions = card && card.description && card.description.split("\n");
 
@@ -83,7 +84,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const imageUrl = card.imageUrl || (card.youTubeId ? `https://img.youtube.com/vi/${card.youTubeId}/0.jpg` : undefined);
 
         const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
-            role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title}
+            role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} title={card.title}
             onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
             {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
@@ -99,17 +100,20 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.label || card.labelIcon || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
                 {card.label || card.labelIcon ?
                     <label role={card.onLabelClicked ? 'button' : undefined} onClick={card.onLabelClicked}
-                        className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>
-                        {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
+                        className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}
+                        aria-label={`${ariaLabel} ${card.onLabelClicked ? "button" : "label"}`}
+                    >
+                        {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}
+                    </label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
+                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper" aria-hidden={true} role="presentation">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
                 </div> : undefined}
                 {card.cardType == "file" && !imageUrl ? <div className="ui fileimage" /> : undefined}
                 {card.cardType == "file" && imageUrl ? <div className="ui fileimage" data-src={imageUrl} ref="lazyimage" /> : undefined}
             </div> : undefined}
             {card.icon || card.iconContent ?
-                <div className="ui imagewrapper"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
+                <div className="ui imagewrapper" aria-hidden={true} role="presentation"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
                     {card.icon ? <sui.Icon icon={`${'icon ' + card.icon}`} /> : undefined}
                     {card.iconContent || undefined}
                 </div></div> : undefined}

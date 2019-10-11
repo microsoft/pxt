@@ -10,6 +10,8 @@ import * as md from "./marked";
 import * as compiler from "./compiler";
 import * as codecard from "./codecard";
 import { HintTooltip } from "./hinttooltip";
+import { PlayButton } from "./simtoolbar";
+import { ProjectView } from "./app";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -34,7 +36,7 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
                 const allblocks = headless.getAllBlocks();
                 for (let bi = 0; bi < allblocks.length; ++bi) {
                     const blk = allblocks[bi];
-                    usedBlocks[blk.type] = 1;
+                    if (!blk.isShadow_) usedBlocks[blk.type] = 1;
                 }
                 return usedBlocks;
             } else {
@@ -46,8 +48,35 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
         });
 }
 
-export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
+export class TutorialMenu extends data.Component<ISettingsProps, {}> {
+    protected hasActivities: boolean;
     constructor(props: ISettingsProps) {
+        super(props);
+        let tutorialOptions = this.props.parent.state.tutorialOptions;
+        this.hasActivities = tutorialOptions && tutorialOptions.tutorialActivityInfo && tutorialOptions.tutorialActivityInfo.length > 1;
+    }
+
+    renderCore () {
+        let tutorialOptions = this.props.parent.state.tutorialOptions;
+        if (this.hasActivities) {
+            return <TutorialStepCircle parent={this.props.parent} />;
+        } else if (tutorialOptions.tutorialStepInfo.length < 8) {
+            return <TutorialMenuItem parent={this.props.parent} />;
+        } else {
+            return <div className="menu">
+                <TutorialMenuItem parent={this.props.parent} className="mobile hide" />
+                <TutorialStepCircle parent={this.props.parent} className="mobile only" />
+            </div>
+        }
+    }
+}
+
+interface ITutorialMenuProps extends ISettingsProps {
+    className?: string;
+}
+
+export class TutorialMenuItem extends data.Component<ITutorialMenuProps, {}> {
+    constructor(props: ITutorialMenuProps) {
         super(props);
 
         this.openTutorialStep = this.openTutorialStep.bind(this);
@@ -74,7 +103,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
             return "mobile hide";
         }
 
-        return <div className="ui item">
+        return <div className={`ui item ${this.props.className}`}>
             <div className="ui item tutorial-menuitem" role="menubar">
                 {tutorialStepInfo.map((step, index) =>
                     (index == currentStep) ?
@@ -114,6 +143,52 @@ export class TutorialMenuItemLink extends data.Component<TutorialMenuItemLinkPro
         return <a className={className} role="menuitem" aria-label={ariaLabel} tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
             {this.props.children}
         </a>;
+    }
+}
+
+export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
+    constructor(props: ITutorialMenuProps) {
+        super(props);
+
+        this.openTutorialStep = this.openTutorialStep.bind(this);
+    }
+
+    handleNextClick = () => {
+        let options = this.props.parent.state.tutorialOptions;
+        this.openTutorialStep( options.tutorialStep + 1);
+    }
+
+    handlePrevClick = () => {
+        let options = this.props.parent.state.tutorialOptions;
+        this.openTutorialStep( options.tutorialStep - 1);
+    }
+
+    openTutorialStep(step: number) {
+        let options = this.props.parent.state.tutorialOptions;
+        pxt.tickEvent(`tutorial.step`, { tutorial: options.tutorial, step: step }, { interactiveConsent: true });
+        this.props.parent.setTutorialStep(step);
+    }
+
+    renderCore() {
+        const { tutorialReady, tutorialStepInfo, tutorialStep } = this.props.parent.state.tutorialOptions;
+        const currentStep = tutorialStep;
+        const hasPrev = tutorialReady && currentStep != 0;
+        const hasNext = tutorialReady && currentStep != tutorialStepInfo.length - 1;
+        const isRtl = false;
+
+        if (!tutorialReady) return <div />;
+
+        return <div id="tutorialsteps" className={`ui item ${this.props.className}`}>
+            <div className="ui item" role="menubar">
+                <sui.Button role="button" icon={`${isRtl ? 'right' : 'left'} chevron`} disabled={!hasPrev} className={`prevbutton left ${!hasPrev ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.handlePrevClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="step-label" key={'tutorialStep' + currentStep}>
+                    <sui.ProgressCircle progress={currentStep + 1} steps={tutorialStepInfo.length} stroke={4.5} />
+                    <span className={`ui circular label blue selected ${!tutorialReady ? 'disabled' : ''}`}
+                        aria-label={lf("You are currently at tutorial step {0}.")}>{tutorialStep + 1}</span>
+                </span>
+                <sui.Button role="button" icon={`${isRtl ? 'left' : 'right'} chevron`} disabled={!hasNext} rightIcon className={`nextbutton right ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.handleNextClick} onKeyDown={sui.fireClickOnEnter} />
+            </div>
+        </div>;
     }
 }
 
@@ -199,6 +274,7 @@ interface TutorialCardProps extends ISettingsProps {
 
 export class TutorialCard extends data.Component<TutorialCardProps, TutorialCardState> {
     private prevStep: number;
+    private cardHeight: number;
 
     public focusInitialized: boolean;
 
@@ -324,7 +400,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                 .then(() => pxsim.U.removeClass(tutorialCard, animationClasses));
         }
         if (this.prevStep != step) {
-            this.setShowSeeMore();
+            this.setShowSeeMore(options.autoexpandStep);
             this.prevStep = step;
 
             if (!!options.tutorialStepInfo[step].unplugged) {
@@ -338,7 +414,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     componentDidMount() {
-        this.setShowSeeMore();
+        this.setShowSeeMore(this.props.parent.state.tutorialOptions.autoexpandStep);
     }
 
     componentWillUnmount() {
@@ -394,14 +470,22 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         evt.stopPropagation();
     }
 
-    private setShowSeeMore() {
+    private setShowSeeMore(autoexpand?: boolean) {
         // compare scrollHeight of inner text with height of card to determine showSeeMore
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         let show = false;
         if (tutorialCard && tutorialCard.firstElementChild && tutorialCard.firstElementChild.firstElementChild) {
             show = tutorialCard.clientHeight < tutorialCard.firstElementChild.firstElementChild.scrollHeight;
+            if (show) {
+                this.cardHeight = tutorialCard.firstElementChild.firstElementChild.scrollHeight;
+                if (autoexpand) this.props.parent.setTutorialInstructionsExpanded(true);
+            }
         }
         this.setState({ showSeeMore: show });
+    }
+
+    getExpandedCardStyle(prop: string) {
+        return { [prop] : `calc(${this.cardHeight}px + 2rem)` }
     }
 
     toggleHint(showFullText?: boolean) {
@@ -443,16 +527,17 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
         const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
 
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
-        const hasPrevious = tutorialReady && currentStep != 0;
-        const hasNext = tutorialReady && currentStep != maxSteps - 1;
-        const hasFinish = !lockedEditor && currentStep == maxSteps - 1;
+        const hideIteration = metadata && metadata.hideIteration;
+        const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
+        const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
+        const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
 
         let tutorialAriaLabel = '',
@@ -469,7 +554,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${this.state.showHintTooltip ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} >
+        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${this.state.showHintTooltip ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
@@ -484,9 +569,9 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                         <div className="content">
                             <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
-                        {this.state.showSeeMore && !tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                        {this.state.showSeeMore && tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                     </div>
+                    {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
+                    {this.state.showSeeMore && tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
                 </div>
                 {hasNext ? <sui.Button icon={`${isRtl ? 'left' : 'right'} chevron orange large`} className={`nextbutton right attached ${!hasNext ? 'disabled' : ''}`} text={lf("Next")} textClass="widedesktop only" ariaLabel={lf("Go to the next step of the tutorial.")} onClick={this.nextTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}

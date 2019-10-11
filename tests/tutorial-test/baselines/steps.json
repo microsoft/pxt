@@ -1,0 +1,31 @@
+{
+    "editor": "blocksprj",
+    "title": "Getting started",
+    "steps": [
+        {
+            "fullscreen": true,
+            "unplugged": true,
+            "tutorialCompleted": false,
+            "contentMd": "Let's get started!",
+            "headerContentMd": "Let's get started!"
+        },
+        {
+            "fullscreen": true,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
+            "headerContentMd": "Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.",
+            "hintContentMd": "```blocks\nbasic.showString(\"Micro!\")\n```",
+            "hasHint": true
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Click ``|Download|`` to transfer your code in your unknown macro!",
+            "headerContentMd": "Click ``|Download|`` to transfer your code in your unknown macro!"
+        }
+    ],
+    "activities": null,
+    "code": "\n { \n basic.showString(\"Micro!\")\n } \n"
+}

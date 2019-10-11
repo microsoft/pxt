@@ -1,5 +1,34 @@
 # Microsoft MakeCode Blog
 
+## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
+
+September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+We've made a number of improvements to our GitHub authoring support. Let's take a tour...
+**[Continue reading this blog post](/blog/github-extensions-episode-2)**
+
+
+## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
+
+September 16th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education week is coming up in December, and Educators can start planning some fun MakeCode activities for it now. Here's a list of some quick and easy MakeCode tutorials and projects you can do for Hour of Code, or really anytime...
+**[Continue reading this blog post](/blog/csed-week/csed-week-2019)**
+
+## [Arcade Game Jam](/blog/arcade/game-jam)
+
+September 12th, 2019 by [shakao](https://github.com/shakao)
+
+We’re super excited to announce the first-ever MakeCode Arcade game jam!
+**[Continue reading this blog post](/blog/arcade/game-jam)**
+
+## [LEGO MINDSTORMS update](/blog/lego/09-06-2019)
+
+September 6th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+A number of bug fixes and a few new blocks for the LEGO editor.
+**[Continue reading this blog post](/blog/lego/09-06-2019)**
+
 ## [MakeCode Assignments in Teams](/blog/teams/teams-assignments)
  
 July 2nd, 2019 by [Jaqster](https://github.com/jaqster)

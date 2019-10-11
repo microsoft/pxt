@@ -2,6 +2,7 @@
  * A workspace implementation that uses IndexedDB directly (bypassing PouchDB), to support WKWebview where PouchDB
  * doesn't work.
  */
+import * as browserworkspace from "./browserworkspace"
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -18,6 +19,38 @@ const HEADERS_TABLE = "headers";
 const KEYPATH = "id";
 
 let _db: pxt.BrowserUtils.IDBWrapper;
+
+// This function migrates existing projectes in pouchDb to indexDb
+// From browserworkspace to idbworkspace
+function migrateBrowserWorkspaceAsync(): Promise<void> {
+    return getDbAsync()
+        .then((db) => {
+            return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
+        })
+        .then((allDbHeaders) => {
+                if (allDbHeaders.length) {
+                    // There are already scripts using the idbworkspace, so a migration has already happened
+                    return Promise.resolve();
+                }
+
+                const copyProject = (h: pxt.workspace.Header): Promise<string> => {
+                    return browserworkspace.provider.getAsync(h)
+                        .then((resp) => {
+                            // Ignore metadata of the previous script so they get re-generated for the new copy
+                            delete (<any>h)._id;
+                            delete (<any>h)._rev;
+                            return setAsync(h, undefined, resp.text);
+                        })
+                };
+
+                return browserworkspace.provider.listAsync()
+                    .then((previousHeaders: pxt.workspace.Header[]) => {
+                        return Promise.map(previousHeaders, (h) => copyProject(h));
+                    })
+                    .then(() => { });
+        });
+
+}
 
 function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
     if (_db) {
@@ -39,7 +72,10 @@ function getDbAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
 }
 
 function listAsync(): Promise<pxt.workspace.Header[]> {
-    return getDbAsync()
+    return migrateBrowserWorkspaceAsync()
+        .then (() => {
+            return getDbAsync();
+        })
         .then((db) => {
             return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
         });

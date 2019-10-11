@@ -371,8 +371,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 return abeta ? 1 : -1;
 
             // use weight if core packages
-            if (a.core && b.core && a.weight != b.weight)
-                return -(a.weight || 0) + (b.weight || 0);
+            const aweight = a.weight === undefined ? 50 : a.weight;
+            const bweight = b.weight === undefined ? 50 : b.weight;
+            if (aweight != bweight)
+                return -aweight + bweight;
 
             // alphabetical sort
             return pxt.Util.strcmp(a.name, b.name)
@@ -410,7 +412,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 description={description}>
                 <div className="ui">
                     {mode == ScriptSearchMode.Experiments ?
-                        <div className="ui message">
+                        <div className="ui message info">
                             <div className="header">{lf("WARNING: EXPERIMENTAL FEATURES AHEAD!")}</div>
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
@@ -445,6 +447,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.addLocal}
                                     label={lf("Local")}
+                                    title={lf("Local GitHub extension")}
+                                    labelClass="blue right ribbon"
                                     role="link"
                                 />
                             )}
