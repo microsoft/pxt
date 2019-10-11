@@ -9,8 +9,14 @@
             <div id="availablelocales" class="ui cards centered" role="listbox"></div>
         </div>
         <div class="ui">
-            <a class="ui  button " href="/translate" target="_blank" rel="noopener noreferrer" role="button" tabindex="0">
-                <span class="ui text">Learn about translations</span>
+            <!-- @ifdef crowdinproject -->
+            <a id="translatebtn" class="ui button" role="button" tabindex="0">
+                Translate this page
+            </a>
+            <!-- @endif -->
+            <a class="ui button" href="/translate" role="button"
+                target="_blank" rel="noopener noreferrer">
+                Learn about translations
             </a>
         </div>
     </div>
