@@ -318,7 +318,7 @@ function languageOption(code) {
     var cardEl = document.createElement('div');
     cardEl.className = 'ui card link card-selected langoption';
     cardEl.dataset.lang = code;
-    cardEl.setAttribute('role', 'link');
+    cardEl.setAttribute('role', 'option');
     cardEl.setAttribute('aria-label', locale.englishName);
     cardEl.setAttribute('tabindex', '0');
     cardEl.appendChild(contentEl);
@@ -327,9 +327,9 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var appTheme = pxt.appTarget.appTheme
+    var appTheme = pxt.appTarget.appTheme;
     var initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
-    var modalContainer = document.querySelector("#langmodal")
+    var modalContainer = document.querySelector("#langmodal");
 
     if (appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
@@ -357,6 +357,7 @@ function setupLangPicker() {
 
         for (var i = 0; i < langOptions.length; i++) {
             var currentOption = langOptions[i];
+
             currentOption.onclick =  function(e) {
                 var langId = e.currentTarget.dataset.lang;
                 if (!pxt.Util.allLanguages[langId]) {
