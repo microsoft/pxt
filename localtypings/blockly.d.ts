@@ -50,7 +50,7 @@ declare module Blockly {
  * PXT Blockly
  *
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * https://github.com/Microsoft/pxt-blockly
+ * https://github.com/microsoft/pxt-blockly
  *
  * See LICENSE file for details.
  */

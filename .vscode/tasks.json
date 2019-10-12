@@ -7,7 +7,7 @@
 // ${cwd}: the current working directory of the spawned process
 
 // Uncomment the following section to use jake to build a workspace
-// cloned from https://github.com/Microsoft/TypeScript.git
+// cloned from https://github.com/microsoft/TypeScript.git
 {
 	"version": "0.1.0",
 	// Task runner is jake

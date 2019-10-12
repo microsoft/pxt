@@ -72,7 +72,7 @@ A program loader already present on the board reads the HEX file. It flashes it 
 
 ## MakeCode and PXT
 
-Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). The project is hosted as a public repository on [GitHub](https://github.com).
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/microsoft/pxt). The project is hosted as a public repository on [GitHub](https://github.com).
 
 ![PXT repository on GitHub](/static/about/pxt-repo.png)
 
@@ -87,7 +87,7 @@ called [Static TypeScript](/language), which omits the dynamic features of JavaS
 The main features of [MakeCode](/docs) and its PXT implementation are:
 
 * a [Google Blockly](https://developers.google.com/blockly/)-based code editor along with converter to [Static TypeScript](/language)
-* a [Monaco](https://github.com/Microsoft/monaco-editor)-based text editor with enhanced, robust auto-completion and auto-correction
+* a [Monaco](https://github.com/microsoft/monaco-editor)-based text editor with enhanced, robust auto-completion and auto-correction
 * support to [define blocks](/defining-blocks) via annotated TypeScript or C++; try the [MakeCode Playground](/playground) to experiment with this feature
 * markdown-based [documentation](/writing-docs) system with built-in macros to render block snippets
 * a [command line interface](/cli)

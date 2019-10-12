@@ -475,11 +475,11 @@ namespace pxt.github {
             id: number; // 6154722,
             avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
             gravatar_id: string; // "",
-            html_url: string; // "https://github.com/Microsoft",
+            html_url: string; // "https://github.com/microsoft",
             type: string; // "Organization"
         },
         private: boolean;
-        html_url: string; // "https://github.com/Microsoft/pxt-microbit-cppsample",
+        html_url: string; // "https://github.com/microsoft/pxt-microbit-cppsample",
         description: string; // "Sample C++ extension for PXT/microbit",
         fork: boolean;
         created_at: string; // "2016-05-05T11:18:12Z",
