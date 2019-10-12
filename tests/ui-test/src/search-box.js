@@ -3,11 +3,14 @@ import assert from "assert";
 class BlocklyToolBox extends DomObject {
 
     async searchBox() {
-        await this.sendKeys('.blocklySearchInputField', 'Basic');
+        const searchBox = '.blocklySearchInputField';
+        await this.sendKeys(searchBox, 'Basic');
 
         await driver.sleep(2000);
 
-        let searchText = await this.getText('[id="blocklySearchLabel"]');
+        const searchLabel = '[id="blocklySearchLabel"]';
+
+        let searchText = await this.getText(searchLabel);
 
         console.debug(`This is the blockly search label: ${searchText}`);
 
@@ -16,29 +19,45 @@ class BlocklyToolBox extends DomObject {
     }
     async dragBlocks() {
 
-        let target = await this.getRect('g.blocklyDraggable:nth-child(1)');
+        const foreverBlock = 'g.blocklyDraggable:nth-child(2)';
+        let target = await this.getRect(foreverBlock);
         console.info(`This is the target location:${target}`);
         console.log(target.x);
         console.log(target.y);
 
-        await this.dragAndDropByCoordinate('g.blocklyDraggable:nth-child(4)',-30,-150);
+        const sayHelloBlock = 'g.blocklyDraggable:nth-child(4)';
+        let start = await this.getRect(sayHelloBlock);
 
-        await this.click('[role="treeitem"]:nth-child(2) .blocklyTreeRow');
-//有点问题
-        // await this.dragAndDropByElement('g.blocklyDraggable:nth-child(6)', 'div.blocklyTreeRoot');
+        let xOffSet = Math.ceil(target.x - start.x);
+        let yOffSet = Math.ceil(target.y - start.y + target.height / 2);
+        await this.dragAndDropByCoordinate(sayHelloBlock, xOffSet, yOffSet);
 
-        await this.contextClick('g.blocklyDraggable:nth-child(2) g.blocklyDraggable');
+        const basicItem = '[role="treeitem"]:nth-child(2) .blocklyTreeRow';
+        await this.click(basicItem);
 
-        await this.click('div.goog-menuitem');
+        await this.dragAndDropByElement('g.blocklyDraggable:nth-child(8)[data-shapes="stack"]', 'div.blocklyToolboxDiv');
 
-        await this.switchToWindow();
-        
+        let insertBlock = 'g.blocklyDraggable:nth-child(2)';
+        await this.contextClick(insertBlock);
+
+        const helpInContextMenu = 'div.goog-menuitem:nth-child(4)';
+        await this.click(helpInContextMenu);
+
+        const iframeIdOfHelp = '#sidedocsframe';
+        await this.switchToIframe(iframeIdOfHelp);
+
+        let sidedocsTitle = await this.getText('#show-string');
+        await this.switchToDefaultFrame();
+
+        assert.equal(sidedocsTitle, 'Show String');
+        console.info(`The side docs title is ${sidedocsTitle}`);
+
         await this.click('.fullscreen-button');
 
         await this.catchScreenShot('LaunchInFullScreen');
 
     }
-    
+
 
     test() {
         it('Get various blocks', async () => {
