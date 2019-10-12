@@ -918,6 +918,7 @@ namespace ts.pxtc.Util {
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
         "nl": { englishName: "Dutch", localizedName: "Nederlands" },
         "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "nb": { englishName: "Norwegian Bokmal", localizedName: "Norsk bokmål" },
         "pl": { englishName: "Polish", localizedName: "Polski" },
         "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
