@@ -31,7 +31,10 @@
 #docs .footer,
 .ui.menu.fixed.docs,
 #docs {
-    background: hsl(@docsHue, 15%, 20%);
+    background: hsl(@docsHue, 25%, 85%);
+    &.inverted {
+        background: hsl(@docsHue, 15%, 20%);
+    }
 }
 
 #docs {
@@ -283,32 +286,32 @@
         margin-bottom: 0;
 
         a.item {
-            color: #72a3d3;
+            color: rgb(22, 83, 130, 1.0);
 
             i.icon {
                 width: auto;
                 padding: 0 .25em !important;
-                color: rgba(255, 255, 255, .6);
+                color: rgba(0, 0, 0, .6);
             }
 
             &:hover, &:focus {
                 i.icon {
-                    color: rgba(255, 255, 255, 0.8);
+                    color: rgba(0, 0, 0, 0.8);
                 }
             }
         }
 
         .divider {
-            border-top: 1px solid rgba(255,255,255,0.3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .ui.divided.horizontal.list > .item:not(:first-child) {
-            border-left: 1px solid rgba(255, 255, 255, .4);
+            border-left: 1px solid rgba(0, 0, 0, .4);
         }
 
         span.item {
-            color: rgba(255, 255, 255, .6);
+            color: rgba(0, 0, 0, .6);
         }
 
         span.item, img {
@@ -322,6 +325,33 @@
 
         .poweredBy .item {
             padding-right: .5em;
+        }
+        &.inverted {
+            a.item {
+                color: rgba(114, 163, 211, 1.0);
+
+                i.icon {
+                    color: rgba(255, 255, 255, .6);
+                }
+
+                &:hover, &:focus {
+                    i.icon {
+                        color: rgba(255, 255, 255, 0.8);
+                    }
+                }
+            }
+            .divider {
+                border-top: 1px solid rgba(255, 255, 255, 0.3);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .ui.divided.horizontal.list > .item:not(:first-child) {
+                border-left: 1px solid rgba(255, 255, 255, .4);
+            }
+
+            span.item {
+                color: rgba(255, 255, 255, .6);
+            }
         }
     }
 }
@@ -403,11 +433,11 @@
         content: none;
     }
     /* indented content
-        Note: we're annoyingly specific with these selectors 
+        Note: we're annoyingly specific with these selectors
         because we need to override Semantic's default behavior
     */
     .accordion.item .content:not(.style),
-    .accordion.item .accordion .title~.content:not(.ui), 
+    .accordion.item .accordion .title~.content:not(.ui),
     .accordion.item .title~.content:not(.ui) {
         padding: 0 0 0 0.25rem;
         margin: 0 0 0 0.5rem;
