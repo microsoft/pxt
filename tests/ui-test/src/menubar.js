@@ -4,10 +4,9 @@ import assert from 'assert';
 class ViewMenuBar extends DomObject {
 
     async menuBar() {
-        
-        await this.click('[role="treeitem"]:nth-child(11) .blocklyTreeRow', '.collapse-button:nth-child(1)');
+        await driver.sleep(2000);
 
-        await this.click('#downloadArea .download-button');
+        await this.click('[role="treeitem"]:nth-child(11) .blocklyTreeRow', '.collapse-button:nth-child(1)', '#downloadArea .download-button');
 
         let downloadTitle = await this.getText('.header-title');
 
