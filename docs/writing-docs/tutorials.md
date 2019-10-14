@@ -13,7 +13,7 @@ possibly a block example. If the step includes a block example, the editor will 
 
 #### Tutorial tool
 
-You can write, edit, and test a tutorial with the online [Tutorial Tool](https://makecode.com/tutorial-tool). Select the MakeCode editor target that your tutorials is for and then write the tutorial. Run you tutorial to see how it will look in the editor.
+You can write, edit, and test a tutorial with the online [Tutorial Tool](https://makecode.com/tutorial-tool). Select the MakeCode editor target that your tutorials is for and then write the tutorial. Run your tutorial to see how it will look in the editor.
 
 ### ~
 
