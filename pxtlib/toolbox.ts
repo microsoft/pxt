@@ -166,7 +166,7 @@ namespace pxt.toolbox {
     }
 
     function parseHex(s: string) {
-        if (s.substring(0, 2) == "0x") return "#"+ s.substring(2);
+        if (s.substring(0, 2) == "0x") return "#" + s.substring(2);
         return s;
     }
 
