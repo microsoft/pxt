@@ -9,6 +9,14 @@ A tutorial is a sequence of steps that the user follows in a limited environment
 Each step of the tutorial has a short description, or explanation, of the activity for the step and
 possibly a block example. If the step includes a block example, the editor will restrict the selection of blocks from the toolbox to only those used in the example.
 
+### ~ hint
+
+#### Tutorial tool
+
+You can write, edit, and test a tutorial with the online [Tutorial Tool](https://makecode.com/tutorial-tool). Select the MakeCode editor target that your tutorials is for and then write the tutorial. Run you tutorial to see how it will look in the editor.
+
+### ~
+
 ## Tutorial documents
 
 Tutorials are simply markdown documents where each level 2 heading (``##``) is a new step. The tutorials can be located anywhere under the ``/docs`` folder although they usually are in the ``/docs/projects`` folder.
@@ -304,6 +312,58 @@ To signify that this step in the tutorial is the "last step", even if more steps
 ## This is a bonus activity that comes after the last step
 
 ```
+## Using blocks
+
+### Hint blocks
+
+If you include blocks in a step, they are shown when the user displays the hint for the step.
+The blocks are specified the same as in any other markdown document. During the step interaction, only the blocks inside the ```` ```blocks```` section are available in the categories (drawers) of the Toolbox.
+
+````
+## Step 3 - Show the temperature
+
+Get a ``||input:temperature|| block and place it in the value slot of ``||basic:show number||``.
+
+```blocks
+forever(function() {
+    basic.showNumber(input.temperature())
+    basic.pause(1000)
+})
+```
+````
+
+### Ghost blocks
+
+If you want extra blocks to appear in the Toolbox drawers during a step, then you add a ghost blocks section. This informs the user that additional blocks beyond those that are shown in the hint are availble to form a solution.
+
+````
+Get a ``||input:temperature|| block and place it in the value slot of ``||basic:show number||``. You can also make a temperature message if you want.
+
+```blocks
+forever(function() {
+    basic.showNumber(input.temperature())
+    basic.pause(1000)
+})
+```
+
+```ghost
+basic.showString("Hello!")
+```
+````
+
+### Templates
+
+A template is a section of blocks that you want to have already on the workspace when the tutorial begins. The tutorial steps can then build on the initial program code given in the template.
+
+````
+```template
+player.onChat("blockleft", function () {
+    agent.move(SixDirection.Forward, 1)
+    agent.turn(TurnDirection.Right)
+    agent.place(SixDirection.Back)
+})
+```
+````
 
 ## Testing
 
