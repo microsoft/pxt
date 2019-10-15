@@ -468,9 +468,9 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
                 onKeyDown={this.handleModalKeyDown}
             >
-                <div className="ui equal width grid">
+                <div className="snippet-builder-inner">
                     {currentQuestion &&
-                        <div className='column snippet-question'>
+                        <div className='snippet-question'>
                             <div className='ui segment raised'>
                                 <h3>{pxt.Util.rlf(currentQuestion.title)}</h3>
                                 <div className='ui equal width grid'>
@@ -492,7 +492,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                 <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
                         </div>
                     }
-                    <div className='snippet output-section column'>
+                    <div className='snippet output-section'>
                         {mdOutput && <md.MarkedContent className='snippet-markdown-content' markdown={mdOutput} parent={parent} />}
                     </div>
                 </div>
@@ -520,7 +520,6 @@ function getSnippetExtensions(): pxt.SnippetConfig[] {
                 pxt.reportError("snippetbuilder", `invalid external .ts file path: ${externalFileName}`);
                 return null
             }
-            c.initialOutput = externalTs[0].content;
         }
         return c
     }).filter(c => !!c))
