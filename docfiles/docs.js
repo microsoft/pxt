@@ -67,6 +67,8 @@ function setupSidebar() {
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
         .sidebar({
+            transition: 'overlay',
+            mobileTransition: 'overlay',
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
@@ -87,6 +89,7 @@ function setupSidebar() {
     $('.ui.accordion')
         .accordion({
             closeNested: true,
+            duration: 50,
             selector: {
                 trigger: '> .title'
             }
@@ -127,8 +130,6 @@ function setupSidebar() {
     for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
-
-    scrollActiveHeaderIntoView();
 }
 
 function setupSemantic() {
