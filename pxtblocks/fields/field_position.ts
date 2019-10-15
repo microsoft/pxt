@@ -117,7 +117,7 @@ namespace pxtblockly {
                 currentX / this.params.screenWidth * width,
                 currentY / this.params.screenHeight * height);
 
-            Blockly.bindEvent_(canvasOverlayDiv, 'mousemove', this, (e: MouseEvent) => {
+            Blockly.bindEvent_(this.selectorDiv_, 'mousemove', this, (e: MouseEvent) => {
                 const bb = canvasOverlayDiv.getBoundingClientRect();
                 const x = e.clientX - bb.left;
                 const y = e.clientY - bb.top;
@@ -125,7 +125,7 @@ namespace pxtblockly {
                 setPos(x, y);
             });
 
-            Blockly.bindEvent_(canvasOverlayDiv, 'click', this, (e: MouseEvent) => {
+            Blockly.bindEvent_(this.selectorDiv_, 'click', this, (e: MouseEvent) => {
                 const bb = canvasOverlayDiv.getBoundingClientRect();
                 const x = e.clientX - bb.left;
                 const y = e.clientY - bb.top;
