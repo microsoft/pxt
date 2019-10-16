@@ -67,8 +67,6 @@ function setupSidebar() {
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
         .sidebar({
-            transition: 'overlay',
-            mobileTransition: 'overlay',
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
