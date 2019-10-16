@@ -41,6 +41,13 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                         onChange={onChange}
                     />
                 )
+            case 'yesno':
+                return (
+                    <YesNoInput
+                        input={input}
+                        onChange={onChange}
+                    />
+                )
             case 'spriteEditor':
                 if (Snippet.isSnippetInputAnswerTypeOther(input)) {
                     return (
@@ -197,6 +204,45 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
                             class='snippet slider-input'
                         />
                     </div>
+                </div>
+            )
+        }
+
+        return null;
+    }
+}
+
+
+/**
+ * YesNo input
+ */
+
+interface IYesNoInputProps {
+    input?: pxt.SnippetQuestionInput;
+    value?: string;
+    onChange: (v: string) => void;
+}
+
+class YesNoInput extends data.Component<IYesNoInputProps, {}> {
+    constructor(props: IYesNoInputProps) {
+        super(props);
+
+        this.onChange = this.onChange.bind(this);
+    }
+
+    onChange = (value: string) => () => {
+        const { onChange } = this.props;
+        onChange(value);
+    }
+
+    renderCore() {
+        const { input } = this.props;
+        if (Snippet.isSnippetInputAnswerTypeYesNo(input)) {
+            return (
+                <div>
+                    {/* TODO: onChange shouldn't assume string */}
+                    <sui.Button text="Yes" title="Yes" onClick={() => this.onChange("true")} />
+                    <sui.Button text="No" title="No" onClick={() => this.onChange("false")} />
                 </div>
             )
         }

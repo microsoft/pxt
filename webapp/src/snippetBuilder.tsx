@@ -391,7 +391,25 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     updateOutput(question: pxt.SnippetQuestions) {
         const { tsOutput } = this.state;
 
-        if (question.output && tsOutput.indexOf(question.output) === -1) {
+        let skipOutput = false
+        if (!!question.outputConditionalOnAnswer) {
+            // TODO(dz): stuck on how to skip output for a question
+            console.log("QUESTION")
+            console.dir(question)
+            console.log("STATE")
+            console.dir(this.state)
+            let cond = question.outputConditionalOnAnswer;
+            let answers = question.inputs
+                .map(i => isSnippetInputAnswerSingular(i) ? [i.answerToken] : i.answerTokens)
+                .reduce((p, n) => [...p, ...n], [])
+            // we intentionally allow type coercion since sometimes answers are boolean, sometimes string
+            if (answers.every(a => this.state.answers[a] != cond))
+                skipOutput = true
+            console.log("skipOutput")
+            console.log(skipOutput)
+        }
+
+        if (!skipOutput && question.output && tsOutput.indexOf(question.output) === -1) {
             const newOutput = pxt.Util.concat([tsOutput, [question.output]]);
             this.setState({ tsOutput: newOutput }, this.generateOutputMarkdown);
         }
@@ -404,7 +422,7 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
      */
     nextPage() {
         const { config, history } = this.state;
-        const currentQuestion = this.getCurrentQuestion();
+        const currentQuestion: pxt.SnippetQuestions = this.getCurrentQuestion();
         const goto = currentQuestion.goto;
 
         if (this.isLastQuestion()) {
@@ -565,14 +583,19 @@ export function isSnippetInputAnswerSingular(input: pxt.SnippetInputAnswerSingul
     return (input as pxt.SnippetInputAnswerSingular).answerToken !== undefined;
 }
 
-export function isSnippetInputAnswerTypeOther(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputOtherType {
+type SnippetInputType = pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType | pxt.SnippetInputYesNoType
+export function isSnippetInputAnswerTypeOther(input: SnippetInputType): input is pxt.SnippetInputOtherType {
     return (input as pxt.SnippetInputOtherType).type !== ('number' || 'dropdown');
 }
 
-export function isSnippetInputAnswerTypeNumber(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputNumberType {
+export function isSnippetInputAnswerTypeNumber(input: SnippetInputType): input is pxt.SnippetInputNumberType {
     return (input as pxt.SnippetInputNumberType).max !== undefined;
 }
 
-export function isSnippetInputAnswerTypeDropdown(input: pxt.SnippetInputOtherType | pxt.SnippetInputNumberType | pxt.SnippetInputDropdownType): input is pxt.SnippetInputDropdownType {
+export function isSnippetInputAnswerTypeYesNo(input: SnippetInputType): input is pxt.SnippetInputNumberType {
+    return input.type === "yesno";
+}
+
+export function isSnippetInputAnswerTypeDropdown(input: SnippetInputType): input is pxt.SnippetInputDropdownType {
     return (input as pxt.SnippetInputDropdownType).options !== undefined;
 }

@@ -179,7 +179,7 @@ declare namespace pxt {
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
         question?: number;
@@ -223,9 +223,13 @@ declare namespace pxt {
         options: pxt.Map<string>;
     }
 
+    interface SnippetInputYesNoType {
+        type: "yesno";
+    }
+
     type SnippetQuestionInput = { label?: string; }
         & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
-        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType | SnippetInputYesNoType)
 
     interface SnippetValidateRegex {
         token: string;
@@ -241,6 +245,7 @@ declare namespace pxt {
     interface SnippetQuestions {
         title: string;
         output?: string;
+        outputConditionalOnAnswer?: string;
         errorMessage?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];
