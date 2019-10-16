@@ -345,7 +345,7 @@ function setupLangPicker() {
                 const focusableElements = document.querySelectorAll('a, button, input, [tabindex]:not([tabindex="-1"])');
                 for (var i = 0; i < focusableElements.length; i++) {
                     var el = focusableElements[i];
-                    if (!modal.contains(el)) {
+                    if (!modalContainer.contains(el)) {
                         el.setAttribute(disabledTabIndexAttribute, el.getAttribute("tabindex") || "0");
                         el.setAttribute("tabindex", "-1");
                     }
