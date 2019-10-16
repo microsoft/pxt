@@ -480,8 +480,11 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
 
         const currentQuestion = this.getCurrentQuestion();
 
+        let isFirstPage = this.getCurrentPage() === 0;
+
         return (
-            <sui.Modal isOpen={visible} className={'snippet-builder full-screen-no-bg'} overlayClassName={'snippet-builder-modal-overlay'}
+            <sui.Modal isOpen={visible} className={'snippet-builder full-screen-no-bg ' + (isFirstPage ? 'no-back-btn' : '')}
+                overlayClassName={'snippet-builder-modal-overlay'}
                 closeOnEscape={true} closeIcon={true} closeOnDimmerClick={false} closeOnDocumentClick={false}
                 dimmer={true} buttons={actions} header={config.name} onClose={this.cancel}
                 onKeyDown={this.handleModalKeyDown}
@@ -507,7 +510,11 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
                                 {currentQuestion.errorMessage && <p className='snippet-error'>{currentQuestion.errorMessage}</p>}
                             </div>
                             {currentQuestion.hint &&
-                                <div className='snippet hint ui segment'>{pxt.Util.rlf(currentQuestion.hint)}</div>}
+                                <div className='snippet hint ui segment'>{
+                                    pxt.Util.rlf(currentQuestion.hint)
+                                        // replace new lines with <br> elements
+                                        .split("\n")
+                                        .reduce((p: (JSX.Element | string)[], n) => [...p, p.length ? (<br></br>) : "", n], [])}</div>}
                         </div>
                     }
                     <div className='snippet output-section'>
