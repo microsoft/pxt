@@ -340,7 +340,7 @@ function setupLangPicker() {
 
         modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`
 
-        var disabledTabIndexAttribute = "disabledtabindex";
+        var disabledTabIndexAttribute = "langmodaldisabledtabindex";
 
         $(modalContainer).modal({
             onShow: function() {
