@@ -338,6 +338,8 @@ function setupLangPicker() {
             localesContainer.appendChild(card);
         });
 
+        modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`
+
         var disabledTabIndexAttribute = "disabledtabindex";
 
         $(modalContainer).modal({
