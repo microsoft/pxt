@@ -14,6 +14,17 @@ The Crowdin translation project below contains both the resources and menu items
 
 If you want to help with translating the editor, please sign in to Crowdin (or join first if you don't already have an account) and send us a translator request.
 
+### ~ hint
+
+#### Sign up to translate
+
+For a quick explaination of how to sign up and join a MakeCode translation team, watch this
+short video:
+
+[Crowdin signup video](#)
+
+### ~
+
 ## Translations in context
 
 MakeCode has the capability for [in context translations](https://support.crowdin.com/in-context-localization/). This allows you to perform translations to text content right at the place where you see it in the editor (or in a documentation page).
