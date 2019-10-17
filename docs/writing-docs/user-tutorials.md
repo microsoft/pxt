@@ -47,6 +47,28 @@ If you plan to update your tutorial over time, we recommend storing your project
 
     https://[editor url]/#tutorial:[GitHub repository url]
 
+### Multiple tutorials per repository
+
+You can override the markdown file from the project used for the content of the tutorial (default is ``README.md``) by adding the path to the query argument (``.md`` not needed)
+
+    https://[editor url]/#tutorial:[GitHub repository url]/[filename]
+
+where MakeCode will load the ``filename.md`` file from the project. Don't forget to add this file in the
+``files`` list in ``pxt.json``.
+
+### Localization
+
+Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 
+where ``filename`` is the name of the tutorial in the default locale. ``icocode`` can be the 
+region specific language code or language neutral. MakeCode will pick the best match.
+
+### Repository as extension
+
+If the tutorial repository contains JavaScript files (``.ts``),
+it will automatically be added to the dependencies of the 
+program used during the tutorial. This allows you to package custom blocks
+in your tutorials or teach your extensions via tutorials.
+
 ## Report abuse and approvals
 
 By default, all tutorials opened from a user shared project or GitHub repository will have a **Report Abuse** button. If you would rather not have this button appear, use the GitHub project approach and get the repository approved.

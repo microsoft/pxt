@@ -70,7 +70,13 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             body: lf("Name cannot have spaces or special characters. Examples: {0}",
                 "my_feature, add-colors, fix_something"),
             agreeLbl: lf("Create"),
-            initialValue: initialBranchName
+            initialValue: initialBranchName,
+            hasCloseIcon: true,
+            onInputValidation: v => {
+                if (/[^\w\-]/.test(v))
+                    return lf("Don't use spaces or special characters.")
+                return undefined;
+            }
         })
         if (!branchName)
             return
@@ -120,12 +126,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
         await core.confirmAsync({
             header: lf("Switch to a different branch"),
+            hasCloseIcon: true,
             hideAgree: true,
+            hideCancel: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list" role="menu">
                     {branchList.map(r =>
-                        <div key={r.name} className="item">
+                        <div key={r.name} className="item link">
                             <i className="large github middle aligned icon"></i>
                             <div className="content">
                                 <a onClick={r.onClick} role="menuitem" className="header">{r.name}</a>

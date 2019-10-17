@@ -151,6 +151,12 @@ span.blocklyTreeLabel, text.blocklyText {
     color: @trashIconColor;
 }
 
+.flyoutOnly #blocklyTrashIcon {
+    top: auto;
+    bottom: 5%;
+    left: 10rem;
+}
+
 .blocklyToolboxDelete .blocklyTreeLabel {
     cursor: url("<<<PATH>>>/handdelete.cur") auto;
 }
@@ -222,7 +228,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightWide;
         min-height: @blocklyRowHeightWide;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthWide;
     }
 }
@@ -240,7 +246,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightComputer;
         min-height: @blocklyRowHeightComputer;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthComputer;
     }
 }
@@ -259,7 +265,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightTablet;
         min-height: @blocklyRowHeightTablet;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthTablet;
     }
     div.blocklyTreeRoot div div div div div.blocklyTreeRow {
@@ -280,7 +286,7 @@ div.blocklyTreeIcon span {
         line-height: @blocklyRowHeightMobile;
         min-height: @blocklyRowHeightMobile;
     }
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         width: @blocklyRowWidthMobile;
     }
 }
@@ -326,7 +332,7 @@ div.blocklyTreeIcon span {
         border-left-width: 8px !important;
     }
     /* Blockly trash icon */
-    #blocklyTrashIcon {
+    #root:not(.flyoutOnly) #blocklyTrashIcon {
         font-size: 3rem;
     }
     /* Hide the blockly toolbox search */

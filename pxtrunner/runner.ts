@@ -191,11 +191,21 @@ namespace pxt.runner {
         pxt.setAppTarget((window as any).pxtTargetBundle)
         Util.assert(!!pxt.appTarget);
 
-        const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
-        const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-        const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-        const force = !!mlang && !!mlang[2];
+        const href = window.location.href;
+        let live = false;
+        let force = false;
+        let lang: string = undefined;
+        if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
+            lang = ts.pxtc.Util.TRANSLATION_LOCALE;
+            live = true;
+            force = true;
+        } else {
+            const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
+            lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+            force = !!mlang && !!mlang[2];
+        }
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
@@ -499,7 +509,7 @@ namespace pxt.runner {
             backButton.addEventListener("click", () => {
                 goBack();
             });
-            pxsim.U.addClass(backButton, "disabled");
+            setElementDisabled(backButton, true);
         }
 
         function render(doctype: string, src: string) {
@@ -563,7 +573,7 @@ namespace pxt.runner {
             }
 
             if (history.length > 1) {
-                pxsim.U.removeClass(backButton, "disabled");
+                setElementDisabled(backButton, false);
             }
         }
 
@@ -576,7 +586,17 @@ namespace pxt.runner {
             }
 
             if (history.length <= 1) {
-                pxsim.U.addClass(backButton, "disabled");
+                setElementDisabled(backButton, true);
+            }
+        }
+
+        function setElementDisabled(el: HTMLElement, disabled: boolean) {
+            if (disabled) {
+                pxsim.U.addClass(el, "disabled");
+                el.setAttribute("aria-disabled", "true");
+            } else {
+                pxsim.U.removeClass(el, "disabled");
+                el.setAttribute("aria-disabled", "false");
             }
         }
 
@@ -763,41 +783,10 @@ ${linkString}
     </div>
 </aside>
 
-<aside id=hero class=box>
-    <div class="ui hero">
-        <div class="main-description">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
 <aside id=hint class=box>
-    <div class="ui info message">
+    <div class="ui icon green message">
         <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=reminder class=box>
-    <div class="ui warning message">
-        <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=alert class=box>
-    <div class="ui negative message">
-        <div class="content">
-            @BODY@
-        </div>
-    </div>
-</aside>
-
-<aside id=tip class=box>
-    <div class="ui positive message">
-        <div class="content">
+            <div class="header">Hint</div>
             @BODY@
         </div>
     </div>

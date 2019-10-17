@@ -131,11 +131,15 @@ The tutorial markdown has a format that the guides the tutorial runner in making
 Tutorial metadata is optionally specified at the top of the document. Metadata is defined as key-value pairs, in the form: ``### @KEY VALUE``. The currrent properties are:
 
 * **activities**: Indicates a three-level tutorial, with activities and steps within the activities. The default is ``false`` which means that the tutorial is just a simple sequence of steps.
-* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. The default  is ``false`` making hints available for each step.
+* **explicitHints**: Indicates explicit hints, in the format ``### ~ tutorialhint``. The default is ``false`` making hints available for each step.
+* **flyoutOnly**: Indicates that the tutorial should display all available blocks in a permanently-visible flyout, instead of the toolbox. The default is ``false``.
+* **hideIteration**: Hides the step controls. This includes the previous, next, and exit tutorial buttons, as well as the step counter in the menu bar. The default is ``false``.
 
 ```markdown
 ### @activities true
 ### @explicitHints true
+### @flyoutOnly true
+### @hideIteration true
 ```
 
 ### Title

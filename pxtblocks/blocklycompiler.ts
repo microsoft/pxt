@@ -228,10 +228,10 @@ namespace pxt.blocks {
                 let parentInput: Blockly.Input;
 
                 if (isArrayGet) {
-                    parentInput = b.inputList.filter(i => i.name === "LIST")[0];
+                    parentInput = b.inputList.find(i => i.name === "LIST");
                 }
                 else {
-                    parentInput = b.inputList.filter(i => i.name === func.comp.thisParameter.definitionName)[0];
+                    parentInput = b.inputList.find(i => i.name === func.comp.thisParameter.definitionName);
                 }
 
                 if (parentInput.connection && parentInput.connection.targetBlock()) {
@@ -437,8 +437,8 @@ namespace pxt.blocks {
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
-                                    let i = b.inputList.filter((i: Blockly.Input) => i.name == p.definitionName)[0];
-                                    if (i.connection && i.connection.check_) {
+                                    let i = b.inputList.find((i: Blockly.Input) => i.name == p.definitionName);
+                                    if (i && i.connection && i.connection.check_) {
                                         if (isInstance && connectionCheck(i) === "Array") {
                                             let gen = handleGenericType(b, p.definitionName);
                                             if (gen) {
@@ -984,10 +984,12 @@ namespace pxt.blocks {
     function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
-        let valid = (x: string) => !e.renames.takenNames[x]
-        let name = "i";
-        for (let i = 0; !valid(name); i++)
-            name = "i" + i;
+        let valid = (x: string) => !lookup(e, b, x);
+
+        let name = "index";
+        // Start at 2 because index0 and index1 are bad names
+        for (let i = 2; !valid(name); i++)
+            name = "index" + i;
         return [
             mkText("for (let " + name + " = 0; "),
             mkInfix(mkText(name), "<", bound),

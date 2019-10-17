@@ -475,11 +475,11 @@ namespace pxt.github {
             id: number; // 6154722,
             avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
             gravatar_id: string; // "",
-            html_url: string; // "https://github.com/Microsoft",
+            html_url: string; // "https://github.com/microsoft",
             type: string; // "Organization"
         },
         private: boolean;
-        html_url: string; // "https://github.com/Microsoft/pxt-microbit-cppsample",
+        html_url: string; // "https://github.com/microsoft/pxt-microbit-cppsample",
         description: string; // "Sample C++ extension for PXT/microbit",
         fork: boolean;
         created_at: string; // "2016-05-05T11:18:12Z",
@@ -512,6 +512,7 @@ namespace pxt.github {
         project?: string;
         fullName: string;
         tag?: string;
+        fileName?: string;
     }
 
     export enum GitRepoStatus {
@@ -688,22 +689,28 @@ namespace pxt.github {
         return r;
     }
 
+    // parse https://github.com/[company]/[project](/filepath)(#tag)
     export function parseRepoId(repo: string): ParsedRepo {
         if (!repo) return undefined;
 
         repo = repo.replace(/^github:/i, "")
         repo = repo.replace(/^https:\/\/github\.com\//i, "")
         repo = repo.replace(/\.git\b/i, "")
+
         let m = /([^#]+)(#(.*))?/.exec(repo)
+        const nameAndFile = m ? m[1] : null;
         const tag = m ? m[3] : null;
         let owner: string;
         let project: string;
         let fullName: string;
+        let fileName: string;
         if (m) {
-            fullName = m[1].toLowerCase();
-            const parts = fullName.split('/');
+            const parts = nameAndFile.split('/');
             owner = parts[0];
             project = parts[1];
+            fullName = `${owner}/${project}`;
+            if (parts.length > 2)
+                fileName = parts.slice(2).join('/');
         } else {
             fullName = repo.toLowerCase();
         }
@@ -711,8 +718,15 @@ namespace pxt.github {
             owner,
             project,
             fullName,
-            tag
+            tag,
+            fileName
         }
+    }
+
+    export function toGithubDependencyPath(id: ParsedRepo): string {
+        let r = "github:" + id.fullName;
+        if (id.tag) r += "#" + id.tag;
+        return r;
     }
 
     export function isGithubId(id: string) {

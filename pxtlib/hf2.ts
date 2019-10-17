@@ -13,6 +13,7 @@ namespace pxt {
         RefRefLocal = 7,
         RefMap = 8,
         RefMImage = 9, // microbit-specific
+        MMap = 10, // linux, mostly ev3
         User0 = 16,
     }
 }
@@ -55,7 +56,7 @@ namespace pxt.HF2 {
 
     export let mkPacketIOAsync: () => Promise<pxt.HF2.PacketIO>
 
-    // see https://github.com/Microsoft/uf2/blob/master/hf2.md for full spec
+    // see https://github.com/microsoft/uf2/blob/master/hf2.md for full spec
     export const HF2_CMD_BININFO = 0x0001 // no arguments
     export const HF2_MODE_BOOTLOADER = 0x01
     export const HF2_MODE_USERSPACE = 0x02

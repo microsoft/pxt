@@ -21,7 +21,7 @@ namespace pxtblockly {
         private static eyedropperEventKey_: any;
 
         constructor(text: string, params: FieldPositionOptions, validator?: Function) {
-            super(text, '0', '100', null, '100', 'Value', validator);
+            super(text, '0', '100', '1', '100', 'Value', validator);
             this.params = params;
             if (!this.params.screenHeight) this.params.screenHeight = 120;
             if (!this.params.screenWidth) this.params.screenWidth = 160;
@@ -219,10 +219,8 @@ namespace pxtblockly {
 
         widgetDispose_() {
             const that = this;
-            return function () {
-                (Blockly.FieldNumber as any).superClass_.widgetDispose_.call(that)();
-                that.close(true);
-            }
+            (Blockly.FieldNumber as any).superClass_.widgetDispose_.call(that);
+            that.close(true);
         }
 
         dispose() {

@@ -1048,31 +1048,31 @@ namespace ts.pxtc {
         let pass0 = U.cpuUs()
         res.times["pass0"] = pass0 - startTime
 
-        if (diagnostics.getModificationCount() == 0) {
-            reset();
-            needsUsingInfo = false
-            bin.finalPass = true
-            emit(rootFunction)
+        let resDiags = diagnostics.getDiagnostics()
 
-            U.assert(usedWorkList.length == 0)
+        reset();
+        needsUsingInfo = false
+        bin.finalPass = true
+        emit(rootFunction)
 
-            res.configData = []
-            for (let k of Object.keys(configEntries)) {
-                if (configEntries["!" + k])
-                    continue
-                res.configData.push({
-                    name: k.replace(/^\!/, ""),
-                    key: configEntries[k].key,
-                    value: configEntries[k].value
-                })
-            }
-            res.configData.sort((a, b) => a.key - b.key)
+        U.assert(usedWorkList.length == 0)
 
-            let pass1 = U.cpuUs()
-            res.times["pass1"] = pass1 - pass0
-            catchErrors(rootFunction, finalEmit)
-            res.times["passFinal"] = U.cpuUs() - pass1
+        res.configData = []
+        for (let k of Object.keys(configEntries)) {
+            if (configEntries["!" + k])
+                continue
+            res.configData.push({
+                name: k.replace(/^\!/, ""),
+                key: configEntries[k].key,
+                value: configEntries[k].value
+            })
         }
+        res.configData.sort((a, b) => a.key - b.key)
+
+        let pass1 = U.cpuUs()
+        res.times["pass1"] = pass1 - pass0
+        catchErrors(rootFunction, finalEmit)
+        res.times["passFinal"] = U.cpuUs() - pass1
 
         if (opts.ast) {
             let pre = U.cpuUs()
@@ -1085,8 +1085,11 @@ namespace ts.pxtc {
 
         compileOptions = null
 
+        if (resDiags.length == 0)
+            resDiags = diagnostics.getDiagnostics()
+
         return {
-            diagnostics: diagnostics.getDiagnostics(),
+            diagnostics: resDiags,
             emittedFiles: undefined,
             emitSkipped: !!opts.noEmit
         }
@@ -1246,7 +1249,7 @@ namespace ts.pxtc {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit)
+            if (opts.noEmit)
                 return;
 
             bin.writeFile = (fn: string, data: string) => {
@@ -2030,7 +2033,7 @@ ${lbl}: .short 0xffff
             let decl = getDeclCore(node)
             markUsed(decl)
 
-            if (!decl && node.kind == SK.PropertyAccessExpression) {
+            if (!decl && node && node.kind == SK.PropertyAccessExpression) {
                 const namedNode = node as PropertyAccessExpression
                 decl = {
                     kind: SK.PropertySignature,
@@ -4113,11 +4116,6 @@ ${lbl}: .short 0xffff
             markUsed(declList.declarations[0])
             const iterVar = emitVariableDeclaration(declList.declarations[0]) // c
             U.assert(!!iterVar || !bin.finalPass)
-            //Start with undefined
-            if (iterVar) {
-                proc.emitExpr(iterVar.storeByRef(emitLit(undefined)))
-                recordUse(declList.declarations[0], true)
-            }
             proc.stackEmpty()
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
@@ -4129,8 +4127,6 @@ ${lbl}: .short 0xffff
             let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
-
-            flushHoistedFunctionDefinitions()
 
             emitBrk(node);
 
@@ -4152,6 +4148,8 @@ ${lbl}: .short 0xffff
             // c = a[i]
             if (iterVar)
                 proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
+
+            flushHoistedFunctionDefinitions()
 
             emit(node.statement);
             proc.emitLblDirect(l.cont);

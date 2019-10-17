@@ -133,7 +133,7 @@ namespace pxt {
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
-                // https://github.com/Microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
+                // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
                 const mainBlocks = this.readFile("main.blocks");
                 const mainTs = this.readFile("main.ts");
                 if (!mainBlocks && mainTs)
@@ -634,9 +634,8 @@ namespace pxt {
             // live loc of bundled packages
             if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
-                const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => {
                             if (tr && Object.keys(tr).length) {
                                 Util.jsonMergeFrom(r, tr);

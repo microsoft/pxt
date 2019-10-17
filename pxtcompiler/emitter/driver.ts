@@ -124,6 +124,13 @@ namespace ts.pxtc {
             opts.sourceFiles.push("main.ts")
         }
 
+        // run post-processing code last, if present
+        const postIdx = opts.sourceFiles.indexOf("_onCodeStop.ts")
+        if (postIdx >= 0) {
+            opts.sourceFiles.splice(postIdx, 1)
+            opts.sourceFiles.push("_onCodeStop.ts")
+        }
+
         res.times["conversions"] = U.cpuUs() - startTime
 
         return res
@@ -333,6 +340,14 @@ namespace ts.pxtc {
             tsFiles.push("main.ts")
             hasMain = true;
         }
+
+        // run post-processing code last, if present
+        const post_idx = tsFiles.indexOf("_onCodeStop.ts")
+        if (post_idx >= 0) {
+            tsFiles.splice(post_idx, 1)
+            tsFiles.push("_onCodeStop.ts")
+        }
+
         // TODO: ensure that main.ts is last???
         const program = createProgram(tsFiles, options, host, old);
         annotate(program, "main.ts", target || (pxt.appTarget && pxt.appTarget.compile));

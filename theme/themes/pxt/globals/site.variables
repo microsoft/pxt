@@ -6,9 +6,8 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
-@docsPrimaryColor    : #6C196C;
-@docsAccentColor     : #FC6483;
+@secondaryColor: rgba(0, 0, 0, 0.55);
+@docsHue: 257;
 
 @red:#A80000;
 @orange:#D83B01;
@@ -21,11 +20,10 @@
 @brown:#00BCF2;
 @grey:#505050;
 @lightGrey: #d9d9d9;
-@backgroundGrey: #F0F2F7;
 
 @greenTextColor: darken(@green, 5);
 
-@lightTextColor              : rgba(0, 0, 0, 0.68);
+@lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
@@ -38,10 +36,10 @@
 @importGoogleFonts: false;
 
 @docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
-@docsPageFont: "Times New Roman", serif;
+@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-@emSize      : 18px;
-@fontSize    : 18px;
+@emSize      : 14px;
+@fontSize    : 12pt;
 
 /*-------------------
    Links
@@ -145,7 +143,7 @@ default semantic
 --------------------*/
 
 @mainMenuBackground: @white;
-@mainMenuInvertedBackground: @backgroundGrey;
+@mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
 
 @mainMenuHeight: 4.0rem;

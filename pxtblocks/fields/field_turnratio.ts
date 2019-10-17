@@ -25,8 +25,9 @@ namespace pxtblockly {
          * @constructor
          */
         constructor(value_: any, params: FieldTurnRatioOptions, opt_validator?: Function) {
-            super(String(value_), '-100', '100', null, '10', 'TurnRatio', opt_validator);
+            super(String(value_), '-200', '200', '1', '10', 'TurnRatio', opt_validator);
             this.params = params;
+            (this as any).sliderColor_ = '#a8aaa8';
         }
 
         static HALF = 80;
@@ -77,25 +78,22 @@ namespace pxtblockly {
             if (!this.path_) {
                 return;
             }
-            let v = goog.math.clamp(parseFloat(this.getText()), -100, 100);
-            if (isNaN(v)) {
-                v = 0;
+            let v = goog.math.clamp(this.getValue() || 0, -200, 200);
+            const x = v / 100;
+            const nx = Math.max(-1, Math.min(1, x));
+            const theta = Math.max(nx) * Math.PI / 2;
+            const r = FieldTurnRatio.RADIUS - 6;
+            let cx = FieldTurnRatio.HALF;
+            const cy = FieldTurnRatio.HALF - 22;
+            if (Math.abs(x) > 1) {
+                cx -= (x - (x > 0 ? 1 : -1)) * r / 2; // move center of circle
             }
-
-            const x = goog.math.clamp(parseFloat(this.getText()), -100, 100) / 100;
-            const theta = x * Math.PI / 2;
-            const cx = FieldTurnRatio.HALF;
-            const cy = FieldTurnRatio.HALF - 14;
-            const gamma = Math.PI - 2 * theta;
-            const r = FieldTurnRatio.RADIUS;
-            const alpha = 0.2 + Math.abs(x) * 0.5;
-            const x1 = 0;
+            const alpha = 0.2 + Math.abs(nx) * 0.5;
             const y1 = r * alpha;
             const y2 = r * Math.sin(Math.PI / 2 - theta);
             const x2 = r * Math.cos(Math.PI / 2 - theta);
             const y3 = y2 - r * alpha * Math.cos(2 * theta);
             const x3 = x2 - r * alpha * Math.sin(2 * theta);
-
 
             const d = `M ${cx} ${cy} C ${cx} ${cy - y1} ${cx + x3} ${cy - y3} ${cx + x2} ${cy - y2}`;
             this.path_.setAttribute('d', d);
