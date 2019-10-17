@@ -49,4 +49,4 @@ The in context translations are available in the beta editions of these editors.
 
 ## Feedback?
 
-Drop us a note in the MakeCode forums at https://forum.makecode.com with any comments.
+Drop us a note in the MakeCode forums at https://forum.makecode.com/t/translations-in-context-blog/643 with any comments.
