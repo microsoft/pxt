@@ -44,9 +44,9 @@
 
 /* Back button */
 .ui.button.back-button {
-    background: none !important;
-    border: none !important;
-    box-shadow: none !important;
+    background: none;
+    border: none;
+    box-shadow: none;
 }
 
 .ui.fullscreen.modal,
@@ -109,10 +109,10 @@
     .ui.button.back-button, .ui.help-button {
         color: @extensionsHeaderColor !important;
         padding-left: 0 !important;
-        /* &:focus {
-            border: 2px solid yellow !important;
-            border-radius: 1px;
-        } */
+
+        &:focus, &:hover {
+            background: rgba(0,0,0,.1);
+        }
     }
 }
 
