@@ -360,7 +360,7 @@ function setupLangPicker() {
         }
         langPicker.onkeydown = handleEnterKey;
 
-        var closeIcon = document.querySelector(".closeIcon");
+        var closeIcon = modalContainer.querySelector(".closeIcon");
         closeIcon.onclick = function() {
             $(modalContainer).modal('hide');
         }
