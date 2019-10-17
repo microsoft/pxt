@@ -92,10 +92,6 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         this.deviceId = undefined;
         if (this.stream) {
             try {
-                if (this.stream.stop)
-                    this.stream.stop();
-            } catch (e) { }
-            try {
                 const tracks = this.stream.getTracks();
                 if (tracks)
                     tracks.forEach(track => track.stop());
