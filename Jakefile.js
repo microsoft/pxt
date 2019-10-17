@@ -8,7 +8,7 @@ var expand = ju.expand;
 var cmdIn = ju.cmdIn;
 var strpSrcMap = ju.strpSrcMap;
 
-function tscIn(task, dir, builtDir) {
+function tscIn(task, dir, builtDir = "built") {
     let command = 'node ' + path.relative(dir, './node_modules/typescript/bin/tsc')
     if (process.env.sourceMaps === 'true') {
         command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
@@ -45,11 +45,11 @@ function setupTest(taskName, testFolder, testFile) {
     })
 
     file("built/tests/" + testFolder + "/" + testFile, ['default'], { async: true }, function () {
-        cmdIn(this, "tests/" + testFolder, 'node ../../node_modules/typescript/bin/tsc')
+        tscIn(this, "tests/" + testFolder)
     });
 
     ju.catFiles('built/tests/' + testFolder + '/runner.js', [
-        "node_modules/typescript/lib/typescript.js",
+        "pxtcompiler/ext-typescript/lib/typescript.js",
         "built/pxtlib.js",
         "built/pxtcompiler.js",
         "built/pxtpy.js",
@@ -106,7 +106,7 @@ task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
 })
 
 ju.catFiles('built/pxt.js', [
-    "node_modules/typescript/lib/typescript.js",
+    "pxtcompiler/ext-typescript/lib/typescript.js",
     "built/pxtlib.js",
     "built/pxtcompiler.js",
     "built/pxtpy.js",
@@ -127,9 +127,9 @@ file('built/pxt.d.ts', ['built/cli.js'], function () {
 file('built/target.js', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, ".", "node built/pxt.js buildtarget");
 })
-file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptServices.d.ts'], function () {
+file('built/typescriptServices.d.ts', ['pxtcompiler/ext-typescript/lib/typescriptServices.d.ts'], function () {
     if (!fs.existsSync("built")) fs.mkdirSync("built");
-    jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
+    jake.cpR('pxtcompiler/ext-typescript/lib/typescriptServices.d.ts', "built/")
 })
 
 file('built/pxt-common.json', expand(['libs/pxt-common', 'libs/pxt-python'], ".ts"), function () {
@@ -191,11 +191,11 @@ task("karma-debug", ["blocklycompilertest"], function () {
 });
 
 task("blocklycompilertest", ["default"], { async: true }, function () {
-    cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
+    tscIn(this, "tests/blocklycompiler-test")
 })
 
 file("built/tests/blocksrunner.js", ["built/pxtlib.js", "built/pxtcompiler.js", "built/pxtblocks.js", "built/pxteditor.js"], { async: true }, function () {
-    cmdIn(this, "tests/blocks-test", "node ../../node_modules/typescript/bin/tsc")
+    tscIn(this, "tests/blocks-test")
 })
 
 task("travis", ["lint", "test", "upload"])
@@ -364,7 +364,7 @@ file("built/web/pxtlib.js", [
         "getCompletionData"
     ]
 
-    let ts = fs.readFileSync("node_modules/typescript/lib/typescript.js", "utf8")
+    let ts = fs.readFileSync("pxtcompiler/ext-typescript/lib/typescript.js", "utf8")
     ts = ts.replace(/getCompletionsAtPosition: getCompletionsAtPosition,/,
         f => f + " " + additionalExports.map(s => s + ": ts.Completions." + s + ",").join(" "))
     fs.writeFileSync("built/web/typescript.js", ts)
