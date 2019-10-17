@@ -21,7 +21,7 @@ If you want to help with translating the editor, please sign in to Crowdin (or j
 For a quick explaination of how to sign up and join a MakeCode translation team, watch this
 short video:
 
-[Crowdin signup video](#)
+https://youtu.be/4PqWq50e8C4
 
 ### ~
 
