@@ -47,7 +47,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return;
         }
 
-        pxt.Util.setCookieLang(langId);
+        pxt.BrowserUtils.setCookieLang(langId);
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });

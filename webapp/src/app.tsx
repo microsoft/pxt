@@ -3895,7 +3895,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                     pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
                 }
-                useLang = mlang ? mlang[3] : (pxt.Util.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
                 force = !!mlang && !!mlang[2];
@@ -3914,7 +3914,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 force)
                 .then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
-                        pxt.Util.setCookieLang(useLang);
+                        pxt.BrowserUtils.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });

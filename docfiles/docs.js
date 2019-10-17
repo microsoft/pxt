@@ -310,7 +310,7 @@ function languageOption(code) {
 
 function setupLangPicker() {
     var appTheme = pxt.appTarget.appTheme;
-    var initialLang = pxt.Util.normalizeLanguageCode(pxt.Util.getCookieLang())[0];
+    var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
 
     if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
@@ -363,7 +363,7 @@ function setupLangPicker() {
                 if (!pxt.Util.allLanguages[langId]) {
                     return;
                 }
-                pxt.Util.setCookieLang(langId, /** docs **/ "true");
+                pxt.BrowserUtils.setCookieLang(langId, /** docs **/ true);
                 if (langId !== initialLang) {
                     pxt.tickEvent("menu.lang.changelang", { lang: langId, docs: "true" });
                     // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
