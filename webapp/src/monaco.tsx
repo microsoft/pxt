@@ -784,6 +784,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     let preText = textAndAmendment[0]
                     if (preText.length) {
+                        console.log("pre text: ")
+                        console.log(preText)
                         // TODO(dz): anything to do if there's unexpected text before the amendment?
                     }
                     let amendmentStr = textAndAmendment[1]
@@ -854,33 +856,57 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                     passLine, startCol + pass.length)
                             }
 
-                            const disposable = this.editor.onDidChangeModelContent(e => {
-                                let changes = e.changes;
+                            // remove 1 from stack
+                            // apply old "on_chat"
+                            // push stack
+                            // apply new
 
-                                disposable.dispose();
-                                if (afterRange)
-                                    this.editor.setSelection(afterRange);
+                            let reverseRange = Object.assign({}, amendment.range)
+                            reverseRange.endColumn = 9999 // TODO(dz) ?
 
-                                // TODO(dz):
-                                // - optional select after range
-
-                                // Clear ranges because the model changed
-                                if (this.fieldEditors)
-                                    this.fieldEditors.clearRanges(this.editor);
-                                if (afterRange)
-                                    resolve(afterRange);
-                            });
-
-                            let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
+                            let undoEdits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
                                 identifier: { major: 0, minor: 0 },
-                                range: model.validateRange(range),
-                                text: newText,
-                                forceMoveMarkers: true,
-                                isAutoWhitespaceEdit: true
+                                range: model.validateRange(reverseRange),
+                                text: "",
+                                forceMoveMarkers: false,
+                                isAutoWhitespaceEdit: false
                             }]
+
                             // TODO(dz): add option to skip undo stack
-                            model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
-                            // model.applyEdits(edits)
+                            // model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
+                            model.applyEdits(undoEdits)
+
+                            setTimeout(() => {
+                                const disposable = this.editor.onDidChangeModelContent(e => {
+                                    let changes = e.changes;
+
+                                    disposable.dispose();
+                                    if (afterRange)
+                                        this.editor.setSelection(afterRange);
+
+                                    // TODO(dz):
+                                    // - optional select after range
+
+                                    // Clear ranges because the model changed
+                                    if (this.fieldEditors)
+                                        this.fieldEditors.clearRanges(this.editor);
+                                    if (afterRange)
+                                        resolve(afterRange);
+                                });
+
+                                let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
+                                    identifier: { major: 0, minor: 0 },
+                                    range: model.validateRange(range),
+                                    text: newText,
+                                    forceMoveMarkers: true,
+                                    isAutoWhitespaceEdit: true
+                                }]
+                                // TODO(dz): add option to skip undo stack
+                                model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
+                                // model.applyEdits(edits)
+                            }, 0);
+
+
                         });
                     }, 0) // end setTimeout
                 }
