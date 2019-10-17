@@ -179,7 +179,7 @@ namespace ts.pxtc.Util {
             return new Promise<string>((resolve, reject) => {
                 let reader = new FileReader();
                 reader.onerror = (ev) => resolve(null);
-                reader.onload = (ev) => resolve(reader.result);
+                reader.onload = (ev) => resolve(reader.result as string);
                 reader.readAsText(f);
             });
         }
