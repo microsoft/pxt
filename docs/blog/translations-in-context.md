@@ -45,6 +45,7 @@ The in context translations are available in the beta editions of these editors.
 * `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
 * `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
 * `/beta` version of [LEGO - EV3](https://makecode.mindstorms.com/beta)
+* `/beta` version of [MakeCode for Minecraft](https://minecraft.makecode.com/beta)
 * The [Maker Editor](https://maker.makecode.com)
 
 ## Feedback?
