@@ -37,6 +37,11 @@
     }
 }
 
+.docs.ui.menu.sidebar {
+    border: none;
+    border-right: 1px solid rgba(34,36,38,.15);
+}
+
 #docs {
     font-family: @docsPageFont !important;
     color: @docsTextColor;
@@ -425,7 +430,7 @@
     a:focus,
     .title:hover a,
     .title:focus a {
-        text-decoration: underline;
+        text-decoration: none;
         color: hsl(@docsHue, 35%, 30%)
     }
     &.vertical .item:before {
