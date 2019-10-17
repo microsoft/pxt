@@ -292,7 +292,7 @@ function setCookieLang(langId) {
         return;
     }
     if (langId !== getCookieLang()) {
-        pxt.tickEvent("menu.lang.setcookielang." + langId);
+        pxt.tickEvent("menu.lang.setcookielang", { lang: langId, docs: "true" });
         var expiration = new Date();
         expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
         document.cookie = `${pxt.Util.pxtLangCookieId}=${langId};expires=${expiration.toUTCString()};path=/`;
@@ -383,12 +383,12 @@ function setupLangPicker() {
                 }
                 setCookieLang(langId);
                 if (langId !== initialLang) {
-                    pxt.tickEvent("menu.lang.changelang." + langId);
+                    pxt.tickEvent("menu.lang.changelang", { lang: langId, docs: "true" });
                     // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
                     // In docs we currently don't have access to pxt.winrt
                     location.reload();
                 } else {
-                    pxt.tickEvent("menu.lang.samelang." + langId);
+                    pxt.tickEvent(`menu.lang.samelang`, { lang: langId, docs: "true" });
                     $('.ui.modal').modal('hide');
                 }
             }
