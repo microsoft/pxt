@@ -262,7 +262,7 @@ namespace pxt.BrowserUtils {
 
         // these are IE specific
         const sysXDPI = (window.screen as any).systemXDPI
-        let logicalXDPI = (window.screen as any).logicalXDPI
+        const logicalXDPI = (window.screen as any).logicalXDPI
         if (sysXDPI !== undefined
             && logicalXDPI !== undefined
             && sysXDPI > logicalXDPI) {
