@@ -213,6 +213,7 @@ declare namespace pxt {
         highContrastPortraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
+        docsHeader?: string;
         organization?: string;
         organizationUrl?: string;
         organizationLogo?: string;
