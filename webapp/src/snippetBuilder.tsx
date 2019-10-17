@@ -357,8 +357,10 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
             if (parameters) {
                 for (const parameter of parameters) {
                     const { answer, token } = parameter;
-                    if (answer === answers[token] || (!answers[token] && answer === defaults[token])) {
-                        return parameter.question;
+                    if (!!answer && !!token) {
+                        if (answer === answers[token] || (!answers[token] && answer === defaults[token])) {
+                            return parameter.question;
+                        }
                     }
                 }
             }
@@ -439,7 +441,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     onChange = (answerToken: string) => (v: string) => {
-        console.log("ON CHANGE")
         let question = this.getCurrentQuestion();
         this.setState((prevState: SnippetBuilderState) => {
             let newAnswers = {
