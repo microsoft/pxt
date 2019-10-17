@@ -283,6 +283,8 @@ function renderSnippets() {
 
 function languageOption(code) {
     var locale = pxt.Util.allLanguages[code];
+    if (!locale)
+        return undefined;
 
     var headerEl = document.createElement('div');
     headerEl.className = 'header';
@@ -309,7 +311,7 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var appTheme = pxt.appTarget.appTheme;
+    var appTheme = pxt.appTarget.appTheme
     var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
 
@@ -317,7 +319,7 @@ function setupLangPicker() {
         var localesContainer = document.querySelector("#availablelocales");
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
-            localesContainer.appendChild(card);
+            if (card) localesContainer.appendChild(card);
         });
 
         modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`;
