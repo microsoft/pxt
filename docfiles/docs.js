@@ -340,7 +340,19 @@ function setupLangPicker() {
 
         modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`;
 
-        $(modalContainer).modal();
+        $(modalContainer).modal({
+            onShow: function() {
+                $(document).off("focusin.focusJail");
+                $(document).on("focusin.focusJail", function(event) {
+                    if (event.target !== modalContainer && !$.contains(modalContainer, event.target)) {
+                        modalContainer.focus();
+                    }
+                });
+            },
+            onHide: function() {
+                $(document).off("focusin.focusJail");
+            }
+        });
 
         var langPicker = document.querySelector("#langpicker");
         langPicker.onclick = function() {
