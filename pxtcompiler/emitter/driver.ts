@@ -1,4 +1,3 @@
-/// <reference path="../../built/typescriptServices.d.ts"/>
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 
 // Enforce order:
