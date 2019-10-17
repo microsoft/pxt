@@ -313,7 +313,7 @@ function setupLangPicker() {
     var initialLang = pxt.Util.normalizeLanguageCode(pxt.Util.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
 
-    if (appTheme.availableLocales && appTheme.selectLanguage) {
+    if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
