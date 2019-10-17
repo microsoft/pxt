@@ -261,7 +261,7 @@ namespace pxt.BrowserUtils {
         if (typeof window === "undefined" || !window.screen) return 1;
 
         // these are IE specific
-        let sysXDPI = (window.screen as any).systemXDPI
+        const sysXDPI = (window.screen as any).systemXDPI
         let logicalXDPI = (window.screen as any).logicalXDPI
         if (sysXDPI !== undefined
             && logicalXDPI !== undefined
