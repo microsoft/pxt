@@ -230,9 +230,9 @@ class YesNoInput extends data.Component<IYesNoInputProps, {}> {
         this.onChange = this.onChange.bind(this);
     }
 
-    onChange(value: string): void {
+    onChange(value: string): () => void {
         const { onChange } = this.props;
-        onChange(value);
+        return () => onChange(value);
     }
 
     renderCore() {
@@ -241,8 +241,8 @@ class YesNoInput extends data.Component<IYesNoInputProps, {}> {
             return (
                 <div>
                     {/* TODO: onChange shouldn't assume string */}
-                    <sui.Button text="Yes" title="Yes" onClick={() => this.onChange("true")} />
-                    <sui.Button text="No" title="No" onClick={() => this.onChange("false")} />
+                    <sui.Button text="Yes" title="Yes" onClick={this.onChange("true")} />
+                    <sui.Button text="No" title="No" onClick={this.onChange("false")} />
                 </div>
             )
         }
