@@ -7,17 +7,7 @@
         "out": "../built/pxtrunner.js",
         "newLine": "LF",
         "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
-        "types": [
-            "jquery",
-            "highlight.js",
-            "bluebird"
-        ],
-        "incremental": true
+        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
+        "types": ["jquery", "highlight.js", "bluebird"]
     }
 }

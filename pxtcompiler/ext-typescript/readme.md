@@ -1,1 +1,0 @@
-This compiled version of typescript was taken from 2.6.1 npm package

@@ -8,15 +8,7 @@
         "out": "../built/pxtsim.js",
         "newLine": "LF",
         "sourceMap": false,
-        "lib": [
-            "dom",
-            "dom.iterable",
-            "scripthost",
-            "es6"
-        ],
-        "types": [
-            "bluebird"
-        ],
-        "incremental": true
+        "lib": ["dom", "dom.iterable", "scripthost", "es6"],
+        "types": ["bluebird"]
     }
 }
