@@ -15,7 +15,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function flatClone<T>(obj: T): T {
+    export function flatClone<T extends Object>(obj: T): T {
         if (obj == null) return null
         let r: any = {}
         Object.keys(obj).forEach((k) => { r[k] = (obj as any)[k] })
@@ -81,6 +81,11 @@ namespace ts.pxtc.Util {
 
     export function isUserLanguageRtl(): boolean {
         return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
+    }
+
+    export const TRANSLATION_LOCALE = "pxt";
+    export function isTranslationMode(): boolean {
+        return userLanguage() == TRANSLATION_LOCALE;
     }
 
     export function _localize(s: string) {
@@ -177,7 +182,7 @@ namespace ts.pxtc.Util {
             lfmt = lfmt.replace(/\{\d+:s\}/g, "")
         }
 
-        lfmt = lfmt.replace(/\{(id|loc):[^\}]+\}/g, '');
+        lfmt = lfmt.replace(/^\{(id|loc):[^\}]+\}/g, '');
 
         return fmt_va(lfmt, args);
     }

@@ -146,7 +146,7 @@ body#docs.tutorial {
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
-    height: calc(~'100% - 3rem');
+    height: calc(~'100% + 2px');
     overflow-y: auto;
 }
 
@@ -368,6 +368,14 @@ span.highlight-line {
     color: @white;
 }
 
+.hideIteration .avatar-container .tooltip {
+    left: 4.5rem;
+}
+
+.hideIteration .avatar-container .tooltip:before {
+    left: 27%;
+}
+
 #tutorialcard:not(.showTooltip) .tooltip,
 #tutorialcard:not(.showTooltip) .tooltip:before {
     display: none;
@@ -377,8 +385,12 @@ span.highlight-line {
         See More Button
 *******************************/
 #tutorialcard.seemore {
-    .tutorialmessage .content {
-        height: calc(@tutorialCardHeight - 1rem - @seeMoreButtonHeight);
+    .tutorialsegment > button {
+        position: relative;
+        top: -1rem;
+        width: auto;
+        margin: auto;
+        padding: 0.5rem 0.8rem;
     }
 }
 

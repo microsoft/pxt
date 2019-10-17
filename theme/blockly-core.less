@@ -80,6 +80,12 @@ text.blocklyText.blocklyBoldItalicizedText {
     font-style: italic;
 }
 
+text.semanticIcon {
+    fill: #fff;
+    font-family: "Icons";
+    font-size: 19px;
+}
+
 
 /* Used by custom field in grey expression blocks */
 
@@ -170,6 +176,17 @@ div.blocklyTooltipDiv {
     opacity: 1 !important;
     /* wrap the JS text inside a blockly Tooltip */
     overflow-wrap: break-word;
+}
+
+#blocks-editor-field-div {
+    position: absolute;
+    z-index: @blocklyDropdownDivZIndex;
+}
+
+.blocks-editor-field-overlay {
+    position: absolute;
+    z-index: @blocklyWidgetDivZIndex;
+    background-color: rgba(0, 0, 0, 0.4)
 }
 
 

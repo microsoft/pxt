@@ -7,6 +7,7 @@
 
 @primaryColor: @pink;
 @secondaryColor: rgba(0, 0, 0, 0.55);
+@docsHue: 257;
 
 @red:#A80000;
 @orange:#D83B01;

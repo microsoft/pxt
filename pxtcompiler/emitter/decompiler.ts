@@ -2720,13 +2720,27 @@ ${output}</xml>`;
                 return undefined;
 
                 function checkEnumArgument(enumArg: ts.Node) {
-                    if (enumArg.kind === SK.PropertyAccessExpression) {
-                        const enumName = (enumArg as PropertyAccessExpression).expression as Identifier;
-                        if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
-                            return true;
-                        }
+                    // Enums can be under namespaces, so split up the qualified name into parts
+                    const parts = paramInfo.type.split(".");
+
+                    const enumParts: string[] = [];
+                    while (enumArg.kind === SK.PropertyAccessExpression) {
+                        enumParts.unshift((enumArg as PropertyAccessExpression).name.text);
+                        enumArg = (enumArg as PropertyAccessExpression).expression;
                     }
-                    return false;
+
+                    if (enumArg.kind !== SK.Identifier) {
+                        return false;
+                    }
+
+                    enumParts.unshift((enumArg as Identifier).text);
+
+                    // Use parts.length, because enumParts also contains the enum member
+                    for (let i = 0; i < parts.length; i++) {
+                        if (parts[i] !== enumParts[i]) return false;
+                    }
+
+                    return true;
                 }
             }
         }
@@ -3134,6 +3148,16 @@ ${output}</xml>`;
         switch (node.kind) {
             case SK.ParenthesizedExpression:
                 return isLiteralNode((node as ts.ParenthesizedExpression).expression)
+            case SK.ArrayLiteralExpression:
+                const arr = node as ts.ArrayLiteralExpression;
+
+                // Check to make sure all array elements are literals or tagged template literals (e.g. img``)
+                for (const el of arr.elements) {
+                    if (!isLiteralNode(el) && el.kind !== SK.TaggedTemplateExpression) {
+                        return false;
+                    }
+                }
+                return true;
             case SK.NumericLiteral:
             case SK.StringLiteral:
             case SK.NoSubstitutionTemplateLiteral:

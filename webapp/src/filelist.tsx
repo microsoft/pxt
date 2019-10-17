@@ -162,9 +162,19 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addTypeScriptFile() {
+        const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
-            body: lf("Please provide a name for your new file. Don't use spaces or special characters.")
+            hasCloseIcon: true,
+            onInputValidation: (v) => {
+                if (!v)
+                    return lf("filename is empty.");
+                v = v.trim();
+                if (!validRx.test(v))
+                    return lf("Don't use spaces or special characters.");
+                return undefined;
+            },
+            body: lf("Please provide a name for your new file.")
         }).then(str => {
             str = str || ""
             str = str.trim()
@@ -184,7 +194,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             }
             if (!str)
                 return Promise.resolve()
-            if (!/^[\w\-]+$/.test(str)) {
+            if (!validRx.test(str)) {
                 core.warningNotification(lf("Invalid file name"))
                 return Promise.resolve()
             }
@@ -321,7 +331,7 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
         const targetTheme = pxt.appTarget.appTheme;
         const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
         const header = this.props.parent.state.header;
-        if (!showGithub || !header) return <div/>;
+        if (!showGithub || !header) return <div />;
 
 
         const { githubId } = header;
@@ -339,7 +349,7 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
                 onKeyDown={sui.fireClickOnEnter}>
                 {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
                 <i className="github icon" />
-                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined }
+                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
             </div>
         </div>;
     }

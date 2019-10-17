@@ -3,7 +3,7 @@
 These pages contain documentation for Microsoft MakeCode, a framework
 for creating JavaScript/Blocks online editors.
 
-[Microsoft MakeCode](https://www.makecode.com) is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
+[Microsoft MakeCode](https://www.makecode.com) is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
 
 ## For MakeCode users
 

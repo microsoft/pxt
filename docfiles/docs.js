@@ -70,7 +70,7 @@ function setupSidebar() {
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
-                document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
+                $(".sidebar .focused").focus();
                 scrollActiveHeaderIntoView();
             },
             onHidden: function () {
@@ -87,8 +87,9 @@ function setupSidebar() {
     $('.ui.accordion')
         .accordion({
             closeNested: true,
+            duration: 50,
             selector: {
-                trigger: '.title .icon'
+                trigger: '> .title'
             }
         });
 
@@ -96,8 +97,9 @@ function setupSidebar() {
     for (var i = 0; i < accordions.length; i++) {
         var nodes = accordions.item(i).getElementsByClassName("title");
         for (var j = 0; j < nodes.length; j++) {
-            var hrefNode = nodes.item(j).getElementsByTagName("a").item(0);
-            var iNode = nodes.item(j).getElementsByTagName("i").item(0);
+            var menuItem = nodes.item(j);
+            var hrefNode = menuItem.getElementsByTagName("a").item(0);
+            var iNode = menuItem.getElementsByTagName("i").item(0);
             iNode.onclick = function (e) {
                 if (hrefNode.hasAttribute("aria-expanded") && hrefNode.getAttribute("aria-expanded") === "true") {
                     hrefNode.setAttribute("aria-expanded", "false");
@@ -105,6 +107,10 @@ function setupSidebar() {
                     hrefNode.setAttribute("aria-expanded", "true");
                 }
             };
+            if (!hrefNode) {
+                hrefNode = menuItem;
+                menuItem.setAttribute("tabindex", "0");
+            }
             hrefNode.onkeydown = function (e) {
                 var charCode = (typeof e.which == "number") ? e.which : e.keyCode
                 if (charCode === 39) { // Right key
@@ -122,8 +128,6 @@ function setupSidebar() {
     for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
-
-    scrollActiveHeaderIntoView();
 }
 
 function setupSemantic() {
@@ -135,12 +139,22 @@ function setupSemantic() {
     $.fn.embed.settings.templates.placeholder = function (image, icon) {
         var html = '';
         if (icon) {
-            html += '<i class="' + icon + ' icon"></i>';
+            html += '<i class="' + icon.replace(/[^\w ]*/g, '') + ' icon"></i>';
         }
         if (image) {
             //Remove the timestamp from the YouTube source URL
             image = image.replace(/\#t=([0-9]+m)?([0-9]+s)?/, "");
-            html += '<img class="placeholder" src="' + image + '">';
+
+            html += `<div class="placeholder" style="
+    background-image: url(${encodeURI(image)});
+    background-size: cover;
+    background-position: 50% 50%;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top:  0;
+    left:  0;
+"></div>`
         }
         return html;
     };
@@ -165,7 +179,7 @@ function setupSemantic() {
             src += (/\?/.test(url) ? '&' : '?') + parameters;
         }
         return ''
-            + '<iframe src="' + src + '"'
+            + '<iframe src="' + encodeURI(src) + '"'
             + ' width="100%" height="100%"'
             + ' frameborder="0" scrolling="no" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>'
             ;
@@ -191,6 +205,10 @@ function setupSemantic() {
 
     $('#printbtn').on("click", function () {
         window.print();
+    })
+
+    $('#translatebtn').on("click", function () {
+        window.location.href = window.location.href.replace(/#.*/, '') + (window.location.href.indexOf('?') > -1 ? "&" : "?") + "translate=1"
     })
 
     if (/browsers$/i.test(window.location.href))
@@ -233,6 +251,8 @@ function setupBlocklyAsync() {
 }
 
 function renderSnippets() {
+    if (typeof ksRunnerReady === "undefined") return; // probably in pxt docs
+
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
         setupBlocklyAsync()
@@ -241,7 +261,7 @@ function renderSnippets() {
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
-                    staticPythonClass: 'lang-spy', 
+                    staticPythonClass: 'lang-spy',
                     shuffleClass: 'lang-shuffle',
                     simulatorClass: 'lang-sim',
                     linksClass: 'lang-cards',

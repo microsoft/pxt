@@ -41,10 +41,6 @@ namespace pxt.runner {
         hex?: string;
     }
 
-    function appendBlocks($parent: JQuery, $svg: JQuery) {
-        $parent.append($('<div class="ui content blocks"/>').append($svg));
-    }
-
     function highlight($js: JQuery) {
         if (typeof hljs !== "undefined") {
             if ($js.hasClass("highlight"))
@@ -55,13 +51,17 @@ namespace pxt.runner {
         }
     }
 
+    function appendBlocks($parent: JQuery, $svg: JQuery) {
+        $parent.append($(`<div class="ui content blocks"/>`).append($svg));
+    }
+
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
+        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>JavaScript</div></div>`).append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/>Python</div></div>').append($py));
+        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>Python</div></div>`).append($py));
         highlight($py);
     }
 
@@ -154,12 +154,14 @@ namespace pxt.runner {
             $menu.append($hexBtn);
         }
 
-        let r = [$c];
+        let r = $(`<div class=codesnippet></div>`);
         // don't add menu if empty
-        if ($menu.children().length) r.push($h);
+        if ($menu.children().length)
+            r.append($h);
+        r.append($c);
 
         // inject container
-        $container.replaceWith(r as any);
+        $container.replaceWith(r);
 
         function appendBlocksButton() {
             if (!$svg) return;
@@ -270,7 +272,7 @@ namespace pxt.runner {
 
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
-            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg as HTMLElement) : undefined;
             const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles["main.py"];
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
             const py = p ? $('<code class="lang-python highlight"/>').text(p.trim()) : undefined;
@@ -315,13 +317,24 @@ namespace pxt.runner {
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
             let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
 
-            const s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const blocksHtml = xml ? pxt.blocks.render(xml) : r.compileBlocks && r.compileBlocks.success ? r.blocksSvg : undefined;
+            const s = blocksHtml ? $(blocksHtml as HTMLElement) : undefined
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             const js = $('<code class="lang-typescript highlight"/>').text(sig);
             // TODO python
             const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
+            // add an html widge that allows to translate the block
+            if (pxt.Util.isTranslationMode()) {
+                const trs = $('<div class="ui segment" />');
+                trs.append($(`<div class="ui header"><i class="ui xicon globe" /></div>`));
+                if (symbolInfo.attributes.translationId)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
+                if (symbolInfo.attributes.jsDoc)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
+                trs.insertAfter(c);
+            }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
@@ -343,8 +356,10 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.staticPythonClass, (c, r) => {
             const s = r.compilePython;
             if (s && s.success) {
-                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
-                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python').text(s.outfiles["main.py"]);
+                const $js = c.clone().removeClass('lang-shadow').addClass('highlight');
+                const $py = $js.clone().addClass('lang-python').text(s.outfiles["main.py"]);
+                $js.addClass('lang-typescript');
+                highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
         }, { package: options.package, snippetMode: true });
@@ -806,7 +821,7 @@ namespace pxt.runner {
             run: !!options.simulator
         }
 
-        function render(e: Node, ignored: boolean) {
+        function render(e: HTMLElement, ignored: boolean) {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
@@ -863,7 +878,7 @@ namespace pxt.runner {
             let $c = $(c);
             let padding = '81.97%';
             if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-            let $sim = $(`<div class="ui centered card"><div class="ui content">
+            let $sim = $(`<div class="ui card"><div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
                     </div>

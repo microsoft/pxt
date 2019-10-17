@@ -2,7 +2,7 @@
 
 Client side telemetry is collected for Microsoft MakeCode [websites](https://makecode.com).
 
-Microsoft MakeCode uses the [Application Insights Javascript SDK](https://github.com/Microsoft/ApplicationInsights-JS) to collect the telemetry information.
+Microsoft MakeCode uses the [Application Insights Javascript SDK](https://github.com/microsoft/ApplicationInsights-JS) to collect the telemetry information.
 
 ## Cookies
 
@@ -95,11 +95,11 @@ Property | Description
 `syntheticSource` | String identifying the bot or test agent.
 
 <br/>
-**Note:** Refer to the [Application Insights SDK API Reference](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md) documentation for further details.
+**Note:** Refer to the [Application Insights SDK API Reference](https://github.com/microsoft/ApplicationInsights-JS/blob/master/API-reference.md) documentation for further details.
 
 ## Microsoft MakeCode custom telemetry
 
-Microsoft MakeCode website's also sends custom telemetry using AppInsights [trackEvent](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackevent). Each custom telemetry event has the following additional information:
+Microsoft MakeCode website's also sends custom telemetry using AppInsights [trackEvent](https://github.com/microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackevent). Each custom telemetry event has the following additional information:
 
 CustomDimensions | Description
 ---|---
@@ -126,4 +126,4 @@ locale | change of language
 Packages | github search, bundled,
 Docs | doc usage
 <br/>
-In addition to the events, exceptions in the editor are sent by AppInsights [trackException](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackexception).
+In addition to the events, exceptions in the editor are sent by AppInsights [trackException](https://github.com/microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackexception).

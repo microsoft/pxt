@@ -8,7 +8,7 @@ and you can volunteer to translate parts of the web site.
 
 ## Crowdin project
 
-The project below contains the resources from https://makecode.com and the menu items of @homeurl@.
+The Crowdin translation project below contains both the resources and menu items from @homeurl@.
 
 * [https://crowdin.com/project/kindscript](https://crowdin.com/project/kindscript)
 
@@ -16,13 +16,98 @@ If you want to help with translating the editor, please sign in to Crowdin (or j
 
 ### ~ hint
 
+#### Sign up to translate
+
+For a quick explaination of how to sign up and join a MakeCode translation team, watch this
+short video:
+
+https://youtu.be/4PqWq50e8C4
+
+### ~
+
+## Translations in context
+
+MakeCode has the capability for [in context translations](https://support.crowdin.com/in-context-localization/). This allows you to perform translations to text content right at the place where you see it in the editor (or in a documentation page).
+
+https://youtu.be/OugXfqhWUQo
+
+### ~ hint
+
+#### In context suppport
+
+In context translation is still being rolled out into the editors. It might not be available for your MakeCode editor yet.
+
+### Currently supported editors
+
+* `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
+* `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
+* `/beta` version of [LEGO - EV3](https://makecode.mindstorms.com/beta)
+* The [Maker Editor](https://maker.makecode.com)
+
+### ~
+
+### Editor translation
+
+To enter translation mode in the editor, go the gearwheel menu, click **Languages** and then click the **Translate the editor** button at the bottom.
+
+![Button in language dialog](/static/blog/translations-in-context/translatebutton.png)
+
+Each portion of text that is available for translation will have a colored border and an icon to edit the translation. The colored borders mean:
+
+* Red border: the text has no translation
+* Blue border: the text has a translation but it isn't validated/approved
+* Green border: the text has a valdated/approved translation
+
+For user interface elements, simply click on the icon to translate them.
+
+![An example of incontext translations](/static/blog/translations-in-context/home.png)
+
+For blocks, go to the context menu
+and click **Translate this block**.
+
+![Blocks context menu with translate option](/static/blog/translations-in-context/contextmenu.png)
+
+You will be prompted with a dialog that contains the block translatable string.
+
+![Translation dialog](/static/blog/translations-in-context/block.png)
+
+## Translation roles
+
+Crowdin is a crowd-sourced translation platform with two main actors: **translators** and **proofreaders**. 
+**Translators** add new translations or vote for existing translations. Once a translation is available, a **proofreader** needs
+to **validate** it in order to appear on the MakeCode web sites.
+
+### Translator
+
+As a translator you select text from a strings file or markdown page. In this case, the tutorial file ``dice.md`` is selected.
+
+![File list](/static/translation/translate-file.jpg)
+
+A particular string is then selected to translate.
+
+![String selections list](/static/translation/string-select.jpg)
+
+Over in the translation editor you type in your suggested translation and press **SAVE**.
+
+![Translation editor example](/static/translation/translate-editor.jpg)
+
+Once your translation is saved, it moves down into the suggested translations list. There could be other translation suggestions listed there too. You can review those to help form your new translation or possibly someone else has come up with a better one. If some part of a string your working on was already translated, Crowdin may offer a suggestion using some of the previous translated text.
+
+![Translation suggestions list](/static/translation/translate-suggestions.jpg)
+
+### Proofreader
+
+Proofreaders review new translations and approve or disapprove suggestions. A suggestion is approved by pressing the **Approve** button (a checkmark) next to it.
+
+![Translation suggestions list](/static/translation/translate-approve.jpg)
+
+## Crowdin deep dive
+
 Interested in how localization works in MakeCode? Watch this video for an overview of the process.
 
 https://youtu.be/XpdUzpBVKFU
 
-### ~
-
-## Languages
+### Languages
 
 On the Crowdin [home page](https://crowdin.com/project/kindscript) are the all of the languages enabled for the MakeCode project. You go here first to choose the language or languages you wish to participate in for translation.
 
@@ -34,11 +119,11 @@ When you select a language, you see a folder view of the translation files for b
 
 The source language for all of the files is English and that's the language the files are in when uploaded to Crowdin. During the translation process, Crowdin keeps a database of all the current and suggested translations for each part of a translation file.
 
-## Target folders
+### Target folders
 
 Under each language there are top-level folders for all of the editors (including the MakeCode core) supported by the MakeCode team. Some of these are featured on the [MakeCode](https://www.microsoft.com/en-us/makecode) home page. If you are interested in helping translate a particular target, you can focus your efforts in the files under its top-level folder. If you wish to help generally and want to work in more than one target, be aware that not all targets are presently active. To make your help count the most, you probably want to work with an active target. These are active and inactive targets:
 
-### Active targets
+#### Active targets
 
 - [x] [adafruit](https://crowdin.com/project/kindscript/en#/adafruit)
 - [x] [arcade](https://crowdin.com/project/kindscript/en#/arcade)
@@ -52,15 +137,15 @@ Under each language there are top-level folders for all of the editors (includin
 - [x] [minecraft](https://crowdin.com/project/kindscript/en#/minecraft)
 - [x] [stm32iotnode](https://crowdin.com/project/kindscript/en#/stm32iotnode)
 
-### Inactive targets
+#### Inactive targets
 
 - [ ] [v0](https://crowdin.com/project/kindscript/en#/v0)
 - [ ] [calliope](https://crowdin.com/project/kindscript/en#/calliope)
 - [ ] [calliopemini](https://crowdin.com/project/kindscript/en#/calliopemini)
 
-## File types
+### File types
 
-### Strings files
+#### Strings files
 
 The folder tree contains both **strings** files and **markdown** files for complete document pages. If you haven't heard of the term _strings_ before, strings are text elements which are either individual words or sentences. If you select the top level ``strings.json`` file, a portion of it might contain:
 
@@ -103,7 +188,7 @@ The block strings can include syntax characters and tokens as well as the text t
 
 ![Words only translation example](/static/translation/xlate-words-only.jpg)
 
-### Documentation pages
+#### Documentation pages
 
 All of the documentation pages are translated. These pages are written in [markdown](https://daringfireball.net/projects/markdown/) and are copied up to Crowdin verbatim, no processing or text extraction. So, in the file folder tree you will see files with names that end with ``.md`` meaning that they are markdown files. The markdown pages support documentation for how-to pages, maker projects, lessons, coding courses, and code block reference...just to name a few.
 
@@ -115,9 +200,9 @@ In this example, a reference page for the **show animation** block is translated
 
 ![Translation example for reference page](/static/translation/md-page.jpg)
 
-## What parts of MakeCode are translated?
+### What parts of MakeCode are translated?
 
-### MakeCode.com website
+#### MakeCode.com website
 
 Not only are the strings and documentation for the various editors translated, the text for the MakeCode.com project website is translated too. Such as the pages for:
 
@@ -130,7 +215,7 @@ Not only are the strings and documentation for the various editors translated, t
 
 Strings found in the rendering code of the MakeCode.com website are placed in  ``webstrings.json``.
 
-### Common strings and pages
+#### Common strings and pages
 
 There are strings that are shared by, and therefore common to, every MakeCode target. There's a top level ``strings.json`` that is used by the webapp that the target editor runs under. These are strings for the base interface elements of the editor. Examples are strings for download actions, editor view buttons, dialog text, and common menu items.
 
@@ -138,7 +223,7 @@ There are strings that are shared by, and therefore common to, every MakeCode ta
 
 A set of base documents that each target editor "inherits" is in the ``core`` folder under ``common-docs``. These mostly document fundamental coding and programming topics that are general for any editor.
 
-### Target editor strings and pages
+#### Target editor strings and pages
 
 Strings for each target are under the target name folder, ``microbit`` for example. Strings which are used for customization of the target editor are in a file called ``target-strings.json``. The other strings files are primarily for the text in the blocks used by the that target. The files are named by the block category followed by ``-strings.json`` and ``-jsdoc-strings.json``. So, text in blocks for the ``radio`` category are found in:
 
@@ -151,33 +236,7 @@ The first file, ``radio-strings.json``, contains strings for the text of the ``r
 
 There's also a ``docs`` folder under each target folder for the all documentation pages specific to that target.
 
-## Translation roles
-
-### Translator
-
-As a translator you select text from a strings file or markdown page. In this case, the tutorial file ``dice.md`` is selected.
-
-![File list](/static/translation/translate-file.jpg)
-
-A particular string is then selected to translate.
-
-![String selections list](/static/translation/string-select.jpg)
-
-Over in the translation editor you type in your suggested translation and press **SAVE**.
-
-![Translation editor example](/static/translation/translate-editor.jpg)
-
-Once your translation is saved, it moves down into the suggested translations list. There could be other translation suggestions listed there too. You can review those to help form your new translation or possibly someone else has come up with a better one. If some part of a string your working on was already translated, Crowdin may offer a suggestion using some of the previous translated text.
-
-![Translation suggestions list](/static/translation/translate-suggestions.jpg)
-
-### Proofreader
-
-Proofreaders review new translations and approve or disapprove suggestions. A suggestion is approved by pressing the **Approve** button (a checkmark) next to it.
-
-![Translation suggestions list](/static/translation/translate-approve.jpg)
-
-## Translation file summary
+### Translation file summary
 
 The following table provides a quick guide to which parts of MakeCode the translation files and folders relate. The links here are to the [English](https://crowdin.com/project/kindscript/en#) source files just to show you the location of the files in the folder structure. Of course, you will translate in your selected language instead.
 

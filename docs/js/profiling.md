@@ -43,3 +43,32 @@ Typical timing procedure is to:
 * reduce randomness by setting `RANDOM_SEED = 42` in `namespace userconfig`
 * reload editor; run the game
 * look at the median of medians in the last perf counter output
+
+## Profiling memory
+
+You can track live objects in the heap, when running in the simulator.
+You do it with `control.heapSnapshot()` API. Typically it's used like this:
+
+```typescript
+game.onUpdateInterval(5000, function () {
+    control.heapSnapshot()
+})
+```
+
+You can also trigger it between game levels, or in some other well-defined points.
+
+Each call creates a heap snapshot.
+For every snapshots it prints number of live objects of each type, the biggest 20 objects, and new objects.
+
+New objects are only identified after the third snapshot has been taken.
+Given three snapshots S0, S1, S2, a new object is one which was not present
+in S0, but is present in both S1 and S2.
+Additionally, if there is no more than `maxBgInstances` (which is set in `//%...` comments on
+class definition and defaults to zero) of objects of given
+type in S2, the object is not considered new.
+
+The profiler doesn't currently track strings and numbers.
+Also, the memory reported for arrays is a low bound (the memory allocated is larger due
+to growth factor of arrays).
+Finally, on hardware heap fragmentation might mean less memory is available than
+one would think.

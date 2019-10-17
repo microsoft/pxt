@@ -179,7 +179,7 @@ namespace ts.pxtc.Util {
             return new Promise<string>((resolve, reject) => {
                 let reader = new FileReader();
                 reader.onerror = (ev) => resolve(null);
-                reader.onload = (ev) => resolve(reader.result);
+                reader.onload = (ev) => resolve(reader.result as string);
                 reader.readAsText(f);
             });
         }
@@ -937,6 +937,7 @@ namespace ts.pxtc.Util {
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
         "nl": { englishName: "Dutch", localizedName: "Nederlands" },
         "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "nb": { englishName: "Norwegian Bokmal", localizedName: "Norsk bokmål" },
         "pl": { englishName: "Polish", localizedName: "Polski" },
         "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
