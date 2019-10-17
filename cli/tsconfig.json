@@ -8,7 +8,6 @@
         "module": "commonjs",
         "rootDir": ".",
         "newLine": "LF",
-        "sourceMap": false,
-        "incremental": true
+        "sourceMap": false
     }
 }

@@ -1,4 +1,4 @@
-/// <reference path='../pxtcompiler/ext-typescript/lib/typescriptServices.d.ts' />
+/// <reference path='../built/typescriptServices.d.ts' />
 namespace ts.pxtc {
     export function flattenDiagnosticMessageText(messageText: string | DiagnosticMessageChain, newLine: string): string {
         if (typeof messageText === "string") {

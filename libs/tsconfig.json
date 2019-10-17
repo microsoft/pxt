@@ -6,7 +6,6 @@
         "outDir": "../built",
         "rootDir": ".",
         "newLine": "LF",
-        "sourceMap": false,
-        "incremental": true
+        "sourceMap": false
     }
 }
