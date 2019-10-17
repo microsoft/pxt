@@ -388,33 +388,6 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         return true;
     }
 
-    updateOutput(question: pxt.SnippetQuestions) {
-        const { tsOutput } = this.state;
-
-        let skipOutput = false
-        if (!!question.outputConditionalOnAnswer) {
-            // TODO(dz): stuck on how to skip output for a question
-            console.log("QUESTION")
-            console.dir(question)
-            console.log("STATE")
-            console.dir(this.state)
-            let cond = question.outputConditionalOnAnswer;
-            let answers = question.inputs
-                .map(i => isSnippetInputAnswerSingular(i) ? [i.answerToken] : i.answerTokens)
-                .reduce((p, n) => [...p, ...n], [])
-            // we intentionally allow type coercion since sometimes answers are boolean, sometimes string
-            if (answers.every(a => this.state.answers[a] != cond))
-                skipOutput = true
-            console.log("skipOutput")
-            console.log(skipOutput)
-        }
-
-        if (!skipOutput && question.output && tsOutput.indexOf(question.output) === -1) {
-            const newOutput = pxt.Util.concat([tsOutput, [question.output]]);
-            this.setState({ tsOutput: newOutput }, this.generateOutputMarkdown);
-        }
-    }
-
     /**
      * Changes page by 1 if next question exists.
      * Looks for output and appends the next questions output if it exists and
@@ -430,10 +403,10 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
         } else if (goto) {
             // Look ahead and update markdown
             const nextQuestion = this.getNextQuestion();
-            this.updateOutput(nextQuestion);
+            let newTsOutput = this.updateOutput(nextQuestion, this.state.answers, this.state.tsOutput)
             const nextQuestionNumber = this.getNextQuestionNumber();
 
-            this.setState({ history: [...history, nextQuestionNumber] }, this.toggleActionButton)
+            this.setState({ history: [...history, nextQuestionNumber], tsOutput: newTsOutput }, this.toggleActionButton)
             pxt.tickEvent('snippet.builder.next.page', { snippet: config.name, page: nextQuestionNumber }, { interactiveConsent: true });
             // Force generates output markdown for updated highlighting
             this.generateOutputMarkdown();
@@ -466,12 +439,44 @@ export class SnippetBuilder extends data.Component<SnippetBuilderProps, SnippetB
     }
 
     onChange = (answerToken: string) => (v: string) => {
-        this.setState((prevState: SnippetBuilderState) => ({
-            answers: {
+        console.log("ON CHANGE")
+        let question = this.getCurrentQuestion();
+        this.setState((prevState: SnippetBuilderState) => {
+            let newAnswers = {
                 ...prevState.answers,
                 [answerToken]: v,
+            };
+            return {
+                answers: newAnswers,
+                tsOutput: this.updateOutput(question, newAnswers, prevState.tsOutput)
             }
-        }), this.generateOutputMarkdown);
+        }, this.generateOutputMarkdown);
+    }
+
+    updateOutput(question: pxt.SnippetQuestions, answers: AnswersMap, oldTsOutput: string[]): string[] {
+        let skipOutput = false
+        if (!!question.outputConditionalOnAnswer) {
+            let cond = question.outputConditionalOnAnswer;
+            let qas = question.inputs
+                .map(i => isSnippetInputAnswerSingular(i) ? [i.answerToken] : i.answerTokens)
+                .reduce((p, n) => [...p, ...n], [])
+            // we intentionally allow type coercion since sometimes answers are boolean, sometimes string
+            if (qas.every(a => answers[a] != cond))
+                skipOutput = true
+        }
+
+        let hasOutput = !!question.output
+        let outputAlreadyIncluded = hasOutput && oldTsOutput.indexOf(question.output) !== -1
+
+        let newOutput = oldTsOutput
+        if (!skipOutput && !outputAlreadyIncluded && hasOutput) {
+            newOutput = pxt.Util.concat([oldTsOutput, [question.output]]);
+        } else if (skipOutput && outputAlreadyIncluded) {
+            newOutput = oldTsOutput
+                .filter(o => o !== question.output)
+        }
+
+        return newOutput;
     }
 
     renderCore() {

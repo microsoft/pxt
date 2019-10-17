@@ -230,7 +230,7 @@ class YesNoInput extends data.Component<IYesNoInputProps, {}> {
         this.onChange = this.onChange.bind(this);
     }
 
-    onChange = (value: string) => () => {
+    onChange(value: string): void {
         const { onChange } = this.props;
         onChange(value);
     }
