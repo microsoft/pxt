@@ -281,24 +281,6 @@ function renderSnippets() {
     });
 }
 
-function getCookieLang() {
-    var cookiePropRegex = new RegExp(pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)+ "=(.*?)(?:;|$)")
-    var cookieValue = cookiePropRegex.exec(document.cookie);
-    return cookieValue && cookieValue[1] || null;
-}
-
-function setCookieLang(langId) {
-    if (!pxt.Util.allLanguages[langId]) {
-        return;
-    }
-    if (langId !== getCookieLang()) {
-        pxt.tickEvent("menu.lang.setcookielang", { lang: langId, docs: "true" });
-        var expiration = new Date();
-        expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
-        document.cookie = `${pxt.Util.pxtLangCookieId}=${langId};expires=${expiration.toUTCString()};path=/`;
-    }
-}
-
 function languageOption(code) {
     var locale = pxt.Util.allLanguages[code];
 
@@ -328,7 +310,7 @@ function languageOption(code) {
 
 function setupLangPicker() {
     var appTheme = pxt.appTarget.appTheme;
-    var initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
+    var initialLang = pxt.Util.normalizeLanguageCode(pxt.Util.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
 
     if (appTheme.availableLocales && appTheme.selectLanguage) {
@@ -381,7 +363,7 @@ function setupLangPicker() {
                 if (!pxt.Util.allLanguages[langId]) {
                     return;
                 }
-                setCookieLang(langId);
+                pxt.Util.setCookieLang(langId, /** docs **/ "true");
                 if (langId !== initialLang) {
                     pxt.tickEvent("menu.lang.changelang", { lang: langId, docs: "true" });
                     // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
