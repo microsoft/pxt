@@ -659,6 +659,8 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
 
 export class WorkspaceHeader extends data.Component<any, {}> {
     private flyoutWidth: number = 0;
+    private flyoutTitle: string = lf("Toolbox");
+    private workspaceTitle: string = lf("Workspace");
     constructor(props: any) {
         super(props);
     }
@@ -678,8 +680,8 @@ export class WorkspaceHeader extends data.Component<any, {}> {
 
     renderCore() {
         return <div id="headers">
-                    <div id="flyoutHeader" style={this.headerStyle()}>Toolbox</div>
-                    <div id="workspaceHeader">Workspace</div>
+                    <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
+                    <div id="workspaceHeader">{this.workspaceTitle}</div>
                </div>;
     }
 }
