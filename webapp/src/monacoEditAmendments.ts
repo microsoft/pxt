@@ -17,7 +17,7 @@ import { rangeToSelection } from "./monaco";
 
 // TODO(dz):
 export interface EditAmendment {
-    delLeft: number,
+    behavior: "replaceLine",
     insertText: string,
 }
 type EditAmendmentInstance = {
@@ -27,15 +27,12 @@ const amendmentMarker = `#AMENDMENT:` // TODO: generalize for TS if needed
 
 export function createLineReplacementPyAmendment(insertPosition: monaco.Position, insertText?: string): EditAmendment {
     return {
-        delLeft: insertPosition.column - 1,
+        behavior: "replaceLine",
         insertText: insertText || "",
     }
 }
 export function amendmentToInsertSnippet(amendment: EditAmendment): string {
-    if (amendment.delLeft > 0)
-        return `${amendmentMarker}${JSON.stringify(amendment)}`
-    else
-        return amendment.insertText
+    return `${amendmentMarker}${JSON.stringify(amendment)}`
 }
 
 function scanForEditAmendment(e: monaco.editor.IModelContentChangedEvent): EditAmendmentInstance | null {
@@ -79,8 +76,10 @@ export function listenForEditAmendments(editor: monaco.editor.IStandaloneCodeEdi
         amendRange.endColumn = MAX_COLUMN_LENGTH
         let changeLines = changeText.split("\n").length - 1
         // amendRange.endLineNumber += changeLines
-        if (amendment.delLeft) {
-            amendRange.startColumn = Math.max(amendRange.startColumn - amendment.delLeft, 1)
+        if (amendment.behavior === "replaceLine") {
+            amendRange.startColumn = 1
+        } else {
+            let _: never = amendment.behavior;
         }
 
         setTimeout(() => {
