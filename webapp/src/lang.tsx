@@ -92,7 +92,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                     <div className="ui cards centered" role="listbox">
                         {languageList.map(langId => {
                             const lang = pxt.Util.allLanguages[langId];
-                            return lang && <LanguageCard
+                            return <LanguageCard
                                 key={langId}
                                 langId={langId}
                                 name={lang.localizedName}
