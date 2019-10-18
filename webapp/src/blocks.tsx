@@ -1318,7 +1318,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
         if (this.flyoutXmlList.length == 0) {
-            let label = goog.dom.createDom('label');
+            let label = Blockly.utils.xml.createElement('label');
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
         }
@@ -1329,7 +1329,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.flyoutXmlList = [];
         const topBlocks = this.getTopBlocks();
         if (topBlocks.length == 0) {
-            let label = goog.dom.createDom('label');
+            let label = Blockly.utils.xml.createElement('label');
             label.setAttribute('text', lf("No basic blocks..."));
             this.flyoutXmlList.push(label);
         } else {
