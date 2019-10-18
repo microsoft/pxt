@@ -14,8 +14,15 @@ import { rangeToSelection } from "./monaco";
 //    We could remove this extra entry if Monaco gave us a way to pop items from the undo stack,
 //    or better yet if it supported our scenarios so that we didn't need edit amendments.
 //  - The user may see a flicker of "#AMENDMENT:..." after completing a snippet
+// Possible future issues:
+//  - The implementation depends on using setTimeout() as a way to wait for Monaco, because
+//    onDidChangeModelContent event notifies us before the change is applied to the buffer
+//    presumably as a way to give us a chance to react somehow, however to apply another edit
+//    we have to wait for the first edit to be applied, thus we use setTimeout().
+//    However in most cases when you use setTimeout(), it's likely that you may be susceptible to
+//    race conditions, especially if anyone else is listening onDidChangeModelContent and using
+//    setTimeout().
 
-// TODO(dz):
 export interface EditAmendment {
     behavior: "replaceLine",
     insertText: string,
@@ -63,81 +70,78 @@ function scanForEditAmendment(e: monaco.editor.IModelContentChangedEvent): EditA
     }, amendment)
 }
 
-export function listenForEditAmendments(editor: monaco.editor.IStandaloneCodeEditor) {
-    editor.onDidChangeModelContent(e => {
-
-        let amendment = scanForEditAmendment(e)
-        if (!amendment)
-            return
-
+// TODO(dz): handle indent
+function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.IStandaloneCodeEditor) {
+    setTimeout(() => { // see top of file comments about why use setTimeout
         let amendRange = Object.assign({}, amendment.range)
-        let changeText = amendment.insertText
-        const MAX_COLUMN_LENGTH = 99999
-        amendRange.endColumn = MAX_COLUMN_LENGTH
-        let changeLines = changeText.split("\n").length - 1
-        // amendRange.endLineNumber += changeLines
         if (amendment.behavior === "replaceLine") {
+            const MAX_COLUMN_LENGTH = 99999
+            amendRange.endColumn = MAX_COLUMN_LENGTH // clunky way to select a whole line
             amendRange.startColumn = 1
         } else {
             let _: never = amendment.behavior;
         }
 
+        let newText = amendment.insertText
+        // return new Promise(resolve => {
+        const model = editor.getModel();
+        let afterRange: monaco.Range = null;
+        let passSplits = newText.split("pass")
+        if (passSplits.length >= 2) {
+            // TODO(dz): generalize
+            let before = passSplits[0]
+            let beforeLines = before.split("\n");
+            let pass = "pass"
+            let lastBeforeLine = beforeLines[beforeLines.length - 1]
+            let passLine = amendRange.startLineNumber + beforeLines.length - 1
+            let startCol = lastBeforeLine.length + 1
+
+            afterRange = new monaco.Range(passLine, startCol,
+                passLine, startCol + pass.length)
+        }
+
+        let reverseRange = Object.assign({}, amendment.range)
+        reverseRange.endColumn = 9999 // TODO(dz) ?
+
+        let undoEdits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
+            identifier: { major: 0, minor: 0 },
+            range: model.validateRange(reverseRange),
+            text: "",
+            forceMoveMarkers: false,
+            isAutoWhitespaceEdit: false
+        }]
+        model.applyEdits(undoEdits)
+
         setTimeout(() => {
-            let newText = changeText
-            let range = amendRange
-            return new Promise(resolve => {
-                const model = editor.getModel();
-                let afterRange: monaco.Range = null;
-                let passSplits = newText.split("pass")
-                if (passSplits.length >= 2) {
-                    // TODO(dz): generalize
-                    let before = passSplits[0]
-                    let beforeLines = before.split("\n");
-                    let pass = "pass"
-                    let lastBeforeLine = beforeLines[beforeLines.length - 1]
-                    let passLine = range.startLineNumber + beforeLines.length - 1
-                    let startCol = lastBeforeLine.length + 1
 
-                    afterRange = new monaco.Range(passLine, startCol,
-                        passLine, startCol + pass.length)
-                }
+            const disposable = editor.onDidChangeModelContent(e => {
+                let changes = e.changes;
 
-                let reverseRange = Object.assign({}, amendment.range)
-                reverseRange.endColumn = 9999 // TODO(dz) ?
+                disposable.dispose();
+                if (afterRange)
+                    editor.setSelection(afterRange);
 
-                let undoEdits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
-                    identifier: { major: 0, minor: 0 },
-                    range: model.validateRange(reverseRange),
-                    text: "",
-                    forceMoveMarkers: false,
-                    isAutoWhitespaceEdit: false
-                }]
-                model.applyEdits(undoEdits)
-
-                setTimeout(() => {
-                    const disposable = editor.onDidChangeModelContent(e => {
-                        let changes = e.changes;
-
-                        disposable.dispose();
-                        if (afterRange)
-                            editor.setSelection(afterRange);
-
-                        if (afterRange)
-                            resolve(afterRange);
-                    });
-
-                    let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
-                        identifier: { major: 0, minor: 0 },
-                        range: model.validateRange(range),
-                        text: newText,
-                        forceMoveMarkers: true,
-                        isAutoWhitespaceEdit: true
-                    }]
-                    model.pushEditOperations(editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
-                }, 0);
-
-
+                // if (afterRange)
+                //     resolve(afterRange);
             });
-        }, 0) // end setTimeout
+
+            let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
+                identifier: { major: 0, minor: 0 },
+                range: model.validateRange(amendRange),
+                text: newText,
+                forceMoveMarkers: true,
+                isAutoWhitespaceEdit: true
+            }]
+            model.pushEditOperations(editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
+        }, 0);
+    }, 0)
+}
+
+export function listenForEditAmendments(editor: monaco.editor.IStandaloneCodeEditor) {
+    editor.onDidChangeModelContent(e => {
+
+        let amendment = scanForEditAmendment(e)
+        if (!!amendment)
+            applyAmendment(amendment, editor)
     });
 }
