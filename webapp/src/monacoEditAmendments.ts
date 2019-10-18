@@ -13,6 +13,7 @@ import { rangeToSelection } from "./monaco";
 //          player.on_cha
 //    We could remove this extra entry if Monaco gave us a way to pop items from the undo stack,
 //    or better yet if it supported our scenarios so that we didn't need edit amendments.
+//  - The user may see a flicker of "#AMENDMENT:..." after completing a snippet
 
 // TODO(dz):
 export interface EditAmendment {
@@ -77,7 +78,7 @@ export function listenForEditAmendments(editor: monaco.editor.IStandaloneCodeEdi
         const MAX_COLUMN_LENGTH = 99999
         amendRange.endColumn = MAX_COLUMN_LENGTH
         let changeLines = changeText.split("\n").length - 1
-        amendRange.endLineNumber += changeLines
+        // amendRange.endLineNumber += changeLines
         if (amendment.delLeft) {
             amendRange.startColumn = Math.max(amendRange.startColumn - amendment.delLeft, 1)
         }
