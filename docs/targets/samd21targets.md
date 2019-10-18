@@ -15,11 +15,11 @@ npm install -g pxt
 
 ## Step 1: UF2-SAMD21 Bootloader
 
-Create a new pull request in the [UF2-SAMD21](https://github.com/Microsoft/uf2-samd21/pulls) bootloader repo to add a config for the board. The [README](https://github.com/Microsoft/uf2-samd21/blob/master/README.md) has details on how to create a configuration. You can look at the [generic](https://github.com/Microsoft/uf2-samd21/blob/master/boards/generic/board_config.h) config to see an example.
+Create a new pull request in the [UF2-SAMD21](https://github.com/microsoft/uf2-samd21/pulls) bootloader repo to add a config for the board. The [README](https://github.com/microsoft/uf2-samd21/blob/master/README.md) has details on how to create a configuration. You can look at the [generic](https://github.com/microsoft/uf2-samd21/blob/master/boards/generic/board_config.h) config to see an example.
 
 ## Step 2: Create a target repo
 
-Clone [pxt-sample](https://github.com/Microsoft/pxt-sample) as the base to create your target. Be sure to run `npm install` in this repo.
+Clone [pxt-sample](https://github.com/microsoft/pxt-sample) as the base to create your target. Be sure to run `npm install` in this repo.
 You can serve the sample editor by running `pxt serve` in the root directory.
 
 ## Step 3: Take a look at pxtarget.json
@@ -29,7 +29,7 @@ See the [pxtarget](/targets/pxtarget) page for documentation on this file and al
 
 ## Step 4: Add the common packages
 
-[pxt-common-packages](https://github.com/Microsoft/pxt-common-packages) is the repo where the CODAL code common to all SAMD21 targets lives.
+[pxt-common-packages](https://github.com/microsoft/pxt-common-packages) is the repo where the CODAL code common to all SAMD21 targets lives.
 Run `npm install --save pxt-common-packages` inside the target repo (your new target built from pxt-sample) to add it to your target.
 If you are developing libraries locally, you can instead clone the pxt-common-packages repo from Github and link it like so: `npm link <path to cloned repo>` (be sure to add it to your `package.json` if you link the package locally).
 
@@ -62,9 +62,9 @@ You can also use following steps for any other library you wish to include from 
 1. Inside the `libs` folder, create a directory with the name of your board.
 This directory will be the main library for your board and should contain any code that does not belong in pxt-common-packages.
 Add a `pxt.json` file to this folder that depends on the "core" library created in the previous step.
-See the [pxt.json](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/pxt.json) in the pxt-adafruit circuit-playground library as an example of what this file should look like.
+See the [pxt.json](https://github.com/microsoft/pxt-adafruit/blob/master/libs/circuit-playground/pxt.json) in the pxt-adafruit circuit-playground library as an example of what this file should look like.
 
-2. Add a file named `config.ts`. This file is used to configure the pinout of the board. See the pxt-adafruit circuit-playground's [config.ts](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/config.ts) for an example.
+2. Add a file named `config.ts`. This file is used to configure the pinout of the board. See the pxt-adafruit circuit-playground's [config.ts](https://github.com/microsoft/pxt-adafruit/blob/master/libs/circuit-playground/config.ts) for an example.
 
 3. Add another file named `device.d.ts`. This file is used to define the components of the board that will be visible to TypeScript. See the pxt-adafruit circuit-playground's [device.d.ts](https://github.com/Microsoft/pxt-adafruit/blob/master/libs/circuit-playground/device.d.ts) for an example.
 

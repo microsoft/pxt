@@ -29,7 +29,7 @@ export function setCookieLang(langId: string) {
     }
 
     if (langId !== getCookieLang()) {
-        pxt.tickEvent(`menu.lang.setcookielang`, {lang : langId});
+        pxt.tickEvent(`menu.lang.setcookielang`, { lang: langId });
         const expiration = new Date();
         expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
         document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
@@ -45,6 +45,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
 
         this.hide = this.hide.bind(this);
         this.changeLanguage = this.changeLanguage.bind(this);
+        this.translateEditor = this.translateEditor.bind(this);
     }
 
     languageList(): string[] {
@@ -52,6 +53,12 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
             return pxt.appTarget.appTheme.availableLocales;
         }
         return defaultLanguages;
+    }
+
+    translateEditor() {
+        pxt.tickEvent("translate.editor.incontext")
+        const sep = window.location.href.indexOf("?") < 0 ? "?" : "&";
+        window.location.href = window.location.pathname + (window.location.search || "") + sep +  "translate=1" + (window.location.hash || "");
     }
 
     changeLanguage(langId: string) {
@@ -62,14 +69,14 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
         setCookieLang(langId);
 
         if (langId !== initialLang) {
-            pxt.tickEvent(`menu.lang.changelang`, {lang : langId});
+            pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
             pxt.winrt.releaseAllDevicesAsync()
                 .then(() => {
                     this.props.parent.reloadEditor();
                 })
                 .done();
         } else {
-            pxt.tickEvent(`menu.lang.samelang`, {lang : langId});
+            pxt.tickEvent(`menu.lang.samelang`, { lang: langId });
             this.hide();
         }
     }
@@ -114,12 +121,12 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                         )}
                     </div>
                 </div>
+                <br/>
                 {targetTheme.crowdinProject ?
-                    <p>
-                        <br /><br />
-                        <a href="/translate" target="_blank" rel="noopener noreferrer"
-                            aria-label={lf("Help us translate")}>{lf("Help us translate")}</a>
-                    </p> : undefined}
+                    <div className="ui">
+                        {!pxt.BrowserUtils.isIE() ? <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> : undefined }
+                        <sui.Link className="button" role="button" aria-label={lf("Learn about translations")} href="/translate" text={lf("Learn about translations")} target="_blank" />
+                    </div> : undefined}
             </sui.Modal>
         );
     }

@@ -125,7 +125,7 @@ namespace pxt.Cloud {
             url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
         if (!packaged && locale != "en") {
-            url += `&lang=${encodeURIComponent(Util.userLanguage())}`
+            url += `&lang=${encodeURIComponent(locale)}`
             if (live) url += "&live=1"
         }
         if (pxt.BrowserUtils.isLocalHost() && !live)

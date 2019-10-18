@@ -50,7 +50,7 @@ declare module Blockly {
  * PXT Blockly
  *
  * Copyright (c) Microsoft Corporation. All rights reserved.
- * https://github.com/Microsoft/pxt-blockly
+ * https://github.com/microsoft/pxt-blockly
  *
  * See LICENSE file for details.
  */
@@ -155,6 +155,7 @@ declare module Blockly {
         hasCategories?: boolean;
         trashcan?: boolean;
         collapse?: boolean;
+        inline?: boolean;
         comments?: boolean;
         disable?: boolean;
         scrollbars?: boolean;
@@ -177,6 +178,11 @@ declare module Blockly {
             minScale?: number;
             scaleSpeed?: number;
             startScale?: number;
+        };
+        move?: {
+            scrollbars?: boolean;
+            wheel?: boolean;
+            drag?: boolean;
         };
         enableRealTime?: boolean;
         rtl?: boolean;
@@ -8571,6 +8577,14 @@ declare module Blockly {
             EDITABLE: boolean;
     
             /**
+             *  * Serializable fields are saved by the XML renderer, non-serializable fields
+             * are not. Editable fields should also be serializable.
+             * @type {boolean}
+             * @const
+             */
+            SERIALIZABLE: boolean;
+    
+            /**
              * Used to tell if the field needs to be rendered the next time the block is
              * rendered. Image fields are statically sized, and only need to be
              * rendered at initialization.
@@ -8903,12 +8917,84 @@ declare module Blockly {
             getNumRestrictor(opt_min: number|string|any /*undefined*/, opt_max: number|string|any /*undefined*/, opt_precision: number|string|any /*undefined*/): RegExp;
     
             /**
-             * Set the constraints for this field.
-             * @param {number=} opt_min Minimum number allowed.
-             * @param {number=} opt_max Maximum number allowed.
-             * @param {number=} opt_precision Step allowed between numbers
+             * Set the maximum, minimum and precision constraints on this field.
+             * Any of these properties may be undefined or NaN to be disabled.
+             * Setting precision (usually a power of 10) enforces a minimum step between
+             * values. That is, the user's value will rounded to the closest multiple of
+             * precision. The least significant digit place is inferred from the precision.
+             * Integers values can be enforces by choosing an integer precision.
+             * @param {?(number|string|undefined)} min Minimum value.
+             * @param {?(number|string|undefined)} max Maximum value.
+             * @param {?(number|string|undefined)} precision Precision for value.
              */
-            setConstraints_(opt_min?: number, opt_max?: number, opt_precision?: number): void;
+            setConstraints_(min: number|string|any /*undefined*/, max: number|string|any /*undefined*/, precision: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the minimum value this field can contain. Updates the value to reflect.
+             * @param {?(number|string|undefined)} min Minimum value.
+             */
+            setMin(min: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the minimum value this field can contain. Called internally to avoid
+             * value updates.
+             * @param {?(number|string|undefined)} min Minimum value.
+             * @private
+             */
+            setMinInternal_(min: number|string|any /*undefined*/): void;
+    
+            /**
+             * Returns the current minimum value this field can contain. Default is
+             * -Infinity.
+             * @return {number} The current minimum value this field can contain.
+             */
+            getMin(): number;
+    
+            /**
+             * Sets the maximum value this field can contain. Updates the value to reflect.
+             * @param {?(number|string|undefined)} max Maximum value.
+             */
+            setMax(max: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the maximum value this field can contain. Called internally to avoid
+             * value updates.
+             * @param {?(number|string|undefined)} max Maximum value.
+             * @private
+             */
+            setMaxInternal_(max: number|string|any /*undefined*/): void;
+    
+            /**
+             * Returns the current maximum value this field can contain. Default is
+             * Infinity.
+             * @return {number} The current maximum value this field can contain.
+             */
+            getMax(): number;
+    
+            /**
+             * Sets the precision of this field's value, i.e. the number to which the
+             * value is rounded. Updates the field to reflect.
+             * @param {?(number|string|undefined)} precision The number to which the
+             *    field's value is rounded.
+             */
+            setPrecision(precision: number|string|any /*undefined*/): void;
+    
+            /**
+             * Sets the precision of this field's value. Called internally to avoid
+             * value updates.
+             * @param {?(number|string|undefined)} precision The number to which the
+             *    field's value is rounded.
+             * @private
+             */
+            setPrecisionInternal_(precision: number|string|any /*undefined*/): void;
+    
+            /**
+             * Returns the current precision of this field. The precision being the
+             * number to which the field's value is rounded. A precision of 0 means that
+             * the value is not rounded.
+             * @return {number} The number to which this field's value is rounded.
+             */
+            getPrecision(): number;
     
             /**
              * Show the inline free-text editor on top of the text and the num-pad if

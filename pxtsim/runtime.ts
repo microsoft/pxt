@@ -192,6 +192,7 @@ namespace pxsim {
         tryFrame?: TryFrame;
         thrownValue?: any;
         hasThrownValue?: boolean;
+        threadId?: number;
         // ... plus locals etc, added dynamically
     }
 
@@ -547,7 +548,8 @@ namespace pxsim {
             methods: src.methods,
             iface: src.iface,
             lastSubtypeNo: src.lastSubtypeNo,
-            toStringMethod: src.toStringMethod
+            toStringMethod: src.toStringMethod,
+            maxBgInstances: src.maxBgInstances,
         };
     }
 
@@ -555,6 +557,30 @@ namespace pxsim {
     export function mkMapVTable() {
         if (!mapVTable) mapVTable = mkVTable({ name: "_Map", numFields: 0, classNo: 0, lastSubtypeNo: 0, methods: null })
         return mapVTable
+    }
+
+    export function functionName(fn: LabelFn) {
+        const fi = (fn as any).info
+        if (fi)
+            return `${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})`
+        return "()"
+    }
+
+    interface ObjDesc {
+        obj: RefObject
+        pointers: [ObjDesc, string][]
+        path: string
+    }
+
+    interface TypeStats {
+        count: number
+        size: number
+        name: string
+    }
+
+    interface HeapSnapshot {
+        visited: Map<ObjDesc>
+        statsByType: Map<TypeStats>
     }
 
     export class Runtime {
@@ -578,9 +604,11 @@ namespace pxsim {
         id: string;
         globals: any = {};
         currFrame: StackFrame;
+        otherFrames: StackFrame[] = [];
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
+        private heapSnapshots: HeapSnapshot[] = [];
 
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
@@ -627,6 +655,181 @@ namespace pxsim {
                 if (p.tryFrame)
                     return p.tryFrame
             return null
+        }
+
+        traceObjects() {
+            const visited: Map<ObjDesc> = {}
+
+            while (this.heapSnapshots.length > 2)
+                this.heapSnapshots.shift()
+
+
+            const stt: TypeStats = {
+                count: 0,
+                size: 0,
+                name: "TOTAL"
+            }
+            const statsByType: Map<TypeStats> = {
+                "TOTAL": stt
+            }
+
+            this.heapSnapshots.push({
+                visited,
+                statsByType
+            })
+
+            function scan(name: string, v: any, par: ObjDesc = null): void {
+                if (!(v instanceof RefObject))
+                    return
+                const obj = v as RefObject
+                if (obj.gcIsStatic())
+                    return
+                const ex = visited[obj.id]
+                if (ex) {
+                    if (par)
+                        ex.pointers.push([par, name])
+                    return
+                }
+                const here: ObjDesc = { obj, path: null, pointers: [[par, name]] }
+                visited[obj.id] = here
+                obj.scan((subpath, v) => {
+                    if (v instanceof RefObject && !visited[v.id])
+                        scan(subpath, v, here)
+                })
+            }
+
+            for (let k of Object.keys(this.globals)) {
+                scan(k.replace(/___\d+$/, ""), this.globals[k])
+            }
+
+            const frames = this.otherFrames.slice()
+            if (this.currFrame && frames.indexOf(this.currFrame) < 0)
+                frames.unshift(this.currFrame)
+
+            for (const thread of this.getThreads()) {
+                const thrPath = "Thread-" + this.rootFrame(thread).threadId
+                for (let s = thread; s; s = s.parent) {
+                    const path = thrPath + "." + functionName(s.fn)
+                    for (let k of Object.keys(s)) {
+                        if (/^(r0|arg\d+|.*___\d+)/.test(k)) {
+                            const v = (s as any)[k]
+                            if (v instanceof RefObject) {
+                                k = k.replace(/___.*/, "")
+                                scan(path + "." + k, v)
+                            }
+                        }
+                    }
+                    if (s.caps) {
+                        for (let c of s.caps)
+                            scan(path + ".cap", c)
+                    }
+                }
+            }
+
+            const allObjects = Object.keys(visited).map(k => visited[k])
+            allObjects.sort((a, b) => b.obj.gcSize() - a.obj.gcSize())
+
+            const setPath = (inf: ObjDesc) => {
+                if (inf.path != null)
+                    return
+                let short = ""
+                inf.path = "(cycle)"
+                for (let [par, name] of inf.pointers) {
+                    if (par == null) {
+                        inf.path = name
+                        return
+                    }
+                    setPath(par)
+                    const newPath = par.path + "." + name
+                    if (!short || short.length > newPath.length)
+                        short = newPath
+                }
+                inf.path = short
+            }
+
+            allObjects.forEach(setPath)
+
+            const allStats = [stt]
+            for (const inf of allObjects) {
+                const sz = inf.obj.gcSize()
+                const key = inf.obj.gcKey()
+                if (!statsByType.hasOwnProperty(key)) {
+                    allStats.push(statsByType[key] = {
+                        count: 0,
+                        size: 0,
+                        name: key
+                    })
+                }
+                const st = statsByType[key]
+                st.size += sz
+                st.count++
+                stt.size += sz
+                stt.count++
+            }
+            allStats.sort((a, b) => a.size - b.size)
+            let objTable = ""
+            const fmt = (n: number) => ("        " + n.toString()).slice(-7)
+            for (const st of allStats) {
+                objTable += fmt(st.size * 4) + fmt(st.count) + " " + st.name + "\n"
+            }
+            const objInfo = (inf: ObjDesc) =>
+                fmt(inf.obj.gcSize() * 4) + " " + inf.obj.gcKey() + " " + inf.path
+
+            const large = allObjects.slice(0, 20).map(objInfo).join("\n")
+
+            let leaks = ""
+            if (this.heapSnapshots.length >= 3) {
+                const v0 = this.heapSnapshots[this.heapSnapshots.length - 3].visited
+                const v1 = this.heapSnapshots[this.heapSnapshots.length - 2].visited
+                const isBgInstance = (obj: RefObject) => {
+                    if (!(obj instanceof RefRecord))
+                        return false
+                    if (obj.vtable && obj.vtable.maxBgInstances) {
+                        if (statsByType[obj.gcKey()].count <= obj.vtable.maxBgInstances)
+                            return true
+                    }
+                    return false
+                }
+                const leakObjs = allObjects
+                    .filter(inf => !v0[inf.obj.id] && v1[inf.obj.id])
+                    .filter(inf => !isBgInstance(inf.obj))
+                leaks = leakObjs
+                    .map(objInfo).join("\n")
+            }
+
+            return (
+                "Threads:\n" + this.threadInfo() +
+                "\n\nSummary:\n" + objTable +
+                "\n\nLarge Objects:\n" + large +
+                "\n\nNew Objects:\n" + leaks)
+        }
+
+        getThreads() {
+            const frames = this.otherFrames.slice()
+            if (this.currFrame && frames.indexOf(this.currFrame) < 0)
+                frames.unshift(this.currFrame)
+            return frames
+        }
+
+        rootFrame(f: StackFrame) {
+            let p = f
+            while (p.parent)
+                p = p.parent
+            return p
+        }
+
+        threadInfo() {
+            const frames = this.getThreads()
+            let info = ""
+            for (let f of frames) {
+                info += `Thread ${this.rootFrame(f).threadId}:\n`
+                for (let s of getBreakpointMsg(f, f.lastBrkId).msg.stackframes) {
+                    let fi = s.funcInfo
+                    info += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
+                }
+                info += "\n"
+            }
+            return info
         }
 
         // communication
@@ -781,6 +984,7 @@ namespace pxsim {
             this.id = msg.id
             this.refCountingDebug = !!msg.refCountingDebug;
 
+            let threadId = 0
             let breakpoints: Uint8Array = null
             let currResume: ResumeFn;
             let dbgHeap: Map<any>;
@@ -842,6 +1046,7 @@ namespace pxsim {
                 const lock = new Object();
                 const pc = s.pc;
                 __this.loopLock = lock;
+                __this.otherFrames.push(s)
                 return () => {
                     if (__this.dead) return;
                     U.assert(s.pc == pc);
@@ -958,7 +1163,7 @@ namespace pxsim {
                 switch (msg.subtype) {
                     case "config":
                         let cfg = msg as DebuggerConfigMessage
-                        if (cfg.setBreakpoints) {
+                        if (cfg.setBreakpoints && breakpoints) {
                             breakpoints.fill(0)
                             for (let n of cfg.setBreakpoints)
                                 breakpoints[n] = 1
@@ -997,6 +1202,17 @@ namespace pxsim {
                 }
             }
 
+            function removeFrame(p: StackFrame) {
+                const frames = __this.otherFrames
+                for (let i = frames.length - 1; i >= 0; --i) {
+                    if (frames[i] === p) {
+                        frames.splice(i, 1)
+                        return
+                    }
+                }
+                U.userError("frame cannot be removed!")
+            }
+
             function loop(p: StackFrame) {
                 if (__this.dead) {
                     console.log("Runtime terminated")
@@ -1004,6 +1220,7 @@ namespace pxsim {
                 }
                 U.assert(!__this.loopLock)
                 __this.perfStartRuntime()
+                removeFrame(p)
                 try {
                     runtime = __this
                     while (!!p) {
@@ -1059,6 +1276,7 @@ namespace pxsim {
                     parent: null,
                     pc: 0,
                     depth: 0,
+                    threadId: ++threadId,
                     fn: () => {
                         if (cb) cb(frame.retval)
                         return null
@@ -1078,6 +1296,7 @@ namespace pxsim {
                     depth: 0,
                     pc: 0
                 }
+                __this.otherFrames = [frame]
                 loop(actionCall(frame))
             }
 
@@ -1118,6 +1337,7 @@ namespace pxsim {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
                 let start = Date.now()
+                __this.otherFrames.push(s)
                 let fn = (v: any) => {
                     if (__this.dead) return;
                     if (__this.loopLock) {
@@ -1143,6 +1363,8 @@ namespace pxsim {
                         // to grow unbounded.
                         let lock = {}
                         __this.loopLock = lock
+                        removeFrame(s)
+                        __this.otherFrames.push(frame)
                         return U.nextTick(() => {
                             U.assert(__this.loopLock === lock)
                             __this.loopLock = null

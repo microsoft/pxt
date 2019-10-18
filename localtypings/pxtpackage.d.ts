@@ -9,6 +9,8 @@ declare namespace pxt {
 
     interface TargetVersions {
         target: string;
+        targetId?: string;
+        targetWebsite?: string;
         pxt?: string;
         pxtCrowdinBranch?: string;
         targetCrowdinBranch?: string;

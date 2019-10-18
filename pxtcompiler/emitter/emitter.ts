@@ -1048,31 +1048,31 @@ namespace ts.pxtc {
         let pass0 = U.cpuUs()
         res.times["pass0"] = pass0 - startTime
 
-        if (diagnostics.getModificationCount() == 0) {
-            reset();
-            needsUsingInfo = false
-            bin.finalPass = true
-            emit(rootFunction)
+        let resDiags = diagnostics.getDiagnostics()
 
-            U.assert(usedWorkList.length == 0)
+        reset();
+        needsUsingInfo = false
+        bin.finalPass = true
+        emit(rootFunction)
 
-            res.configData = []
-            for (let k of Object.keys(configEntries)) {
-                if (configEntries["!" + k])
-                    continue
-                res.configData.push({
-                    name: k.replace(/^\!/, ""),
-                    key: configEntries[k].key,
-                    value: configEntries[k].value
-                })
-            }
-            res.configData.sort((a, b) => a.key - b.key)
+        U.assert(usedWorkList.length == 0)
 
-            let pass1 = U.cpuUs()
-            res.times["pass1"] = pass1 - pass0
-            catchErrors(rootFunction, finalEmit)
-            res.times["passFinal"] = U.cpuUs() - pass1
+        res.configData = []
+        for (let k of Object.keys(configEntries)) {
+            if (configEntries["!" + k])
+                continue
+            res.configData.push({
+                name: k.replace(/^\!/, ""),
+                key: configEntries[k].key,
+                value: configEntries[k].value
+            })
         }
+        res.configData.sort((a, b) => a.key - b.key)
+
+        let pass1 = U.cpuUs()
+        res.times["pass1"] = pass1 - pass0
+        catchErrors(rootFunction, finalEmit)
+        res.times["passFinal"] = U.cpuUs() - pass1
 
         if (opts.ast) {
             let pre = U.cpuUs()
@@ -1085,8 +1085,11 @@ namespace ts.pxtc {
 
         compileOptions = null
 
+        if (resDiags.length == 0)
+            resDiags = diagnostics.getDiagnostics()
+
         return {
-            diagnostics: diagnostics.getDiagnostics(),
+            diagnostics: resDiags,
             emittedFiles: undefined,
             emitSkipped: !!opts.noEmit
         }
@@ -1246,7 +1249,7 @@ namespace ts.pxtc {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit)
+            if (opts.noEmit)
                 return;
 
             bin.writeFile = (fn: string, data: string) => {
@@ -2030,7 +2033,7 @@ ${lbl}: .short 0xffff
             let decl = getDeclCore(node)
             markUsed(decl)
 
-            if (!decl && node.kind == SK.PropertyAccessExpression) {
+            if (!decl && node && node.kind == SK.PropertyAccessExpression) {
                 const namedNode = node as PropertyAccessExpression
                 decl = {
                     kind: SK.PropertySignature,

@@ -369,7 +369,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 return <ProjectsCodeCard
                                     key={'local' + scr.id + scr.recentUse}
                                     cardType="file"
-                                    className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
+                                    className={`${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
                                     name={scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}

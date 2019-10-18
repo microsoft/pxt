@@ -190,6 +190,19 @@ class FormattingProvider implements monaco.languages.DocumentRangeFormattingEdit
     }
 }
 
+const modeMap: pxt.Map<pxt.editor.FileType> = {
+    "cpp": pxt.editor.FileType.CPP,
+    "h": pxt.editor.FileType.CPP,
+    "json": pxt.editor.FileType.JSON,
+    "md": pxt.editor.FileType.Markdown,
+    "py": pxt.editor.FileType.Python,
+    "ts": pxt.editor.FileType.TypeScript,
+    "js": pxt.editor.FileType.JavaScript,
+    "svg": pxt.editor.FileType.XML,
+    "blocks": pxt.editor.FileType.XML,
+    "asm": pxt.editor.FileType.Asm,
+}
+
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
@@ -851,8 +864,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 categories: this.getAllCategories(),
                 showSearchBox: this.shouldShowSearch()
             })
+            if (this.shouldShowToolbox())
+                this.toolbox.show();
+            else
+                this.toolbox.hide();
         }
 
+        this.updateDebuggerToolbox();
+    }
+
+    private updateDebuggerToolbox() {
+        // update debugger
         const container = document.getElementById('monacoDebuggerToolbox');
         if (!container || !this.blockInfo) return;
 
@@ -862,15 +884,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             parent={this.parent}
             apis={this.blockInfo.apis.byQName}
             openLocation={this.revealBreakpointLocation}
-            showCallStack /> : <div />;
-
-        if (debugging) {
-            this.toolbox.hide();
-        } else {
-            this.debuggerToolbox = null;
-            this.toolbox.show();
-        }
-
+            showCallStack /> : null;
         ReactDOM.render(debuggerToolbox, container);
     }
 
@@ -903,6 +917,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.setValue(content);
     }
 
+    private shouldShowToolbox(): boolean {
+        const readOnly =
+            !this.currFile
+            || this.currFile.isReadonly()
+            || pxt.shell.isReadOnly()
+            || this.isDebugging();
+        return pxt.appTarget.appTheme.monacoToolbox
+            && !readOnly
+            && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
+                || (this.fileType == "python" && this.currFile.name == "main.py"));
+    }
+
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
         let mode = pxt.editor.FileType.Text;
         this.currSource = file.content;
@@ -921,18 +947,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.updateFieldEditors();
 
                 let ext = file.getExtension()
-                let modeMap: pxt.Map<pxt.editor.FileType> = {
-                    "cpp": pxt.editor.FileType.CPP,
-                    "h": pxt.editor.FileType.CPP,
-                    "json": pxt.editor.FileType.JSON,
-                    "md": pxt.editor.FileType.Markdown,
-                    "py": pxt.editor.FileType.Python,
-                    "ts": pxt.editor.FileType.TypeScript,
-                    "js": pxt.editor.FileType.JavaScript,
-                    "svg": pxt.editor.FileType.XML,
-                    "blocks": pxt.editor.FileType.XML,
-                    "asm": pxt.editor.FileType.Asm,
-                }
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
                 this.fileType = mode
 
@@ -945,19 +959,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = pxt.appTarget.appTheme.monacoToolbox
-                    && !readOnly
-                    && ((mode == "typescript" && file.name == "main.ts")
-                        || (mode == "python" && file.name == "main.py"));
-                if (shouldShowToolbox) {
+                // Set the current file
+                this.currFile = file;
+                // update toolbox
+                if (this.shouldShowToolbox()) {
                     this.beginLoadToolbox(file, hc);
                 } else {
                     if (this.toolbox)
                         this.toolbox.hide();
                 }
-
-                // Set the current file
-                this.currFile = file;
 
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())

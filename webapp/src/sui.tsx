@@ -770,6 +770,7 @@ export interface MenuItemProps {
     position?: 'right';
     ariaControls?: string;
     id?: string;
+    tabIndex?: number;
 }
 
 export class MenuItem extends data.Component<MenuItemProps, {}> {
@@ -797,7 +798,8 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
             onClick,
             position,
             ariaControls,
-            id
+            id,
+            tabIndex
         } = this.props;
 
         const classes = cx([
@@ -817,7 +819,17 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
         }
 
         return (
-            <div id={id} tabIndex={active ? 0 : -1} className={classes} onClick={this.handleClick} role="tab" aria-controls={ariaControls} aria-selected={active} aria-label={content || name}>
+            <div
+                id={id}
+                tabIndex={tabIndex != null ? tabIndex : -1}
+                className={classes}
+                onClick={this.handleClick}
+                onKeyDown={fireClickOnEnter}
+                role="tab"
+                aria-controls={ariaControls}
+                aria-selected={active}
+                aria-label={content || name}
+            >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}
             </div>
