@@ -221,7 +221,7 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        const existingFilters: Map<Element> = {};
+        const existingFilters: Map<boolean> = {};
         return consumeNext()
             .then(() => {
                 Blockly.Workspace.getAll().forEach(el => el.dispose())
@@ -244,7 +244,7 @@ namespace pxt.runner {
                         if (existingFilters[el.id]) {
                             el.remove();
                         } else {
-                            existingFilters[el.id] = el;
+                            existingFilters[el.id] = true;
                         }
                     });
                     render(el, r);
