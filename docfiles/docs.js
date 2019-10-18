@@ -310,7 +310,7 @@ function languageOption(code) {
 }
 
 function setupLangPicker() {
-    var appTheme = pxt.appTarget.appTheme
+    var appTheme = pxt.appTarget.appTheme;
     var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
 
