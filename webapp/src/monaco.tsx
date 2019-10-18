@@ -19,6 +19,7 @@ import Util = pxt.Util;
 import { BreakpointCollection } from "./monacoDebugger";
 import { DebuggerCallStack } from "./debuggerCallStack";
 import { DebuggerToolbox } from "./debuggerToolbox";
+import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -37,14 +38,6 @@ interface FoldingController extends monaco.editor.IEditorContribution {
     foldLevel(foldLevel: number, selectedLineNumbers: number[]): void;
     foldUnfoldRecursively(isFold: boolean): void;
 }
-
-
-// TODO(dz):
-interface EditAmendment {
-    delLeft: number,
-    insertText: string
-}
-const amendmentMarker = "#AMENDMENT:" // TODO(dz) pivot python vs ts
 
 class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
@@ -82,16 +75,29 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                 console.log("monaco 74")
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
-                    let resultSnippet = null
-                    if (insertSnippet) {
-                        let amend: EditAmendment = {
-                            delLeft: position.column - 1,
-                            insertText: insertSnippet || ""
-                        }
-                        if (amend.delLeft > 0)
-                            resultSnippet = `${amendmentMarker}${JSON.stringify(amend)}`
-                        else
-                            resultSnippet = insertSnippet
+                    let completionSnippet: string;
+                    if (insertSnippet && this.python) {
+                        // For python, we want to replace the entire line because when creating
+                        // new functions these need to be placed before the line the user was typing
+                        // unlike with typescript where callbacks use lambdas.
+                        //
+                        // e.g. "player.on_chat"
+                        // becomes:
+                        //      def on_chat_handler():
+                        //          pass
+                        //      player.on_chat(on_chat_handler)
+                        // whereas TS looks like:
+                        //      player.onChat(() => {
+                        //          
+                        //      })
+                        //
+                        // At the time of this writting, Monaco does not support item completions that replace the
+                        // whole line. So we use a custom system of "edit amendments". See monacoEditAmendments.ts
+                        // for more.
+                        completionSnippet = amendmentToInsertSnippet(
+                            createLineReplacementPyAmendment(position, insertSnippet))
+                    } else {
+                        completionSnippet = insertSnippet
                     }
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
@@ -106,12 +112,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
-                        insertText: resultSnippet || "",
-                        // range: range,
-                        // textEdit: {
-                        //     text: snippet,
-                        //     range: range
-                        // }
+                        insertText: completionSnippet,
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -128,42 +129,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      * The editor will only resolve a completion item once.
      */
     resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        // TODO(dz):
-        console.log("Resolving! " + item.label)
-        console.dir(item)
-        // if (item.kind == monaco.languages.CompletionItemKind.Function) {
-        //     item.range = item.range
-        //         .setStartPosition(item.range.startLineNumber, 1)
-        // }
-
         return item
-        // TODO(dz)
-        // // item.insertText = "foobaz"
-        // let newItem = Object.assign({}, item)
-        // let qName = newItem.insertText as string
-        // console.log(newItem.insertText)
-        // console.log(qName)
-        // return compiler.snippetAsync(qName, this.python)
-        //     .then(snippet => {
-        //         // newItem.insertText = snippet
-        //         // console.log("snippet")
-        //         // console.log(newItem.insertText)
-        //         newItem.insertText = "foobarbaz"
-        //         return newItem
-        //     })
-
-        // TODO(dz): speculation on edit/undo
-        // player.on_walk
-        // ->
-        // def foobar_foobar
-        // player.on_walk
-        // <=
-        // def foobar_foo
-
-        // step 1:
-        // player.on_walk
-        // =>
-        // def foobar_foobar
     }
 }
 
@@ -756,161 +722,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.setupToolbox(editorArea);
             this.setupFieldEditors();
 
-            this.editor.onDidChangeModelContent(e => {
-                // TODO(dz):
-                // - do one edit to always delete the amendment
-                // - do one edit to delete left
-                // - ensure undo-redo stack works
-                // - ensure indent works
-                // - ensure pasting snippet in the middle of existing function works
+            // this monitors the text buffer for "edit amendments". See monacoEditAmendments for more.
+            // This is an extension we made to Monaco that allows us to replace full lines of text when
+            // using code completion.
+            listenForEditAmendments(this.editor);
 
-                type EditAmendmentInstance = {
-                    range: monaco.IRange
-                } & EditAmendment
-
-                function getEditAmendment(event: monaco.editor.IModelContentChangedEvent): EditAmendmentInstance | null {
-                    if (e.changes.length != 1)
-                        return null
-                    let change = e.changes[0]
-                    let hasAmendment = change.text.indexOf(amendmentMarker) >= 0
-                    if (!hasAmendment)
-                        return null
-                    let textAndAmendment = change.text.split(amendmentMarker)
-                    if (textAndAmendment.length != 2) {
-                        // TODO(dz):
-                        console.error("Incorrect text ammendment: ")
-                        console.dir(change)
-                        return null
-                    }
-                    let preText = textAndAmendment[0]
-                    if (preText.length) {
-                        console.log("pre text: ")
-                        console.log(preText)
-                        // TODO(dz): anything to do if there's unexpected text before the amendment?
-                    }
-                    let amendmentStr = textAndAmendment[1]
-                    let amendment = pxt.U.jsonTryParse(amendmentStr) as EditAmendment
-                    if (!amendment) {
-                        // TODO(dz): Unexpected token , in JSON at position 14
-                        console.error("Incorrect text ammendment str: ")
-                        console.dir(amendmentStr)
-                        // TODO(dz): even if we can't parse the amendment json, still remove it from the editor
-                        return null
-                    }
-                    console.log("amendment:")
-                    console.dir(amendment)
-                    return Object.assign({
-                        range: change.range
-                    }, amendment)
-                }
-
-                let amendment = getEditAmendment(e)
-                if (amendment) {
-                    // let model = this.editor.getModel()
-                    // let amendRange = monaco.Range.lift(change.range)
-                    // let amendRange = model.validateRange(change.range)
-                    // TODO(dz):
-                    // amendRange.endColumn -= amendmentMarker.length + amendmentStr.length
-                    let amendRange = Object.assign({}, amendment.range)
-                    let changeText = amendment.insertText
-                    amendRange.endColumn = 9999 // TODO(dz) ?
-                    let changeLines = changeText.split("\n").length - 1
-                    amendRange.endLineNumber += changeLines
-                    if (amendment.delLeft) {
-                        amendRange.startColumn = Math.max(amendRange.startColumn - amendment.delLeft, 1)
-                    }
-
-                    // this.editor.getModel().pushStackElement()
-
-                    // TODO(dz): hacky? yes. better way? unknown.
-                    setTimeout(() => {
-                        // plan:
-                        // undo snippet with "apply", back to just user code
-                        // push proper change
-                        // 1. thing you are jumping back to can never have the AMENDMENT
-                        // 
-
-                        // this.editModelAsync(amendRange, changeText)
-
-                        // TODO(dz): this listens for code editor changes
-                        let newText = changeText
-                        let range = amendRange
-                        return new Promise(resolve => {
-                            const model = this.editor.getModel();
-                            const lines = newText.split("\n");
-                            // const afterRange = new monaco.Range(range.startLineNumber, range.startColumn,
-                            //     range.startLineNumber + lines.length - 1, lines[lines.length - 1].length)
-                            // TODO(dz): finding "pass" in text
-                            let afterRange: monaco.Range = null;
-                            let passSplits = newText.split("pass")
-                            if (passSplits.length >= 2) {
-                                // TODO(dz): generalize
-                                let before = passSplits[0]
-                                let beforeLines = before.split("\n");
-                                let pass = "pass"
-                                let lastBeforeLine = beforeLines[beforeLines.length - 1]
-                                let passLine = range.startLineNumber + beforeLines.length - 1
-                                let startCol = lastBeforeLine.length + 1
-
-                                afterRange = new monaco.Range(passLine, startCol,
-                                    passLine, startCol + pass.length)
-                            }
-
-                            // remove 1 from stack
-                            // apply old "on_chat"
-                            // push stack
-                            // apply new
-
-                            let reverseRange = Object.assign({}, amendment.range)
-                            reverseRange.endColumn = 9999 // TODO(dz) ?
-
-                            let undoEdits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
-                                identifier: { major: 0, minor: 0 },
-                                range: model.validateRange(reverseRange),
-                                text: "",
-                                forceMoveMarkers: false,
-                                isAutoWhitespaceEdit: false
-                            }]
-
-                            // TODO(dz): add option to skip undo stack
-                            // model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
-                            model.applyEdits(undoEdits)
-
-                            setTimeout(() => {
-                                const disposable = this.editor.onDidChangeModelContent(e => {
-                                    let changes = e.changes;
-
-                                    disposable.dispose();
-                                    if (afterRange)
-                                        this.editor.setSelection(afterRange);
-
-                                    // TODO(dz):
-                                    // - optional select after range
-
-                                    // Clear ranges because the model changed
-                                    if (this.fieldEditors)
-                                        this.fieldEditors.clearRanges(this.editor);
-                                    if (afterRange)
-                                        resolve(afterRange);
-                                });
-
-                                let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
-                                    identifier: { major: 0, minor: 0 },
-                                    range: model.validateRange(range),
-                                    text: newText,
-                                    forceMoveMarkers: true,
-                                    isAutoWhitespaceEdit: true
-                                }]
-                                // TODO(dz): add option to skip undo stack
-                                model.pushEditOperations(this.editor.getSelections(), edits, inverseOp => [rangeToSelection(inverseOp[0].range)])
-                                // model.applyEdits(edits)
-                            }, 0);
-
-
-                        });
-                    }, 0) // end setTimeout
-                }
-            });
+            editor.onDidChangeModelContent(e => {
+                // Clear ranges because the model changed
+                if (this.fieldEditors)
+                    this.fieldEditors.clearRanges(editor);
+            })
         })
     }
 
@@ -2192,7 +2013,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 }
 
-function rangeToSelection(range: monaco.IRange): monaco.Selection {
+export function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
 }
 
