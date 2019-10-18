@@ -161,13 +161,17 @@ namespace pxt.docs {
                 NAME: m.name,
             }
             if (m.subitems) {
-                /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6013,
-                 * swap templ assignments below with the commented out version, and remove
-                 * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
-                 * docfiles/macros.html **/
-                if (lev == 0) templ = menus["top-dropdown"]
-                else templ = menus["inner-dropdown"]
-                // templ = menus["toc-dropdown"]
+                if (!!menus["toc-dropdown"]) {
+                    templ = menus["toc-dropdown"]
+                }
+                else {
+                    /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6058,
+                     * swap templ assignments below with the commented out version, and remove
+                     * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
+                     * docfiles/macros.html **/
+                    if (lev == 0) templ = menus["top-dropdown"]
+                    else templ = menus["inner-dropdown"]
+                }
                 mparams["ITEMS"] = m.subitems.map(e => recMenu(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -194,7 +198,7 @@ namespace pxt.docs {
                     return true
                 }
             }
-            if (d.filepath && d.filepath.indexOf(m.path) == 0) {
+            if (d.filepath && !!m.path && d.filepath.indexOf(m.path) == 0) {
                 tocPath.push(m)
                 return true
             }
@@ -222,23 +226,29 @@ namespace pxt.docs {
                 mparams["EXPANDED"] = 'false';
             }
             if (m.subitems && m.subitems.length > 0) {
-                /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6013,
-                 * swap templ assignments below with the commented out version, and remove
-                 * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
-                 * docfiles/macros.html **/
-                if (lev == 0) {
+                if (!!toc["toc-dropdown"]) {
+                    // if macros support "toc-*", use them
                     if (m.name !== "") {
-                        templ = toc["top-dropdown"]
+                        templ = toc["toc-dropdown"]
                     } else {
-                        templ = toc["top-dropdown-noHeading"]
+                        templ = toc["toc-dropdown-noLink"]
                     }
-                } else if (lev == 1) templ = toc["inner-dropdown"]
-                else templ = toc["nested-dropdown"]
-                // if (m.name !== "") {
-                //     templ = toc["toc-dropdown"]
-                // } else {
-                //     templ = toc["toc-dropdown-noHeading"]
-                // }
+                }
+                else {
+                    // if macros don't support "toc-*"
+                    /** TODO: when all targets bumped to include https://github.com/microsoft/pxt/pull/6058,
+                     * delete this else branch, and remove
+                     * top-dropdown, top-dropdown-noheading, inner-dropdown, and nested-dropdown from
+                     * docfiles/macros.html **/
+                    if (lev == 0) {
+                        if (m.name !== "") {
+                            templ = toc["top-dropdown"]
+                        } else {
+                            templ = toc["top-dropdown-noHeading"]
+                        }
+                    } else if (lev == 1) templ = toc["inner-dropdown"]
+                    else templ = toc["nested-dropdown"]
+                }
                 mparams["ITEMS"] = m.subitems.map(e => recTOC(e, lev + 1)).join("\n")
             } else {
                 if (/^-+$/.test(m.name)) {
@@ -309,7 +319,7 @@ namespace pxt.docs {
 
         // Add sidebar toggle
         const sidebarToggleHtml = `
-            <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menu" aria-expanded="false">
+            <a id="togglesidebar" class="launch icon item" tabindex="0" title="Side menu" aria-label="${lf("Side menu")}" role="menuitem" aria-expanded="false">
                 <i class="content icon"></i>
             </a>
         `
@@ -857,6 +867,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         currentStack.push(dummy);
 
         let tokens = markedInstance.lexer(summaryMD, options);
+        let wasListStart = false
         tokens.forEach((token: any) => {
             switch (token.type) {
                 case "heading":
@@ -868,17 +879,25 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     break;
                 case "list_item_start":
                 case "loose_item_start":
+                    wasListStart = true;
                     let newItem: pxt.TOCMenuEntry = {
                         name: '',
+                        path: '',
                         subitems: []
                     };
                     currentStack.push(newItem);
-                    break;
+                    return;
                 case "text":
-                    token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
-                        currentStack[currentStack.length - 1].name = name;
-                        currentStack[currentStack.length - 1].path = path.replace('.md', '');
-                    });
+                    let lastTocEntry = currentStack[currentStack.length - 1]
+                    if (token.text.indexOf("[") >= 0) {
+                        token.text.replace(/^\[(.*)\]\((.*)\)$/i, function (full: string, name: string, path: string) {
+                            lastTocEntry.name = name;
+                            lastTocEntry.path = path.replace('.md', '');
+                        });
+                    }
+                    else if (wasListStart) {
+                        lastTocEntry.name = token.text
+                    }
                     break;
                 case "list_item_end":
                 case "loose_item_end":
@@ -889,6 +908,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
                     break;
                 default:
             }
+            wasListStart = false;
         })
 
         let TOC = dummy.subitems

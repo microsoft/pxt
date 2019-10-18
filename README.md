@@ -5,7 +5,7 @@
 [![Build Status](https://travis-ci.org/microsoft/pxt.svg?branch=master)](https://travis-ci.org/microsoft/pxt) 
 [![Community Discord](https://img.shields.io/discord/448979533891371018.svg)](https://aka.ms/makecodecommunity)
 
-Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
+Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
 
 PXT is a framework for creating special-purpose programming experiences for
 beginners, especially focused on computer science education. PXT's underlying
@@ -14,7 +14,7 @@ features).
 
 The main features of PXT are:
 * a Blockly-based code editor along with converter to the text format
-* a Monaco code editor that powers [VS Code](https://github.com/Microsoft/vscode), editor's features are listed [here](https://code.visualstudio.com/docs/editor/editingevolved).
+* a Monaco code editor that powers [VS Code](https://github.com/microsoft/vscode), editor's features are listed [here](https://code.visualstudio.com/docs/editor/editingevolved).
 * extensibility support to define new blocks in TypeScript
 * an ARM Thumb machine code emitter
 * a command-line package manager
@@ -114,7 +114,7 @@ browser tests. To execute them, run `npm run test:all` in the root directory.
 
 ## License
 
-[MIT License](https://github.com/Microsoft/pxt/blob/master/LICENSE)
+[MIT License](https://github.com/microsoft/pxt/blob/master/LICENSE)
 
 ## Code of Conduct
 

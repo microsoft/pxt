@@ -34,73 +34,73 @@ namespace pxt.editor.experiments {
                 id: "print",
                 name: lf("Print Code"),
                 description: lf("Print the code from the current project"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4740"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4740"
             },
             {
                 id: "greenScreen",
                 name: lf("Green screen"),
                 description: lf("Display a webcam video stream or a green background behind the code."),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4738"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4738"
             },
             {
                 id: "allowPackageExtensions",
                 name: lf("Editor Extensions"),
                 description: lf("Allow Extensions to add buttons in the editor."),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4741"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4741"
             },
             {
                 id: "instructions",
                 name: lf("Wiring Instructions"),
                 description: lf("Generate step-by-step assembly instructions for breadboard wiring."),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4739"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4739"
             },
             {
                 id: "debugger",
                 name: lf("Debugger"),
                 description: lf("Step through code and inspect variables in the debugger"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4729"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4729"
             },
             {
                 id: "bluetoothUartConsole",
                 name: "Bluetooth Console",
                 description: lf("Receives UART message through Web Bluetooth"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4796"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4796"
             },
             {
                 id: "bluetoothPartialFlashing",
                 name: "Bluetooth Download",
                 description: lf("Download code via Web Bluetooth"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4807"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/4807"
             },
             {
                 id: "simScreenshot",
                 name: lf("Simulator Screenshots"),
                 description: lf("Download screenshots of the simulator"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5232"
             },
             {
                 id: "python",
                 name: lf("Static Python"),
                 description: lf("Use Static Python to code your device"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5390"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5390"
             },
             {
                 id: "simGif",
                 name: lf("Simulator Gifs"),
                 description: lf("Download gifs of the simulator"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5297"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5297"
             },
             {
                 id: "autoWebUSBDownload",
                 name: lf("WebUSB Download"),
                 description: lf("Automatically try to download via WebUSB"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5344"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5344"
             },
             {
                 id: "qrCode",
                 name: lf("Shared QR Code"),
                 description: lf("Generate a QR Code form the shared project url"),
-                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5456"
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/5456"
             },
             {
                 id: "importExtensionFiles",

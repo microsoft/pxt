@@ -219,10 +219,8 @@ namespace pxtblockly {
 
         widgetDispose_() {
             const that = this;
-            return function () {
-                (Blockly.FieldNumber as any).superClass_.widgetDispose_.call(that)();
-                that.close(true);
-            }
+            (Blockly.FieldNumber as any).superClass_.widgetDispose_.call(that);
+            that.close(true);
         }
 
         dispose() {

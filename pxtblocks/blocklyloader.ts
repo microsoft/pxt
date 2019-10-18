@@ -285,7 +285,7 @@ namespace pxt.blocks {
 
     function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string): HTMLElement {
         // Add the Heading label
-        let headingLabel = goog.dom.createDom('label') as HTMLElement;
+        let headingLabel = Blockly.utils.xml.createElement('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
             headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
@@ -303,7 +303,7 @@ namespace pxt.blocks {
     }
 
     export function createFlyoutButton(callbackkey: string, label: string) {
-        let button = goog.dom.createDom('button') as Element;
+        let button = Blockly.utils.xml.createElement('button') as Element;
         button.setAttribute('text', label);
         button.setAttribute('callbackkey', callbackkey);
         return button;
@@ -1986,7 +1986,7 @@ namespace pxt.blocks {
                 xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button') as HTMLElement;
+            let button = document.createElement('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable..."));
             button.setAttribute('callbackkey', 'CREATE_VARIABLE');
 
@@ -2248,15 +2248,15 @@ namespace pxt.blocks {
                          *   </block>
                          * </xml>
                          */
-                        let xml = goog.dom.createDom('xml');
-                        let block = goog.dom.createDom('block');
+                        let xml = Blockly.utils.xml.createElement('xml');
+                        let block = Blockly.utils.xml.createElement('block');
                         block.setAttribute('type', this.defType_);
                         let xy = this.getRelativeToSurfaceXY();
                         let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
                         let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                         block.setAttribute('x', x);
                         block.setAttribute('y', y);
-                        let field = goog.dom.createDom('field');
+                        let field = Blockly.utils.xml.createElement('field');
                         field.setAttribute('name', 'NAME');
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
@@ -2336,7 +2336,7 @@ namespace pxt.blocks {
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
-            let button = goog.dom.createDom('button');
+            let button = Blockly.utils.xml.createElement('button');
             button.setAttribute('text', newFunction);
             button.setAttribute('callbackkey', 'CREATE_FUNCTION');
 
@@ -2356,12 +2356,12 @@ namespace pxt.blocks {
                     x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
                     y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                 }
-                let xml = goog.dom.createDom('xml');
-                let block = goog.dom.createDom('block');
+                let xml = Blockly.utils.xml.createElement('xml');
+                let block = Blockly.utils.xml.createElement('block');
                 block.setAttribute('type', 'procedures_defnoreturn');
                 block.setAttribute('x', String(x));
                 block.setAttribute('y', String(y));
-                let field = goog.dom.createDom('field');
+                let field = Blockly.utils.xml.createElement('field');
                 field.setAttribute('name', 'NAME');
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
@@ -2420,7 +2420,7 @@ namespace pxt.blocks {
                     // <block type="procedures_callnoreturn" gap="16">
                     //   <field name="NAME">name</field>
                     // </block>
-                    let block = goog.dom.createDom('block');
+                    let block = Blockly.utils.xml.createElement('block');
                     block.setAttribute('type', templateName);
                     block.setAttribute('gap', '16');
                     block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
