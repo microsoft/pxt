@@ -12,12 +12,17 @@
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
+@workspaceHeaderHeight: 2rem;
 
 /*******************************
       Tutorial mode
 *******************************/
 .tutorial #maineditor .full-abs {
     top: @tutorialCardHeight;
+}
+
+.tutorial.flyoutOnly #maineditor .full-abs {
+    top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
 }
 
 .tutorial #maineditor #monacoEditor {
@@ -438,6 +443,31 @@ span.highlight-line {
     stroke-linecap: round;
 }
 
+/*******************************
+        Workspace headers
+*******************************/
+#headers {
+    display: flex;
+    position: relative;
+    height: @workspaceHeaderHeight;
+    color: @white;
+    z-index: @simulatorZIndex;
+
+    #workspaceHeader {
+        flex: 1;
+    }
+
+    #flyoutHeader {
+        box-sizing: content-box;
+    }
+
+    div {
+        display: inline-block;
+        text-align: center;
+        line-height: 2rem;
+        font-weight: 800;
+    }
+}
 
 /*******************************
         Media Adjustments

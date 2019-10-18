@@ -466,8 +466,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.setState({ showSeeMore: show });
     }
 
+    getCardHeight() {
+        return this.cardHeight;
+    }
+
     getExpandedCardStyle(prop: string) {
-        return { [prop] : `calc(${this.cardHeight}px + 2rem)` }
+        return { [prop] : `calc(${this.getCardHeight()}px + 2rem)` }
     }
 
     toggleHint(showFullText?: boolean) {
@@ -650,5 +654,32 @@ export class ChooseRecipeDialog extends data.Component<ISettingsProps, ChooseRec
                 </div>
             </sui.Modal>
         )
+    }
+}
+
+export class WorkspaceHeader extends data.Component<any, {}> {
+    private flyoutWidth: number = 0;
+    constructor(props: any) {
+        super(props);
+    }
+
+    componentWillUpdate() {
+        let flyout = document.querySelector('.blocklyFlyout');
+        if (flyout) {
+            this.flyoutWidth = flyout.clientWidth;
+        }
+    }
+
+    private headerStyle() {
+        return {
+            width: this.flyoutWidth
+        }
+    }
+
+    renderCore() {
+        return <div id="headers">
+                    <div id="flyoutHeader" style={this.headerStyle()}>Toolbox</div>
+                    <div id="workspaceHeader">Workspace</div>
+               </div>;
     }
 }
