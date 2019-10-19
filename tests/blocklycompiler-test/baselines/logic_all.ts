@@ -1,4 +1,4 @@
-let item = 0
+let item = 0 //pxtGenerated
 if (!(false) && false) {
     item = 0
 }

@@ -1,4 +1,4 @@
-let item = 0
+let item = 0 //pxtGenerated
 if (true) {;
     [0][0] = 0
     item = [0][0]
