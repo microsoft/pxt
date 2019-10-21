@@ -16,6 +16,7 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
         private params: FieldPositionOptions;
         private selectorDiv_: HTMLElement;
+        private resetCrosshair: () => void;
 
         constructor(text: string, params: FieldPositionOptions, validator?: Function) {
             super(text, '0', '100', '1', '100', 'Value', validator);
@@ -47,6 +48,11 @@ namespace pxtblockly {
 
             // Now render the screen in the dropdown div below the slider
             this.renderScreenPicker();
+        }
+
+        setValue(value: string) {
+            super.setValue(value);
+            if (this.resetCrosshair) this.resetCrosshair();
         }
 
         protected renderScreenPicker() {
@@ -112,10 +118,15 @@ namespace pxtblockly {
             }
 
             // Position initial crossX and crossY
-            const { currentX, currentY } = this.getXY();
-            setPos(
-                currentX / this.params.screenWidth * width,
-                currentY / this.params.screenHeight * height);
+            this.resetCrosshair = () => {
+                const { currentX, currentY } = this.getXY();
+                setPos(
+                    currentX / this.params.screenWidth * width,
+                    currentY / this.params.screenHeight * height);
+            };
+
+            this.resetCrosshair();
+
 
             Blockly.bindEvent_(this.selectorDiv_, 'mousemove', this, (e: MouseEvent) => {
                 const bb = canvasOverlayDiv.getBoundingClientRect();
@@ -124,6 +135,8 @@ namespace pxtblockly {
 
                 setPos(x, y);
             });
+
+            Blockly.bindEvent_(this.selectorDiv_, 'mouseleave', this, this.resetCrosshair);
 
             Blockly.bindEvent_(this.selectorDiv_, 'click', this, (e: MouseEvent) => {
                 const bb = canvasOverlayDiv.getBoundingClientRect();
@@ -203,6 +216,7 @@ namespace pxtblockly {
 
             // remove resize listener
             window.removeEventListener("resize", this.resizeHandler);
+            this.resetCrosshair = undefined;
 
             // Destroy the selector div
             if (!this.selectorDiv_) return;
