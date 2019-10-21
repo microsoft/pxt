@@ -56,7 +56,7 @@ If the local editor fails to open, copy the URL printed in the console and open 
 The local server requires a security token embedded in the URL to serve pages.
 ### ~
 
-For a quick introduction on creating extensions, try the [simple extension](./getting-started/simple-extension) tutorial.
+For a quick introduction on creating extensions, try the [simple extension](/extensions/getting-started/simple-extension) tutorial.
 
 ## Step 5: Testing
 
