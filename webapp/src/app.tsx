@@ -1013,7 +1013,6 @@ export class ProjectView
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            tc.setPopout();
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
@@ -1265,7 +1264,7 @@ export class ProjectView
                 this.setState({ editorState: editorState });
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
-                const fullscreen = stepInfo[0].fullscreen;
+                const fullscreen = stepInfo[header.tutorial.tutorialStep].fullscreen;
                 if (fullscreen) this.showTutorialHint();
                 //else this.showLightbox();
             })
@@ -3158,9 +3157,13 @@ export class ProjectView
         if (tc) tc.showHint(true, showFullText);
     }
 
-    getExpandedCardStyle(): any {
+    getExpandedCardStyle(flyoutOnly?: boolean): any {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        return tc ? tc.getExpandedCardStyle('top') : null;
+        let margin = 2;
+        if (flyoutOnly) {
+            margin += 2;
+        }
+        return tc ? { 'top' : "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3310,7 +3313,7 @@ export class ProjectView
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
         const simDebug = !!targetTheme.debugger || inDebugMode;
-        const flyoutOnly = this.state.editorState && !this.state.editorState.hasCategories;
+        const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration;
@@ -3326,7 +3329,8 @@ export class ProjectView
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
-        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() : null;
+        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
+        const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3338,6 +3342,7 @@ export class ProjectView
             shouldHideEditorFloats ? "hideEditorFloats" : '',
             shouldCollapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
+            invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
@@ -3388,9 +3393,10 @@ export class ProjectView
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
-                {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
-                </div> : undefined}
+                    {flyoutOnly && <tutorial.WorkspaceHeader />}
+                </div>}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>

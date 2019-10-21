@@ -89,6 +89,7 @@ namespace pxt.toolbox {
      * Convert blockly hue to rgb
      */
     export function convertColor(colour: string): string {
+        colour = parseHex(colour); // convert from 0x hex encoding if necessary
         const hue = parseInt(colour);
         if (!isNaN(hue)) {
             return hueToRgb(hue);
@@ -162,6 +163,12 @@ namespace pxt.toolbox {
     function componentToHex(c: number) {
         const hex = c.toString(16);
         return hex.length == 1 ? "0" + hex : hex;
+    }
+
+    function parseHex(s: string) {
+        if (!s) return "#000000";
+        if (s.substring(0, 2) == "0x") return "#" + s.substring(2);
+        return s;
     }
 
     export function fadeColor(hex: string, luminosity: number, lighten: boolean): string {

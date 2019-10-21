@@ -849,7 +849,7 @@ namespace pxt.github {
             let i = 0
             for (let e of strings) {
                 if (options.ignoreWhitespace)
-                    e = e.replace(/\s+/g, "")
+                    e = e.replace(/\s+$/g, "").replace(/^\s+/g, ''); // only ignore start/end of lines
                 if (idxmap.hasOwnProperty(e))
                     idxarr[i] = idxmap[e]
                 else {

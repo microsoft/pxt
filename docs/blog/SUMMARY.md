@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Translations in Context](/blog/translations-in-context)
     * [GitHub Extensions Authoring - Episode 2](/blog/github-extensions-episode-2)
     * [CS Ed Week 2019](/blog/csed-week/csed-week-2019)
     * [Arcade Game Jam](/blog/arcade/game-jam)
