@@ -3326,6 +3326,7 @@ export class ProjectView
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
         const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() : null;
+        const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3337,6 +3338,7 @@ export class ProjectView
             shouldHideEditorFloats ? "hideEditorFloats" : '',
             shouldCollapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
+            invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',

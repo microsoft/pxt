@@ -700,21 +700,25 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
+        const targetTheme = pxt.appTarget.appTheme;
         const needsToken = !pxt.github.token;
 
-        return <div>
-            {needsToken ? <div className="ui info message join">
+        if (needsToken)
+            return <div className={`ui ${targetTheme.invertedMenu ? 'inverted' : ''} info message join`}>
                 <p>{lf("Host your code on GitHub and work together with friends on projects.")}
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
-            </div> : undefined}
-            {!needsToken && needsCommitMessage ? <div className="ui warning message">
+            </div>;
+
+        if (!needsToken && needsCommitMessage)
+            return <div className="ui warning message">
                 <div className="content">
                     {lf("You need to commit your changes before you can pull from GitHub.")}
                 </div>
-            </div> : undefined}
-        </div>
+            </div>
+
+        return undefined;
     }
 }
 
@@ -743,13 +747,11 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
             <div className="ui field">
                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
             </div>
-            {<div className="field">
-                <p>{lf("Save your changes in GitHub.")}
-                    {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
-                </p>
-            </div>}
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <span>{lf("Save your changes in GitHub.")}
+                    {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
+                </span>
             </div>
         </div>
     }
@@ -774,6 +776,7 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const { needsToken, githubId, master, gs } = this.props;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
+        const inverted = pxt.appTarget.appTheme.invertedMenu;
         return <div>
             <p>{lf("No local changes found.")}</p>
             {master ? <div className="ui divider"></div> : undefined}
@@ -785,13 +788,13 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
                 :
                 <div className="ui field">
-                    <p>
+                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                    <span>
                         {lf("Bump up the version number and create a release on GitHub.")}
                         {sui.helpIconLink("/github/release#license", lf("Learn more about extension releases."))}
-                    </p>
-                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                    </span>
                 </div> : undefined}
-            {master && needsLicenseMessage ? <div className="ui message">
+            {master && needsLicenseMessage ? <div className={`ui ${inverted ? 'inverted' : ''} message`}>
                 <div className="content">
                     {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
                     {" "}
