@@ -718,7 +718,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
             </div>
 
-        return undefined;
+        return <div />;
     }
 }
 
