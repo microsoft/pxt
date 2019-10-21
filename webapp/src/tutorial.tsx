@@ -388,10 +388,6 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             if (!!options.tutorialStepInfo[step].unplugged) {
                 this.removeHintOnClick();
             }
-
-            if (!this.state.showHintTooltip) {
-                this.showHint(true); // re-bind events after tutorial DOM loaded
-            }
         }
     }
 
