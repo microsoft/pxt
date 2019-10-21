@@ -788,11 +788,11 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
                 :
                 <div className="ui field">
-                    <p>
+                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                    <span>
                         {lf("Bump up the version number and create a release on GitHub.")}
                         {sui.helpIconLink("/github/release#license", lf("Learn more about extension releases."))}
-                    </p>
-                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                    </span>
                 </div> : undefined}
             {master && needsLicenseMessage ? <div className={`ui ${inverted ? 'inverted' : ''} message`}>
                 <div className="content">
