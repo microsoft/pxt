@@ -868,10 +868,29 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
     }
 }
 
-export class ToolboxTrashIcon extends data.Component<{}, {}> {
+interface ToolboxTrashIconProps {
+    flyoutOnly?: boolean;
+}
+
+export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> {
+    constructor(props: ToolboxTrashIconProps) {
+        super(props);
+    }
+
+    getStyle() {
+        let style: any = { opacity: 0, display: 'none' };
+        if (this.props.flyoutOnly) {
+            let flyout = document.querySelector('.blocklyFlyout');
+            if (flyout ) {
+                style["left"] = (flyout.clientWidth / 2);
+                style["transform"] = "translateX(-45%)";
+            }
+        }
+        return style;
+    }
 
     renderCore() {
-        return <div id="blocklyTrashIcon" style={{ opacity: 0, display: 'none' }}>
+        return <div id="blocklyTrashIcon" style={this.getStyle()}>
             <i className="trash icon" aria-hidden="true"></i>
         </div>
     }
