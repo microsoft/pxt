@@ -1,6 +1,6 @@
 # Translations in Context
 
-Posted on October 8, 2018 by [pelikhan](https://github.com/pelikhan)
+Posted on October 17, 2019 by [pelikhan](https://github.com/pelikhan)
 
 Last week, we had the good fortune of meeting plenty of MakeCode users at [micro:bit live](https://www.microbit.org/en/2019-04-12-microbit-live/). 
 With many of the participants coming from a non-English speaking background, it reminded me again of how important it is to localize the editors. 
