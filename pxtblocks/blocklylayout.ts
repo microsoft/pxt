@@ -209,11 +209,13 @@ namespace pxt.blocks.layout {
         if (!ws)
             return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
-        const metrics = (ws as any).getBlocksBoundingBox();
+        const metrics = (ws as any).getBlocksBoundingBox() as Blockly.utils.Rect;
         const sg = (ws as any).getParentSvg().cloneNode(true) as SVGElement;
         cleanUpBlocklySvg(sg);
 
-        return blocklyToSvgAsync(sg, metrics.x, metrics.y, metrics.width, metrics.height);
+        let width = metrics.right - metrics.left;
+        let height = metrics.bottom - metrics.top;
+        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height);
     }
 
     export function serializeNode(sg: Node): string {
