@@ -302,6 +302,8 @@ function statsCrowdinAsync(prj: string, key: string, preferredLang?: string): Pr
         .then(info => {
             if (!info) throw new Error("info failed")
             let languages = info.languages;
+            // remove in-context language
+            languages = languages.filter(l => l.code != ts.pxtc.Util.TRANSLATION_LOCALE);
             if (preferredLang)
                 languages = languages.filter(lang => lang.code.toLowerCase() == preferredLang.toLowerCase());
             return Promise.all(languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
