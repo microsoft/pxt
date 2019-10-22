@@ -1023,7 +1023,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             .then((config) => {
                 const repoStatus = pxt.github.repoStatus(parsedRepo, config);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.config.extension.localUrl;
                 const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
@@ -1205,7 +1205,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         // Add extension buttons
         if (!subns) {
-            this.extensions.forEach(config => {
+            this.extensions.forEach(extension => {
+                const config = extension.config;
                 const name = config.name;
                 const namespace = config.extension.namespace || name;
                 if (ns == namespace) {
