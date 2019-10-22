@@ -1,5 +1,28 @@
 import { rangeToSelection } from "./monaco";
 
+// This file adds a feature to Monaco I (dz) call "Edit Amendments".
+// EditAmendments are used by the auto-complete system as a work around for limitations in Monaco.
+// Worked example:
+//      Consider if a user starts typing this (in Minecraft py):
+//          player.on_cha
+//      Our auto-complete suggestion would be:
+//          player.on_chat
+//      And the snippet we want to insert is:
+//          def on_chat_handler():
+//              pass
+//          player.on_chat(on_chat_handler)
+//      The problem is that Monaco would paste this snippet as:
+//          player.def on_chat_handler():
+//              pass
+//          player.on_chat(on_chat_handler)
+//      And there's no way I've found to remove the "player." prefix.
+//      Note that we don't have this issue in typescript because of inline callbacks:
+//          player.on_chat(() => {
+//          
+//          })
+//      So the system basically sticks a json payload at the end of the snippet insertion:
+//          player.on_chat#AMENDMENT{behavior: "replaceLine", insertText: "def on_chat_handler(): ..." }
+//      which we then sniff for in the onDidChangeModelContent event and apply the changes.
 // Known limitations:
 //  - Any time we use an edit amendment, the user's undo stack will have a superfluous entry.
 //    For example, the undo stack for player.on_chat will look like:
@@ -26,6 +49,7 @@ import { rangeToSelection } from "./monaco";
 export interface EditAmendment {
     behavior: "replaceLine",
     insertText: string,
+    selectText?: string,
 }
 type EditAmendmentInstance = {
     range: monaco.IRange
@@ -36,6 +60,7 @@ export function createLineReplacementPyAmendment(insertPosition: monaco.Position
     return {
         behavior: "replaceLine",
         insertText: insertText || "",
+        selectText: "pass"
     }
 }
 export function amendmentToInsertSnippet(amendment: EditAmendment): string {
@@ -70,39 +95,40 @@ function scanForEditAmendment(e: monaco.editor.IModelContentChangedEvent): EditA
     }, amendment)
 }
 
-// TODO(dz): handle indent
 function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.IStandaloneCodeEditor) {
+    const MAX_COLUMN_LENGTH = 99999 // clunky way to select a whole line
     setTimeout(() => { // see top of file comments about why use setTimeout
+        // determine where to apply
         let amendRange = Object.assign({}, amendment.range)
         if (amendment.behavior === "replaceLine") {
-            const MAX_COLUMN_LENGTH = 99999
-            amendRange.endColumn = MAX_COLUMN_LENGTH // clunky way to select a whole line
+            amendRange.endColumn = MAX_COLUMN_LENGTH
             amendRange.startColumn = 1
         } else {
             let _: never = amendment.behavior;
         }
 
-        let newText = amendment.insertText
-        // return new Promise(resolve => {
-        const model = editor.getModel();
-        let afterRange: monaco.Range = null;
-        let passSplits = newText.split("pass")
-        if (passSplits.length >= 2) {
-            // TODO(dz): generalize
-            let before = passSplits[0]
-            let beforeLines = before.split("\n");
-            let pass = "pass"
-            let lastBeforeLine = beforeLines[beforeLines.length - 1]
-            let passLine = amendRange.startLineNumber + beforeLines.length - 1
-            let startCol = lastBeforeLine.length + 1
+        // determine selection range after applying
+        let afterRange: monaco.Range | null = null;
+        if (!!amendment.selectText) {
+            let selectSplits = amendment.insertText.split(amendment.selectText)
+            if (selectSplits.length >= 2) {
+                // TODO(dz): generalize
+                let before = selectSplits[0]
+                let beforeLines = before.split("\n");
+                let lastBeforeLine = beforeLines[beforeLines.length - 1]
+                let selectLine = amendRange.startLineNumber + beforeLines.length - 1
+                let startCol = lastBeforeLine.length + 1
 
-            afterRange = new monaco.Range(passLine, startCol,
-                passLine, startCol + pass.length)
+                afterRange = new monaco.Range(selectLine, startCol,
+                    selectLine, startCol + amendment.selectText.length)
+            }
         }
 
-        let reverseRange = Object.assign({}, amendment.range)
-        reverseRange.endColumn = 9999 // TODO(dz) ?
+        const model = editor.getModel();
 
+        // remove the amendment so it doesn't appear in the undo stack
+        let reverseRange = Object.assign({}, amendment.range)
+        reverseRange.endColumn = MAX_COLUMN_LENGTH
         let undoEdits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
             identifier: { major: 0, minor: 0 },
             range: model.validateRange(reverseRange),
@@ -113,22 +139,18 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
         model.applyEdits(undoEdits)
 
         setTimeout(() => {
-
+            // prepare to select the appropriate text afterwards, probably "pass"
             const disposable = editor.onDidChangeModelContent(e => {
-                let changes = e.changes;
-
                 disposable.dispose();
                 if (afterRange)
                     editor.setSelection(afterRange);
-
-                // if (afterRange)
-                //     resolve(afterRange);
             });
 
+            // apply the amendment
             let edits: monaco.editor.IIdentifiedSingleEditOperation[] = [{
                 identifier: { major: 0, minor: 0 },
                 range: model.validateRange(amendRange),
-                text: newText,
+                text: amendment.insertText,
                 forceMoveMarkers: true,
                 isAutoWhitespaceEdit: true
             }]
