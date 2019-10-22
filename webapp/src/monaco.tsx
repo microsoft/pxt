@@ -1018,10 +1018,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    .map(ep => ep.getKsPkg())
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
 
                 if (this.giveFocusOnLoading) {
                     this.editor.focus();
