@@ -20,10 +20,7 @@ class BlocklyToolBox extends DomObject {
     async dragBlocks() {
 
         const foreverBlock = 'g.blocklyDraggable:nth-child(2)';
-        let target = await this.getRect(foreverBlock);
-        console.info(`This is the target location:${target}`);
-        console.log(target.x);
-        console.log(target.y);
+        let target = await this.getRect(foreverBlock);        
 
         const sayHelloBlock = 'g.blocklyDraggable:nth-child(4)';
         let start = await this.getRect(sayHelloBlock);
@@ -32,32 +29,63 @@ class BlocklyToolBox extends DomObject {
         let yOffSet = Math.ceil(target.y - start.y + target.height / 2);
         await this.dragAndDropByCoordinate(sayHelloBlock, xOffSet, yOffSet);
 
-        const basicItem = '[role="treeitem"]:nth-child(2) .blocklyTreeRow';
+        const basicItem = '[aria-label="Toggle category Basic"]';
         await this.click(basicItem);
 
-        await this.dragAndDropByElement('g.blocklyDraggable:nth-child(8)[data-shapes="stack"]', 'div.blocklyToolboxDiv');
+        const showStringBlock = 'g.blocklyDraggable:nth-child(8)[data-shapes="stack"]';
+        await this.dragAndDropByElement(showStringBlock, 'div.blocklyToolboxDiv');
+        
+        const insertBlock = 'g.blocklyDraggable:nth-child(2)';
+        await this.contextClick(insertBlock);
+        
+        const duplicateOptionOfInsertBlock = '.goog-menuitem:nth-child(1)';
+        await this.click(duplicateOptionOfInsertBlock);
+        let classValueOfDuplication = await this.getAttribute('.blocklySelected.blocklyDisabled','class');
+        assert.equal(classValueOfDuplication,'blocklyDraggable blocklySelected blocklyDisabled');
+        console.log(`This is the class value of duplication:${classValueOfDuplication}`);
 
-        let insertBlock = 'g.blocklyDraggable:nth-child(2)';
+        const duplication= '.blocklySelected.blocklyDisabled';
+        await this.contextClick(duplication);
+        const deleteDuplicateBlock = '.goog-menuitem:nth-child(3)';
+        await this.click(deleteDuplicateBlock);
+
+        await this.contextClick(insertBlock);
+        const addComment = '.goog-menuitem:nth-child(2)';
+        await this.click(addComment);
+
+        const textBox = 'body textarea';
+        await this.sendKeys(textBox,'fortest');
+
+        const commentDeleteButton = 'g.blocklyCommentDeleteIcon';
+        await this.click(commentDeleteButton);
+        
         await this.contextClick(insertBlock);
 
-        const helpInContextMenu = 'div.goog-menuitem:nth-child(4)';
-        await this.click(helpInContextMenu);
+        const helpOptionOfInsertBlock = '.goog-menuitem:nth-child(4)';
+        await this.click(helpOptionOfInsertBlock);
 
         const iframeIdOfHelp = '#sidedocsframe';
         await this.switchToIframe(iframeIdOfHelp);
 
-        let sidedocsTitle = await this.getText('#show-string');
+        let sideDocsTitle = await this.getText('#show-string');
         await this.switchToDefaultFrame();
 
-        assert.equal(sidedocsTitle, 'Show String');
-        console.info(`The side docs title is ${sidedocsTitle}`);
+        assert.equal(sideDocsTitle, 'Show String');
+        console.info(`The side docs title is ${sideDocsTitle}`);
+        const collapseButton = '[id="sidedocstoggle"]';
+        await this.click(collapseButton);
 
+        await this.contextClick(insertBlock);
+        const deleteInsertBlock = '.goog-menuitem:nth-child(3)';
+        await this.click(deleteInsertBlock);
+        
         await this.click('.fullscreen-button');
 
         await this.catchScreenShot('LaunchInFullScreen');
 
-    }
+        await this.click('[title="Exit fullscreen mode"]');
 
+    }
 
     test() {
         it('Get various blocks', async () => {
