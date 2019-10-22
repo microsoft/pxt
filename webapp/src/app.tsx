@@ -3638,13 +3638,19 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const hid = hash.arg;
             const header = workspace.getHeader(hid);
             if (header) {
-                const deps: any = {};
-                deps[header.name] = `workspace:${header.id}`;
-                editor.newProject({
-                    prj: pxt.appTarget.blocksprj,
-                    name: `test ${header.name}`,
-                    dependencies: deps
-                });
+                const name = lf("test {0}", header.name);
+                const existing = workspace.getHeaders().filter(hd => hd.name == name)[0];
+                if (existing)
+                    editor.loadHeaderAsync(header);
+                else {
+                    const deps: any = {};
+                    deps[header.name] = `workspace:${header.id}`;
+                    editor.newProject({
+                        prj: pxt.appTarget.blocksprj,
+                        name,
+                        dependencies: deps
+                    });
+                }
             }
             pxt.BrowserUtils.changeHash("");
             return true;
