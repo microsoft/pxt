@@ -30,7 +30,8 @@ class ViewMenuBar extends DomObject {
 
         assert.equal(afterChange, 'UntitledProject');
 
-        await this.click('#projectNameArea [title="Save"]');
+        await this.click('#projectNameArea [title="Save"]','.collapse-button:nth-child(1)');
+
     }
 
     test() {
