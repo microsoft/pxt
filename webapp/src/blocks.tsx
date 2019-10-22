@@ -1021,15 +1021,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
         pxt.packagesConfigAsync()
             .then((config) => {
+                const extensionConfig = extension.config;
                 const repoStatus = pxt.github.repoStatus(parsedRepo, config);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.config.extension.localUrl;
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
                 const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extension.config.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
                 /* tslint:enable:no-http-string */
-                this.parent.openExtension(extension.config.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
+                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
             });
     }
 

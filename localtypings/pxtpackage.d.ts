@@ -30,7 +30,7 @@ declare namespace pxt {
     interface PackageConfig {
         name: string;
         version?: string;
-        // installedVersion?: string; ignored going further
+        // installedVersion?: string; moved to Package class
         // url to icon -- support for built-in packages only
         icon?: string;
         // semver description for support target version

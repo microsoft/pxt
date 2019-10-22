@@ -35,7 +35,7 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
-        public installedVersion: string;
+        public installedVersion: string; // resolve version
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -900,7 +900,7 @@ namespace pxt {
                     if (!allowPrivate && !this.config.public)
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
-                    delete (<any>cfg).installedVersion
+                    delete (<any>cfg).installedVersion // cleanup old pxt.json files
                     delete cfg.additionalFilePath
                     delete cfg.additionalFilePaths
                     if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
