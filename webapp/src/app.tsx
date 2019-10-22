@@ -3645,7 +3645,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const hid = hash.arg;
             const header = workspace.getHeader(hid);
             if (header) {
-                const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == hid)[0];
+                const existing = hd.extensionUnderTest && workspace.getHeader(hd.extensionUnderTest);
                 if (existing)
                     editor.loadHeaderAsync(existing);
                 else {
