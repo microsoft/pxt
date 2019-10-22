@@ -582,6 +582,6 @@ class EmbedMenuItem extends sui.StatelessUIElement<EmbedMenuItemProps> {
 
     renderCore() {
         const { label, mode, currentMode } = this.props;
-        return <sui.MenuItem id={`tab${mode}`} active={currentMode == mode} name={label} onClick={this.handleClick} />
+        return <sui.MenuItem id={`tab${mode}`} active={currentMode == mode} tabIndex={0} name={label} onClick={this.handleClick} />
     }
 }

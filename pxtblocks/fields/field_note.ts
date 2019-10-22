@@ -138,6 +138,7 @@ namespace pxtblockly {
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
         //  value of the field
         private note_: string;
 
@@ -349,6 +350,7 @@ namespace pxtblockly {
             }
             this.note_ = this.callValidator(note);
             this.setText(this.getNoteName_());
+            this.value_ = this.note_;
         }
 
         /**

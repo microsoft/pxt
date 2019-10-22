@@ -17,7 +17,7 @@ namespace pxt.blocks.layout {
         const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
         const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
-            .filter((n: ChildNode) => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (<Element>n).getAttribute("disabled") == "true")
+            .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
         const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
@@ -105,15 +105,15 @@ namespace pxt.blocks.layout {
         comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
             commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
         blocks.forEach((block, blocki) => {
-            const size = block.getHeightWidth();
-            const translate = { x: 0, y: 0 };
-            if (block.getStartHat()) {
-                size.height += emPixels;
-                translate.y += emPixels;
-            }
-            extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-                blocki, size, translate)
-        });
+                const size = block.getHeightWidth();
+                const translate = { x: 0, y: 0 };
+                if (block.getStartHat()) {
+                    size.height += emPixels;
+                    translate.y += emPixels;
+                }
+                extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
+                    blocki, size, translate)
+            });
         return div;
     }
 
@@ -209,11 +209,13 @@ namespace pxt.blocks.layout {
         if (!ws)
             return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
-        const metrics = (ws as any).getBlocksBoundingBox();
+        const metrics = (ws as any).getBlocksBoundingBox() as Blockly.utils.Rect;
         const sg = (ws as any).getParentSvg().cloneNode(true) as SVGElement;
         cleanUpBlocklySvg(sg);
 
-        return blocklyToSvgAsync(sg, metrics.x, metrics.y, metrics.width, metrics.height);
+        let width = metrics.right - metrics.left;
+        let height = metrics.bottom - metrics.top;
+        return blocklyToSvgAsync(sg, metrics.left, metrics.top, width, height);
     }
 
     export function serializeNode(sg: Node): string {
@@ -304,13 +306,12 @@ namespace pxt.blocks.layout {
     function expandImagesAsync(xsg: Document): Promise<void> {
         if (!imageXLinkCache) imageXLinkCache = {};
 
-        const images = xsg.getElementsByTagName("image")
+        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
         const p = pxt.Util.toArray(images)
             .filter(image => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 return href && !/^data:/.test(href);
             })
-            .map(img => img as unknown as HTMLImageElement)
             .map((image: HTMLImageElement) => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 let dataUri = imageXLinkCache[href];
@@ -319,11 +320,9 @@ namespace pxt.blocks.layout {
                         .then((img: HTMLImageElement) => {
                             const cvs = document.createElement("canvas") as HTMLCanvasElement;
                             const ctx = cvs.getContext("2d");
-                            let w = img.width
-                            let h = img.height
-                            cvs.width = w;
-                            cvs.height = h;
-                            ctx.drawImage(img, 0, 0, w, h, 0, 0, cvs.width, cvs.height);
+                            cvs.width = img.width;
+                            cvs.height = img.height;
+                            ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, cvs.width, cvs.height);
                             imageXLinkCache[href] = dataUri = cvs.toDataURL("image/png");
                             return dataUri;
                         }).catch(e => {
@@ -341,10 +340,9 @@ namespace pxt.blocks.layout {
 
         if (!BrowserUtils.isEdge()) return Promise.resolve();
 
-        const images = xsg.getElementsByTagName("image")
+        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
         const p = pxt.Util.toArray(images)
             .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
-            .map(img => img as unknown as HTMLImageElement)
             .map((image: HTMLImageElement) => {
                 const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));

@@ -269,7 +269,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Otherwise translate the blocks so that they are positioned on the top left
             this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
-            this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
+            this.editor.scrollX = 10;
             this.editor.scrollY = 10;
 
             // Forces scroll to take effect
@@ -604,10 +604,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
+        let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div>
                 <div id="blocksEditor"></div>
-                <toolbox.ToolboxTrashIcon />
+                <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
             </div>
         )
     }
@@ -1318,7 +1319,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
         if (this.flyoutXmlList.length == 0) {
-            let label = goog.dom.createDom('label');
+            let label = Blockly.utils.xml.createElement('label');
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
         }
@@ -1329,7 +1330,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.flyoutXmlList = [];
         const topBlocks = this.getTopBlocks();
         if (topBlocks.length == 0) {
-            let label = goog.dom.createDom('label');
+            let label = Blockly.utils.xml.createElement('label');
             label.setAttribute('text', lf("No basic blocks..."));
             this.flyoutXmlList.push(label);
         } else {
@@ -1431,7 +1432,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    // For editors that have no toolb
+    // For editors that have no toolbox
     showFlyoutOnlyToolbox() {
         // Show a Flyout only with all the blocks
         const allCategories = this.getAllCategories();
@@ -1451,6 +1452,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (blockXmlList) xmlList = xmlList.concat(blockXmlList);
         })
         this.showFlyoutInternal_(xmlList);
+        this.parent.forceUpdate();
     }
 
     ///////////////////////////////////////////////////////////

@@ -1,3 +1,5 @@
+/// <reference path="../../built/typescriptServices.d.ts"/>
+
 declare namespace ts {
     function getNodeId(node: Node): number;
     interface Node extends TextRange {

@@ -12,12 +12,17 @@
 @avatarSize: 4.5rem;
 @avatarMargin: @avatarSize + 0.5rem;
 @mobileAvatarMargin: 2rem;
+@workspaceHeaderHeight: 2rem;
 
 /*******************************
       Tutorial mode
 *******************************/
 .tutorial #maineditor .full-abs {
     top: @tutorialCardHeight;
+}
+
+.tutorial.flyoutOnly #maineditor .full-abs {
+    top: calc(@tutorialCardHeight + @workspaceHeaderHeight);
 }
 
 .tutorial #maineditor #monacoEditor {
@@ -252,7 +257,8 @@ span.highlight-line {
     padding: 0.5rem;
 }
 
-#tutorialcard .prevbutton, #tutorialcard .nextbutton {
+#tutorialcard .prevbutton,
+#tutorialcard .nextbutton {
     background: @tutorialSegmentBackground;
     z-index: 2;
 
@@ -261,13 +267,13 @@ span.highlight-line {
         margin: 0 auto 0.5em !important;
         color: @mainMenuTutorialBackground;
     }
-}
 
-#tutorialcard .prevbutton:hover, #tutorialcard .nextbutton:hover {
-    background-color: @lightGrey;
+    &:hover, &:focus {
+        background-color: @lightGrey;
 
-    > i, > span, > i.orange {
-        color: @black!important;
+        > i, > span, > i.orange {
+            color: @black!important;
+        }
     }
 }
 
@@ -294,6 +300,14 @@ span.highlight-line {
     .ui.segment {
         display: flex;
         min-height: 100px;
+    }
+}
+
+.ui.modal.hintdialog,
+.tutorialsegment .tutorialmessage {
+    img {
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
@@ -386,7 +400,7 @@ span.highlight-line {
 #tutorialcard.seemore {
     .tutorialsegment > button {
         position: relative;
-        top: -1rem;
+        top: -0.75rem;
         width: auto;
         margin: auto;
         padding: 0.5rem 0.8rem;
@@ -429,6 +443,31 @@ span.highlight-line {
     stroke-linecap: round;
 }
 
+/*******************************
+        Workspace headers
+*******************************/
+#headers {
+    display: flex;
+    position: relative;
+    height: @workspaceHeaderHeight;
+    color: @white;
+    z-index: @simulatorZIndex;
+
+    #workspaceHeader {
+        flex: 1;
+    }
+
+    #flyoutHeader {
+        box-sizing: content-box;
+    }
+
+    div {
+        display: inline-block;
+        text-align: center;
+        line-height: 2rem;
+        font-weight: 800;
+    }
+}
 
 /*******************************
         Media Adjustments
@@ -520,12 +559,12 @@ span.highlight-line {
 @media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .tutorial #tutorialcard {
         padding-left: 0.5rem;
-        padding-right: 0.5rem;        
+        padding-right: 0.5rem;
     }
     .tutorial #tutorialcard .content {
         font-size: 10pt;
     }
-    
+
     .modal.hintdialog img.ui.centered.image {
         max-height:12rem;
     }

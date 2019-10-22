@@ -760,6 +760,9 @@ export class ProjectView
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
+
+        // start blockly load
+        this.loadBlocklyAsync();
     }
 
     // Add an error guard for the entire application
@@ -1013,7 +1016,6 @@ export class ProjectView
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
         if (!tc) return;
         if (step > -1) {
-            tc.setPopout();
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
             tutorialOptions.tutorialStepExpanded = false;
@@ -1265,7 +1267,7 @@ export class ProjectView
                 this.setState({ editorState: editorState });
                 this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
-                const fullscreen = stepInfo[0].fullscreen;
+                const fullscreen = stepInfo[header.tutorial.tutorialStep].fullscreen;
                 if (fullscreen) this.showTutorialHint();
                 //else this.showLightbox();
             })
@@ -1860,7 +1862,7 @@ export class ProjectView
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
-        this.createProjectAsync(options)
+        return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Promise.delay(500))
             .finally(() => core.hideLoading("newproject"));
@@ -1877,6 +1879,12 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.extensionUnderTest) {
+            const ext = workspace.getHeader(options.extensionUnderTest);
+            if (ext) {
+                cfg.dependencies[ext.name] = `workspace:${ext.id}`;
+            }
+        }
         if (options.tsOnly) {
             cfg.files = cfg.files.filter(f => f != "main.blocks")
             delete files["main.blocks"]
@@ -1911,7 +1919,8 @@ export class ProjectView
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary,
-            tutorial: options.tutorial
+            tutorial: options.tutorial,
+            extensionUnderTest: options.extensionUnderTest
         }, files)
             .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
     }
@@ -3158,9 +3167,13 @@ export class ProjectView
         if (tc) tc.showHint(true, showFullText);
     }
 
-    getExpandedCardStyle(): any {
+    getExpandedCardStyle(flyoutOnly?: boolean): any {
         let tc = this.refs[ProjectView.tutorialCardId] as tutorial.TutorialCard;
-        return tc ? tc.getExpandedCardStyle('top') : null;
+        let margin = 2;
+        if (flyoutOnly) {
+            margin += 2;
+        }
+        return tc ? { 'top': "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3310,7 +3323,7 @@ export class ProjectView
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
         const simDebug = !!targetTheme.debugger || inDebugMode;
-        const flyoutOnly = this.state.editorState && !this.state.editorState.hasCategories;
+        const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration;
@@ -3326,7 +3339,8 @@ export class ProjectView
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const recipes = !!targetTheme.recipes;
-        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle() : null;
+        const expandedStyle = inTutorialExpanded ? this.getExpandedCardStyle(flyoutOnly) : null;
+        const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
 
         const collapseIconTooltip = this.state.collapseEditorTools ? lf("Show the simulator") : lf("Hide the simulator");
 
@@ -3338,6 +3352,7 @@ export class ProjectView
             shouldHideEditorFloats ? "hideEditorFloats" : '',
             shouldCollapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
+            invertedTheme ? 'inverted-theme' : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
@@ -3388,9 +3403,10 @@ export class ProjectView
                         <notification.NotificationBanner parent={this} />
                         <container.MainMenu parent={this} />
                     </header>}
-                {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />
-                </div> : undefined}
+                    {flyoutOnly && <tutorial.WorkspaceHeader />}
+                </div>}
                 <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")} tabIndex={inHome ? -1 : 0}>
@@ -3624,6 +3640,25 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             });
             pxt.BrowserUtils.changeHash("");
             return true;
+        case "testproject": {// create new project that references the given extension
+            pxt.tickEvent("hash.testproject");
+            const hid = hash.arg;
+            const header = workspace.getHeader(hid);
+            if (header) {
+                const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == header.id)[0];
+                if (existing)
+                    editor.loadHeaderAsync(existing);
+                else {
+                    editor.newProject({
+                        prj: pxt.appTarget.blocksprj,
+                        name: lf("test {0}", header.name),
+                        extensionUnderTest: hid
+                    });
+                }
+            }
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        }
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
@@ -3680,6 +3715,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "follow":
         case "newproject":
         case "newjavascript":
+        case "testproject":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
         case "recipe":
