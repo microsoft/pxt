@@ -10,7 +10,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     private searchSubset: pxt.Map<boolean | string>;
 
     protected toolbox: toolbox.Toolbox;
-    protected extensions: pxt.PackageConfig[];
+    protected extensions: pxt.Package[];
 
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
 
@@ -324,7 +324,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     getNamespaces() {
         const namespaces: string[] = [];
         // Add extension namespaces if not already in
-        this.extensions.forEach(config => {
+        this.extensions.forEach(p => {
+            const config = p.config;
             const name = config.name;
             const namespace = config.extension.namespace || name;
             if (!this.extensionsMap[namespace]) this.extensionsMap[namespace] = config;

@@ -103,6 +103,7 @@ namespace pxt.editor {
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
+        extensionUnderTest?: string; // workspace id of the extension under test
     }
 
     export interface ExampleImportOptions {

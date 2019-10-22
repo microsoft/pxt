@@ -629,6 +629,7 @@ ${content}
         const gs = this.getGitJson();
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
+        const testurl = `${window.location.href.replace(/#.*$/, '')}#testproject:${this.props.parent.state.header.id}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
         const prUrl = !gs.isFork && master ? null :
@@ -646,6 +647,7 @@ ${content}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        <sui.Link className="ui button" icon="flask" href={testurl} title={lf("Open test project for extension.")} target={`${pxt.appTarget.id}testproject`} onKeyDown={sui.fireClickOnEnter} />
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>

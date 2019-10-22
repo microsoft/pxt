@@ -44,6 +44,12 @@
     }
 }
 
+.ui.card.file.test {
+    .fileimage {
+        background-image: @testFileLogo;
+    }
+}
+
 .ui.card.file.board {
     .fileimage {
         background-image: unset;

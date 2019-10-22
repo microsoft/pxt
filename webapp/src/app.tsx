@@ -760,6 +760,9 @@ export class ProjectView
             editor: this.state.header ? this.state.header.editor : ''
         })
         this.forceUpdate(); // we now have editors prepared
+
+        // start blockly load
+        this.loadBlocklyAsync();
     }
 
     // Add an error guard for the entire application
@@ -1859,7 +1862,7 @@ export class ProjectView
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
-        this.createProjectAsync(options)
+        return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Promise.delay(500))
             .finally(() => core.hideLoading("newproject"));
@@ -1876,6 +1879,12 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.extensionUnderTest) {
+            const ext = workspace.getHeader(options.extensionUnderTest);
+            if (ext) {
+                cfg.dependencies[ext.name] = `workspace:${ext.id}`;
+            }
+        }
         if (options.tsOnly) {
             cfg.files = cfg.files.filter(f => f != "main.blocks")
             delete files["main.blocks"]
@@ -1910,7 +1919,8 @@ export class ProjectView
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary,
-            tutorial: options.tutorial
+            tutorial: options.tutorial,
+            extensionUnderTest: options.extensionUnderTest
         }, files)
             .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
     }
@@ -3163,7 +3173,7 @@ export class ProjectView
         if (flyoutOnly) {
             margin += 2;
         }
-        return tc ? { 'top' : "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
+        return tc ? { 'top': "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3630,6 +3640,25 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             });
             pxt.BrowserUtils.changeHash("");
             return true;
+        case "testproject": {// create new project that references the given extension
+            pxt.tickEvent("hash.testproject");
+            const hid = hash.arg;
+            const header = workspace.getHeader(hid);
+            if (header) {
+                const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == header.id)[0];
+                if (existing)
+                    editor.loadHeaderAsync(existing);
+                else {
+                    editor.newProject({
+                        prj: pxt.appTarget.blocksprj,
+                        name: lf("test {0}", header.name),
+                        extensionUnderTest: hid
+                    });
+                }
+            }
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        }
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
@@ -3686,6 +3715,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "follow":
         case "newproject":
         case "newjavascript":
+        case "testproject":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
         case "recipe":

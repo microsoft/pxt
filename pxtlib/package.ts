@@ -35,6 +35,7 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
+        public installedVersion: string; // resolve version
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -201,8 +202,7 @@ namespace pxt {
                         pxt.debug(`skip download of invalid package ${this.id}`);
                         return undefined;
                     }
-                    if (!/^embed:/.test(verNo) &&
-                        this.config && this.config.installedVersion == verNo)
+                    if (!/^embed:/.test(verNo) && this.installedVersion == verNo)
                         return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
@@ -220,7 +220,7 @@ namespace pxt {
                 U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
             this.parseConfig(confStr);
             if (this.level != 0)
-                this.config.installedVersion = this.version()
+                this.installedVersion = this.version()
             this.saveConfig()
         }
 
@@ -848,7 +848,7 @@ namespace pxt {
                             name: this.config.name,
                             comment: this.config.description,
                             status: "unpublished",
-                            scriptId: this.config.installedVersion,
+                            scriptId: this.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
                             editor: this.getPreferredEditor(),
                             targetVersions: pxt.appTarget.versions
@@ -900,7 +900,7 @@ namespace pxt {
                     if (!allowPrivate && !this.config.public)
                         U.userError('Only packages with "public":true can be published')
                     let cfg = U.clone(this.config)
-                    delete cfg.installedVersion
+                    delete (<any>cfg).installedVersion // cleanup old pxt.json files
                     delete cfg.additionalFilePath
                     delete cfg.additionalFilePaths
                     if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
