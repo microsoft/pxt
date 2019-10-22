@@ -4,7 +4,7 @@ import assert from 'assert';
 class GetMoreList extends DomObject {
 
     async moreList() {
-        for (var i = 1; i < 4; i++) {
+        for (let i = 1; i < 4; i++) {
 
             await this.click('[title="More..."]', '[title="Project Settings"]');
 
