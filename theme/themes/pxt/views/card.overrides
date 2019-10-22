@@ -46,7 +46,7 @@
 
 .ui.card.file.test {
     .fileimage {
-        background-image: @testFileLogoUrl;
+        background-image: @testFileLogo;
     }
 }
 
