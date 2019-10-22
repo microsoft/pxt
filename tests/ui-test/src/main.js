@@ -11,14 +11,15 @@ describe('Micro:bit Test', function () {
         return await website.open("beta");
     });
     after(function () {
-        website.close();
+       website.close();
     });
 
     newProjectPage.test();
-    // shareProject.test();
-    // toggleButton.test();
+    shareProject.test();
+    toggleButton.test();
     getHelpList.test();
-    // getMoreList.test();
-    // viewMenuBar.test();
-    // blocklyToolBox.test();
+    getMoreList.test();
+    viewMenuBar.test();
+    blocklyToolBox.test();
+    
 });
