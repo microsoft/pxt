@@ -25,6 +25,8 @@ declare namespace pxt.workspace {
         tutorial?: pxt.tutorial.TutorialOptions;
         // completed tutorial info if any
         tutorialCompleted?: pxt.tutorial.TutorialCompletionInfo;
+        // workspace guid of the extension under test
+        extensionUnderTest?: string;
     }
 
     export interface Header extends InstallHeader {

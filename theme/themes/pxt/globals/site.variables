@@ -118,6 +118,9 @@ default semantic
 @githubFileLogoUrl: "../docs/static/githubfilelogo.svg";
 @githubFileLogo: data-uri(@githubFileLogoUrl);
 
+@testFileLogoUrl: "../docs/static/testfilelogo.svg";
+@testFileLogo: data-uri(@testFileLogoUrl);
+
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
 
