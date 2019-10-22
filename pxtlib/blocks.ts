@@ -728,13 +728,14 @@ namespace pxt.blocks {
         }
 
         if (pxt.Util.isTranslationMode()) {
-            Util.values(_blockDefinitions).filter(b => b.block && b.block.message0).forEach(b => {
-                pxt.crowdin.inContextLoadAsync(b.block.message0)
+            Util.values(_blockDefinitions).forEach(b =>
+                Object.keys(b).forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
                     .done(r => {
-                        b.translationId = b.block.message0;
-                        b.block.message0 = r;
-                    });
-            })
+                        if (k == "message0") b.translationId = b.block[k];
+                        b.block[k] = r;
+                    })
+                )
+            )
         }
     }
 }
