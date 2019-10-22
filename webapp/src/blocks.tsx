@@ -783,10 +783,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    .map(ep => ep.getKsPkg())
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
             })
     }
 
@@ -1017,19 +1017,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private openExtension(extensionName: string) {
-        const extension = this.extensions.filter(c => c.name == extensionName)[0];
+        const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
         const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
         pxt.packagesConfigAsync()
-            .then((config) => {
-                const repoStatus = pxt.github.repoStatus(parsedRepo, config);
+            .then((packagesConfig) => {
+                const extensionConfig = extension.config;
+                const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
                 const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
                 /* tslint:enable:no-http-string */
-                this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
+                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
             });
     }
 
@@ -1205,7 +1206,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         // Add extension buttons
         if (!subns) {
-            this.extensions.forEach(config => {
+            this.extensions.forEach(extension => {
+                const config = extension.config;
                 const name = config.name;
                 const namespace = config.extension.namespace || name;
                 if (ns == namespace) {
