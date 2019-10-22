@@ -875,7 +875,7 @@ export function promptTranslateBlock(blockid: string, blockTranslationIds: strin
                 {lf("Do not translate variable names (%name, $name).")}
                 {lf("Once validated in Crowdin, translations may take 24h to be active.")}
             </div>
-            {blockTranslationIds.map(trid => <div className="ui basic segment">{trid}</div>)}
+            {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
         </div>
     }).done();
 }
