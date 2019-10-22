@@ -728,11 +728,17 @@ namespace pxt.blocks {
         }
 
         if (pxt.Util.isTranslationMode()) {
+            const msg = Blockly.Msg as any;
             Util.values(_blockDefinitions).filter(b => b.block).forEach(b => {
                 const keys = Object.keys(b.block);
                 b.translationIds = Util.values(b.block);
                 keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
-                    .done(r => b.block[k] = r)
+                    .done(r => {
+                        b.block[k] = r;
+                        // override builtin blockly namespace strings
+                        if (/^[A-Z_]+$/.test(k))
+                            msg[k] = r;
+                    })
                 )
             })
         }
