@@ -521,10 +521,13 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
     renderCore() {
         let { scr, onCardClick, onLabelClick, onClick, cardType, imageUrl, className, ...rest } = this.props;
 
+        className = className || "";
         // compute icon
         if (scr && cardType == "file") {
             if (scr.githubId)
                 className = 'file github ' + className;
+            else if (scr.extensionUnderTest)
+                className = 'file test ' + className;
             else if (scr.board) {
                 className = 'file board ' + className;
                 imageUrl = pxt.bundledSvg(scr.board)
