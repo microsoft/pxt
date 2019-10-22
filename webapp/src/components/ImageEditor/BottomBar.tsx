@@ -88,6 +88,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={!onionSkinEnabled}
                     />
                 </div> }
+                { cursorLocation && <div className="image-editor-seperator"/> }
                 <div className="image-editor-coordinate-preview">
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
                 </div>
