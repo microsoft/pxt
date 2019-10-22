@@ -128,9 +128,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const showExperiments = pxt.editor.experiments.someEnabled();
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink
-            && !isApp
-            && !pxt.shell.isSandboxMode();
 
         if (showExperiments) {
             const displayTime = 20 * 1000; // 20 seconds
@@ -152,20 +149,30 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             );
         }
 
-        if (showWindowsStoreBanner) {
-            const delayTime = 300 * 1000; // 5 minutes
-            const displayTime = 20 * 1000; // 20 seconds
-            const sleepTime = 24 * 7 * 3600; // 1 week
-            return (
-                <GenericBanner id="uwp" parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
-                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
-                        <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)} alt={lf("Windows store logo")}></img>
-                    </sui.Link>
-                    <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
-                        {lf("Want a faster download? Get the app!")}
-                    </sui.Link>
-                </GenericBanner>
-            );
+        const showGenericBanner = !isApp && !pxt.shell.isSandboxMode() && targetConfig && targetConfig.banner;
+        if (showGenericBanner) {
+            //TODO (abchatra): Warning this is not localized.
+            let banner = targetConfig.banner;
+            let link = banner.link; //ms-windows-store://pdp/?ProductId=9PGZHWSK0PGD
+            let text = banner.text; //lf("Want a faster download? Get the app!")
+            let icon = banner.icon; //`images/windowsstorebag.png`
+            
+            if (link && text && icon) {
+                const delayTime = 300 * 1000; // 5 minutes
+                const displayTime = 20 * 1000; // 20 seconds
+                const sleepTime = 24 * 7 * 3600; // 1 week
+
+                return (
+                    <GenericBanner id="banner" parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
+                        <sui.Link className="link" target="_blank" ariaLabel={lf("Link to the banner page")} href={banner.link} onClick={this.handleBannerClick}>
+                            <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, banner.icon)} alt={lf("logo")}></img>
+                        </sui.Link>
+                        <sui.Link className="link" target="_blank" ariaLabel={lf("Link to the banner page")} href={link} onClick={this.handleBannerClick}>
+                            {text}
+                        </sui.Link>
+                    </GenericBanner>
+                );
+            }
         }
 
         return <div></div>;

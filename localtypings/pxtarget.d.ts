@@ -11,7 +11,7 @@ declare namespace pxt {
         galleries?: pxt.Map<string>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
-        windowsStoreLink?: string;
+        banner?: pxt.Map<string>;
         // link to the latest firmware urls (boardid -> url)
         firmwareUrls?: pxt.Map<string>;
         // release manifest for the electron app
