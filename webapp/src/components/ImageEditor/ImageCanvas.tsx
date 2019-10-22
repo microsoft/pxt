@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { ImageEditorStore, ImageEditorTool } from './store/imageReducer';
-import { dispatchImageEdit, dispatchChangeZoom } from "./actions/dispatch";
+import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation } from "./actions/dispatch";
 import { ImageState, Bitmap } from './store/bitmap';
 import { GestureTarget, ClientCoordinates, bindGestureEvents } from './util';
 
@@ -11,6 +11,7 @@ import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './too
 export interface ImageCanvasProps {
     dispatchImageEdit: (state: ImageState) => void;
     dispatchChangeZoom: (zoom: number) => void;
+    dispatchChangeCursorLocation: (loc: [number, number]) => void;
     selectedColor: number;
     backgroundColor: number;
     tool: ImageEditorTool;
@@ -180,6 +181,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected updateCursorLocation(coord: ClientCoordinates): boolean {
         if (!coord) {
             this.cursorLocation = null;
+            this.props.dispatchChangeCursorLocation(null);
             if (!this.edit) this.redraw();
             return false;
         }
@@ -191,6 +193,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             if (!this.cursorLocation || x !== this.cursorLocation[0] || y !== this.cursorLocation[1]) {
                 this.cursorLocation = [x, y];
+
+                this.props.dispatchChangeCursorLocation((x < 0 || y < 0 || x >= this.imageWidth || y >= this.imageHeight) ? null : this.cursorLocation);
 
                 if (!this.edit) this.redraw();
 
@@ -460,6 +464,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             const unit = this.getCanvasUnit(bounds);
             const newWidth = unit * this.imageWidth;
             const newHeight = unit * this.imageHeight;
+            const minimumVisible = this.imageWidth > 1 && this.imageHeight > 1 ? unit * 2 : unit >> 1;
+
+            this.panX = Math.max(Math.min(this.panX, newWidth - minimumVisible), -(bounds.width - minimumVisible));
+            this.panY = Math.max(Math.min(this.panY, newHeight - minimumVisible), -(bounds.height - minimumVisible));
 
             this.canvas.style.position = "fixed"
             this.canvas.style.width = `${newWidth}px`;
@@ -548,6 +556,7 @@ function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps:
 
 const mapDispatchToProps = {
     dispatchImageEdit,
+    dispatchChangeCursorLocation,
     dispatchChangeZoom
 };
 

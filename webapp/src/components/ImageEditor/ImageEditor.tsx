@@ -13,6 +13,7 @@ import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames } from './actions/dispatch';
 import { Bitmap, bitmapToImageLiteral } from './store/bitmap';
 import { EditorState, AnimationState } from './store/imageReducer';
+import { imageStateToBitmap } from './util';
 
 export interface ImageEditorSaveState {
     editor: EditorState;
@@ -64,12 +65,12 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         const state = store.getState();
         const currentFrame = state.present.frames[state.present.currentFrame];
 
-        return bitmapToImageLiteral(Bitmap.fromData(currentFrame.bitmap), "ts");
+        return bitmapToImageLiteral(imageStateToBitmap(currentFrame), "ts");
     }
 
     getAllFrames() {
         const state = store.getState();
-        return "[" + state.present.frames.map(frame => bitmapToImageLiteral(Bitmap.fromData(frame.bitmap), "ts")).join(",") + "]";
+        return "[" + state.present.frames.map(frame => bitmapToImageLiteral(imageStateToBitmap(frame), "ts")).join(",") + "]";
     }
 
     getInterval() {
