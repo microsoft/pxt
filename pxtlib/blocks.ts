@@ -280,7 +280,7 @@ namespace pxt.blocks {
         block?: Map<string>;
         blockTextSearch?: string; // Which block text to use for searching; if undefined, search uses all texts in BlockDefinition.block, joined with space
         tooltipSearch?: string; // Which tooltip to use for searching; if undefined, search uses all tooltips in BlockDefinition.tooltip, joined with space
-        translationId?: string;
+        translationIds?: string[];
     }
 
     let _blockDefinitions: Map<BlockDefinition>;
@@ -728,14 +728,13 @@ namespace pxt.blocks {
         }
 
         if (pxt.Util.isTranslationMode()) {
-            Util.values(_blockDefinitions).forEach(b =>
-                Object.keys(b).forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
-                    .done(r => {
-                        if (k == "message0") b.translationId = b.block[k];
-                        b.block[k] = r;
-                    })
+            Util.values(_blockDefinitions).filter(b => b.block).forEach(b => {
+                const keys = Object.keys(b.block);
+                b.translationIds = Util.values(b.block);
+                keys.forEach(k => pxt.crowdin.inContextLoadAsync(b.block[k])
+                    .done(r => b.block[k] = r)
                 )
-            )
+            })
         }
     }
 }

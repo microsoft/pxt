@@ -862,7 +862,7 @@ export function showCloudSignInDialog() {
     }
 }
 
-export function promptTranslateBlock(blockid: string, blockTranslationId: string) {
+export function promptTranslateBlock(blockid: string, blockTranslationIds: string[]) {
     core.confirmAsync({
         header: lf("Translate this block"),
         hideCancel: true,
@@ -875,7 +875,7 @@ export function promptTranslateBlock(blockid: string, blockTranslationId: string
                 {lf("Do not translate variable names (%name, $name).")}
                 {lf("Once validated in Crowdin, translations may take 24h to be active.")}
             </div>
-            <div className="ui basic segment">{blockTranslationId}</div>
+            {blockTranslationIds.map(trid => <div className="ui basic segment">{trid}</div>)}
         </div>
     }).done();
 }
