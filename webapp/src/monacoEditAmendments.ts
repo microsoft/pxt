@@ -112,7 +112,6 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
         if (!!amendment.selectText) {
             let selectSplits = amendment.insertText.split(amendment.selectText)
             if (selectSplits.length >= 2) {
-                // TODO(dz): generalize
                 let before = selectSplits[0]
                 let beforeLines = before.split("\n");
                 let lastBeforeLine = beforeLines[beforeLines.length - 1]
