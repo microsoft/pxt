@@ -460,6 +460,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             const unit = this.getCanvasUnit(bounds);
             const newWidth = unit * this.imageWidth;
             const newHeight = unit * this.imageHeight;
+            const minimumVisible = this.imageWidth > 1 && this.imageHeight > 1 ? unit * 2 : unit >> 1;
+
+            this.panX = Math.max(Math.min(this.panX, newWidth - minimumVisible), -(bounds.width - minimumVisible));
+            this.panY = Math.max(Math.min(this.panY, newHeight - minimumVisible), -(bounds.height - minimumVisible));
 
             this.canvas.style.position = "fixed"
             this.canvas.style.width = `${newWidth}px`;
