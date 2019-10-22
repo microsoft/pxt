@@ -1862,7 +1862,7 @@ export class ProjectView
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
-        this.createProjectAsync(options)
+        return this.createProjectAsync(options)
             .then(() => this.autoChooseBoardAsync())
             .then(() => Promise.delay(500))
             .finally(() => core.hideLoading("newproject"));
@@ -1879,6 +1879,12 @@ export class ProjectView
             Util.jsonCopyFrom(files, options.filesOverride)
         if (options.dependencies)
             Util.jsonMergeFrom(cfg.dependencies, options.dependencies)
+        if (options.extensionUnderTest) {
+            const ext = workspace.getHeader(options.extensionUnderTest);
+            if (ext) {
+                cfg.dependencies[ext.name] = `workspace:${ext.id}`;
+            }
+        }
         if (options.tsOnly) {
             cfg.files = cfg.files.filter(f => f != "main.blocks")
             delete files["main.blocks"]
@@ -1913,7 +1919,8 @@ export class ProjectView
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary,
-            tutorial: options.tutorial
+            tutorial: options.tutorial,
+            extensionUnderTest: options.extensionUnderTest
         }, files)
             .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
     }
@@ -3638,17 +3645,14 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             const hid = hash.arg;
             const header = workspace.getHeader(hid);
             if (header) {
-                const name = lf("test {0}", header.name);
-                const existing = workspace.getHeaders().filter(hd => hd.name == name)[0];
+                const existing = workspace.getHeaders().filter(hd => hd.extensionUnderTest == hid)[0];
                 if (existing)
-                    editor.loadHeaderAsync(header);
+                    editor.loadHeaderAsync(existing);
                 else {
-                    const deps: any = {};
-                    deps[header.name] = `workspace:${header.id}`;
                     editor.newProject({
                         prj: pxt.appTarget.blocksprj,
-                        name,
-                        dependencies: deps
+                        name: lf("test {0}", header.name),
+                        extensionUnderTest: hid
                     });
                 }
             }
@@ -3711,6 +3715,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "follow":
         case "newproject":
         case "newjavascript":
+        case "testproject":
         // case "gettingstarted": // This should be true, #gettingstarted hash handling is not yet implemented
         case "tutorial":
         case "recipe":
