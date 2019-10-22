@@ -743,8 +743,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // always insert the text on the next lin
         insertText += "\n";
-        // TODO(dz)
-        insertText += "\n#woobloooblobo\n"
         position.lineNumber++;
         position.column = 1;
         // check existing content
@@ -1969,7 +1967,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private editModelAsync(range: monaco.IRange, newText: string): Promise<monaco.IRange> {
-        // TODO(dz): this listens for code editor changes
         return new Promise(resolve => {
             const model = this.editor.getModel();
             const lines = newText.split("\n");
