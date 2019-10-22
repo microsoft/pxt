@@ -56,11 +56,11 @@ type EditAmendmentInstance = {
 } & EditAmendment
 const amendmentMarker = `#AMENDMENT:` // TODO: generalize for TS if needed
 
-export function createLineReplacementPyAmendment(insertPosition: monaco.Position, insertText?: string): EditAmendment {
+export function createLineReplacementPyAmendment(insertText?: string, selectText: string = "pass"): EditAmendment {
     return {
         behavior: "replaceLine",
         insertText: insertText || "",
-        selectText: "pass"
+        selectText: selectText
     }
 }
 export function amendmentToInsertSnippet(amendment: EditAmendment): string {

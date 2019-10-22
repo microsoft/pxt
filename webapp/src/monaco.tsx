@@ -95,7 +95,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // whole line. So we use a custom system of "edit amendments". See monacoEditAmendments.ts
                         // for more.
                         completionSnippet = amendmentToInsertSnippet(
-                            createLineReplacementPyAmendment(position, insertSnippet))
+                            createLineReplacementPyAmendment(insertSnippet))
                     } else {
                         completionSnippet = insertSnippet
                     }
