@@ -3166,7 +3166,7 @@ export class ProjectView
         if (flyoutOnly) {
             margin += 2;
         }
-        return tc ? { 'top' : "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
+        return tc ? { 'top': "calc(" + tc.getCardHeight() + "px + " + margin + "em)" } : null;
     }
 
     ///////////////////////////////////////////////////////////
@@ -3633,6 +3633,22 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             });
             pxt.BrowserUtils.changeHash("");
             return true;
+        case "testproject": {// create new project that references the given extension
+            pxt.tickEvent("hash.testproject");
+            const hid = hash.arg;
+            const header = workspace.getHeader(hid);
+            if (header) {
+                const deps: any = {};
+                deps[header.name] = `workspace:${header.id}`;
+                editor.newProject({
+                    prj: pxt.appTarget.blocksprj,
+                    name: `test ${header.name}`,
+                    dependencies: deps
+                });
+            }
+            pxt.BrowserUtils.changeHash("");
+            return true;
+        }
         case "gettingstarted":
             pxt.tickEvent("hash.gettingstarted");
             editor.newProject();
