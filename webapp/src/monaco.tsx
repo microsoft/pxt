@@ -13,7 +13,8 @@ import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
-import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
+import * as blocklyFieldView from "./blocklyFieldView";
+import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
 import { BreakpointCollection } from "./monacoDebugger";
@@ -212,7 +213,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     giveFocusOnLoading: boolean = false;
 
     protected fieldEditors: FieldEditorManager;
-    protected feWidget: ViewZoneEditorHost;
+    protected feWidget: ViewZoneEditorHost | ModalEditorHost;
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
@@ -529,6 +530,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`) : 0;
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
+
+            const workspaceRect = this.editor.getDomNode().getBoundingClientRect();
+            blocklyFieldView.setEditorBounds({
+                top: workspaceRect.top,
+                left: workspaceRect.left,
+                width: monacoArea.offsetWidth - toolboxWidth,
+                height: workspaceRect.height
+            });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
         }
@@ -1163,8 +1172,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.feWidget) {
             this.feWidget.close();
         }
-        this.feWidget = new ViewZoneEditorHost(fe, range, this.editor.getModel());
-        this.feWidget.heightInPx = viewZoneHeight;
+        this.feWidget = new ModalEditorHost(fe, range, this.editor.getModel());
+        // this.feWidget.heightInPx = viewZoneHeight;
         this.feWidget.showAsync(this.fileType, this.editor)
             .then(edit => {
                 this.activeRangeID = null;
