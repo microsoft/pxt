@@ -41,5 +41,3 @@ export class GithubProvider implements cloudsync.IdentityProvider {
             })
     }
 }
-
-export const provider = new GithubProvider;
