@@ -306,7 +306,7 @@ namespace pxsim {
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
 
             runtime = new Runtime(msg);
-            runtime.board.setUrlFragment(msg.fragment);
+            if (runtime.board.setUrlFragment) runtime.board.setUrlFragment(msg.fragment);
             runtime.board.initAsync(msg)
                 .done(() => {
                     runtime.run((v) => {

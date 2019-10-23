@@ -503,7 +503,7 @@ namespace pxsim {
                 player: mc
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
-            var fragment = window.location.href.split('#');
+            let fragment = window.location.href.split('#');
             if (fragment && fragment.length > 1) msg.fragment = fragment[1].split('&');
 
             frame.dataset['runid'] = this.runId;

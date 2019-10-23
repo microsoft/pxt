@@ -1239,7 +1239,7 @@ export class ProjectView
             }).then(() => this.loadTutorialFiltersAsync())
             .finally(() => {
                 // Editor is loaded
-                var editorHash = "#editor";
+                let editorHash = "#editor";
                 if (!/editor/.test(window.location.hash) && window.location.hash)
                     editorHash += "&" + window.location.hash.substring(1);
                 pxt.BrowserUtils.changeHash(editorHash, true);
