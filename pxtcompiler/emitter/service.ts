@@ -857,7 +857,6 @@ namespace ts.pxtc.service {
         },
 
         getCompletions: v => {
-            console.log("service.ts 798")
             let src: string = v.fileContent
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
@@ -985,8 +984,6 @@ namespace ts.pxtc.service {
             return lastApiInfo.apis;
         },
         snippet: v => {
-            console.log("service.ts 943")
-            console.dir(v)
             const o = v.snippet;
             if (!lastApiInfo) return undefined;
             const fn = lastApiInfo.apis.byQName[o.qName];

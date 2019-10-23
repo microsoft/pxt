@@ -66,13 +66,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      */
     provideCompletionItems(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken):
         monaco.languages.CompletionItem[] | monaco.Thenable<monaco.languages.CompletionItem[]> | monaco.languages.CompletionList | monaco.Thenable<monaco.languages.CompletionList> {
-        console.log("monaco 68")
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
-                console.log("monaco 74")
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
                     let completionSnippet: string;

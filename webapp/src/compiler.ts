@@ -184,7 +184,6 @@ export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics:
 }
 
 export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
-    console.log("compiler 183")
     return workerOpAsync("getCompletions", {
         fileName,
         fileContent,
@@ -651,6 +650,6 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 function blocksOptions(): pxtc.service.BlocksOptions {
     const bannedCategories = pkg.mainPkg.resolveBannedCategories();
     if (bannedCategories)
-        return {  bannedCategories };
+        return { bannedCategories };
     return undefined;
 }
