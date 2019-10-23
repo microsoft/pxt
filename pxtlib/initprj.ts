@@ -180,8 +180,8 @@ cache:
     }
 
     export function packageFiles(name: string): pxt.Map<string> {
-        let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
-        let config = U.clone(prj.config);
+        const prj = pxt.appTarget.blocksprj || pxt.appTarget.tsprj;
+        const config = U.clone(prj.config);
         // clean up
         delete (<any>config).installedVersion;
         delete config.additionalFilePath;
