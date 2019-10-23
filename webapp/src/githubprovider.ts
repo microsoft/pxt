@@ -10,6 +10,13 @@ export class GithubProvider extends cloudsync.ProviderBase implements cloudsync.
         return false;
     }
 
+    loginCheck() {
+        super.loginCheck();
+        const tok = this.token();
+        if (tok)
+            pxt.github.token = tok;
+    }
+
     login(): void {
         dialogs.showGithubLoginAsync()
             .done(() => this.loginCheck());
@@ -26,3 +33,5 @@ export class GithubProvider extends cloudsync.ProviderBase implements cloudsync.
             })
     }
 }
+
+export const provider = new GithubProvider();

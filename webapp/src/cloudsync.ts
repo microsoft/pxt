@@ -81,9 +81,13 @@ export class ProviderBase {
         throw mkSyncError(msg)
     }
 
-    protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
-        let tok = pxt.storage.getLocal(this.name + "token")
+    protected token() {
+        const tok = pxt.storage.getLocal(this.name + "token")
+        return tok;
+    }
 
+    protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
+        const tok = this.token();
         if (!tok) {
             throw this.pleaseLogin()
         }
@@ -132,8 +136,7 @@ export class ProviderBase {
     }
 
     loginCheck() {
-        let tok = pxt.storage.getLocal(this.name + "token")
-
+        const tok = this.token();
         if (!tok)
             return
 
@@ -231,7 +234,7 @@ export function providers(): IdentityProvider[] {
                 .filter(p => !!cl.cloudProviders[p.name])
                 .forEach(p => allProviders[p.name] = p);
         }
-        const gh = new githubprovider.GithubProvider();
+        const gh = githubprovider.provider;
         allProviders[gh.name] = gh;
     }
 
