@@ -3738,9 +3738,9 @@ async function importGithubProject(id: string) {
         let hd = workspace.getHeaders().find(h => h.githubId == id);
         if (!hd)
             hd = await workspace.importGithubAsync(id)
-        let text = await workspace.getTextAsync(hd.id)
+        const text = await workspace.getTextAsync(hd.id)
         if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
-            let ok = await core.confirmAsync({
+            const ok = await core.confirmAsync({
                 header: lf("Initialize MakeCode extension?"),
                 body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
                 agreeLbl: lf("Initialize!")
