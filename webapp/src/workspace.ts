@@ -602,10 +602,11 @@ function mergeError() {
 // requests token to user if needed
 async function ensureTokenAsync() {
     // check that we have a token first
-    if (!pxt.github.token)
+    if (!pxt.github.token) {
         await dialogs.showGithubLoginAsync();
-    if (!pxt.github.token)
-        U.userError(lf("Please sign in to GitHub to perform this operation."))
+        if (!pxt.github.token)
+            U.userError(lf("Please sign in to GitHub to perform this operation."))
+    }
 }
 
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
