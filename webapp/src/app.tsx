@@ -1798,7 +1798,7 @@ export class ProjectView
     }
 
     cloudSignInComplete() {
-        console.log('sign in complete');
+        pxt.log('cloud sign in complete');
         initLogin();
         cloudsync.syncAsync()
             .then(() => {

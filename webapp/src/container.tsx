@@ -529,14 +529,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
 
-        const simActive = this.props.parent.isEmbedSimActive();
-        const blockActive = this.props.parent.isBlocksActive();
-        const javascriptActive = this.props.parent.isJavaScriptActive();
-
         const hasCloud = this.hasCloud();
         const user = hasCloud ? this.getUser() : undefined;
-
-        const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -569,8 +563,6 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
                 {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
                 {!hasCloud || sandbox || inTutorial ? undefined : <cloud.UserMenu parent={this.props.parent} user={user}/>}
-                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
-
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}

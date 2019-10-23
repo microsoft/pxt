@@ -1,7 +1,6 @@
 /// <reference path="../built/pxtlib.d.ts"/>
 
 namespace pxt.workspace {
-
     export type ScriptText = pxt.Map<string>;
 
     export interface Project {
