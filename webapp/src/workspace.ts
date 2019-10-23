@@ -695,7 +695,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
-    const pfiles = pxt.packageFiles(hd.name);
+    const pfiles = pxt.template.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
@@ -769,8 +769,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     let currFiles = await getTextAsync(hd.id);
 
-    const templateFiles = pxt.packageFiles(name);
-    pxt.packageFilesFixup(templateFiles, false);
+    const templateFiles = pxt.template.packageFiles(name);
+    pxt.template.packageFilesFixup(templateFiles, false);
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
