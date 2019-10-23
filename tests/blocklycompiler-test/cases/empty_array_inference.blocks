@@ -1,0 +1,81 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+<variables>
+<variable id="T0Fu4P9JbSx@uH_Tp#Ub">listA</variable>
+<variable id="i0/By*+{-oBVouljDE_*">listC</variable>
+<variable id="8#w^JPqRI4lkika+26P7">listB</variable>
+</variables>
+<block type="pxt-on-start" x="0" y="0">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR" id="i0/By*+{-oBVouljDE_*">listC</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+<block type="lists_create_with">
+<mutation items="0" />
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR" id="T0Fu4P9JbSx@uH_Tp#Ub">listA</field>
+<breakpoint xmlns="http://www.w3.org/1999/xhtml"></breakpoint>
+<value name="VALUE">
+<block type="lists_create_with">
+<mutation items="0" />
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR" id="8#w^JPqRI4lkika+26P7">listB</field>
+<value name="VALUE">
+<block type="lists_create_with">
+<mutation items="2" />
+<value name="ADD0">
+<shadow type="math_number">
+<field name="NUM">123</field>
+</shadow>
+</value>
+<value name="ADD1">
+<shadow type="math_number">
+<field name="NUM">234</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="array_push">
+<value name="list">
+<block type="variables_get">
+<field name="VAR" id="i0/By*+{-oBVouljDE_*">listC</field>
+</block>
+</value>
+<value name="value">
+<block type="variables_get">
+<field name="VAR" id="T0Fu4P9JbSx@uH_Tp#Ub">listA</field>
+</block>
+</value>
+<next>
+<block type="array_push">
+<value name="list">
+<block type="variables_get">
+<field name="VAR" id="i0/By*+{-oBVouljDE_*">listC</field>
+</block>
+</value>
+<value name="value">
+<block type="variables_get">
+<field name="VAR" id="8#w^JPqRI4lkika+26P7">listB</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

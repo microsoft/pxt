@@ -287,6 +287,10 @@ describe("blockly compiler", function () {
         it("should handle functions with list return types", (done: () => void) => {
             blockTestAsync("array_return_type").then(done, done);
         });
+
+        it("should correctly infer types for arrays initialized to empty", (done: () => void) => {
+            blockTestAsync("empty_array_inference").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {
