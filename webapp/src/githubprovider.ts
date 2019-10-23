@@ -28,7 +28,8 @@ export class GithubProvider extends cloudsync.ProviderBase implements cloudsync.
             .then<cloudsync.UserInfo>(ghuser => {
                 return {
                     id: ghuser.login,
-                    name: ghuser.name
+                    name: ghuser.name,
+                    imageUrl: ghuser.avatar_url
                 }
             })
     }

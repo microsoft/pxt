@@ -28,6 +28,7 @@ export interface FileInfo {
 export interface UserInfo {
     id: string;
     name: string;
+    imageUrl?: string;
 }
 
 export interface ProviderInfo {
