@@ -95,6 +95,12 @@ namespace pxt.blocks {
 
     // Cached block info from the last inject operation
     let cachedBlockInfo: pxtc.BlocksInfo;
+    let cachedSymbolInfo: pxtc.SymbolInfo[];
+
+    export function clearCaches() {
+        cachedBlockInfo = null;
+        cachedSymbolInfo = null;
+    }
 
     // blocks cached
     interface CachedBlock {
@@ -385,12 +391,13 @@ namespace pxt.blocks {
     }
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
-        cachedBlockInfo = blockInfo;
+        if (cachedBlockInfo && cachedSymbolInfo) return cachedSymbolInfo;
 
+        cachedBlockInfo = blockInfo;
         Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
 
         // inject Blockly with all block definitions
-        return blockInfo.blocks
+        cachedSymbolInfo = blockInfo.blocks
             .map(fn => {
                 if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
@@ -402,6 +409,7 @@ namespace pxt.blocks {
                 }
                 return fn;
             });
+        return cachedSymbolInfo;
     }
 
     function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, blockXml: HTMLElement): boolean {

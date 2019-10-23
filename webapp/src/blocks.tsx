@@ -134,6 +134,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             editorDiv.appendChild(loadingDimmer);
 
             compiler.clearCaches(); // ensure that we refresh the blocks list
+            pxt.blocks.clearCaches();
             this.loadingXmlPromise = this.loadBlocklyAsync()
                 .then(() => compiler.getBlocksAsync())
                 .then(bi => {
