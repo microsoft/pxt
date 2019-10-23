@@ -235,7 +235,7 @@ export function providers(): IdentityProvider[] {
                 .filter(p => !!cl.cloudProviders[p.name])
                 .forEach(p => allProviders[p.name] = p);
         }
-        const gh = githubprovider.provider;
+        const gh = new githubprovider.GithubProvider();
         allProviders[gh.name] = gh;
     }
 

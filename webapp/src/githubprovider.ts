@@ -34,5 +34,3 @@ export class GithubProvider extends cloudsync.ProviderBase implements cloudsync.
             })
     }
 }
-
-export const provider = new GithubProvider();

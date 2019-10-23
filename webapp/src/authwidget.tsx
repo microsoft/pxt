@@ -45,10 +45,11 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
             />;
 
         const username = this.getData("sync:username");
+        const descr = lf("Signed in as {0} with {1}", username, provider.friendlyName);
         return <sui.Button
             className={`circular authwidget ${provider.name}`}
-            title={username}
-            tooltip={username}
+            title={descr}
+            tooltip={descr}
             icon={provider.icon}
             onClick={this.handleHeadClick}>
         </sui.Button>
