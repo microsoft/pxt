@@ -225,6 +225,16 @@ namespace pxt.github {
     // overriden by client
     export let db: IGithubDb = new MemoryGithubDb();
 
+    export interface GitUser {
+        login: string,
+        avatar_url: string,
+        name: string
+    }
+
+    export function authenticatedUserAsync(): Promise<GitUser> {
+        return ghGetJsonAsync("https://api.github.com/user");
+    }
+
     export function getCommitAsync(repopath: string, sha: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
             .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")

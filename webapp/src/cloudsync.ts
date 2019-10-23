@@ -7,7 +7,6 @@ import * as data from "./data";
 import * as dialogs from "./dialogs";
 
 type Header = pxt.workspace.Header;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -31,13 +30,16 @@ export interface UserInfo {
     name: string;
 }
 
-export interface Provider {
+export interface IdentityProvider {
     name: string;
     friendlyName: string;
     loginCheck(): void;
     login(): void;
     loginCallback(queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<UserInfo>;
+}
+
+export interface Provider extends IdentityProvider {
     listAsync(): Promise<FileInfo[]>;
     // apis below return CloudFile mostly for the version field
     downloadAsync(id: string): Promise<FileInfo>;

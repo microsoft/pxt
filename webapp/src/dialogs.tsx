@@ -4,6 +4,7 @@ import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
+import * as githubprovider from "./githubprovider";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
@@ -839,7 +840,12 @@ export function showResetDialogAsync() {
 }
 
 export function showCloudSignInDialog() {
-    const providers = cloudsync.providers();
+    // cloud provider + github
+    const providers: cloudsync.IdentityProvider[] = cloudsync.providers();
+
+    // add github
+    providers.push(new githubprovider. GithubProvider());
+
     if (providers.length == 0)
         return;
     if (providers.length == 1)

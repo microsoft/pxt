@@ -41,7 +41,7 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
         // signed in, display bubbled head
         // TODO: display face
         return <sui.Button
-            className={`authwidget ${authority}`}
+            className={`circular authwidget ui icon ${authority}`}
             onClick={this.handleHeadClick}>
         </sui.Button>
     }
