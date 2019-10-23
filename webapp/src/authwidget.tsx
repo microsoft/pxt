@@ -30,9 +30,13 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
     }
 
     renderCore() {
-        const provider = cloudsync.identityProvider();
+        // no cloud
+        const hasCloud = this.getData("sync:hascloud");
+        if (!hasCloud)
+            return <div/>;
 
-        // not signed in
+        // signed in?
+        const provider = this.getData("sync:provider") as cloudsync.ProviderInfo;
         if (!provider)
             return <sui.Button
                 className={"authwidget anonymous"}
@@ -40,10 +44,11 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
                 text={lf("Sign in")}
             />;
 
-        // signed in, display bubbled head
-        // TODO: display face
+        const username = this.getData("sync:username");
         return <sui.Button
             className={`circular authwidget ${provider.name}`}
+            title={username}
+            tooltip={username}
             icon={provider.icon}
             onClick={this.handleHeadClick}>
         </sui.Button>

@@ -12,6 +12,10 @@ export class GithubProvider implements cloudsync.IdentityProvider {
         this.icon = "icon github";
     }
 
+    supportsSync(): boolean {
+        return false;
+    }
+
     loginCheck(): void {
         if (!pxt.github.token)
             this.login();
@@ -29,7 +33,10 @@ export class GithubProvider implements cloudsync.IdentityProvider {
         // https://developer.github.com/v3/users/#get-the-authenticated-user
         return pxt.github.authenticatedUserAsync()
             .then<cloudsync.UserInfo>(ghuser => {
-                return { id: ghuser.login, name: ghuser.name }
+                return {
+                    id: ghuser.login,
+                    name: ghuser.name
+                }
             })
     }
 }

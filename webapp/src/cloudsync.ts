@@ -5,16 +5,15 @@ import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
 import * as dialogs from "./dialogs";
-import * as githubprovider from "./githubprovider";
 
 type Header = pxt.workspace.Header;
 
 import U = pxt.Util;
 const lf = U.lf
 
-let allProviders: pxt.Map<Provider>
-let provider: Provider
-let status = ""
+let allProviders: pxt.Map<IdentityProvider>;
+let currentProvider: IdentityProvider;
+let status = "";
 
 const HEADER_JSON = ".cloudheader.json"
 
@@ -31,14 +30,18 @@ export interface UserInfo {
     name: string;
 }
 
-export interface IdentityProvider {
+export interface ProviderInfo {
     name: string;
     friendlyName: string;
     icon: string; // including icon or xicon
+}
+
+export interface IdentityProvider extends ProviderInfo {
     loginCheck(): void;
     login(): void;
     loginCallback(queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<UserInfo>;
+    supportsSync(): boolean;
 }
 
 export interface Provider extends IdentityProvider {
@@ -68,6 +71,10 @@ function mkSyncError(msg: string) {
 
 export class ProviderBase {
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
+    }
+
+    supportsSync(): boolean {
+        return true;
     }
 
     syncError(msg: string) {
@@ -211,30 +218,30 @@ export function reconstructMeta(files: pxt.Map<string>) {
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
 import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
-import { GithubProvider } from "./githubprovider";
+import * as githubprovider from "./githubprovider";
 
-export function providers() {
+export function providers(): IdentityProvider[] {
     if (!allProviders) {
         allProviders = {}
-        for (let impl of [new onedrive.Provider(), new googledrive.Provider()]) {
-            allProviders[impl.name] = impl
+        const cl = pxt.appTarget.cloud
+
+        if (cl && cl.cloudProviders) {
+            [new onedrive.Provider(), new googledrive.Provider()]
+                .filter(p => !!cl.cloudProviders[p.name])
+                .forEach(p => allProviders[p.name] = p);
         }
+        allProviders[githubprovider.provider.name] = githubprovider.provider;
     }
 
-    let cl = pxt.appTarget.cloud
-
-    if (!cl || !cl.cloudProviders)
-        return []
-
-    return Object.keys(cl.cloudProviders).map(id => allProviders[id])
+    return pxt.Util.values(allProviders);
 }
 
 // this is generally called by the provier's loginCheck() function
-export function setProvider(impl: Provider) {
-    provider = impl
+export function setProvider(impl: IdentityProvider) {
+    currentProvider = impl
 }
 
-async function syncOneUpAsync(h: Header) {
+async function syncOneUpAsync(provider: Provider, h: Header) {
     let saveId = {}
     h.saveId = saveId;
     let text = await ws.getTextAsync(h.id)
@@ -275,11 +282,11 @@ export function resetAsync() {
 
 function updateNameAsync() {
     let name = pxt.storage.getLocal("cloudName");
-    if (name || !provider)
+    if (name || !currentProvider)
         return Promise.resolve()
-    return provider.getUserInfoAsync()
+    return currentProvider.getUserInfoAsync()
         .then(info => {
-            let id = provider.name + ":" + info.id
+            let id = currentProvider.name + ":" + info.id
             let currId = pxt.storage.getLocal("cloudId")
             if (currId && currId != id) {
                 core.confirmAsync({
@@ -316,11 +323,14 @@ function updateNameAsync() {
 export function syncAsync(): Promise<void> {
     let numUp = 0
     let numDown = 0
-    let blobConatiner = ""
     let updated: pxt.Map<number> = {}
 
-    if (!provider)
+    if (!currentProvider || !currentProvider.supportsSync())
         return Promise.resolve(undefined)
+
+    const provider = currentProvider as Provider;
+    if (!provider)
+        return Promise.resolve(undefined);
 
     function uninstallAsync(h: Header) {
         pxt.debug(`uninstall local ${h.blobId}`)
@@ -407,7 +417,7 @@ export function syncAsync(): Promise<void> {
 
     function syncUpAsync(h: Header) {
         numUp++
-        return syncOneUpAsync(h)
+        return syncOneUpAsync(provider, h)
             .then(() => progress(--numUp))
     }
 
@@ -440,9 +450,9 @@ export function syncAsync(): Promise<void> {
                         }
                     } else {
                         if (hd.blobCurrent) {
-                            return syncDownAsync(hd, chd)
+                            return syncDownAsync(provider, hd, chd)
                         } else {
-                            return resolveConflictAsync(hd, chd)
+                            return resolveConflictAsync(provider, hd, chd)
                         }
                     }
                 } else {
@@ -497,8 +507,9 @@ export function loginCheck() {
 }
 
 export function saveToCloudAsync(h: Header) {
-    if (!provider) return Promise.resolve();
-    return syncOneUpAsync(h)
+    if (!currentProvider || !currentProvider.supportsSync())
+        return Promise.resolve();
+    return syncOneUpAsync(currentProvider as Provider, h)
 }
 
 function setStatus(s: string) {
@@ -506,12 +517,6 @@ function setStatus(s: string) {
         status = s
         data.invalidate("sync:status")
     }
-}
-
-export function identityProvider(): IdentityProvider {
-    if (pxt.github.token)
-        return githubprovider.provider;
-    return provider;
 }
 
 /*
@@ -525,11 +530,11 @@ data.mountVirtualApi("sync", {
     getSync: p => {
         switch (data.stripProtocol(p)) {
             case "provider":
-                return provider && provider.name
+                return currentProvider;
             case "username":
-                return pxt.storage.getLocal("cloudName")
+                return pxt.storage.getLocal("cloudName");
             case "loggedin":
-                return provider != null
+                return currentProvider != null
             case "status":
                 return status
             case "hascloud":
