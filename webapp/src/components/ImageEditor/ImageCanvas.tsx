@@ -173,7 +173,6 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             if (this.updateCursorLocation(coord))
                 this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
 
-            this.edit.end(this.cursorLocation[0], this.cursorLocation[1], this.editState);
             this.commitEdit();
         }
     }
@@ -248,7 +247,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected updateEdit(x: number, y: number) {
-        if (this.edit && this.inBounds(x, y)) {
+        if (this.edit && this.edit.inBounds(x, y)) {
             this.edit.update(x, y);
 
             this.redraw();
@@ -337,10 +336,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected redrawFloatingLayer(state: EditState) {
+    protected redrawFloatingLayer(state: EditState, skipImage = false) {
         const floatingRect = this.refs["floating-layer-border"] as HTMLDivElement;
         if (state.floatingLayer) {
-            this.drawBitmap(state.floatingLayer, state.layerOffsetX, state.layerOffsetY, true);
+            if (!skipImage) this.drawBitmap(state.floatingLayer, state.layerOffsetX, state.layerOffsetY, true);
 
             const rect = this.canvas.getBoundingClientRect();
 
@@ -353,6 +352,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             const yScale = rect.height / state.height;
 
             floatingRect.style.display = ""
+
+            if (right - left < 1 || bottom - top < 1) floatingRect.style.display = "none";
 
             floatingRect.style.left = (-this.panX + xScale * left) + "px";
             floatingRect.style.top = (-this.panY + yScale * top) + "px";
@@ -485,7 +486,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.background.style.top = this.canvas.style.top;
             this.background.style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
 
-            this.redrawFloatingLayer(this.editState);
+            this.redrawFloatingLayer(this.editState, true);
         }
     }
 
