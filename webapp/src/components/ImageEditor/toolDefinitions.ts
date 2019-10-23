@@ -226,16 +226,15 @@ export abstract class Edit {
         }
     }
 
+    public inBounds(x: number, y: number) {
+        return x >= 0 && x < this.canvasWidth && y >= 0 && y < this.canvasHeight
+    }
+
 
     start(cursorCol: number, cursorRow: number, state: EditState) {
         this.isStarted = true;
         this.startCol = cursorCol;
         this.startRow = cursorRow;
-    }
-
-
-    end(col: number, row: number, state: EditState): void {
-
     }
 
     drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
@@ -613,8 +612,8 @@ export class MarqueeEdit extends SelectionEdit {
         }
     }
 
-    end(cursorCol: number, cursorRow: number, state: EditState) {
-
+    public inBounds(x: number, y: number) {
+        return this.isMove || super.inBounds(x, y);
     }
 
     protected doEditCore(state: EditState): void {
