@@ -270,6 +270,7 @@ namespace pxsim {
         bus: pxsim.EventBus;
         runOptions: SimulatorRunMessage;
         messageListeners: MessageListener[] = [];
+        setUrlFragment?: (params: string[]) => void;
 
         constructor() {
             this.id = "b" + Math.round(Math.random() * 2147483647);
