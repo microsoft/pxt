@@ -214,7 +214,10 @@ cache:
             "testFiles",
             "testDependencies",
             "public",
-            "targetVersions"
+            "targetVersions",
+            "preferredEditor",
+            "additionalFilePath",
+            "additionalFilePaths"
         ]
 
         config.files = pkgFiles.filter(s => !/test/.test(s));
