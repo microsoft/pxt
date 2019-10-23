@@ -167,6 +167,23 @@ namespace ts.pxtc {
 
             hex = hexinfo.hex;
 
+            if (target.nativeType == pxtc.NATIVE_TYPE_VM) {
+                bytecodeStartIdx = -1
+                bytecodeStartAddr = 0
+                bytecodeStartAddrPadded = 0
+                bytecodePaddingSize = 0
+
+                jmpStartAddr = -1
+                jmpStartIdx = -1
+
+                for (let f of funs) {
+                    funcInfo[f.name] = f
+                    f.value = 0xffffff
+                }
+
+                return
+            }
+
             patchSegmentHex(hex)
 
             if (hex.length <= 2) {
@@ -391,12 +408,7 @@ namespace ts.pxtc {
                 vt ^= 1
                 if (vt & 3) oops("Unaligned vt: " + vt)
 
-                if (target.gc) {
-                    pxt.HF2.write32(headerBytes, 0, vt)
-                } else {
-                    pxt.HF2.write16(headerBytes, 0, parseInt(pxt.REFCNT_FLASH))
-                    pxt.HF2.write16(headerBytes, 2, vt >> target.vtableShift)
-                }
+                pxt.HF2.write32(headerBytes, 0, vt)
 
                 let len = 0
                 if (isString)
@@ -671,7 +683,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         // 4 words header
         // 4 or 2 mem mgmt methods
         // 1 toString
-        return 4 + (target.gc ? 4 : 2) + 1
+        return 4 + 4 + 1
     }
 
     const primes = [
@@ -684,7 +696,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
     ]
 
     export const vtLookups = 3
-    function computeHashMultiplier(nums: number[]) {
+    export function computeHashMultiplier(nums: number[]) {
         let shift = 32
         U.assert(U.unique(nums, v => "" + v).length == nums.length, "non unique")
         for (let sz = 2; ; sz = sz << 1) {
@@ -771,10 +783,8 @@ ${info.id}_VT:
 
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
-        if (target.gc) {
-            addPtr("pxt::RefRecord_scan")
-            addPtr("pxt::RefRecord_gcsize")
-        }
+        addPtr("pxt::RefRecord_scan")
+        addPtr("pxt::RefRecord_gcsize")
         let toStr = info.toStringMethod
         addPtr(toStr ? toStr.vtLabel() : "0")
 
@@ -844,8 +854,8 @@ ${hex.hexPrelude()}
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
     .word _pxt_perf_counters
-    .word 0 ; reserved
-    .word 0 ; reserved
+    .word _pxt_restore_exception_state@fn
+    .word ${bin.emitString(bin.getTitle())} ; name
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
@@ -880,7 +890,7 @@ ${hex.hexPrelude()}
         let idx = 0
         for (let d of bin.ifaceMembers) {
             let lbl = bin.emitString(d)
-            asmsource += `    .word ${lbl}meta  ; ${idx++} .${d}\n`
+            asmsource += `    .word ${lbl}  ; ${idx++} .${d}\n`
         }
         asmsource += `    .word 0\n`
         asmsource += "_vtables_end:\n\n"
@@ -933,7 +943,10 @@ ${hex.hexPrelude()}
     function mkProcessorFile(target: CompileTarget) {
         let b: assembler.File
 
-        b = new assembler.File(new thumb.ThumbProcessor())
+        if (target.nativeType == NATIVE_TYPE_VM)
+            b = new assembler.VMFile(new vm.VmProcessor(target))
+        else
+            b = new assembler.File(new thumb.ThumbProcessor())
 
         b.ei.testAssembler(); // just in case
 
@@ -1135,7 +1148,13 @@ __flash_checksums:
     export let validateShim = hex.validateShim;
 
     export function f4EncodeImg(w: number, h: number, bpp: number, getPix: (x: number, y: number) => number) {
-        let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
+        const header = [
+            0x87, bpp,
+            w & 0xff, w >> 8,
+            h & 0xff, h >> 8,
+            0, 0
+        ]
+        let r = header.map(hex2).join("")
         let ptr = 4
         let curr = 0
         let shift = 0
@@ -1168,6 +1187,5 @@ __flash_checksums:
         function hex2(n: number) {
             return ("0" + n.toString(16)).slice(-2)
         }
-
     }
 }

@@ -1,6 +1,7 @@
 namespace pxt.blocks {
     export enum NT {
         Prefix, // op + map(children)
+        Postfix, // map(children) + op
         Infix, // children.length == 2, child[0] op child[1]
         Block, // { } are implicit
         NewLine
@@ -31,9 +32,13 @@ namespace pxt.blocks {
 
     let placeholders: Map<Map<any>> = {};
 
+    export function backtickLit(s: string) {
+        return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
+    }
+
     export function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
-            return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
+            return backtickLit(s)
         else return JSON.stringify(s)
     }
 
@@ -51,6 +56,10 @@ namespace pxt.blocks {
 
     export function mkPrefix(pref: string, children: JsNode[]) {
         return mkNode(NT.Prefix, pref, children)
+    }
+
+    export function mkPostfix(children: JsNode[], post: string) {
+        return mkNode(NT.Postfix, post, children)
     }
 
     export function mkInfix(child0: JsNode, op: string, child1: JsNode) {
@@ -210,11 +219,7 @@ namespace pxt.blocks {
         }
 
         export function mkParenthesizedExpression(expression: JsNode): JsNode {
-            return mkGroup([
-                mkText("("),
-                expression,
-                mkText(")")
-            ])
+            return isParenthesized(flattenNode([expression]).output) ? expression : mkGroup([mkText("("), expression, mkText(")")]);
         }
     }
 
@@ -364,6 +369,13 @@ namespace pxt.blocks {
                         output += n.op
                     n.children.forEach(emit)
                     break
+                case NT.Postfix:
+                    n.children.forEach(emit)
+                    if (n.canIndentInside)
+                        output += n.op.replace(/\n/g, "\n" + indent + "    ")
+                    else
+                        output += n.op
+                    break
                 default:
                     break
             }
@@ -422,5 +434,25 @@ namespace pxt.blocks {
 
     export function isReservedWord(str: string) {
         return reservedWords.indexOf(str) !== -1;
+    }
+
+    export function isParenthesized(fnOutput: string): boolean {
+        if (fnOutput[0] !== "(" || fnOutput[fnOutput.length - 1] !== ")") {
+            return false;
+        }
+        let unclosedParentheses = 1;
+        for (let i = 1; i < fnOutput.length; i++) {
+            const c = fnOutput[i];
+            if (c === "(") {
+                unclosedParentheses++;
+            }
+            else if (c === ")") {
+                unclosedParentheses--;
+                if (unclosedParentheses === 0) {
+                    return i === fnOutput.length - 1;
+                }
+            }
+        }
+        return false;
     }
 }

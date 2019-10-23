@@ -5,6 +5,8 @@ import * as Promise from "bluebird";
 const PouchDB = require("pouchdb");
 /* tslint:disable:no-submodule-imports TODO(tslint) */
 require('pouchdb/extras/memory');
+// pouchdb 7.0 - broken in IE
+// PouchDB.plugin(require('pouchdb-adapter-memory'));
 /* tslint:enable:no-submodule-imports */
 
 (Promise as any).config({

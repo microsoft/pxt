@@ -81,7 +81,7 @@ interface Array<T> {
       * @param sep the string separator
       */
     //% helper=arrayJoin weight=40
-    join(sep: string): string;
+    join(sep?: string): string;
     
     /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
@@ -257,12 +257,10 @@ declare interface String {
     //% helper=stringSlice
     slice(start: number, end?: number): string;
 
-    // This block is currently disabled, as it does not compile in some targets
-    // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
-    //% shim=String_::isEmpty
+    //% helper=stringEmpty
     //% blockId="string_isempty" blockNamespace="text"
-    // block="%this=text| is empty"
+    //% block="%this=text| is empty"
     isEmpty(): boolean;
 
     /**
@@ -273,6 +271,7 @@ declare interface String {
     //% shim=String_::indexOf
     //% help=text/index-of
     //% blockId="string_indexof" blockNamespace="text"
+    //% block="%this=text|find index of %searchValue"
     indexOf(searchValue: string, start?: number): number;
 
     /**
@@ -283,6 +282,7 @@ declare interface String {
     //% shim=String_::includes
     //% help=text/includes
     //% blockId="string_includes" blockNamespace="text"
+    //% block="%this=text|includes %searchValue"
     includes(searchValue: string, start?: number): boolean;
 
     /**
@@ -293,7 +293,15 @@ declare interface String {
     //% helper=stringSplit
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
+    //% block="split %this=text|at %separator"
     split(separator?: string, limit?: number): string[];
+
+    /**
+     * Converts the string to lower case characters.
+     */
+    //% helper=stringToLowerCase
+    //% help=text/to-lower-case
+    toLowerCase(): string;
 
     [index: number]: string;
 }
@@ -333,16 +341,15 @@ declare interface Boolean {
 /**
  * Combine, split, and search text strings.
 */
-//% blockNamespace="Text"
+//% blockNamespace="text"
 declare namespace String {
 
     /**
      * Make a string from the given ASCII character code.
      */
     //% help=math/from-char-code
-    //% shim=String_::fromCharCode
-    //% weight=0
-    //% blockNamespace="Text" blockId="stringFromCharCode" block="text from char code %code" weight=1
+    //% shim=String_::fromCharCode weight=1
+    //% blockNamespace="text" blockId="stringFromCharCode" block="text from char code %code"
     function fromCharCode(code: number): string;
 }
 
@@ -518,4 +525,12 @@ declare namespace Math {
      */
     //% shim=Math_::idiv
     function idiv(x: number, y: number): number;
+}
+
+declare namespace control {
+    //% shim=_control::_onCodeStart
+    export function _onCodeStart(arg: any): void;
+
+    //% shim=_control::_onCodeStop
+    export function _onCodeStop(arg: any): void;
 }

@@ -20,7 +20,7 @@ Routing path. If missing, defaults to ``local``. The route will be injected into
 
 ### githubpages (optional)
 
-Generate a web site compatiable with GitHub pages.
+Generate a web site compatible with GitHub pages.
 
 ### output (optional)
 
@@ -60,7 +60,7 @@ If you wish to publish your web site to GitHub pages, simply add ``--githubpages
 
 This will:
 * create a fresh checkout in `built/gh-pages` if needed
-* implicityly run `pxt staticpkg --route repo-name`
+* implicitly run `pxt staticpkg --route repo-name`
 * copy files from `built/packaged/repo-name` to `built/gh-pages`
 * add files to git, commit, and push
 

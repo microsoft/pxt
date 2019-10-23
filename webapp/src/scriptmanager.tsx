@@ -345,7 +345,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 {!hasHeaders ? <div className="empty-content">
-                    <h2 className="ui center aligned header">
+                    <h2 className={`ui center aligned header ${darkTheme ? "inverted" : ""}`}>
                         <div className="content">
                             {lf("It's empty in here")}
                             <div className="sub header">{lf("Go back to create a new project")}</div>
@@ -353,14 +353,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     </h2>
                 </div> : undefined}
                 {hasHeaders && view == 'grid' ?
-                    <div role="grid" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
+                    <div role="button" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <div className="sort-by">
-                            <div className="ui compact buttons">
+                            <div role="menu" className="ui menu compact buttons">
                                 <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
-                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={sortedBy != 'name' ? 'no-icon' : ''} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
-                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={sortedBy != 'time' ? 'no-icon' : ''} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
                                 </sui.DropdownMenu>
-                                <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
+                                <sui.Button role="menuitem" icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
                             </div>
                         </div>
                         <div className={"ui cards"}>
@@ -375,11 +375,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     `right corner label large selected-label`;
                                 const label = showMarkedNew ? lf("New") : undefined;
 
+                                // TODO name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
                                 return <ProjectsCodeCard
                                     key={'local' + scr.id + scr.recentUse}
                                     cardType="file"
                                     className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
-                                    name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
+                                    name={scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                                     scr={scr} index={index}

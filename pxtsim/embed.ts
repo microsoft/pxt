@@ -19,6 +19,8 @@ namespace pxsim {
         localizedStrings?: Map<string>;
         version?: string;
         clickTrigger?: boolean;
+        breakOnStart?: boolean;
+        storedState?: Map<any>;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -29,6 +31,10 @@ namespace pxsim {
     export interface SimulatorMuteMessage extends SimulatorMessage {
         type: "mute";
         mute: boolean;
+    }
+
+    export interface SimulatorStopSoundMessage extends SimulatorMessage {
+        type: "stopsound";
     }
 
     export interface SimulatorDocMessage extends SimulatorMessage {
@@ -54,8 +60,9 @@ namespace pxsim {
         type: "toplevelcodefinished";
     }
 
-    export interface SimulatorDocsReadyMessage extends SimulatorMessage {
-        type: "popoutcomplete";
+    export interface SimulatorOpenDocMessage extends SimulatorMessage {
+        type: "opendoc";
+        url: string;
     }
 
     export interface SimulatorStateMessage extends SimulatorMessage {
@@ -89,7 +96,9 @@ namespace pxsim {
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
-        command: "modal" | "restart" | "reload"
+        command: "modal" | "restart" | "reload" | "setstate" | "focus" | "blur"
+        stateKey?: string;
+        stateValue?: any;
         header?: string;
         body?: string;
         copyable?: string;
@@ -97,6 +106,7 @@ namespace pxsim {
         linkButtonLabel?: string;
         displayOnceId?: string; // An id for the modal command, if the sim wants the modal to be displayed only once in the session
         modalContext?: string; // Modal context of where to show the modal
+        timestamp?: number;
     }
     export interface SimulatorRadioPacketMessage extends SimulatorBroadcastMessage {
         type: "radiopacket";
@@ -143,6 +153,7 @@ namespace pxsim {
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";
+        width?: number;
     }
 
     export interface TutorialMessage extends SimulatorMessage {
@@ -204,6 +215,9 @@ namespace pxsim {
         svg?: string;
         width?: number;
         height?: number;
+        css?: string;
+        uri?: string;
+        error?: string;
     }
 
     export function print(delay: number = 0) {
@@ -222,9 +236,10 @@ namespace pxsim {
     }
 
     export namespace Embed {
+        export let frameid: string;
         export function start() {
             window.addEventListener("message", receiveMessage, false);
-            let frameid = window.location.hash.slice(1)
+            frameid = window.location.hash.slice(1)
             initAppcache();
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }
@@ -234,16 +249,17 @@ namespace pxsim {
             // TODO: test origins
 
             let data: SimulatorMessage = event.data || {};
-            let type = data.type || '';
+            let type = data.type;
             if (!type) return;
-            switch (type || '') {
+            switch (type) {
                 case "run": run(<SimulatorRunMessage>data); break;
                 case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
                 case "stop": stop(); break;
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "stopsound": stopSound(); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
-                case "screenshot": Runtime.postScreenshotAsync().done(); break;
+                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
                 case "custom":
                     if (handleCustomMessage)
                         handleCustomMessage((<SimulatorCustomMessage>data));
@@ -254,6 +270,16 @@ namespace pxsim {
                     if (runtime)
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
                     break;
+                case 'simulator':
+                    let simData = data as SimulatorCommandMessage;
+                    switch (simData.command) {
+                        case "focus":
+                            tickEvent("simulator.focus", {timestamp: simData.timestamp});
+                            break;
+                        case "blur":
+                            tickEvent("simulator.blur", {timestamp: simData.timestamp});
+                            break;
+                    }
                 default: queue(data); break;
             }
         }
@@ -292,6 +318,10 @@ namespace pxsim {
             AudioContextManager.mute(mute);
         }
 
+        function stopSound() {
+            AudioContextManager.stopAll();
+        }
+
         function queue(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) {
                 return;
@@ -303,7 +333,7 @@ namespace pxsim {
             if (!runtime) return;
             switch (rec.action) {
                 case "start":
-                    runtime.startRecording();
+                    runtime.startRecording(rec.width);
                     break;
                 case "stop":
                     runtime.stopRecording();

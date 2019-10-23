@@ -14,11 +14,13 @@ export interface WebCamState {
     userFacing?: boolean;
 }
 
-export function isSupported(): boolean {
+function isMediaDevicesSupported(): boolean {
     return typeof navigator !== undefined
         && !!navigator.mediaDevices
         && !!navigator.mediaDevices.enumerateDevices
-        && !!navigator.mediaDevices.getUserMedia;
+        && !!navigator.mediaDevices.getUserMedia
+        && !pxt.BrowserUtils.isElectron()
+        && !pxt.BrowserUtils.isUwpEdge();
 }
 
 export class WebCam extends data.Component<WebCamProps, WebCamState> {
@@ -75,10 +77,11 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     componentDidMount() {
-        navigator.mediaDevices.enumerateDevices()
-            .then(devices => {
-                this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
-            })
+        if (isMediaDevicesSupported())
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    this.setState({ devices: devices.filter(device => device.kind == "videoinput") });
+                })
     }
 
     componentWillUnmount() {
@@ -164,7 +167,7 @@ class WebCamCard extends data.Component<WebCamCardProps, {}> {
 
     renderCore() {
         const { header, icon } = this.props;
-        return <div role="button" className="ui card link" onClick={this.handleClick}>
+        return <div role="button" className="ui card link" tabIndex={0} onClick={this.handleClick} onKeyDown={sui.fireClickOnEnter}>
             <div className="imageicon">
                 <sui.Icon icon={`${icon} massive`} />
             </div>

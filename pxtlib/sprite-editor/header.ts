@@ -5,7 +5,6 @@ namespace pxtsprite {
     export interface SpriteHeaderHost {
         showGallery(): void;
         hideGallery(): void;
-        closeEditor(): void;
     }
 
     export class SpriteHeader {
@@ -14,8 +13,6 @@ namespace pxtsprite {
         toggle: Toggle;
         undoButton: Button;
         redoButton: Button;
-
-        closeButton: HTMLDivElement;
 
         constructor(protected host: SpriteHeaderHost) {
             this.div = document.createElement("div");
@@ -30,12 +27,6 @@ namespace pxtsprite {
                 else {
                     this.host.showGallery();
                 }
-            });
-
-            this.closeButton = makeCloseButton();
-            this.div.appendChild(this.closeButton);
-            this.closeButton.addEventListener("click", () => {
-                host.closeEditor();
             });
         }
 

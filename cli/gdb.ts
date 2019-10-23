@@ -7,6 +7,130 @@ import * as commandParser from './commandparser';
 
 import U = pxt.Util;
 
+
+const openAsync = Promise.promisify(fs.open)
+const closeAsync = Promise.promisify(fs.close) as (fd: number) => Promise<void>
+const writeAsync = Promise.promisify(fs.write)
+
+let gdbServer: pxt.GDBServer
+let bmpMode = false
+
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
+
+function getBMPSerialPortsAsync(): Promise<string[]> {
+    if (process.platform == "win32") {
+        return execAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
+            .then((buf: Buffer) => {
+                let res: string[] = []
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    let m = /^(COM\d+)\s+USB\\VID_(\w+)&PID_(\w+)&MI_(\w+)/.exec(ln)
+                    if (m) {
+                        const comp = m[1]
+                        const vid = parseInt(m[2], 16)
+                        const pid = parseInt(m[3], 16)
+                        const mi = parseInt(m[4], 16)
+                        if (vid == 0x1d50 && pid == 0x6018 && mi == 0) {
+                            res.push("\\\\.\\" + comp)
+                        }
+                    }
+                })
+                return res
+            })
+    }
+    else if (process.platform == "darwin") {
+        return execAsync("ioreg -p IOUSB -l -w 0")
+            .then((buf: Buffer) => {
+                let res: string[] = []
+                let inBMP = false
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    if (ln.indexOf("+-o Black Magic Probe") >= 0)
+                        inBMP = true
+                    if (!inBMP)
+                        return
+                    let m = /"USB Serial Number" = "(\w+)"/.exec(ln)
+                    if (m) {
+                        inBMP = false
+                        res.push("/dev/cu.usbmodem" + m[1] + "1")
+                    }
+                })
+                return res
+            })
+    } else if (process.platform == "linux") {
+        // TODO
+        return Promise.resolve([])
+    } else {
+        return Promise.resolve([])
+    }
+}
+
+class SerialIO implements pxt.TCPIO {
+    onData: (v: Uint8Array) => void;
+    onError: (e: Error) => void;
+    fd: number;
+    id = 0
+    trace = false
+
+    constructor(public comName: string) { }
+
+    connectAsync(): Promise<void> {
+        return this.disconnectAsync()
+            .then(() => {
+                pxt.log("open GDB at " + this.comName)
+                return openAsync(this.comName, "r+")
+            })
+            .then(fd => {
+                this.fd = fd
+                const id = ++this.id
+                const buf = Buffer.alloc(128)
+                const loop = () => fs.read(fd, buf, 0, buf.length, null, (err, nb, buf) => {
+                    if (this.id != id)
+                        return
+                    if (nb > 0) {
+                        let bb = buf.slice(0, nb)
+                        if (this.trace)
+                            pxt.log("R:" + bb.toString("utf8"))
+                        if (this.onData)
+                            this.onData(bb)
+                        loop()
+                    } else {
+                        let msg = "GDB read error, nb=" + nb + (err ? err.message : "no err")
+                        if (this.trace) pxt.log(msg)
+                        else pxt.debug(msg)
+                        setTimeout(loop, 500)
+                    }
+                })
+                loop()
+            })
+    }
+
+    sendPacketAsync(pkt: Uint8Array): Promise<void> {
+        if (this.trace)
+            pxt.log("W:" + Buffer.from(pkt).toString("utf8"))
+        return writeAsync(this.fd, pkt)
+            .then(() => { })
+    }
+
+    error(msg: string): any {
+        pxt.log(this.comName + ": " + msg)
+    }
+
+    disconnectAsync(): Promise<void> {
+        if (this.fd == null)
+            return Promise.resolve()
+        this.id++
+        const f = this.fd
+        this.fd = null
+        pxt.log("close GDB at " + this.comName)
+        // try to elicit some response from the server, so that the read loop is tickled
+        // and stops; without this the close() below hangs
+        fs.write(f, "$?#78", () => { })
+        return closeAsync(f)
+            .then(() => {
+            })
+    }
+}
+
+
 function fatal(msg: string) {
     U.userError(msg)
 }
@@ -44,8 +168,10 @@ function getOpenOcdPath(cmds = "") {
     if (fs.existsSync("/usr/bin/openocd")) {
         openocdPath = "/usr/"
         gccPath = "/usr/"
-    }
-    else {
+    } else if (fs.existsSync("/usr/local/bin/openocd")) {
+        openocdPath = "/usr/local/"
+        gccPath = "/usr/local/"
+    } else {
         for (let ardV = 15; ardV < 50; ++ardV) {
             for (let d of dirs) {
                 pkgDir = path.join(d + ardV, "/packages/arduino/")
@@ -61,7 +187,7 @@ function getOpenOcdPath(cmds = "") {
         if (!pkgDir)
             fatal("cannot find Arduino packages directory")
 
-        openocdPath = latest("openocd")
+        openocdPath = bmpMode ? "" : latest("openocd")
         gccPath = latest("arm-none-eabi-gcc")
     }
 
@@ -70,7 +196,7 @@ function getOpenOcdPath(cmds = "") {
     if (process.platform == "win32")
         openocdBin += ".exe"
 
-    let script = pxt.appTarget.compile.openocdScript
+    let script = bmpMode ? "N/A" : pxt.appTarget.compile.openocdScript
     if (!script) fatal("no openocdScript in pxtarget.json")
 
     if (!cmds)
@@ -109,9 +235,8 @@ ${cmds}
 function codalBin() {
     let cs = pxt.appTarget.compileService
 
-    return cs.codalBinary ?
-        buildengine.thisBuild.buildPath + "/build/" + cs.codalBinary :
-        "built/yt/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "");
+    return buildengine.thisBuild.buildPath + "/build/" + (cs.codalBinary ? cs.codalBinary :
+        cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, ""));
 }
 
 let cachedMap = ""
@@ -124,10 +249,12 @@ function getMap() {
 
 function mangle(symbolName: string) {
     let m = /(.*)::(.*)/.exec(symbolName)
-    return "_ZN" + m[1].length + m[1] + "L" + m[2].length + m[2] + "E"
+    if (m)
+        return "_ZN" + m[1].length + m[1] + "L" + m[2].length + m[2] + "E"
+    return "_ZL" + symbolName.length + symbolName
 }
 
-function findAddr(symbolName: string) {
+function findAddr(symbolName: string, opt = false) {
     if (!addrCache) {
         addrCache = {}
         let bss = ""
@@ -152,12 +279,40 @@ function findAddr(symbolName: string) {
     if (addr) {
         return addr
     } else {
-        fatal(`Can't find ${symbolName} symbol in map`)
-        return -1
+        if (!opt)
+            fatal(`Can't find ${symbolName} symbol in map`)
+        return null
     }
 }
 
+async function initGdbServerAsync() {
+    let ports = await getBMPSerialPortsAsync()
+    if (ports.length == 0) {
+        pxt.log(`Black Magic Probe not detected; falling back to openocd`)
+        return
+    }
+    bmpMode = true
+    pxt.log(`detected Black Magic Probe at ${ports[0]}`)
+    gdbServer = new pxt.GDBServer(new SerialIO(ports[0]))
+    // gdbServer.trace = true
+    await gdbServer.io.connectAsync()
+    await gdbServer.initAsync()
+    pxt.log(gdbServer.targetInfo)
+    nodeutil.addCliFinalizer(() => {
+        if (!gdbServer)
+            return Promise.resolve()
+        let g = gdbServer
+        gdbServer = null
+        return g.io.disconnectAsync()
+    })
+}
+
 async function getMemoryAsync(addr: number, bytes: number) {
+    if (gdbServer) {
+        return gdbServer.readMemAsync(addr, bytes)
+            .then((b: Uint8Array) => Buffer.from(b))
+    }
+
     let toolPaths = getOpenOcdPath(`
 init
 halt
@@ -212,8 +367,10 @@ function VAR_BLOCK_WORDS(vt: number) {
 }
 
 export async function dumpheapAsync() {
-    let memStart = findAddr("_sdata")
-    let memEnd = findAddr("_estack")
+    await initGdbServerAsync()
+
+    let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
+    let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
     let mem = await getMemoryAsync(memStart, memEnd - memStart)
     let heapDesc = findAddr("heap")
@@ -236,7 +393,7 @@ export async function dumpheapAsync() {
     let numFibers = 0
     let numListeners = 0
     for (let q of ["runQueue", "sleepQueue", "waitQueue", "fiberPool", "idleFiber"]) {
-        let addr = findAddr("codal::" + q)
+        let addr = findAddr("codal::" + q, true) || findAddr(q)
         for (let ptr = read32(addr); ptr; ptr = read32(ptr + 6 * 4)) {
             pointerClassification[hex(ptr)] = "Fiber/" + q
             pointerClassification[hex(read32(ptr))] = "Fiber/TCB/" + q
@@ -248,17 +405,19 @@ export async function dumpheapAsync() {
         }
     }
 
-    let messageBus = read32(findAddr("codal::EventModel::defaultEventBus"))
-    for (let ptr = read32(messageBus + 20); ptr; ptr = read32(ptr + 36)) {
-        numListeners++
-        pointerClassification[hex(ptr)] = "codal::Listener"
-    }
-    for (let ptr = read32(messageBus + 24); ptr; ptr = read32(ptr + 16)) {
-        pointerClassification[hex(ptr)] = "codal::EventQueueItem"
-    }
+    let messageBus = read32(findAddr("codal::EventModel::defaultEventBus", true))
+    if (messageBus) {
+        for (let ptr = read32(messageBus + 20); ptr; ptr = read32(ptr + 36)) {
+            numListeners++
+            pointerClassification[hex(ptr)] = "codal::Listener"
+        }
+        for (let ptr = read32(messageBus + 24); ptr; ptr = read32(ptr + 16)) {
+            pointerClassification[hex(ptr)] = "codal::EventQueueItem"
+        }
 
-    for (let ptr = read32(findAddr("pxt::handlerBindings")); ptr; ptr = read32(ptr)) {
-        pointerClassification[hex(ptr)] = "pxt::HandlerBinding"
+        for (let ptr = read32(findAddr("pxt::handlerBindings")); ptr; ptr = read32(ptr)) {
+            pointerClassification[hex(ptr)] = "pxt::HandlerBinding"
+        }
     }
 
     console.log(`heaps at ${hex(heapDesc)}, num=${heapNum}`)
@@ -678,6 +837,7 @@ export async function dumpheapAsync() {
 }
 
 export async function dumplogAsync() {
+    await initGdbServerAsync()
     let addr = findAddr("codalLogStore")
     let buf = await getMemoryAsync(addr + 4, 1024)
     for (let i = 0; i < buf.length; ++i) {
@@ -688,36 +848,98 @@ export async function dumplogAsync() {
     }
 }
 
-export function startAsync(gdbArgs: string[]) {
+export async function hwAsync(cmds: string[]) {
+    await initGdbServerAsync()
+
+    switch (cmds[0]) {
+        case "rst":
+        case "reset":
+            await gdbServer.sendCmdAsync("R00", null)
+            break
+        case "boot":
+            let bi = getBootInfo()
+            if (bi.addr) {
+                await gdbServer.write32Async(bi.addr, bi.boot)
+            }
+            await gdbServer.sendCmdAsync("R00", null)
+            break
+        case "log":
+        case "dmesg":
+            await dumplogAsync()
+            break
+    }
+}
+
+function getBootInfo() {
+    let r = {
+        addr: 0,
+        boot: 0,
+        app: 0
+    }
+
+    if (/at91samd/.test(pxt.appTarget.compile.openocdScript)) {
+        let ramSize = pxt.appTarget.compile.ramSize || 0x8000
+        r.addr = 0x20000000 + ramSize - 4
+        r.app = 0xf02669ef
+        r.boot = 0xf01669ef
+    }
+
+    return r
+}
+
+export async function startAsync(gdbArgs: string[]) {
     let elfFile = codalBin()
     if (!fs.existsSync(elfFile))
         fatal("compiled file not found: " + elfFile)
 
-    let toolPaths = getOpenOcdPath()
-    let oargs = toolPaths.args
+    let bmpPort = (await getBMPSerialPortsAsync())[0]
+    let trg = ""
+    let monReset = "monitor reset"
+    let monResetHalt = "monitor reset halt"
 
-    let goToApp = ""
-    let goToBl = ""
-
-    if (/at91samd/.test(pxt.appTarget.compile.openocdScript)) {
-        let ramSize = pxt.appTarget.compile.ramSize || 0x8000
-        let addr = 0x20000000 + ramSize - 4
-        goToApp = `set {int}(${addr}) = 0xf02669ef`
-        goToBl = `set {int}(${addr}) = 0xf01669ef`
+    if (bmpPort) {
+        bmpMode = true
+        trg = "target extended-remote " + bmpPort
+        trg += "\nmonitor swdp_scan\nattach 1"
+        pxt.log("Using Black Magic Probe at " + bmpPort)
+        monReset = "run"
+        monResetHalt = "run"
     }
+
+    let mapsrc = ""
+    if (/docker/.test(buildengine.thisBuild.buildPath)) {
+        mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
+    let toolPaths = getOpenOcdPath()
+
+    if (!bmpMode) {
+        let oargs = toolPaths.args
+        trg = "target remote | " + oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")
+        pxt.log("starting openocd: " + oargs.join(" "))
+    }
+
+    let binfo = getBootInfo()
+
+    let goToApp = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.app}` : ""
+    let goToBl = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
 
     // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
         `
-target remote | ${oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")}
+${trg}
+${mapsrc}
 define rst
+  set confirm off
   ${goToApp}
-  monitor reset halt
+  ${monResetHalt}
   continue
+  set confirm on
 end
 define boot
+  set confirm off
   ${goToBl}
-  monitor reset
+  ${monReset}
   quit
 end
 define irq
@@ -755,7 +977,6 @@ echo    bt: for stacktrace\\n\\n
 echo More help at https://makecode.com/cli/gdb\\n\\n
 `)
 
-    pxt.log("starting openocd: " + oargs.join(" "))
 
     let gdbargs = ["--command=built/openocd.gdb", elfFile].concat(gdbArgs)
 

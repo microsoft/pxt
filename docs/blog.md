@@ -1,5 +1,79 @@
 # Microsoft MakeCode Blog
 
+## [Translations in Context](/blog/translations-in-context)
+
+October 17th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+Translate your favorite MakeCode editor... from the editor itself!
+**[Continue reading this blog post](/blog/translations-in-context)**
+
+## [GitHub Extensions - Episode 2](/blog/github-extensions-episode-2)
+
+September 25th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+We've made a number of improvements to our GitHub authoring support. Let's take a tour...
+**[Continue reading this blog post](/blog/github-extensions-episode-2)**
+
+## [MakeCode Tutorials and Projects for CS Ed Week](/blog/csed-week/csed-week-2019)
+
+September 16th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Computer Science Education week is coming up in December, and Educators can start planning some fun MakeCode activities for it now. Here's a list of some quick and easy MakeCode tutorials and projects you can do for Hour of Code, or really anytime...
+**[Continue reading this blog post](/blog/csed-week/csed-week-2019)**
+
+## [Arcade Game Jam](/blog/arcade/game-jam)
+
+September 12th, 2019 by [shakao](https://github.com/shakao)
+
+We’re super excited to announce the first-ever MakeCode Arcade game jam!
+**[Continue reading this blog post](/blog/arcade/game-jam)**
+
+## [LEGO MINDSTORMS update](/blog/lego/09-06-2019)
+
+September 6th, 2019 by [pelikhan](https://github.com/pelikhan)
+
+A number of bug fixes and a few new blocks for the LEGO editor.
+**[Continue reading this blog post](/blog/lego/09-06-2019)**
+
+## [MakeCode Assignments in Teams](/blog/teams/teams-assignments)
+ 
+July 2nd, 2019 by [Jaqster](https://github.com/jaqster)
+
+We’re excited to announce a new Teams feature for Educators who are teaching with MakeCode.
+You can now create MakeCode programming assignments for your students by attaching a MakeCode project.
+Students can then open the MakeCode editor and complete the assignment without ever leaving Teams!
+**[Continue reading this blog post](/blog/teams/teams-assignments)**
+
+## [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
+ 
+June 15th, 2019 by [Jaqster](https://github.com/jaqster)
+
+It’s out! The 2019 MakeCode micro:bit update has been released!
+A BIG thanks to everyone who has been hammering on the Beta these past couple months to help us find bugs and come up with fixes. Unlike last year’s update...
+**[Continue reading this blog post](/blog/microbit/2019-release)**
+
+## [Project Alava: Programming Webs of Microcontrollers](/blog/alava/alava)
+
+April 26th, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball)
+
+As you know, the MakeCode team is primarily a bunch of web-heads who fell in love with
+microcontrollers. Since early 2016, we've been bringing web technology to the world of microcontrollers.
+**[Continue reading this blog post](/blog/alava/alava)**
+
+## [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)
+ 
+April 5th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Believe it or not, we are getting ready to ship the **Summer 2019 release** of **MakeCode for the micro:bit**! Thank you to everyone who helped us identify bugs and suggest new features.
+**[Continue reading this blog post](/blog/microbit/2019-beta)**
+
+## [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
+ 
+March 12th, 2019 by [Jaqster](https://github.com/jaqster)
+
+We've decided to supplement the curriculum by providing some additional Educator materials that would help new teachers learn and teach the course. We didn’t change the course at all, just added some extra materials, like...
+**[Continue reading this blog post](/blog/microbit/csintro-educator)**
+
 ## [MakeCode Arcade: Retro Gaming, Modern Programming](/blog/arcade/01-18-2019)
 
 January 18th, 2019 by Microsoft MakeCode Team

@@ -45,7 +45,9 @@ namespace pxt.crowdin {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             if (!info) throw new Error("info failed")
 
-            const todo = info.languages;
+            let todo = info.languages.filter(l => l.code != "en");
+            if (pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales)
+                todo = todo.filter(l => pxt.appTarget.appTheme.availableLocales.indexOf(l.code) > -1);
             pxt.log('languages: ' + todo.map(l => l.code).join(', '));
             const nextFile = (): Promise<void> => {
                 const item = todo.pop();
@@ -151,30 +153,34 @@ namespace pxt.crowdin {
             else if (code == 404 && data.error.code == 17) {
                 return createDirectoryAsync(branch, prj, key, filename.replace(/\/[^\/]+$/, ""), incr)
                     .then(() => startAsync())
+            } else if (!data.success && data.error.code == 53) {
+                // file is being updated
+                return Promise.delay(5000) // wait 5s and try again
+                    .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200) {
                 return Promise.resolve()
             } else {
-                throw new Error(`Error, upload translation: ${filename}, ${resp}, ${JSON.stringify(data)}`)
+                throw new Error(`Error, upload translation: ${filename}, ${code}, ${JSON.stringify(data)}`)
             }
         }
 
         return startAsync();
     }
 
-    function flatten(allFiles: CrowdinFileInfo[], files: CrowdinFileInfo, parentDir: string, branch?: string) {
-        const n = files.name;
+    function flatten(allFiles: CrowdinFileInfo[], node: CrowdinFileInfo, parentDir: string, branch?: string) {
+        const n = node.name;
         const d = parentDir ? parentDir + "/" + n : n;
-        files.fullName = d;
-        files.branch = branch || "";
-        switch (files.node_type) {
+        node.fullName = d;
+        node.branch = branch || "";
+        switch (node.node_type) {
             case "file":
-                allFiles.push(files);
+                allFiles.push(node);
                 break;
             case "directory":
-                (files.files || []).forEach(f => flatten(allFiles, f, d));
+                (node.files || []).forEach(f => flatten(allFiles, f, d, branch));
                 break;
             case "branch":
-                (files.files || []).forEach(f => flatten(allFiles, f, parentDir, files.name));
+                (node.files || []).forEach(f => flatten(allFiles, f, parentDir, node.name));
                 break;
         }
     }
@@ -253,5 +259,26 @@ namespace pxt.crowdin {
                 const allFiles = filterAndFlattenFiles(info.files);
                 return allFiles;
             });
+    }
+
+    export function inContextLoadAsync(text: string): Promise<string> {
+        const node = document.createElement("input") as HTMLInputElement;
+        node.type = "text";
+        node.setAttribute("class", "hidden");
+        node.value = text;
+        let p = new Promise<string>((resolve, reject) => {
+            const observer = new MutationObserver(() => {
+                if (text == node.value)
+                    return;
+                const r = Util.rlf(node.value); // get rid of {id}...
+                node.remove();
+                observer.disconnect();
+                resolve(r);
+            });
+            observer.observe(node, { attributes: true });
+        })
+        document.body.appendChild(node);
+
+        return p;
     }
 }

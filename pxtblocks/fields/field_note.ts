@@ -138,6 +138,7 @@ namespace pxtblockly {
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
         //  value of the field
         private note_: string;
 
@@ -178,7 +179,7 @@ namespace pxtblockly {
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
 
-            FieldNote.superClass_.constructor.call(this, text, validator);
+            (FieldNote as any).superClass_.constructor.call(this, text, validator);
             this.note_ = text;
 
             if (params.editorColour) {
@@ -219,7 +220,7 @@ namespace pxtblockly {
          * Install this field on a block.
          */
         init() {
-            FieldNote.superClass_.init.call(this);
+            (FieldNote as any).superClass_.init.call(this);
             this.noteFreq_.length = 0;
             this.noteName_.length = 0;
             let thisField = this;
@@ -330,10 +331,12 @@ namespace pxtblockly {
         }
 
         /**
-         * Set the note.
+         * Called by setValue if the text input is valid. Updates the value of the
+         * field, and updates the text of the field if it is not currently being
+         * edited (i.e. handled by the htmlInput_).
          * @param {string} note The new note in string format.
          */
-        setValue(note: string) {
+        doValueUpdate_(note: string) {
             // accommodate note strings like "Note.GSharp5" as well as numbers
             let match: Array<string> = regex.exec(note);
             let noteName: any = (match && match.length > 1) ? match[1] : null;
@@ -347,6 +350,7 @@ namespace pxtblockly {
             }
             this.note_ = this.callValidator(note);
             this.setText(this.getNoteName_());
+            this.value_ = this.note_;
         }
 
         /**
@@ -430,7 +434,7 @@ namespace pxtblockly {
             const quietInput = (goog.userAgent.MOBILE || goog.userAgent.ANDROID ||
                 goog.userAgent.IPAD);
             const readOnly = quietInput;
-            FieldNote.superClass_.showEditor_.call(this, e, false, readOnly);
+            (FieldNote as any).superClass_.showEditor_.call(this, e, false, readOnly);
 
             let pianoWidth: number;
             let pianoHeight: number;
@@ -638,14 +642,14 @@ namespace pxtblockly {
                 }
                 currentSelectedKey = this;
                 script.style.backgroundColor = selectedKeyColor;
-                Blockly.FieldTextInput.htmlInput_.value = thisField.getText();
-                AudioContextManager.tone(freq);
+                (thisField as any).htmlInput_.value = thisField.getText();
+                pxt.AudioContextManager.tone(freq);
                 setTimeout(function () {
                     // compare current sound counter with listener sound counter (avoid async problems)
                     if (soundingKeys == cnt)
-                        AudioContextManager.stop();
+                        pxt.AudioContextManager.stop();
                 }, 300);
-                FieldNote.superClass_.dispose.call(this);
+                (FieldNote as any).superClass_.dispose.call(this);
             }
             /** get width of blockly editor space
              * @return {number} width of the blockly editor workspace
@@ -812,7 +816,7 @@ namespace pxtblockly {
             let secondaryX = primaryX;
             let secondaryY = position.top;
             // Set bounds to workspace; show the drop-down.
-            (Blockly.DropDownDiv as any).setBoundsElement(this.sourceBlock_.workspace.getParentSvg().parentNode);
+            (Blockly.DropDownDiv as any).setBoundsElement((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode);
             (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
                 this.onHide.bind(this));
         }
@@ -828,7 +832,7 @@ namespace pxtblockly {
          */
         dispose() {
             (Blockly.DropDownDiv as any).hideIfOwner(this);
-            Blockly.FieldTextInput.superClass_.dispose.call(this);
+            (Blockly.FieldTextInput as any).superClass_.dispose.call(this);
         }
 
         private updateColor() {

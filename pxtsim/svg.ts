@@ -9,8 +9,9 @@ namespace pxsim.svg {
 
     let pt: SVGPoint;
     export function cursorPoint(pt: SVGPoint, svg: SVGSVGElement, evt: MouseEvent): SVGPoint {
-        pt.x = evt.clientX;
-        pt.y = evt.clientY;
+        // clientX and clientY are not defined in iOS safari
+        pt.x = evt.clientX != null ? evt.clientX : evt.pageX;
+        pt.y = evt.clientY != null ? evt.clientY : evt.pageY;
         return pt.matrixTransform(svg.getScreenCTM().inverse());
     }
 
@@ -19,21 +20,6 @@ namespace pxsim.svg {
             'transform',
             `translate(${originX},${originY}) rotate(${degrees + 90}) translate(${-originX},${-originY})`
         );
-    }
-
-    export function hasClass(el: SVGElement, cls: string): boolean {
-        if (el.classList) return el.classList.contains(cls);
-        else return el.className.baseVal.indexOf(cls) > -1;
-    }
-
-    export function addClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.add(cls);
-        else if (el.className.baseVal.indexOf(cls) < 0) el.className.baseVal += ' ' + cls;
-    }
-
-    export function removeClass(el: SVGElement, cls: string) {
-        if (el.classList) el.classList.remove(cls);
-        else el.className.baseVal = el.className.baseVal.replace(cls, '').replace(/\s{2,}/, ' ');
     }
 
     export function hydrate(el: SVGElement, props: any) {
@@ -173,7 +159,7 @@ namespace pxsim.svg {
     }
 
     export function animate(el: SVGElement, cls: string) {
-        svg.addClass(el, cls);
+        pxsim.U.addClass(el, cls);
         let p = el.parentElement;
         if (p) {
             p.removeChild(el);

@@ -44,6 +44,12 @@
     }
 }
 
+.ui.card.file.test {
+    .fileimage {
+        background-image: @testFileLogo;
+    }
+}
+
 .ui.card.file.board {
     .fileimage {
         background-image: unset;
@@ -123,7 +129,7 @@ a.ui.card:focus,
     background: fade(@primaryColor, 90%) !important;
 }
 .ui.card.link.scriptmanagercard {
-    background: fade(@secondaryColor, 90%) !important;
+    background: darken(@secondaryColor, 20%) !important;
 }
 
 

@@ -23,13 +23,36 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
+    // people often ask about where to look for errors, and many will look in the console
+    // the output.txt has usability issues
+    if (output)
+        pxt.log(output);
+
     if (!output)
         output = U.lf("Everything seems fine!\n")
 
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
-    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
+    const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+    f.numDiagnosticsOverride = errors.length
+    reportDiagnosticErrors(errors);
+}
+
+let lastErrorCounts: string = "";
+function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
+    // report to analytics;
+    if (errors && errors.length) {
+        const counts: pxt.Map<number> = {};
+        errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
+        const errorCounts = JSON.stringify(errors);
+        if (errorCounts !== lastErrorCounts) {
+            pxt.tickEvent("diagnostics", counts);
+            lastErrorCounts = errorCounts;
+        }
+    } else {
+        lastErrorCounts = "";
+    }
 }
 
 let noOpAsync = new Promise<any>(() => { })
@@ -50,33 +73,59 @@ export interface CompileOptions {
     trace?: boolean;
     native?: boolean;
     debug?: boolean;
+    debugExtensionCode?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
-    preferredEditor?: string;
     clickTrigger?: boolean;
+}
+
+export let emptyProgram =
+    `(function (ectx) {
+'use strict';
+ectx.runtime.setupPerfCounters([]);
+ectx.setupDebugger(1)
+return function (s) {
+    // START
+    ectx.runtime.kill()
+    return ectx.leave(s, s.r0)
+}
+})
+`
+
+export function emptyCompileResult(): pxtc.CompileResult {
+    return {
+        success: true,
+        diagnostics: [],
+        times: {},
+        breakpoints: [],
+        outfiles: {
+            "binary.js": emptyProgram
+                .replace("// START", pxt.appTarget.simulator.emptyRunCode || "")
+        },
+    }
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    trg.preferredEditor = options.preferredEditor;
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             if (options.debug) {
-                opts.breakpoints = true
-                opts.justMyCode = true
+                opts.breakpoints = true;
+                opts.justMyCode = !options.debugExtensionCode;
+                opts.testMode = true;
             }
             if (options.trace) {
-                opts.breakpoints = true
-                opts.justMyCode = true
+                opts.breakpoints = true;
+                opts.justMyCode = true;
                 opts.trace = true;
             }
-            opts.computeUsedSymbols = true
+            opts.computeUsedSymbols = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
-                opts.testMode = true
-            return opts
+                opts.testMode = true;
+            return opts;
         })
         .then(compileCoreAsync)
         .then(resp => {
@@ -124,6 +173,34 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
+export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics: pxtc.KsDiagnostic[] }> {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            return workerOpAsync("py2ts", { options: opts })
+        })
+}
+
+export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+    return workerOpAsync("getCompletions", {
+        fileName,
+        fileContent,
+        position,
+        runtime: pxt.appTarget.runtime
+    });
+}
+
+export function syntaxInfoAsync(infoType: pxtc.InfoType, fileName: string, position: number, fileContent: string): Promise<pxtc.SyntaxInfo> {
+    return workerOpAsync("syntaxInfo", {
+        fileName,
+        fileContent,
+        position,
+        infoType
+    });
+}
+
 export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -145,7 +222,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         })
 }
 
-export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
+export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksInfo): Promise<string> {
     const snippetTs = "main.ts";
     const snippetBlocks = "main.blocks";
     let trg = pkg.mainPkg.getTargetOptions()
@@ -160,7 +237,6 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
             if (opts.sourceFiles.indexOf(snippetBlocks) === -1) {
                 opts.sourceFiles.push(snippetBlocks);
             }
-
             opts.ast = true;
             return decompileCoreAsync(opts, snippetTs)
         }).then(resp => {
@@ -169,11 +245,65 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
+    return workerOpAsync("decompile", { options: opts, fileName: fileName })
+}
+
+export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.ast = true;
+            opts.testMode = true;
+            opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
+            return pyDecompileCoreAsync(opts, fileName)
+        })
+        .then(resp => {
+            pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
+            setDiagnostics(resp.diagnostics)
+            return resp
+        })
+}
+
+export function decompilePythonSnippetAsync(code: string): Promise<string> {
+    const snippetTs = "main.ts";
+    const snippetPy = "main.py";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.fileSystem[snippetTs] = code;
+            opts.fileSystem[snippetPy] = "";
+
+            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
+                opts.sourceFiles.push(snippetTs);
+            }
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            opts.ast = true;
+            return pyDecompileCoreAsync(opts, snippetTs)
+        }).then(resp => {
+            return resp.outfiles[snippetPy]
+        })
+}
+
+function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+    return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
-    return pxt.worker.getWorker(pxt.webConfig.workerjs).opAsync(op, arg)
+    const startTm = Date.now()
+    pxt.debug("worker op: " + op)
+    return pxt.worker.getWorker(pxt.webConfig.workerjs)
+        .opAsync(op, arg)
+        .then(res => {
+            if (pxt.appTarget.compile.switches.time) {
+                pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
+                if (res.times)
+                    console.log(res.times)
+            }
+            pxt.debug("worker op done: " + op)
+            return res
+        })
 }
 
 let firstTypecheck: Promise<void>;
@@ -204,7 +334,10 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
         .then(() => {
             searchFor.localizedApis = cachedApis;
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
-            return workerOpAsync("apiSearch", { search: searchFor, blocks: blocksOptions() });
+            return workerOpAsync("apiSearch", {
+                search: searchFor,
+                blocks: blocksOptions()
+            });
         });
 }
 
@@ -218,12 +351,19 @@ export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions)
 export function projectSearchClear() {
     return ensureApisInfoAsync()
         .then(() => {
-            return workerOpAsync("projectSearchClear", { });
+            return workerOpAsync("projectSearchClear", {});
         });
 }
 
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
+}
+
+export function snippetAsync(qName: string, python?: boolean) {
+    return workerOpAsync("snippet", {
+        snippet: { qName, python },
+        runtime: pxt.appTarget.runtime
+    });
 }
 
 export function typecheckAsync() {
@@ -249,7 +389,8 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     return cachedBlocks
         ? Promise.resolve(cachedBlocks)
         : getApisInfoAsync().then(info => {
-            cachedBlocks = pxtc.getBlocksInfo(info);
+            const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+            cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
             return cachedBlocks;
         });
 }
@@ -274,39 +415,39 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
         });
     }
 
-    const upgradeOp = epkg.header.editor === pxt.JAVASCRIPT_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
+    const upgradeOp = epkg.header.editor !== pxt.BLOCKS_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
 
     let projectNeverCompiled = false;
 
     return checkPatchAsync()
-    .catch(() => projectNeverCompiled = true)
-    .then(upgradeOp)
-    .then(result => {
-        if (!result.success) {
-            pxt.tickEvent("upgrade.failed", {
+        .catch(() => projectNeverCompiled = true)
+        .then(upgradeOp)
+        .then(result => {
+            if (!result.success) {
+                pxt.tickEvent("upgrade.failed", {
+                    projectEditor: epkg.header.editor,
+                    preUpgradeVersion: epkg.header.targetVersion || "unknown",
+                    errors: JSON.stringify(result.errorCodes),
+                    projectNeverCompiled: "" + projectNeverCompiled
+                });
+
+                pxt.debug("Upgrade failed; bailing out and leaving project as-is");
+
+                return Promise.resolve(result);
+            }
+
+            pxt.tickEvent("upgrade.success", {
                 projectEditor: epkg.header.editor,
+                upgradedEditor: result.editor,
                 preUpgradeVersion: epkg.header.targetVersion || "unknown",
-                errors: JSON.stringify(result.errorCodes),
                 projectNeverCompiled: "" + projectNeverCompiled
             });
 
-            pxt.debug("Upgrade failed; bailing out and leaving project as-is");
+            pxt.debug("Upgrade successful!");
 
-            return Promise.resolve(result);
-        }
-
-        pxt.tickEvent("upgrade.success", {
-            projectEditor: epkg.header.editor,
-            upgradedEditor: result.editor,
-            preUpgradeVersion: epkg.header.targetVersion || "unknown",
-            projectNeverCompiled: "" + projectNeverCompiled
-        });
-
-        pxt.debug("Upgrade successful!");
-
-        return patchProjectFilesAsync(epkg, result.patchedFiles, result.editor)
-            .then(() => result);
-    })
+            return patchProjectFilesAsync(epkg, result.patchedFiles, result.editor)
+                .then(() => result);
+        })
 }
 
 function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
@@ -320,7 +461,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to blocks")
 
-    return  pxt.BrowserUtils.loadBlocklyAsync()
+    return pxt.BrowserUtils.loadBlocklyAsync()
         .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
@@ -440,13 +581,13 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
             return workspace.saveAsync(epkg.header);
         })
         .then(() => Promise.each(packages, p => {
-                if (token) token.throwIfCancelled();
-                return epkg.updateDepAsync(p.getPkgId())
-                    .then(() => {
-                        ++completed;
-                        if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
-                    })
+            if (token) token.throwIfCancelled();
+            return epkg.updateDepAsync(p.getPkgId())
+                .then(() => {
+                    ++completed;
+                    if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
                 })
+        })
         )
         .then(() => pkg.loadPkgAsync(epkg.header.id))
         .then(() => newProjectAsync())
@@ -479,10 +620,14 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
 
 export function newProjectAsync() {
+    clearCaches();
+    return workerOpAsync("reset", {});
+}
+
+export function clearCaches() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
-    return workerOpAsync("reset", {});
 }
 
 export function getPackagesWithErrors(): pkg.EditorPackage[] {
@@ -494,7 +639,7 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 
         topPkg.forEachFile(file => {
             if (file.diagnostics && file.diagnostics.length && file.epkg && corePkgs.indexOf(file.epkg.getPkgId()) === -1 && !file.epkg.isTopLevel() &&
-                    file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
+                file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
                 badPackages[file.epkg.getPkgId()] = file.epkg;
             }
         });
@@ -503,8 +648,8 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {
-    if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
-        return { bannedCategories: pxt.appTarget.runtime.bannedCategories };
-    }
+    const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+    if (bannedCategories)
+        return {  bannedCategories };
     return undefined;
 }

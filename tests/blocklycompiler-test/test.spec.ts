@@ -185,7 +185,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
                 return Promise.reject("Could not compile");
 
             // decompile to blocks
-            let apis = pxtc.getApiInfo(opts, resp.ast);
+            let apis = pxtc.getApiInfo(resp.ast, opts.jres);
             let blocksInfo = pxtc.getBlocksInfo(apis);
             pxt.blocks.initializeAndInject(blocksInfo);
 
@@ -225,7 +225,7 @@ function blockTestAsync(name: string) {
             }
 
             chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
-        }, err => fail('Compiling blocks failed'));
+        }, err => fail('Compiling blocks failed with error: ' + err));
 }
 
 describe("blockly compiler", function () {
@@ -287,6 +287,10 @@ describe("blockly compiler", function () {
         it("should handle functions with list return types", (done: () => void) => {
             blockTestAsync("array_return_type").then(done, done);
         });
+
+        it("should correctly infer types for arrays initialized to empty", (done: () => void) => {
+            blockTestAsync("empty_array_inference").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {
@@ -296,6 +300,10 @@ describe("blockly compiler", function () {
 
         it("should handle all the logic operators", (done: () => void) => {
             blockTestAsync("logic_all_operators").then(done, done);
+        });
+
+        it("should handle non-number inputs in logic operators", (done: () => void) => {
+            blockTestAsync("logic_non_numeric").then(done, done);
         });
     });
 
@@ -377,6 +385,18 @@ describe("blockly compiler", function () {
         it("should hoist variable declarations when the first set references the target", (done: () => void) => {
             blockTestAsync("self_reference_vars").then(done, done);
         });
+
+        it("should allow variables declared in a for-loop at the top of on-start", (done: () => void) => {
+            blockTestAsync("on_start_with_for_loop").then(done, done);
+        });
+
+        it("should handle variables declared within grey blocks", (done: () => void) => {
+            blockTestAsync("grey_block_declared_vars").then(done, done);
+        });
+
+        it("should declare variable types when the initializer expression has a generic type", (done: () => void) => {
+            blockTestAsync("array_type_declaration_in_set").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
@@ -409,6 +429,10 @@ describe("blockly compiler", function () {
         it("should convert handler parameters to draggable variables", done => {
             blockTestAsync("draggable_parameters").then(done, done);
         });
+
+        it("should set the right check for primitive draggable parameters in blockly loader", done => {
+            blockTestAsync("draggable_primitive_reporter").then(done, done);
+        });
     });
 
     describe("compiling expandable blocks", () => {
@@ -440,6 +464,12 @@ describe("blockly compiler", function () {
             it("should compile values even if they are invalid", done => {
                 blockTestAsync("enum_define_bit_mask_bad_values").then(done, done);
             });
+        });
+    });
+
+    describe("compiling KIND_GET blocks", () => {
+        it("should declare namespaces for declared kinds", done =>{
+            blockTestAsync("sprite_kind").then(done, done);
         });
     });
 

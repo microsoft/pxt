@@ -2,7 +2,10 @@ namespace pxtsprite {
     // These are the characters used to output literals (but we support aliases for some of these)
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
 
-    export type Coord = [number, number];
+    export interface Coord {
+        x: number,
+        y: number
+    }
 
     /**
      * 16-color sprite
@@ -15,14 +18,14 @@ namespace pxtsprite {
         }
 
         set(col: number, row: number, value: number) {
-            if (col < this.width && row < this.height && col >= 0 && row  >= 0) {
+            if (col < this.width && row < this.height && col >= 0 && row >= 0) {
                 const index = this.coordToIndex(col, row);
                 this.setCore(index, value);
             }
         }
 
         get(col: number, row: number) {
-            if (col < this.width && row < this.height && col >= 0 && row  >= 0) {
+            if (col < this.width && row < this.height && col >= 0 && row >= 0) {
                 const index = this.coordToIndex(col, row);
                 return this.getCore(index);
             }
@@ -41,10 +44,14 @@ namespace pxtsprite {
             return sub;
         }
 
-        apply(change: Bitmap) {
+        apply(change: Bitmap, transparent = false) {
+            let current: number;
             for (let c = 0; c < change.width; c++) {
                 for (let r = 0; r < change.height; r++) {
-                    this.set(change.x0 + c, change.y0 + r, change.get(c, r));
+                    current = change.get(c, r);
+
+                    if (!current && transparent) continue;
+                    this.set(change.x0 + c, change.y0 + r, current);
                 }
             }
         }
@@ -113,12 +120,16 @@ namespace pxtsprite {
         return result;
     }
 
-    export function imageLiteralToBitmap(text: string): Bitmap {
+    export function imageLiteralToBitmap(text: string, defaultPattern?: string): Bitmap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
         text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:img)/g, "").trim();
+        text = text.replace(/^["`\(\)]*/, '').replace(/["`\(\)]*$/, '');
         text = text.replace(/&#10;/g, "\n");
+
+        if (!text && defaultPattern)
+            text = defaultPattern;
 
         const rows = text.split("\n");
 
@@ -177,17 +188,36 @@ namespace pxtsprite {
         return result;
     }
 
-    export function bitmapToImageLiteral(bitmap: Bitmap): string {
-        let res = "img`";
+    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: pxt.editor.FileType): string {
+        let res = '';
+        switch (fileType) {
+            case pxt.editor.FileType.Python:
+                res = "img(\"\"\"";
+                break;
+            default:
+                res = "img`";
+                break;
+        }
 
-        for (let r = 0; r < bitmap.height; r++) {
-            res += "\n"
-            for (let c = 0; c < bitmap.width; c++) {
-                res += hexChars[bitmap.get(c, r)] + " ";
+        if (bitmap) {
+            for (let r = 0; r < bitmap.height; r++) {
+                res += "\n"
+                for (let c = 0; c < bitmap.width; c++) {
+                    res += hexChars[bitmap.get(c, r)] + " ";
+                }
             }
         }
 
-        res += "\n`";
+        res += "\n";
+
+        switch (fileType) {
+            case pxt.editor.FileType.Python:
+                res += "\"\"\")";
+                break;
+            default:
+                res += "`";
+                break;
+        }
 
         return res;
     }

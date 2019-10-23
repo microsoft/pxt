@@ -27,3 +27,16 @@ let unusedInit = incrXyz();
 
 assert(xyz == 13, "init2")
 xyz = 0
+
+for (let e of [""]) {}
+
+s2 = ""
+for (let i = 0; i < 3; i++) {
+    let copy = i;
+    control.runInBackground(() => {
+        pause(10 * copy + 1);
+        s2 = s2 + copy;
+    });
+}
+pause(200)
+assert(s2 == "012")

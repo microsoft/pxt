@@ -4,6 +4,7 @@
 @import 'themes/pxt/globals/site.variables';
 @import 'fieldeditors';
 @import 'spriteeditor.less';
+@import 'melodyeditor.less';
 
 /*******************************
         Blockly SVG
@@ -77,6 +78,12 @@ text.blocklyText.blocklyItalicizedText {
 text.blocklyText.blocklyBoldItalicizedText {
     font-weight: bold;
     font-style: italic;
+}
+
+text.semanticIcon {
+    fill: #fff;
+    font-family: "Icons";
+    font-size: 19px;
 }
 
 
@@ -171,6 +178,10 @@ div.blocklyTooltipDiv {
     overflow-wrap: break-word;
 }
 
+div.blocklyTooltipDiv .ui.card .content .description {
+    /* override semantic, tooltip text should always be visible*/
+    display: inline;
+}
 
 /* Blockly Slider field */
 
@@ -209,6 +220,10 @@ text.blocklyCheckbox {
     fill-opacity: 0.5;
 }
 
+
+.blocklyDisabled .blocklyNonEditableText .blocklyBlockBackground {
+    fill-opacity: 0.1 !important;
+}
 
 /*******************************
         Scrollbars
@@ -256,6 +271,11 @@ text.blocklyCheckbox {
 
 .blocklyCommentForeignObject {
     overflow: hidden;
+}
+
+.blocklyMinimalBody {
+    position: static; // override default 'position: fixed' for comment <body> element
+    border: 1px solid #FAF6BD; // match comment color
 }
 
 /*******************************

@@ -15,6 +15,27 @@
  */
 
 namespace ts.pxtc.thumb {
+    const thumbRegs: pxt.Map<number> = {
+        "r0": 0,
+        "r1": 1,
+        "r2": 2,
+        "r3": 3,
+        "r4": 4,
+        "r5": 5,
+        "r6": 6,
+        "r7": 7,
+        "r8": 8,
+        "r9": 9,
+        "r10": 10,
+        "r11": 10,
+        "r12": 12,
+        "sp": 13,
+        "r13": 13,
+        "lr": 14,
+        "r14": 14,
+        "pc": 15,
+        "r15": 15,
+    }
 
     export class ThumbProcessor extends pxtc.assembler.AbstractProcessor {
 
@@ -267,7 +288,11 @@ namespace ts.pxtc.thumb {
                         }
                     }
                     let reg = line.words[1]
-                    let v = line.words[3]
+                    // make sure the key in values[] below doesn't look like integer
+                    // we rely on Object.keys() returning stuff in insertion order, and integers mess with it
+                    // see https://www.ecma-international.org/ecma-262/6.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
+                    // or possibly https://www.stefanjudis.com/today-i-learned/property-order-is-predictable-in-javascript-objects-since-es2015/
+                    let v = "#" + line.words[3]
                     let lbl = U.lookup(values, v)
                     if (!lbl) {
                         lbl = "_ldlit_" + ++seq
@@ -284,7 +309,7 @@ namespace ts.pxtc.thumb {
                     txtLines.push(".balign 4")
                     for (let v of Object.keys(values)) {
                         let lbl = values[v]
-                        txtLines.push(lbl + ": .word " + v)
+                        txtLines.push(lbl + ": .word " + v.slice(1))
                     }
                     if (needsJumpOver)
                         txtLines.push(jmplbl + ":")
@@ -397,15 +422,6 @@ namespace ts.pxtc.thumb {
                 singleReg(ln) == lnNext.numArgs[0] && lnNext.numArgs[1] == 0) {
                 // RULE: push {rX}; ldr rX, [sp, #0] -> push {rX}
                 lnNext.update("")
-            } else if (lnop == "bl" && lnNext.getOp() == "push" &&
-                /^_pxt_(incr|decr)$/.test(ln.words[1]) && singleReg(lnNext) == 0) {
-                ln.update("bl " + ln.words[1] + "_pushR0")
-                lnNext.update("@dummystack 1")
-            } else if (lnop == "ldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
-                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 32
-                && lnNext2 && lnNext2.getOp() != "push") {
-                ln.update("bl " + lnNext.words[1] + "_" + ln.numArgs[1])
-                lnNext.update("")
             } else if (lnNext2 && lnop == "push" && singleReg(ln) >= 0 && preservesReg(lnNext, singleReg(ln)) &&
                 lnNext2.getOp() == "pop" && singleReg(ln) == singleReg(lnNext2)) {
                 // RULE: push {rX}; movs rY, #V; pop {rX} -> movs rY, #V (when X != Y)
@@ -417,18 +433,10 @@ namespace ts.pxtc.thumb {
         public registerNo(actual: string) {
             if (!actual) return null;
             actual = actual.toLowerCase()
-            switch (actual) {
-                case "pc": actual = "r15"; break;
-                case "lr": actual = "r14"; break;
-                case "sp": actual = "r13"; break;
-            }
-            let m = /^r(\d+)$/.exec(actual)
-            if (m) {
-                let r = parseInt(m[1], 10)
-                if (0 <= r && r < 16)
-                    return r;
-            }
-            return null;
+            const r = thumbRegs[actual]
+            if (r === undefined)
+                return null
+            return r
         }
 
         public testAssembler() {

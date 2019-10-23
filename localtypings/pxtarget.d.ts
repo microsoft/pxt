@@ -49,6 +49,12 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
+        unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
+        checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
+    }
+
+    interface BrowserOptions {
+        id: string;
     }
 
     interface ProjectTemplate {
@@ -89,7 +95,6 @@ declare namespace pxt {
         functionBlocks?: boolean;
         functionsOptions?: {
             extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
-            useNewFunctions?: boolean;
         };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
@@ -98,6 +103,8 @@ declare namespace pxt {
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
         pauseUntilBlock?: BlockOptions;
+        breakBlock?: boolean;
+        continueBlock?: boolean;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
@@ -146,6 +153,7 @@ declare namespace pxt {
         autoRun?: boolean; // enable autoRun in regular mode, not light mode
         autoRunLight?: boolean; // force autorun in light mode
         stopOnChange?: boolean;
+        emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
         // moved to theme
         // enableTrace?: boolean;
@@ -185,11 +193,13 @@ declare namespace pxt {
         codalDefinitions?: any;
 
         dockerImage?: string;
+        dockerArgs?: string[];
 
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
+        skipCloudBuild?: boolean;
     }
 
     interface AppTheme {
@@ -232,6 +242,7 @@ declare namespace pxt {
         accentColor?: string; // used in PWA manifest as theme color
         backgroundColor?: string; // use in PWA manifest as background color
         cardLogo?: string;
+        thumbLogo?: string;
         appLogo?: string;
         htmlDocIncludes?: Map<string>;
         htmlTemplates?: Map<string>;
@@ -242,7 +253,7 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
-        blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation
@@ -257,6 +268,7 @@ declare namespace pxt {
         allowSimulatorTelemetry?: boolean; // allow the simulator to send telemetry messages
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
+        python?: boolean; // enable Python?
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
         hideMenuBar?: boolean; // Hides the main menu bar
@@ -279,6 +291,7 @@ declare namespace pxt {
         debugger?: boolean; // debugger button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
+        showProjectSettings?: boolean; // show a link to pxt.json in the cogwheel menu
         useUploadMessage?: boolean; // change "Download" text to "Upload"
         downloadIcon?: string; // which icon io use for download
         blockColors?: Map<string>; // block namespace colors, used for build in categories
@@ -291,6 +304,7 @@ declare namespace pxt {
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
         saveInMenu?: boolean; // move save icon under gearwheel menu
+        lockedEditor?: boolean; // remove default home navigation links from the editor
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
         appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
@@ -305,7 +319,7 @@ declare namespace pxt {
         pairingButton?: boolean; // display a pairing button
         tagColors?: pxt.Map<string>; // optional colors for tags
         dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
-        disableFileAccessinMaciOs?:boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
+        disableFileAccessinMaciOs?: boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
         baseTheme?: string; // Use this to determine whether to show a light or dark theme, default is 'light', options are 'light', 'dark', or 'hc'
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
@@ -323,6 +337,23 @@ declare namespace pxt {
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
         simGifKey?: boolean; // shortcut to start stop
+        simGifTransparent?: string; // specify the gif transparency color
+        simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
+        simGifMaxFrames?: number; // maximum number of frames, default 64
+        simGifWidth?: number; // with in pixels for gif frames
+        autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
+        qrCode?: boolean; // generate QR code for shared urls
+        importExtensionFiles?: boolean; // import extensions from files
+        debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
+        snippetBuilder?: boolean; // Snippet builder experimental feature
+        experimentalHw?: boolean; // enable experimental hardware
+        recipes?: boolean; // inlined tutorials
+        checkForHwVariantWebUSB?: boolean; // check for hardware variant using webusb before compiling
+        shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
+        leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
+        nameProjectFirst?: boolean;
+        alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
+        alwaysGithubItem?: boolean; // show Github item; even when token is not available
     }
 
     interface SocialOptions {
@@ -330,6 +361,8 @@ declare namespace pxt {
         orgTwitterHandle?: string;
         hashtags?: string;
         related?: string;
+        discourse?: string; // URL to the discourse powered forum
+        discourseCategory?: string;
     }
 
     interface DocMenuEntry {
@@ -356,7 +389,30 @@ declare namespace pxt {
     }
 }
 
+declare namespace pxt.editor {
+    const enum FileType {
+        Text = "text",
+        TypeScript = "typescript",
+        JavaScript = "javascript",
+        Markdown = "markdown",
+        Python = "python",
+        CPP = "cpp",
+        JSON = "json",
+        XML = "xml",
+        Asm = "asm"
+    }
+}
+
 declare namespace ts.pxtc {
+
+    namespace ir {
+        const enum CallingConvention {
+            Plain,
+            Async,
+            Promise,
+        }
+    }
+
     interface CompileSwitches {
         profile?: boolean;
         gcDebug?: boolean;
@@ -369,10 +425,13 @@ declare namespace ts.pxtc {
         noTreeShake?: boolean;
         inlineConversions?: boolean;
         noPeepHole?: boolean;
+        time?: boolean;
+        noIncr?: boolean;
     }
 
     interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
+        preferredEditor?: string; // used to indicate which way to run any source-level conversions (TS/Py/Blocks)
         nativeType?: string; // currently only "thumb"
         runtimeIsARM?: boolean; // when nativeType is "thumb" but runtime is compiled in ARM mode
         hasHex: boolean;
@@ -408,6 +467,256 @@ declare namespace ts.pxtc {
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
         imageRefTag?: number;
+        keepCppFiles?: boolean;
+        debugMode?: boolean; // set dynamically, not in config
+    }
+
+    type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
+    type BlockPart = BlockContentPart | BlockBreak;
+
+    interface BlockLabel {
+        kind: "label";
+        text: string;
+        style?: string[];
+        cssClass?: string;
+    }
+
+    interface BlockParameter {
+        kind: "param";
+        ref: boolean;
+        name: string;
+        shadowBlockId?: string;
+        varName?: string;
+    }
+
+    interface BlockBreak {
+        kind: "break";
+    }
+
+    interface BlockImage {
+        kind: "image";
+        uri: string;
+    }
+
+    interface ParsedBlockDef {
+        parts: ReadonlyArray<(BlockPart)>;
+        parameters: ReadonlyArray<BlockParameter>;
+    }
+
+    interface CommentAttrs {
+        debug?: boolean; // requires ?dbg=1
+        shim?: string;
+        shimArgument?: string;
+        enumval?: string;
+        helper?: string;
+        help?: string;
+        async?: boolean;
+        promise?: boolean;
+        hidden?: boolean;
+        undeletable?: boolean;
+        callingConvention: ir.CallingConvention;
+        block?: string; // format of the block, used at namespace level for category name
+        translationId?: string; // in-context translation id
+        blockId?: string; // unique id of the block
+        blockGap?: string; // pixels in toolbox after the block is inserted
+        blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
+        blockImportId?: string;
+        blockBuiltin?: boolean;
+        blockNamespace?: string;
+        blockIdentity?: string;
+        blockAllowMultiple?: boolean; // override single block behavior for events
+        blockHidden?: boolean; // not available directly in toolbox
+        blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
+        blockCombine?: boolean;
+        blockCombineShadow?: string;
+        blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
+        fixedInstances?: boolean;
+        fixedInstance?: boolean;
+        expose?: boolean; // expose to VM despite being in pxt:: namespace
+        decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
+        constantShim?: boolean;
+        indexedInstanceNS?: string;
+        indexedInstanceShim?: string;
+        defaultInstance?: string;
+        autoCreate?: string;
+        noRefCounting?: boolean;
+        color?: string;
+        colorSecondary?: string;
+        colorTertiary?: string;
+        icon?: string;
+        jresURL?: string;
+        iconURL?: string;
+        imageLiteral?: number;
+        weight?: number;
+        parts?: string;
+        trackArgs?: number[];
+        advanced?: boolean;
+        deprecated?: boolean;
+        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
+        callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+        py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
+        pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname
+        argsNullable?: boolean; // allow NULL to be passed to C++ shim function
+        maxBgInstances?: string; // if there's less than that number of instances of the current class, it's not reported as a mem leak
+
+        // on class
+        snippet?: string; // value used to generate TS snippet
+        pySnippet?: string; // value used to generate python snippet
+
+        // On block
+        subcategory?: string;
+        group?: string;
+        whenUsed?: boolean;
+        jres?: string;
+        tags?: string; // value used to describe an element in a gallery when filtering / searching
+        useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
+        topblock?: boolean;
+        topblockWeight?: number;
+        locs?: pxt.Map<string>;
+        // On namepspace
+        subcategories?: string[];
+        groups?: string[];
+        groupIcons?: string[];
+        groupHelp?: string[];
+        labelLineWidth?: string;
+        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
+        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
+
+        // on interfaces
+        indexerGet?: string;
+        indexerSet?: string;
+
+        mutate?: string;
+        mutateText?: string;
+        mutatePrefix?: string;
+        mutateDefaults?: string;
+        mutatePropertyEnum?: string;
+        inlineInputMode?: string; // can be inline, external, or auto
+        expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        draggableParameters?: string; // can be reporter or variable; defaults to variable
+
+
+        /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
+
+        enumName?: string; // The name of the enum as it will appear in the code
+        enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
+        enumStartValue?: number; // The lowest value to emit when going from blocks to TS
+        enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
+        enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
+        enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
+        enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
+
+        /* end enum-only attributes */
+
+
+        isKind?: boolean; // annotation for built-in kinds in library code
+        kindMemberName?: string; // The name a member of the kind as it will appear in the blocks editor. If the kind was "Colors" this would be "color"
+        kindNamespace?: string; // defaults to blockNamespace or the namesapce of this API
+        kindCreateFunction?: string; // defaults to kindNamespace.create()
+        kindPromptHint?: string; // Defaults to "Create a new kind..."
+
+        optionalVariableArgs?: boolean;
+        toolboxVariableArgs?: string;
+
+        _name?: string;
+        _source?: string;
+        _def?: ParsedBlockDef;
+        _expandedDef?: ParsedBlockDef;
+        _untranslatedBlock?: string; // The block definition before it was translated
+        _shadowOverrides?: pxt.Map<string>;
+        jsDoc?: string;
+        paramHelp?: pxt.Map<string>;
+        // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
+        paramDefl: pxt.Map<string>;
+        // this lists arguments that have .defl as opposed to just eg.: stuff
+        explicitDefaults?: string[];
+
+        paramMin?: pxt.Map<string>; // min range
+        paramMax?: pxt.Map<string>; // max range
+        // Map for custom field editor parameters
+        paramFieldEditor?: pxt.Map<string>; //.fieldEditor
+        paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
+        paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
+
+        duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
+    }
+
+    interface ParameterDesc {
+        name: string;
+        description: string;
+        type: string;
+        pyTypeString?: string;
+        initializer?: string;
+        default?: string;
+        properties?: PropertyDesc[];
+        handlerParameters?: PropertyDesc[];
+        options?: pxt.Map<PropertyOption>;
+        isEnum?: boolean;
+    }
+
+    interface PropertyDesc {
+        name: string;
+        type: string;
+    }
+
+    interface PropertyOption {
+        value: any;
+    }
+
+    const enum SymbolKind {
+        None,
+        Method,
+        Property,
+        Function,
+        Variable,
+        Module,
+        Enum,
+        EnumMember,
+        Class,
+        Interface,
+    }
+
+    interface SymbolInfo {
+        attributes: CommentAttrs;
+        // unqualified name (e.g. "Grass" instead of "Blocks.Grass")
+        name: string;
+        namespace: string;
+        fileName: string;
+        kind: SymbolKind;
+        parameters: ParameterDesc[];
+        retType: string;
+        extendsTypes?: string[]; // for classes and interfaces
+        isInstance?: boolean;
+        isContextual?: boolean;
+        // qualified name (e.g. "Blocks.Grass")
+        qName?: string;
+        pkg?: string;
+        snippet?: string;
+        snippetName?: string;
+        pySnippet?: string;
+        pySnippetName?: string;
+        blockFields?: ParsedBlockDef;
+        isReadOnly?: boolean;
+        combinedProperties?: string[];
+        pyName?: string;
+        pyQName?: string;
+    }
+
+    interface ApisInfo {
+        byQName: pxt.Map<SymbolInfo>;
+        jres?: pxt.Map<pxt.JRes>;
+    }
+
+    type InfoType = "memberCompletion" | "identifierCompletion" | "signature" | "symbol"
+    interface SyntaxInfo {
+        type: InfoType;
+        position: number;
+
+        symbols?: SymbolInfo[];
+        beginPos?: number;
+        endPos?: number;
+        auxResult?: any;
     }
 
     interface CompileOptions {
@@ -415,6 +724,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
+        generatedFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
@@ -427,9 +737,15 @@ declare namespace ts.pxtc {
         computeUsedSymbols?: boolean;
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
+        apisInfo?: ApisInfo;
+        bannedCategories?: string[];
+        skipPxtModulesTSC?: boolean; // skip re-checking of pxt_modules/*
+        skipPxtModulesEmit?: boolean; // skip re-emit of pxt_modules/*
+
+        syntaxInfo?: SyntaxInfo;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
-        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
+        allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
 
         embedMeta?: string;
         embedBlob?: string; // base64
@@ -439,7 +755,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue";
+        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue" | "userenum";
         map?: pxt.Map<string>;
     }
 
@@ -462,6 +778,7 @@ declare namespace ts.pxtc {
         enumsDTS: string;
         onlyPublic: boolean;
         commBase?: number;
+        skipCloudBuild?: boolean;
     }
 
     interface HexInfo {
@@ -474,5 +791,68 @@ declare namespace ts.pxtc {
         pid: string;
         usagePage: string;
         usageId: string;
+    }
+}
+
+
+declare namespace pxt.tutorial {
+    interface TutorialInfo {
+        editor: string; // preferred editor or blocks by default
+        title?: string;
+        steps: TutorialStepInfo[];
+        activities: TutorialActivityInfo[];
+        code: string; // all code
+        templateCode?: string;
+        metadata?: TutorialMetadata;
+    }
+
+    interface TutorialMetadata {
+        activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
+        explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
+        flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        hideIteration?: boolean; // hide step control in tutorial
+        codeStart?: string; // command to run when code starts (MINECRAFT HOC ONLY)
+        codeStop?: string; // command to run when code stops (MINECRAFT HOC ONLY)
+    }
+
+    interface TutorialStepInfo {
+        fullscreen?: boolean;
+        // no coding
+        unplugged?: boolean;
+        tutorialCompleted?: boolean;
+        hasHint?: boolean;
+        contentMd?: string;
+        headerContentMd?: string;
+        hintContentMd?: string;
+        activity?: number;
+    }
+
+    interface TutorialActivityInfo {
+        name: string,
+        step: number
+    }
+
+    interface TutorialOptions {
+        tutorial?: string; // tutorial
+        tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialActivityInfo?: pxt.tutorial.TutorialActivityInfo[];
+        tutorialStep?: number; // current tutorial page
+        tutorialReady?: boolean; // current tutorial page
+        tutorialHintCounter?: number // count for number of times hint has been shown
+        tutorialStepExpanded?: boolean; // display full step in dialog
+        tutorialMd?: string; // full tutorial markdown
+        tutorialCode?: string; // all tutorial code bundled
+        tutorialRecipe?: boolean; // micro tutorial running within the context of a script
+        templateCode?: string;
+        autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
+        metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
+    }
+    interface TutorialCompletionInfo {
+        // id of the tutorial
+        id: string;
+        // number of steps completed
+        steps: number;
     }
 }

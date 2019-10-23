@@ -128,7 +128,8 @@ namespace pxt.BrowserUtils {
 
     export function isLocalHost(): boolean {
         try {
-            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+            return typeof window !== "undefined"
+                && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
                 && !/nolocalhost=1/.test(window.location.href)
                 && !(pxt.webConfig && pxt.webConfig.isStatic);
         } catch (e) { return false; }
@@ -217,6 +218,11 @@ namespace pxt.BrowserUtils {
         if (/bot|crawler|spider|crawling/i.test(navigator.userAgent))
             return true;
 
+        //Check target theme to see if this browser is supported
+        if (pxt.appTarget.unsupportedBrowsers && pxt.appTarget.unsupportedBrowsers.some(b => b.id == browser())) {
+            return false
+        }
+
         // testing browser versions
         const versionString = browserVersion();
         const v = parseInt(versionString || "0")
@@ -244,7 +250,7 @@ namespace pxt.BrowserUtils {
         if (!hasLoggedBrowser) {
             pxt.log(`Browser: ${browser()} ${versionString} on ${os()}`)
             if (!isSupported) {
-                pxt.tickEvent(`browser.unsupported.${navigator.userAgent}`)
+                pxt.tickEvent("browser.unsupported", { useragent: navigator.userAgent })
             }
             hasLoggedBrowser = true
         }
@@ -518,7 +524,7 @@ namespace pxt.BrowserUtils {
         // RTL languages
         if (Util.isUserLanguageRtl()) {
             pxt.debug("rtl layout");
-            document.body.classList.add("rtl");
+            pxt.BrowserUtils.addClass(document.body, "rtl");
             document.body.style.direction = "rtl";
 
             // replace semantic.css with rtlsemantic.css
@@ -880,6 +886,8 @@ namespace pxt.BrowserUtils {
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
     let _translationDbPromise: Promise<ITranslationDb>;
     export function translationDbAsync(): Promise<ITranslationDb> {
+        if (pxt.Util.isNodeJS)
+            return Promise.resolve(new MemTranslationDb());
         // try indexed db
         if (!_translationDbPromise)
             _translationDbPromise = IndexedDbTranslationDb.createAsync()
@@ -915,27 +923,34 @@ namespace pxt.BrowserUtils {
         leave: string
     }
 
-    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
-        up: "pointerup",
-        down: ["pointerdown"],
-        move: "pointermove",
-        enter: "pointerenter",
-        leave: "pointerleave"
-    } : isTouchEnabled() ?
-            {
+    export const pointerEvents: IPointerEvents = (() => {
+        if (hasPointerEvents()) {
+            return {
+                up: "pointerup",
+                down: ["pointerdown"],
+                move: "pointermove",
+                enter: "pointerenter",
+                leave: "pointerleave"
+            }
+        } else if (isTouchEnabled()) {
+            return {
                 up: "mouseup",
                 down: ["mousedown", "touchstart"],
                 move: "touchmove",
                 enter: "touchenter",
                 leave: "touchend"
-            } :
-            {
+            }
+        } else {
+            return {
                 up: "mouseup",
                 down: ["mousedown"],
                 move: "mousemove",
                 enter: "mouseenter",
                 leave: "mouseleave"
-            };
+            }
+        }
+    })();
+
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {
             const winLeft = window.screenLeft ? window.screenLeft : window.screenX;
@@ -955,6 +970,56 @@ namespace pxt.BrowserUtils {
             // Error opening popup
             pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
             return null;
+        }
+    }
+
+    // Keep these helpers unified with pxtsim/runtime.ts
+    export function containsClass(el: SVGElement | HTMLElement, classes: string) {
+        return classes
+            .split(/\s+/)
+            .every(cls => containsSingleClass(el, cls));
+
+        function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                return el.classList.contains(cls);
+            } else {
+                const classes = (el.className + "").split(/\s+/);
+                return !(classes.indexOf(cls) < 0);
+            }
+        }
+    }
+
+    export function addClass(el: SVGElement | HTMLElement, classes: string) {
+        classes
+            .split(/\s+/)
+            .forEach(cls => addSingleClass(el, cls));
+
+        function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                el.classList.add(cls);
+            } else {
+                const classes = (el.className + "").split(/\s+/);
+                if (classes.indexOf(cls) < 0) {
+                    el.className.baseVal += " " + cls;
+                }
+            }
+        }
+    }
+
+    export function removeClass(el: SVGElement | HTMLElement, classes: string) {
+        classes
+            .split(/\s+/)
+            .forEach(cls => removeSingleClass(el, cls));
+
+        function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
+            if (el.classList) {
+                el.classList.remove(cls);
+            } else {
+                el.className.baseVal = (el.className + "")
+                    .split(/\s+/)
+                    .filter(c => c != cls)
+                    .join(" ");
+            }
         }
     }
 }

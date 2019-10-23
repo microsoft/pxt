@@ -99,11 +99,11 @@ namespace pxt.blocks {
         });
 
         function addPlusButton() {
-            i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, false, lf("Add argument"),
+            i.appendField(new Blockly.FieldImage((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
                 () => {
                     currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
                     updateShape();
-                }), "_HANDLER_ADD");
+                }, false), "_HANDLER_ADD");
         }
     }
 
@@ -154,7 +154,7 @@ namespace pxt.blocks {
                     if (!isNaN(val)) {
                         const delta = val - (state.getNumber(numVisibleAttr) || 0);
                         if (state.getBoolean(inputInitAttr)) {
-                            if (b.rendered) {
+                            if ((b as Blockly.BlockSvg).rendered) {
                                 updateShape(delta, true);
                             }
                             else {
@@ -174,7 +174,7 @@ namespace pxt.blocks {
         // hide the inputs in init() or domToMutation(). This will get executed after
         // the block is rendered
         setTimeout(() => {
-            if (b.rendered && !b.workspace.isDragging()) {
+            if ((b as Blockly.BlockSvg).rendered && !(b.workspace as Blockly.WorkspaceSvg).isDragging()) {
                 updateShape(0, undefined, true);
                 updateButtons();
             }
@@ -192,7 +192,7 @@ namespace pxt.blocks {
 
             if (!state.getBoolean(inputInitAttr) && visibleOptions > 0) {
                 initOptionalInputs();
-                if (!b.rendered) {
+                if (!(b as Blockly.BlockSvg).rendered) {
                     return;
                 }
             }
@@ -232,12 +232,12 @@ namespace pxt.blocks {
             }
 
             updateButtons();
-            if (!skipRender) b.render();
+            if (!skipRender) (b as Blockly.BlockSvg).render();
         }
 
         function addButton(name: string, uri: string, alt: string, delta: number) {
             b.appendDummyInput(name)
-            .appendField(new Blockly.FieldImage(uri, 24, 24, false, alt, () => updateShape(delta)))
+            .appendField(new Blockly.FieldImage(uri, 24, 24, alt, () => updateShape(delta), false))
         }
 
         function updateButtons() {
@@ -292,9 +292,9 @@ namespace pxt.blocks {
 
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
-            if (b.rendered) {
+            if ((b as Blockly.BlockSvg).rendered) {
                 let renderList = input.setVisible(visible);
-                renderList.forEach(block => {
+                renderList.forEach((block: Blockly.BlockSvg) => {
                     block.render();
                 });
             }

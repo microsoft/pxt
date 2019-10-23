@@ -7,6 +7,7 @@ namespace pxtsprite {
         setActiveTool(tool: PaintTool): void;
         setActiveColor(color: number): void;
         setToolWidth(width: number): void;
+        setIconsToDefault(): void;
     }
 
     const TOOLBAR_WIDTH = 65;
@@ -20,7 +21,7 @@ namespace pxtsprite {
     const TOOL_BUTTON_WIDTH = (TOOLBAR_WIDTH - INNER_BUTTON_MARGIN) / 2;
     const PALLETTE_SWATCH_WIDTH = (TOOLBAR_WIDTH - PALETTE_BORDER_WIDTH * 3) / 2;
     const TOOL_BUTTON_TOP = TOOLBAR_WIDTH / 3 + BUTTON_GROUP_SPACING;
-    const PALETTE_TOP = TOOL_BUTTON_TOP + TOOL_BUTTON_WIDTH * 2 + INNER_BUTTON_MARGIN + COLOR_MARGIN;
+    const PALETTE_TOP = TOOL_BUTTON_TOP + TOOL_BUTTON_WIDTH * 3 + INNER_BUTTON_MARGIN + COLOR_MARGIN;
 
     export class SideBar {
         root: svg.Group;
@@ -32,6 +33,7 @@ namespace pxtsprite {
         protected eraseTool: Button;
         protected rectangleTool: Button;
         protected fillTool: Button;
+        protected marqueeTool: Button;
 
         protected sizeGroup: svg.Group;
         protected buttonGroup: svg.Group;
@@ -122,6 +124,9 @@ namespace pxtsprite {
             this.rectangleTool = this.initButton(lf("Rectangle"), "\uf096", PaintTool.Rectangle);
             this.rectangleTool.translate(1 + TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN, TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN);
 
+            this.marqueeTool = this.initButton(lf("Marquee"), "\uf113", PaintTool.Marquee, true);
+            this.marqueeTool.translate(0, (TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN) << 1);
+
             this.setTool(PaintTool.Normal);
         }
 
@@ -177,8 +182,14 @@ namespace pxtsprite {
 
         protected initButton(title: string, icon: string, tool: PaintTool, xicon = false) {
             const btn = xicon ? mkXIconButton(icon, TOOL_BUTTON_WIDTH) : mkIconButton(icon, TOOL_BUTTON_WIDTH);
+            const shortcut = getPaintToolShortcut(tool);
+            if (shortcut) btn.shortcut(shortcut);
             btn.title(title);
-            btn.onClick(() => this.setTool(tool));
+
+            btn.onClick(() => {
+                this.host.setIconsToDefault();
+                this.setTool(tool);
+            });
             this.buttonGroup.appendChild(btn.getElement());
             return btn;
         }
@@ -191,6 +202,7 @@ namespace pxtsprite {
                 case PaintTool.Fill: return this.fillTool;
                 case PaintTool.Rectangle:
                 case PaintTool.Circle: return this.rectangleTool;
+                case PaintTool.Marquee: return this.marqueeTool;
                 default: return undefined;
             }
         }

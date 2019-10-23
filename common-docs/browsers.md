@@ -5,7 +5,6 @@
 You need one of these browsers running on Windows 7, Windows 8, Windows 8.1, or
 Windows 10:
 
-* Internet Explorer 11
 * Microsoft Edge
 * Google Chrome
 * Mozilla Firefox
@@ -42,7 +41,7 @@ version of one of the following:
 
 ## Chrome OS
 
-* Version 58 or higher
+* Version 69 or higher
 
 ## How to check your OS or browser
 
@@ -63,13 +62,6 @@ version of one of the following:
 
 ![](/static/configurations/osx-version.png)
 
-### Internet Explorer
-
-* Click on the Settings icon in the top right
-* Click 'About Internet Explorer'
-* This window will be displayed:
-
-![](/static/configurations/ie-version.png)
 
 ### Microsoft Edge
 

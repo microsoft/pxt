@@ -1,0 +1,12 @@
+{
+    "name": "py",
+    "dependencies": {
+        "device": "file:../../libs/device"
+    },
+    "preferredEditor": "pyprj",
+    "description": "",
+    "files": [
+        "main.ts",
+        "main.py"
+    ]
+}

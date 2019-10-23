@@ -10,23 +10,24 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     private searchSubset: pxt.Map<boolean | string>;
 
     protected toolbox: toolbox.Toolbox;
-    protected extensions: pxt.PackageConfig[];
+    protected extensions: pxt.Package[];
 
     abstract getBlocksForCategory(ns: string, subns?: string): toolbox.BlockDefinition[];
 
-    protected shouldShowBlock(blockId: string, ns: string) {
+    protected shouldShowBlock(blockId: string, ns: string, shadow?: boolean) {
         const filters = this.parent.state.editorState && this.parent.state.editorState.filters;
         if (filters) {
+            // block-level filters should not apply to shadow blocks (nested)
             const blockFilter = filters.blocks && filters.blocks[blockId];
             const categoryFilter = filters.namespaces && filters.namespaces[ns];
             // First try block filters
-            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden) return false;
+            if (blockFilter != undefined && blockFilter == pxt.editor.FilterState.Hidden && !shadow) return false;
             if (blockFilter != undefined) return true;
             // Check if category is hidden
             if (categoryFilter != undefined && categoryFilter == pxt.editor.FilterState.Hidden) return false;
             if (categoryFilter != undefined) return true;
             // Check default filter state
-            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden) return false;
+            if (filters.defaultState != undefined && filters.defaultState == pxt.editor.FilterState.Hidden && !shadow) return false;
         }
         return true;
     }
@@ -42,6 +43,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 (!filters.namespaces || filters.namespaces["variables"] !== pxt.editor.FilterState.Disabled)) {
                 return true;
             } else if (ns === "functions" && (!filters.blocks ||
+                filters.blocks["function_definition"] ||
                 filters.blocks["procedures_defnoreturn"] ||
                 filters.blocks["procedures_callnoreturn"]) &&
                 (!filters.namespaces || filters.namespaces["functions"] !== pxt.editor.FilterState.Disabled)) {
@@ -205,6 +207,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     }
 
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
+    abstract hideFlyout(): void;
     moveFocusToFlyout() { }
 
     protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
@@ -213,6 +216,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
         const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelp, labelLineWidth, blocks } = treeRow;
+        const inTutorial = this.parent.state.tutorialOptions
+            && !!this.parent.state.tutorialOptions.tutorial;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
@@ -271,7 +276,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 if (!blockGroups[group] || !blockGroups[group].length) continue;
 
                 // Add the group label
-                if (group != 'other') {
+                if (group != 'other' && !inTutorial) {
                     this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpDict[group]);
                 }
 
@@ -319,7 +324,8 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     getNamespaces() {
         const namespaces: string[] = [];
         // Add extension namespaces if not already in
-        this.extensions.forEach(config => {
+        this.extensions.forEach(p => {
+            const config = p.config;
             const name = config.name;
             const namespace = config.extension.namespace || name;
             if (!this.extensionsMap[namespace]) this.extensionsMap[namespace] = config;

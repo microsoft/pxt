@@ -22,11 +22,25 @@ export interface SpawnOptions {
     input?: string;
     silent?: boolean;
     envOverrides?: pxt.Map<string>;
+    allowNonZeroExit?: boolean;
 }
 
 //This should be correct at startup when running from command line
 export let targetDir: string = process.cwd();
 export let pxtCoreDir: string = path.join(__dirname, "..");
+
+export let cliFinalizers: (() => Promise<void>)[] = [];
+
+export function addCliFinalizer(f: () => Promise<void>) {
+    cliFinalizers.push(f)
+}
+
+export function runCliFinalizersAsync() {
+    let fins = cliFinalizers
+    cliFinalizers = []
+    return Promise.mapSeries(fins, f => f())
+        .then(() => { })
+}
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
@@ -38,7 +52,7 @@ export function readResAsync(g: events.EventEmitter) {
         let bufs: Buffer[] = []
         g.on('data', (c: any) => {
             if (typeof c === "string")
-                bufs.push(new Buffer(c, "utf8"))
+                bufs.push(Buffer.from(c, "utf8"))
             else
                 bufs.push(c)
         });
@@ -76,7 +90,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
                 }
             })
         ch.on('close', (code: number) => {
-            if (code != 0)
+            if (code != 0 && !opts.allowNonZeroExit)
                 reject(new Error("Exit code: " + code + " from " + info))
             resolve(Buffer.concat(bufs))
         });
@@ -186,11 +200,11 @@ function nodeHttpRequestAsync(options: Util.HttpRequestOptions): Promise<Util.Ht
         if (Buffer.isBuffer(data)) {
             buf = data;
         } else if (typeof data == "object") {
-            buf = new Buffer(JSON.stringify(data), "utf8")
+            buf = Buffer.from(JSON.stringify(data), "utf8")
             u.headers["content-type"] = "application/json; charset=utf8"
             if (options.allowGzipPost) gzipContent = true
         } else if (typeof data == "string") {
-            buf = new Buffer(data, "utf8")
+            buf = Buffer.from(data, "utf8")
             if (options.allowGzipPost) gzipContent = true
         } else {
             Util.oops("bad data")
@@ -253,14 +267,18 @@ function init() {
     Util.isNodeJS = true;
     Util.httpRequestCoreAsync = nodeHttpRequestAsync;
     Util.sha256 = sha256;
+    Util.cpuUs = () => {
+        const p = process.cpuUsage()
+        return p.system + p.user
+    }
     Util.getRandomBuf = buf => {
         let tmp = crypto.randomBytes(buf.length)
         for (let i = 0; i < buf.length; ++i)
             buf[i] = tmp[i]
     }
 
-    (global as any).btoa = (str: string) => new Buffer(str, "binary").toString("base64");
-    (global as any).atob = (str: string) => new Buffer(str, "base64").toString("binary");
+    (global as any).btoa = (str: string) => Buffer.from(str, "binary").toString("base64");
+    (global as any).atob = (str: string) => Buffer.from(str, "base64").toString("binary");
 }
 
 export function sanitizePath(path: string) {
@@ -278,7 +296,9 @@ export function readPkgConfig(dir: string) {
 
     const ap = js.additionalFilePath
     if (ap) {
-        const adddir = path.join(dir, ap)
+        let adddir = path.join(dir, ap);
+        if (!existsDirSync(adddir))
+            pxt.U.userError(`additional pxt.json not found: ${adddir} in ${dir} + ${ap}`)
         pxt.debug("additional pxt.json: " + adddir)
         const js2 = readPkgConfig(adddir)
         for (let k of Object.keys(js2)) {

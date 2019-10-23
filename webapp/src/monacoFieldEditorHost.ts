@@ -2,6 +2,7 @@
 /// <reference path="../../built/pxteditor.d.ts" />
 
 import * as compiler from "./compiler";
+import * as blocklyFieldView from "./blocklyFieldView";
 
 interface OwnedRange {
     line: number;
@@ -17,6 +18,7 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
 
     protected content: HTMLDivElement;
     protected wrapper: HTMLDivElement;
+    private fileType: pxt.editor.FileType;
     protected editor: monaco.editor.IStandaloneCodeEditor;
     protected blocks: pxtc.BlocksInfo;
     protected id: number;
@@ -50,7 +52,8 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
         return this.content;
     }
 
-    showAsync(editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
+    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
+        this.fileType = fileType;
         this.editor = editor;
         return compiler.getBlocksAsync()
             .then(bi => {
@@ -61,7 +64,7 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
                 this.editor.setScrollPosition({
                     scrollTop: this.editor.getTopForLineNumber(this.afterLineNumber)
                 });
-                return this.fe.showEditorAsync(this.range, this)
+                return this.fe.showEditorAsync(this.fileType, this.range, this)
             })
             .finally(() => {
                 this.close();
@@ -112,6 +115,38 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
         this.editor.changeViewZones(accessor => {
             accessor.removeZone(this.id);
         });
+    }
+}
+
+export class ModalEditorHost implements pxt.editor.MonacoFieldEditorHost {
+    protected blocks: pxtc.BlocksInfo;
+
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    }
+
+    contentDiv(): HTMLDivElement {
+        return null;
+    }
+
+    getText(range: monaco.Range): string {
+        return this.model.getValueInRange(range);
+    }
+
+    blocksInfo(): pxtc.BlocksInfo {
+        return this.blocks;
+    }
+
+    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
+        return compiler.getBlocksAsync()
+            .then(bi => {
+                this.blocks = bi;
+                return this.fe.showEditorAsync(fileType, this.range, this);
+            });
+    }
+
+    close(): void {
+        this.fe.onClosed();
+        this.fe.dispose();
     }
 }
 

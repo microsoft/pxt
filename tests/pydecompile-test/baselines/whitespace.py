@@ -1,0 +1,7 @@
+x = "\r"
+x = "hello\n"
+x = "\tgoodbye"
+x = "\f"
+x = "\v"
+x = " "
+x = ""

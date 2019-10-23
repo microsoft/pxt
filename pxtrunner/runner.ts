@@ -4,6 +4,7 @@
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
+/// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
 namespace pxt.runner {
@@ -13,6 +14,7 @@ namespace pxt.runner {
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
+        dependencies?: string[]
     }
 
     class EditorPackage {
@@ -69,8 +71,29 @@ namespace pxt.runner {
             return Promise.resolve(null as string)
         }
 
+        patchDependencies(cfg: pxt.PackageConfig, name: string, repoId: string): boolean {
+            if (!repoId) return false;
+            // check that the same package hasn't been added yet
+            const repo = pxt.github.parseRepoId(repoId);
+            if (!repo) return false;
+
+            for (const k of Object.keys(cfg.dependencies)) {
+                const v = cfg.dependencies[k];
+                const kv = pxt.github.parseRepoId(v);
+                if (kv && repo.fullName == kv.fullName) {
+                    if (pxt.semver.strcmp(repo.tag, kv.tag) < 0) {
+                        // we have a later tag, use this one
+                        cfg.dependencies[k] = repoId;
+                    }
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private githubPackageCache: pxt.Map<Map<string>> = {};
-        downloadPackageAsync(pkg: pxt.Package) {
+        downloadPackageAsync(pkg: pxt.Package, dependencies?: string[]) {
             let proto = pkg.verProtocol()
             let cached: pxt.Map<string> = undefined;
             // cache resolve github packages
@@ -87,22 +110,35 @@ namespace pxt.runner {
                         return Promise.resolve()
                     }
                     if (proto == "empty") {
-                        epkg.setFiles(emptyPrjFiles())
+                        if (Object.keys(epkg.files).length == 0) {
+                            epkg.setFiles(emptyPrjFiles())
+                        }
+                        if (dependencies && dependencies.length) {
+                            const files = getEditorPkg(pkg).files;
+                            const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            dependencies.forEach((d: string) => {
+                                addPackageToConfig(cfg, d);
+                            });
+                            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        }
                         return Promise.resolve()
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
                         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        // load all dependencies
                         pkg.verArgument().split(',').forEach(d => {
-                            let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
-                            if (m)
-                                cfg.dependencies[m[1]] = m[3] || "*"
-                            else
-                                console.warn(`unknown package syntax ${d}`)
+                            if (!addPackageToConfig(cfg, d)) {
+                                return;
+                            }
                         });
+
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         epkg.setFiles(files);
+                        return Promise.resolve();
+                    } else if (proto == "invalid") {
+                        pxt.log(`skipping invalid pkg ${pkg.id}`);
                         return Promise.resolve();
                     } else {
                         return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
@@ -112,6 +148,17 @@ namespace pxt.runner {
     }
 
     export let mainPkg: pxt.MainPackage;
+
+    function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
+        let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(dep);
+        if (m) {
+            if (m[3] && this && this.patchDependencies(cfg, m[1], m[3]))
+                return false;
+            cfg.dependencies[m[1]] = m[3] || "*"
+        } else
+            console.warn(`unknown package syntax ${dep}`)
+        return true;
+    }
 
     function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg
@@ -144,11 +191,21 @@ namespace pxt.runner {
         pxt.setAppTarget((window as any).pxtTargetBundle)
         Util.assert(!!pxt.appTarget);
 
-        const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
-        const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-        const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-        const force = !!mlang && !!mlang[2];
+        const href = window.location.href;
+        let live = false;
+        let force = false;
+        let lang: string = undefined;
+        if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
+            lang = ts.pxtc.Util.TRANSLATION_LOCALE;
+            live = true;
+            force = true;
+        } else {
+            const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
+            lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+            force = !!mlang && !!mlang[2];
+        }
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
@@ -187,7 +244,7 @@ namespace pxt.runner {
     }
 
     let previousMainPackage: pxt.MainPackage = undefined;
-    function loadPackageAsync(id: string, code?: string) {
+    function loadPackageAsync(id: string, code?: string, dependencies?: string[]) {
         const verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj";
         let host: pxt.Host;
         let downloadPackagePromise: Promise<void>;
@@ -201,7 +258,7 @@ namespace pxt.runner {
             host = mainPkg.host();
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
-            downloadPackagePromise = host.downloadPackageAsync(mainPkg);
+            downloadPackagePromise = host.downloadPackageAsync(mainPkg, dependencies);
             installPromise = mainPkg.installAllAsync()
             // cache previous package
             previousMainPackage = mainPkg;
@@ -242,7 +299,7 @@ namespace pxt.runner {
     }
 
     function compileAsync(hex: boolean, updateOptions?: (ops: pxtc.CompileOptions) => void) {
-        return getCompileOptionsAsync()
+        return getCompileOptionsAsync(hex)
             .then(opts => {
                 if (updateOptions) updateOptions(opts);
                 let resp = pxtc.compile(opts)
@@ -268,8 +325,20 @@ namespace pxt.runner {
             });
     }
 
+    export function generateVMFileAsync(options: SimulateOptions): Promise<any> {
+        pxt.setHwVariant("vm")
+        return loadPackageAsync(options.id)
+            .then(() => compileAsync(true, opts => {
+                if (options.code) opts.fileSystem["main.ts"] = options.code;
+            }))
+            .then(resp => {
+                console.log(resp)
+                return resp
+            })
+    }
+
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        return loadPackageAsync(simOptions.id)
+        return loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
@@ -350,11 +419,11 @@ namespace pxt.runner {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
                     let url = mp[3] == "doc" ? (pxt.webConfig.isStatic ? `/docs${mp[4]}.html` : `${mp[4]}`) : `${docsUrl}?md=${mp[4]}`;
-                    window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
-                        window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
-                            type: "popoutcomplete"
+                        window.parent.postMessage(<pxsim.SimulatorOpenDocMessage>{
+                            type: "opendoc",
+                            url: BrowserUtils.urlJoin(verPrefix, url)
                         }, "*");
                 }
                 break;
@@ -367,24 +436,6 @@ namespace pxt.runner {
                 }
                 break;
         }
-    }
-
-    function initEditorExtensionsAsync(): Promise<void> {
-        let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-            const opts: pxt.editor.FieldExtensionOptions = {};
-            promise = promise
-                .then(() => pxt.BrowserUtils.loadBlocklyAsync())
-                .then(() => pxt.BrowserUtils.loadScriptAsync("fieldeditors.js"))
-                .then(() => pxt.editor.initFieldExtensionsAsync(opts))
-                .then(res => {
-                    if (res.fieldEditors)
-                        res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                        })
-                })
-        }
-        return promise;
     }
 
     export function startRenderServer() {
@@ -417,12 +468,22 @@ namespace pxt.runner {
                         uri: res ? res.xml : undefined,
                         css: res ? res.css : undefined
                     }, "*");
+                })
+                .catch(e => {
+                    window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
+                        source: "makecode",
+                        type: "renderblocks",
+                        id: msg.id,
+                        error: e.message
+                    }, "*");
+                })
+                .finally(() => {
                     jobPromise = undefined;
                     consumeQueue();
                 })
         }
 
-        initEditorExtensionsAsync()
+        pxt.editor.initEditorExtensionsAsync()
             .done(() => {
                 // notify parent that render engine is loaded
                 window.addEventListener("message", function (ev) {
@@ -448,7 +509,7 @@ namespace pxt.runner {
             backButton.addEventListener("click", () => {
                 goBack();
             });
-            pxsim.U.addClass(backButton, "disabled");
+            setElementDisabled(backButton, true);
         }
 
         function render(doctype: string, src: string) {
@@ -512,7 +573,7 @@ namespace pxt.runner {
             }
 
             if (history.length > 1) {
-                pxsim.U.removeClass(backButton, "disabled");
+                setElementDisabled(backButton, false);
             }
         }
 
@@ -525,7 +586,17 @@ namespace pxt.runner {
             }
 
             if (history.length <= 1) {
-                pxsim.U.addClass(backButton, "disabled");
+                setElementDisabled(backButton, true);
+            }
+        }
+
+        function setElementDisabled(el: HTMLElement, disabled: boolean) {
+            if (disabled) {
+                pxsim.U.addClass(el, "disabled");
+                el.setAttribute("aria-disabled", "true");
+            } else {
+                pxsim.U.removeClass(el, "disabled");
+                el.setAttribute("aria-disabled", "false");
             }
         }
 
@@ -540,7 +611,7 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        let promise = initEditorExtensionsAsync();
+        let promise = pxt.editor.initEditorExtensionsAsync();
         promise.done(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
@@ -721,6 +792,15 @@ ${linkString}
     </div>
 </aside>
 
+<aside id=tutorialhint class=box>
+    <div class="ui icon orange message" data-inferred>
+        <div class="content">
+            <div class="header">Tutorial Hint</div>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
 <!-- wrapped around ordinary content -->
 <aside id=main-container class=box>
     <div class="ui text">
@@ -765,6 +845,8 @@ ${linkString}
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
             blocksXmlClass: 'lang-blocksxml',
+            diffBlocksXmlClass: 'lang-diffblocksxml',
+            staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
@@ -773,6 +855,7 @@ ${linkString}
             projectClass: 'lang-project',
             snippetReplaceParent: true,
             simulator: true,
+            showEdit: true,
             hex: true,
             tutorial: !!options.tutorial,
             showJavaScript: editorLanguageMode == LanguageMode.TypeScript,
@@ -782,6 +865,7 @@ ${linkString}
             renderOptions.showEdit = false;
             renderOptions.simulator = false;
         }
+
         return pxt.runner.renderAsync(renderOptions).then(() => {
             // patch a elements
             $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
@@ -797,6 +881,7 @@ ${linkString}
         compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
+        compilePython?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
@@ -826,17 +911,20 @@ ${linkString}
                 }
                 programCache = program;
 
+                let compilePython: pxtc.CompileResult = undefined;
+                if (pxt.appTarget.appTheme.python)
+                    compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
+
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, program);
+                let apis = pxtc.getApiInfo(program, opts.jres);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
-                        const useNewFunctions = appTarget.runtime && appTarget.runtime.functionsOptions && appTarget.runtime.functionsOptions.useNewFunctions;
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode, useNewFunctions });
+                            { snippetMode: options && options.snippetMode });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
@@ -854,6 +942,7 @@ ${linkString}
                             compileProgram: program,
                             compileJS,
                             compileBlocks: bresp,
+                            compilePython,
                             apiInfo: apis,
                             blocksSvg
                         };
@@ -870,7 +959,7 @@ ${linkString}
             .then(opts => {
                 opts.ast = true
                 const resp = pxtc.compile(opts)
-                const apis = pxtc.getApiInfo(opts, resp.ast);
+                const apis = pxtc.getApiInfo(resp.ast, opts.jres);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);

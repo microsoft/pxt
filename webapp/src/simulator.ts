@@ -11,6 +11,7 @@ interface SimulatorConfig {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean;
     restartSimulator(): void;
     onStateChanged(state: pxsim.SimulatorState): void;
+    setState(key: string, value: any): void;
     editor: string;
 }
 
@@ -24,7 +25,10 @@ let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
-    simTranslations = translations;
+    if (simTranslations !== translations) {
+        simTranslations = translations;
+        setDirty();
+    }
 }
 
 export function init(root: HTMLElement, cfg: SimulatorConfig) {
@@ -159,6 +163,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {
+                case "setstate":
+                    cfg.setState(msg.stateKey, msg.stateValue);
+                    break
                 case "restart":
                     cfg.restartSimulator();
                     break;
@@ -203,9 +210,6 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        autoRun: pxt.appTarget.simulator && (pxt.options.light
-            ? !!pxt.appTarget.simulator.autoRunLight
-            : !!pxt.appTarget.simulator.autoRun)
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
@@ -233,22 +237,30 @@ export function setState(editor: string, tutMode?: boolean) {
 }
 
 export function setDirty() { // running outdated code
-    driver.setDirty();
+    if (driver) driver.setDirty();
 }
 
-export function setStarting() {
-    driver.setStarting();
+export function setPending() {
+    if (driver) driver.setPending();
+}
+
+export interface RunOptions {
+    mute?: boolean;
+    highContrast?: boolean;
+    light?: boolean;
+    clickTrigger?: boolean;
+    storedState?: pxt.Map<any>;
+    autoRun?: boolean;
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
-    res: pxtc.CompileResult, mute?: boolean,
-    highContrast?: boolean, light?: boolean,
-    clickTrigger?: boolean) {
+    res: pxtc.CompileResult, options: RunOptions) {
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
     const fnArgs = res.usedArguments;
     lastCompileResult = res;
+    const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -264,7 +276,10 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         localizedStrings: simTranslations,
         refCountingDebug: pxt.options.debug,
         version: pkg.version(),
-        clickTrigger: clickTrigger
+        clickTrigger: clickTrigger,
+        breakOnStart: debug,
+        storedState: storedState,
+        autoRun
     }
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
@@ -280,6 +295,7 @@ export function mute(mute: boolean) {
 
 export function stop(unload?: boolean, starting?: boolean) {
     if (!driver) return;
+    driver.stopSound();
     driver.stop(unload, starting);
 }
 

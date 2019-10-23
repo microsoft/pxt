@@ -116,6 +116,42 @@ a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
 * Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
 
+## Custom block localization
+
+You can override the value used in ``block`` for a particular locale by provide a ``block.loc.LOCALE`` entry.
+
+```
+block.loc.LOCALE = blocksyntax
+```
+
+For example,
+
+```typescript-ignore
+//% block="square $x"
+//% block.loc.fr="$x au carré"
+function square(x: number): number {}
+```
+
+You can also override the ``jsDoc`` description and parameter info.
+
+```
+jsdoc.loc.LOCALE = translated jsdoc
+PARAM.loc.LOCALE = parameter jsdoc
+```
+
+```typescript-ignore
+/**
+    Computes the square of x
+    @param x the number to square
+**/
+//% block="square $x"
+//% block.loc.fr="$x au carré"
+//% jsdoc.loc.fr="Calcule le carré de x"
+//% x.loc.fr="le nombre"
+function square(x: number): number {}
+```
+
+
 ## Supported types
 
 The following [types](/playground#basic-types) are supported in function signatures that are meant to be exported:
@@ -159,6 +195,28 @@ export function showNumber(v: number, interval: number = 150): void
 >**Note**: Using ``defl`` to specify a default parameter value will take precedence over a default value given in the `eg:` portion for ``@param`` in JsDoc. See the [Docs and default values](#jsdoc) section below.
 
 **Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
+
+
+## Array default values
+
+For array type parameters, set the shadow ID to "lists_create_with":
+
+```typescript-ignore
+//% block="$myParam"
+//% myParam.shadow="lists_create_with"
+function myFunction(myParam: number[]): void {}
+```
+
+To populate the array with blocks, set the default value of the parameter as well.
+
+```typescript-ignore
+//% block="$myParam"
+//% myParam.shadow="lists_create_with"
+//% myParam.defl="inner_shadow_block"
+function myFunction(myParam: number[]): void {}
+```
+
+The above will create a block that has an array by default with "inner_shadow_blocks" inside the array.
 
 ## Input formats
 
@@ -361,7 +419,7 @@ name in the block definition string (`msg`).
 
 You can have blocks themselves define an enumeration dynamically. The block will specify some inital members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.
 
-You first create a shadow block that defines the enumeration and has the initial members. 
+You first create a shadow block that defines the enumeration and has the initial members.
 
 ```typescript-ignore
 //% shim=ENUM_GET
@@ -396,7 +454,7 @@ Enums are emitted at the top of user code only if the block is used in the
 project (or if it was used in the past). If the user changes the value of
 the enum in TypeScript then those changes should persist when switching back to blocks.
 
-When a function uses an enum shadow block, the incoming argument 
+When a function uses an enum shadow block, the incoming argument
 should be of type `number` (don't use the `enum` type).
 
 ```typescript-ignore
@@ -621,7 +679,7 @@ namespace Widgets {
 }
 ```
 
-To ensure there's a valid instance of the class when the block is used, the `blockSetVariable` attribute sets a variable to the new instance. In the example above, the `blockSetVariable` attribute will automatically create an instance of `Gizmo` and set the `gizmo` variable to it. The `gizmo` variable is created if it doesn't exist already. This allows a valid instance of `Gizmo` to be created by default when the block is pulled into the editor. 
+To ensure there's a valid instance of the class when the block is used, the `blockSetVariable` attribute sets a variable to the new instance. In the example above, the `blockSetVariable` attribute will automatically create an instance of `Gizmo` and set the `gizmo` variable to it. The `gizmo` variable is created if it doesn't exist already. This allows a valid instance of `Gizmo` to be created by default when the block is pulled into the editor.
 
 **Playground examples**: [Factories](https://makecode.com/playground#factories)
 

@@ -7,7 +7,7 @@ export class TestHost implements pxt.Host {
     //Global cache of module files
     static files: pxt.Map<pxt.Map<string>> = {}
 
-    constructor(public name: string, public main: string, public extraDependencies: string[], private includeCommon = false) { }
+    constructor(public name: string, public packageFiles: pxt.Map<string>, public extraDependencies: string[], private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
         return ""
@@ -19,23 +19,22 @@ export class TestHost implements pxt.Host {
         }
         if (module.id == "this") {
             if (filename == "pxt.json") {
+                let commonFiles = this.includeCommon ? [
+                    "pxt-core.d.ts",
+                    "pxt-helpers.ts",
+                    "pxt-python.d.ts",
+                    "pxt-python-helpers.ts"
+                ] : []
+                let packageFileNames = Object.keys(this.packageFiles)
                 return JSON.stringify({
                     "name": this.name,
                     "dependencies": this.dependencies,
                     "description": "",
-                    "files": this.includeCommon ? [
-                        "main.blocks", //TODO: Probably don't want this
-                        "main.ts",
-                        "pxt-core.d.ts",
-                        "pxt-helpers.ts"
-                    ] : [
-                        "main.blocks", //TODO: Probably don't want this
-                        "main.ts",
-                    ]
+                    "files": packageFileNames.concat(commonFiles)
                 })
             }
-            else if (filename == "main.ts") {
-                return this.main
+            else if (filename in this.packageFiles) {
+                return this.packageFiles[filename]
             }
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
@@ -70,13 +69,14 @@ export class TestHost implements pxt.Host {
             }
         }
 
-        if (filename === "pxt-core.d.ts") {
-            const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
+        // TODO: we should handle these files in a more general way
+        if (filename === "pxt-core.d.ts" || filename === "pxt-helpers.ts") {
+            const contents = fs.readFileSync(path.resolve("libs", "pxt-common", filename), 'utf8');
             this.writeFile(module, filename, contents);
             return contents;
         }
-        else if (filename === "pxt-helpers.ts") {
-            const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+        else if (filename === "pxt-python.d.ts" || filename === "pxt-python-helpers.ts") {
+            const contents = fs.readFileSync(path.resolve("libs", "pxt-python", filename), 'utf8');
             this.writeFile(module, filename, contents);
             return contents;
         }

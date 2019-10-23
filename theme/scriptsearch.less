@@ -13,7 +13,25 @@
     .ui.card {
         height: 20rem;
         .ui.cardimage {
+            background-color: transparent;
             height: 11rem;
+            &.upload {
+                margin: 3em auto;
+            }
+        }
+        .content:not(.extra) {
+            .header {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .description {
+                height: 2.8em;
+                overflow: hidden;
+            }
+            .description.long  {
+                height: 14em;
+            }
         }
     }
     /* Search input */
@@ -40,6 +58,9 @@
 
             .ui.cardimage {
                 height: 5rem;
+                &.upload {
+                    margin: auto;
+                }
             }
         }
     }

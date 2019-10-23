@@ -1,3 +1,4 @@
+/// <reference path="../../localtypings/projectheader.d.ts"/>
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
@@ -124,7 +125,7 @@ namespace pxt.Cloud {
             url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
         if (!packaged && locale != "en") {
-            url += `&lang=${encodeURIComponent(Util.userLanguage())}`
+            url += `&lang=${encodeURIComponent(locale)}`
             if (live) url += "&live=1"
         }
         if (pxt.BrowserUtils.isLocalHost() && !live)
@@ -210,12 +211,6 @@ namespace pxt.Cloud {
         time: number; // time when publication was created
     }
 
-    export interface JsonScriptMeta {
-        blocksWidth?: number;
-        blocksHeight?: number;
-        versions?: TargetVersions
-    }
-
     export interface JsonScript extends JsonPublication {
         shortid?: string;
         name: string;
@@ -224,5 +219,6 @@ namespace pxt.Cloud {
         target?: string;
         targetVersion?: string;
         meta?: JsonScriptMeta; // only in lite, bag of metadata
+        thumb?: boolean;
     }
 }

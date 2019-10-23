@@ -38,7 +38,6 @@ namespace pxtsprite {
 
     const WIDTH = PADDING + SIDEBAR_WIDTH + SIDEBAR_CANVAS_MARGIN + CANVAS_HEIGHT + PADDING - DROP_DOWN_PADDING * 2;
 
-
     export class SpriteEditor implements SideBarHost, SpriteHeaderHost {
         private group: svg.Group;
         private root: svg.SVG;
@@ -49,87 +48,100 @@ namespace pxtsprite {
         private bottomBar: ReporterBar;
         private gallery: Gallery;
 
-        private state: Bitmap;
+        private state: CanvasState;
 
         // When changing the size, keep the old bitmap around so that we can restore it
-        private cachedState: Bitmap;
+        private cachedState: CanvasState;
 
         private edit: Edit;
         private activeTool: PaintTool = PaintTool.Normal;
         private toolWidth = 1;
-        private color = 1;
+        public color = 1;
 
         private cursorCol = 0;
         private cursorRow = 0;
 
-        private undoStack: Bitmap[] = [];
-        private redoStack: Bitmap[] = [];
+        private undoStack: CanvasState[] = [];
+        private redoStack: CanvasState[] = [];
 
         private columns: number = 16;
         private rows: number = 16;
         private colors: string[];
 
-
         private shiftDown: boolean = false;
+        private altDown: boolean = false;
         private mouseDown: boolean = false;
 
         private closeHandler: () => void;
 
-        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
+        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false, public scale = 1) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
             this.rows = bitmap.height;
 
-            this.state = bitmap.copy()
+            this.state = new CanvasState(bitmap.copy())
 
             this.root = new svg.SVG();
             this.root.setClass("sprite-canvas-controls");
             this.group = this.root.group();
             this.createDefs();
 
-            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
+            this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode, this.scale);
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
-                this.setCell(col, row, this.color, false);
+                if (!this.altDown) {
+                    this.setCell(col, row, this.color, false);
+                }
+
                 this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.up((col, row) => {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
-                this.commit();
+                if (this.altDown) {
+                    const color = this.state.image.get(col, row);
+                    this.sidebar.setColor(color);
+                } else {
+                    this.paintSurface.onEditEnd(col, row, this.edit);
+                    if (this.state.floatingLayer && !this.paintSurface.state.floatingLayer) {
+                        this.pushState(true);
+                        this.state = this.paintSurface.state.copy();
+                        this.rePaint();
+                    }
+                    this.commit();
+                    this.shiftAction();
+                }
+
                 this.mouseDown = false;
-                if (this.activeTool == PaintTool.Circle && !this.shiftDown) {
-                    this.switchIconBack(PaintTool.Rectangle);
-                }
-                if (this.activeTool == PaintTool.Line && !this.shiftDown) {
-                    this.switchIconBack(PaintTool.Normal);
-                }
             });
 
             this.paintSurface.down((col, row) => {
-                this.setCell(col, row, this.color, false);
+                if (!this.altDown) {
+                    this.setCell(col, row, this.color, false);
+                }
                 this.mouseDown = true;
             });
 
             this.paintSurface.move((col, row) => {
                 this.drawCursor(col, row);
+                this.shiftAction()
                 this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.leave(() => {
                 if (this.edit) {
-                    this.paintSurface.repaint();
-                }
-                if (this.edit.isStarted) {
-                    this.commit();
+                    this.rePaint();
+                    if (this.edit.isStarted && !this.shiftDown) {
+                        this.commit();
+                    }
                 }
                 this.bottomBar.hideCursor();
             });
 
             this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
-            this.sidebar.setColor(1);
+            this.sidebar.setColor(this.colors.length >= 3 ? 3 : 1); // colors omits 0
 
             this.header = new SpriteHeader(this);
             this.gallery = new Gallery(blocksInfo);
@@ -137,24 +149,27 @@ namespace pxtsprite {
 
             this.updateUndoRedo();
 
-            document.addEventListener("keydown", ev => {
-                if (ev.key === "Undo" || (ev.ctrlKey && ev.key === "z")) {
-                    this.undo();
-                }
-                else if (ev.key === "Redo" || (ev.ctrlKey && ev.key === "y")) {
-                    this.redo();
-                }
-            });
+            // Sets canvas scale
+            this.scale = scale;
+        }
+
+        setSidebarColor(color: number) {
+            this.sidebar.setColor(color);
         }
 
         setCell(col: number, row: number, color: number, commit: boolean): void {
             if (commit) {
-                this.state.set(col, row, color);
+                this.state.image.set(col, row, color);
                 this.paintCell(col, row, color);
             }
-            else {
+            else if (this.edit) {
                 if (!this.edit.isStarted) {
-                    this.edit.start(col, row);
+                    this.paintSurface.onEditStart(col, row, this.edit);
+
+                    if (this.state.floatingLayer && !this.paintSurface.state.floatingLayer) {
+                        this.pushState(true);
+                        this.state = this.paintSurface.state.copy();
+                    }
                 }
                 this.edit.update(col, row);
                 this.cursorCol = col;
@@ -201,26 +216,48 @@ namespace pxtsprite {
         setActiveColor(color: number, setPalette = false) {
             if (setPalette) {
             }
-            else {
+            else if (this.color != color) {
                 this.color = color;
 
                 // If the user is erasing, go back to pencil
                 if (this.activeTool === PaintTool.Erase) {
                     this.sidebar.setTool(PaintTool.Normal);
                 } else {
-                    this.edit = this.newEdit(this.color);
+                    this.updateEdit();
                 }
             }
         }
 
         setActiveTool(tool: PaintTool) {
-            this.activeTool = tool;
-            this.edit = this.newEdit(this.color)
+            if (this.activeTool != tool) {
+                this.activeTool = tool;
+                this.updateEdit()
+            }
         }
 
         setToolWidth(width: number) {
-            this.toolWidth = width;
-            this.edit = this.newEdit(this.color);
+            if (this.toolWidth != width) {
+                this.toolWidth = width;
+                this.updateEdit();
+            }
+        }
+
+        initializeUndoRedo(undoStack: CanvasState[], redoStack: CanvasState[]) {
+            if (undoStack) {
+                this.undoStack = undoStack;
+            }
+            if (redoStack) {
+                this.redoStack = redoStack;
+            }
+            this.updateUndoRedo();
+        }
+
+        getUndoStack() {
+            return this.undoStack.slice();
+        }
+
+        getRedoStack() {
+            return this.redoStack.slice();
         }
 
         undo() {
@@ -256,12 +293,16 @@ namespace pxtsprite {
                 this.undoStack.push(this.cachedState)
                 this.redoStack = [];
             }
-            this.state = resizeBitmap(this.cachedState, width, height);
+            this.state.image = resizeBitmap(this.cachedState.image, width, height);
             this.afterResize(true);
         }
 
         setSizePresets(presets: [number, number][]) {
             this.bottomBar.setSizePresets(presets, this.columns, this.rows);
+        }
+
+        setGalleryFilter(filter: string) {
+            this.gallery.setFilter(filter);
         }
 
         canvasWidth() {
@@ -292,7 +333,7 @@ namespace pxtsprite {
                 else if (result) {
                     this.redoStack = [];
                     this.pushState(true);
-                    this.restore(result);
+                    this.restore(new CanvasState(result));
                     this.hideGallery();
                     this.header.toggle.toggle(true);
                 }
@@ -305,7 +346,13 @@ namespace pxtsprite {
 
         closeEditor() {
             if (this.closeHandler) {
-                this.closeHandler();
+                const ch = this.closeHandler;
+                this.closeHandler = undefined;
+                ch();
+            }
+            if (this.state.floatingLayer) {
+                this.state.mergeFloatingLayer();
+                this.pushState(true);
             }
         }
 
@@ -313,73 +360,161 @@ namespace pxtsprite {
             this.closeHandler = handler;
         }
 
-        switchIconBack(tool: PaintTool) {
-            let btn = (this.sidebar.getButtonForTool(tool) as TextButton);
-            if (tool == PaintTool.Rectangle) {
-                //Change icon back to square
-                btn.setText("\uf096");
-                btn.title(lf("Rectangle"));
-            } else if (tool == PaintTool.Normal) {
-                //Change icon back to pencil
-                btn.setText("\uf040");
-                btn.title(lf("Pencil"));
+        switchIconTo(tool: PaintTool) {
+            if (this.activeTool === tool) return;
+
+            const btn = this.sidebar.getButtonForTool(tool) as TextButton;
+
+            switch (tool) {
+                case PaintTool.Rectangle:
+                    updateIcon(btn, "\uf096", lf("Rectangle"));
+                    break;
+                case PaintTool.Circle:
+                    updateIcon(btn, "\uf10c", lf("Circle"));
+                    break;
+                case PaintTool.Normal:
+                    updateIcon(btn, "\uf040", lf("Pencil"));
+                    break;
+                case PaintTool.Line:
+                    updateIcon(btn, "\uf07e", lf("Line"));
+                    break;
+                default:  // no alternate icon, do not change
+                    return;
             }
-            btn.onClick(() => this.sidebar.setTool(tool));
-            if ((this.activeTool == PaintTool.Circle && tool == PaintTool.Rectangle)
-                    || (this.activeTool == PaintTool.Line && tool == PaintTool.Normal)) {
-                this.setActiveTool(tool);
+
+            btn.onClick(() => {
+                if (tool != PaintTool.Circle && tool != PaintTool.Line) {
+                    this.setIconsToDefault();
+                    this.sidebar.setTool(tool);
+                }
+            });
+
+            function updateIcon(button: TextButton, text: string, title: string) {
+                const shortcut = getPaintToolShortcut(tool);
+
+                button.setText(text);
+                button.title(title);
+                button.shortcut(shortcut);
             }
+        }
+
+        setIconsToDefault() {
+            this.switchIconTo(PaintTool.Rectangle);
+            this.switchIconTo(PaintTool.Normal);
         }
 
         private keyDown = (event: KeyboardEvent) => {
             if (event.keyCode == 16) { // Shift
-                if (!this.shiftDown) {
-                    let btn = (this.sidebar.getButtonForTool(PaintTool.Normal) as TextButton);
-                    btn.setText("\uf07e");
-                    btn.title(lf("Line"));
-                    btn.onClick(() => this.sidebar.setTool(PaintTool.Line));
-                    if (this.activeTool == PaintTool.Normal) {
-                        this.setActiveTool(PaintTool.Line);
-                    }
-                    btn = (this.sidebar.getButtonForTool(PaintTool.Rectangle) as TextButton);
-                    btn.setText("\uf10c");
-                    btn.title(lf("Circle"));
-                    btn.onClick(() => this.sidebar.setTool(PaintTool.Circle));
-                    if (this.activeTool == PaintTool.Rectangle) {
-                        this.setActiveTool(PaintTool.Circle);
-                    }
-                }
                 this.shiftDown = true;
+                this.shiftAction();
             }
 
+            if (event.keyCode === 18) { // Alt
+                this.discardEdit();
+                this.paintSurface.setEyedropperMouse(true);
+                this.altDown = true;
+            }
+
+            if (this.state.floatingLayer) {
+                let didSomething = true;
+
+                switch (event.keyCode) {
+                    case 8: // backspace
+                    case 46: // delete
+                        event.preventDefault();
+                        event.stopPropagation();
+                        this.state.floatingLayer = undefined;
+                        break;
+                    case 37: // Left arrow
+                        this.state.layerOffsetX--;
+                        break;
+                    case 38: // Up arrow
+                        this.state.layerOffsetY--;
+                        break;
+                    case 39: // Right arrow
+                        this.state.layerOffsetX++;
+                        break;
+                    case 40: // Down arrow
+                        this.state.layerOffsetY++;
+                        break;
+                    default:
+                        didSomething = false;
+                }
+
+                if (didSomething) {
+                    this.updateEdit();
+                    this.pushState(true);
+                    this.paintSurface.restore(this.state, true);
+                }
+            }
+
+            const tools = [
+                PaintTool.Fill,
+                PaintTool.Normal,
+                PaintTool.Rectangle,
+                PaintTool.Erase,
+                PaintTool.Circle,
+                PaintTool.Line,
+                PaintTool.Marquee
+            ]
+
+            tools.forEach(tool => {
+                if (event.key === getPaintToolShortcut(tool)) {
+                    this.setIconsToDefault();
+                    this.switchIconTo(tool);
+                    this.sidebar.setTool(tool);
+                }
+            });
+
+            const zeroKeyCode = 48;
+            const nineKeyCode = 57;
+
+            if (event.keyCode >= zeroKeyCode && event.keyCode <= nineKeyCode) {
+                let color = event.keyCode - zeroKeyCode;
+                if (this.shiftDown) {
+                    color += 9;
+                }
+                if (color <= this.colors.length) { // colors omits 0
+                    this.sidebar.setColor(color);
+                }
+            }
         }
 
         private keyUp = (event: KeyboardEvent) => {
             // If not drawing a circle, switch back to Rectangle and Pencil
-            if (event.keyCode == 16) { // Shift
+            if (event.keyCode === 16) { // Shift
                 this.shiftDown = false;
-                if (this.mouseDown) {
-                    if (this.activeTool != PaintTool.Line) {
-                        this.switchIconBack(PaintTool.Normal);
-                    }
-                    if (this.activeTool != PaintTool.Circle) {
-                        this.switchIconBack(PaintTool.Rectangle);
-                    }
-                } else {
-                    this.switchIconBack(PaintTool.Normal);
-                    this.switchIconBack(PaintTool.Rectangle);
-                }
+                this.clearShiftAction();
+            } else if (event.keyCode === 18) { // Alt
+                this.altDown = false;
+                this.paintSurface.setEyedropperMouse(false);
+                this.updateEdit();
+            }
+        }
+
+        private undoRedoEvent = (event: KeyboardEvent) => {
+            const controlOrMeta = event.ctrlKey || event.metaKey; // ctrl on windows, meta on mac
+            if (event.key === "Undo" || (controlOrMeta && event.key === "z")) {
+                this.undo();
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (event.key === "Redo" || (controlOrMeta && event.key === "y")) {
+                this.redo();
+                event.preventDefault();
+                event.stopPropagation();
             }
         }
 
         addKeyListeners() {
             document.addEventListener("keydown", this.keyDown);
             document.addEventListener("keyup", this.keyUp);
+            document.addEventListener("keydown", this.undoRedoEvent, true);
         }
 
         removeKeyListeners() {
             document.removeEventListener("keydown", this.keyDown);
             document.removeEventListener("keyup", this.keyUp);
+            document.removeEventListener("keydown", this.undoRedoEvent, true);
             this.paintSurface.removeMouseListeners();
         }
 
@@ -390,10 +525,10 @@ namespace pxtsprite {
             this.bottomBar.updateDimensions(this.columns, this.rows);
             this.layout();
 
-            if (showOverlay) this.paintSurface.showOverlay();
+            if (showOverlay) this.paintSurface.showResizeOverlay();
 
             // Canvas size changed and some edits rely on that (like paint)
-            this.edit = this.newEdit(this.color);
+            this.updateEdit();
         }
 
         private drawCursor(col: number, row: number) {
@@ -402,9 +537,9 @@ namespace pxtsprite {
             }
         }
 
-        private paintEdit(edit: Edit, col: number, row: number) {
+        private paintEdit(edit: Edit, col: number, row: number, gestureEnd = false) {
             this.paintSurface.restore(this.state);
-            this.paintSurface.applyEdit(edit, col, row);
+            this.paintSurface.applyEdit(edit, col, row, gestureEnd);
         }
 
         private commit() {
@@ -413,9 +548,9 @@ namespace pxtsprite {
                     this.cachedState = undefined;
                 }
                 this.pushState(true);
-                this.paintEdit(this.edit, this.cursorCol, this.cursorRow);
-                this.state.apply(this.paintSurface.image);
-                this.edit = this.newEdit(this.color);
+                this.paintEdit(this.edit, this.cursorCol, this.cursorRow, true);
+                this.state = this.paintSurface.state.copy();
+                this.updateEdit();
                 this.redoStack = [];
             }
         }
@@ -431,14 +566,27 @@ namespace pxtsprite {
             this.updateUndoRedo();
         }
 
-        private restore(bitmap: Bitmap) {
-            if (bitmap.width !== this.state.width || bitmap.height !== this.state.height) {
-                this.state = bitmap;
+        private discardEdit() {
+            if (this.edit) {
+                this.edit = undefined;
+                this.rePaint();
+            }
+        }
+
+        private updateEdit() {
+            if (!this.altDown) {
+                this.edit = this.newEdit();
+            }
+        }
+
+        private restore(state: CanvasState) {
+            if (state.width !== this.state.width || state.height !== this.state.height) {
+                this.state = state;
                 this.afterResize(false);
             }
             else {
-                this.state.apply(bitmap);
-                this.paintSurface.restore(bitmap, true);
+                this.state = state.copy();
+                this.paintSurface.restore(state, true);
             }
         }
 
@@ -450,15 +598,51 @@ namespace pxtsprite {
             this.paintSurface.writeColor(col, row, color);
         }
 
-        private newEdit(color: number) {
+        private newEdit() {
             switch (this.activeTool) {
-                case PaintTool.Normal: return new PaintEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Rectangle: return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Outline: return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Line: return new LineEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Circle: return new CircleEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Erase: return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
-                case PaintTool.Fill: return new FillEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Normal:
+                    return new PaintEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Rectangle:
+                    return new OutlineEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Outline:
+                    return new OutlineEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Line:
+                    return new LineEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Circle:
+                    return new CircleEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Erase:
+                    return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
+                case PaintTool.Fill:
+                    return new FillEdit(this.columns, this.rows, this.color, this.toolWidth);
+                case PaintTool.Marquee:
+                    return new MarqueeEdit(this.columns, this.rows, this.color, this.toolWidth);
+            }
+        }
+
+        private shiftAction() {
+            if (!this.shiftDown || this.altDown)
+                return;
+
+            switch (this.activeTool) {
+                case PaintTool.Line:
+                case PaintTool.Rectangle:
+                case PaintTool.Circle:
+                    this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
+                    break;
+            }
+        }
+
+        private clearShiftAction() {
+            if (this.mouseDown)
+                return;
+
+            switch (this.activeTool) {
+                case PaintTool.Line:
+                case PaintTool.Rectangle:
+                case PaintTool.Circle:
+                    this.updateEdit();
+                    this.paintSurface.restore(this.state, true);
+                    break;
             }
         }
 

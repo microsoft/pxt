@@ -1,0 +1,40 @@
+.image-editor-button {
+    text-align: center;
+    line-height: 2rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    margin: 0.375rem;
+
+    transition: color 0.1s;
+    color: var(--sidebar-icon-active-color);
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.image-editor-button.toggle, .image-editor-button.disabled {
+    color: var(--sidebar-icon-inactive-color);
+}
+
+.image-editor-button.disabled {
+    cursor: not-allowed;
+}
+
+.image-editor-button.toggle:hover {
+    color: var(--sidebar-icon-active-color);
+}
+
+.cursor-button-contents {
+    background-color: var(--sidebar-icon-active-color);
+    transition: background-color 0.1s;
+    display: inline-block;
+}
+
+.image-editor-button.toggle .cursor-button-contents, .image-editor-button.disabled .cursor-button-contents {
+    background-color: var(--sidebar-icon-inactive-color);
+}
+
+.image-editor-button.toggle:hover .cursor-button-contents {
+    background-color: var(--sidebar-icon-active-color);
+}

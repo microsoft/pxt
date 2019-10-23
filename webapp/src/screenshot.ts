@@ -318,6 +318,7 @@ declare interface GIFOptions {
     debug?: boolean;
 
     maxFrames?: number;
+    maxLength?: number;
 }
 
 declare interface GIFFrameOptions {
@@ -396,18 +397,33 @@ export class GifEncoder {
     renderAsync(): Promise<string> {
         if (this.cancellationToken.isCancelled()) return Promise.resolve(undefined);
 
-        pxt.debug(`gif: render`)
-        if (!this.renderPromise)
-            this.renderPromise = this.renderGifAsync()
-                .then(blob => {
+        // keep trying to render until size is small enough
+        const tryRenderGifAsync: () => Promise<string> = () => {
+            return this.renderGifAsync()
+                .then(imageUri => {
                     this.cancellationToken.throwIfCancelled();
-                    return new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(<string>reader.result);
-                        reader.onerror = e => reject(e);
-                        reader.readAsDataURL(blob);
-                    });
+                    // check if we've passed the max size for the blob length
+                    if (this.options.maxLength && imageUri.length > this.options.maxLength) {
+                        const nframes = Math.floor(this.gif.frames.length * this.options.maxLength / imageUri.length) - 1;
+                        pxt.log(`gif: size too large (${(imageUri.length / 1000) | 0}kb) reducing frames to ${nframes}`);
+                        if (nframes <= 0) {
+                            pxt.log(`gif: simulator image too large, cannot have a single frame`);
+                            return undefined;
+                        }
+                        // try rendering again
+                        this.gif.frames = this.gif.frames.slice(0, nframes);
+                        return tryRenderGifAsync();
+                    }
+
+                    // all done
+                    pxt.log(`gif: rendered ${this.gif.frames.length} frames to ${(imageUri.length / 1000) | 0}kb`);
+                    return imageUri;
                 })
+        };
+
+        pxt.debug(`gif: render ${this.gif.frames.length} frames`)
+        if (!this.renderPromise)
+            this.renderPromise = tryRenderGifAsync()
                 .finally(() => this.clean())
                 .catch(e => {
                     pxt.debug(`rendering failed`)
@@ -417,10 +433,11 @@ export class GifEncoder {
         return this.renderPromise;
     }
 
-    private renderGifAsync(): Promise<Blob> {
+    private renderGifAsync(): Promise<string> {
         this.cancellationToken.throwIfCancelled();
-        return new Promise((resolve, reject) => {
+        return new Promise<Blob>((resolve, reject) => {
             this.gif.on('finished', (blob: Blob) => {
+                this.gif.running = false;
                 resolve(blob);
             });
             this.gif.on('abort', () => {
@@ -428,16 +445,22 @@ export class GifEncoder {
                 resolve(undefined);
             });
             this.gif.render();
-        })
+        }).then(blob => ts.pxtc.Util.blobReadAsDataURL(blob));
     }
 }
 
 export function loadGifEncoderAsync(): Promise<GifEncoder> {
+    if (!pxt.webConfig.gifworkerjs)
+        return Promise.resolve(undefined);
+
     const options: GIFOptions = {
         workers: 1,
-        quality: 10,
         dither: false,
-        workerScript: pxt.webConfig.gifworkerjs
+        workerScript: pxt.webConfig.gifworkerjs,
+        quality: pxt.appTarget.appTheme.simGifQuality || 16,
+        transparent: pxt.appTarget.appTheme.simGifTransparent,
+        maxFrames: pxt.appTarget.appTheme.simGifMaxFrames || 64,
+        maxLength: pxt.appTarget.appTheme.simScreenshotMaxUriLength || 300000
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
