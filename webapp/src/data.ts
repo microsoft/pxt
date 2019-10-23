@@ -329,13 +329,6 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         return this.getData("sync:hascloud");
     }
 
-    getUserInfo() {
-        const user = this.getData("sync:username");
-        if (!user) return undefined;
-
-        return user;
-    }
-
     getUser() {
         const name = this.getData("sync:username");
         if (!name) return undefined;
