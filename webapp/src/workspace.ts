@@ -12,6 +12,7 @@ import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
+import * as dialogs from "./dialogs"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -518,6 +519,8 @@ export interface CommitOptions {
 }
 
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
+    await ensureTokenAsync();
+
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
@@ -594,6 +597,16 @@ function mergeError() {
     const e = new Error("Merge error");
     (e as any).isMergeError = true
     return e
+}
+
+// requests token to user if needed
+async function ensureTokenAsync() {
+    // check that we have a token first
+    if (!pxt.github.token) {
+        await dialogs.showGithubLoginAsync();
+        if (!pxt.github.token)
+            U.userError(lf("Please sign in to GitHub to perform this operation."))
+    }
 }
 
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
@@ -681,7 +694,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             pubId: "",
             pubCurrent: false,
             meta: {},
-            editor: "tsprj",
+            editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
         }, files)
@@ -695,7 +708,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
-    const pfiles = pxt.packageFiles(hd.name);
+    const pfiles = pxt.template.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
@@ -764,13 +777,15 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
+    await ensureTokenAsync();
+
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
 
     let currFiles = await getTextAsync(hd.id);
 
-    const templateFiles = pxt.packageFiles(name);
-    pxt.packageFilesFixup(templateFiles, false);
+    const templateFiles = pxt.template.packageFiles(name);
+    pxt.template.packageFilesFixup(templateFiles, false);
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
@@ -819,7 +834,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     return hd
 }
 
-export async function importGithubAsync(id: string) {
+export async function importGithubAsync(id: string): Promise<Header> {
     let sha = ""
     let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
     let parsed = pxt.github.parseRepoId(repoid)
@@ -830,6 +845,7 @@ export async function importGithubAsync(id: string) {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
+            await ensureTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)

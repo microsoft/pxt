@@ -2592,7 +2592,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
         .then(() => {
             let tscfg = "tsconfig.json"
             if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
+                nodeutil.writeFileSync(tscfg, pxt.template.TS_CONFIG)
             }
         });
 
@@ -2706,7 +2706,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
-    const files = pxt.packageFiles(path.basename(path.resolve(".")).replace(/^pxt-/, ""))
+    const files = pxt.template.packageFiles(path.basename(path.resolve(".")).replace(/^pxt-/, ""))
 
     let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
@@ -2722,7 +2722,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
         .then(() => {
             files[pxt.CONFIG_NAME] = JSON.stringify(configMap, null, 4) + "\n"
 
-            pxt.packageFilesFixup(files)
+            pxt.template.packageFilesFixup(files)
 
             U.iterMap(files, (k, v) => {
                 nodeutil.mkdirP(path.dirname(k))
@@ -4539,8 +4539,8 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             nodeutil.writeFileSync(fullname, prj.files[fn])
         }
         // add default files if not present
-        const files = pxt.packageFiles(prj.name);
-        pxt.packageFilesFixup(files);
+        const files = pxt.template.packageFiles(prj.name);
+        pxt.template.packageFilesFixup(files);
         for (let fn in files) {
             if (prj.files[fn]) continue;
             const fullname = path.join(fdir, fn)
