@@ -5,6 +5,7 @@ import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
 import * as dialogs from "./dialogs";
+import * as githubprovider from "./githubprovider";
 
 type Header = pxt.workspace.Header;
 
@@ -33,6 +34,7 @@ export interface UserInfo {
 export interface IdentityProvider {
     name: string;
     friendlyName: string;
+    icon: string; // including icon or xicon
     loginCheck(): void;
     login(): void;
     loginCallback(queryString: pxt.Map<string>): void;
@@ -65,7 +67,7 @@ function mkSyncError(msg: string) {
 }
 
 export class ProviderBase {
-    constructor(public name: string, public friendlyName: string, public urlRoot: string) {
+    constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
     }
 
     syncError(msg: string) {
@@ -209,6 +211,7 @@ export function reconstructMeta(files: pxt.Map<string>) {
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
 import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
+import { GithubProvider } from "./githubprovider";
 
 export function providers() {
     if (!allProviders) {
@@ -503,6 +506,12 @@ function setStatus(s: string) {
         status = s
         data.invalidate("sync:status")
     }
+}
+
+export function identityProvider(): IdentityProvider {
+    if (pxt.github.token)
+        return githubprovider.provider;
+    return provider;
 }
 
 /*

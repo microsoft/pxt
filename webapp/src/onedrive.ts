@@ -19,7 +19,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
     private entryCache: pxt.Map<OneEntry> = {}
 
     constructor() {
-        super("onedrive", lf("Microsoft OneDrive"), "https://graph.microsoft.com/v1.0")
+        super("onedrive", lf("Microsoft OneDrive"), "icon microsoft", "https://graph.microsoft.com/v1.0")
     }
 
     login() {

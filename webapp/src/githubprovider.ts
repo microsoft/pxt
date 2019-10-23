@@ -4,10 +4,12 @@ import * as cloudsync from "./cloudsync";
 export class GithubProvider implements cloudsync.IdentityProvider {
     name: string;
     friendlyName: string;
+    icon: string;
 
     constructor() {
         this.name = "github";
         this.friendlyName = "GitHub";
+        this.icon = "icon github";
     }
 
     loginCheck(): void {
@@ -31,3 +33,5 @@ export class GithubProvider implements cloudsync.IdentityProvider {
             })
     }
 }
+
+export const provider = new GithubProvider;

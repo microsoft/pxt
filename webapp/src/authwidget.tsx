@@ -2,6 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as dialogs from "./dialogs";
+import * as cloudsync from "./cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -25,13 +26,14 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
 
     handleHeadClick() {
         pxt.tickEvent('auth.head', undefined, { interactiveConsent: true });
+        // do something...
     }
 
     renderCore() {
-        const authority = pxt.github.token ? "github" : this.getData("sync:provider");
+        const provider = cloudsync.identityProvider();
 
         // not signed in
-        if (!authority)
+        if (!provider)
             return <sui.Button
                 className={"authwidget anonymous"}
                 onClick={this.handleSignInClick}
@@ -41,7 +43,7 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
         // signed in, display bubbled head
         // TODO: display face
         return <sui.Button
-            className={`circular authwidget ui icon ${authority}`}
+            className={`circular authwidget ui ${provider.icon}`}
             onClick={this.handleHeadClick}>
         </sui.Button>
     }

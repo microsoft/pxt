@@ -14,7 +14,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
     private entryCache: pxt.Map<GEntry> = {}
 
     constructor() {
-        super("googledrive", lf("Google Drive"), "https://www.googleapis.com")
+        super("googledrive", lf("Google Drive"), "icon google drive", "https://www.googleapis.com")
     }
 
     login() {
