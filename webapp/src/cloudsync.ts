@@ -504,13 +504,17 @@ function setStatus(s: string) {
 }
 
 /*
+    sync:provider
     sync:username
     sync:loggedin
     sync:status
+    sync:hascloud
 */
 data.mountVirtualApi("sync", {
     getSync: p => {
         switch (data.stripProtocol(p)) {
+            case "provider":
+                return provider && provider.name
             case "username":
                 return pxt.storage.getLocal("cloudName")
             case "loggedin":

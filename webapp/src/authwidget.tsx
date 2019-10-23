@@ -27,8 +27,7 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
     }
 
     renderCore() {
-        // TODO: move to state
-        const authority = pxt.github.token ? "github" : undefined;
+        const authority = pxt.github.token ? "github" : this.getData("sync:provider");
 
         // not signed in
         if (!authority)
