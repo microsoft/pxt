@@ -1,33 +1,18 @@
 import * as dialogs from "./dialogs";
 import * as cloudsync from "./cloudsync";
 
-export class GithubProvider implements cloudsync.IdentityProvider {
-    name: string;
-    friendlyName: string;
-    icon: string;
-
+export class GithubProvider extends cloudsync.ProviderBase implements cloudsync.IdentityProvider {
     constructor() {
-        this.name = "github";
-        this.friendlyName = "GitHub";
-        this.icon = "icon github";
+        super("github", lf("GitHub"), "icon github", "https://api.github.com");
     }
 
     supportsSync(): boolean {
         return false;
     }
 
-    loginCheck(): void {
-        if (pxt.github.token)
-            cloudsync.setProvider(this as any)
-    }
-
     login(): void {
         dialogs.showGithubLoginAsync()
             .done(() => this.loginCheck());
-    }
-
-    loginCallback(queryString: pxt.Map<string>): void {
-        ts.pxtc.Util.userError("TODO");
     }
 
     getUserInfoAsync(): Promise<cloudsync.UserInfo> {

@@ -187,7 +187,8 @@ export class ProviderBase {
             pxt.storage.removeLocal(ns + "tokenExp")
         }
         // re-compute
-        pxt.storage.removeLocal("cloudName")
+        pxt.storage.removeLocal("cloudName");
+        invalidateSync();
     }
 }
 
@@ -237,13 +238,17 @@ export function providers(): IdentityProvider[] {
     return pxt.Util.values(allProviders);
 }
 
-// this is generally called by the provier's loginCheck() function
-export function setProvider(impl: IdentityProvider) {
-    currentProvider = impl
+function invalidateSync() {
     data.invalidate("sync:provider")
     data.invalidate("sync:username")
     data.invalidate("sync:status")
     data.invalidate("sync:loggedin")
+}
+
+// this is generally called by the provier's loginCheck() function
+export function setProvider(impl: IdentityProvider) {
+    currentProvider = impl
+    invalidateSync();
 }
 
 async function syncOneUpAsync(provider: Provider, h: Header) {
