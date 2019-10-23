@@ -8,7 +8,8 @@ import * as core from "./core";
 import * as discourse from "./discourse";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
-import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
+import * as authwidget from "./authwidget";
+import { showAboutDialogAsync } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -35,7 +36,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
         this.showScriptManager = this.showScriptManager.bind(this);
-        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -142,11 +142,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.showScriptManager();
     }
 
-    cloudSignIn() {
-        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        showCloudSignInDialog();
-    }
-
     renderCore() {
         const { selectedCategory, selectedIndex } = this.state;
 
@@ -172,13 +167,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
-        let signIn = ""
-        let signInIcon = ""
-        if (this.getData("sync:hascloud")) {
-            signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
-            signIn = this.getData("sync:username") || lf("Sign in")
-        }
-
         return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
@@ -194,8 +182,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
-                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
+                        {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                        {targetTheme.authWidget ? <authwidget.AuthWidget parent={this.props.parent} /> : undefined}
                     </div>
                 </div>
                 <div className="content">

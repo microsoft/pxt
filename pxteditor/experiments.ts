@@ -142,6 +142,11 @@ namespace pxt.editor.experiments {
                 id: "alwaysGithubItemBlocks",
                 name: lf("Always GitHub Blocks"),
                 description: lf("Always show GitHub item in Explorer view for blocks, even if token is not available.")
+            },
+            {
+                id: "authWidget",
+                name: lf("Authentication Widget"),
+                description: lf("Display user bubble head or sign in button")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
