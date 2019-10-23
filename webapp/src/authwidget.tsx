@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-
+import * as dialogs from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -20,6 +20,7 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
 
     handleSignInClick() {
         pxt.tickEvent('auth.signin', undefined, { interactiveConsent: true });
+        dialogs.showCloudSignInDialog();
     }
 
     handleHeadClick() {
