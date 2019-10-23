@@ -321,16 +321,19 @@ function updateNameAsync() {
 }
 
 export function syncAsync(): Promise<void> {
+    // no provider...
+    if (!currentProvider)
+        return Promise.resolve(undefined)
+
+    // no cloud sync, just identity
+    if (!currentProvider.supportsSync())
+        return updateNameAsync();
+
+    // identity
+    const provider = currentProvider as Provider;
     let numUp = 0
     let numDown = 0
     let updated: pxt.Map<number> = {}
-
-    if (!currentProvider || !currentProvider.supportsSync())
-        return Promise.resolve(undefined)
-
-    const provider = currentProvider as Provider;
-    if (!provider)
-        return Promise.resolve(undefined);
 
     function uninstallAsync(h: Header) {
         pxt.debug(`uninstall local ${h.blobId}`)
@@ -450,9 +453,9 @@ export function syncAsync(): Promise<void> {
                         }
                     } else {
                         if (hd.blobCurrent) {
-                            return syncDownAsync(provider, hd, chd)
+                            return syncDownAsync(hd, chd)
                         } else {
-                            return resolveConflictAsync(provider, hd, chd)
+                            return resolveConflictAsync(hd, chd)
                         }
                     }
                 } else {
