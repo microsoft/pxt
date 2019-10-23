@@ -259,6 +259,9 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     checkSession();
     U.assert(h.target == pxt.appTarget.id);
 
+    if (h.temporary)
+        return Promise.resolve()
+
     let e = lookup(h.id)
     //U.assert(e.header === h)
 
