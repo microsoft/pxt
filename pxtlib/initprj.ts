@@ -202,7 +202,7 @@ cache:
                 files[f] = prj.files[f];
 
         const pkgFiles = Object.keys(files).filter(s =>
-            /\.(md|ts|asm|cpp|h|py)$/.test(s))
+            /\.(blocks|md|ts|asm|cpp|h|py)$/.test(s))
 
         const fieldsOrder = [
             "name",
@@ -223,7 +223,7 @@ cache:
         config.files = pkgFiles.filter(s => !/test/.test(s));
         config.testFiles = pkgFiles.filter(s => /test/.test(s));
 
-        let configMap: Map<string> = config as any
+        const configMap: Map<string> = config as any
         // make it look nice
         const newCfg: any = {}
         for (const f of fieldsOrder) {
