@@ -503,6 +503,9 @@ namespace pxsim {
                 player: mc
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
+            let fragment = window.location.href.split('#');
+            if (fragment && fragment.length > 1) msg.fragment = fragment[1].split('&');
+
             frame.dataset['runid'] = this.runId;
             frame.dataset['runtimeid'] = msg.id;
             frame.contentWindow.postMessage(msg, "*");
