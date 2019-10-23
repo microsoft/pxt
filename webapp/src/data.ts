@@ -6,7 +6,6 @@ export type AnyComponent = Component<any, any>;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-import { UserInfo } from "./cloudsync";
 
 interface CacheEntry {
     path: string;
