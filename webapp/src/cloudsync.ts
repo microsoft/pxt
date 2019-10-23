@@ -239,6 +239,10 @@ export function providers(): IdentityProvider[] {
 // this is generally called by the provier's loginCheck() function
 export function setProvider(impl: IdentityProvider) {
     currentProvider = impl
+    data.invalidate("sync:provider")
+    data.invalidate("sync:username")
+    data.invalidate("sync:status")
+    data.invalidate("sync:loggedin")
 }
 
 async function syncOneUpAsync(provider: Provider, h: Header) {

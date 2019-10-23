@@ -17,12 +17,13 @@ export class GithubProvider implements cloudsync.IdentityProvider {
     }
 
     loginCheck(): void {
-        if (!pxt.github.token)
-            this.login();
+        if (pxt.github.token)
+            cloudsync.setProvider(this as any)
     }
 
     login(): void {
-        dialogs.showGithubLoginAsync().done();
+        dialogs.showGithubLoginAsync()
+            .done(() => this.loginCheck());
     }
 
     loginCallback(queryString: pxt.Map<string>): void {
