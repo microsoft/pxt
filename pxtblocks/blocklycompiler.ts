@@ -219,7 +219,7 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || ground("Array");
+            return tp || mkPoint(null);
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
