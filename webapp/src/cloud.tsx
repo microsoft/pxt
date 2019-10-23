@@ -57,7 +57,7 @@ export class SignInDialog extends data.Component<SignInDialogProps, SignInDialog
                 closeIcon={true} header={lf("Sign In")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className="ui header">{lf("Please choose your cloud drive.")}</div>
+                <div className="ui header">{lf("Please choose your cloud provider.")}</div>
                 <div className="ui grid padded">
                     <div className={"ui cards"}>
                         {providers.map(p => (
