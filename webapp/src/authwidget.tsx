@@ -15,7 +15,7 @@ export class AuthWidget extends data.Component<AuthWidgetProps, AuthWidgetState>
     constructor(props: AuthWidgetProps) {
         super(props);
         this.handleSignInClick = this.handleSignInClick.bind(this);
-        this.handleHeadClick = this.handleHeadClick.bind(this;)
+        this.handleHeadClick = this.handleHeadClick.bind(this);
     }
 
     handleSignInClick() {
