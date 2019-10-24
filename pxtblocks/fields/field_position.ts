@@ -86,6 +86,15 @@ namespace pxtblockly {
             const slider = contentDiv.getElementsByClassName("goog-slider-horizontal")[0] as HTMLDivElement;
             if (slider) {
                 slider.style.width = width + "px";
+
+                // Because we resized the slider, we need to update the handle position. The closure
+                // slider won't update unless the value changes so change it and un-change it
+                const value = parseFloat(this.getValue());
+
+                if (!isNaN(value) && value > this.getMin()) {
+                    this.setValue((value - 1) + "");
+                    this.setValue(value + "");
+                }
             }
 
             const setPos = (x: number, y: number) => {
