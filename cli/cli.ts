@@ -1108,9 +1108,10 @@ function uploadCoreAsync(opts: UploadOptions) {
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
 
     // check size
-    const toobig = checkFileSize(opts.fileList);
-    if (toobig > 0)
+    const maxSize = checkFileSize(opts.fileList);
+    if (maxSize > 15000000) // 15Mb max
         U.userError(`file too big for upload`);
+    pxt.log('');
 
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
@@ -4599,24 +4600,19 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
 
 function checkFileSize(files: string[]): number {
     if (!pxt.appTarget.cloud)
-        return -1;
+        return 0;
 
     pxt.log('checking for file sizes');
     const mb = 1e6;
-    const maxSize = pxt.appTarget.cloud.maxFileSize || (5 * mb);
     const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
-    let toobig = 0;
+    let maxSize = 0;
     files.forEach(f => {
             const stats = fs.statSync(f);
             if (stats.size > warnSize)
                 pxt.log(`  ${f} - ${stats.size / mb}Mb`);
-            if (stats.size > maxSize) {/* 5Mb */
-                toobig++;
-            }
+            maxSize = Math.max(maxSize, stats.size);
         });
-    if (toobig)
-        pxt.log(`${toobig} files above allowed size (${maxSize / mb}Mb)`);
-    return toobig;
+    return maxSize;
 }
 
 function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
@@ -4633,9 +4629,10 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let broken = 0;
     let snippets: CodeSnippet[] = [];
 
-    const toobig = checkFileSize(nodeutil.allFiles("docs"));
-    if (toobig > 0 && !pxt.appTarget.ignoreDocsErrors)
-        U.userError(`${toobig} files too big in docs folder`);
+    const maxFileSize = checkFileSize(nodeutil.allFiles("docs"));
+    if (!pxt.appTarget.ignoreDocsErrors
+        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
+        U.userError(`files too big in docs folder`);
 
     // scan and fix image links
     if (fix) {
