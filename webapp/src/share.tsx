@@ -142,7 +142,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (this.state.recordingState == ShareRecordingState.GifRecording) {
             if (this._gifEncoder.addFrame(msg.data, msg.delay))
                 this.gifRender();
-        } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap) {
+        } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap || this.state.recordingState === ShareRecordingState.None) {
             // received a screenshot
             this.setState({ screenshotUri: pxt.BrowserUtils.imageDataToPNG(msg.data), recordingState: ShareRecordingState.None, recordError: undefined })
         } else {
@@ -164,6 +164,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (Object.keys(newState).length > 0) {
             this.setState(newState);
         }
+    }
+
+    componentDidMount() {
+        document.addEventListener("keydown", this.handleKeyDown);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("keydown", this.handleKeyDown);
     }
 
     shouldComponentUpdate(nextProps: ShareEditorProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -495,6 +503,21 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const container = document.getElementById("shareLoanedSimulator");
         if (container && this.loanedSimulator && !this.loanedSimulator.parentNode)
             container.appendChild(this.loanedSimulator);
+    }
+
+    protected handleKeyDown = (e: KeyboardEvent) => {
+        const targetTheme = pxt.appTarget.appTheme;
+        const pressed = e.key.toLocaleLowerCase();
+
+        // Don't fire events if they are typing in a name
+        if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+
+        if (targetTheme.simScreenshotKey && pressed === targetTheme.simScreenshotKey.toLocaleLowerCase()) {
+            this.handleScreenshotClick();
+        }
+        else if (targetTheme.simGifKey && pressed === targetTheme.simGifKey.toLocaleLowerCase()) {
+            this.handleRecordClick();
+        }
     }
 }
 

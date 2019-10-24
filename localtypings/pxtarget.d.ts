@@ -331,7 +331,7 @@ declare namespace pxt {
         simScreenshotKey?: string; // keyboard key name
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
-        simGifKey?: boolean; // shortcut to start stop
+        simGifKey?: string; // shortcut to start stop
         simGifTransparent?: string; // specify the gif transparency color
         simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
         simGifMaxFrames?: number; // maximum number of frames, default 64
