@@ -283,7 +283,6 @@ namespace pxt.py {
             }
         }
 
-        // TODO(dz): decide what to do with this..
         // TODO this is for testing mostly; we can do this lazily
         for (let sym of U.values(externalApis)) {
             fillTypes(sym)
