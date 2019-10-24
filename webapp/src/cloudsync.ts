@@ -4,7 +4,6 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
-import * as dialogs from "./dialogs";
 
 type Header = pxt.workspace.Header;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -12,8 +11,8 @@ type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 import U = pxt.Util;
 const lf = U.lf
 
-let allProviders: pxt.Map<Provider>
-let provider: Provider
+let allProviders: pxt.Map<IdentityProvider>
+let currentProvider: IdentityProvider
 let status = ""
 
 const HEADER_JSON = ".cloudheader.json"
@@ -38,7 +37,7 @@ export interface ProviderLoginResponse {
     expiresIn: number; // seconds
 }
 
-export interface Provider {
+export interface IdentityProvider {
     name: string;
     friendlyName: string;
     icon: string;
@@ -47,6 +46,10 @@ export interface Provider {
     logout(): void;
     loginCallback(queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<UserInfo>;
+    hasSync(): boolean;
+}
+
+export interface Provider extends IdentityProvider {
     listAsync(): Promise<FileInfo[]>;
     // apis below return CloudFile mostly for the version field
     downloadAsync(id: string): Promise<FileInfo>;
@@ -78,13 +81,21 @@ export class ProviderBase {
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
     }
 
+    hasSync(): boolean {
+        return true;
+    }
+
     syncError(msg: string) {
         throw mkSyncError(msg)
     }
 
-    protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
-        let tok = pxt.storage.getLocal(this.name + "token")
+    protected token() {
+        const tok = pxt.storage.getLocal(this.name + "token")
+        return tok;
+    }
 
+    protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
+        const tok = this.token();
         if (!tok) {
             throw this.pleaseLogin()
         }
@@ -138,8 +149,7 @@ export class ProviderBase {
     }
 
     loginCheck() {
-        let tok = pxt.storage.getLocal(this.name + "token")
-
+        const tok = this.token();
         if (!tok)
             return
 
@@ -255,29 +265,32 @@ export function reconstructMeta(files: pxt.Map<string>) {
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
 import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
+import * as githubprovider from "./githubprovider";
 
-export function providers() {
+export function providers(): IdentityProvider[] {
     if (!allProviders) {
         allProviders = {}
-        for (let impl of [new onedrive.Provider(), new googledrive.Provider()]) {
-            allProviders[impl.name] = impl
+        const cl = pxt.appTarget.cloud
+
+        if (cl && cl.cloudProviders) {
+            [new onedrive.Provider(), new googledrive.Provider()]
+                .filter(p => !!cl.cloudProviders[p.name])
+                .forEach(p => allProviders[p.name] = p);
         }
+        const gh = new githubprovider.GithubProvider();
+        allProviders[gh.name] = gh;
     }
 
-    let cl = pxt.appTarget.cloud
-
-    if (!cl || !cl.cloudProviders)
-        return []
-
-    return Object.keys(cl.cloudProviders).map(id => allProviders[id])
+    return pxt.Util.values(allProviders);
 }
 
 // this is generally called by the provier's loginCheck() function
-export function setProvider(impl: Provider) {
-    provider = impl
+export function setProvider(impl: IdentityProvider) {
+    currentProvider = impl
+    invalidateData();
 }
 
-async function syncOneUpAsync(h: Header) {
+async function syncOneUpAsync(provider: Provider, h: Header) {
     let saveId = {}
     h.saveId = saveId;
     let text = await ws.getTextAsync(h.id)
@@ -312,7 +325,7 @@ async function syncOneUpAsync(h: Header) {
     await ws.saveAsync(h, null, true)
 }
 
-export async function renameAsync(h: Header, newName: string) {
+export async function renameAsync(provider: Provider, h: Header, newName: string) {
     try {
         await provider.updateAsync(h.blobId, newName)
     } catch (e) {
@@ -321,8 +334,8 @@ export async function renameAsync(h: Header, newName: string) {
 }
 
 export function resetAsync() {
-    if (provider) provider.logout()
-    provider = null
+    if (currentProvider) currentProvider.logout()
+    currentProvider = null
 
     pxt.storage.removeLocal("cloudId")
     pxt.storage.removeLocal("cloudName")
@@ -333,15 +346,13 @@ export function resetAsync() {
     pxt.storage.removeLocal("cloudName")
     pxt.storage.removeLocal("cloudPhoto")
 
-    data.invalidate("sync:status")
-    data.invalidate("sync:username")
-    data.invalidate("sync:userphoto")
-    data.invalidate("sync:loggedin")
+    invalidateData();
 
     return Promise.resolve()
 }
 
 function updateNameAsync() {
+    const provider = currentProvider;
     let name = pxt.storage.getLocal("cloudName");
     if (name || !provider)
         return Promise.resolve()
@@ -388,17 +399,20 @@ function updateNameAsync() {
 }
 
 export function refreshToken() {
-    provider.loginAsync(undefined, true).done();
+    if (currentProvider)
+        currentProvider.loginAsync(undefined, true).done();
 }
 
 export function syncAsync(): Promise<void> {
+    if (!currentProvider)
+        return Promise.resolve(undefined)
+    if (!currentProvider.hasSync())
+        return updateNameAsync();
+
+    const provider = currentProvider as Provider;
     let numUp = 0
     let numDown = 0
-    let blobConatiner = ""
     let updated: pxt.Map<number> = {}
-
-    if (!provider)
-        return Promise.resolve(undefined)
 
     function uninstallAsync(h: Header) {
         pxt.debug(`uninstall local ${h.blobId}`)
@@ -487,7 +501,7 @@ export function syncAsync(): Promise<void> {
 
     function syncUpAsync(h: Header) {
         numUp++
-        return syncOneUpAsync(h)
+        return syncOneUpAsync(provider, h)
             .then(() => progress(--numUp))
     }
 
@@ -591,8 +605,14 @@ export function loginCheck() {
 }
 
 export function saveToCloudAsync(h: Header) {
-    if (!provider) return Promise.resolve();
-    return syncOneUpAsync(h)
+    if (!currentProvider || !currentProvider.hasSync())
+        return Promise.resolve();
+
+    const provider = currentProvider as Provider;
+    if (provider)
+        return syncOneUpAsync(provider, h)
+
+    return Promise.resolve();
 }
 
 function setStatus(s: string) {
@@ -619,7 +639,7 @@ data.mountVirtualApi("sync", {
                 const user = pxt.storage.getLocal("cloudUser");
                 return user ? JSON.parse(user) : undefined;
             case "loggedin":
-                return provider != null
+                return currentProvider != null
             case "status":
                 return status
             case "hascloud":
@@ -628,3 +648,13 @@ data.mountVirtualApi("sync", {
         return null
     },
 })
+
+
+function invalidateData() {
+    data.invalidate("sync:status")
+    data.invalidate("sync:username")
+    data.invalidate("sync:userphoto")
+    data.invalidate("sync:user")
+    data.invalidate("sync:loggedin")
+    data.invalidate("sync:hascloud")
+}
