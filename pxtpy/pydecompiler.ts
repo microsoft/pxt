@@ -15,7 +15,7 @@ namespace pxt.py {
     }
     function emptyResult(): pxtc.CompileResult {
         return {
-            blocksInfo: null,
+            blocksInfo: undefined,
             outfiles: {},
             diagnostics: [],
             success: true,
@@ -87,7 +87,7 @@ namespace pxt.py {
                 return { vars: {} }
             }
         }
-        function popScope(): Scope {
+        function popScope(): Scope | undefined {
             return env.shift()
         }
         function getReservedNmes(): string[] {
@@ -120,7 +120,7 @@ namespace pxt.py {
                 'type', 'vars', 'zip']
             return reservedNames;
         }
-        function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string {
+        function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string | null {
             if (!exp.getSourceFile())
                 return null
             let tsExp = exp.getText()
@@ -305,7 +305,7 @@ namespace pxt.py {
                 .reduce((p, c) => p.concat(c), [])
                 .map(n => indent1(n));
 
-            return [`@namespace`, `class ${name}:`].concat(stmts);
+            return [`@namespace`, `class ${name}:`].concat(stmts || []);
         }
         function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
             let typeStr = pxtc.emitType(s.type)
@@ -337,12 +337,6 @@ namespace pxt.py {
             return asInt !== Infinity && String(asInt) === str
         }
         function getSimpleForRange(s: ts.ForStatement): RangeItr | null {
-            let result: RangeItr = {
-                name: null,
-                fromIncl: null,
-                toExcl: null
-            }
-
             // must be (let i = X; ...)
             if (!s.initializer)
                 return null
@@ -355,9 +349,9 @@ namespace pxt.py {
             }
 
             let decl = initDecls.declarations[0]
-            result.name = getName(decl.name)
+            let result_name = getName(decl.name)
 
-            if (!isConstExp(decl.initializer) || !isNumberType(decl.initializer)) {
+            if (!decl.initializer || !isConstExp(decl.initializer) || !isNumberType(decl.initializer)) {
                 // TODO allow variables?
                 // TODO restrict to numbers?
                 return null
@@ -367,7 +361,7 @@ namespace pxt.py {
             if (fromNumSup.length)
                 return null
 
-            result.fromIncl = fromNum
+            let result_fromIncl = fromNum
 
             // TODO body must not mutate loop variable
 
@@ -378,7 +372,7 @@ namespace pxt.py {
                 return null
             if (!ts.isIdentifier(s.condition.left))
                 return null
-            if (getName(s.condition.left) != result.name)
+            if (getName(s.condition.left) != result_name)
                 return null
             // TODO restrict initializers to expressions that aren't modified by the loop
             // e.g. isConstExp(s.condition.right) but more semantic
@@ -390,12 +384,12 @@ namespace pxt.py {
             if (toNumSup.length)
                 return null
 
-            result.toExcl = toNum
+            let result_toExcl = toNum
             if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken) {
                 if (isNormalInteger(toNum))
-                    result.toExcl = "" + (Number(toNum) + 1)
+                    result_toExcl = "" + (Number(toNum) + 1)
                 else
-                    result.toExcl += " + 1"
+                    result_toExcl += " + 1"
             }
             else if (s.condition.operatorToken.kind !== ts.SyntaxKind.LessThanToken)
                 return null
@@ -411,9 +405,14 @@ namespace pxt.py {
                 return null
 
             // must be X < Y
-            if (!(result.fromIncl < result.toExcl))
+            if (!(result_fromIncl < result_toExcl))
                 return null
 
+            let result: RangeItr = {
+                name: result_name,
+                fromIncl: result_fromIncl,
+                toExcl: result_toExcl
+            }
             return result
         }
         function emitBody(s: ts.Statement): string[] {
@@ -567,6 +566,10 @@ namespace pxt.py {
 
             // TODO handle inheritence
 
+            if (!s.name) {
+                return throwError(s, 3011, "Unsupported: anonymous class");
+            }
+
             let isEnum = s.members.every(isEnumMem) // TODO hack?
             let name = getName(s.name)
             if (isEnum)
@@ -599,9 +602,10 @@ namespace pxt.py {
             }
 
             if (allInit) {
-                let memAndSup = s.members
-                    .map(m => [m, emitExp(m.initializer)] as [ts.EnumMember, ExpRes])
-                return throwError(s, 3006, "Unsupported: explicit enum initialization"); // TODO
+                // TODO
+                // let memAndSup = s.members
+                //     .map(m => [m, emitExp(m.initializer)] as [ts.EnumMember, ExpRes])
+                return throwError(s, 3006, "Unsupported: explicit enum initialization");
             }
 
             let val = 0
@@ -620,6 +624,8 @@ namespace pxt.py {
             for (let mod of prop.modifiers)
                 if (mod.kind !== ts.SyntaxKind.StaticKeyword)
                     return false;
+            if (!prop.initializer)
+                return false;
             if (prop.initializer.kind !== ts.SyntaxKind.NumericLiteral)
                 return false;
 
@@ -657,7 +663,7 @@ namespace pxt.py {
                 return false
             return true
         }
-        function tryEmitIncDecUnaryStmt(e: ts.Expression): string[] {
+        function tryEmitIncDecUnaryStmt(e: ts.Expression): string[] | null {
             // special case ++ or -- as a statement
             if (!isUnaryPlusPlusOrMinusMinus(e))
                 return null
@@ -693,7 +699,7 @@ namespace pxt.py {
             return stmts
         }
         function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction,
-            name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipTypes?: boolean): string[] {
+            name?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipTypes?: boolean): string[] {
             // TODO determine captured variables, then determine global and nonlocal directives
             // TODO helper function for determining if an expression can be a python expression
             let paramList: string[] = []
@@ -719,12 +725,20 @@ namespace pxt.py {
                 fnName = "__init__"
             }
             else {
-                fnName = name || getName(s.name)
+                if (name)
+                    fnName = name
+                else if (s.name)
+                    fnName = getName(s.name)
+                else
+                    return throwError(s, 3012, "Unsupported: anonymous function decleration");
             }
 
             out.push(`def ${fnName}(${params}):`)
 
             pushScope() // functions start a new scope in python
+
+            if (!s.body)
+                return throwError(s, 3013, "Unsupported: function decleration without body");
 
             let stmts: string[] = []
             if (ts.isBlock(s.body))
@@ -935,7 +949,7 @@ namespace pxt.py {
 
             // get words from this parameter/arg as last resort
             let paramPart: string = ""
-            if (!calleePart && !otherParamsPart)
+            if (!calleePart && !otherParamsPart && param)
                 paramPart = getName(param.name)
 
             // the full hint
@@ -1046,7 +1060,7 @@ namespace pxt.py {
                 const args = argExps
                     .map(([a, _]) => a)
                     .join(", ");
-                return  [`${recv}.${fn}(${args})`, sup]
+                return [`${recv}.${fn}(${args})`, sup]
             }
 
             let args = argExps
