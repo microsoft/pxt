@@ -152,6 +152,14 @@ namespace pxt.editor {
         openHomeIfFailed?: boolean;
     }
 
+    export interface UserInfo {
+        id: string;
+        name: string;
+        loginHint?: string;
+        initials?: string;
+        photo?: string;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;

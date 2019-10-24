@@ -71,7 +71,7 @@ export class SignInDialog extends data.Component<SignInDialogProps, SignInDialog
 }
 
 interface SignInProviderButtonProps {
-    provider?: cloudsync.Provider;
+    provider?: cloudsync.IdentityProvider;
     onLoggedIn?: () => void;
 }
 

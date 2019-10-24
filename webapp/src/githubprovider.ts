@@ -22,14 +22,14 @@ export class GithubProvider extends cloudsync.ProviderBase implements cloudsync.
             .done(() => this.loginCheck());
     }
 
-    getUserInfoAsync(): Promise<cloudsync.UserInfo> {
+    getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
         // https://developer.github.com/v3/users/#get-the-authenticated-user
         return pxt.github.authenticatedUserAsync()
-            .then<cloudsync.UserInfo>(ghuser => {
+            .then<pxt.editor.UserInfo>(ghuser => {
                 return {
                     id: ghuser.login,
                     name: ghuser.name,
-                    imageUrl: ghuser.avatar_url
+                    photo: ghuser.avatar_url
                 }
             })
     }

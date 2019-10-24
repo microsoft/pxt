@@ -25,13 +25,6 @@ export interface FileInfo {
     content?: pxt.Map<string>;
 }
 
-export interface UserInfo {
-    id: string;
-    name: string;
-    email?: string;
-    photo?: string;
-}
-
 export interface ProviderLoginResponse {
     accessToken: string;
     expiresIn: number; // seconds
@@ -45,7 +38,7 @@ export interface IdentityProvider {
     loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse>;
     logout(): void;
     loginCallback(queryString: pxt.Map<string>): void;
-    getUserInfoAsync(): Promise<UserInfo>;
+    getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
     hasSync(): boolean;
 }
 
@@ -325,7 +318,8 @@ async function syncOneUpAsync(provider: Provider, h: Header) {
     await ws.saveAsync(h, null, true)
 }
 
-export async function renameAsync(provider: Provider, h: Header, newName: string) {
+export async function renameAsync(h: Header, newName: string) {
+    const provider = currentProvider && currentProvider.hasSync() && currentProvider as Provider;
     try {
         await provider.updateAsync(h.blobId, newName)
     } catch (e) {
@@ -388,6 +382,8 @@ function updateNameAsync() {
                 pxt.storage.setLocal("cloudId", id)
             }
             pxt.storage.setLocal("cloudName", info.name)
+            if (!info.initials)
+                info.initials = userInitials(info.name);
             pxt.storage.setLocal("cloudUser", JSON.stringify(info))
             data.invalidate("sync:username")
             if (info.photo) {
@@ -622,6 +618,13 @@ function setStatus(s: string) {
     }
 }
 
+function userInitials(username: string): string {
+    if (!username) return "?";
+    // Parse the user name for user initials
+    const initials = username.match(/\b\w/g) || [];
+    return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+}
+
 /*
     sync:username
     sync:userphoto
@@ -636,14 +639,16 @@ data.mountVirtualApi("sync", {
             case "userphoto":
                 return pxt.storage.getLocal("cloudPhoto")
             case "user":
-                const user = pxt.storage.getLocal("cloudUser");
-                return user ? JSON.parse(user) : undefined;
+                const user = pxt.Util.jsonTryParse(pxt.storage.getLocal("cloudUser")) as pxt.editor.UserInfo;
+                return user;
             case "loggedin":
                 return currentProvider != null
             case "status":
                 return status
             case "hascloud":
                 return providers().length > 0
+            case "hassync":
+                return currentProvider && currentProvider.hasSync();
         }
         return null
     },
@@ -657,4 +662,5 @@ function invalidateData() {
     data.invalidate("sync:user")
     data.invalidate("sync:loggedin")
     data.invalidate("sync:hascloud")
+    data.invalidate("sync:hassync")
 }

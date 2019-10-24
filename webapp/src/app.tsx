@@ -1769,7 +1769,7 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     cloudSync() {
-        return this.hasCloud() && !!this.getUser();
+        return this.hasSync();
     }
 
     cloudSignInDialog() {

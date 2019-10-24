@@ -296,12 +296,6 @@ export function getAsync(path: string) {
     })
 }
 
-function userInitials(username: string): string {
-    // Parse the user name for user initials
-    let initials = username.match(/\b\w/g) || [];
-    return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
-}
-
 export class Component<TProps, TState> extends React.Component<TProps, TState> {
     subscriptions: CacheEntry[] = [];
     renderCoreOk = false;
@@ -329,16 +323,12 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         return this.getData("sync:hascloud");
     }
 
-    getUser() {
-        const name = this.getData("sync:username");
-        if (!name) return undefined;
+    hasSync() {
+        return this.getData("sync:hassync")
+    }
 
-        const photo = this.getData("sync:userphoto");
-        return {
-            name: name,
-            initials: userInitials(name),
-            photo: photo
-        }
+    getUser(): pxt.editor.UserInfo {
+        return this.getData("sync:user");
     }
 
     componentWillUnmount(): void {

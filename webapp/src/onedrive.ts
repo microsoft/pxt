@@ -45,7 +45,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
                 p.prompt = 'none';
 
                 const user = pxt.storage.getLocal("cloudUser");
-                if (user) p.login_hint = JSON.parse(user).email;
+                if (user) p.login_hint = JSON.parse(user).loginHint;
             }
 
             const url = core.stringifyQueryString("https://login.microsoftonline.com/common/oauth2/v2.0/authorize", p)
@@ -429,7 +429,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
         return this.getJsonAsync("/me")
             .then(resp => ({
                 name: resp.displayName as string || lf("{0} User", this.friendlyName),
-                email: resp.userPrincipalName as string,
+                loginHint: resp.userPrincipalName as string,
                 id: resp.id
             }));
         // .then(info => {
