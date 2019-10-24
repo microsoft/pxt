@@ -4629,7 +4629,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let broken = 0;
     let snippets: CodeSnippet[] = [];
 
-    const maxFileSize = checkFileSize(nodeutil.allFiles("docs"));
+    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
     if (!pxt.appTarget.ignoreDocsErrors
         && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
         U.userError(`files too big in docs folder`);
