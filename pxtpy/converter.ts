@@ -40,12 +40,12 @@ namespace pxt.py {
     let autoImport = true
     let currErrorCtx: string | undefined = "???"
     let verboseTypes = false
-    let lastAST: AST
+    let lastAST: AST | undefined = undefined
     let lastFile: string
     let diagnostics: pxtc.KsDiagnostic[]
     let compileOptions: pxtc.CompileOptions
-    let syntaxInfo: pxtc.SyntaxInfo
-    let infoNode: AST
+    let syntaxInfo: pxtc.SyntaxInfo | undefined
+    let infoNode: AST | undefined = undefined
     let infoScope: ScopeDef
 
     function stmtTODO(v: py.Stmt) {
@@ -104,8 +104,11 @@ namespace pxt.py {
                 return tpVoid
             case ts.SyntaxKind.AnyKeyword:
                 return tpAny
-            default:
-                return tpBuffer
+            default: {
+                if (!tpBuffer)
+                    error(null, 9554, lf("invalid tpBuffer"));
+                return tpBuffer!
+            }
         }
     }
 
@@ -380,13 +383,17 @@ namespace pxt.py {
         else return pref + "?" + n.kind
     }
 
-    function applyTypeMap(s: string) {
+    function applyTypeMap(s: string): string {
         let over = U.lookup(typeMap, s)
         if (over) return over
         for (let v of U.values(ctx.currModule.vars)) {
             if (!v.isImport)
                 continue
-            if (v.expandsTo == s) return v.pyName
+            if (v.expandsTo == s) {
+                if (!v.pyName)
+                    error(null, 9553, lf("missing pyName"));
+                return v.pyName!
+            }
             if (v.isImport && v.expandsTo && U.startsWith(s, v.expandsTo + ".")) {
                 return v.pyName + s.slice(v.expandsTo.length)
             }
@@ -416,8 +423,9 @@ namespace pxt.py {
             return "?" + t.tid
     }
 
-    function mkDiag(astNode: py.AST | null, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
-        if (!astNode) astNode = lastAST
+    function mkDiag(astNode: py.AST | undefined | null, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
+        if (!astNode)
+            astNode = lastAST
         if (!astNode || !ctx || !ctx.currModule) {
             return {
                 fileName: lastFile,
@@ -1804,7 +1812,7 @@ namespace pxt.py {
             let fun = namedSymbol
 
             let recvTp: Type
-            let recv: py.Expr
+            let recv: py.Expr | undefined = undefined
             let methName: string = ""
 
             if (isClass) {
@@ -1822,7 +1830,7 @@ namespace pxt.py {
                 }
             }
 
-            let orderedArgs = n.args.slice()
+            let orderedArgs: (Expr | null)[] = n.args.slice()
 
             if (nm == "super" && orderedArgs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass) {
@@ -1880,7 +1888,7 @@ namespace pxt.py {
                 allargs = orderedArgs.map(expr)
             } else {
                 if (orderedArgs.length > formals.length)
-                    error(n, 9510, U.lf("too many arguments in call to '{0}'", fun.pyQName))
+                    error(n, 9510, U.lf("too many arguments in call to '{0}'", fun!.pyQName))
 
                 while (orderedArgs.length < formals.length)
                     orderedArgs.push(null)
@@ -1889,9 +1897,9 @@ namespace pxt.py {
                 for (let kw of n.keywords) {
                     let idx = formals.findIndex(f => f.name == kw.arg)
                     if (idx < 0)
-                        error(kw, 9511, U.lf("'{0}' doesn't have argument named '{1}'", fun.pyQName, kw.arg))
+                        error(kw, 9511, U.lf("'{0}' doesn't have argument named '{1}'", fun!.pyQName, kw.arg))
                     else if (orderedArgs[idx] != null)
-                        error(kw, 9512, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun.pyQName))
+                        error(kw, 9512, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun!.pyQName))
                     else
                         orderedArgs[idx] = kw.value
                 }
@@ -1907,19 +1915,25 @@ namespace pxt.py {
                 for (let i = 0; i < orderedArgs.length; ++i) {
                     let arg = orderedArgs[i]
                     if (arg == null && !formals[i].initializer) {
-                        error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.pyQName))
+                        error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun!.pyQName))
                         allargs.push(B.mkText("null"))
                     } else if (arg) {
-                        if (formals[i].pyType.primType !== "any") {
-                            unifyTypeOf(arg, formals[i].pyType)
+                        if (!formals[i].pyType)
+                            error(n, 9545, lf("formal arg missing py type"));
+                        if (formals[i].pyType!.primType !== "any") {
+                            unifyTypeOf(arg, formals[i].pyType!)
                         }
-                        if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
-                            allargs.push(emitFunctionDef(arg.symbolInfo.pyAST as FunctionDef, true))
+                        if (!arg.symbolInfo)
+                            error(n, 9546, lf("arg missing symbol info"));
+                        if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo!)) {
+                            allargs.push(emitFunctionDef(arg.symbolInfo!.pyAST as FunctionDef, true))
                         } else {
                             allargs.push(expr(arg))
                         }
                     } else {
-                        allargs.push(B.mkText(formals[i].initializer))
+                        if (!formals[i].initializer)
+                            error(n, 9547, lf("formal arg missing initializer"));
+                        allargs.push(B.mkText(formals[i].initializer!))
                     }
                 }
             }
@@ -1943,14 +1957,22 @@ namespace pxt.py {
                 }
             }
 
+            if (!recv)
+                error(n, 9550, lf("missing recv"));
+
             if (fun) {
-                unifyTypeOf(n, fun.pyRetType)
+                if (!fun.pyRetType)
+                    error(n, 9549, lf("function missing pyRetType"));
+                unifyTypeOf(n, fun.pyRetType!)
                 n.symbolInfo = fun
 
                 if (fun.attributes.py2tsOverride) {
                     const override = parseTypeScriptOverride(fun.attributes.py2tsOverride);
                     if (override) {
-                        return buildOverride(override, allargs, methName ? expr(recv) : null);
+                        let res = buildOverride(override, allargs, methName ? expr(recv!) : undefined);
+                        if (!res)
+                            error(n, 9555, lf("buildOverride failed unexpectedly"));
+                        return res!
                     }
                 }
                 else if (fun.attributes.pyHelper) {
@@ -1963,7 +1985,7 @@ namespace pxt.py {
                 }
             }
 
-            let fn = methName ? B.mkInfix(expr(recv), ".", B.mkText(methName)) : expr(n.func)
+            let fn = methName ? B.mkInfix(expr(recv!), ".", B.mkText(methName)) : expr(n.func)
 
             let nodes = [
                 fn,
@@ -1976,18 +1998,24 @@ namespace pxt.py {
                 nodes = [fn, forceBackticks(allargs[0])]
 
             if (isClass) {
-                nodes[0] = B.mkText(applyTypeMap(namedSymbol.pyQName))
+                if (!namedSymbol || !namedSymbol.pyQName)
+                    error(n, 9551, lf("missing namedSymbol or pyQName"));
+                nodes[0] = B.mkText(applyTypeMap(namedSymbol!.pyQName!))
                 nodes.unshift(B.mkText("new "))
             }
 
             return B.mkGroup(nodes)
         },
         Num: (n: py.Num) => {
-            unify(n, n.tsType, tpNumber)
+            if (!n.tsType)
+                error(n, 9556, lf("tsType missing"));
+            unify(n, n.tsType!, tpNumber)
             return B.mkText(n.ns)
         },
         Str: (n: py.Str) => {
-            unify(n, n.tsType, tpString)
+            if (!n.tsType)
+                error(n, 9557, lf("tsType missing"));
+            unify(n, n.tsType!, tpString)
             return B.mkText(B.stringLit(n.s))
         },
         FormattedValue: (n: py.FormattedValue) => exprTODO(n),
@@ -1996,8 +2024,11 @@ namespace pxt.py {
             return B.mkText(`hex\`${U.toHex(new Uint8Array(n.s))}\``)
         },
         NameConstant: (n: py.NameConstant) => {
-            if (n.value != null)
-                unify(n, n.tsType, tpBoolean)
+            if (n.value != null) {
+                if (!n.tsType)
+                    error(n, 9558, lf("tsType missing"));
+                unify(n, n.tsType!, tpBoolean)
+            }
             return B.mkText(JSON.stringify(n.value))
         },
         Ellipsis: (n: py.Ellipsis) => exprTODO(n),
@@ -2011,7 +2042,9 @@ namespace pxt.py {
             if (fd) {
                 n.symbolInfo = fd
                 addCaller(n, fd)
-                unify(n, n.tsType, fd.pyRetType)
+                if (!n.tsType || !fd.pyRetType)
+                    error(n, 9559, lf("tsType or pyRetType missing"));
+                unify(n, n.tsType!, fd.pyRetType!)
                 nm = fd.name
             } else if (part.moduleType) {
                 let sym = lookupGlobalSymbol(part.moduleType.pyQName + "." + n.attr)
@@ -2044,7 +2077,7 @@ namespace pxt.py {
                 let s = n.slice as py.Slice
                 return B.mkInfix(expr(n.value), ".",
                     B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
-                    s.upper ? expr(s.upper) : null].filter(x => !!x)))
+                    s.upper ? expr(s.upper) : null].filter(x => !!x).map(x => x as B.JsNode)))
             }
             else {
                 return exprTODO(n)
@@ -2056,7 +2089,9 @@ namespace pxt.py {
 
             // shortcut, but should work
             if (n.id == "self" && ctx.currClass) {
-                unifyClass(n, n.tsType, ctx.currClass.symInfo)
+                if (!n.tsType)
+                    error(n, 9560, lf("missing tsType"));
+                unifyClass(n, n.tsType!, ctx.currClass.symInfo)
                 return B.mkText("this")
             }
 
@@ -2068,7 +2103,9 @@ namespace pxt.py {
             markUsage(v, n);
 
             if (n.ctx.indexOf("Load") >= 0) {
-                return quote(v ? v.qName : getName(n))
+                if (v && !v.qName)
+                    error(n, 9561, lf("missing qName"));
+                return quote(v ? v.qName! : getName(n))
             } else
                 return possibleDef(n)
         },
@@ -2087,14 +2124,16 @@ namespace pxt.py {
         }
         if (v) {
             n.symbolInfo = v
-            unify(n, n.tsType, symbolType(v))
+            if (!n.tsType)
+                error(n, 9562, lf("missing tsType"));
+            unify(n, n.tsType!, symbolType(v))
             if (v.isImport)
                 return v
             addCaller(n, v)
         } else if (currIteration > 0) {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
-        return v
+        return v!
     }
 
     function markUsage(s: SymbolInfo, location: py.AST) {
@@ -2121,7 +2160,9 @@ namespace pxt.py {
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
-        unify(n, n.tsType, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
+        if (!n.tsType)
+            error(n, 9563, lf("missing tsType"));
+        unify(n, n.tsType!, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
         return B.mkGroup([
             B.mkText("["),
             B.mkCommaSep(n.elts.map(expr)),
@@ -2172,15 +2213,15 @@ namespace pxt.py {
     }
 
     function findNonlocalDeclaration(name: string, scope: py.ScopeDef): py.ScopeDef {
-        if (!scope) return null;
-
         const symbolInfo = scope.vars && scope.vars[name];
 
         if (symbolInfo && symbolInfo.modifier != VarModifier.NonLocal) {
             return scope;
         }
         else {
-            return findNonlocalDeclaration(name, scope.parent);
+            if (!scope.parent)
+                error(null, 9564, lf("missing scope.parent"));
+            return findNonlocalDeclaration(name, scope.parent!);
         }
     }
 
@@ -2198,12 +2239,15 @@ namespace pxt.py {
     }
 
     function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef) {
-        return sym.kind === SK.Variable && sym.modifier === undefined && (sym.firstRefPos < sym.firstAssignPos || sym.firstAssignDepth > scope.blockDepth);
+        return sym.kind === SK.Variable
+            && sym.modifier === undefined
+            && ((sym.firstRefPos && sym.firstAssignPos && sym.firstRefPos < sym.firstAssignPos)
+                || (sym.firstAssignDepth && scope.blockDepth && sym.firstAssignDepth > scope.blockDepth));
     }
 
     // TODO look at scopes of let
 
-    function toTS(mod: py.Module): B.JsNode[] {
+    function toTS(mod: py.Module): B.JsNode[] | null {
         U.assert(mod.kind == "Module")
         if (mod.tsBody)
             return null
@@ -2236,7 +2280,7 @@ namespace pxt.py {
         currIteration = iter
         diagnostics = []
         numUnifies = 0
-        lastAST = null
+        lastAST = undefined
     }
 
     export interface Py2TsRes {
@@ -2248,22 +2292,28 @@ namespace pxt.py {
         const generated: Map<string> = {}
         diagnostics = []
 
+        if (!opts.sourceFiles)
+            error(null, 9566, lf("missing sourceFiles"));
+
         // find .ts files that are copies of / shadowed by the .py files
-        let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
+        let pyFiles = opts.sourceFiles!.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
             return { generated, diagnostics }
         let removeEnd = (file: string, ext: string) => file.substr(0, file.length - ext.length)
         let pyFilesSet = U.toDictionary(pyFiles, p => removeEnd(p, ".py"))
-        let tsFiles = opts.sourceFiles
+        let tsFiles = opts.sourceFiles!
             .filter(fn => U.endsWith(fn, ".ts"))
         let tsShadowFiles = tsFiles
             .filter(fn => removeEnd(fn, ".ts") in pyFilesSet)
 
+        if (!opts.apisInfo)
+            error(null, 9567, lf("missing apisInfo"));
+
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
-        initApis(opts.apisInfo, tsShadowFiles)
+        initApis(opts.apisInfo!, tsShadowFiles)
 
         compileOptions = opts
-        syntaxInfo = null
+        syntaxInfo = undefined
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -2313,14 +2363,14 @@ namespace pxt.py {
         }
 
         resetPass(1000)
-        infoNode = null
+        infoNode = undefined
         syntaxInfo = opts.syntaxInfo
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
                 if (!nodes) continue
                 let res = B.flattenNode(nodes)
-                opts.sourceFiles.push(m.tsFilename)
+                opts.sourceFiles!.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
                 opts.fileSystem[m.tsFilename] = res.output
                 generated[m.tsFilename] = res.output
@@ -2349,11 +2399,19 @@ namespace pxt.py {
 
         if (syntaxInfo) syntaxInfo.symbols = []
 
+        if (infoNode)
+            error(null, 9566, lf("type annotation error; this should be unreachable"));
         if (syntaxInfo && infoNode) {
+            // TODO: unreachable since infoNode is always undefined here
+            infoNode = infoNode as AST
+
             const apis = U.values(externalApis).concat(U.values(internalApis))
 
             syntaxInfo.beginPos = infoNode.startPos
             syntaxInfo.endPos = infoNode.endPos
+
+            if (!syntaxInfo.symbols)
+                syntaxInfo.symbols = []
 
             if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
@@ -2368,7 +2426,9 @@ namespace pxt.py {
                     const ct = tp.classType || resolvePrimType(tp.primType);
 
                     if (ct) {
-                        let types = ct.extendsTypes.concat(ct.qName)
+                        if (!ct.extendsTypes || !ct.qName)
+                            error(null, 9567, lf("missing extendsTypes or qName"));
+                        let types = ct.extendsTypes!.concat(ct.qName!)
                         for (let v of apis) {
                             if (v.isInstance && types.indexOf(v.namespace) >= 0) {
                                 syntaxInfo.symbols.push(v)
@@ -2381,11 +2441,11 @@ namespace pxt.py {
                 let existing: SymbolInfo[] = []
                 const addSym = (v: SymbolInfo) => {
                     if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
-                        syntaxInfo.symbols.push(v)
+                        syntaxInfo!.symbols!.push(v)
                 }
                 existing = syntaxInfo.symbols.slice()
-                for (let s = infoScope; s; s = s.parent) {
-                    if (s.vars)
+                for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
+                    if (s && s.vars)
                         U.values(s.vars).forEach(addSym)
                 }
                 apis.forEach(addSym)
@@ -2490,7 +2550,7 @@ namespace pxt.py {
                     result.push(args[part.index]);
                 }
                 else {
-                    result.push(B.mkText(part.default))
+                    result.push(B.mkText(part.default!))
                 }
             }
             else if (part.isOptional) {
