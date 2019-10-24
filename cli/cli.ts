@@ -1107,6 +1107,11 @@ function uploadCoreAsync(opts: UploadOptions) {
     // only keep the last version of each uploadFileName()
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
 
+    // check size
+    const toobig = checkFileSize(opts.fileList);
+    if (toobig > 0)
+        U.userError(`file too big for upload`);
+
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
@@ -4592,6 +4597,28 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     )
 }
 
+function checkFileSize(files: string[]): number {
+    if (!pxt.appTarget.cloud)
+        return -1;
+
+    pxt.log('checking for file sizes');
+    const mb = 1e6;
+    const maxSize = pxt.appTarget.cloud.maxFileSize || (5 * mb);
+    const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
+    let toobig = 0;
+    files.forEach(f => {
+            const stats = fs.statSync(f);
+            if (stats.size > warnSize)
+                pxt.log(`  ${f} - ${stats.size / mb}Mb`);
+            if (stats.size > maxSize) {/* 5Mb */
+                toobig++;
+            }
+        });
+    if (toobig)
+        pxt.log(`${toobig} files above allowed size (${maxSize / mb}Mb)`);
+    return toobig;
+}
+
 function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
@@ -4606,24 +4633,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let broken = 0;
     let snippets: CodeSnippet[] = [];
 
-    if (pxt.appTarget.cloud) {
-        pxt.log('checking for file sizes');
-        const mb = 1e6;
-        const maxSize = pxt.appTarget.cloud.maxFileSize || (5 * mb);
-        const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
-        let toobig = 0;
-        nodeutil.allFiles("docs")
-            .map(f => {
-                const stats = fs.statSync(f);
-                if (stats.size > warnSize)
-                    pxt.log(`  ${f} - ${stats.size / mb}Mb`);
-                if (stats.size > maxSize) {/* 5Mb */
-                    toobig++;
-                }
-            });
-        if (toobig && !pxt.appTarget.ignoreDocsErrors)
-            U.userError(`${toobig} files above allowed size (${maxSize / mb}Mb)`);
-    }
+    const toobig = checkFileSize(nodeutil.allFiles("docs"));
+    if (toobig > 0 && !pxt.appTarget.ignoreDocsErrors)
+        U.userError(`${toobig} files too big in docs folder`);
 
     // scan and fix image links
     if (fix) {
