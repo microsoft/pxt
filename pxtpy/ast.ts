@@ -337,7 +337,7 @@ namespace pxt.py {
     }
     export interface Dict extends Expr {
         kind: "Dict";
-        keys: Expr[];
+        keys: (Expr | undefined)[];
         values: Expr[];
     }
     export interface Set extends Expr {
@@ -415,7 +415,7 @@ namespace pxt.py {
     }
     export interface NameConstant extends Expr {
         kind: "NameConstant";
-        value: boolean; // null=None, True, False
+        value: boolean | undefined; // undefined=None, True, False
     }
     export interface Ellipsis extends Expr {
         kind: "Ellipsis";
