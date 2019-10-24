@@ -27,7 +27,7 @@ export interface FileInfo {
 
 export interface ProviderLoginResponse {
     accessToken: string;
-    expiresIn: number; // seconds
+    expiresIn?: number; // seconds
 }
 
 export interface IdentityProvider {
@@ -146,8 +146,7 @@ export class ProviderBase {
         if (!tok)
             return
 
-        let exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
-
+        const exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
         if (exp && exp < U.nowSeconds()) {
             // if we already attempted autologin (and failed), don't do it again
             if (pxt.storage.getLocal(this.name + "AutoLogin")) {
@@ -159,7 +158,10 @@ export class ProviderBase {
             this.loginAsync(undefined, true)
                 .then((resp) => {
                     pxt.storage.setLocal("access_token", resp.accessToken);
-                    pxt.storage.setLocal(this.name + "tokenExp", resp.expiresIn + "")
+                    if (resp.expiresIn)
+                        pxt.storage.setLocal(this.name + "tokenExp", resp.expiresIn + "")
+                    else
+                        pxt.storage.removeLocal(this.name + "tokenExp");
                 })
                 .done();
         } else {
@@ -275,6 +277,10 @@ export function providers(): IdentityProvider[] {
     }
 
     return pxt.Util.values(allProviders);
+}
+
+export function githubProvider(): githubprovider.GithubProvider {
+    return providers().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
 }
 
 // this is generally called by the provier's loginCheck() function

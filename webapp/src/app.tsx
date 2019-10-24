@@ -2604,7 +2604,7 @@ export class ProjectView
 
             simulator.stop(false, true);
 
-            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger)  ;
+            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger);
 
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
@@ -3360,7 +3360,7 @@ export class ProjectView
     private handleSignInDialogRef = (c: cloud.SignInDialog) => {
         this.signInDialog = c;
     }
-    
+
     private handleChooseRecipeDialogRef = (c: tutorial.ChooseRecipeDialog) => {
         this.chooseRecipeDialog = c;
     }
@@ -3536,33 +3536,35 @@ function getEditor() {
     return theEditor
 }
 
+function parseLocalToken() {
+    const qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
+    if (qs["local_token"]) {
+        pxt.storage.setLocal("local_token", qs["local_token"])
+        location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
+    }
+    Cloud.localToken = pxt.storage.getLocal("local_token") || "";
+}
+
 function initLogin() {
     cloudsync.loginCheck()
+    parseLocalToken();
 
-    {
-        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
-        if (qs["access_token"]) {
-            let ex = pxt.storage.getLocal("oauthState")
-            let tp = pxt.storage.getLocal("oauthType")
-            if (ex && ex == qs["state"]) {
-                pxt.storage.removeLocal("oauthState")
-                pxt.storage.removeLocal("oauthType")
-                if (tp == "github")
-                    pxt.storage.setLocal("githubtoken", qs["access_token"])
-            }
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
-        }
-        Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
-    }
-
-    {
-        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
-        if (qs["local_token"]) {
-            pxt.storage.setLocal("local_token", qs["local_token"])
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
-        }
-        Cloud.localToken = pxt.storage.getLocal("local_token") || "";
-    }
+    // handled in cloudsync.logincheck
+    //    {
+    //        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
+    //        if (qs["access_token"]) {
+    //            let ex = pxt.storage.getLocal("oauthState")
+    //            let tp = pxt.storage.getLocal("oauthType")
+    //            if (ex && ex == qs["state"]) {
+    //                pxt.storage.removeLocal("oauthState")
+    //                pxt.storage.removeLocal("oauthType")
+    //                if (tp == "github")
+    //                    pxt.storage.setLocal("githubtoken", qs["access_token"])
+    //            }
+    //            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
+    //        }
+    //        Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
+    //    }
 }
 
 function initSerial() {
@@ -3971,7 +3973,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
-    pxt.github.token = pxt.storage.getLocal("githubtoken");
+    // github token set in cloud provider
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();

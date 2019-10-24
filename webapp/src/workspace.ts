@@ -526,7 +526,7 @@ export interface CommitOptions {
 }
 
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
-    await ensureTokenAsync();
+    await ensureGitHubTokenAsync();
 
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -607,13 +607,11 @@ function mergeError() {
 }
 
 // requests token to user if needed
-async function ensureTokenAsync() {
+async function ensureGitHubTokenAsync() {
     // check that we have a token first
-    if (!pxt.github.token) {
-        await dialogs.showGithubLoginAsync();
-        if (!pxt.github.token)
-            U.userError(lf("Please sign in to GitHub to perform this operation."))
-    }
+    await cloudsync.githubProvider().loginAsync();
+    if (!pxt.github.token)
+        U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
 
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
@@ -784,7 +782,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
-    await ensureTokenAsync();
+    await ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
@@ -852,7 +850,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
-            await ensureTokenAsync();
+            await ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)

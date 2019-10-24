@@ -7,6 +7,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as dialogs from "./dialogs";
 import * as workspace from "./workspace";
+import * as cloudsync from "./cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -297,34 +298,14 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
         const { githubId } = this.props.parent.state.header;
         if (!githubId) {
             pxt.tickEvent("github.filelist.create")
-            this.createRepositoryAsync().done();
+            cloudsync.githubProvider().createRepositoryAsync(this.props.parent.state.projectName, this.props.parent.state.header)
+                .done(() => this.props.parent.reloadHeaderAsync());
         } else {
             pxt.tickEvent("github.filelist.nav")
             const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
             this.props.parent.setSideFile(gitf);
         }
         e.stopPropagation();
-    }
-
-    private async createRepositoryAsync() {
-        pxt.tickEvent("github.filelist.create.start");
-        if (!pxt.github.token) await dialogs.showGithubLoginAsync();
-        if (!pxt.github.token) {
-            pxt.tickEvent("github.filelist.create.notoken");
-            return;
-        }
-
-        const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
-        if (!repoid) return;
-
-        pxt.tickEvent("github.filelist.create.export");
-        core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
-        try {
-            await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
-        } finally {
-            core.hideLoading("creategithub");
-        }
-        await this.props.parent.reloadHeaderAsync();
     }
 
     renderCore() {
