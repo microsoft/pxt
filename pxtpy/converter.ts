@@ -4,8 +4,8 @@ namespace pxt.py {
 
     interface Ctx {
         currModule: py.Module;
-        currClass: py.ClassDef;
-        currFun: py.FunctionDef;
+        currClass?: py.ClassDef;
+        currFun?: py.FunctionDef;
         blockDepth: number;
     }
 
@@ -579,10 +579,11 @@ namespace pxt.py {
     }
 
     function isLocalScope(scope: ScopeDef) {
-        while (scope) {
-            if (scope.kind == "FunctionDef")
+        let s: ScopeDef | undefined = scope
+        while (s) {
+            if (s.kind == "FunctionDef")
                 return true
-            scope = scope.parent
+            s = s.parent
         }
         return false
     }
@@ -599,7 +600,9 @@ namespace pxt.py {
                 n.symInfo = addSymbol(k, qn)
             const sym = n.symInfo
             sym.pyAST = n
-            scope.vars[sym.pyName] = sym
+            if (!sym.pyName)
+                error(null, 9528, U.lf("Symbol '{0}' is missing pyName", sym.qName || sym.name))
+            scope.vars[sym.pyName!] = sym
         }
         return n.symInfo
     }
@@ -610,7 +613,7 @@ namespace pxt.py {
         return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
     }
 
-    function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false) {
+    function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false): SymbolInfo | null {
         let qid = ct.pyQName + "." + n
         let f = lookupGlobalSymbol(qid)
         if (f)
@@ -622,8 +625,9 @@ namespace pxt.py {
                 if (sym) {
                     if (sym == ct)
                         U.userError("field lookup loop on: " + sym.qName + " / " + n)
-                    f = getClassField(sym, n, true)
-                    if (f) return f
+                    let classF = getClassField(sym, n, true)
+                    if (classF)
+                        return classF
                 }
             }
         }
@@ -651,8 +655,10 @@ namespace pxt.py {
             if (f) {
                 if (!f.isInstance)
                     error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
+                if (!ctx.currClass)
+                    error(null, 9528, U.lf("no class context found for {0}", f.pyQName))
                 if (isSuper(recv) ||
-                    (isThis(recv) && f.namespace != ctx.currClass.symInfo.qName)) {
+                    (isThis(recv) && f.namespace != ctx.currClass!.symInfo.qName)) {
                     f.isProtected = true
                 }
             }
@@ -671,7 +677,9 @@ namespace pxt.py {
         return null
     }
 
-    function resolvePrimType(primType: string) {
+    function resolvePrimType(primType: string | undefined) {
+        if (!primType)
+            return undefined;
         if (primType == "@array") {
             return lookupApi("_py.Array")
         } else if (primType == "string") {
@@ -743,8 +751,8 @@ namespace pxt.py {
 
     function resetCtx(m: py.Module) {
         ctx = {
-            currClass: null,
-            currFun: null,
+            currClass: undefined,
+            currFun: undefined,
             currModule: m,
             blockDepth: 0
         }
@@ -832,7 +840,9 @@ namespace pxt.py {
         if (!n.symInfo.parameters) {
             let didx = args.defaults.length - nargs.length
             n.symInfo.parameters = nargs.map(a => {
-                let tp = compileType(a.annotation)
+                if (!a.annotation)
+                    error(n, 9519, U.lf("Arg '{0}' missing annotation", a.arg))
+                let tp = compileType(a.annotation!)
                 let defl = ""
                 if (didx >= 0) {
                     defl = B.flattenNode([expr(args.defaults[didx])]).output
@@ -853,8 +863,10 @@ namespace pxt.py {
 
         let lst = n.symInfo.parameters.map(p => {
             let v = defvar(p.name, { isParam: true })
-            unify(n, symbolType(v), p.pyType)
-            let res = [quote(p.name), typeAnnot(p.pyType)]
+            if (p.pyType)
+                error(n, 9529, U.lf("parameter '{0}' missing pyType", p.name))
+            unify(n, symbolType(v), p.pyType!)
+            let res = [quote(p.name), typeAnnot(p.pyType!)]
             if (p.default) {
                 res.push(B.mkText(" = " + p.default))
             }
@@ -870,7 +882,7 @@ namespace pxt.py {
     }
 
     function accessAnnot(f: SymbolInfo) {
-        if (f.pyName[0] != "_")
+        if (!f.pyName || f.pyName[0] != "_")
             return B.mkText("")
         return f.isProtected ? B.mkText("protected ") : B.mkText("private ")
     }
@@ -1035,16 +1047,20 @@ namespace pxt.py {
             if (n.body.length >= 1 && n.body[0].kind == "Raise")
                 n.alwaysThrows = true
             if (isMethod) {
+                if (!ctx.currClass)
+                    error(n, 9531, lf("method '{0}' is missing current class context", sym.pyQName));
+                if (!sym.pyRetType)
+                    error(n, 9532, lf("method '{0}' is missing a return type", sym.pyQName));
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
-                    unifyClass(n, sym.pyRetType, ctx.currClass.symInfo)
+                    unifyClass(n, sym.pyRetType!, ctx.currClass!.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
                         let vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
-                            let cf = getClassField(ctx.currClass.symInfo, "__get__")
-                            if (cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.pyRetType, cf.pyRetType)
+                            let cf = getClassField(ctx.currClass!.symInfo, "__get__")
+                            if (cf && cf.pyRetType && cf.pyAST && cf.pyAST.kind == "FunctionDef")
+                                unify(n, vv.pyRetType!, cf.pyRetType)
                         }
                         funname = funname.replace(/_/g, "")
                     }
@@ -1069,11 +1085,14 @@ namespace pxt.py {
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
-                for (let f of listClassFields(ctx.currClass)) {
+                if (!ctx.currClass)
+                    error(n, 9533, lf("__init__ method '{0}' is missing current class context", sym.pyQName));
+
+                for (let f of listClassFields(ctx.currClass!)) {
                     let p = f.pyAST as Assign
                     if (p && p.value) {
                         body.push(
-                            B.mkStmt(B.mkText(`this.${quoteStr(f.pyName)} = `), expr(p.value))
+                            B.mkStmt(B.mkText(`this.${quoteStr(f.pyName!)} = `), expr(p.value))
                         )
                     }
                 }
@@ -1123,7 +1142,7 @@ namespace pxt.py {
                     let b = getClassDef(n.bases[0])
                     if (b) {
                         n.baseClass = b
-                        sym.extendsTypes = [b.symInfo.pyQName]
+                        sym.extendsTypes = [b.symInfo.pyQName!]
                     }
                 }
             }
@@ -1132,7 +1151,12 @@ namespace pxt.py {
 
             let fieldDefs = listClassFields(n)
                 .filter(f => f.kind == SK.Property && f.isInstance)
-                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName), typeAnnot(f.pyRetType)))
+                .map(f => {
+                    if (!f.pyName || !f.pyRetType)
+                        error(n, 9535, lf("field definition missing py name or ret type", f.qName));
+                    return f
+                })
+                .map((f) => B.mkStmt(accessAnnot(f), quote(f.pyName!), typeAnnot(f.pyRetType!)))
             body.children = fieldDefs.concat(body.children)
 
             return B.mkStmt(B.mkGroup(nodes))
@@ -1141,7 +1165,11 @@ namespace pxt.py {
         Return: (n: py.Return) => {
             if (n.value) {
                 let f = ctx.currFun
-                if (f) unifyTypeOf(n.value, f.symInfo.pyRetType)
+                if (f) {
+                    if (!f.symInfo.pyRetType)
+                        error(n, 9536, lf("function '{0}' missing return type", f.symInfo.pyQName));
+                    unifyTypeOf(n.value, f.symInfo.pyRetType!)
+                }
                 return B.mkStmt(B.mkText("return "), expr(n.value))
             } else {
                 return B.mkStmt(B.mkText("return"))
