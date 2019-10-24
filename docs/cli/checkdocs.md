@@ -23,6 +23,10 @@ This command is also automatically run from a cloud build and will fail the buil
 
 Regex filter to select files to be scanned for snippets
 
+## Other
+
+Add a ``.ignorelargefiles`` file in a folder to disable large file checks under this folder.
+
 ## See Also
 
 [pxt](/cli) tool

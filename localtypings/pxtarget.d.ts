@@ -141,6 +141,8 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
+        maxFileSize?: number; // maximum file size in bytes
+        warnFileSize?: number; // warn aboutfile size in bytes
         cloudProviders?: pxt.Map<AppCloudProvider>;
     }
 

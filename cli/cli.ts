@@ -1107,6 +1107,12 @@ function uploadCoreAsync(opts: UploadOptions) {
     // only keep the last version of each uploadFileName()
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
 
+    // check size
+    const maxSize = checkFileSize(opts.fileList);
+    if (maxSize > 15000000) // 15Mb max
+        U.userError(`file too big for upload`);
+    pxt.log('');
+
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
@@ -4592,6 +4598,23 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     )
 }
 
+function checkFileSize(files: string[]): number {
+    if (!pxt.appTarget.cloud)
+        return 0;
+
+    pxt.log('checking for file sizes');
+    const mb = 1e6;
+    const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
+    let maxSize = 0;
+    files.forEach(f => {
+            const stats = fs.statSync(f);
+            if (stats.size > warnSize)
+                pxt.log(`  ${f} - ${stats.size / mb}Mb`);
+            maxSize = Math.max(maxSize, stats.size);
+        });
+    return maxSize;
+}
+
 function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
@@ -4604,8 +4627,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let urls: any = {};
     let checked = 0;
     let broken = 0;
-    let snipCount = 0;
     let snippets: CodeSnippet[] = [];
+
+    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
+    if (!pxt.appTarget.ignoreDocsErrors
+        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
+        U.userError(`files too big in docs folder`);
 
     // scan and fix image links
     if (fix) {

@@ -362,7 +362,7 @@ export function cp(srcFile: string, destDirectory: string) {
     fs.writeFileSync(dest, buf);
 }
 
-export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false): string[] {
+export function allFiles(top: string, maxDepth = 8, allowMissing = false, includeDirs = false, ignoredFileMarker: string = undefined): string[] {
     let res: string[] = []
     if (allowMissing && !existsDirSync(top)) return res
     for (const p of fs.readdirSync(top)) {
@@ -370,6 +370,9 @@ export function allFiles(top: string, maxDepth = 8, allowMissing = false, includ
         const inner = path.join(top, p)
         const st = fs.statSync(inner)
         if (st.isDirectory()) {
+            // check for ingored folder marker
+            if (ignoredFileMarker && fs.existsSync(path.join(inner, ignoredFileMarker)))
+                continue;
             if (maxDepth > 1)
                 Util.pushRange(res, allFiles(inner, maxDepth - 1))
             if (includeDirs)
