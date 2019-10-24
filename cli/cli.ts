@@ -4604,8 +4604,20 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let urls: any = {};
     let checked = 0;
     let broken = 0;
-    let snipCount = 0;
     let snippets: CodeSnippet[] = [];
+
+    if (pxt.appTarget.cloud) {
+        pxt.log('checking for file sizes');
+        const maxSize = pxt.appTarget.cloud.maxFileSize || 5000000;
+        nodeutil.allFiles("docs")
+            .map(f => {
+                const stats = fs.statSync(f);
+                if (stats.size > maxSize) /* 5Mb */
+                    fatal(`${f} size is ${stats.size / 100000}Mb, keep files under ${maxSize}`);
+                else if (stats.size > 1000000)
+                    pxt.log(`  ${f} - ${stats.size / 100000}Mb`);
+            });
+    }
 
     // scan and fix image links
     if (fix) {

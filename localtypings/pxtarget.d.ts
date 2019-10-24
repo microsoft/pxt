@@ -142,6 +142,7 @@ declare namespace pxt {
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
         cloudProviders?: pxt.Map<{}>;
+        maxFileSize?: number; // maximum file size in bytes
     }
 
     interface AppSimulator {
