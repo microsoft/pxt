@@ -105,8 +105,6 @@ namespace pxt.py {
             case ts.SyntaxKind.AnyKeyword:
                 return tpAny
             default: {
-                if (!tpBuffer)
-                    error(null, 9554, lf("invalid tpBuffer"));
                 return tpBuffer!
             }
         }
@@ -451,8 +449,8 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9525; 9550-9599 reserved for parser
-    function error(astNode: py.AST | null, code: number, msg: string) {
+    // next free error 9572; 9550-9599 reserved for parser
+    function error(astNode: py.AST | null | undefined, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
         //currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
@@ -664,7 +662,7 @@ namespace pxt.py {
                 if (!f.isInstance)
                     error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
                 if (!ctx.currClass)
-                    error(null, 9528, U.lf("no class context found for {0}", f.pyQName))
+                    error(null, 9529, U.lf("no class context found for {0}", f.pyQName))
                 if (isSuper(recv) ||
                     (isThis(recv) && f.namespace != ctx.currClass!.symInfo.qName)) {
                     f.isProtected = true
@@ -872,7 +870,7 @@ namespace pxt.py {
         let lst = n.symInfo.parameters.map(p => {
             let v = defvar(p.name, { isParam: true })
             if (p.pyType)
-                error(n, 9529, U.lf("parameter '{0}' missing pyType", p.name))
+                error(n, 9530, U.lf("parameter '{0}' missing pyType", p.name))
             unify(n, symbolType(v), p.pyType!)
             let res = [quote(p.name), typeAnnot(p.pyType!)]
             if (p.default) {
@@ -1464,7 +1462,7 @@ namespace pxt.py {
             isConstCall = !!(value && ctx.currClass.isNamespace);
             let fd = getClassField(ctx.currClass.symInfo, nm)
             if (!fd)
-                error(n, 9538, lf("cannot get class field"));
+                error(n, 9544, lf("cannot get class field"));
             // TODO: use or remove this code
             /*
             let src = expr(value)
@@ -1574,7 +1572,7 @@ namespace pxt.py {
             if (!n.tsType)
                 error(n, 9540, lf("definition missing ts type"));
             if (!curr.pyRetType)
-                error(n, 9540, lf("missing py return type"));
+                error(n, 9568, lf("missing py return type"));
             unify(n, n.tsType!, curr.pyRetType!)
         }
 
@@ -1753,7 +1751,7 @@ namespace pxt.py {
                 unifyTypeOf(n.left, tpNumber)
                 unifyTypeOf(n.right, tpNumber)
                 if (!n.tsType)
-                    error(n, 9542, lf("binary op missing ts type"));
+                    error(n, 9570, lf("binary op missing ts type"));
                 unify(n, n.tsType!, tpNumber)
             }
             return r
@@ -2400,7 +2398,7 @@ namespace pxt.py {
         if (syntaxInfo) syntaxInfo.symbols = []
 
         if (infoNode)
-            error(null, 9566, lf("type annotation error; this should be unreachable"));
+            error(null, 9569, lf("type annotation error; this should be unreachable"));
         if (syntaxInfo && infoNode) {
             // TODO: unreachable since infoNode is always undefined here
             infoNode = infoNode as AST
