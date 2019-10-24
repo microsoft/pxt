@@ -38,7 +38,7 @@ namespace pxt.py {
     // we run conversion several times, until we have all information possible
     let numUnifies = 0
     let autoImport = true
-    let currErrorCtx = "???"
+    let currErrorCtx: string | undefined = "???"
     let verboseTypes = false
     let lastAST: AST
     let lastFile: string
@@ -215,11 +215,22 @@ namespace pxt.py {
                 }
             }
 
-            if (prevRetType)
+            if (prevRetType) {
+                if (!sym.pyAST) {
+                    error(null, 9525, U.lf("symbol is missing python AST reference near '{1}'", currErrorCtx || "???"))
+                    return mkType({})
+                }
                 unify(sym.pyAST, prevRetType, sym.pyRetType)
+            }
 
-            if (sym.kind == SK.Function || sym.kind == SK.Method)
-                sym.pySymbolType = mkFunType(sym.pyRetType, sym.parameters.map(p => p.pyType))
+            if (sym.kind == SK.Function || sym.kind == SK.Method) {
+                let paramTypes = sym.parameters.map(p => p.pyType)
+                if (paramTypes.some(p => !p)) {
+                    error(null, 9526, U.lf("function symbol is missing parameter types near '{1}'", currErrorCtx || "???"))
+                    return mkType({})
+                }
+                sym.pySymbolType = mkFunType(sym.pyRetType, paramTypes as Type[])
+            }
             else
                 sym.pySymbolType = sym.pyRetType
 
@@ -227,7 +238,7 @@ namespace pxt.py {
                 sym.pyInstanceType = mkType({ classType: sym })
             }
 
-            currErrorCtx = null
+            currErrorCtx = undefined
         }
         return sym.pySymbolType
     }
@@ -243,7 +254,6 @@ namespace pxt.py {
     }
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
-        if (!name) return null
         return fillTypes(lookupApi(name))
     }
 
@@ -263,8 +273,12 @@ namespace pxt.py {
             if (sym2.extendsTypes)
                 sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
 
-            externalApis[sym2.pyQName] = sym2
-            externalApis[sym2.qName] = sym2
+            if (!sym2.pyQName || !sym2.qName) {
+                error(null, 9526, U.lf("Symbol '{0}' is missing qName for '{1}'", sym2.name, !sym2.pyQName ? "py" : "ts"))
+            } else {
+                externalApis[sym2.pyQName] = sym2
+                externalApis[sym2.qName] = sym2
+            }
         }
 
         // TODO(dz): decide what to do with this..
@@ -290,9 +304,11 @@ namespace pxt.py {
         return mkType({ primType: "@fn" + argTypes.length, typeArgs: [retTp].concat(argTypes) })
     }
 
-    function instanceType(sym: SymbolInfo) {
+    function instanceType(sym: SymbolInfo): Type {
         symbolType(sym)
-        return sym.pyInstanceType
+        if (!sym.pyInstanceType)
+            error(null, 9527, U.lf("Instance type symbol '{0}' is missing pyInstanceType", sym))
+        return sym.pyInstanceType!
     }
 
     function currentScope(): py.ScopeDef {
@@ -340,7 +356,7 @@ namespace pxt.py {
         return v
     }
 
-    function find(t: Type) {
+    function find(t: Type): Type {
         if (t.union) {
             t.union = find(t.union)
             return t.union
@@ -371,7 +387,7 @@ namespace pxt.py {
             if (!v.isImport)
                 continue
             if (v.expandsTo == s) return v.pyName
-            if (v.isImport && U.startsWith(s, v.expandsTo + ".")) {
+            if (v.isImport && v.expandsTo && U.startsWith(s, v.expandsTo + ".")) {
                 return v.pyName + s.slice(v.expandsTo.length)
             }
         }
@@ -382,24 +398,25 @@ namespace pxt.py {
         t = find(t)
         const suff = (s: string) => verboseTypes ? s : ""
         if (t.primType) {
-            if (t.primType == "@array")
+            if (t.typeArgs && t.primType == "@array") {
                 return t2s(t.typeArgs[0]) + "[]"
+            }
 
-            if (U.startsWith(t.primType, "@fn"))
+            if (U.startsWith(t.primType, "@fn") && t.typeArgs)
                 return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
             return t.primType + suff("/P")
         }
 
-        if (t.classType)
+        if (t.classType && t.classType.pyQName)
             return applyTypeMap(t.classType.pyQName) + suff("/C")
-        else if (t.moduleType)
+        else if (t.moduleType && t.moduleType.pyQName)
             return applyTypeMap(t.moduleType.pyQName) + suff("/M")
         else
             return "?" + t.tid
     }
 
-    function mkDiag(astNode: py.AST, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
+    function mkDiag(astNode: py.AST | null, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
         if (!astNode) astNode = lastAST
         if (!astNode || !ctx || !ctx.currModule) {
             return {
@@ -427,7 +444,7 @@ namespace pxt.py {
     }
 
     // next free error 9525; 9550-9599 reserved for parser
-    function error(astNode: py.AST, code: number, msg: string) {
+    function error(astNode: py.AST | null, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
         //currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
@@ -554,7 +571,10 @@ namespace pxt.py {
             return sym
         }
         sym = mkSymbol(kind, qname)
-        internalApis[sym.pyQName] = sym
+        if (!sym.pyQName)
+            error(null, 9527, U.lf("Symbol '{0}' is missing pyQName", qname))
+
+        internalApis[sym.pyQName!] = sym
         return sym
     }
 
