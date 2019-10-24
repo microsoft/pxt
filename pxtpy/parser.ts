@@ -1159,9 +1159,9 @@ namespace pxt.py {
             if (currentOp() == "Comma") {
                 let rem = parseParenthesizedList("RBracket", U.lf("dict element"), dictelt)
                 for (let e of rem) {
-                    if (e[0] && e[1]) {
-                        r.keys.push(e[0])
-                        r.values.push(e[1])
+                    if (e.length >= 2 && e[0] && e[1]) {
+                        r.keys.push(e[0]!)
+                        r.values.push(e[1]!)
                     }
                 }
             } else {
