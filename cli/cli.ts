@@ -4610,12 +4610,13 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         pxt.log('checking for file sizes');
         const mb = 1e6;
         const maxSize = pxt.appTarget.cloud.maxFileSize || (5 * mb);
+        const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
         nodeutil.allFiles("docs")
             .map(f => {
                 const stats = fs.statSync(f);
                 if (stats.size > maxSize) /* 5Mb */
                     fatal(`${f} size is ${stats.size / mb}Mb, keep files under ${maxSize / mb}`);
-                else if (stats.size > mb)
+                else if (stats.size > warnSize)
                     pxt.log(`  ${f} - ${stats.size / mb}Mb`);
             });
     }

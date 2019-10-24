@@ -143,6 +143,7 @@ declare namespace pxt {
         noGithubProxy?: boolean;
         cloudProviders?: pxt.Map<{}>;
         maxFileSize?: number; // maximum file size in bytes
+        warnFileSize?: number; // warn aboutfile size in bytes
     }
 
     interface AppSimulator {
