@@ -1055,7 +1055,7 @@ namespace pxt.py {
 
             if (fn.indexOf("_py.py_") === 0) {
                 if (argExps.length <= 0)
-                    return throwError(s, 3013, "Unsupported: call expression has no arguments for _py.py_ fn");
+                    return throwError(s, 3014, "Unsupported: call expression has no arguments for _py.py_ fn");
                 // The format is _py.py_type_name, so remove the type
                 fn = fn.substr(7).split("_").filter((_, i) => i !== 0).join("_");
                 const recv = argExps.shift()![0];
@@ -1158,7 +1158,7 @@ namespace pxt.py {
         }
         function emitElAccessExp(s: ts.ElementAccessExpression): ExpRes {
             if (!s.argumentExpression)
-                return throwError(s, 3014, "Unsupported: element access expression without an argument expression");
+                return throwError(s, 3015, "Unsupported: element access expression without an argument expression");
             let [left, leftSup] = emitExp(s.expression)
             let [arg, argSup] = emitExp(s.argumentExpression)
             let sup = leftSup.concat(argSup)
