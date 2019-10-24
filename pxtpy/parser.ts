@@ -132,7 +132,7 @@ namespace pxt.py {
         patchPosition(d, source)
 
         if (traceParser)
-            pxt.log(`${traceLev}TS${code} ${d.messageText} at ${d.line + 1},${d.column + 1}`)
+            pxt.log(`${traceLev}TS${code} ${d.messageText} at ${d.line! + 1},${d.column! + 1}`)
 
         diags.push(d)
 
@@ -317,12 +317,12 @@ namespace pxt.py {
                         shiftToken()
                         eh.name = name()
                     } else {
-                        eh.name = null
+                        eh.name = undefined
                     }
                 } else {
                     sawDefault = true
-                    eh.type = null
-                    eh.name = null
+                    eh.type = undefined
+                    eh.name = undefined
                 }
                 eh.body = colon_suite()
             } else {
@@ -344,8 +344,8 @@ namespace pxt.py {
     function raise_stmt(): Stmt {
         let r = mkAST("Raise") as Raise
         expectKw("raise")
-        r.exc = null
-        r.cause = null
+        r.exc = undefined
+        r.cause = undefined
         if (!atStmtEnd()) {
             r.exc = test()
             if (currentKw() == "from") {
@@ -359,7 +359,7 @@ namespace pxt.py {
     function with_item() {
         let r = mkAST("WithItem") as WithItem
         r.context_expr = test()
-        r.optional_vars = null
+        r.optional_vars = undefined
         if (currentKw() == "as") {
             shiftToken()
             r.optional_vars = expr()
@@ -382,7 +382,7 @@ namespace pxt.py {
         expectOp("LParen")
         r.args = parse_arguments(true)
         expectOp("RParen")
-        r.returns = null
+        r.returns = undefined
         if (currentOp() == "Arrow") {
             shiftToken()
             r.returns = test()
@@ -467,7 +467,7 @@ namespace pxt.py {
         if (!atStmtEnd()) {
             r.value = testlist()
         } else {
-            r.value = null
+            r.value = undefined
         }
         return finish(r)
     }
@@ -513,7 +513,7 @@ namespace pxt.py {
             shiftToken()
             r.asname = name()
         } else {
-            r.asname = null
+            r.asname = undefined
         }
         return finish(r)
     }
@@ -525,7 +525,7 @@ namespace pxt.py {
             shiftToken()
             r.asname = name()
         } else {
-            r.asname = null
+            r.asname = undefined
         }
         return finish(r)
     }
@@ -560,7 +560,7 @@ namespace pxt.py {
         if (peekToken().type == TokenType.Id)
             r.module = dotted_name()
         else
-            r.module = null
+            r.module = undefined
         if (!r.level && !r.module)
             error()
         expectKw("import")
@@ -588,7 +588,7 @@ namespace pxt.py {
         if (currentOp() == "Comma") {
             shiftToken()
             r.msg = test()
-        } else r.msg = null
+        } else r.msg = undefined
         return finish(r)
     }
 
@@ -676,7 +676,7 @@ namespace pxt.py {
 
         error(9555, U.lf("unexpected token"))
         shiftToken()
-        return null
+        return null!
     }
 
     function small_stmt() {
@@ -774,7 +774,7 @@ namespace pxt.py {
                 if (peekToken().type == TokenType.Id)
                     r.vararg = pdef()
                 else
-                    r.vararg = null
+                    r.vararg = undefined
             } else if (o == "Pow") {
                 if (r.kwarg)
                     error(9558, U.lf("multiple **arg"))
@@ -784,12 +784,12 @@ namespace pxt.py {
                 if (r.kwarg)
                     error(9559, U.lf("arguments after **"))
                 let a = pdef()
-                let defl: Expr = null
+                let defl: Expr | undefined = undefined
                 if (currentOp() == "Assign") {
                     shiftToken()
                     defl = test()
                 }
-                if (r.vararg !== undefined) {
+                if (r.vararg !== undefined && defl) {
                     r.kwonlyargs.push(a)
                     r.kw_defaults.push(defl)
                 } else {
@@ -808,15 +808,15 @@ namespace pxt.py {
             }
         }
 
-        if (!r.kwarg) r.kwarg = null
-        if (!r.vararg) r.vararg = null
+        if (!r.kwarg) r.kwarg = undefined
+        if (!r.vararg) r.vararg = undefined
 
         return finish(r)
 
         function pdef() {
             let r = mkAST("Arg") as Arg
             r.arg = name()
-            r.annotation = null
+            r.annotation = undefined
             if (allowTypes) {
                 if (currentOp() == "Colon") {
                     shiftToken()
@@ -975,7 +975,7 @@ namespace pxt.py {
 
     function subscript(): AnySlice {
         let t0 = peekToken()
-        let lower: Expr = null
+        let lower: Expr | undefined = undefined
         if (currentOp() != "Colon") {
             lower = test()
         }
@@ -987,8 +987,8 @@ namespace pxt.py {
             if (o != "Colon" && o != "Comma" && o != "RSquare")
                 r.upper = test()
             else
-                r.upper = null
-            r.step = null
+                r.upper = undefined
+            r.step = undefined
             if (currentOp() == "Colon") {
                 shiftToken()
                 o = currentOp()
@@ -997,8 +997,10 @@ namespace pxt.py {
             }
             return finish(r)
         } else {
+            if (!lower)
+                error(9570, U.lf("unable to parse lower subscript"))
             let r = mkAST("Index") as Index
-            r.value = lower
+            r.value = lower!
             return finish(r)
         }
     }
@@ -1055,7 +1057,7 @@ namespace pxt.py {
         if (currentOp() == "Pow") {
             let r = mkAST("Keyword") as Keyword
             shiftToken()
-            r.arg = null
+            r.arg = undefined
             r.value = test()
             return finish(r)
         }
@@ -1087,7 +1089,7 @@ namespace pxt.py {
 
         if (currentOp() == "Pow") {
             shiftToken()
-            return dict(null, expr())
+            return dict(undefined, expr())
         } else if (currentOp() == "RBracket") {
             let r = mkAST("Dict", t0) as Dict
             shiftToken()
@@ -1139,12 +1141,12 @@ namespace pxt.py {
             }
         }
 
-        function dict(key0: Expr, value0: Expr) {
+        function dict(key0: Expr | undefined, value0: Expr) {
             if (currentKw() == "for") {
                 if (!key0)
                     error(9563, U.lf("dict unpacking cannot be used in dict comprehension"))
                 let r = mkAST("DictComp", t0) as DictComp
-                r.key = key0
+                r.key = key0!
                 r.value = value0
                 r.generators = comp_for()
                 return finish(r)
@@ -1157,8 +1159,10 @@ namespace pxt.py {
             if (currentOp() == "Comma") {
                 let rem = parseParenthesizedList("RBracket", U.lf("dict element"), dictelt)
                 for (let e of rem) {
-                    r.keys.push(e[0])
-                    r.values.push(e[1])
+                    if (e[0] && e[1]) {
+                        r.keys.push(e[0])
+                        r.values.push(e[1])
+                    }
                 }
             } else {
                 expectOp("RBracket")
@@ -1170,7 +1174,7 @@ namespace pxt.py {
 
     function shiftAndFake() {
         let r = mkAST("NameConstant") as NameConstant
-        r.value = null
+        r.value = undefined
         shiftToken()
         return finish(r)
     }
@@ -1210,7 +1214,7 @@ namespace pxt.py {
             if (t.value == "None" || t.value == "True" || t.value == "False") {
                 let r = mkAST("NameConstant") as NameConstant
                 shiftToken()
-                r.value = t.value == "True" ? true : t.value == "False" ? false : null
+                r.value = t.value == "True" ? true : t.value == "False" ? false : undefined
                 return finish(r)
             } else {
                 error(9564, U.lf("expecting atom"))
