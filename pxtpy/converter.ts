@@ -105,6 +105,7 @@ namespace pxt.py {
             case ts.SyntaxKind.AnyKeyword:
                 return tpAny
             default: {
+                // TODO: this could be null
                 return tpBuffer!
             }
         }
@@ -284,9 +285,9 @@ namespace pxt.py {
 
         // TODO(dz): decide what to do with this..
         // TODO this is for testing mostly; we can do this lazily
-        // for (let sym of U.values(externalApis)) {
-        //     fillTypes(sym)
-        // }
+        for (let sym of U.values(externalApis)) {
+            fillTypes(sym)
+        }
 
         tpBuffer = mapTsType("Buffer")
     }
@@ -994,7 +995,7 @@ namespace pxt.py {
         }
     }
 
-    function shouldInlineFunction(si: SymbolInfo) {
+    function shouldInlineFunction(si: SymbolInfo | undefined) {
         if (!si || !si.pyAST)
             return false
         if (si.pyAST.kind != "FunctionDef")
@@ -1921,9 +1922,7 @@ namespace pxt.py {
                         if (formals[i].pyType!.primType !== "any") {
                             unifyTypeOf(arg, formals[i].pyType!)
                         }
-                        if (!arg.symbolInfo)
-                            error(n, 9546, lf("arg missing symbol info"));
-                        if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo!)) {
+                        if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
                             allargs.push(emitFunctionDef(arg.symbolInfo!.pyAST as FunctionDef, true))
                         } else {
                             allargs.push(expr(arg))
