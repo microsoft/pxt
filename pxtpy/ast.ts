@@ -53,8 +53,8 @@ namespace pxt.py {
 
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
-        startPos?: number;
-        endPos?: number;
+        startPos: number;
+        endPos: number;
         kind: string;
     }
     export interface Stmt extends AST {
@@ -161,7 +161,7 @@ namespace pxt.py {
     }
 
     export interface ScopeDef extends Stmt {
-        vars?: Map<SymbolInfo>;
+        vars: Map<SymbolInfo>;
         parent?: ScopeDef;
         blockDepth?: number;
     }
