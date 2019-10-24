@@ -1244,7 +1244,10 @@ export class ProjectView
             }).then(() => this.loadTutorialFiltersAsync())
             .finally(() => {
                 // Editor is loaded
-                pxt.BrowserUtils.changeHash("#editor", true);
+                let editorHash = "#editor";
+                if (!/editor/.test(window.location.hash) && window.location.hash)
+                    editorHash += "&" + window.location.hash.substring(1);
+                pxt.BrowserUtils.changeHash(editorHash, true);
                 document.getElementById("root").focus(); // Clear the focus.
                 this.editorLoaded();
             })
@@ -2600,7 +2603,9 @@ export class ProjectView
             this.syncPreferredEditor()
 
             simulator.stop(false, true);
-            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && this.isBlocksEditor();
+
+            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger)  ;
+
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
                 .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))
