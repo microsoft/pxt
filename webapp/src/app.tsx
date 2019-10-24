@@ -1806,6 +1806,7 @@ export class ProjectView
             if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
+            // preserves hash parameters not in "#cmd:arg" format (eg "#ipc=1" for minecraft)
             else if (!!hash.arg) {
                 location.hash = `#${hash.arg}`;
             }
