@@ -81,7 +81,7 @@ namespace pxt.py {
     const tpBoolean = mkType({ primType: "boolean" })
     const tpVoid = mkType({ primType: "void" })
     const tpAny = mkType({ primType: "any" })
-    let tpBuffer: Type
+    let tpBuffer: Type | undefined = undefined
 
 
     const builtInTypes: Map<Type> = {
@@ -1260,15 +1260,19 @@ namespace pxt.py {
         With: (n: py.With) => {
             if (n.items.length == 1 && isOfType(n.items[0].context_expr, "pins.I2CDevice")) {
                 let it = n.items[0]
-                let id = getName(it.optional_vars)
                 let res: B.JsNode[] = []
                 let devRef = expr(it.context_expr)
-                if (id) {
-                    let v = defvar(id, { isLocal: true })
-                    id = quoteStr(id)
-                    res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
-                    unifyTypeOf(it.context_expr, v.pyRetType)
-                    devRef = B.mkText(id)
+                if (it.optional_vars) {
+                    let id = getName(it.optional_vars)
+                    if (id) {
+                        let v = defvar(id, { isLocal: true })
+                        id = quoteStr(id)
+                        res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
+                        if (!v.pyRetType)
+                            error(n, 9537, lf("function '{0}' missing return type", v.pyQName));
+                        unifyTypeOf(it.context_expr, v.pyRetType!)
+                        devRef = B.mkText(id)
+                    }
                 }
                 res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
                 U.pushRange(res, n.body.map(stmt))
@@ -1297,7 +1301,7 @@ namespace pxt.py {
             let ex = n.exc || n.cause
             if (!ex)
                 return B.mkStmt(B.mkText("throw"))
-            let msg: B.JsNode
+            let msg: B.JsNode | undefined = undefined
             if (ex && ex.kind == "Call") {
                 let cex = ex as py.Call
                 if (cex.args.length == 1) {
@@ -1309,7 +1313,11 @@ namespace pxt.py {
                 msg = B.mkGroup([B.mkText("`"), expr(ex), B.mkText("`")])
             return B.mkStmt(B.H.mkCall("control.fail", [msg]))
         },
-        Assert: (n: py.Assert) => B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg]))),
+        Assert: (n: py.Assert) => {
+            if (!n.msg)
+                error(n, 9537, lf("assert missing message"));
+            return B.mkStmt(B.H.mkCall("control.assert", exprs0([n.test, n.msg!])))
+        },
         Import: (n: py.Import) => {
             for (let nm of n.names) {
                 if (nm.asname)
@@ -1323,10 +1331,13 @@ namespace pxt.py {
         ImportFrom: (n: py.ImportFrom) => {
             let res: B.JsNode[] = []
             for (let nn of n.names) {
-                if (nn.name == "*")
-                    defvar(n.module, {
+                if (nn.name == "*") {
+                    if (!n.module)
+                        error(n, 9538, lf("import missing module name"));
+                    defvar(n.module!, {
                         isImportStar: true
                     })
+                }
                 else {
                     let fullname = n.module + "." + nn.name
                     let sym = lookupGlobalSymbol(fullname)
@@ -1387,7 +1398,7 @@ namespace pxt.py {
 
                 const sym = defvar(name, { modifier: VarModifier.Global });
 
-                if (sym.firstRefPos < n.startPos) {
+                if (!sym.firstRefPos || sym.firstRefPos < n.startPos) {
                     error(n, 9522, U.lf("Variable referenced before global declaration"))
                 }
             }
@@ -1407,7 +1418,7 @@ namespace pxt.py {
 
                 const sym = defvar(name, { modifier: VarModifier.NonLocal });
 
-                if (sym.firstRefPos < n.startPos) {
+                if (!sym.firstRefPos || sym.firstRefPos < n.startPos) {
                     error(n, 9524, U.lf("Variable referenced before nonlocal declaration"))
                 }
             }
@@ -1416,8 +1427,8 @@ namespace pxt.py {
     }
 
     function convertAssign(n: py.AnnAssign | py.Assign): B.JsNode {
-        let annotation: Expr;
-        let value: Expr;
+        let annotation: Expr | null;
+        let value: Expr | null;
         let target: Expr;
         // TODO handle more than 1 target
         if (n.kind === "Assign") {
@@ -1442,8 +1453,10 @@ namespace pxt.py {
         if (nm && ctx.currClass && !ctx.currFun) {
             // class fields can't be const
             // hack: value in @namespace should always be const
-            isConstCall = value && ctx.currClass.isNamespace;
+            isConstCall = !!(value && ctx.currClass.isNamespace);
             let fd = getClassField(ctx.currClass.symInfo, nm)
+            if (!fd)
+                error(n, 9538, lf("cannot get class field"));
             // TODO: use or remove this code
             /*
             let src = expr(value)
@@ -1479,8 +1492,10 @@ namespace pxt.py {
             if (currIteration == 0) {
                 return B.mkText("/* skip for now */")
             }
-            unifyTypeOf(target, fd.pyRetType)
-            fd.isInstance = false
+            if (!fd!.pyRetType)
+                error(n, 9539, lf("function '{0}' missing return type", fd!.pyQName));
+            unifyTypeOf(target, fd!.pyRetType!)
+            fd!.isInstance = false
             pref = ctx.currClass.isNamespace ? `export ${isConstCall ? "const" : "let"} ` : "static "
         }
         if (value)
@@ -1548,14 +1563,19 @@ namespace pxt.py {
                 n.isdef = false
             }
             n.symbolInfo = curr
-            unify(n, n.tsType, curr.pyRetType)
+            if (!n.tsType)
+                error(n, 9540, lf("definition missing ts type"));
+            if (!curr.pyRetType)
+                error(n, 9540, lf("missing py return type"));
+            unify(n, n.tsType!, curr.pyRetType!)
         }
 
-        if (n.isdef && shouldHoist(curr, currentScope())) {
+        if (n.isdef && shouldHoist(curr!, currentScope())) {
             n.isdef = false;
         }
 
-        markUsage(curr, n);
+        if (curr)
+            markUsage(curr, n);
 
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
@@ -1575,8 +1595,6 @@ namespace pxt.py {
     }
 
     function getName(e: py.Expr): string {
-        if (e == null)
-            return null
         if (e.kind == "Name") {
             let s = (e as py.Name).id
             let v = lookupVar(s)
@@ -1588,7 +1606,8 @@ namespace pxt.py {
             if (pref)
                 return pref + "." + (e as py.Attribute).attr
         }
-        return null
+        error(null, 9542, lf("Cannot get name of unknown expression kind '{0}'", e.kind));
+        return null!
     }
 
     function quote(id: py.identifier) {
@@ -1614,7 +1633,7 @@ namespace pxt.py {
     }
 
     interface FunOverride extends pxtc.FunOverride {
-        t: Type;
+        t: Type | undefined;
     }
 
     const funMapExtension: Map<FunOverride> = {
@@ -1725,14 +1744,16 @@ namespace pxt.py {
             if (numOps[n.op]) {
                 unifyTypeOf(n.left, tpNumber)
                 unifyTypeOf(n.right, tpNumber)
-                unify(n, n.tsType, tpNumber)
+                if (!n.tsType)
+                    error(n, 9542, lf("binary op missing ts type"));
+                unify(n, n.tsType!, tpNumber)
             }
             return r
         },
         UnaryOp: (n: py.UnaryOp) => {
             let op = prefixOps[n.op]
             U.assert(!!op)
-            return B.mkInfix(null, op, expr(n.operand))
+            return B.mkInfix(null!, op, expr(n.operand))
         },
         Lambda: (n: py.Lambda) => exprTODO(n),
         IfExp: (n: py.IfExp) =>
@@ -1784,10 +1805,10 @@ namespace pxt.py {
 
             let recvTp: Type
             let recv: py.Expr
-            let methName: string
+            let methName: string = ""
 
             if (isClass) {
-                fun = lookupSymbol(namedSymbol.pyQName + ".__constructor")
+                fun = lookupSymbol(namedSymbol!.pyQName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
                     let attr = n.func as py.Attribute
@@ -1804,8 +1825,11 @@ namespace pxt.py {
             let orderedArgs = n.args.slice()
 
             if (nm == "super" && orderedArgs.length == 0) {
-                if (ctx.currClass && ctx.currClass.baseClass)
-                    unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
+                if (ctx.currClass && ctx.currClass.baseClass) {
+                    if (!n.tsType)
+                        error(n, 9543, lf("call expr missing ts type"));
+                    unifyClass(n, n.tsType!, ctx.currClass.baseClass.symInfo)
+                }
                 return B.mkText("super")
             }
 
@@ -1815,9 +1839,9 @@ namespace pxt.py {
                     methName = ""
 
                 if (methName) {
-                    nm = t2s(recvTp) + "." + methName
+                    nm = t2s(recvTp!) + "." + methName
                     over = U.lookup(funMap, nm)
-                    if (!over && typeCtor(find(recvTp)) == "@array") {
+                    if (!over && typeCtor(find(recvTp!)) == "@array") {
                         nm = "Array." + methName
                         over = U.lookup(funMap, nm)
                     }
@@ -1827,7 +1851,7 @@ namespace pxt.py {
 
                 if (over) {
                     if (over.n[0] == "." && orderedArgs.length) {
-                        recv = orderedArgs.shift()
+                        recv = orderedArgs.shift()!
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
                         fun = getTypeField(recv, methName)
