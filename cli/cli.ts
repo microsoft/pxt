@@ -4611,14 +4611,18 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         const mb = 1e6;
         const maxSize = pxt.appTarget.cloud.maxFileSize || (5 * mb);
         const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
+        let toobig = 0;
         nodeutil.allFiles("docs")
             .map(f => {
                 const stats = fs.statSync(f);
-                if (stats.size > maxSize) /* 5Mb */
-                    fatal(`${f} size is ${stats.size / mb}Mb, keep files under ${maxSize / mb}`);
-                else if (stats.size > warnSize)
+                if (stats.size > warnSize)
                     pxt.log(`  ${f} - ${stats.size / mb}Mb`);
+                if (stats.size > maxSize) {/* 5Mb */
+                    toobig++;
+                }
             });
+        if (toobig && !pxt.appTarget.ignoreDocsErrors)
+            U.userError(`${toobig} files above allowed size (${maxSize / mb}Mb)`);
     }
 
     // scan and fix image links
