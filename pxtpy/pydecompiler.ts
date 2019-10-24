@@ -1023,7 +1023,7 @@ namespace pxt.py {
                     // TODO(dz): uncomment to support reason #1 above. I've disabled this for now because it generates uglier
                     // code if we don't have support in py2ts to reverse this
                     // let altParams = param.type.parameters
-                    let altParams = null
+                    let altParams = undefined
                     let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
                     return emitFnExp(s, fnNameHint, altParams, true)
                 }
@@ -1038,7 +1038,7 @@ namespace pxt.py {
             let calleeParameters: ts.NodeArray<ts.ParameterDeclaration> = ts.createNodeArray([])
             if (ts.isFunctionTypeNode(calleeTypeNode)) {
                 calleeParameters = calleeTypeNode.parameters
-                if (calleeParameters.length < s.arguments.length) {
+                if (s.arguments && calleeParameters.length < s.arguments.length) {
                     pxt.tickEvent("depython.todo", { kind: s.kind })
                     return throwError(s, 3010, "TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText());
                 }
@@ -1047,16 +1047,18 @@ namespace pxt.py {
             // TODO inspect type info to rewrite things like console.log, Math.max, etc.
             let [fn, fnSup] = emitExp(s.expression)
 
-            let argExps = s.arguments
+            let argExps = (s.arguments || ts.createNodeArray())
                 .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
             let sup = argExps
                 .map(([_, aSup]) => aSup)
                 .reduce((p, c) => p.concat(c), fnSup)
 
             if (fn.indexOf("_py.py_") === 0) {
+                if (argExps.length <= 0)
+                    return throwError(s, 3013, "Unsupported: call expression has no arguments for _py.py_ fn");
                 // The format is _py.py_type_name, so remove the type
                 fn = fn.substr(7).split("_").filter((_, i) => i !== 0).join("_");
-                const recv = argExps.shift()[0];
+                const recv = argExps.shift()![0];
                 const args = argExps
                     .map(([a, _]) => a)
                     .join(", ");
@@ -1155,6 +1157,8 @@ namespace pxt.py {
             return [exp, sup]
         }
         function emitElAccessExp(s: ts.ElementAccessExpression): ExpRes {
+            if (!s.argumentExpression)
+                return throwError(s, 3014, "Unsupported: element access expression without an argument expression");
             let [left, leftSup] = emitExp(s.expression)
             let [arg, argSup] = emitExp(s.argumentExpression)
             let sup = leftSup.concat(argSup)
