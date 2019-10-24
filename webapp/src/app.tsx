@@ -1806,6 +1806,9 @@ export class ProjectView
             if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
+            else if (!!hash.arg) {
+                location.hash = `#${hash.arg}`;
+            }
             else if (this.state && this.state.home) {
                 location.hash = "#reload"
             }
@@ -3605,11 +3608,12 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(window.location.hash)
+    let hashStr = window.location.hash || '';
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(hashStr)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
-    return { cmd: '', arg: '' };
+    return { cmd: '', arg: hashStr.substring(1) };
 }
 
 function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
