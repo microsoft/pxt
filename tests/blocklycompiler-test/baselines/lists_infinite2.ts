@@ -1,4 +1,4 @@
-let list: number[] = [] //pxtGenerated
+let list: number[] = []
 
 for (let value of list) {
 

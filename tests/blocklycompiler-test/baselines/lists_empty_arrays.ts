@@ -1,4 +1,4 @@
-let item: string[] = [] //pxtGenerated
+let item: string[] = []
 if (true) {
     item = []
     item.push("")

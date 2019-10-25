@@ -6,5 +6,5 @@ player.onChat("hello", function (asb, num2) {
   asb = 0
   num2 = 0
 })
-let asb = 0 //pxtGenerated
+let asb = 0
 let num2 = 0

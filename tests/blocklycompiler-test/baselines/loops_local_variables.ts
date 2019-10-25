@@ -1,5 +1,5 @@
-let index = 0 //pxtGenerated
-let i = 0 //pxtGenerated
+let index = 0
+let i = 0
 for (let index2 = 0; index2 < 4; index2++) {
     i = 0
     for (let index2 = 0; index2 < 4; index2++) {

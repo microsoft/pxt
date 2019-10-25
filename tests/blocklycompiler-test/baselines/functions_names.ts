@@ -4,6 +4,6 @@ function item() {
 function _Math()  {
 
 }
-let item2 = 0 //pxtGenerated
+let item2 = 0
 item()
 _Math()

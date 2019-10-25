@@ -1,5 +1,5 @@
-let item = 0 //pxtGenerated
-let list: number[] = [] //pxtGenerated
+let item = 0
+let list: number[] = []
 for (let value of list) {
     item = list.length
 }

@@ -1,5 +1,5 @@
-let item = "" //pxtGenerated
-let myList: string[] = [] //pxtGenerated
+let item = ""
+let myList: string[] = []
 if (true) {
     myList = ["", ""]
     item = myList.pop()

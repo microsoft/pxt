@@ -1,5 +1,5 @@
-let item = "" //pxtGenerated
-let myList: string[] = [] //pxtGenerated
+let item = ""
+let myList: string[] = []
 if (true) {
     myList.push("")
     item = myList[0]

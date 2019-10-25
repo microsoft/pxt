@@ -1,8 +1,8 @@
 function doSomething (mySprite: Sprite, text: string, bool: boolean, num: number) {
 
 }
-let mNum = 0 //pxtGenerated
-let mBool = false //pxtGenerated
-let mText = "" //pxtGenerated
-let mSprite: Sprite = null //pxtGenerated
+let mNum = 0
+let mBool = false
+let mText = ""
+let mSprite: Sprite = null
 doSomething(mSprite, mText, mBool, mNum)

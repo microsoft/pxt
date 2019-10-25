@@ -1,5 +1,5 @@
-let item = 0 //pxtGenerated
-let list: number[][] = [] //pxtGenerated
+let item = 0
+let list: number[][] = []
 if (true) {
     list = [[784]]
     for (let value of list) {

@@ -1,4 +1,4 @@
-let item = "" //pxtGenerated
+let item = ""
 if (true) {
     item = [""][0]
 } else {
