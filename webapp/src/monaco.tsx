@@ -251,6 +251,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private editorViewZones: number[];
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
+    private editAmendmentsListener: monaco.IDisposable;
 
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -720,11 +721,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.setupToolbox(editorArea);
             this.setupFieldEditors();
 
-            // this monitors the text buffer for "edit amendments". See monacoEditAmendments for more.
-            // This is an extension we made to Monaco that allows us to replace full lines of text when
-            // using code completion.
-            listenForEditAmendments(this.editor);
-
             editor.onDidChangeModelContent(e => {
                 // Clear ranges because the model changed
                 if (this.fieldEditors)
@@ -1062,6 +1058,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (this.giveFocusOnLoading) {
                     this.editor.focus();
                 }
+
+                // this monitors the text buffer for "edit amendments". See monacoEditAmendments for more.
+                // This is an extension we made to Monaco that allows us to replace full lines of text when
+                // using code completion.
+                if (this.fileType === pxt.editor.FileType.Python)
+                    this.editAmendmentsListener = listenForEditAmendments(this.editor);
             }).finally(() => {
                 editorArea.removeChild(loading);
             });
@@ -1074,6 +1076,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
         }
+        if (this.editAmendmentsListener) {
+            this.editAmendmentsListener.dispose();
+        }
+
         return Promise.resolve();
     }
 

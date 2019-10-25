@@ -159,7 +159,7 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
 }
 
 export function listenForEditAmendments(editor: monaco.editor.IStandaloneCodeEditor) {
-    editor.onDidChangeModelContent(e => {
+    return editor.onDidChangeModelContent(e => {
 
         let amendment = scanForEditAmendment(e)
         if (!!amendment)
