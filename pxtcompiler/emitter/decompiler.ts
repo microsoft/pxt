@@ -303,7 +303,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
-        generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>; // decompiler only; check variable declarations against those generated during block compilatio
+        generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>; // check variable declarations against those generated during block compilation
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
