@@ -16,25 +16,12 @@ export class GithubProvider extends cloudsync.ProviderBase {
         return false;
     }
 
-    logout() {
-        super.logout();
-        pxt.storage.removeLocal("githubtoken"); // legacy token storage
-    }
-
     loginCheck() {
         super.loginCheck();
 
-        // legacy token
-        const oldtoken = pxt.storage.getLocal("githubtoken")
-        if (oldtoken) {
-            this.setNewToken(oldtoken);
-            pxt.storage.removeLocal("githubtoken");
-        }
-
-        // regular flow
+        // update github in-memory token
         const tok = this.token();
-        if (tok)
-            pxt.github.token = tok;
+        pxt.github.token = tok;
     }
 
     loginAsync(redirect?: boolean, silent?: boolean): Promise<cloudsync.ProviderLoginResponse> {
@@ -150,7 +137,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     async createRepositoryAsync(projectName: string, header: pxt.workspace.Header) {
         pxt.tickEvent("github.filelist.create.start");
-        this.loginAsync();
+        await this.loginAsync();
         if (!this.token()) {
             pxt.tickEvent("github.filelist.create.notoken");
             return;

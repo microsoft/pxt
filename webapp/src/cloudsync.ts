@@ -82,6 +82,9 @@ export class ProviderBase {
     }
 
     protected token() {
+        if (this.hasTokenExpired())
+            return undefined;
+
         const tok = pxt.storage.getLocal(this.name + "token")
         return tok;
     }
@@ -145,8 +148,7 @@ export class ProviderBase {
         if (!tok)
             return
 
-        const exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
-        if (exp && exp < U.nowSeconds()) {
+        if (this.hasTokenExpired()) {
             // if we already attempted autologin (and failed), don't do it again
             if (pxt.storage.getLocal(this.name + "AutoLogin")) {
                 this.pleaseLogin()
@@ -155,13 +157,7 @@ export class ProviderBase {
 
             pxt.storage.setLocal(this.name + "AutoLogin", "yes")
             this.loginAsync(undefined, true)
-                .then((resp) => {
-                    pxt.storage.setLocal("access_token", resp.accessToken);
-                    if (resp.expiresIn)
-                        pxt.storage.setLocal(this.name + "tokenExp", resp.expiresIn + "")
-                    else
-                        pxt.storage.removeLocal(this.name + "tokenExp");
-                })
+                .then((resp) => resp && this.setNewToken(resp.accessToken, resp.expiresIn))
                 .done();
         } else {
             setProvider(this as any)
@@ -210,18 +206,19 @@ export class ProviderBase {
     }
 
     setNewToken(accessToken: string, expiresIn?: number) {
-        const ns = this.name
+        const ns = this.name;
         pxt.storage.setLocal(ns + "token", accessToken)
         if (expiresIn) {
             let time = Math.round(Date.now() / 1000 + (0.75 * expiresIn));
             pxt.storage.setLocal(ns + "tokenExp", time + "")
-        }
+        } else
+            pxt.storage.removeLocal(ns + "tokenExp");
         invalidateData();
     }
 
     hasTokenExpired() {
-        let exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
-        if (exp && exp < U.nowSeconds()) {
+        const exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
+        if (!exp || exp < U.nowSeconds()) {
             return false;
         }
         return true;
@@ -287,8 +284,10 @@ export function githubProvider(): githubprovider.GithubProvider {
 
 // this is generally called by the provier's loginCheck() function
 export function setProvider(impl: IdentityProvider) {
-    currentProvider = impl
-    invalidateData();
+    if (impl !== currentProvider) {
+        currentProvider = impl
+        invalidateData();
+    }
 }
 
 async function syncOneUpAsync(provider: Provider, h: Header) {
