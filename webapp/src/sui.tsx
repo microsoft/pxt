@@ -830,7 +830,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
                 role="tab"
                 aria-controls={ariaControls}
                 aria-selected={active}
-                aria-label={content || name}
+                aria-label={`${content || name}`}
             >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}
