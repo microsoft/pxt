@@ -529,8 +529,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
 
-        const hasCloud = this.hasCloud();
-        const user = hasCloud ? this.getUser() : undefined;
+        //const hasCloud = this.hasCloud();
+        //const user = hasCloud ? this.getUser() : undefined;
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -562,7 +562,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
                 {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
-                {!hasCloud || sandbox || inTutorial ? undefined : <cloud.UserMenu parent={this.props.parent} user={user}/>}
+                {/*!hasCloud || sandbox || inTutorial ? undefined : <cloud.UserMenu parent={this.props.parent} user={user}/>*/ undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
