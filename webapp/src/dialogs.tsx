@@ -1,3 +1,5 @@
+// tslint:disable: react-a11y-anchors
+
 import * as React from "react";
 import * as sui from "./sui";
 import * as core from "./core";
