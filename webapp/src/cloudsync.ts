@@ -6,7 +6,6 @@ import * as ws from "./workspace";
 import * as data from "./data";
 
 type Header = pxt.workspace.Header;
-type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -206,9 +205,8 @@ export class ProviderBase {
         this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
 
         // re-compute
-        pxt.storage.removeLocal("cloudName")
-        pxt.storage.removeLocal("cloudPhoto")
-        invalidateData();
+        pxt.storage.removeLocal("cloudUser")
+        data.invalidate("sync:user")
     }
 
     setNewToken(accessToken: string, expiresIn?: number) {
@@ -232,6 +230,7 @@ export class ProviderBase {
     logout() {
         pxt.storage.removeLocal(this.name + "token")
         pxt.storage.removeLocal(this.name + "tokenExp")
+        pxt.storage.removeLocal("cloudUser")
         invalidateData();
     }
 }
@@ -337,18 +336,15 @@ export async function renameAsync(h: Header, newName: string) {
 }
 
 export function resetAsync() {
-    if (currentProvider) currentProvider.logout()
+    if (currentProvider)
+        currentProvider.logout()
     currentProvider = null
 
     pxt.storage.removeLocal("cloudId")
-    pxt.storage.removeLocal("cloudName")
-
     pxt.storage.removeLocal("oauthType")
     pxt.storage.removeLocal("oauthHash")
     pxt.storage.removeLocal("oauthRedirect")
-    pxt.storage.removeLocal("cloudName")
-    pxt.storage.removeLocal("cloudPhoto")
-
+    pxt.storage.removeLocal("cloudUser")
     invalidateData();
 
     return Promise.resolve()
@@ -356,8 +352,8 @@ export function resetAsync() {
 
 function updateNameAsync() {
     const provider = currentProvider;
-    let name = pxt.storage.getLocal("cloudName");
-    if (name || !provider)
+    let user = pxt.storage.getLocal("cloudUser");
+    if (user || !provider)
         return Promise.resolve()
     return provider.getUserInfoAsync()
         .then(info => {
@@ -390,15 +386,10 @@ function updateNameAsync() {
             } else {
                 pxt.storage.setLocal("cloudId", id)
             }
-            pxt.storage.setLocal("cloudName", info.name)
             if (!info.initials)
                 info.initials = userInitials(info.name);
             pxt.storage.setLocal("cloudUser", JSON.stringify(info))
-            data.invalidate("sync:username")
-            if (info.photo) {
-                pxt.storage.setLocal("cloudPhoto", info.photo)
-                data.invalidate("sync:userphoto")
-            }
+            data.invalidate("sync:user")
             return null
         })
 }
@@ -634,19 +625,9 @@ function userInitials(username: string): string {
     return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
 }
 
-/*
-    sync:username
-    sync:userphoto
-    sync:loggedin
-    sync:status
-*/
 data.mountVirtualApi("sync", {
     getSync: p => {
         switch (data.stripProtocol(p)) {
-            case "username":
-                return pxt.storage.getLocal("cloudName")
-            case "userphoto":
-                return pxt.storage.getLocal("cloudPhoto")
             case "user":
                 const user = pxt.Util.jsonTryParse(pxt.storage.getLocal("cloudUser")) as pxt.editor.UserInfo;
                 return user;
@@ -673,8 +654,6 @@ data.mountVirtualApi("sync", {
 
 function invalidateData() {
     data.invalidate("sync:status")
-    data.invalidate("sync:username")
-    data.invalidate("sync:userphoto")
     data.invalidate("sync:user")
     data.invalidate("sync:loggedin")
     data.invalidate("sync:hascloud")
