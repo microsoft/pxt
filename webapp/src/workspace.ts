@@ -894,25 +894,17 @@ export function saveToCloudAsync(h: Header) {
     return cloudsync.saveToCloudAsync(h)
 }
 
-export function resetCloudAsync() {
+export function resetCloudAsync(): Promise<void> {
     checkSession();
 
+    // remove all cloudsync or github repositories
     return cloudsync.resetAsync()
-        .then(() => {
-            const allHeaders = allScripts.map(e => e.header);
-            return Promise.all(allHeaders.map(h => {
-                if (h.cloudSync) {
-                    // Remove cloud sync'ed project
-                    h.isDeleted = true;
-                    h.blobVersion = "DELETED";
-                    return saveAsync(h, null, true);
-                }
-                return Promise.resolve();
-            }));
-        })
-        .then(() => {
-            data.invalidate("header:*")
-        })
+        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
+            // Remove cloud sync'ed project
+            h.isDeleted = true;
+            h.blobVersion = "DELETED";
+            return saveAsync(h, null, true);
+        }))).then(() => data.invalidate("header:*"));
 }
 
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
