@@ -574,9 +574,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected isLink() {
         const { cardType, url, youTubeId } = this.props;
 
-        return cardType === "forumUrl" || (!isCodeCardType(cardType) && (youTubeId || url));
+        return isCodeCardWithLink(cardType) && (youTubeId || url);
 
-        function isCodeCardType(value: string): value is pxt.CodeCardType {
+        function isCodeCardWithLink(value: string) {
             switch (value) {
                 case "file":
                 case "example":
@@ -586,10 +586,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 case "template":
                 case "package":
                 case "hw":
-                case "forumUrl":
-                    return true;
-                default:
                     return false;
+                case "forumUrl":
+                default:
+                    return true;
             }
         }
     }
