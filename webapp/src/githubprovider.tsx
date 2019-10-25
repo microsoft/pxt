@@ -101,13 +101,25 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 </div>
             </div>,
         }).then(res => {
-            if (!res)
+            if (!res) {
                 pxt.tickEvent("github.token.cancel");
-            else {
-                const hextoken = input.value.trim()
+                return Promise.resolve()
+            } else {
+                const hextoken = input.value.trim();
+                return this.saveAndValidateTokenAsync(hextoken);
+            }
+        })
+    }
+
+    private saveAndValidateTokenAsync(hextoken: string): Promise<void> {
+        const LOAD_ID = "githubtokensave";
+        core.showLoading(LOAD_ID, lf("validating GitHub token..."));
+        return Promise.resolve()
+            .then(() => {
                 if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
                     pxt.tickEvent("github.token.invalid");
                     core.errorNotification(lf("Invalid token format"))
+                    return Promise.resolve();
                 } else {
                     pxt.github.token = hextoken
                     // try to create a bogus repo - it will fail with
@@ -133,9 +145,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                             }
                         })
                 }
-            }
-            return Promise.resolve()
-        })
+            }).finally(() => core.hideLoading(LOAD_ID))
     }
 
     async createRepositoryAsync(projectName: string, header: pxt.workspace.Header) {
