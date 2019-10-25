@@ -1239,10 +1239,7 @@ export class ProjectView
             }).then(() => this.loadTutorialFiltersAsync())
             .finally(() => {
                 // Editor is loaded
-                let editorHash = "#editor";
-                if (!/editor/.test(window.location.hash) && window.location.hash)
-                    editorHash += "&" + window.location.hash.substring(1);
-                pxt.BrowserUtils.changeHash(editorHash, true);
+                pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
                 this.editorLoaded();
             })
