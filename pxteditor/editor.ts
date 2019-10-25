@@ -154,7 +154,9 @@ namespace pxt.editor {
 
     export interface UserInfo {
         id: string;
+        userName?: string;
         name: string;
+        profile?: string;
         loginHint?: string;
         initials?: string;
         photo?: string;

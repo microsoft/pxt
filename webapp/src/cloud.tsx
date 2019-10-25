@@ -136,6 +136,7 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
         const { user } = this.props;
 
         const title = user && user.name ? lf("{0}'s Account", user.name) : lf("Sign in");
+        const profile = user && user.profile;
         const userPhoto = user && user.photo;
         const userInitials = user && user.initials;
         const providericon = this.getData("sync:providericon") || "";
@@ -145,6 +146,7 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
             title={title}
             className="item icon user-dropdown-menuitem"
             tabIndex={0}>
+            {profile ? <a className="ui item" role="menuitem" href={profile} title={lf("Open user profile page")} target="_blank" rel="noopener noreferrer">{lf("Signed in as {0}", user.userName || user.name)}</a> : undefined}
             {user ? <sui.Item role="menuitem" icon="sign out" text={lf("Sign out")} onClick={this.logout} /> : undefined}
             {!user ? <sui.Item role="menuitem" icon="sign in" text={lf("Sign in")} onClick={this.login} /> : undefined}
         </sui.DropdownMenu>
