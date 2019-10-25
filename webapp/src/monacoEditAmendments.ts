@@ -109,7 +109,7 @@ function applyAmendment(amendment: EditAmendmentInstance, editor: monaco.editor.
 
         // determine selection range after applying
         let afterRange: monaco.Range | null = null;
-        if (!!amendment.selectText) {
+        if (amendment.selectText) {
             let selectSplits = amendment.insertText.split(amendment.selectText)
             if (selectSplits.length >= 2) {
                 let before = selectSplits[0]
@@ -162,7 +162,7 @@ export function listenForEditAmendments(editor: monaco.editor.IStandaloneCodeEdi
     return editor.onDidChangeModelContent(e => {
 
         let amendment = scanForEditAmendment(e)
-        if (!!amendment)
+        if (amendment)
             applyAmendment(amendment, editor)
     });
 }
