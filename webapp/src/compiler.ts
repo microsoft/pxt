@@ -201,13 +201,14 @@ export function syntaxInfoAsync(infoType: pxtc.InfoType, fileName: string, posit
     });
 }
 
-export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string, generatedVarDecls?: pxt.Map<pxt.blocks.VarDeclaration>): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.ast = true;
             opts.testMode = true;
             opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
+            opts.generatedVarDeclarations = generatedVarDecls;
             return decompileCoreAsync(opts, fileName)
         })
         .then(resp => {

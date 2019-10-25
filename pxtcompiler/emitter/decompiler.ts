@@ -303,6 +303,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
+        generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>; // decompiler only; check variable declarations against those generated during block compilatio
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
@@ -1155,7 +1156,7 @@ ${output}</xml>`;
                         break;
                     case SK.VariableDeclaration:
                         const decl = node as ts.VariableDeclaration;
-                        if (isAutoDeclaration(decl)) {
+                        if (isAutoDeclaration(decl, env)) {
                             // Don't emit null or automatic initializers;
                             // They are implicit within the blocks. But do track them in case they
                             // never get used in the blocks (and thus won't be emitted again)
@@ -2403,7 +2404,7 @@ ${output}</xml>`;
             if (!n.initializer) {
                 return Util.lf("Variable declarations must have an initializer");
             }
-            if (isAutoDeclaration(n)) {
+            if (isAutoDeclaration(n, env)) {
                 return undefined;
             }
             if (n.type && !isBlocklyType(n.type)) {
@@ -2876,14 +2877,11 @@ ${output}</xml>`;
         return false;
     }
 
-    function isAutoDeclaration(decl: VariableDeclaration) {
+    function isAutoDeclaration(decl: VariableDeclaration, env: DecompilerEnv) {
         if (decl.initializer) {
-            if (isTopLevelNode(decl)) {
-                const sourceFileText = decl.getSourceFile().getFullText();
-                const commentRanges = ts.getTrailingCommentRanges(sourceFileText, decl.getEnd());
-                if (Array.isArray(commentRanges) && commentRanges.length === 1 &&
-                    commentRanges[0].kind === SK.SingleLineCommentTrivia &&
-                    sourceFileText.substring(commentRanges[0].pos, commentRanges[0].end) === "//pxtGenerated") {
+            if (isTopLevelNode(decl) && env.opts.generatedVarDeclarations) {
+                const varInfo = env.opts.generatedVarDeclarations[decl.name.getText()];
+                if (varInfo && varInfo.type === (decl.type === undefined ? undefined : decl.type.getText()) && varInfo.value === decl.initializer.getText()) {
                     return true;
                 }
             }

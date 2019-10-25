@@ -70,6 +70,11 @@ namespace pxt.blocks {
         inBlockDef: boolean
     }
 
+    export interface VarDeclaration {
+        type?: string;
+        value: string;
+    }
+
     // Information for blocks that compile to function calls but are defined by vanilla Blockly
     // and not dynamically by BlocklyLoader
     export const builtinFunctionInfo: pxt.Map<{ params: string[]; blockId: string; }> = {

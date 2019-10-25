@@ -275,7 +275,8 @@ namespace ts.pxtc {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
-            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
+            generatedVarDeclarations: opts.generatedVarDeclarations
         };
         let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);

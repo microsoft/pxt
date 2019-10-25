@@ -743,6 +743,7 @@ declare namespace ts.pxtc {
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
+        generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>; // decompiler only; check variable declarations against those generated during block compilation
 
         embedMeta?: string;
         embedBlob?: string; // base64
