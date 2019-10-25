@@ -1809,23 +1809,20 @@ namespace pxt.blocks {
         return result;
     }
 
-    async function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[], varDecls?: pxt.Map<VarDeclaration>): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[], varDecls?: pxt.Map<VarDeclaration>): Promise<BlockCompilationResult> {
         let res = flattenNode(app)
 
         // Note: the result of format is not used!
 
-        await workerOpAsync("format", { format: { input: res.output, pos: 1 } });
-
-        const result: BlockCompilationResult = {
-            source: res.output,
-            sourceMap: res.sourceMap,
-            stats: env.stats,
-            diagnostics: diags || []
-        };
-        if (varDecls) {
-            result.generatedVarDeclarations = varDecls;
-        }
-        return result;
+        return workerOpAsync("format", { format: { input: res.output, pos: 1 } }).then(() => {
+            return {
+                source: res.output,
+                sourceMap: res.sourceMap,
+                stats: env.stats,
+                diagnostics: diags || [],
+                generatedVarDeclarations: varDecls
+            };
+        })
     }
 
     function maybeAddComment(b: Blockly.Block, comments: string[]) {
