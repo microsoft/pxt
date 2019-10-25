@@ -474,7 +474,7 @@ namespace ts.pxtc {
         const attrJsLocsKey = langLower + "|jsdoc";
         const attrBlockLocsKey = langLower + "|block";
         return mainPkg.localizationStringsAsync(lang)
-            .then(loc => Util.values(apis.byQName).forEach(fn => {
+            .then(loc => Util.values(apis.byQName).map(fn => {
                 if (apiLocalizationStrings)
                     Util.jsonMergeFrom(loc, apiLocalizationStrings);
                 const attrLocs = fn.attributes.locs || {};
