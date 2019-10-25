@@ -26,12 +26,32 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     loginAsync(redirect?: boolean, silent?: boolean): Promise<cloudsync.ProviderLoginResponse> {
         this.loginCheck()
-        let p = Promise.resolve();
-        if (!this.token())
-            p = p.then(() => this.showGithubLoginAsync())
-        return p.then(() => {
+        if (this.token())
+            return Promise.resolve({ accessToken: this.token() } as cloudsync.ProviderLoginResponse);
+
+        // auth flow
+        const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders[this.name];
+        if (cl)
+            return this.oauthLoginAsync().then(() => undefined);
+
+        // dev token
+        return this.showGithubLoginAsync().then(() => {
             return { accessToken: this.token() } as cloudsync.ProviderLoginResponse;
         });
+    }
+
+    private oauthLoginAsync(): Promise<void> {
+        core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
+        const self = window.location.href.replace(/#.*/, "")
+        const state = ts.pxtc.Util.guidGen();
+        pxt.storage.setLocal("oauthState", state)
+        pxt.storage.setLocal("oauthType", this.name)
+        const login = pxt.Cloud.getServiceUrl() +
+            "/oauth/login?state=" + state +
+            "&response_type=token&client_id=gh-token&redirect_uri=" +
+            encodeURIComponent(self)
+        window.location.href = login;
+        return Promise.delay(1000);
     }
 
     getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
