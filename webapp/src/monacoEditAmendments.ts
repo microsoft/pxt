@@ -51,9 +51,9 @@ export interface EditAmendment {
     insertText: string,
     selectText?: string,
 }
-type EditAmendmentInstance = {
+interface EditAmendmentInstance extends EditAmendment {
     range: monaco.IRange
-} & EditAmendment
+}
 const amendmentMarker = `#AMENDMENT:` // TODO: generalize for TS if needed
 
 export function createLineReplacementPyAmendment(insertText?: string, selectText: string = "pass"): EditAmendment {

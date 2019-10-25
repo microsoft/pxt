@@ -251,7 +251,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private editorViewZones: number[];
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
-    private editAmendmentsListener: monaco.IDisposable;
+    private editAmendmentsListener: monaco.IDisposable | undefined;
 
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -1078,6 +1078,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         if (this.editAmendmentsListener) {
             this.editAmendmentsListener.dispose();
+            this.editAmendmentsListener = undefined;
         }
 
         return Promise.resolve();
@@ -1977,10 +1978,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const afterRange = new monaco.Range(range.startLineNumber, range.startColumn,
                 range.startLineNumber + lines.length - 1, lines[lines.length - 1].length)
 
-            const disposable = this.editor.onDidChangeModelContent(e => {
-                let changes = e.changes;
-
-                disposable.dispose();
+            let disposable = this.editor.onDidChangeModelContent(e => {
+                if (disposable) {
+                    disposable.dispose();
+                    disposable = undefined
+                }
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
