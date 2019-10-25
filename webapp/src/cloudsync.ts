@@ -227,6 +227,7 @@ export class ProviderBase {
     logout() {
         pxt.storage.removeLocal(this.name + "token")
         pxt.storage.removeLocal(this.name + "tokenExp")
+        pxt.storage.removeLocal(this.name + "AutoLogin")
         pxt.storage.removeLocal("cloudUser")
         invalidateData();
     }
@@ -341,6 +342,7 @@ export function resetAsync() {
 
     pxt.storage.removeLocal("cloudId")
     pxt.storage.removeLocal("oauthType")
+    pxt.storage.removeLocal("oauthState")
     pxt.storage.removeLocal("oauthHash")
     pxt.storage.removeLocal("oauthRedirect")
     pxt.storage.removeLocal("cloudUser")
@@ -579,23 +581,44 @@ export function syncAsync(): Promise<void> {
 }
 
 export function loginCheck() {
-    let prov = providers()
-
-    if (!prov.length)
+    const provs = providers()
+    if (!provs.length)
         return
 
-    let qs = core.parseQueryString(pxt.storage.getLocal("oauthHash") || "")
-    if (qs["access_token"]) {
-        for (let impl of prov) {
-            if (impl.name == pxt.storage.getLocal("oauthType")) {
+    // implicit OAuth flow, via query argument
+    {
+        const qs = core.parseQueryString(pxt.storage.getLocal("oauthHash") || "")
+        if (qs["access_token"]) {
+            const tp = pxt.storage.getLocal("oauthType")
+            const impl = provs.filter(p => p.name == tp)[0];
+            if (impl) {
                 pxt.storage.removeLocal("oauthHash");
                 impl.loginCallback(qs)
-                break
             }
         }
     }
 
-    for (let impl of prov)
+    // auth OAuth flow, via hash
+    {
+        const qs = core.parseQueryString((location.hash || "#")
+            .slice(1)
+            .replace(/%23access_token/, "access_token"));
+        if (qs["access_token"]) {
+            const ex = pxt.storage.getLocal("oauthState");
+            const tp = pxt.storage.getLocal("oauthType");
+            if (ex && ex == qs["state"]) {
+                pxt.storage.removeLocal("oauthState")
+                pxt.storage.removeLocal("oauthType");
+                const impl = provs.filter(p => p.name == tp)[0];
+                if (impl)
+                    impl.loginCallback(qs);
+            }
+            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
+        }
+    }
+
+    // notify cloud providers
+    for (const impl of provs)
         impl.loginCheck();
 }
 

@@ -3552,23 +3552,6 @@ function parseLocalToken() {
 function initLogin() {
     cloudsync.loginCheck()
     parseLocalToken();
-
-    // handled in cloudsync.logincheck
-    //    {
-    //        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
-    //        if (qs["access_token"]) {
-    //            let ex = pxt.storage.getLocal("oauthState")
-    //            let tp = pxt.storage.getLocal("oauthType")
-    //            if (ex && ex == qs["state"]) {
-    //                pxt.storage.removeLocal("oauthState")
-    //                pxt.storage.removeLocal("oauthType")
-    //                if (tp == "github")
-    //                    pxt.storage.setLocal("githubtoken", qs["access_token"])
-    //            }
-    //            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
-    //        }
-    //        Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
-    //    }
 }
 
 function initSerial() {
