@@ -597,9 +597,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getUrl() {
         const { url, youTubeId } = this.props;
         return (youTubeId && !url) ?
-                    `https://youtu.be/${youTubeId}`
-                    :
-                    ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+                `https://youtu.be/${youTubeId}`
+                :
+                ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
     }
 
     handleDetailClick() {
