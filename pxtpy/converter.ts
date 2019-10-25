@@ -218,10 +218,6 @@ namespace pxt.py {
             }
 
             if (prevRetType) {
-                if (!sym.pyAST) {
-                    error(null, 9525, U.lf("symbol is missing python AST reference near '{1}'", currErrorCtx || "???"))
-                    return mkType({})
-                }
                 unify(sym.pyAST, prevRetType, sym.pyRetType)
             }
 
@@ -457,7 +453,7 @@ namespace pxt.py {
         //currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
     }
 
-    function typeError(a: py.AST, t0: Type, t1: Type) {
+    function typeError(a: py.AST | undefined, t0: Type, t1: Type) {
         error(a, 9500, U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
@@ -515,7 +511,7 @@ namespace pxt.py {
         unify(e, typeOf(e), t1)
     }
 
-    function unify(a: AST, t0: Type, t1: Type): void {
+    function unify(a: AST | undefined, t0: Type, t1: Type): void {
         if (t0 === t1)
             return
 
@@ -1954,9 +1950,6 @@ namespace pxt.py {
                 }
             }
 
-            if (!recv)
-                error(n, 9550, lf("missing recv"));
-
             if (fun) {
                 if (!fun.pyRetType)
                     error(n, 9549, lf("function missing pyRetType"));
@@ -1966,6 +1959,9 @@ namespace pxt.py {
                 if (fun.attributes.py2tsOverride) {
                     const override = parseTypeScriptOverride(fun.attributes.py2tsOverride);
                     if (override) {
+                        if (methName && !recv)
+                            error(n, 9550, lf("missing recv"));
+
                         let res = buildOverride(override, allargs, methName ? expr(recv!) : undefined);
                         if (!res)
                             error(n, 9555, lf("buildOverride failed unexpectedly"));
