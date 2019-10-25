@@ -108,7 +108,8 @@ class SignInProviderButton extends sui.StatelessUIElement<SignInProviderButtonPr
 
 
 interface UserMenuProps extends ISettingsProps {
-    user?: any;
+    user?: pxt.editor.UserInfo;
+    button?: boolean;
 }
 
 export class UserMenu extends data.Component<UserMenuProps, {}> {
@@ -118,7 +119,6 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
 
         this.logout = this.logout.bind(this);
         this.login = this.login.bind(this);
-        this.refresh = this.refresh.bind(this);
     }
 
     login() {
@@ -129,26 +129,39 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
         this.props.parent.cloudSignOut();
     }
 
-    refresh() {
-        cloudsync.refreshToken();
-    }
-
     shouldComponentUpdate(nextProps: UserMenuProps, nextState: any, nextContext: any): boolean {
         return this.props.user != nextProps.user;
     }
 
     renderCore() {
-        const { user } = this.props;
-        const targetTheme = pxt.appTarget.appTheme;
+        const { user, button } = this.props;
 
         const title = user && user.name ? lf("{0}'s Account", user.name) : lf("Sign in");
         const userPhoto = user && user.photo;
         const userInitials = user && user.initials;
+        const providericon = this.getData("sync:providericon") || "";
 
-        return <sui.DropdownMenu role="menuitem" avatarImage={userPhoto} avatarInitials={userInitials} icon={'user large'} title={title} className="item icon user-dropdown-menuitem" tabIndex={0}>
-            {user ? <sui.Item role="menuitem" icon="sign out" text={lf("Sign out")} onClick={this.logout} /> : undefined}
-            {!user ? <sui.Item role="menuitem" icon="sign in" text={lf("Sign in")} onClick={this.login} /> : undefined}
-            {/* <sui.Item role="menuitem" icon="sign in" text={lf("Refresh")} onClick={this.refresh} /> */}
-        </sui.DropdownMenu>
+        if (button) {
+            if (!user)
+                return <sui.Button
+                    className={"authwidget anonymous"}
+                    icon={"user large"}
+                    onClick={this.login}
+                    text={lf("Sign in")}
+                />;
+            else
+                return <sui.Button
+                    className={`circular authwidget ${providericon}`}
+                    title={title}
+                    tooltip={title}
+                    onClick={this.logout}>
+                    {userInitials}
+                </sui.Button>
+        }
+        else
+            return <sui.DropdownMenu role="menuitem" avatarImage={userPhoto} avatarInitials={userInitials} icon={'user large'} title={title} className="item icon user-dropdown-menuitem" tabIndex={0}>
+                {user ? <sui.Item role="menuitem" icon="sign out" text={lf("Sign out")} onClick={this.logout} /> : undefined}
+                {!user ? <sui.Item role="menuitem" icon="sign in" text={lf("Sign in")} onClick={this.login} /> : undefined}
+            </sui.DropdownMenu>
     }
 }

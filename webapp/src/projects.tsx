@@ -192,11 +192,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
-                        {/* {hasCloud ?
-                            <sui.Button key="signin" className="sign-in-btn blue" text={user ? user.name : lf("Sign in")} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
-                            : undefined} */}
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                        {!hasCloud ? undefined : <cloud.UserMenu parent={this.props.parent} user={user} button={true} />}
                     </div>
                 </div>
                 <div className="content">
@@ -264,7 +262,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
             <div className="right menu">
-                {!hasCloud ? undefined : <cloud.UserMenu parent={this.props.parent} user={user}/>}
+                {!hasCloud ? undefined : <cloud.UserMenu parent={this.props.parent} user={user} />}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
