@@ -221,24 +221,41 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        const job = renderQueue.shift();
-        if (!job) return Promise.resolve(); // done
-
-        const { el, options, render } = job;
-        return pxt.runner.decompileToBlocksAsync(el.text(), options)
-            .then((r) => {
-                const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
-                if (errors && errors.length)
-                    errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
-                render(el, r);
-                el.removeClass("lang-shadow");
-                return consumeRenderQueueAsync();
-            }).catch(e => {
-                pxt.reportException(e);
-                el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                el.removeClass("lang-shadow");
-                return consumeRenderQueueAsync();
+        const existingFilters: Map<boolean> = {};
+        return consumeNext()
+            .then(() => {
+                Blockly.Workspace.getAll().forEach(el => el.dispose())
             });
+
+        function consumeNext(): Promise<void> {
+            const job = renderQueue.shift();
+            if (!job) return Promise.resolve(); // done
+
+            const { el, options, render } = job;
+            return pxt.runner.decompileToBlocksAsync(el.text(), options)
+                .then(r => {
+                    const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
+                    if (errors && errors.length) {
+                        errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
+                    }
+
+                    // filter out any blockly definitions from the svg that would be duplicates on the page
+                    r.blocksSvg.querySelectorAll("defs *").forEach(el => {
+                        if (existingFilters[el.id]) {
+                            el.remove();
+                        } else {
+                            existingFilters[el.id] = true;
+                        }
+                    });
+                    render(el, r);
+                }, e => {
+                    pxt.reportException(e);
+                    el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                }).finally(() => {
+                    el.removeClass("lang-shadow");
+                    return consumeNext();
+                });
+        }
     }
 
     function renderNextSnippetAsync(cls: string,
