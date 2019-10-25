@@ -649,7 +649,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         const action = this.isLink() ?
             <sui.Link
-                key={`action_${clickLabel}`}
                 href={this.getUrl()}
                 refCallback={this.linkRef}
                 target={'_blank'}
@@ -658,7 +657,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             />
             :
             <sui.Button
-                key={`action_${clickLabel}`}
                 text={clickLabel}
                 className={`approve huge positive`}
                 onClick={this.handleDetailClick}
@@ -683,7 +681,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     <div className="actions">
                         {action}
                         {cardType === "forumUrl" && <sui.Button
-                            key="action_open"
                             text={lf("Open in Editor")}
                             className={`approve huge`}
                             onClick={this.handleOpenForumUrlInEditor}
