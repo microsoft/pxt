@@ -559,7 +559,8 @@ export interface ProjectsDetailState {
 
 
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
-    private actionRef: React.RefObject<HTMLAnchorElement>;
+    private linkRef: React.RefObject<HTMLAnchorElement>;
+
     constructor(props: ProjectsDetailProps) {
         super(props);
         this.state = {
@@ -567,7 +568,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
-        this.actionRef = React.createRef<HTMLAnchorElement>();
+        this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
     protected isLink() {
@@ -622,8 +623,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
     componentDidMount() {
         // autofocus on linked action
-        if (this.actionRef && this.actionRef.current) {
-            this.actionRef.current.focus();
+        if (this.linkRef && this.linkRef.current) {
+            this.linkRef.current.focus();
         }
     }
 
@@ -650,7 +651,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             <sui.Link
                 key={`action_${clickLabel}`}
                 href={this.getUrl()}
-                refCallback={this.actionRef}
+                refCallback={this.linkRef}
                 target={'_blank'}
                 text={clickLabel}
                 className={`ui button approve huge positive`}
