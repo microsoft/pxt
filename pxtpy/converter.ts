@@ -283,10 +283,11 @@ namespace pxt.py {
             }
         }
 
+        // TODO(dz):
         // TODO this is for testing mostly; we can do this lazily
-        for (let sym of U.values(externalApis)) {
-            fillTypes(sym)
-        }
+        // for (let sym of U.values(externalApis)) {
+        //     fillTypes(sym)
+        // }
 
         tpBuffer = mapTsType("Buffer")
     }

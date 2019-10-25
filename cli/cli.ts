@@ -5418,7 +5418,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             },
             noBrowser: {
                 description: "start the server without launching a browser",
-                aliases: ["no-browser"]
+                aliases: ["no-browser", "nb"]
             },
             noSerial: {
                 description: "do not monitor serial devices",
