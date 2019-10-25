@@ -208,6 +208,7 @@ export class ProviderBase {
         // re-compute
         pxt.storage.removeLocal("cloudName")
         pxt.storage.removeLocal("cloudPhoto")
+        invalidateData();
     }
 
     setNewToken(accessToken: string, expiresIn?: number) {
@@ -217,6 +218,7 @@ export class ProviderBase {
             let time = Math.round(Date.now() / 1000 + (0.75 * expiresIn));
             pxt.storage.setLocal(ns + "tokenExp", time + "")
         }
+        invalidateData();
     }
 
     hasTokenExpired() {
@@ -230,6 +232,7 @@ export class ProviderBase {
     logout() {
         pxt.storage.removeLocal(this.name + "token")
         pxt.storage.removeLocal(this.name + "tokenExp")
+        invalidateData();
     }
 }
 
@@ -656,7 +659,12 @@ data.mountVirtualApi("sync", {
             case "hassync":
                 return currentProvider && currentProvider.hasSync();
             case "providericon":
-                return currentProvider && currentProvider.icon;
+                if (currentProvider)
+                    return currentProvider.icon;
+                const prs = providers();
+                if (prs.length == 1)
+                    return prs[0].icon;
+                return "user";
         }
         return null
     },

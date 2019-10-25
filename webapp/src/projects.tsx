@@ -194,7 +194,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
-                        {!hasCloud ? undefined : <cloud.UserMenu parent={this.props.parent} user={user} button={true} />}
                     </div>
                 </div>
                 <div className="content">
