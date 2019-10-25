@@ -1436,6 +1436,8 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
+        else
+            return stmtTODO(n)
         if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
