@@ -7,7 +7,7 @@ player.onChatCommand("jump",  [ChatArgument.string, ChatArgument.number],functio
   }
 })
 player.onChatCommand("run",  [ChatArgument.number],function ({ number }) {
-  let string = 0 //pxtGenerated
+  let string = 0
   if (number == string) {
 
   }
