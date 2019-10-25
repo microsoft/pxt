@@ -3462,7 +3462,10 @@ export class ProjectView
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         // show github if token or if always vis
-        const showGithub = !!pxt.github.token || (isBlocks && targetTheme.alwaysGithubItemBlocks) || (!isBlocks && targetTheme.alwaysGithubItem);
+        const cloudProvider = this.getData("sync:provider");
+        const showGithub = (cloudProvider == "github" || !cloudProvider)
+            || (isBlocks && targetTheme.alwaysGithubItemBlocks)
+            || (!isBlocks && targetTheme.alwaysGithubItem);
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}

@@ -661,6 +661,8 @@ data.mountVirtualApi("sync", {
                 return providers().length > 0
             case "hassync":
                 return currentProvider && currentProvider.hasSync();
+            case "provider":
+                return currentProvider && currentProvider.name;
             case "providericon":
                 if (currentProvider)
                     return currentProvider.icon;
@@ -680,5 +682,6 @@ function invalidateData() {
     data.invalidate("sync:loggedin")
     data.invalidate("sync:hascloud")
     data.invalidate("sync:hassync")
+    data.invalidate("sync:provider")
     data.invalidate("sync:providericon")
 }
