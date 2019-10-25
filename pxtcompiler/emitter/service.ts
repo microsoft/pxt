@@ -939,7 +939,7 @@ namespace ts.pxtc.service {
         },
         decompile: v => {
             host.setOpts(v.options)
-            return decompile(service.getProgram(), v.options, v.fileName, false);
+            return decompile(service.getProgram(), v.options, v.fileName, false, v.generatedVarDeclarations);
         },
         pydecompile: v => {
             host.setOpts(v.options)

@@ -208,8 +208,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
             opts.ast = true;
             opts.testMode = true;
             opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
-            opts.generatedVarDeclarations = generatedVarDecls;
-            return decompileCoreAsync(opts, fileName)
+            return decompileCoreAsync(opts, fileName, generatedVarDecls)
         })
         .then(resp => {
             // try to patch event locations
@@ -245,8 +244,8 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
         })
 }
 
-function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName })
+function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string, generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>): Promise<pxtc.CompileResult> {
+    return workerOpAsync("decompile", { options: opts, fileName: fileName, generatedVarDeclarations: generatedVarDeclarations });
 }
 
 export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
