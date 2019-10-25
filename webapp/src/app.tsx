@@ -1239,10 +1239,7 @@ export class ProjectView
             }).then(() => this.loadTutorialFiltersAsync())
             .finally(() => {
                 // Editor is loaded
-                let editorHash = "#editor";
-                if (!/editor/.test(window.location.hash) && window.location.hash)
-                    editorHash += "&" + window.location.hash.substring(1);
-                pxt.BrowserUtils.changeHash(editorHash, true);
+                pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
                 this.editorLoaded();
             })
@@ -1805,10 +1802,6 @@ export class ProjectView
             // On embedded pages, preserve the loaded project
             if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
-            }
-            // preserves hash parameters not in "#cmd:arg" format (eg "#ipc=1" for minecraft)
-            else if (!!hash.arg) {
-                location.hash = `#${hash.arg}`;
             }
             else if (this.state && this.state.home) {
                 location.hash = "#reload"
@@ -3611,12 +3604,11 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashStr = window.location.hash || '';
-    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(hashStr)
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
-    return { cmd: '', arg: hashStr.substring(1) };
+    return { cmd: '', arg: '' };
 }
 
 function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boolean {
