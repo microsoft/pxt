@@ -193,7 +193,7 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
                             onChange={this.onChange}
                             aria-valuemin={input.min}
                             aria-valuemax={input.max}
-                            aria-valuenow={value}
+                            aria-valuenow={+value}
                             style={{
                                 marginLeft: 0
                             }}
