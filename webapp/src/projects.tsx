@@ -245,7 +245,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
 
         // only show cloud head if a configuration is available
-        const showCloudHead = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && this.hasCloud();
+        const showCloudHead = this.hasCloud();
         const user = showCloudHead ? this.getUser() : undefined;
 
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
