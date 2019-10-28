@@ -319,12 +319,12 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         return getCached(this, path)
     }
 
-    hasCloud() {
-        return this.getData("sync:hascloud");
+    hasCloud(): boolean {
+        return !!this.getData("sync:hascloud");
     }
 
-    hasSync() {
-        return this.getData("sync:hassync")
+    hasSync(): boolean {
+        return !!this.getData("sync:hassync")
     }
 
     getUser(): pxt.editor.UserInfo {
