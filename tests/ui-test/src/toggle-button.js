@@ -1,7 +1,6 @@
-
 import { DomObject } from './lib/dom-object';
-
 import assert from "assert";
+let { switchButton } = require('./lib/css-value');
 
 class ToggleButton extends DomObject {
 
@@ -9,15 +8,15 @@ class ToggleButton extends DomObject {
 
         console.debug("Start testToggleDisplayForm()");
 
-        await this.click('[title="Convert code to JavaScript"]');
+        await this.click(switchButton.toggleToJavaScript);
 
-        let explorerToolbar = await this.getText('[aria-label="File explorer toolbar"]');
+        let explorerToolbar = await this.getText(switchButton.titleOfExplorer);
 
         assert.equal(explorerToolbar, 'Explorer');
 
         console.debug(`The ${explorerToolbar} toolbar appears after toggling to JavaScript option`);
 
-        await this.click('[title="Convert code to Blocks"]');
+        await this.click(switchButton.toggleToBlocks);
 
     }
 

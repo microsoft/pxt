@@ -1,20 +1,22 @@
 import { DomObject } from './lib/dom-object';
 import assert from 'assert';
-
+let { helpOfProject } = require('./lib/css-value');
 
 class GetHelpList extends DomObject {
 
     async helpList() {
 
-        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Support"]');
+        console.debug('Start testHelpList()');
+
+        await this.click(helpOfProject.helpButton, helpOfProject.support);
 
         await this.switchToWindow();
 
-        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Reference"]');
+        await this.click(helpOfProject.helpButton, helpOfProject.reference);
 
-        await this.switchToIframe('#sidedocsframe');
+        await this.switchToIframe(helpOfProject.iframeOfSideDocs);
 
-        let referenceTitle = await this.getText('#reference');
+        let referenceTitle = await this.getText(helpOfProject.titleOfReferencePage);
 
         console.debug(`The side docs toggle text is: ${referenceTitle}`);
 
@@ -22,17 +24,17 @@ class GetHelpList extends DomObject {
 
         await this.switchToDefaultFrame();
 
-        await this.click('#sidedocsbar');
+        await this.click(helpOfProject.openLinkButton);
 
-        await driver.sleep(2000);//Currently, this static waiting cannot ignore, will find the reason soon.
+        await driver.sleep(2000);
 
         await this.switchToWindow();
 
-        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Blocks"]');
+        await this.click(helpOfProject.helpButton, helpOfProject.blocks);
 
-        await this.switchToIframe('#sidedocsframe');
+        await this.switchToIframe(helpOfProject.iframeOfSideDocs);
 
-        let blocksTitle = await this.getText('#blocks-language');
+        let blocksTitle = await this.getText(helpOfProject.titleOfBlocksPage);
 
         console.debug(`The side docs toggle text is: ${blocksTitle}`);
 
@@ -40,13 +42,13 @@ class GetHelpList extends DomObject {
 
         await this.switchToDefaultFrame();
 
-        await this.click('#sidedocstoggle');
+        await this.click(helpOfProject.collapseButton);
 
-        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="JavaScript"]');
+        await this.click(helpOfProject.helpButton, helpOfProject.javascript);
 
-        await this.switchToIframe('#sidedocsframe');
+        await this.switchToIframe(helpOfProject.iframeOfSideDocs);
 
-        let javascriptTitle = await this.getText('#javascript');
+        let javascriptTitle = await this.getText(helpOfProject.titleOfJavaScriptPage);
 
         console.debug(`The side docs toggle text is: ${javascriptTitle}`);
 
@@ -54,19 +56,19 @@ class GetHelpList extends DomObject {
 
         await this.switchToDefaultFrame();
 
-        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Hardware"]');
+        await this.click(helpOfProject.helpButton, helpOfProject.hardware);
 
-        await this.switchToIframe('#sidedocsframe');
+        await this.switchToIframe(helpOfProject.iframeOfSideDocs);
 
-        await this.click('#sidedocs-back-button');
+        await this.click(helpOfProject.goBackButton);
 
-        let goBackResult = await this.getText('.ui.text h1');
+        let goBackResult = await this.getText(helpOfProject.titleAfterGoBack);
 
         assert.notEqual(goBackResult, 'Device');
 
         await this.switchToDefaultFrame();
 
-        await this.click('[title="Help"]', '[aria-label="Dropdown menu Help"] [title="Buy"]');
+        await this.click(helpOfProject.helpButton, helpOfProject.buy);
 
         await this.switchToWindow();
     }

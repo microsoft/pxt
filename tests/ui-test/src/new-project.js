@@ -1,5 +1,6 @@
 import { DomObject } from './lib/dom-object';
 import assert from "assert";
+let { newProject } = require('./lib/css-value');
 
 class NewProjectPage extends DomObject {
 
@@ -7,21 +8,21 @@ class NewProjectPage extends DomObject {
 
         console.debug("Start testGetCodeSource()");
 
-        await this.click('.newprojectcard', '.openproject', '.closeIcon');
+        await this.click(newProject.newProjectButton, newProject.homeOfProject, newProject.closeButtonOfHomePage);
 
-        await this.click('.openproject');
+        await this.click(newProject.homeOfProject);
 
-        await this.sendKeys('input#projectNameInput', 'Project1');
+        await this.sendKeys(newProject.inputProjectName, 'Project1');
 
-        await this.click('.button.positive');
+        await this.click(newProject.saveButtonOfHomePage);
 
-        let text = await this.getText("[aria-label='My Projects'] .carouselitem:nth-child(2) .header");
+        let text = await this.getText(newProject.projectTitle);
 
         console.debug(`The header text in the first DIV of 'My Projects' is: ${text}"`);
 
         assert.equal(text, "Project1");
 
-        await this.click("[aria-label='My Projects'] .carouselitem:nth-child(2)");
+        await this.click(newProject.openProject);
     }
 
     test() {
