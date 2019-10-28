@@ -73,13 +73,9 @@ class BlocklyToolBox extends DomObject {
                 await this.catchScreenShot('LaunchInFullScreen');
 
                 await this.click(dragBlocks.exitFullScreen);
-
-            } else {
-                console.warn('The locate element is not found!');
-            }
         }
     }
-
+}
     test() {
         it('Get various blocks', async () => {
             return await this.searchBox();
