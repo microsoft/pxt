@@ -18,9 +18,9 @@ class GetHelpList extends DomObject {
 
         let referenceTitle = await this.getText(helpOfProject.titleOfReferencePage);
 
-        console.debug(`The side docs toggle text is: ${referenceTitle}`);
-
         assert.equal(referenceTitle, 'Reference');
+
+        console.debug(`The side docs toggle text is: ${referenceTitle}`);
 
         await this.switchToDefaultFrame();
 
@@ -36,9 +36,9 @@ class GetHelpList extends DomObject {
 
         let blocksTitle = await this.getText(helpOfProject.titleOfBlocksPage);
 
-        console.debug(`The side docs toggle text is: ${blocksTitle}`);
-
         assert.equal(blocksTitle, 'Blocks language');
+
+        console.debug(`The side docs toggle text is: ${blocksTitle}`);
 
         await this.switchToDefaultFrame();
 
@@ -50,9 +50,9 @@ class GetHelpList extends DomObject {
 
         let javascriptTitle = await this.getText(helpOfProject.titleOfJavaScriptPage);
 
-        console.debug(`The side docs toggle text is: ${javascriptTitle}`);
-
         assert.equal(javascriptTitle, 'JavaScript');
+
+        console.debug(`The side docs toggle text is: ${javascriptTitle}`);
 
         await this.switchToDefaultFrame();
 

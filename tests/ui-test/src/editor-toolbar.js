@@ -14,26 +14,26 @@ class EditorToolBar extends DomObject {
 
         let downloadTitle = await this.getText(editorTools.headerTitle);
 
-        console.debug(`This is the title of download button:${downloadTitle}`);
-
         assert.equal(downloadTitle, 'Download to your micro:bit');
+
+        console.debug(`This is the title of download button:${downloadTitle}`);
 
         await this.click(editorTools.closeButton);
 
         let beforeName = await this.getAttribute(editorTools.nameOfInputBox, 'value');
 
-        console.debug(`This is the name before changing:${beforeName}`);
-
         assert.equal(beforeName, 'Untitled');
+
+        console.debug(`This is the name before changing:${beforeName}`);
 
         await this.sendKeys(editorTools.nameOfInputBox, 'Project');
 
         let afterChange = await this.getAttribute(editorTools.nameOfInputBox, 'value');
 
-        console.debug(`This is the name before changing:${afterChange}`);
-
         assert.equal(afterChange, 'Project');
 
+        console.debug(`This is the name before changing:${afterChange}`);
+        
         await this.click(editorTools.saveInputName, editorTools.collapseButton);
 
     }

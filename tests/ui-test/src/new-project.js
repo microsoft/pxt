@@ -17,10 +17,10 @@ class NewProjectPage extends DomObject {
         await this.click(newProject.saveButtonOfHomePage);
 
         let text = await this.getText(newProject.projectTitle);
-
-        console.debug(`The header text in the first DIV of 'My Projects' is: ${text}"`);
-
+        
         assert.equal(text, "Project1");
+       
+        console.debug(`The header text in the first DIV of 'My Projects' is: ${text}"`);
 
         await this.click(newProject.openProject);
     }
