@@ -335,7 +335,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
         const avatar = avatarImage || avatarInitials ?
             <div className="avatar">
-                {avatarImage ? <img src={avatarImage} alt={title} /> :
+                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
                     <div className="initials">{avatarInitials}</div>}
             </div>
             : undefined;
