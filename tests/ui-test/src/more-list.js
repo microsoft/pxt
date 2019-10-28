@@ -46,7 +46,7 @@ class GetMoreList extends DomObject {
 
         console.debug(`This is the alert of delete project:${deleteTitle}`);
 
-        assert.equal(deleteTitle, "Would you like to delete 'Project1Fortest'?");
+        assert.equal(deleteTitle, "Would you like to delete 'Fortest'?");
 
         await this.click(moreOfProject.cancelButton, moreOfProject.moreButton, moreOfProject.reportAbuse,
             moreOfProject.cancelButton, moreOfProject.moreButton, moreOfProject.languageOption);
@@ -57,7 +57,7 @@ class GetMoreList extends DomObject {
 
         assert.equal(languageHeader, 'Select Language');
 
-        await this.click(moreOfProject.closeButtonOfLanguage, moreOfProject.moreButton, moreOfProject.turnOnTheHighContrast);
+        await this.click(moreOfProject.closeButton, moreOfProject.moreButton, moreOfProject.turnOnTheHighContrast);
 
         await this.catchScreenShot('HighContrast');
 

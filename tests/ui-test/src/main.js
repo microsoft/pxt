@@ -4,14 +4,15 @@ import { shareProject } from "./share-project";
 import { toggleButton } from "./toggle-button";
 import { getHelpList } from "./help-list";
 import { getMoreList } from "./more-list";
-import { viewMenuBar } from "./menubar";
-import { blocklyToolBox } from "./search-box";
+import { editorToolBar } from "./editor-toolbar";
+import { blocklyToolBox } from "./drag-blocks";
+
 describe('Micro:bit Test', function () {
     before(async () => {
         return await website.open("beta");
     });
     after(function () {
-       website.close();
+        website.close();
     });
 
     newProjectPage.test();
@@ -19,7 +20,7 @@ describe('Micro:bit Test', function () {
     toggleButton.test();
     getHelpList.test();
     getMoreList.test();
-    viewMenuBar.test();
+    editorToolBar.test();
     blocklyToolBox.test();
-    
+
 });

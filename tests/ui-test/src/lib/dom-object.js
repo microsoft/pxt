@@ -3,6 +3,7 @@ import fs from 'fs';
 import util from 'util';
 const screenshotsFolder = './screenshots';
 import dateformat from 'dateformat';
+
 export class DomObject {
 
     async actionForAll(actionName, findBys) {
@@ -108,8 +109,16 @@ export class DomObject {
     async sendKeys(criteria, keys) {
 
         let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
-        return element.sendKeys(keys);
 
+        if (element !== null) {
+
+            element.clear();
+            element.sendKeys(keys);
+
+        } else {
+            element.sendKeys(keys);
+            
+        }
     }
 
     async click(...findBys) {

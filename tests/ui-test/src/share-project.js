@@ -18,11 +18,10 @@ class ShareProject extends DomObject {
 
         console.debug(`The shared project's name is: "${sharedProjectName}"`);
 
-        assert.equal(shareTheProject, "Project1");
+        assert.equal(sharedProjectName, "Project1");
 
         await this.click(shareTheProject.publishButton, shareTheProject.copyButton, shareTheProject.closeButtonOfSharePage);
 
-        return true;
     }
 
     test() {

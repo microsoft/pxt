@@ -8,7 +8,7 @@ class ToggleButton extends DomObject {
 
         console.debug("Start testToggleDisplayForm()");
 
-        await this.click(switchButton.toggleToJavaScript);
+        await this.click(switchButton.switchToJavaScript);
 
         let explorerToolbar = await this.getText(switchButton.titleOfExplorer);
 
@@ -16,7 +16,7 @@ class ToggleButton extends DomObject {
 
         console.debug(`The ${explorerToolbar} toolbar appears after toggling to JavaScript option`);
 
-        await this.click(switchButton.toggleToBlocks);
+        await this.click(switchButton.switchToBlocks);
 
     }
 
