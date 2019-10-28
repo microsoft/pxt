@@ -559,6 +559,7 @@ export interface ProjectsDetailState {
 
 
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
+    private linkRef: React.RefObject<HTMLAnchorElement>;
 
     constructor(props: ProjectsDetailProps) {
         super(props);
@@ -567,23 +568,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
         this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
+        this.linkRef = React.createRef<HTMLAnchorElement>();
     }
 
-    handleDetailClick() {
-        const { cardType, url, youTubeId, scr, onClick } = this.props;
+    protected isLink() {
+        const { cardType, url, youTubeId } = this.props;
 
-        const isForum = cardType == "forumUrl";
-        const isLink = isForum || (!isCodeCardType(cardType) && (youTubeId || url));
+        return isCodeCardWithLink(cardType) && (youTubeId || url);
 
-        if (isLink) {
-            const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
-                ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
-            window.open(linkHref, '_blank');
-        } else {
-            onClick(scr);
-        }
-
-        function isCodeCardType(value: string): value is pxt.CodeCardType {
+        function isCodeCardWithLink(value: string) {
             switch (value) {
                 case "file":
                 case "example":
@@ -593,12 +586,25 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 case "template":
                 case "package":
                 case "hw":
-                case "forumUrl":
-                    return true;
-                default:
                     return false;
+                case "forumUrl":
+                default:
+                    return true;
             }
         }
+    }
+
+    protected getUrl() {
+        const { url, youTubeId } = this.props;
+        return (youTubeId && !url) ?
+                `https://youtu.be/${youTubeId}`
+                :
+                ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+    }
+
+    handleDetailClick() {
+        const { scr, onClick } = this.props;
+        onClick(scr);
     }
 
     handleOpenForumUrlInEditor() {
@@ -613,6 +619,13 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 }
             })
             .catch(core.handleNetworkError)
+    }
+
+    componentDidMount() {
+        // autofocus on linked action
+        if (this.linkRef && this.linkRef.current) {
+            this.linkRef.current.focus();
+        }
     }
 
     renderCore() {
@@ -634,6 +647,22 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else if (youTubeId)
             clickLabel = lf("Play Video");
 
+        const action = this.isLink() ?
+            <sui.Link
+                href={this.getUrl()}
+                refCallback={this.linkRef}
+                target={'_blank'}
+                text={clickLabel}
+                className={`ui button approve huge positive`}
+            />
+            :
+            <sui.Button
+                text={clickLabel}
+                className={`approve huge positive`}
+                onClick={this.handleDetailClick}
+                onKeyDown={sui.fireClickOnEnter}
+            />
+
         return <div className="ui grid stackable padded">
             {image && <div className="imagewrapper">
                 <div className="image" style={{ backgroundImage: `url("${image}")` }} />
@@ -650,16 +679,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         </p>
                     })}
                     <div className="actions">
-                        <sui.Button
-                            key={`action_${clickLabel}`}
-                            text={clickLabel}
-                            className={`approve huge positive`}
-                            onClick={this.handleDetailClick}
-                            onKeyDown={sui.fireClickOnEnter}
-                            autoFocus={true}
-                        />
-                        {cardType == "forumUrl" && <sui.Button
-                            key="action_open"
+                        {action}
+                        {cardType === "forumUrl" && <sui.Button
                             text={lf("Open in Editor")}
                             className={`approve huge`}
                             onClick={this.handleOpenForumUrlInEditor}

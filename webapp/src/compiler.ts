@@ -359,11 +359,11 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
-export function snippetAsync(qName: string, python?: boolean) {
+export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     return workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    });
+    }).then(res => res as string)
 }
 
 export function typecheckAsync() {
@@ -650,6 +650,6 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 function blocksOptions(): pxtc.service.BlocksOptions {
     const bannedCategories = pkg.mainPkg.resolveBannedCategories();
     if (bannedCategories)
-        return {  bannedCategories };
+        return { bannedCategories };
     return undefined;
 }

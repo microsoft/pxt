@@ -285,7 +285,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     private handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
         if (this.isMouseDown) return;
-        // Use timeout to delay examination of activeElement until after blur/focus 
+        // Use timeout to delay examination of activeElement until after blur/focus
         // events have been processed.
         setTimeout(() => {
             let open = this.isChildFocused();
@@ -488,6 +488,7 @@ export interface LinkProps extends ButtonProps {
     download?: string;
     target?: string;
     rel?: string;
+    refCallback?: React.Ref<HTMLAnchorElement>
 }
 
 export class Link extends StatelessUIElement<LinkProps> {
@@ -499,6 +500,7 @@ export class Link extends StatelessUIElement<LinkProps> {
                 target={this.props.target}
                 rel={this.props.rel || (this.props.target ? "noopener noreferrer" : "")}
                 download={this.props.download}
+                ref={this.props.refCallback}
                 role={this.props.role}
                 title={this.props.title}
                 tabIndex={this.props.tabIndex || 0}
@@ -838,7 +840,7 @@ export class MenuItem extends data.Component<MenuItemProps, {}> {
                 role="tab"
                 aria-controls={ariaControls}
                 aria-selected={active}
-                aria-label={content || name}
+                aria-label={`${content || name}`}
             >
                 {icon ? <Icon icon={icon} /> : undefined}
                 {content || name}
