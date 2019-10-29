@@ -661,6 +661,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 className={`approve huge positive`}
                 onClick={this.handleDetailClick}
                 onKeyDown={sui.fireClickOnEnter}
+                autoFocus={true}
             />
 
         return <div className="ui grid stackable padded">
