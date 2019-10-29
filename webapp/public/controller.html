@@ -89,6 +89,9 @@
             else if (action == 'settracestate') {
                 msg.enabled = true;
             }
+            else if (action == 'setlang') {}
+                msg.lang = 'fr'
+            }
             if (msg.response)
                 pendingMsgs[msg.id] = msg;
             editor.postMessage(msg, "*")
@@ -174,6 +177,7 @@
         <button class="ui button" onclick="sendMessage('print')">print</button>
         <button class="ui button" onclick="sendMessage('pair')">pair</button>
         <button class="ui button" onclick="sendMessage('info')">info</button>
+        <button class="ui button" onclick="sendMessage('setlang')">setlang</button>
         <br/>
         <input id="hexfile" class="ui input" type="file" />
         <button class="ui button" onclick="importHexFile()">import hex</button>
