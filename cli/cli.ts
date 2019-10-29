@@ -1668,7 +1668,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     nodeutil.mkdirP("built");
     nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
     nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
-    pxt.log(`target-strings.json built `)
+    pxt.log(`target-strings.json built`)
 }
 
 function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
