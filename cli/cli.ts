@@ -1669,6 +1669,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     nodeutil.mkdirP("built");
     nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
     nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
+    pxt.log(`target-strings.json built `)
 }
 
 function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
@@ -1953,7 +1954,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
-                            console.error(`Failed to extract native image for project ${dirname}`);
+                            pxt.debug(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
