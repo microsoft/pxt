@@ -100,8 +100,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
-                    const svg = Blockly.Xml.textToDom(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code]));
-                    wrapperDiv.appendChild(svg);
+                    const doc = Blockly.utils.xml.textToDomDocument(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code]));
+                    wrapperDiv.appendChild(doc.documentElement);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
                     parent.renderBlocksAsync({
