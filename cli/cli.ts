@@ -1581,6 +1581,21 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    // walk options in pxt.json
+    // patch icons in bundled packages
+    Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+        const res = cfg.bundledpkgs[pkgid];
+        // path config before storing
+        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (config.description) targetStrings[config.description] = config.description;
+        if (config.yotta && config.yotta.userConfigs) {
+            config.yotta.userConfigs
+                .filter(userConfig => userConfig.description)
+                .forEach(userConfig => targetStrings[userConfig.description]);
+        }
+        res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+    })
+
     // extract strings from docs
     function walkDocs(docs: pxt.DocMenuEntry[]) {
         if (!docs) return;
@@ -4607,11 +4622,11 @@ function checkFileSize(files: string[]): number {
     const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
     let maxSize = 0;
     files.forEach(f => {
-            const stats = fs.statSync(f);
-            if (stats.size > warnSize)
-                pxt.log(`  ${f} - ${stats.size / mb}Mb`);
-            maxSize = Math.max(maxSize, stats.size);
-        });
+        const stats = fs.statSync(f);
+        if (stats.size > warnSize)
+            pxt.log(`  ${f} - ${stats.size / mb}Mb`);
+        maxSize = Math.max(maxSize, stats.size);
+    });
     return maxSize;
 }
 

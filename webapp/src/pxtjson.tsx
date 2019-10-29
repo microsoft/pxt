@@ -236,7 +236,7 @@ class UserConfigCheckbox extends data.Component<UserConfigCheckboxProps, {}> {
 
         return <sui.Checkbox
             key={`userconfig-${uc.description}`}
-            inputLabel={uc.description}
+            inputLabel={pxt.Util.rlf(uc.description)}
             checked={isChecked}
             onChange={this.applyUserConfig} />
     }
