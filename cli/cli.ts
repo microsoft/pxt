@@ -1591,9 +1591,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
         if (config.yotta && config.yotta.userConfigs) {
             config.yotta.userConfigs
                 .filter(userConfig => userConfig.description)
-                .forEach(userConfig => targetStrings[userConfig.description]);
+                .forEach(userConfig => targetStrings[userConfig.description] = userConfig.description);
         }
-        res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
     })
 
     // extract strings from docs
