@@ -633,6 +633,26 @@ namespace pxt.BrowserUtils {
             .then(estimate => !estimate.quota || estimate.usage / estimate.quota < 0.8 ? stressTranslationsAsync() : Promise.resolve());
     }
 
+    export function getCookieLang() {
+        const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
+        const cookieValue = cookiePropRegex.exec(document.cookie);
+        return cookieValue && cookieValue[1] || null;
+    }
+
+    export function setCookieLang(langId: string): boolean {
+        if (!pxt.Util.allLanguages[langId]) {
+            return false;
+        }
+
+        if (langId !== getCookieLang()) {
+            pxt.tickEvent(`menu.lang.setcookielang`, { lang: langId });
+            const expiration = new Date();
+            expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
+            document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
+        }
+        return true;
+    }
+
     export interface ITranslationDbEntry {
         id?: string;
         etag: string;

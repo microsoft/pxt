@@ -23,19 +23,6 @@ export function getCookieLang() {
     return cookieValue && cookieValue[1] || null;
 }
 
-export function setCookieLang(langId: string) {
-    if (!pxt.Util.allLanguages[langId]) {
-        return;
-    }
-
-    if (langId !== getCookieLang()) {
-        pxt.tickEvent(`menu.lang.setcookielang`, { lang: langId });
-        const expiration = new Date();
-        expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
-        document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
-    }
-}
-
 export class LanguagePicker extends data.Component<ISettingsProps, LanguagesState> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -58,15 +45,12 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
     translateEditor() {
         pxt.tickEvent("translate.editor.incontext")
         const sep = window.location.href.indexOf("?") < 0 ? "?" : "&";
-        window.location.href = window.location.pathname + (window.location.search || "") + sep +  "translate=1" + (window.location.hash || "");
+        window.location.href = window.location.pathname + (window.location.search || "") + sep + "translate=1" + (window.location.hash || "");
     }
 
     changeLanguage(langId: string) {
-        if (!pxt.Util.allLanguages[langId]) {
+        if (!pxt.BrowserUtils.setCookieLang(langId))
             return;
-        }
-
-        setCookieLang(langId);
 
         if (langId !== initialLang) {
             pxt.tickEvent(`menu.lang.changelang`, { lang: langId });
@@ -121,10 +105,10 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                         )}
                     </div>
                 </div>
-                <br/>
+                <br />
                 {targetTheme.crowdinProject ?
                     <div className="ui">
-                        {!pxt.BrowserUtils.isIE() ? <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> : undefined }
+                        {!pxt.BrowserUtils.isIE() ? <sui.Button aria-label={lf("Translate the editor")} onClick={this.translateEditor} text={lf("Translate the editor")} /> : undefined}
                         <sui.Link className="button" role="button" aria-label={lf("Learn about translations")} href="/translate" text={lf("Learn about translations")} target="_blank" />
                     </div> : undefined}
             </sui.Modal>

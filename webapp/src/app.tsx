@@ -3951,8 +3951,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 live,
                 force)
                 .then(() => {
-                    if (pxt.Util.isLocaleEnabled(useLang)) {
-                        lang.setCookieLang(useLang);
+                    if (pxt.BrowserUtils.setCookieLang(useLang)) {
                         lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });

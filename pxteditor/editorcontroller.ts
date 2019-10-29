@@ -55,6 +55,7 @@ namespace pxt.editor {
         | "togglehighcontrast"
         | "togglegreenscreen"
         | "settracestate" // 
+        | "setlang"
 
         | "print" // print code
         | "pair" // pair device
@@ -220,6 +221,11 @@ namespace pxt.editor {
         enabled: boolean;
         // interval speed for the execution trace
         intervalSpeed?: number;
+    }
+
+    export interface EditorMessageSetLangRequest extends EditorMessageRequest {
+        action: "setlang";
+        lang: string;
     }
 
     export interface InfoMessage {
@@ -412,6 +418,16 @@ namespace pxt.editor {
                                                 availableLocales: pxt.appTarget.appTheme.availableLocales
                                             }
                                         });
+                                }
+                                case "setlang": {
+                                    const langmsg = data as EditorMessageSetLangRequest;
+                                    const curr = pxt.BrowserUtils.getCookieLang();
+                                    if (pxt.BrowserUtils.setCookieLang(langmsg.lang)
+                                        && curr !== pxt.BrowserUtils.getCookieLang()) {
+                                        // reload to pick up new language
+                                        window.location.reload();
+                                    } else
+                                        return Promise.resolve();
                                 }
                             }
                             return Promise.resolve();
