@@ -516,7 +516,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;
-        const hideIteration = tutorialOptions && tutorialOptions.metadata.hideIteration;
+        const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
         const hc = !!this.props.parent.state.highContrast;
