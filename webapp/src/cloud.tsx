@@ -146,7 +146,10 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
             title={title}
             className="item icon user-dropdown-menuitem"
             tabIndex={0}>
-            {profile ? <a className="ui item" role="menuitem" href={profile} title={lf("Open user profile page")} target="_blank" rel="noopener noreferrer">{lf("Signed in as {0}", user.userName || user.name)}</a> : undefined}
+            {profile ? <a className="ui item" role="menuitem" href={profile} title={lf("Open user profile page")} target="_blank" rel="noopener noreferrer">
+                <i className={`ui icon ${providericon}`} />
+                {lf("Signed in as {0}", user.userName || user.name)}
+            </a> : undefined}
             {user ? <sui.Item role="menuitem" icon="sign out" text={lf("Sign out")} onClick={this.logout} /> : undefined}
             {!user ? <sui.Item role="menuitem" icon="sign in" text={lf("Sign in")} onClick={this.login} /> : undefined}
         </sui.DropdownMenu>
