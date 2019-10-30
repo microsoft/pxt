@@ -1581,6 +1581,20 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    // walk options in pxt.json
+    // patch icons in bundled packages
+    Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+        const res = cfg.bundledpkgs[pkgid];
+        // path config before storing
+        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (config.description) targetStrings[config.description] = config.description;
+        if (config.yotta && config.yotta.userConfigs) {
+            config.yotta.userConfigs
+                .filter(userConfig => userConfig.description)
+                .forEach(userConfig => targetStrings[userConfig.description] = userConfig.description);
+        }
+    })
+
     // extract strings from docs
     function walkDocs(docs: pxt.DocMenuEntry[]) {
         if (!docs) return;
@@ -1654,6 +1668,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     nodeutil.mkdirP("built");
     nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
     nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
+    pxt.log(`target-strings.json built`)
 }
 
 function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
@@ -1938,7 +1953,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
-                            console.error(`Failed to extract native image for project ${dirname}`);
+                            pxt.debug(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
@@ -4607,11 +4622,11 @@ function checkFileSize(files: string[]): number {
     const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
     let maxSize = 0;
     files.forEach(f => {
-            const stats = fs.statSync(f);
-            if (stats.size > warnSize)
-                pxt.log(`  ${f} - ${stats.size / mb}Mb`);
-            maxSize = Math.max(maxSize, stats.size);
-        });
+        const stats = fs.statSync(f);
+        if (stats.size > warnSize)
+            pxt.log(`  ${f} - ${stats.size / mb}Mb`);
+        maxSize = Math.max(maxSize, stats.size);
+    });
     return maxSize;
 }
 
