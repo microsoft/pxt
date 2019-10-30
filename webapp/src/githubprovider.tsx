@@ -12,6 +12,11 @@ export class GithubProvider extends cloudsync.ProviderBase {
         super(PROVIDER_NAME, lf("GitHub"), "icon github", "https://api.github.com");
     }
 
+    logout() {
+        super.logout();
+        pxt.github.token = undefined;
+    }
+
     hasSync(): boolean {
         return false;
     }
