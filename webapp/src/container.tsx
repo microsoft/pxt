@@ -5,7 +5,6 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
-import * as greenscreen from "./greenscreen";
 import * as core from "./core";
 import * as cloud from "./cloud";
 
@@ -346,7 +345,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -365,7 +364,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -384,7 +383,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -407,7 +406,7 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
         const isRunning = this.props.parent.state.simState == pxt.editor.SimState.Running;
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
-        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -421,7 +420,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         super(props);
     }
 
-    renderCore () {
+    renderCore() {
         const pythonEnabled = this.props.python;
         const dropdownActive = pythonEnabled && (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
 
@@ -529,8 +528,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
 
-        //const hasCloud = this.hasCloud();
-        //const user = hasCloud ? this.getUser() : undefined;
+        const hasCloud = this.hasCloud();
+        const user = hasCloud ? this.getUser() : undefined;
+        const showCloud = !sandbox && !inTutorial && !debugging && !!user;
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -562,6 +562,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
+                {showCloud ? <cloud.UserMenu parent={this.props.parent} user={user} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}
