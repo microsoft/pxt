@@ -1,5 +1,4 @@
 import { ImageEditorTool } from "./store/imageReducer";
-import { Coord, Bitmap, Bitmask, ImageState } from "./store/bitmap";
 
 export enum ToolCursor {
     None = "none",
@@ -106,23 +105,23 @@ export function getEdit(tool: ImageEditorTool, state: EditState, color: number, 
     }
 }
 
-export function getEditState(state: ImageState): EditState {
-    const res = new EditState(Bitmap.fromData(state.bitmap).copy());
+export function getEditState(state: pxt.sprite.ImageState): EditState {
+    const res = new EditState(pxt.sprite.Bitmap.fromData(state.bitmap).copy());
     res.layerOffsetX = state.layerOffsetX;
     res.layerOffsetY = state.layerOffsetY;
 
-    if (state.floatingLayer) res.floatingLayer = Bitmap.fromData(state.floatingLayer).copy();
+    if (state.floatingLayer) res.floatingLayer = pxt.sprite.Bitmap.fromData(state.floatingLayer).copy();
 
     return res;
 }
 
 export class EditState {
-    image: Bitmap;
-    floatingLayer: Bitmap;
+    image: pxt.sprite.Bitmap;
+    floatingLayer: pxt.sprite.Bitmap;
     layerOffsetX: number;
     layerOffsetY: number;
 
-    constructor(bitmap?: Bitmap) {
+    constructor(bitmap?: pxt.sprite.Bitmap) {
         this.image = bitmap;
         this.layerOffsetX = 0;
         this.layerOffsetY = 0;
@@ -256,14 +255,14 @@ export abstract class SelectionEdit extends Edit {
         }
     }
 
-    protected topLeft(): Coord {
+    protected topLeft(): pxt.sprite.Coord {
         return {
             x: Math.min(this.startCol, this.endCol),
             y: Math.min(this.startRow, this.endRow)
         };
     }
 
-    protected bottomRight(): Coord {
+    protected bottomRight(): pxt.sprite.Coord {
         return {
             x: Math.max(this.startCol, this.endCol),
             y: Math.max(this.startRow, this.endRow)
@@ -275,12 +274,12 @@ export abstract class SelectionEdit extends Edit {
  * Regular old drawing tool
  */
 export class PaintEdit extends Edit {
-    protected mask: Bitmask;
+    protected mask: pxt.sprite.Bitmask;
     showPreview = true;
 
     constructor (canvasWidth: number, canvasHeight: number, color: number, toolWidth: number) {
         super(canvasWidth, canvasHeight, color, toolWidth);
-        this.mask = new Bitmask(canvasWidth, canvasHeight);
+        this.mask = new pxt.sprite.Bitmask(canvasWidth, canvasHeight);
     }
 
     update(col: number, row: number) {
@@ -397,7 +396,7 @@ export class OutlineEdit extends SelectionEdit {
         }
     }
 
-    protected drawRectangle(state: EditState, tl: Coord, br: Coord) {
+    protected drawRectangle(state: EditState, tl: pxt.sprite.Coord, br: pxt.sprite.Coord) {
         if (tl.x > br.x || tl.y > br.y) return;
 
         for (let c = tl.x; c <= br.x; c++) {
@@ -568,9 +567,9 @@ export class FillEdit extends Edit {
         }
         state.mergeFloatingLayer();
 
-        const mask = new Bitmask(state.width, state.height);
+        const mask = new pxt.sprite.Bitmask(state.width, state.height);
         mask.set(this.col, this.row);
-        const q: Coord[] = [{x: this.col, y: this.row}];
+        const q: pxt.sprite.Coord[] = [{x: this.col, y: this.row}];
         while (q.length) {
             const curr = q.pop();
             if (state.image.get(curr.x, curr.y) === replColor) {

@@ -1,5 +1,3 @@
-import { ImageState, Bitmap } from "./store/bitmap";
-
 export const DRAG_RADIUS = 3;
 
 export function hasPointerEvents(): boolean {
@@ -289,10 +287,10 @@ function isRightClick(ev: MouseEvent | PointerEvent | TouchEvent) {
 export interface Color { r: number, g: number, b: number, a?: number }
 
 
-export function imageStateToBitmap(state: ImageState) {
-    const base = Bitmap.fromData(state.bitmap);
+export function imageStateToBitmap(state: pxt.sprite.ImageState) {
+    const base = pxt.sprite.Bitmap.fromData(state.bitmap);
     if (state.floatingLayer) {
-        const floating = Bitmap.fromData(state.floatingLayer)
+        const floating = pxt.sprite.Bitmap.fromData(state.floatingLayer)
         floating.x0 = state.layerOffsetX || 0;
         floating.y0 = state.layerOffsetY || 0;
 

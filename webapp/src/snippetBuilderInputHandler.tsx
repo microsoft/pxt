@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as data from './data';
-import { SpriteEditor } from './snippetBuilderSpriteEditor';
+import { ImageEditor } from './components/ImageEditor/ImageEditor';
 import * as sui from './sui';
 import { PositionPicker } from './snippetBuilderPositionPicker';
 import * as Snippet from './snippetBuilder'
@@ -51,11 +51,10 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
             case 'spriteEditor':
                 if (Snippet.isSnippetInputAnswerTypeOther(input)) {
                     return (
-                        <SpriteEditor
-                            input={input}
+                        <ImageEditor
+                            singleFrame={true}
+                            initialValue={value}
                             onChange={onChange}
-                            value={value}
-                            fullscreen={false}
                         />
                     );
                 }
