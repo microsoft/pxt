@@ -3457,9 +3457,7 @@ export class ProjectView
         // show github if token or if always vis
         const hasCloud = this.hasCloud();
         const cloudProvider = hasCloud && this.getData("sync:provider");
-        const showGithub = (cloudProvider == "github" || !cloudProvider)
-            || (isBlocks && targetTheme.alwaysGithubItemBlocks)
-            || (!isBlocks && targetTheme.alwaysGithubItem);
+        const showGithub = cloudProvider == "github";
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
