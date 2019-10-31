@@ -238,7 +238,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.signInGithub = this.signOutGithub.bind(this);
+        this.signInGithub = this.signInGithub.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -308,7 +308,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
-            {showSigninGithub ? <sui.Item role="menuitem" text={lf("Sign in with GitHub")} icon="github" onClick={this.signInGithub} /> : undefined}
+            {showSigninGithub ? <sui.Item role="menuitem" text={lf("Sign in with GitHub")} icon="github" onClick={this.signOutGithub} /> : undefined}
             {showSignoutGithub ? <sui.Item role="menuitem" text={lf("Sign out from GitHub")} icon="github" onClick={this.signOutGithub} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <div className="ui divider"></div>
