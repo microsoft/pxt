@@ -1783,18 +1783,28 @@ export class ProjectView
     }
 
     cloudSignOut() {
-        const inEditor = !!this.state.header;
-        // Reset the cloud workspace
-        workspace.resetCloudAsync()
-            .then(() => {
-                if (inEditor) {
-                    this.openHome();
-                }
-                if (this.home) {
-                    this.home.forceUpdate();
-                }
-            })
-            .done();
+        core.confirmAsync({
+            header: lf("Sign out"),
+            body: lf("You are signing out. Make sure that you commited all your changes, local projects will be deleted."),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            agreeLbl: lf("Sign out"),
+        }).then(r => {
+            if (r) {
+                const inEditor = !!this.state.header;
+                // Reset the cloud workspace
+                return workspace.resetCloudAsync()
+                    .then(() => {
+                        if (inEditor) {
+                            this.openHome();
+                        }
+                        if (this.home) {
+                            this.home.forceUpdate();
+                        }
+                    })
+            }
+            return Promise.resolve();
+        });
     }
 
     cloudSignInComplete() {
