@@ -81,7 +81,7 @@
     "pxt-monaco-typescript": "2.3.5",
     "pxt-blockly": "2.1.11",
     "react": "16.8.3",
-    "react-dom": "16.3.1",
+    "react-dom": "16.11.0",
     "react-modal": "3.3.2",
     "react-redux": "5.1.1",
     "react-tooltip": "3.9.0",
