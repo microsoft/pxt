@@ -108,7 +108,6 @@ class SignInProviderButton extends sui.StatelessUIElement<SignInProviderButtonPr
 
 
 interface UserMenuProps extends ISettingsProps {
-    user?: pxt.editor.UserInfo;
 }
 
 export class UserMenu extends data.Component<UserMenuProps, {}> {
@@ -118,27 +117,34 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
 
         this.logout = this.logout.bind(this);
         this.login = this.login.bind(this);
+        this.createRepository = this.createRepository.bind(this);
     }
 
     login() {
+        pxt.tickEvent("github.usermenu.signin", undefined, { interactiveConsent: true });
         this.props.parent.cloudSignInDialog();
     }
 
     logout() {
+        pxt.tickEvent("github.usermenu.signout", undefined, { interactiveConsent: true });
         this.props.parent.cloudSignOut();
     }
 
-    shouldComponentUpdate(nextProps: UserMenuProps, nextState: any, nextContext: any): boolean {
-        return this.props.user != nextProps.user;
+    createRepository() {
+        pxt.tickEvent("github.usermenu.create", undefined, { interactiveConsent: true });
+        const { projectName, header } = this.props.parent.state;
+        cloudsync.githubProvider().createRepositoryAsync(projectName, header)
+            .done(r => r && this.props.parent.reloadHeaderAsync());
     }
 
     renderCore() {
-        const { user } = this.props;
-
+        const header = this.props.parent.state.header;
+        const user = this.getUser();
         const title = user && user.name ? lf("{0}'s Account", user.name) : lf("Sign in");
         const profile = user && user.profile;
         const userPhoto = user && user.photo;
         const userInitials = user && user.initials;
+        const provider = this.getData("sync:provider");
         const providericon = this.getData("sync:providericon") || "";
 
         return <sui.DropdownMenu role="menuitem" avatarImage={userPhoto} avatarInitials={userInitials}
@@ -150,6 +156,8 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
                 <i className={`ui icon ${providericon}`} />
                 {lf("Signed in as {0}", user.userName || user.name)}
             </a> : undefined}
+            {user && provider == "github" && header && !header.githubId ? <sui.Item role="menuitem" text={lf("New repository")} onClick={this.createRepository} /> : undefined}
+            {user ? <div className="ui divider" /> : undefined}
             {user ? <sui.Item role="menuitem" icon="sign out" text={lf("Sign out")} onClick={this.logout} /> : undefined}
             {!user ? <sui.Item role="menuitem" icon="sign in" text={lf("Sign in")} onClick={this.login} /> : undefined}
         </sui.DropdownMenu>

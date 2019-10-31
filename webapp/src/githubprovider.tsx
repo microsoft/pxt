@@ -162,21 +162,23 @@ export class GithubProvider extends cloudsync.ProviderBase {
             }).finally(() => core.hideLoading(LOAD_ID))
     }
 
-    async createRepositoryAsync(projectName: string, header: pxt.workspace.Header) {
+    async createRepositoryAsync(projectName: string, header: pxt.workspace.Header): Promise<boolean> {
         pxt.tickEvent("github.filelist.create.start");
         await this.loginAsync();
         if (!this.token()) {
             pxt.tickEvent("github.filelist.create.notoken");
-            return;
+            return false;
         }
 
         const repoid = await dialogs.showCreateGithubRepoDialogAsync(projectName);
-        if (!repoid) return;
+        if (!repoid)
+            return false;
 
         pxt.tickEvent("github.filelist.create.export");
         core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
         try {
             await workspace.exportToGithubAsync(header, repoid);
+            return true;
         } finally {
             core.hideLoading("creategithub");
         }

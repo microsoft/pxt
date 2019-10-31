@@ -246,7 +246,6 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
         // only show cloud head if a configuration is available
         const showCloudHead = this.hasCloud();
-        const user = showCloudHead ? this.getUser() : undefined;
 
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
@@ -259,7 +258,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             </div>
             {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
             <div className="right menu">
-                {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} user={user} />}
+                {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />

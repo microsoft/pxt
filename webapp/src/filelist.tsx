@@ -295,27 +295,24 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
     }
 
     private handleClick(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
         const { githubId } = this.props.parent.state.header;
-        if (!githubId) {
-            pxt.tickEvent("github.filelist.create")
-            cloudsync.githubProvider().createRepositoryAsync(this.props.parent.state.projectName, this.props.parent.state.header)
-                .done(() => this.props.parent.reloadHeaderAsync());
-        } else {
+        if (githubId) {
             pxt.tickEvent("github.filelist.nav")
             const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
             this.props.parent.setSideFile(gitf);
         }
-        e.stopPropagation();
     }
 
     renderCore() {
         const header = this.props.parent.state.header;
         if (!header) return <div />;
 
-
-        const targetTheme = pxt.appTarget.appTheme;
         const { githubId } = header;
         const ghid = pxt.github.parseRepoId(githubId);
+        if (!ghid) return <div />;
+
+        const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
 
@@ -327,9 +324,9 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
                 tabIndex={0}
                 role="button"
                 onKeyDown={sui.fireClickOnEnter}>
-                {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
+                {ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName}
                 <i className="github icon" />
-                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
+                {meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
             </div>
         </div>;
     }
