@@ -347,7 +347,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
             <div className="right menu">
                 {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
-                <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} greenScreen={this.props.parent.state.greenScreen}  />
+                <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
@@ -685,9 +685,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     protected getUrl() {
         const { url, youTubeId } = this.props;
         return (youTubeId && !url) ?
-                `https://youtu.be/${youTubeId}`
-                :
-                ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+            `https://youtu.be/${youTubeId}`
+            :
+            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
     }
 
     handleDetailClick() {
@@ -875,8 +875,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
-
-                    {pxt.github.token ?
+                    {pxt.appTarget.cloud && pxt.appTarget.cloud.githubPackages ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
