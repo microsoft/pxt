@@ -35,7 +35,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             return Promise.resolve({ accessToken: this.token() } as cloudsync.ProviderLoginResponse);
 
         // auth flow
-        const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders[this.name];
+        const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         if (cl)
             return this.oauthLoginAsync().then(() => undefined);
 

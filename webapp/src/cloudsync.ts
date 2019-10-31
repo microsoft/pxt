@@ -176,7 +176,7 @@ export class ProviderBase {
         pxt.storage.setLocal("oauthRedirect", window.location.href)
         const state = ts.pxtc.Util.guidGen();
         pxt.storage.setLocal("oauthState", state)
-        const providerDef = pxt.appTarget.cloud.cloudProviders[this.name];
+        const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
             client_id: providerDef.client_id,
