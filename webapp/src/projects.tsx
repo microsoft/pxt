@@ -218,6 +218,79 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 }
 
+// This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
+export interface ProjectSettingsMenuProps extends ISettingsProps {
+    highContrast: boolean;
+}
+export interface ProjectSettingsMenuState {
+    highContrast?: boolean;
+}
+
+export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps, ProjectSettingsMenuState> {
+
+    constructor(props: ProjectSettingsMenuProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.showLanguagePicker = this.showLanguagePicker.bind(this);
+        this.toggleHighContrast = this.toggleHighContrast.bind(this);
+        this.showResetDialog = this.showResetDialog.bind(this);
+        this.showAboutDialog = this.showAboutDialog.bind(this);
+    }
+
+    showLanguagePicker() {
+        pxt.tickEvent("home.langpicker", undefined, { interactiveConsent: true });
+        this.props.parent.showLanguagePicker();
+    }
+
+    toggleHighContrast() {
+        pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
+        this.props.parent.toggleHighContrast();
+    }
+
+    toggleGreenScreen() {
+        pxt.tickEvent("home.togglegreenscreen", undefined, { interactiveConsent: true });
+        this.props.parent.toggleGreenScreen();
+    }
+
+    showResetDialog() {
+        pxt.tickEvent("home.reset", undefined, { interactiveConsent: true });
+        this.props.parent.showResetDialog();
+    }
+
+    showAboutDialog() {
+        pxt.tickEvent("home.about");
+        this.props.parent.showAboutDialog();
+    }
+
+    componentWillReceiveProps(nextProps: ProjectSettingsMenuProps) {
+        const newState: ProjectSettingsMenuState = {};
+        if (nextProps.highContrast != undefined) {
+            newState.highContrast = nextProps.highContrast;
+        }
+        if (Object.keys(newState).length > 0) this.setState(newState)
+    }
+
+    shouldComponentUpdate(nextProps: ProjectSettingsMenuProps, nextState: ProjectSettingsMenuState, nextContext: any): boolean {
+        return this.state.highContrast != nextState.highContrast;
+    }
+
+    renderCore() {
+        const { highContrast } = this.state;
+        const targetTheme = pxt.appTarget.appTheme;
+
+        return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
+            {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
+            {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
+            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
+            <div className="ui divider"></div>
+            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
+            {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
+        </sui.DropdownMenu>;
+    }
+}
+
 export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
 
     constructor(props: ISettingsProps) {
@@ -259,6 +332,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
             {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
             <div className="right menu">
                 {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
+                <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} greenScreen={this.props.parent.state.greenScreen}  />
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
