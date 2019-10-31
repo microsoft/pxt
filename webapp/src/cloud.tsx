@@ -117,7 +117,6 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
 
         this.logout = this.logout.bind(this);
         this.login = this.login.bind(this);
-        this.createRepository = this.createRepository.bind(this);
     }
 
     login() {
@@ -130,15 +129,7 @@ export class UserMenu extends data.Component<UserMenuProps, {}> {
         this.props.parent.cloudSignOut();
     }
 
-    createRepository() {
-        pxt.tickEvent("github.usermenu.create", undefined, { interactiveConsent: true });
-        const { projectName, header } = this.props.parent.state;
-        cloudsync.githubProvider().createRepositoryAsync(projectName, header)
-            .done(r => r && this.props.parent.reloadHeaderAsync());
-    }
-
     renderCore() {
-        const header = this.props.parent.state.header;
         const user = this.getUser();
         const title = user && user.name ? lf("{0}'s Account", user.name) : lf("Sign in");
         const profile = user && user.profile;

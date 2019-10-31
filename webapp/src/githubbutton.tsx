@@ -1,0 +1,69 @@
+import * as React from "react";
+import * as sui from "./sui";
+import * as pkg from "./package";
+import * as cloudsync from "./cloudsync";
+
+type ISettingsProps = pxt.editor.ISettingsProps;
+
+interface GithubButtonState {
+    pushPulling?: boolean;
+}
+
+export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {};
+        this.handleClick = this.handleClick.bind(this);
+        this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+        this.createRepository = this.createRepository.bind(this);
+    }
+
+    private handleButtonKeydown(e: React.KeyboardEvent<HTMLElement>) {
+        e.stopPropagation();
+    }
+
+    private createRepository(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.button.create", undefined, { interactiveConsent: true });
+        const { projectName, header } = this.props.parent.state;
+        cloudsync.githubProvider().createRepositoryAsync(projectName, header)
+            .done(r => r && this.props.parent.reloadHeaderAsync());
+    }
+
+    private handleClick(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
+        const { header } = this.props.parent.state;
+        if (!header) return;
+
+        const { githubId } = header;
+        if (!githubId) return;
+
+        pxt.tickEvent("github.button.nav")
+        const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
+        if (gitf)
+            this.props.parent.setSideFile(gitf);
+    }
+
+    renderCore() {
+        const header = this.props.parent.state.header;
+        if (!header) return <div />;
+
+        const { githubId } = header;
+        const ghid = pxt.github.parseRepoId(githubId);
+        // new github repo
+        if (!ghid)
+            return <sui.Button icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")} onClick={this.createRepository} />
+
+        // existing repo
+        const targetTheme = pxt.appTarget.appTheme;
+        const mainPkg = pkg.mainEditorPkg()
+        const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
+        const text = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+
+        return <div role="button" className={`ui button`}>
+                <i className="github icon" />
+                {meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
+                {text}
+            </div>;
+    }
+}
+
