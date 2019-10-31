@@ -266,6 +266,43 @@ During an interaction, the step description (all text before the first code bloc
 
 ### ~
 
+### Images
+
+Using images in steps is a simple and powerful way to reinforce concepts and convey ideas. Images can be included as part of step descriptions. You specify an image using the standard markdown format.
+
+```markdown
+![Agent building a tower](/static/tutorials/agent-tower.png)
+```
+
+A step with and image might have text like this:
+
+```markdown
+## Introduction @unplugged
+
+Have the agent build a tower! Make a command to tell it how many levels to build.
+
+![Agent building a tower](/static/tutorials/agent-tower.png)
+```
+
+Images appear in steps that have either the [fullscreen](#fullscreen) or [unplugged](#unplugged) modifiers present, or when a step hint is viewed.
+
+Images should be hosted under the ``./docs/static/`` folder path of the editor project's repository files. The relative URL in markdown begins with just ``/static/`` though.
+
+Image formats typically used are PNG, JPEG, and GIF.
+
+### ~ alert
+
+#### Image size considerations
+
+It's important to consider that image size can affect the load time and therefore
+impact the experience of the user during a tutorial. Also, images that are too large can consume the viewing area where the tutorial is displayed. Try to economize tutorial images both in file size and dimensionally.
+Recommendations for images are:
+
+* **File size**: 1 MB or less
+* **Dimensions**: 800 pixels wide or less
+
+### ~
+
 ## Step modifiers
 
 To add a special behavior to a step, use a step modifier:
@@ -312,6 +349,7 @@ To signify that this step in the tutorial is the "last step", even if more steps
 ## This is a bonus activity that comes after the last step
 
 ```
+
 ## Using blocks
 
 ### Hint blocks
