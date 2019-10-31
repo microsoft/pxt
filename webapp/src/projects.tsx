@@ -308,11 +308,12 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
+            <div className="ui divider"></div>
             {showSigninGithub ? <sui.Item role="menuitem" text={lf("Sign in with GitHub")} icon="github" onClick={this.signOutGithub} /> : undefined}
             {showSignoutGithub ? <sui.Item role="menuitem" text={lf("Sign out from GitHub")} icon="github" onClick={this.signOutGithub} /> : undefined}
-            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <div className="ui divider"></div>
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
+            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }
