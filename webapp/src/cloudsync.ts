@@ -235,7 +235,8 @@ export class ProviderBase {
         pxt.storage.removeLocal(this.name + "token")
         pxt.storage.removeLocal(this.name + "tokenExp")
         pxt.storage.removeLocal(this.name + "AutoLogin")
-        pxt.storage.removeLocal("cloudUser")
+        if (this.hasSync())
+            pxt.storage.removeLocal("cloudUser")
         invalidateData();
     }
 }
@@ -371,7 +372,7 @@ export function resetAsync() {
 function updateNameAsync() {
     const provider = currentProvider;
     let user = pxt.storage.getLocal("cloudUser");
-    if (user || !provider)
+    if (user || !provider || !provider.hasSync())
         return Promise.resolve()
     return provider.getUserInfoAsync()
         .then(info => {

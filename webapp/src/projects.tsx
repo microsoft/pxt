@@ -836,10 +836,12 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.props.parent.showImportUrlDialog();
     }
 
-    private cloneGithub() {
+    private async cloneGithub() {
         pxt.tickEvent("github.projects.clone", undefined, { interactiveConsent: true });
         this.hide();
-        this.props.parent.showImportGithubDialog();
+        await cloudsync.githubProvider().loginAsync();
+        if (pxt.github.token)
+            this.props.parent.showImportGithubDialog();
     }
 
     renderCore() {
