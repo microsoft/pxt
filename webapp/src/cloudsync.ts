@@ -269,7 +269,8 @@ import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
 import * as githubprovider from "./githubprovider";
 
-export function providers(): IdentityProvider[] {
+// All identity providers, including hithub
+function identityProviders(): IdentityProvider[] {
     if (!allProviders) {
         allProviders = {}
         const cl = pxt.appTarget.cloud
@@ -288,8 +289,15 @@ export function providers(): IdentityProvider[] {
     return pxt.Util.values(allProviders);
 }
 
+/**
+ * All cloud synchronization providers
+ */
+export function providers(): Provider[] {
+    return identityProviders().filter(p => p.hasSync()).map(p => <Provider>p);
+}
+
 export function githubProvider(): githubprovider.GithubProvider {
-    return providers().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
+    return identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
 }
 
 // this is generally called by the provier's loginCheck() function
@@ -590,7 +598,7 @@ export function syncAsync(): Promise<void> {
 }
 
 export function loginCheck() {
-    const provs = providers()
+    const provs = identityProviders();
     if (!provs.length)
         return
 
