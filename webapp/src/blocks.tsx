@@ -453,7 +453,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("blocks.create", { "block": blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
-                this.parent.setState({ hideEditorFloats: false });
+                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata  || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
+                    this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {

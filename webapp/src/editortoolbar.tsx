@@ -56,11 +56,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     zoomIn(view?: string) {
         pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomIn();
+        this.props.parent.forceUpdate();
     }
 
     zoomOut(view?: string) {
         pxt.tickEvent("editortools.zoomOut", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomOut();
+        this.props.parent.forceUpdate();
     }
 
     startStopSimulator(view?: string) {
@@ -157,7 +159,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasUndo = this.props.parent.editor.hasUndo();
 
         const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename && !debugging;
-        const showUndoRedo = !tutorial && !readOnly && !debugging;
+        const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
 
         const trace = !!targetTheme.enableTrace;
