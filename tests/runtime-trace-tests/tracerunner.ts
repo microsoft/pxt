@@ -257,7 +257,7 @@ function compileTsToJs(filename: string): ts.Program {
         target: ts.ScriptTarget.ES5,
         module: ts.ModuleKind.ES2015,
         // noLib: true,
-        // skipLibCheck: true
+        skipLibCheck: true
     }
     return ts.pxtc.plainTscCompileFiles([filename], cOpts)
 }
