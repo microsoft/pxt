@@ -515,13 +515,13 @@ export function syncAsync(): Promise<void> {
         .then(() => provider.listAsync())
         .then(entries => {
             // Get all local headers including those that had been deleted
-            let allScripts = ws.getHeaders(true)
-            let cloudHeaders = U.toDictionary(entries, e => e.id)
-            let existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId), h => h.blobId)
-            console.log('all', allScripts);
-            console.log('cloud', cloudHeaders);
-            console.log('existing', existingHeaders);
-            console.log('syncthese', allScripts.filter(hd => hd.cloudSync));
+            const allScripts = ws.getHeaders(true)
+            const cloudHeaders = U.toDictionary(entries, e => e.id)
+            const existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId), h => h.blobId)
+            //console.log('all', allScripts);
+            //console.log('cloud', cloudHeaders);
+            //console.log('existing', existingHeaders);
+            //console.log('syncthese', allScripts.filter(hd => hd.cloudSync));
             // Only syncronize those that have been marked with cloudSync
             let waitFor = allScripts.filter(hd => hd.cloudSync).map(hd => {
                 if (cloudHeaders.hasOwnProperty(hd.blobId)) {
