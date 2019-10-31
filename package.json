@@ -88,7 +88,7 @@
     "redux": "3.7.2",
     "pouchdb": "5.4.5",
     "typescript": "2.6.1",
-    "jquery": "3.3.1",
+    "jquery": "3.4.1",
     "fuse.js": "3.2.0",
     "highlight.js": "9.12.0",
     "smoothie": "1.35.0",
