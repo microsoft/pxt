@@ -35,7 +35,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             return Promise.resolve({ accessToken: this.token() } as cloudsync.ProviderLoginResponse);
 
         // auth flow
-        const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders[this.name];
+        const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         if (cl)
             return this.oauthLoginAsync().then(() => undefined);
 
@@ -69,6 +69,12 @@ export class GithubProvider extends cloudsync.ProviderBase {
                     photo: ghuser.avatar_url,
                     profile: `https://github.com/${ghuser.login}`
                 }
+            }).catch(e => {
+                // the token expired or got deleted by the user
+                if (e.statusCode == 401) {
+                    this.setNewToken(undefined);
+                }
+                throw e;
             })
     }
 

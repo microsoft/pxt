@@ -176,7 +176,7 @@ export class ProviderBase {
         pxt.storage.setLocal("oauthRedirect", window.location.href)
         const state = ts.pxtc.Util.guidGen();
         pxt.storage.setLocal("oauthState", state)
-        const providerDef = pxt.appTarget.cloud.cloudProviders[this.name];
+        const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
             client_id: providerDef.client_id,
@@ -207,12 +207,19 @@ export class ProviderBase {
 
     setNewToken(accessToken: string, expiresIn?: number) {
         const ns = this.name;
-        pxt.storage.setLocal(ns + "token", accessToken)
-        if (expiresIn) {
-            let time = Math.round(Date.now() / 1000 + (0.75 * expiresIn));
-            pxt.storage.setLocal(ns + "tokenExp", time + "")
-        } else
-            pxt.storage.removeLocal(ns + "tokenExp");
+        const tokenKey = ns + "token";
+        const tokenKeyExp = ns + "tokenExp";
+        if (!accessToken) {
+            pxt.storage.removeLocal(tokenKey);
+            pxt.storage.removeLocal(tokenKeyExp);
+        } else {
+            pxt.storage.setLocal(tokenKey, accessToken)
+            if (expiresIn) {
+                let time = Math.round(Date.now() / 1000 + (0.75 * expiresIn));
+                pxt.storage.setLocal(tokenKeyExp, time + "")
+            } else
+                pxt.storage.removeLocal(tokenKeyExp);
+        }
         invalidateData();
     }
 
