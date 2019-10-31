@@ -4669,7 +4669,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 pxt.log(`missing file ${p}.${ext}`)
                 return m;
             });
-            if (md != newmd) {
+            if (fix && md != newmd) {
                 pxt.log(`patching ${f}`)
                 nodeutil.writeFileSync(f, newmd, { encoding: "utf8" })
             }
