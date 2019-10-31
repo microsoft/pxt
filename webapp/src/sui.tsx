@@ -70,6 +70,9 @@ export interface DropdownProps extends UiProps {
     title?: string;
     id?: string;
     onChange?: (v: string) => void;
+
+    avatarImage?: string;
+    avatarInitials?: string;
 }
 
 export interface DropdownState {
@@ -304,7 +307,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, children } = this.props;
+        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -329,6 +332,13 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             'menu',
             open ? 'visible transition' : ''
         ])
+
+        const avatar = avatarImage || avatarInitials ?
+            <div className="avatar">
+                {avatarImage ? <img className="ui circular image" src={avatarImage} alt={title} /> :
+                    <div className="initials">{avatarInitials}</div>}
+            </div>
+            : undefined;
         return (
             <div role="listbox" ref="dropdown" title={title} {...aria}
                 id={this.props.id}
@@ -340,7 +350,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 onBlur={this.handleBlur}
                 tabIndex={0}
             >
-                {genericContent(this.props)}
+                {avatar ? avatar : genericContent(this.props)}
                 <div ref="menu" {...menuAria} className={menuClasses}
                     role="menu">
                     {children}

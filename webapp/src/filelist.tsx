@@ -7,6 +7,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as dialogs from "./dialogs";
 import * as workspace from "./workspace";
+import * as cloudsync from "./cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -294,48 +295,24 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
     }
 
     private handleClick(e: React.MouseEvent<HTMLElement>) {
+        e.stopPropagation();
         const { githubId } = this.props.parent.state.header;
-        if (!githubId) {
-            pxt.tickEvent("github.filelist.create")
-            this.createRepositoryAsync().done();
-        } else {
+        if (githubId) {
             pxt.tickEvent("github.filelist.nav")
             const gitf = pkg.mainEditorPkg().lookupFile("this/" + pxt.github.GIT_JSON);
             this.props.parent.setSideFile(gitf);
         }
-        e.stopPropagation();
-    }
-
-    private async createRepositoryAsync() {
-        pxt.tickEvent("github.filelist.create.start");
-        if (!pxt.github.token) await dialogs.showGithubLoginAsync();
-        if (!pxt.github.token) {
-            pxt.tickEvent("github.filelist.create.notoken");
-            return;
-        }
-
-        const repoid = await dialogs.showCreateGithubRepoDialogAsync(this.props.parent.state.projectName);
-        if (!repoid) return;
-
-        pxt.tickEvent("github.filelist.create.export");
-        core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
-        try {
-            await workspace.exportToGithubAsync(this.props.parent.state.header, repoid);
-        } finally {
-            core.hideLoading("creategithub");
-        }
-        await this.props.parent.reloadHeaderAsync();
     }
 
     renderCore() {
-        const targetTheme = pxt.appTarget.appTheme;
-        const showGithub = !!pxt.github.token || targetTheme.alwaysGithubItem;
         const header = this.props.parent.state.header;
-        if (!showGithub || !header) return <div />;
-
+        if (!header) return <div />;
 
         const { githubId } = header;
         const ghid = pxt.github.parseRepoId(githubId);
+        if (!ghid) return <div />;
+
+        const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
 
@@ -347,9 +324,9 @@ export class GithubTreeItem extends sui.UIElement<ISettingsProps, GithubTreeItem
                 tabIndex={0}
                 role="button"
                 onKeyDown={sui.fireClickOnEnter}>
-                {ghid ? (ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName) : lf("create GitHub repository")}
+                {ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName}
                 <i className="github icon" />
-                {ghid && meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
+                {meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
             </div>
         </div>;
     }

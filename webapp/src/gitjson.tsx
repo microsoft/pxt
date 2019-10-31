@@ -9,6 +9,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
+import * as cloudsync from "./cloudsync";
 
 interface DiffCache {
     file: pkg.File;
@@ -670,8 +671,6 @@ ${content}
                     <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div>
-
-                    {pxt.github.token ? dialogs.githubFooter("", () => this.props.parent.forceUpdate()) : undefined}
                 </div>
             </div>
         )
@@ -696,7 +695,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     private handleSignInClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.signin");
         e.stopPropagation();
-        dialogs.showGithubLoginAsync()
+        cloudsync.githubProvider().loginAsync()
             .done(() => this.props.parent.forceUpdate());
     }
 
@@ -737,8 +736,8 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.commit");
-        if (!pxt.github.token)
-            await dialogs.showGithubLoginAsync();
+        e.stopPropagation();
+        await cloudsync.githubProvider().loginAsync();
         if (pxt.github.token)
             await this.props.parent.commitAsync();
     }
@@ -767,9 +766,7 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
     private async handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.bump");
         e.stopPropagation();
-
-        if (!pxt.github.token)
-            await dialogs.showGithubLoginAsync();
+        await cloudsync.githubProvider().loginAsync();
         if (pxt.github.token)
             this.props.parent.bumpAsync();
     }

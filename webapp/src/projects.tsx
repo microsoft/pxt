@@ -5,10 +5,12 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
+import * as cloud from "./cloud";
+
 import * as discourse from "./discourse";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
-import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
+import { showAboutDialogAsync } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -144,7 +146,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     cloudSignIn() {
         pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        showCloudSignInDialog();
+        this.props.parent.cloudSignInDialog();
     }
 
     renderCore() {
@@ -171,13 +173,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const tabClasses = sui.cx([
             'ui segment bottom attached tab active tabsegment'
         ]);
-
-        let signIn = ""
-        let signInIcon = ""
-        if (this.getData("sync:hascloud")) {
-            signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
-            signIn = this.getData("sync:username") || lf("Sign in")
-        }
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
@@ -249,6 +244,9 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
+        // only show cloud head if a configuration is available
+        const showCloudHead = this.hasCloud();
+
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={this.brandIconClick}>
@@ -258,8 +256,9 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                     {targetTheme.portraitLogo ? (<img className={`ui ${targetTheme.logoWide ? "small" : "mini"} image portrait only`} src={targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
             </div>
-            <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
+            {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
             <div className="right menu">
+                {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />
