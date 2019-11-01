@@ -284,7 +284,7 @@ import * as onedrive from "./onedrive";
 import * as googledrive from "./googledrive";
 import * as githubprovider from "./githubprovider";
 
-// All identity providers, including hithub
+// All identity providers, including github
 function identityProviders(): IdentityProvider[] {
     if (!allProviders) {
         allProviders = {}
