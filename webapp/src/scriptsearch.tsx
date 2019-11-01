@@ -457,7 +457,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     key={'bundled' + scr.name}
                                     name={scr.name}
                                     description={scr.description}
-                                    url={"/" + scr.installedVersion}
                                     imageUrl={scr.icon}
                                     scr={scr}
                                     onCardClick={this.addBundle}
@@ -533,7 +532,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <div className="header">{lf("Experiments changed")}</div>
                         {lf("The editor will reload when leaving this page.")}
                     </div> : undefined}
-                {mode == ScriptSearchMode.Extensions ? dialogs.githubFooter(lf("Want to create your own extension?"), this.hide) : undefined}
             </sui.Modal>
         );
     }

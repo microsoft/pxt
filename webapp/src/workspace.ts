@@ -12,6 +12,7 @@ import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
+import * as dialogs from "./dialogs"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -60,6 +61,7 @@ export function setupWorkspace(id: string) {
     switch (id) {
         case "fs":
         case "file":
+            // Local file workspace, serializes data under target/projects/
             impl = fileworkspace.provider;
             break;
         case "mem":
@@ -67,6 +69,7 @@ export function setupWorkspace(id: string) {
             impl = memoryworkspace.provider;
             break;
         case "iframe":
+            // Iframe workspace, the editor relays sync messages back and forth when hosted in an iframe
             impl = iframeworkspace.provider;
             break;
         case "uwp":
@@ -260,7 +263,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         return Promise.resolve()
 
     let e = lookup(h.id)
-    U.assert(e.header === h)
+    //U.assert(e.header === h)
 
     if (!isCloud)
         h.recentUse = U.nowSeconds()
@@ -302,7 +305,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 .then(ver => {
                     if (text)
                         e.version = ver
-                    if (text || h.isDeleted) {
+                    if ((text && !isCloud) || h.isDeleted) {
                         h.pubCurrent = false
                         h.blobCurrent = false
                         h.saveId = null
@@ -353,6 +356,11 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 
     return importAsync(h, text)
         .then(() => h)
+}
+
+export function renameAsync(h: Header, newName: string) {
+    checkSession();
+    return cloudsync.renameAsync(h, newName);
 }
 
 export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): Promise<Header> {
@@ -518,6 +526,8 @@ export interface CommitOptions {
 }
 
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
+    await ensureGitHubTokenAsync();
+
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
@@ -594,6 +604,14 @@ function mergeError() {
     const e = new Error("Merge error");
     (e as any).isMergeError = true
     return e
+}
+
+// requests token to user if needed
+async function ensureGitHubTokenAsync() {
+    // check that we have a token first
+    await cloudsync.githubProvider().loginAsync();
+    if (!pxt.github.token)
+        U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
 
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
@@ -681,7 +699,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             pubId: "",
             pubCurrent: false,
             meta: {},
-            editor: "tsprj",
+            editor: pxt.BLOCKS_PROJECT_NAME,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
         }, files)
@@ -695,7 +713,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
 export async function exportToGithubAsync(hd: Header, repoid: string) {
     const parsed = pxt.github.parseRepoId(repoid);
-    const pfiles = pxt.packageFiles(hd.name);
+    const pfiles = pxt.template.packageFiles(hd.name);
     await pxt.github.putFileAsync(parsed.fullName, ".gitignore", pfiles[".gitignore"]);
     const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
@@ -764,13 +782,15 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
+    await ensureGitHubTokenAsync();
+
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
 
     let currFiles = await getTextAsync(hd.id);
 
-    const templateFiles = pxt.packageFiles(name);
-    pxt.packageFilesFixup(templateFiles, false);
+    const templateFiles = pxt.template.packageFiles(name);
+    pxt.template.packageFilesFixup(templateFiles, false);
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
@@ -819,7 +839,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     return hd
 }
 
-export async function importGithubAsync(id: string) {
+export async function importGithubAsync(id: string): Promise<Header> {
     let sha = ""
     let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
     let parsed = pxt.github.parseRepoId(repoid)
@@ -830,6 +850,7 @@ export async function importGithubAsync(id: string) {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
+            await ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
@@ -871,6 +892,19 @@ export function installByIdAsync(id: string) {
 export function saveToCloudAsync(h: Header) {
     checkSession();
     return cloudsync.saveToCloudAsync(h)
+}
+
+export function resetCloudAsync(): Promise<void> {
+    checkSession();
+
+    // remove all cloudsync or github repositories
+    return cloudsync.resetAsync()
+        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
+            // Remove cloud sync'ed project
+            h.isDeleted = true;
+            h.blobVersion = "DELETED";
+            return saveAsync(h, null, true);
+        }))).then(() => data.invalidate("header:*"));
 }
 
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {

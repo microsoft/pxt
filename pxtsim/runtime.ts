@@ -1136,6 +1136,7 @@ namespace pxsim {
                     }
                     U.assert(__this.loopLock == lock)
                     __this.loopLock = null;
+                    __this.otherFrames.push(s);
                     loop(s);
                     flushLoopLock();
                 }

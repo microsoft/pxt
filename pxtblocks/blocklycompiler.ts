@@ -136,7 +136,7 @@ namespace pxt.blocks {
             _p1.parentType = null;
             union(pt, _p2.parentType);
         }
-        else if (_p1.parentType && !_p2.parentType) {
+        else if (_p1.parentType && !_p2.parentType && !_p2.type) {
             _p2.parentType = _p1.parentType;
         }
 
@@ -219,7 +219,7 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || ground("Array");
+            return tp || mkPoint(null);
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
@@ -383,7 +383,6 @@ namespace pxt.blocks {
                         break;
                     case "pxt_controls_for_of":
                     case "controls_for_of":
-                        unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
                         const elementTp = lookup(e, b, getLoopVariableField(b).getField("VAR").getText()).type;
                         genericLink(listTp, elementTp);

@@ -110,3 +110,8 @@ editor while it's running, adding the new features.
 ## Open Source
 
 MakeCode is an open source project and is provided as a joint effort between [Microsoft Research](https://www.microsoft.com/en-us/research/project/microsoft-makecode/) and [Visual Studio](https://visualstudio.microsoft.com/).
+
+
+## Contact us
+
+Want to reach us? Get in touch using one of the resources on the [contact page](/contact).

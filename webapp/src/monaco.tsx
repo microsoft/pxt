@@ -13,12 +13,14 @@ import * as pyhelper from "./monacopyhelper";
 import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
-import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
+import * as blocklyFieldView from "./blocklyFieldView";
+import { ViewZoneEditorHost, ModalEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
 import { BreakpointCollection } from "./monacoDebugger";
 import { DebuggerCallStack } from "./debuggerCallStack";
 import { DebuggerToolbox } from "./debuggerToolbox";
+import { amendmentToInsertSnippet, listenForEditAmendments, createLineReplacementPyAmendment } from "./monacoEditAmendments";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -37,7 +39,6 @@ interface FoldingController extends monaco.editor.IEditorContribution {
     foldLevel(foldLevel: number, selectedLineNumbers: number[]): void;
     foldUnfoldRecursively(isFold: boolean): void;
 }
-
 
 class CompletionProvider implements monaco.languages.CompletionItemProvider {
     constructor(public editor: Editor, public python: boolean) {
@@ -72,7 +73,31 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
-                    const snippet = this.python ? si.pySnippet : si.snippet;
+                    let insertSnippet = this.python ? si.pySnippet : si.snippet;
+                    let completionSnippet: string;
+                    if (insertSnippet && this.python) {
+                        // For python, we want to replace the entire line because when creating
+                        // new functions these need to be placed before the line the user was typing
+                        // unlike with typescript where callbacks use lambdas.
+                        //
+                        // e.g. "player.on_chat"
+                        // becomes:
+                        //      def on_chat_handler():
+                        //          pass
+                        //      player.on_chat(on_chat_handler)
+                        // whereas TS looks like:
+                        //      player.onChat(() => {
+                        //          
+                        //      })
+                        //
+                        // At the time of this writting, Monaco does not support item completions that replace the
+                        // whole line. So we use a custom system of "edit amendments". See monacoEditAmendments.ts
+                        // for more.
+                        completionSnippet = amendmentToInsertSnippet(
+                            createLineReplacementPyAmendment(insertSnippet))
+                    } else {
+                        completionSnippet = insertSnippet
+                    }
                     const label = this.python
                         ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
                         : (completions.isMemberCompletion ? si.name : si.qName);
@@ -82,10 +107,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         label,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation,
-                        detail: this.python ? si.pySnippet : si.snippet,
+                        detail: insertSnippet,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${snippet}`,
-                        filterText: `${label} ${documentation} ${block}`
+                        sortText: `${tosort(i)} ${insertSnippet}`,
+                        filterText: `${label} ${documentation} ${block}`,
+                        insertText: completionSnippet,
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -102,7 +128,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
      * The editor will only resolve a completion item once.
      */
     resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
-        return item;
+        return item
     }
 }
 
@@ -212,7 +238,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     giveFocusOnLoading: boolean = false;
 
     protected fieldEditors: FieldEditorManager;
-    protected feWidget: ViewZoneEditorHost;
+    protected feWidget: ViewZoneEditorHost | ModalEditorHost;
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
@@ -226,6 +252,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private editorViewZones: number[];
     private highlightDecorations: string[] = [];
     private highlightedBreakpoint: number;
+    private editAmendmentsListener: monaco.IDisposable | undefined;
 
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -530,6 +557,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
 
+            const workspaceRect = this.editor.getDomNode().getBoundingClientRect();
+            blocklyFieldView.setEditorBounds({
+                top: workspaceRect.top,
+                left: workspaceRect.left,
+                width: monacoArea.offsetWidth - toolboxWidth,
+                height: workspaceRect.height
+            });
+
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
         }
     }
@@ -694,6 +729,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.setupToolbox(editorArea);
             this.setupFieldEditors();
+
+            editor.onDidChangeModelContent(e => {
+                // Clear ranges because the model changed
+                if (this.fieldEditors)
+                    this.fieldEditors.clearRanges(editor);
+            })
         })
     }
 
@@ -717,7 +758,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             {
                 identifier: { major: 0, minor: 0 },
                 range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                text: insertText,
+                text: insertText || "",
                 forceMoveMarkers: true,
                 isAutoWhitespaceEdit: true,
 
@@ -1018,14 +1059,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    .map(ep => ep.getKsPkg())
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
 
                 if (this.giveFocusOnLoading) {
                     this.editor.focus();
                 }
+
+                // this monitors the text buffer for "edit amendments". See monacoEditAmendments for more.
+                // This is an extension we made to Monaco that allows us to replace full lines of text when
+                // using code completion.
+                if (this.fileType === pxt.editor.FileType.Python)
+                    this.editAmendmentsListener = listenForEditAmendments(this.editor);
             }).finally(() => {
                 editorArea.removeChild(loading);
             });
@@ -1038,6 +1085,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
         }
+        if (this.editAmendmentsListener) {
+            this.editAmendmentsListener.dispose();
+            this.editAmendmentsListener = undefined;
+        }
+
         return Promise.resolve();
     }
 
@@ -1163,8 +1215,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.feWidget) {
             this.feWidget.close();
         }
-        this.feWidget = new ViewZoneEditorHost(fe, range, this.editor.getModel());
-        this.feWidget.heightInPx = viewZoneHeight;
+        this.feWidget = new ModalEditorHost(fe, range, this.editor.getModel());
+        // this.feWidget.heightInPx = viewZoneHeight;
         this.feWidget.showAsync(this.fileType, this.editor)
             .then(edit => {
                 this.activeRangeID = null;
@@ -1935,8 +1987,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const afterRange = new monaco.Range(range.startLineNumber, range.startColumn,
                 range.startLineNumber + lines.length - 1, lines[lines.length - 1].length)
 
-            const disposable = this.editor.onDidChangeModelContent(e => {
-                disposable.dispose();
+            let disposable = this.editor.onDidChangeModelContent(e => {
+                if (disposable) {
+                    disposable.dispose();
+                    disposable = undefined
+                }
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
@@ -1970,7 +2025,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 }
 
-function rangeToSelection(range: monaco.IRange): monaco.Selection {
+export function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
 }
 

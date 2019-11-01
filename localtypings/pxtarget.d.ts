@@ -141,7 +141,14 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
-        cloudProviders?: pxt.Map<{}>;
+        maxFileSize?: number; // maximum file size in bytes
+        warnFileSize?: number; // warn aboutfile size in bytes
+        cloudProviders?: pxt.Map<AppCloudProvider>;
+    }
+
+    interface AppCloudProvider {
+        client_id: string;
+        redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
     }
 
     interface AppSimulator {
@@ -331,7 +338,7 @@ declare namespace pxt {
         simScreenshotKey?: string; // keyboard key name
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
-        simGifKey?: boolean; // shortcut to start stop
+        simGifKey?: string; // shortcut to start stop
         simGifTransparent?: string; // specify the gif transparency color
         simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
         simGifMaxFrames?: number; // maximum number of frames, default 64
@@ -347,8 +354,6 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
-        alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
-        alwaysGithubItem?: boolean; // show Github item; even when token is not available
     }
 
     interface SocialOptions {

@@ -178,17 +178,10 @@ div.blocklyTooltipDiv {
     overflow-wrap: break-word;
 }
 
-#blocks-editor-field-div {
-    position: absolute;
-    z-index: @blocklyDropdownDivZIndex;
+div.blocklyTooltipDiv .ui.card .content .description {
+    /* override semantic, tooltip text should always be visible*/
+    display: inline;
 }
-
-.blocks-editor-field-overlay {
-    position: absolute;
-    z-index: @blocklyWidgetDivZIndex;
-    background-color: rgba(0, 0, 0, 0.4)
-}
-
 
 /* Blockly Slider field */
 

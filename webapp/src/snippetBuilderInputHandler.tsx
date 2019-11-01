@@ -19,7 +19,7 @@ interface InputHandlerState {
 }
 
 export class InputHandler extends data.Component<InputHandlerProps, InputHandlerState> {
-    constructor(props:   InputHandlerProps) {
+    constructor(props: InputHandlerProps) {
         super(props);
         this.state = {
             isFocused: false
@@ -38,6 +38,13 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                     <DropdownInput
                         input={input}
                         value={value}
+                        onChange={onChange}
+                    />
+                )
+            case 'yesno':
+                return (
+                    <YesNoInput
+                        input={input}
                         onChange={onChange}
                     />
                 )
@@ -133,7 +140,7 @@ class DropdownInput extends data.Component<IDropdownInputProps, {}> {
                             text={pxt.Util.rlf(input.options[optionValue])}
                             onClick={this.onChange(optionValue)}
                         />)}
-                    </sui.DropdownMenu>
+                </sui.DropdownMenu>
             )
         }
 
@@ -172,35 +179,70 @@ class RangeInput extends data.Component<IRangeInputProps, {}> {
         const { input, value, autoFocus } = this.props;
         if (Snippet.isSnippetInputAnswerTypeNumber(input)) {
             return (
-                <div>
+                <div className="slider-outer">
                     <span>{input.label && input.label}</span>
-                    <div className='ui grid'>
-                        <div className='left floated column snippet-slider'>
-                            <input
-                                type='range'
-                                autoFocus={autoFocus}
-                                className={'slider blocklyMockSlider'}
-                                role={'slider'}
-                                max={input.max}
-                                min={input.min}
-                                value={value}
-                                onChange={this.onChange}
-                                aria-valuemin={input.min}
-                                aria-valuemax={input.max}
-                                aria-valuenow={value}
-                                style={{
-                                    marginLeft: 0
-                                }}
-                            />
-                        </div>
-                        <div className='column slider-value snippet'>
-                            <sui.Input
-                                value={value}
-                                onChange={this.props.onChange}
-                                class='snippet slider-input'
-                            />
-                        </div>
+                    <div>
+                        <input
+                            type='range'
+                            autoFocus={autoFocus}
+                            className={'slider blocklyMockSlider'}
+                            role={'slider'}
+                            max={input.max}
+                            min={input.min}
+                            value={value}
+                            onChange={this.onChange}
+                            aria-valuemin={input.min}
+                            aria-valuemax={input.max}
+                            aria-valuenow={+value}
+                            style={{
+                                marginLeft: 0
+                            }}
+                        />
+                        <sui.Input
+                            value={value}
+                            onChange={this.props.onChange}
+                            class='snippet slider-input'
+                        />
                     </div>
+                </div>
+            )
+        }
+
+        return null;
+    }
+}
+
+
+/**
+ * YesNo input
+ */
+
+interface IYesNoInputProps {
+    input?: pxt.SnippetQuestionInput;
+    value?: string;
+    onChange: (v: string) => void;
+}
+
+class YesNoInput extends data.Component<IYesNoInputProps, {}> {
+    constructor(props: IYesNoInputProps) {
+        super(props);
+
+        this.onChange = this.onChange.bind(this);
+    }
+
+    onChange(value: string): () => void {
+        const { onChange } = this.props;
+        return () => onChange(value);
+    }
+
+    renderCore() {
+        const { input } = this.props;
+        if (Snippet.isSnippetInputAnswerTypeYesNo(input)) {
+            return (
+                <div>
+                    {/* TODO: onChange shouldn't assume string */}
+                    <sui.Button text="Yes" title="Yes" onClick={this.onChange("true")} />
+                    <sui.Button text="No" title="No" onClick={this.onChange("false")} />
                 </div>
             )
         }

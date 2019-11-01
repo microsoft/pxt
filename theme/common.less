@@ -434,6 +434,11 @@ div.simframe > iframe {
     position: relative;
 }
 
+.ui.button.big-play-button {
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
+}
+
 /* Icon and text */
 .ui.item.link.dbg-btn > .icon-and-text.icon ~ .ui.text,
 .ui.item.link > .icon-and-text.icon ~ .ui.text.exit-debugmode-btn,
@@ -994,6 +999,11 @@ p.ui.font.small {
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
     }
+    #root.headless.transparentEditorTools {
+        #editortools {
+            margin-bottom: 1.5rem;
+        }
+    }
 }
 
 /* Mobile */
@@ -1485,6 +1495,7 @@ img.pixelart {
     image-rendering: pixelated;
 }
 
+
 /** language modal **/
 #langmodal {
     #availablelocales .langoption .header{
@@ -1497,4 +1508,15 @@ img.pixelart {
         align-items: center;
         margin-top: 2em;
     }
+}
+
+#blocks-editor-field-div {
+    position: absolute;
+    z-index: @blocklyDropdownDivZIndex;
+}
+
+.blocks-editor-field-overlay {
+    position: absolute;
+    z-index: @blocklyWidgetDivZIndex;
+    background-color: rgba(0, 0, 0, 0.4)
 }

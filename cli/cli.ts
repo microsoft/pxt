@@ -1107,6 +1107,12 @@ function uploadCoreAsync(opts: UploadOptions) {
     // only keep the last version of each uploadFileName()
     opts.fileList = U.values(U.toDictionary(opts.fileList, uploadFileName))
 
+    // check size
+    const maxSize = checkFileSize(opts.fileList);
+    if (maxSize > 15000000) // 15Mb max
+        U.userError(`file too big for upload`);
+    pxt.log('');
+
     if (opts.localDir)
         return Promise.map(opts.fileList, uploadFileAsync, { concurrency: 15 })
             .then(() => {
@@ -1575,6 +1581,20 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    // walk options in pxt.json
+    // patch icons in bundled packages
+    Object.keys(cfg.bundledpkgs).forEach(pkgid => {
+        const res = cfg.bundledpkgs[pkgid];
+        // path config before storing
+        const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (config.description) targetStrings[config.description] = config.description;
+        if (config.yotta && config.yotta.userConfigs) {
+            config.yotta.userConfigs
+                .filter(userConfig => userConfig.description)
+                .forEach(userConfig => targetStrings[userConfig.description] = userConfig.description);
+        }
+    })
+
     // extract strings from docs
     function walkDocs(docs: pxt.DocMenuEntry[]) {
         if (!docs) return;
@@ -1648,6 +1668,7 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     nodeutil.mkdirP("built");
     nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
     nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
+    pxt.log(`target-strings.json built`)
 }
 
 function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
@@ -1932,7 +1953,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!compileOpts) {
-                            console.error(`Failed to extract native image for project ${dirname}`);
+                            pxt.debug(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
@@ -2592,7 +2613,7 @@ export function installAsync(parsed?: commandParser.ParsedCommand): Promise<void
         .then(() => {
             let tscfg = "tsconfig.json"
             if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                nodeutil.writeFileSync(tscfg, pxt.TS_CONFIG)
+                nodeutil.writeFileSync(tscfg, pxt.template.TS_CONFIG)
             }
         });
 
@@ -2706,7 +2727,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
-    const files = pxt.packageFiles(path.basename(path.resolve(".")).replace(/^pxt-/, ""))
+    const files = pxt.template.packageFiles(path.basename(path.resolve(".")).replace(/^pxt-/, ""))
 
     let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
@@ -2722,7 +2743,7 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
         .then(() => {
             files[pxt.CONFIG_NAME] = JSON.stringify(configMap, null, 4) + "\n"
 
-            pxt.packageFilesFixup(files)
+            pxt.template.packageFilesFixup(files)
 
             U.iterMap(files, (k, v) => {
                 nodeutil.mkdirP(path.dirname(k))
@@ -4539,8 +4560,8 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             nodeutil.writeFileSync(fullname, prj.files[fn])
         }
         // add default files if not present
-        const files = pxt.packageFiles(prj.name);
-        pxt.packageFilesFixup(files);
+        const files = pxt.template.packageFiles(prj.name);
+        pxt.template.packageFilesFixup(files);
         for (let fn in files) {
             if (prj.files[fn]) continue;
             const fullname = path.join(fdir, fn)
@@ -4592,6 +4613,23 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     )
 }
 
+function checkFileSize(files: string[]): number {
+    if (!pxt.appTarget.cloud)
+        return 0;
+
+    pxt.log('checking for file sizes');
+    const mb = 1e6;
+    const warnSize = pxt.appTarget.cloud.warnFileSize || (1 * mb);
+    let maxSize = 0;
+    files.forEach(f => {
+        const stats = fs.statSync(f);
+        if (stats.size > warnSize)
+            pxt.log(`  ${f} - ${stats.size / mb}Mb`);
+        maxSize = Math.max(maxSize, stats.size);
+    });
+    return maxSize;
+}
+
 function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
@@ -4604,34 +4642,38 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     let urls: any = {};
     let checked = 0;
     let broken = 0;
-    let snipCount = 0;
     let snippets: CodeSnippet[] = [];
 
+    const maxFileSize = checkFileSize(nodeutil.allFiles("docs", 10, true, true, ".ignorelargefiles"));
+    if (!pxt.appTarget.ignoreDocsErrors
+        && maxFileSize > (pxt.appTarget.cloud.maxFileSize || (5000000)))
+        U.userError(`files too big in docs folder`);
+
     // scan and fix image links
-    if (fix) {
-        pxt.log('patching links');
-        nodeutil.allFiles("docs")
-            .filter(f => /\.md/.test(f))
-            .forEach(f => {
-                let md = fs.readFileSync(f, { encoding: "utf8" });
-                let newmd = md.replace(/]\((\/static\/[^)]+?)\.(png|jpg)(\s+"[^"]+")?\)/g, (m: string, p: string, ext: string, comment: string) => {
-                    let fn = path.join(docsRoot, "docs", `${p}.${ext}`);
-                    if (fs.existsSync(fn))
-                        return m;
-                    // try finding other file
-                    let next = ext == "png" ? "jpg" : "png";
-                    if (!fs.existsSync(path.join(docsRoot, "docs", `${p}.${next}`))) {
-                        pxt.log(`could not patch ${fn}`)
-                        return m;
-                    }
+    nodeutil.allFiles("docs")
+        .filter(f => /\.md/.test(f))
+        .forEach(f => {
+            let md = fs.readFileSync(f, { encoding: "utf8" });
+            let newmd = md.replace(/]\((\/static\/[^)]+?)\.(png|jpg)(\s+"[^"]+")?\)/g, (m: string, p: string, ext: string, comment: string) => {
+                let fn = path.join(docsRoot, "docs", `${p}.${ext}`);
+                if (fs.existsSync(fn))
+                    return m;
+                // try finding other file
+                let next = ext == "png" ? "jpg" : "png";
+                const exists = fs.existsSync(path.join(docsRoot, "docs", `${p}.${next}`));
+                if (exists && fix)
                     return `](${p}.${next}${comment ? " " : ""}${comment || ""})`;
-                });
-                if (md != newmd) {
-                    pxt.log(`patching ${f}`)
-                    nodeutil.writeFileSync(f, newmd, { encoding: "utf8" })
-                }
+
+                // broken image or resources
+                broken++;
+                pxt.log(`missing file ${p}.${ext}`)
+                return m;
             });
-    }
+            if (fix && md != newmd) {
+                pxt.log(`patching ${f}`)
+                nodeutil.writeFileSync(f, newmd, { encoding: "utf8" })
+            }
+        });
 
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
         snippets.push(snippet);

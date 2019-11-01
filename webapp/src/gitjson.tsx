@@ -9,6 +9,7 @@ import * as coretsx from "./coretsx";
 import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
+import * as cloudsync from "./cloudsync";
 
 interface DiffCache {
     file: pkg.File;
@@ -645,11 +646,11 @@ ${content}
                         <sui.Button icon={`${needsPull === true ? "down arrow" : needsPull === false ? "check" : "sync"}`}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
-                        {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        {!needsToken && !isBlocksMode ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -662,14 +663,12 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
-                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
-                    }
-                    <div className="ui">
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
+                        : <div className="ui segment">{lf("No local changes found.")}</div>}
+                    {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
-                    </div>
-
-                    {pxt.github.token ? dialogs.githubFooter("", () => this.props.parent.forceUpdate()) : undefined}
+                    </div> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} /> : undefined}
                 </div>
             </div>
         )
@@ -683,6 +682,7 @@ interface GitHubViewProps {
     parent: GithubComponent;
     gs: pxt.github.GitJson;
     isBlocks: boolean;
+    needsCommit: boolean;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -694,27 +694,31 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     private handleSignInClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.signin");
         e.stopPropagation();
-        dialogs.showGithubLoginAsync()
+        cloudsync.githubProvider().loginAsync()
             .done(() => this.props.parent.forceUpdate());
     }
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
+        const targetTheme = pxt.appTarget.appTheme;
         const needsToken = !pxt.github.token;
 
-        return <div>
-            {needsToken ? <div className="ui info message join">
+        if (needsToken)
+            return <div className={`ui ${targetTheme.invertedMenu ? 'inverted' : ''} info message join`}>
                 <p>{lf("Host your code on GitHub and work together with friends on projects.")}
                     {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
                 </p>
                 <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
-            </div> : undefined}
-            {!needsToken && needsCommitMessage ? <div className="ui warning message">
+            </div>;
+
+        if (!needsToken && needsCommitMessage)
+            return <div className="ui warning message">
                 <div className="content">
                     {lf("You need to commit your changes before you can pull from GitHub.")}
                 </div>
-            </div> : undefined}
-        </div>
+            </div>
+
+        return <div />;
     }
 }
 
@@ -731,8 +735,8 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     private async handleCommitClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.commit");
-        if (!pxt.github.token)
-            await dialogs.showGithubLoginAsync();
+        e.stopPropagation();
+        await cloudsync.githubProvider().loginAsync();
         if (pxt.github.token)
             await this.props.parent.commitAsync();
     }
@@ -743,41 +747,65 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
             <div className="ui field">
                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
             </div>
-            {<div className="field">
-                <p>{lf("Save your changes in GitHub.")}
-                    {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
-                </p>
-            </div>}
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <span>{lf("Save your changes in GitHub.")}
+                    {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
+                </span>
             </div>
         </div>
     }
 }
-class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
+
+class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleBumpClick = this.handleBumpClick.bind(this);
     }
 
-    private async handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+    private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.bump");
         e.stopPropagation();
-
-        if (!pxt.github.token)
-            await dialogs.showGithubLoginAsync();
-        if (pxt.github.token)
-            this.props.parent.bumpAsync();
+        const { needsCommit, master } = this.props;
+        if (needsCommit)
+            core.confirmAsync({
+                header: lf("Commit your changes..."),
+                body: lf("You need to commit your local changes to create a release."),
+                agreeLbl: lf("Ok"),
+                hideAgree: true
+            });
+        else if (master)
+            core.confirmAsync({
+                header: lf("Checkout the master branch..."),
+                body: lf("You need to checkout the master branch to create a release."),
+                agreeLbl: lf("Ok"),
+                hideAgree: true
+            });
+        else
+            cloudsync.githubProvider()
+                .loginAsync()
+                .then(() => pxt.github.token && this.props.parent.bumpAsync());
     }
 
     renderCore() {
-        const { needsToken, githubId, master, gs } = this.props;
+        const { needsToken, githubId, gs } = this.props;
+        const header = this.props.parent.props.parent.state.header;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
-        return <div>
-            <p>{lf("No local changes found.")}</p>
-            {master ? <div className="ui divider"></div> : undefined}
-            {master ? gs.commit && gs.commit.tag ?
+        const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
+        return <div className="ui transparent segment">
+            <div className="ui header">{lf("Extension zone")}</div>
+            <div className="ui field">
+                <a href={testurl}
+                    role="button" className="ui button"
+                    target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
+                    {lf("Test Extension")}
+                </a>
+                <span>
+                    {lf("Open a test project that uses this extension.")}
+                </span>
+            </div>
+            {gs.commit && gs.commit.tag ?
                 <div className="ui field">
                     <p>{lf("Current release: {0}", gs.commit.tag)}
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
@@ -785,22 +813,24 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
                 :
                 <div className="ui field">
-                    <p>
+                    <sui.Button text={lf("Create release")}
+                        onClick={this.handleBumpClick}
+                        onKeyDown={sui.fireClickOnEnter} />
+                    <span>
                         {lf("Bump up the version number and create a release on GitHub.")}
-                        {sui.helpIconLink("/github/release#license", lf("Learn more about extension releases."))}
-                    </p>
-                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
-                </div> : undefined}
-            {master && needsLicenseMessage ? <div className="ui message">
-                <div className="content">
-                    {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
-                    {" "}
-                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                        role="button" className="ui link"
-                        target="_blank" rel="noopener noreferrer">
-                        {lf("Add license")}
-                    </a>
-                </div>
+                        {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
+                    </span>
+                </div>}
+            {needsLicenseMessage ? <div className={`ui field`}>
+                <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                    role="button" className="ui button"
+                    target="_blank" rel="noopener noreferrer">
+                    {lf("Add license")}
+                </a>
+                <span>
+                    {lf("Your project doesn't seem to have a license.")}
+                    {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                </span>
             </div> : undefined}
         </div>
     }

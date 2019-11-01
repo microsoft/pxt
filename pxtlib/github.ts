@@ -225,6 +225,16 @@ namespace pxt.github {
     // overriden by client
     export let db: IGithubDb = new MemoryGithubDb();
 
+    export interface GitUser {
+        login: string,
+        avatar_url: string,
+        name: string
+    }
+
+    export function authenticatedUserAsync(): Promise<GitUser> {
+        return ghGetJsonAsync("https://api.github.com/user");
+    }
+
     export function getCommitAsync(repopath: string, sha: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
             .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
@@ -849,7 +859,7 @@ namespace pxt.github {
             let i = 0
             for (let e of strings) {
                 if (options.ignoreWhitespace)
-                    e = e.replace(/\s+/g, "")
+                    e = e.replace(/\s+$/g, "").replace(/^\s+/g, ''); // only ignore start/end of lines
                 if (idxmap.hasOwnProperty(e))
                     idxarr[i] = idxmap[e]
                 else {

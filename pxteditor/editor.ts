@@ -103,6 +103,7 @@ namespace pxt.editor {
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
+        extensionUnderTest?: string; // workspace id of the extension under test
     }
 
     export interface ExampleImportOptions {
@@ -151,6 +152,16 @@ namespace pxt.editor {
         openHomeIfFailed?: boolean;
     }
 
+    export interface UserInfo {
+        id: string;
+        userName?: string;
+        name: string;
+        profile?: string;
+        loginHint?: string;
+        initials?: string;
+        photo?: string;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -186,6 +197,9 @@ namespace pxt.editor {
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
+        cloudSync(): boolean;
+        cloudSignInDialog(): void;
+        cloudSignOut(): void;
         removeProject(): void;
         editText(): void;
 

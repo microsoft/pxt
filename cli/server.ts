@@ -941,6 +941,12 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
+        if (pathname == "/oauth-redirect") {
+            res.writeHead(301, { location: '/oauth-redirect.html' })
+            res.end()
+            return
+        }
+
         let elts = pathname.split("/").filter(s => !!s)
         if (elts.some(s => s[0] == ".")) {
             return error(400, "Bad path :-(\n")

@@ -4,8 +4,8 @@ import * as sui from './sui';
 import * as data from './data';
 import * as compiler from './compiler';
 
-const SPRITE_EDITOR_DEFAULT_HEIGHT = 1023;
-const SPRITE_EDITOR_DEFAULT_WIDTH = 2100;
+const SPRITE_EDITOR_DEFAULT_HEIGHT = 492;
+const SPRITE_EDITOR_DEFAULT_WIDTH = 503;
 
 interface ISpriteEditorProps {
     input: pxt.SnippetQuestionInput;
@@ -54,12 +54,17 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
     }
 
     protected setScale() {
-        // Sprite editor default height at scale 1 1023 - full size value
-        const height = window.innerHeight;
-        // Sprite editor default height at scale 1 2100 - full size value
-        const width = window.innerWidth;
+        let editorHost = document.getElementsByClassName("snippet-sprite-editor")[0]
+        // Sprite editor default height at scale 1 SPRITE_EDITOR_DEFAULT_WIDTH - full size value
+        const height = editorHost.clientHeight;
+        // Sprite editor default height at scale 1 SPRITE_EDITOR_DEFAULT_HEIGHT - full size value
+        const width = editorHost.clientWidth;
 
-        let scale = height > width ? width / SPRITE_EDITOR_DEFAULT_WIDTH : height / SPRITE_EDITOR_DEFAULT_HEIGHT;
+        let wScale = width / SPRITE_EDITOR_DEFAULT_WIDTH;
+        let hScale = height / SPRITE_EDITOR_DEFAULT_HEIGHT;
+        let scale = Math.min(wScale, hScale);
+
+        // let scale = height > width ? width / SPRITE_EDITOR_DEFAULT_WIDTH : height / SPRITE_EDITOR_DEFAULT_HEIGHT;
 
         // Minimum resize threshold .81
         if (scale < .61) {
@@ -171,7 +176,7 @@ export class SpriteEditor extends data.Component<ISpriteEditorProps, ISpriteEdit
             </div>
         );
     }
-  }
+}
 
 const DEFAULT_SPRITE_STATE = `
 . . . . . . . . . . . . . . . .

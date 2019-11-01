@@ -269,7 +269,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Otherwise translate the blocks so that they are positioned on the top left
             this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
-            this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
+            this.editor.scrollX = 10;
             this.editor.scrollY = 10;
 
             // Forces scroll to take effect
@@ -453,7 +453,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("blocks.create", { "block": blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
-                this.parent.setState({ hideEditorFloats: false });
+                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata  || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
+                    this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             else if (ev.type == "var_create" || ev.type == "var_rename" || ev.type == "delete") {
@@ -604,10 +605,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
+        let flyoutOnly = this.parent.state.editorState && this.parent.state.editorState.hasCategories === false;
         return (
             <div>
                 <div id="blocksEditor"></div>
-                <toolbox.ToolboxTrashIcon />
+                <toolbox.ToolboxTrashIcon flyoutOnly={flyoutOnly} />
             </div>
         )
     }
@@ -782,10 +784,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 // Get extension packages
                 this.extensions = pkg.allEditorPkgs()
-                    .map(ep => ep.getKsPkg()).map(p => !!p && p.config)
+                    .map(ep => ep.getKsPkg())
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
-                    .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+                    .filter(p => !!p && p.config && !!p.config.extension && /^(file:|github:)/.test(p.installedVersion));
             })
     }
 
@@ -1016,19 +1018,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private openExtension(extensionName: string) {
-        const extension = this.extensions.filter(c => c.name == extensionName)[0];
+        const extension = this.extensions.filter(c => c.config.name == extensionName)[0];
         const parsedRepo = pxt.github.parseRepoId(extension.installedVersion);
         pxt.packagesConfigAsync()
-            .then((config) => {
-                const repoStatus = pxt.github.repoStatus(parsedRepo, config);
+            .then((packagesConfig) => {
+                const extensionConfig = extension.config;
+                const repoStatus = pxt.github.repoStatus(parsedRepo, packagesConfig);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extensionConfig.extension.localUrl;
                 const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
-                    : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
+                    : localDebug ? extensionConfig.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
                 /* tslint:enable:no-http-string */
-                this.parent.openExtension(extension.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
+                this.parent.openExtension(extensionConfig.name, url, repoStatus == 0); // repoStatus can only be APPROVED or UNKNOWN at this point
             });
     }
 
@@ -1204,7 +1207,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         // Add extension buttons
         if (!subns) {
-            this.extensions.forEach(config => {
+            this.extensions.forEach(extension => {
+                const config = extension.config;
                 const name = config.name;
                 const namespace = config.extension.namespace || name;
                 if (ns == namespace) {
@@ -1431,7 +1435,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    // For editors that have no toolb
+    // For editors that have no toolbox
     showFlyoutOnlyToolbox() {
         // Show a Flyout only with all the blocks
         const allCategories = this.getAllCategories();
@@ -1445,12 +1449,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
         });
 
+        let container = document.createElement("div");
+        ReactDOM.render(<toolbox.ToolboxStyle categories={allCategories} />, container);
+        document.getElementById('editorcontent').appendChild(container);
+
         let xmlList: Element[] = [];
         allBlocks.forEach((block) => {
             const blockXmlList = this.getBlockXml(block);
             if (blockXmlList) xmlList = xmlList.concat(blockXmlList);
         })
         this.showFlyoutInternal_(xmlList);
+        this.parent.forceUpdate();
     }
 
     ///////////////////////////////////////////////////////////

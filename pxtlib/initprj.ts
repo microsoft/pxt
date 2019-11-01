@@ -1,5 +1,5 @@
-namespace pxt {
-    export const TS_CONFIG =             `{
+namespace pxt.template {
+    export const TS_CONFIG = `{
     "compilerOptions": {
         "target": "es5",
         "noImplicitAny": true,
@@ -9,13 +9,14 @@ namespace pxt {
     "exclude": ["pxt_modules/**/*test.ts"]
 }
 `;
-    const _defaultFiles: Map<string> = {
-        "tsconfig.json": TS_CONFIG,
+    function defaultFiles(): Map<string> {
+        return {
+            "tsconfig.json": TS_CONFIG,
 
-        "test.ts": `// tests go here; this will not be compiled when this package is used as a library
+            "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
 `,
 
-        "Makefile": `all: deploy
+            "Makefile": `all: deploy
 
 build:
 \tpxt build
@@ -27,40 +28,43 @@ test:
 \tpxt test
 `,
 
-        "README.md": `# @NAME@
+            "README.md": `# @NAME@
 
 @DESCRIPTION@
 
-## Usage
+## ${lf("Use this extension")}
 
-This repository contains a MakeCode extension. To use it in MakeCode,
+${lf("This repository can be added as an **extension** in MakeCode.")}
 
-* open @HOMEURL@
-* click on **New Project**
-* click on **Extensions** under the gearwheel menu
-* search for the URL of this repository
+* ${lf("open @HOMEURL@")}
+* ${lf("click on **New Project**")}
+* ${lf("click on **Extensions** under the gearwheel menu")}
+* ${lf("search for the URL of this repository and import")}
 
-## Collaborators
+## ${lf("Edit this extension")}
 
-You can invite users to become collaborators to this repository. This will allow multiple users to work on the same project at the same time.
-[Learn more...](https://help.github.com/en/articles/inviting-collaborators-to-a-personal-repository)
+${lf("To edit this repository in MakeCode.")}
 
-To edit this repository in MakeCode,
+* ${lf("open @HOMEURL@")}
+* ${lf("click on **Import** then click on **Import URL**")}
+* ${lf("paste the repository URL and click import")}
 
-* open @HOMEURL@
-* click on **Import** then click on **Import URL**
-* paste the repository URL and click import
+## ${lf("Collaborators")}
 
-## Supported targets
+${lf("You can invite users to become collaborators to this repository.")}
+${lf("This will allow multiple users to work on the same project at the same time.")}
+[${lf("Learn more...")}](https://help.github.com/en/articles/inviting-collaborators-to-a-personal-repository)
+
+## ${lf("Supported targets")}
 
 * for PXT/@TARGET@
 * for PXT/@PLATFORM@
-(The metadata above is needed for package search.)
+${lf("(The metadata above is needed for package search.)")}
 
 `,
 
-        ".gitignore":
-            `built
+            ".gitignore":
+                `built
 node_modules
 yotta_modules
 yotta_targets
@@ -69,8 +73,8 @@ pxt_modules
 *.tgz
 .header.json
 `,
-        ".vscode/settings.json":
-            `{
+            ".vscode/settings.json":
+                `{
     "editor.formatOnType": true,
     "files.autoSave": "afterDelay",
     "files.watcherExclude": {
@@ -93,7 +97,7 @@ pxt_modules
         "**/pxt_modules": true
     }
 }`,
-        ".github/workflows/makecode.yml": `name: MakeCode CI
+            ".github/workflows/makecode.yml": `name: MakeCode CI
 
 on: [push]
 
@@ -121,7 +125,7 @@ jobs:
         env:
           CI: true
 `,
-        ".travis.yml": `language: node_js
+            ".travis.yml": `language: node_js
 node_js:
     - "8.9.4"
 script:
@@ -134,8 +138,8 @@ cache:
     directories:
     - npm_modules
     - pxt_modules`,
-        ".vscode/tasks.json":
-            `
+            ".vscode/tasks.json":
+                `
 // A task runner that calls the MakeCode (PXT) compiler
 {
     "version": "2.0.0",
@@ -172,34 +176,33 @@ cache:
     }]
 }
 `
+        }
     }
 
     export function packageFiles(name: string): pxt.Map<string> {
-        let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
-        let config = U.clone(prj.config);
-        // remove blocks file
-        Object.keys(prj.files)
-            .filter(f => /\.blocks$/.test(f))
-            .forEach(f => delete prj.files[f]);
-        config.files = config.files.filter(f => !/\.blocks$/.test(f));
-
+        const prj = pxt.appTarget.blocksprj || pxt.appTarget.tsprj;
+        const config = U.clone(prj.config);
+        // clean up
+        delete (<any>config).installedVersion;
+        delete config.additionalFilePath;
+        delete config.additionalFilePaths;
+        // (keep blocks files)
+        config.preferredEditor = config.files.find(f => /\.blocks$/.test(f))
+            ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
         config.name = name;
-        // by default, projects are not public
-        config.public = false;
-
-        if (!config.version) {
+        config.public = true;
+        if (!config.version)
             config.version = "0.0.0"
-        }
-
         const files: Map<string> = {};
-        for (const f in _defaultFiles)
-            files[f] = _defaultFiles[f];
+        const defFiles = defaultFiles();
+        for (const f in defFiles)
+            files[f] = defFiles[f];
         for (const f in prj.files)
             if (f != "README.md") // this one we need to keep
                 files[f] = prj.files[f];
 
         const pkgFiles = Object.keys(files).filter(s =>
-            /\.(md|ts|asm|cpp|h|py)$/.test(s))
+            /\.(blocks|md|ts|asm|cpp|h|py)$/.test(s))
 
         const fieldsOrder = [
             "name",
@@ -211,13 +214,16 @@ cache:
             "testFiles",
             "testDependencies",
             "public",
-            "targetVersions"
+            "targetVersions",
+            "preferredEditor",
+            "additionalFilePath",
+            "additionalFilePaths"
         ]
 
         config.files = pkgFiles.filter(s => !/test/.test(s));
         config.testFiles = pkgFiles.filter(s => /test/.test(s));
 
-        let configMap: Map<string> = config as any
+        const configMap: Map<string> = config as any
         // make it look nice
         const newCfg: any = {}
         for (const f of fieldsOrder) {
