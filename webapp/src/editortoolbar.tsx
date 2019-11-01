@@ -126,11 +126,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         if (showSave) {
             const sizeClass = view == View.Computer ? 'small' : 'large';
-            saveInput.push(<EditorToolbarButton icon='save' className={`${sizeClass} right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(view)} key="save" />)
+            saveInput.push(<EditorToolbarButton icon='save' className={`${sizeClass} right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(view)} key={`save${view}`} />)
         }
 
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.githubPackages) {
-            saveInput.push(<githubbutton.GithubButton parent={this.props.parent} />)
+            saveInput.push(<githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${view}`} />)
         }
 
         return saveInput;
