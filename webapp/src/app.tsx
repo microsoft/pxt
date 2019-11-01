@@ -3464,10 +3464,7 @@ export class ProjectView
         const showFileList = !sandbox
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
-        // show github if token or if always vis
         const hasCloud = this.hasCloud();
-        const cloudProvider = hasCloud && this.getData("sync:provider");
-        const showGithub = cloudProvider == "github";
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3494,7 +3491,6 @@ export class ProjectView
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
-                        {showGithub ? <filelist.GithubTreeItem parent={this} /> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
                         {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
