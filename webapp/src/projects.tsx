@@ -267,18 +267,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
-    componentWillReceiveProps(nextProps: ProjectSettingsMenuProps) {
-        const newState: ProjectSettingsMenuState = {};
-        if (nextProps.highContrast != undefined) {
-            newState.highContrast = nextProps.highContrast;
-        }
-        if (Object.keys(newState).length > 0) this.setState(newState)
-    }
-
-    shouldComponentUpdate(nextProps: ProjectSettingsMenuProps, nextState: ProjectSettingsMenuState, nextContext: any): boolean {
-        return this.state.highContrast != nextState.highContrast;
-    }
-
     signInGithub() {
         pxt.tickEvent("home.github.signin");
         const githubProvider = cloudsync.githubProvider();
@@ -291,10 +279,8 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
+        if (githubProvider)
             githubProvider.logout();
-            this.props.parent.forceUpdate();
-        }
     }
 
     renderCore() {
@@ -308,7 +294,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             <div className="ui divider"></div>
-            {!githubUser ? <sui.Item role="menuitem" title={lf("Host your code on GitHub and work together with friends on projects.")} text={lf("Sign in with GitHub")} icon="github" onClick={this.signOutGithub} /> : undefined}
+            {!githubUser ? <sui.Item role="menuitem" title={lf("Host your code on GitHub and work together with friends on projects.")} text={lf("Sign in with GitHub")} icon="github" onClick={this.signInGithub} /> : undefined}
             {githubUser ? <a className="ui item" title={lf("Signed in as {0} with GitHub", githubUser.name)} role="menuitem" href={githubUser.profile} target="_blank" rel="noopener noreferrer">
                 <div className="avatar">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
