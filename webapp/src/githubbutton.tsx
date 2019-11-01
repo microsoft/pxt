@@ -59,12 +59,14 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         //const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
-        const text = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+        const modified = meta && !!meta.numFilesGitModified;
+        const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+        const title = lf("Review and commit changes for {0}", repoName);
 
         return <div role="button" className={`ui icon button editortools-btn editortools-github-btn`}
-            title={text} onClick={this.handleClick}>
+            title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            {meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
+            {modified ? <i className="up arrow icon" /> : undefined}
         </div>;
     }
 }
