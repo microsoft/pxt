@@ -52,7 +52,7 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         // new github repo
         if (!ghid)
             return <sui.Button className={`ui icon button editortools-btn editortools-github-btn`}
-                icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")} 
+                icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")}
                 onClick={this.createRepository} />
 
         // existing repo
