@@ -650,7 +650,7 @@ ${content}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -663,12 +663,12 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
-                        : <NoChangesComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} />
-                    }
-                    <div className="ui">
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
+                        : <div className="ui segment">{lf("No local changes found.")}</div>}
+                    {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
-                    </div>
+                    </div> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} /> : undefined}
                 </div>
             </div>
         )
@@ -682,6 +682,7 @@ interface GitHubViewProps {
     parent: GithubComponent;
     gs: pxt.github.GitJson;
     isBlocks: boolean;
+    needsCommit: boolean;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -755,7 +756,8 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
         </div>
     }
 }
-class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
+
+class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleBumpClick = this.handleBumpClick.bind(this);
@@ -770,50 +772,51 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId, master, gs } = this.props;
+        const { needsToken, githubId, needsCommit, master, gs } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
-        return <div>
-            <div className="ui segment">{lf("No local changes found.")}</div>
-            {master ? <div className="ui transparent segment">
-                <div className="ui header">{lf("Extension zone")}</div>
+        const canRelease = master && !needsCommit;
+        return <div className="ui transparent segment">
+            <div className="ui header">{lf("Extension zone")}</div>
+            <div className="ui field">
+                <a href={testurl}
+                    role="button" className="ui button"
+                    target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
+                    {lf("Test Extension")}
+                </a>
+                <span>
+                    {lf("Open a test project that uses this extension.")}
+                </span>
+            </div>
+            {gs.commit && gs.commit.tag ?
                 <div className="ui field">
-                    <a href={testurl}
-                        role="button" className="ui button"
-                        target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
-                        {lf("Test Extension")}
-                    </a>
-                    <span>
-                        {lf("Open a test project that uses this extension.")}
-                    </span>
+                    <p>{lf("Current release: {0}", gs.commit.tag)}
+                        {sui.helpIconLink("/github/release", lf("Learn about releases."))}
+                    </p>
                 </div>
-                {gs.commit && gs.commit.tag ?
-                    <div className="ui field">
-                        <p>{lf("Current release: {0}", gs.commit.tag)}
-                            {sui.helpIconLink("/github/release", lf("Learn about releases."))}
-                        </p>
-                    </div>
-                    :
-                    <div className="ui field">
-                        <sui.Button text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
-                        <span>
-                            {lf("Bump up the version number and create a release on GitHub.")}
-                            {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
-                        </span>
-                    </div>}
-                {needsLicenseMessage ? <div className={`ui field`}>
-                    <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                        role="button" className="ui button"
-                        target="_blank" rel="noopener noreferrer">
-                        {lf("Add license")}
-                    </a>
+                :
+                <div className="ui field">
+                    <sui.Button text={lf("Create release")}
+                        disabled={!canRelease}
+                        onClick={this.handleBumpClick}
+                        onKeyDown={sui.fireClickOnEnter} />
                     <span>
-                        {lf("Your project doesn't seem to have a license.")}
-                        {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                        {lf("Bump up the version number and create a release on GitHub.")}
+                        {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
                     </span>
-                </div> : undefined}
+                </div>}
+            {needsLicenseMessage ? <div className={`ui field`}>
+                <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                    role="button" className="ui button"
+                    target="_blank" rel="noopener noreferrer">
+                    {lf("Add license")}
+                </a>
+                <span>
+                    {lf("Your project doesn't seem to have a license.")}
+                    {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                </span>
             </div> : undefined}
         </div>
     }
