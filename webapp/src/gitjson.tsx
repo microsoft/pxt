@@ -630,7 +630,6 @@ ${content}
         const gs = this.getGitJson();
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
-        const testurl = `${window.location.href.replace(/#.*$/, '')}#testproject:${this.props.parent.state.header.id}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
         const prUrl = !gs.isFork && master ? null :
@@ -648,7 +647,6 @@ ${content}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
-                        <sui.Link className="ui button" icon="flask" href={testurl} title={lf("Open test project for extension.")} target={`${pxt.appTarget.id}testproject`} onKeyDown={sui.fireClickOnEnter} />
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
@@ -773,12 +771,24 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsToken, githubId, master, gs } = this.props;
+        const header = this.props.parent.props.parent.state.header;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
+        const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
         return <div>
             <div className="ui segment">{lf("No local changes found.")}</div>
             {master ? <div className="ui transparent segment">
                 <div className="ui header">{lf("Extension zone")}</div>
+                <div className="ui field">
+                    <a href={testurl}
+                        role="button" className="ui button"
+                        target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
+                        {lf("Test Extension")}
+                    </a>
+                    <span>
+                        {lf("Open a test project that uses this extension.")}
+                    </span>
+                </div>
                 {gs.commit && gs.commit.tag ?
                     <div className="ui field">
                         <p>{lf("Current release: {0}", gs.commit.tag)}
