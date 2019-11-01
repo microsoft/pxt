@@ -295,13 +295,12 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             <div className="ui divider"></div>
             {!githubUser ? <sui.Item role="menuitem" title={lf("Host your code on GitHub and work together with friends on projects.")} text={lf("Sign in with GitHub")} icon="github" onClick={this.signInGithub} /> : undefined}
-            {githubUser ? <a className="ui item" title={lf("Signed in as {0} with GitHub", githubUser.name)} role="menuitem" href={githubUser.profile} target="_blank" rel="noopener noreferrer">
-                <div className="avatar">
+            {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
+                <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
                 </div>
-                {githubUser.userName}
-            </a> : undefined}
-            {githubUser ? <sui.Item role="menuitem" text={lf("Sign out from GitHub")} icon="github" onClick={this.signOutGithub} /> : undefined}
+                {lf("Sign out")}
+            </div> : undefined}
             <div className="ui divider"></div>
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />

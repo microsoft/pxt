@@ -770,12 +770,16 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         if (needsCommit)
             core.confirmAsync({
                 header: lf("Commit your changes..."),
-                body: lf("You need to commit your local changes to create a release.")
+                body: lf("You need to commit your local changes to create a release."),
+                agreeLbl: lf("Ok"),
+                hideAgree: true
             });
         else if (master)
             core.confirmAsync({
                 header: lf("Checkout the master branch..."),
-                body: lf("You need to checkout the master branch to create a release.")
+                body: lf("You need to checkout the master branch to create a release."),
+                agreeLbl: lf("Ok"),
+                hideAgree: true
             });
         else
             cloudsync.githubProvider()
