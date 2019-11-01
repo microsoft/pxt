@@ -114,4 +114,4 @@ MakeCode is an open source project and is provided as a joint effort between [Mi
 
 ## Contact us
 
-Trying to reach us? Try [the contact page](/contact).
+Want to reach us? Get in touch using one of the resources on the [contact page](/contact).
