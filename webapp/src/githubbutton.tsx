@@ -51,19 +51,18 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         const ghid = pxt.github.parseRepoId(githubId);
         // new github repo
         if (!ghid)
-            return <sui.Button icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")} onClick={this.createRepository} />
+            return <sui.Button className={`ui icon button editortools-btn editortools-github-btn`}
+                icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")} onClick={this.createRepository} />
 
         // existing repo
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
         const meta: pkg.PackageMeta = ghid ? this.getData("open-pkg-meta:" + mainPkg.getPkgId()) : undefined;
-        const text = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
 
-        return <div role="button" className={`ui button`}>
-                <i className="github icon" />
-                {meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
-                {text}
-            </div>;
+        return <div role="button" className={`ui icon button editortools-btn editortools-github-btn`} title={text} onClick={this.handleClick}>
+            <i className="github icon" />
+            {meta && meta.numFilesGitModified ? <i className="up arrow icon" /> : undefined}
+        </div>;
     }
 }
 
