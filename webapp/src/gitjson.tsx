@@ -763,21 +763,32 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         this.handleBumpClick = this.handleBumpClick.bind(this);
     }
 
-    private async handleBumpClick(e: React.MouseEvent<HTMLElement>) {
+    private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.bump");
         e.stopPropagation();
-        await cloudsync.githubProvider().loginAsync();
-        if (pxt.github.token)
-            this.props.parent.bumpAsync();
+        const { needsCommit, master } = this.props;
+        if (needsCommit)
+            core.confirmAsync({
+                header: lf("Commit your changes..."),
+                body: lf("You need to commit your local changes to create a release.")
+            });
+        else if (master)
+            core.confirmAsync({
+                header: lf("Checkout the master branch..."),
+                body: lf("You need to checkout the master branch to create a release.")
+            });
+        else
+            cloudsync.githubProvider()
+                .loginAsync()
+                .then(() => pxt.github.token && this.props.parent.bumpAsync());
     }
 
     renderCore() {
-        const { needsToken, githubId, needsCommit, master, gs } = this.props;
+        const { needsToken, githubId, gs } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
-        const canRelease = master && !needsCommit;
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">
@@ -799,8 +810,6 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 :
                 <div className="ui field">
                     <sui.Button text={lf("Create release")}
-                        disabled={!canRelease}
-                        title={canRelease ? lf("Bump up the version number and create a release on GitHub.") : lf("Commit your changed and move to the master branch to create a release.")}
                         onClick={this.handleBumpClick}
                         onKeyDown={sui.fireClickOnEnter} />
                     <span>
