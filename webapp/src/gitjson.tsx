@@ -775,34 +775,35 @@ class NoChangesComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const { needsToken, githubId, master, gs } = this.props;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
-        const inverted = pxt.appTarget.appTheme.invertedMenu;
         return <div>
-            <p>{lf("No local changes found.")}</p>
-            {master ? <div className="ui divider"></div> : undefined}
-            {master ? gs.commit && gs.commit.tag ?
-                <div className="ui field">
-                    <p>{lf("Current release: {0}", gs.commit.tag)}
-                        {sui.helpIconLink("/github/release", lf("Learn about releases."))}
-                    </p>
-                </div>
-                :
-                <div className="ui field">
-                    <sui.Button className="primary" text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
-                    <span>
-                        {lf("Bump up the version number and create a release on GitHub.")}
-                        {sui.helpIconLink("/github/release#license", lf("Learn more about extension releases."))}
-                    </span>
-                </div> : undefined}
-            {master && needsLicenseMessage ? <div className={`ui ${inverted ? 'inverted' : ''} message`}>
-                <div className="content">
-                    {lf("Your project doesn't seem to have a license. This makes it hard for others to use it.")}
-                    {" "}
+            <div className="ui segment">{lf("No local changes found.")}</div>
+            {master ? <div className="ui transparent segment">
+                <div className="ui header">{lf("Extension zone")}</div>
+                {gs.commit && gs.commit.tag ?
+                    <div className="ui field">
+                        <p>{lf("Current release: {0}", gs.commit.tag)}
+                            {sui.helpIconLink("/github/release", lf("Learn about releases."))}
+                        </p>
+                    </div>
+                    :
+                    <div className="ui field">
+                        <sui.Button text={lf("Create release")} onClick={this.handleBumpClick} onKeyDown={sui.fireClickOnEnter} />
+                        <span>
+                            {lf("Bump up the version number and create a release on GitHub.")}
+                            {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
+                        </span>
+                    </div>}
+                {needsLicenseMessage ? <div className={`ui field`}>
                     <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                        role="button" className="ui link"
+                        role="button" className="ui button"
                         target="_blank" rel="noopener noreferrer">
                         {lf("Add license")}
                     </a>
-                </div>
+                    <span>
+                        {lf("Your project doesn't seem to have a license.")}
+                        {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                    </span>
+                </div> : undefined}
             </div> : undefined}
         </div>
     }
