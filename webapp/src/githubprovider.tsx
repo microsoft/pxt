@@ -59,6 +59,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
     }
 
     getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
+        if (!this.token())
+            return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
                 return {
