@@ -238,7 +238,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.signInGithub = this.signInGithub.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -267,15 +266,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
-    signInGithub() {
-        pxt.tickEvent("home.github.signin");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.loginAsync()
-                .done(() => this.props.parent.forceUpdate());
-        }
-    }
-
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
@@ -294,7 +284,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             <div className="ui divider"></div>
-            {!githubUser ? <sui.Item role="menuitem" title={lf("Host your code on GitHub and work together with friends on projects.")} text={lf("Sign in with GitHub")} icon="github" onClick={this.signInGithub} /> : undefined}
             {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
