@@ -39,6 +39,8 @@ export interface IdentityProvider {
     loginCallback(queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<pxt.editor.UserInfo>;
     hasSync(): boolean;
+    user(): pxt.editor.UserInfo;
+    setUser(user: pxt.editor.UserInfo): void;
 }
 
 export interface Provider extends IdentityProvider {
@@ -79,6 +81,20 @@ export class ProviderBase {
 
     syncError(msg: string) {
         throw mkSyncError(msg)
+    }
+
+    user(): pxt.editor.UserInfo {
+        const user = pxt.Util.jsonTryParse(pxt.storage.getLocal(this.name + "cloudUser")) as pxt.editor.UserInfo;
+        return user;
+    }
+
+    setUser(user: pxt.editor.UserInfo) {
+        if (user)
+            pxt.storage.setLocal(this.name + "cloudUser", JSON.stringify(user))
+        else
+            pxt.storage.removeLocal(this.name + "cloudUser");
+        data.invalidate("sync:user")
+        data.invalidate("github:user")
     }
 
     protected token() {
@@ -201,8 +217,7 @@ export class ProviderBase {
         this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
 
         // re-compute
-        pxt.storage.removeLocal("cloudUser")
-        data.invalidate("sync:user")
+        this.setUser(undefined);
     }
 
     setNewToken(accessToken: string, expiresIn?: number) {
@@ -235,8 +250,7 @@ export class ProviderBase {
         pxt.storage.removeLocal(this.name + "token")
         pxt.storage.removeLocal(this.name + "tokenExp")
         pxt.storage.removeLocal(this.name + "AutoLogin")
-        if (this.hasSync())
-            pxt.storage.removeLocal("cloudUser")
+        this.setUser(undefined)
         invalidateData();
     }
 }
@@ -363,16 +377,16 @@ export function resetAsync() {
     pxt.storage.removeLocal("oauthState")
     pxt.storage.removeLocal("oauthHash")
     pxt.storage.removeLocal("oauthRedirect")
-    pxt.storage.removeLocal("cloudUser")
     invalidateData();
 
     return Promise.resolve()
 }
 
-function updateNameAsync() {
-    const provider = currentProvider;
-    let user = pxt.storage.getLocal("cloudUser");
-    if (user || !provider || !provider.hasSync())
+function updateNameAsync(provider: IdentityProvider) {
+    if (!provider)
+        return Promise.resolve()
+    let user = provider.user();
+    if (user)
         return Promise.resolve()
     return provider.getUserInfoAsync()
         .then(info => {
@@ -407,8 +421,7 @@ function updateNameAsync() {
             }
             if (!info.initials)
                 info.initials = userInitials(info.name);
-            pxt.storage.setLocal("cloudUser", JSON.stringify(info))
-            data.invalidate("sync:user")
+            provider.setUser(info);
             return null
         })
 }
@@ -419,10 +432,20 @@ export function refreshToken() {
 }
 
 export function syncAsync(): Promise<void> {
+    return Promise.all([githubSyncAsync(), cloudSyncAsync()])
+        .then(() => { });
+}
+
+function githubSyncAsync(): Promise<void> {
+    const gp = githubProvider();
+    return gp ? updateNameAsync(gp) : Promise.resolve();
+}
+
+function cloudSyncAsync(): Promise<void> {
     if (!currentProvider)
         return Promise.resolve(undefined)
     if (!currentProvider.hasSync())
-        return updateNameAsync();
+        return updateNameAsync(currentProvider);
 
     const provider = currentProvider as Provider;
     let numUp = 0
@@ -527,7 +550,7 @@ export function syncAsync(): Promise<void> {
 
     setStatus("syncing");
 
-    return updateNameAsync()
+    return updateNameAsync(provider)
         .then(() => provider.listAsync())
         .then(entries => {
             // Get all local headers including those that had been deleted
@@ -665,34 +688,44 @@ function userInitials(username: string): string {
     return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
 }
 
-data.mountVirtualApi("sync", {
-    getSync: p => {
-        switch (data.stripProtocol(p)) {
-            case "user":
-                const user = pxt.Util.jsonTryParse(pxt.storage.getLocal("cloudUser")) as pxt.editor.UserInfo;
-                return user;
-            case "loggedin":
-                return currentProvider != null
-            case "status":
-                return status
-            case "hascloud":
-                return providers().length > 0
-            case "hassync":
-                return currentProvider && currentProvider.hasSync();
-            case "provider":
-                return currentProvider && currentProvider.name;
-            case "providericon":
-                if (currentProvider)
-                    return currentProvider.icon;
-                const prs = providers();
-                if (prs.length == 1)
-                    return prs[0].icon;
-                return "user";
-        }
-        return null
-    },
-})
+function syncApiHandler(p: string) {
+    const provider = currentProvider;
+    switch (data.stripProtocol(p)) {
+        case "user":
+            return provider && provider.user();
+        case "loggedin":
+            return !!provider;
+        case "status":
+            return status;
+        case "hascloud":
+            return providers().length > 0
+        case "hassync":
+            return provider && provider.hasSync();
+        case "provider":
+            return provider && provider.name;
+        case "providericon":
+            if (provider)
+                return provider.icon;
+            const prs = providers();
+            if (prs.length == 1)
+                return prs[0].icon;
+            return "user";
+    }
+    return null
+}
 
+
+function githubApiHandler(p: string) {
+    const provider = githubProvider();
+    switch (data.stripProtocol(p)) {
+        case "user":
+            return provider && provider.user();
+    }
+    return null
+}
+
+data.mountVirtualApi("sync", { getSync: syncApiHandler })
+data.mountVirtualApi("github", { getSync: githubApiHandler })
 
 function invalidateData() {
     data.invalidate("sync:status")
@@ -702,4 +735,5 @@ function invalidateData() {
     data.invalidate("sync:hassync")
     data.invalidate("sync:provider")
     data.invalidate("sync:providericon")
+    data.invalidate("github:user");
 }

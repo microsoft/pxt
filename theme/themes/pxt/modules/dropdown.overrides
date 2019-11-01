@@ -15,6 +15,14 @@
     justify-content: center;
 }
 
+
+.ui.dropdown .ui.item .avatar > img {
+    height: 1.5rem;
+    width: 1.5rem;
+    display: inline-block;
+}
+
+
 /* Small + Large Monitor */
 @media only screen and (min-width: @computerBreakpoint) {
     .ui.dropdown .avatar {
