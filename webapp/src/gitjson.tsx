@@ -800,6 +800,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="ui field">
                     <sui.Button text={lf("Create release")}
                         disabled={!canRelease}
+                        title={canRelease ? lf("Bump up the version number and create a release on GitHub.") : lf("Commit your changed and move to the master branch to create a release.")}
                         onClick={this.handleBumpClick}
                         onKeyDown={sui.fireClickOnEnter} />
                     <span>
