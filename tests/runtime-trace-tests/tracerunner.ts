@@ -75,9 +75,9 @@ function writeFileStringSync(filePath: string, content: string) {
 async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     // debug info
     console.log("Python3 version:")
-    runProcAsync("python3 --version", "")
+    console.log(await runProcAsync("python3 --version", ""))
     console.log("node version:")
-    runProcAsync("node --version", "")
+    console.log(await runProcAsync("node --version", ""))
 
     let ext = path.extname(tsOrPyFile)
     let isPy = ext === ".py"
