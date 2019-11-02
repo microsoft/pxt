@@ -83,6 +83,15 @@ namespace pxt.blocks {
         referencedVars: number[];
         assignedVars: number[];
         children: Scope[];
+        blockCounter: number;
+        variables: Map<ScopedVarInfo>;
+    }
+
+    export interface ScopedVarInfo {
+        firstReferencingBlock?: Blockly.Block;
+        firstReferencingBlockIndex?: number;
+        initializingBlock?: Blockly.Block;
+        initializingBlockIndex?: number;
     }
 
     export enum BlockDeclarationType {
@@ -106,6 +115,7 @@ namespace pxt.blocks {
         alreadyDeclared?: BlockDeclarationType;
         firstReference?: Blockly.Block;
         isAssigned?: boolean;
+        scopes?: Scope[];
     }
 
     function find(p: Point): Point {
@@ -2106,6 +2116,55 @@ namespace pxt.blocks {
         }
     }
 
+    function findDeclaringScope(varInfo: VarInfo): Scope | undefined {
+        if (varInfo.scopes === undefined || varInfo.scopes.length === 0) {
+            return undefined;
+        }
+        if (varInfo.scopes.length === 1) {
+            return varInfo.scopes[0];
+        }
+
+        let lcaPath = findPathToLowestCommonAncestor(varInfo.scopes[0], varInfo.scopes[1]);
+        for (let i = 2; i < varInfo.scopes.length; i++) {
+            lcaPath = findPathToLowestCommonAncestor(lcaPath, varInfo.scopes[i]);
+        }
+        return lcaPath[lcaPath.length - 1];
+    }
+
+    function getPathToSelf(scope: Scope): Scope[] {
+        const result = [];
+        for (let s = scope; s !== undefined; s = s.parent) {
+            result.unshift(s);
+        }
+        return result;
+    }
+
+    function findPathToLowestCommonAncestor(a: Scope | Scope[], b: Scope): Scope[] | undefined {
+        const pathToA = Array.isArray(a) ? a : getPathToSelf(a);
+        const pathToB = getPathToSelf(b);
+
+        if (pathToA[0] !== pathToB[0]) {
+            return undefined;
+        }
+
+        let longer: Scope[];
+        let shorter: Scope[];
+        if (pathToA.length > pathToB.length) {
+            longer = pathToA;
+            shorter = pathToB;
+        }
+        else {
+            longer = pathToB;
+            shorter = pathToA;
+        }
+        for (let i = 0; i < longer.length; i++) {
+            if (longer[i] !== shorter[i]) {
+                return longer.slice(0, i);
+            }
+        }
+
+        return undefined;
+    }
 
     function findCommonScope(current: Scope, varID: number): Scope {
         let ref: Scope;
@@ -2134,11 +2193,11 @@ namespace pxt.blocks {
     function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
         topBlocks = topBlocks.filter(b => !b.disabled);
 
-        let id = 1;
+        let id = 0;
         let topScope: Scope;
 
         // First, look for on-start
-        topBlocks.forEach(block => {
+        for (const block of topBlocks) {
             if (block.type === ts.pxtc.ON_START_TYPE) {
                 const firstStatement = block.getInputTargetBlock("HANDLER");
                 if (firstStatement) {
@@ -2147,12 +2206,15 @@ namespace pxt.blocks {
                         declaredVars: {},
                         referencedVars: [],
                         children: [],
-                        assignedVars: []
+                        assignedVars: [],
+                        blockCounter: 0,
+                        variables: {}
                     }
                     trackVariables(firstStatement, topScope, e);
                 }
+                break;
             }
-        });
+        }
 
         // If we didn't find on-start, then create an empty top scope
         if (!topScope) {
@@ -2161,7 +2223,9 @@ namespace pxt.blocks {
                 declaredVars: {},
                 referencedVars: [],
                 children: [],
-                assignedVars: []
+                assignedVars: [],
+                blockCounter: 0,
+                variables: {}
             }
         }
 
@@ -2172,31 +2236,81 @@ namespace pxt.blocks {
             trackVariables(block, topScope, e);
         });
 
-        Object.keys(topScope.declaredVars).forEach(varName => {
-            const varID = topScope.declaredVars[varName];
+        for (const varName of Object.keys(topScope.declaredVars)) {
+            const varInfo = topScope.declaredVars[varName];
             delete topScope.declaredVars[varName];
-            const declaringScope = findCommonScope(topScope, varID.id) || topScope;
-            declaringScope.declaredVars[varName] = varID;
-        })
+            const declaringScope = findDeclaringScope(varInfo);
+            declaringScope.declaredVars[varName] = varInfo;
+        }
 
         markDeclarationLocations(topScope, e);
         escapeVariables(topScope, e);
 
+        console.log(e.allVariables);
+
         return topScope;
+
+        function addScopeToVarInfo(varInfo: VarInfo, scope: Scope) {
+            if (varInfo.scopes === undefined) {
+                varInfo.scopes = [scope];
+            }
+            else if (varInfo.scopes.indexOf(scope) === -1) {
+                varInfo.scopes.push(scope);
+            }
+        }
+
+        function referenceVariable(block: Blockly.Block, scope: Scope, blockIndex: number, isAssigned = false, isSet = false) {
+            const varName = block.getField("VAR").getText();
+            const varInfo = findOrDeclareVariable(varName, scope);
+            addScopeToVarInfo(varInfo, scope);
+            scope.referencedVars.push(varInfo.id);
+
+            if (scope.variables[varName] === undefined) {
+                scope.variables[varName] = {};
+            }
+            const scopedVarInfo = scope.variables[varName];
+            if (scopedVarInfo.firstReferencingBlockIndex === undefined) {
+                scopedVarInfo.firstReferencingBlock = block;
+                scopedVarInfo.firstReferencingBlockIndex = blockIndex;
+            }
+
+            if (isAssigned) {
+                scope.assignedVars.push(varInfo.id);
+            }
+
+            if (isSet && scopedVarInfo.initializingBlockIndex === undefined) {
+                const isDefinitivelyAssigned = () => {
+                    let result = true;
+                    forEachChildExpression(
+                        block,
+                        child => {
+                            if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
+                                result = false;
+                            }
+                        },
+                        true
+                    );
+                    return result;
+                };
+                if (isDefinitivelyAssigned()) {
+                    scopedVarInfo.initializingBlock = block;
+                    scopedVarInfo.initializingBlockIndex = blockIndex;
+                }
+            }
+        }
 
         function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
             e.idToScope[block.id] = currentScope;
+            const blockIndex = currentScope.blockCounter++;
 
             if (block.type === "variables_get") {
-                const name = block.getField("VAR").getText();
-                const info = findOrDeclareVariable(name, currentScope);
-                currentScope.referencedVars.push(info.id);
+                referenceVariable(block, currentScope, blockIndex);
             }
-            else if (block.type === "variables_set" || block.type === "variables_change") {
-                const name = block.getField("VAR").getText();
-                const info = findOrDeclareVariable(name, currentScope);
-                currentScope.assignedVars.push(info.id);
-                currentScope.referencedVars.push(info.id);
+            else if (block.type === "variables_change") {
+                referenceVariable(block, currentScope, blockIndex, true);
+            }
+            else if (block.type === "variables_set") {
+                referenceVariable(block, currentScope, blockIndex, true, true);
             }
             else if (block.type === pxtc.TS_STATEMENT_TYPE) {
                 const declaredVars: string = (block as any).declaredVariables
@@ -2205,6 +2319,13 @@ namespace pxt.blocks {
                     varNames.forEach(vName => {
                         const info = findOrDeclareVariable(vName, currentScope);
                         info.alreadyDeclared = BlockDeclarationType.Argument;
+                        currentScope.variables[vName] = {
+                            firstReferencingBlock: block,
+                            firstReferencingBlockIndex: blockIndex,
+                            initializingBlock: block,
+                            initializingBlockIndex: blockIndex
+                        };
+                        addScopeToVarInfo(info, currentScope);
                     });
                 }
             }
@@ -2218,48 +2339,58 @@ namespace pxt.blocks {
                     }
                 });
 
-
-                let parentScope = currentScope;
+                let inputScope = currentScope;
                 if (vars.length) {
                     // We need to create a scope for this block, and then a scope
                     // for each statement input (in case there are multiple)
 
-                    parentScope = {
+                    inputScope = {
                         parent: currentScope,
                         firstStatement: block,
                         declaredVars: {},
                         referencedVars: [],
                         assignedVars: [],
-                        children: []
+                        children: [],
+                        blockCounter: 0,
+                        variables: {}
                     };
 
                     vars.forEach(v => {
                         v.alreadyDeclared = BlockDeclarationType.Assigned;
-                        parentScope.declaredVars[v.name] = v;
+                        inputScope.declaredVars[v.name] = v;
+                        inputScope.variables[v.name] = {
+                            firstReferencingBlock: block,
+                            firstReferencingBlockIndex: blockIndex,
+                            initializingBlock: block,
+                            initializingBlockIndex: blockIndex
+                        };
+                        addScopeToVarInfo(v, inputScope);
                     });
 
-                    e.idToScope[block.id] = parentScope;
+                    e.idToScope[block.id] = inputScope;
                 }
 
 
-                if (currentScope !== parentScope) {
-                    currentScope.children.push(parentScope);
+                if (currentScope !== inputScope) {
+                    currentScope.children.push(inputScope);
                 }
 
                 forEachChildExpression(block, child => {
-                    trackVariables(child, parentScope, e);
+                    trackVariables(child, inputScope, e);
                 });
 
                 forEachStatementInput(block, connectedBlock => {
                     const newScope: Scope = {
-                        parent: parentScope,
+                        parent: inputScope,
                         firstStatement: connectedBlock,
                         declaredVars: {},
                         referencedVars: [],
                         assignedVars: [],
-                        children: []
+                        children: [],
+                        blockCounter: 0,
+                        variables: {}
                     };
-                    parentScope.children.push(newScope);
+                    inputScope.children.push(newScope);
                     trackVariables(connectedBlock, newScope, e);
                 });
             }
@@ -2387,7 +2518,9 @@ namespace pxt.blocks {
                 e.blockDeclarations[scope.firstStatement.id] = decls.concat(e.blockDeclarations[scope.firstStatement.id] || []);
             }
 
-            decls.forEach(d => e.allVariables.push(d));
+            for (const d of decls) {
+                e.allVariables[d.id] = d;
+            }
         }
 
         scope.children.forEach(child => markDeclarationLocations(child, e));
