@@ -34,7 +34,13 @@ pxt.setAppTarget(util.testAppTarget);
 // tests
 const casesDir = path.join(process.cwd(), "tests", "runtime-trace-tests", "cases");
 
-describe("convert between ts<->py ", () => {
+describe("convert between ts<->py ", async () => {
+    // debug info
+    console.log("Python3 version:")
+    console.log(await runProcAsync("python3 --version", ""))
+    console.log("node version:")
+    console.log(await runProcAsync("node --version", ""))
+
     // TODO: can this be moved to a mocha before() block?
     let tsAndPyFiles: string[]
 
@@ -73,12 +79,6 @@ function writeFileStringSync(filePath: string, content: string) {
 }
 
 async function testTsOrPy(tsOrPyFile: string): Promise<void> {
-    // debug info
-    console.log("Python3 version:")
-    console.log(await runProcAsync("python3 --version", ""))
-    console.log("node version:")
-    console.log(await runProcAsync("node --version", ""))
-
     let ext = path.extname(tsOrPyFile)
     let isPy = ext === ".py"
     let isTs = ext === ".ts"

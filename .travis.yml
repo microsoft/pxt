@@ -3,6 +3,8 @@ os: linux
 dist: trusty
 node_js:
   - "8.9.4"
+python:
+  - "3.7"
 before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
