@@ -1679,7 +1679,7 @@ namespace pxt.blocks {
                 if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
 
                 diags.push({
-                    blockId: v.scopes.find(s => s.variables[v.name] && s.variables[v.name].firstReferencingBlock).variables[v.name].firstReferencingBlock.id,
+                    blockId: v.scopes.find(s => s.variables[v.name] !== undefined && s.variables[v.name].firstReferencingBlock !== undefined).variables[v.name].firstReferencingBlock.id,
                     message: lf("Variable '{0}' is never assigned", v.name)
                 });
             });
