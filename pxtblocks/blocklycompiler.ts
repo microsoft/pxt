@@ -83,15 +83,12 @@ namespace pxt.blocks {
         referencedVars: number[];
         assignedVars: number[];
         children: Scope[];
-        blockCounter: number;
         variables: Map<ScopedVarInfo>;
     }
 
     export interface ScopedVarInfo {
-        firstReferencingBlock?: Blockly.Block;
-        firstReferencingBlockIndex?: number;
-        initializingBlock?: Blockly.Block;
-        initializingBlockIndex?: number;
+        firstReferencingBlock: Blockly.Block;
+        isDefinitivelyAssignedInFRB: boolean;
     }
 
     export enum BlockDeclarationType {
@@ -2157,13 +2154,13 @@ namespace pxt.blocks {
             longer = pathToB;
             shorter = pathToA;
         }
-        for (let i = 0; i < longer.length; i++) {
-            if (longer[i] !== shorter[i]) {
-                return longer.slice(0, i);
+        for (let i = 1; i < shorter.length; i++) {
+            if (shorter[i] !== longer[i]) {
+                return shorter.slice(0, i);
             }
         }
 
-        return undefined;
+        return shorter;
     }
 
     function findCommonScope(current: Scope, varID: number): Scope {
@@ -2207,7 +2204,6 @@ namespace pxt.blocks {
                         referencedVars: [],
                         children: [],
                         assignedVars: [],
-                        blockCounter: 0,
                         variables: {}
                     }
                     trackVariables(firstStatement, topScope, e);
@@ -2224,7 +2220,6 @@ namespace pxt.blocks {
                 referencedVars: [],
                 children: [],
                 assignedVars: [],
-                blockCounter: 0,
                 variables: {}
             }
         }
@@ -2259,58 +2254,46 @@ namespace pxt.blocks {
             }
         }
 
-        function referenceVariable(block: Blockly.Block, scope: Scope, blockIndex: number, isAssigned = false, isSet = false) {
+        function referenceVariable(block: Blockly.Block, scope: Scope, isAssigned = false, isSet = false) {
             const varName = block.getField("VAR").getText();
             const varInfo = findOrDeclareVariable(varName, scope);
             addScopeToVarInfo(varInfo, scope);
             scope.referencedVars.push(varInfo.id);
 
             if (scope.variables[varName] === undefined) {
-                scope.variables[varName] = {};
+                scope.variables[varName] = {
+                    firstReferencingBlock: block,
+                    isDefinitivelyAssignedInFRB: isSet && ((() => {
+                        let result = true;
+                        forEachChildExpression(
+                            block,
+                            child => {
+                                if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
+                                    result = false;
+                                }
+                            },
+                            true
+                        );
+                        return result;
+                    })())
+                };
             }
-            const scopedVarInfo = scope.variables[varName];
-            if (scopedVarInfo.firstReferencingBlockIndex === undefined) {
-                scopedVarInfo.firstReferencingBlock = block;
-                scopedVarInfo.firstReferencingBlockIndex = blockIndex;
-            }
-
             if (isAssigned) {
                 scope.assignedVars.push(varInfo.id);
-            }
-
-            if (isSet && scopedVarInfo.initializingBlockIndex === undefined) {
-                const isDefinitivelyAssigned = () => {
-                    let result = true;
-                    forEachChildExpression(
-                        block,
-                        child => {
-                            if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
-                                result = false;
-                            }
-                        },
-                        true
-                    );
-                    return result;
-                };
-                if (isDefinitivelyAssigned()) {
-                    scopedVarInfo.initializingBlock = block;
-                    scopedVarInfo.initializingBlockIndex = blockIndex;
-                }
             }
         }
 
         function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
             e.idToScope[block.id] = currentScope;
-            const blockIndex = currentScope.blockCounter++;
 
             if (block.type === "variables_get") {
-                referenceVariable(block, currentScope, blockIndex);
+                referenceVariable(block, currentScope);
             }
             else if (block.type === "variables_change") {
-                referenceVariable(block, currentScope, blockIndex, true);
+                referenceVariable(block, currentScope, true);
             }
             else if (block.type === "variables_set") {
-                referenceVariable(block, currentScope, blockIndex, true, true);
+                referenceVariable(block, currentScope, true, true);
             }
             else if (block.type === pxtc.TS_STATEMENT_TYPE) {
                 const declaredVars: string = (block as any).declaredVariables
@@ -2321,9 +2304,7 @@ namespace pxt.blocks {
                         info.alreadyDeclared = BlockDeclarationType.Argument;
                         currentScope.variables[vName] = {
                             firstReferencingBlock: block,
-                            firstReferencingBlockIndex: blockIndex,
-                            initializingBlock: block,
-                            initializingBlockIndex: blockIndex
+                            isDefinitivelyAssignedInFRB: true
                         };
                         addScopeToVarInfo(info, currentScope);
                     });
@@ -2351,7 +2332,6 @@ namespace pxt.blocks {
                         referencedVars: [],
                         assignedVars: [],
                         children: [],
-                        blockCounter: 0,
                         variables: {}
                     };
 
@@ -2360,9 +2340,7 @@ namespace pxt.blocks {
                         inputScope.declaredVars[v.name] = v;
                         inputScope.variables[v.name] = {
                             firstReferencingBlock: block,
-                            firstReferencingBlockIndex: blockIndex,
-                            initializingBlock: block,
-                            initializingBlockIndex: blockIndex
+                            isDefinitivelyAssignedInFRB: true
                         };
                         addScopeToVarInfo(v, inputScope);
                     });
@@ -2387,7 +2365,6 @@ namespace pxt.blocks {
                         referencedVars: [],
                         assignedVars: [],
                         children: [],
-                        blockCounter: 0,
                         variables: {}
                     };
                     inputScope.children.push(newScope);
