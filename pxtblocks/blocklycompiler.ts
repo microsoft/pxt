@@ -2195,22 +2195,21 @@ namespace pxt.blocks {
             addScopeToVarInfo(varInfo, scope);
 
             if (scope.variables[varName] === undefined) {
-                const isDefinitivelyAssignedInFRB = block.type === "variables_set" && ((() => {
-                    let result = true;
-                    forEachChildExpression(
-                        block,
-                        child => {
-                            if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
-                                result = false;
-                            }
-                        },
-                        true
-                    );
-                    return result;
-                })());
                 scope.variables[varName] = {
                     firstReferencingBlock: block,
-                    isDefinitivelyAssignedInFRB: isDefinitivelyAssignedInFRB
+                    isDefinitivelyAssignedInFRB: block.type === "variables_set" && ((() => {
+                        let result = true;
+                        forEachChildExpression(
+                            block,
+                            child => {
+                                if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
+                                    result = false;
+                                }
+                            },
+                            true
+                        );
+                        return result;
+                    })())
                 };
                 referenceVariableInScopeAncestors(scope, varName);
             }
