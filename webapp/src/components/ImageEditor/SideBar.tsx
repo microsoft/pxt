@@ -5,7 +5,7 @@ import { tools } from "./toolDefinitions";
 import { IconButton } from "./Button";
 import { ImageEditorTool, ImageEditorStore } from "./store/imageReducer";
 import { dispatchChangeImageTool } from "./actions/dispatch";
-import { Palette } from "./Palette";
+import { Palette } from "./sprite/Palette";
 
 interface SideBarProps {
     selectedTool: ImageEditorTool;

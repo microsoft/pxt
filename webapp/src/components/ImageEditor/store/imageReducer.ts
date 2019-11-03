@@ -1,5 +1,6 @@
 import * as actions from '../actions/types'
 import { ImageState, Bitmap } from './bitmap';
+import { TileSet } from './tilemap';
 
 export enum ImageEditorTool {
     Paint,
@@ -36,9 +37,16 @@ export interface AnimationState {
     interval: number;
 }
 
+export interface TilemapState {
+    tileset: TileSet;
+    aspectRatioLocked: boolean;
+    tilemap: ImageState;
+}
+
 // State that is not on the undo/redo stack
 export interface EditorState {
     previewAnimating: boolean;
+    isTilemap: boolean;
 
     selectedColor: number;
     backgroundColor: number;
@@ -51,11 +59,24 @@ export interface EditorState {
 }
 
 export interface ImageEditorStore {
-    past: AnimationState[];
-    present: AnimationState;
-    future: AnimationState[];
+    store: EditorStore;
 
     editor: EditorState;
+}
+
+export interface EditorStore {
+    past: (AnimationState | TilemapState)[];
+    present: AnimationState | TilemapState;
+    future: (AnimationState | TilemapState)[];
+}
+
+export interface AnimationStore {
+}
+
+export interface TilemapStore {
+    past: TilemapState[];
+    present: TilemapState;
+    future: TilemapState[];
 }
 
 const initialState: AnimationState =  {
@@ -87,16 +108,19 @@ const initialState: AnimationState =  {
 }
 
 const initialStore: ImageEditorStore = {
-    present: initialState,
-    past: [],
-    future: [],
+    store: {
+        present: initialState,
+        past: [],
+        future: [],
+    },
     editor: {
         selectedColor: 3,
         tool: ImageEditorTool.Paint,
         cursorSize: CursorSize.One,
         backgroundColor: 1,
         previewAnimating: false,
-        onionSkinEnabled: false
+        onionSkinEnabled: false,
+        isTilemap: false
     }
 }
 
@@ -119,68 +143,83 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             return {
                 ...state,
                 editor: action.state,
-                past: action.past || state.past,
-                future: action.past ? [] : state.future
+                store: {
+                    ...state.store,
+                    past: action.past || state.store.past,
+                    future: action.past ? [] : state.store.future
+                }
             };
         case actions.UNDO_IMAGE_EDIT:
-            if (!state.past.length) return state;
+            if (!state.store.past.length) return state;
 
             tickEvent(`undo`);
             return {
                 ...state,
-                past: state.past.slice(0, state.past.length - 1),
-                present: state.past[state.past.length - 1],
-                future: [...state.future, state.present]
+                store: {
+                    ...state.store,
+                    past: state.store.past.slice(0, state.store.past.length - 1),
+                    present: state.store.past[state.store.past.length - 1],
+                    future: [...state.store.future, state.store.present]
+                }
             };
         case actions.REDO_IMAGE_EDIT:
-            if (!state.future.length) return state;
+            if (!state.store.future.length) return state;
 
             tickEvent(`redo`);
             return {
                 ...state,
-                past: [...state.past, state.present],
-                present: state.future[state.future.length - 1],
-                future: state.future.slice(0, state.future.length - 1),
+                store: {
+                    ...state.store,
+                    past: [...state.store.past, state.store.present],
+                    present: state.store.future[state.store.future.length - 1],
+                    future: state.store.future.slice(0, state.store.future.length - 1),
+                }
             };
         case actions.SET_INITIAL_FRAMES:
             return {
                 ...state,
-                past: [],
-                present: {
-                    visible: true,
-                    colors: [
-                        "#000000",
-                        "#ffffff",
-                        "#ff2121",
-                        "#ff93c4",
-                        "#ff8135",
-                        "#fff609",
-                        "#249ca3",
-                        "#78dc52",
-                        "#003fad",
-                        "#87f2ff",
-                        "#8e2ec4",
-                        "#a4839f",
-                        "#5c406c",
-                        "#e5cdc4",
-                        "#91463d",
-                        "#000000"
-                    ],
+                store: {
+                    ...state.store,
+                    past: [],
+                    present: {
+                        visible: true,
+                        colors: [
+                            "#000000",
+                            "#ffffff",
+                            "#ff2121",
+                            "#ff93c4",
+                            "#ff8135",
+                            "#fff609",
+                            "#249ca3",
+                            "#78dc52",
+                            "#003fad",
+                            "#87f2ff",
+                            "#8e2ec4",
+                            "#a4839f",
+                            "#5c406c",
+                            "#e5cdc4",
+                            "#91463d",
+                            "#000000"
+                        ],
 
-                    aspectRatioLocked: false,
+                        aspectRatioLocked: false,
 
-                    currentFrame: 0,
-                    frames: action.frames,
-                    interval: action.interval
-                },
-                future: []
+                        currentFrame: 0,
+                        frames: action.frames,
+                        interval: action.interval
+                    },
+                    future: []
+                }
             }
         default:
             return {
                 ...state,
-                past: [...state.past, state.present],
-                present: animationReducer(state.present, action),
-                future: []
+                store: {
+                    ...state.store,
+                    past: [...state.store.past, state.store.present],
+                    present: state.editor.isTilemap ? tilemapReducer(state.store.present as TilemapState, action) : animationReducer(state.store.present as AnimationState, action),
+                    future: []
+                }
             }
     }
 }
@@ -301,6 +340,10 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             tickEvent(`toggle-onion-skin`);
             return { ...state, onionSkinEnabled: !state.onionSkinEnabled };
     }
+    return state;
+}
+
+const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
     return state;
 }
 

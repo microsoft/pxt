@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { ImageEditorStore } from './store/imageReducer';
+import { ImageEditorStore, AnimationState } from './store/imageReducer';
 import { dispatchChangeInterval, dispatchChangePreviewAnimating } from './actions/dispatch';
 import { IconButton } from "./Button";
 import { CursorSizes } from "./CursorSizes";
@@ -81,7 +81,8 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
     }
 }
 
-function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
+    let state = present as AnimationState;
     if (!state) return {};
 
     return {

@@ -11,7 +11,7 @@ export interface BitmapData {
     height: number;
     x0: number;
     y0: number;
-    data: Uint8Array;
+    data: Uint8ClampedArray;
 }
 
 export interface ImageState {
@@ -25,14 +25,14 @@ export interface ImageState {
  * 16-color sprite
  */
 export class Bitmap {
-    protected buf: Uint8Array;
+    protected buf: Uint8ClampedArray;
 
     public static fromData(data: BitmapData): Bitmap {
         return new Bitmap(data.width, data.height, data.x0, data.y0, data.data);
     }
 
-    constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8Array) {
-        this.buf = buf || new Uint8Array(Math.ceil(width * height / 2));
+    constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8ClampedArray) {
+        this.buf = buf || new Uint8ClampedArray(this.dataLength());
     }
 
     set(col: number, row: number, value: number) {
@@ -121,6 +121,10 @@ export class Bitmap {
         else {
             this.buf[cell] = (this.buf[cell] & 0x0f) | ((value & 0xf) << 4);
         }
+    }
+
+    protected dataLength() {
+        return Math.ceil(this.width * this.height / 2);
     }
 }
 

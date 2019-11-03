@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { ImageEditorStore } from "./store/imageReducer";
+import { ImageEditorStore, AnimationState } from "./store/imageReducer";
 import { dispatchChangeCurrentFrame, dispatchNewFrame, dispatchDuplicateFrame, dispatchDeleteFrame, dispatchMoveFrame } from "./actions/dispatch";
 
 import { ImageState, Bitmap } from "./store/bitmap";
@@ -269,7 +269,8 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
     }
 }
 
-function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
+    let state = present as AnimationState;
     if (!state) return {};
     return {
         frames: state.frames,

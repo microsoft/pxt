@@ -63,25 +63,28 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
 
     getCurrentFrame() {
         const state = store.getState();
-        const currentFrame = state.present.frames[state.present.currentFrame];
+        const animationState = state.store.present as AnimationState;
+        const currentFrame = animationState.frames[animationState.currentFrame];
 
         return bitmapToImageLiteral(imageStateToBitmap(currentFrame), "ts");
     }
 
     getAllFrames() {
         const state = store.getState();
-        return "[" + state.present.frames.map(frame => bitmapToImageLiteral(imageStateToBitmap(frame), "ts")).join(",") + "]";
+        const animationState = state.store.present as AnimationState;
+        return "[" + animationState.frames.map(frame => bitmapToImageLiteral(imageStateToBitmap(frame), "ts")).join(",") + "]";
     }
 
     getInterval() {
-        return store.getState().present.interval;
+        const animationState = store.getState().store.present as AnimationState;
+        return animationState.interval;
     }
 
     getPersistentData(): ImageEditorSaveState {
         const state = store.getState();
         return {
             editor: state.editor,
-            past: state.past
+            past: state.store.past as AnimationState[]
         }
     }
 

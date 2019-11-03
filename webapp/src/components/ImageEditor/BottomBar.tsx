@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { ImageEditorStore } from './store/imageReducer';
+import { ImageEditorStore, AnimationState } from './store/imageReducer';
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled} from './actions/dispatch';
 import { IconButton } from "./Button";
 
@@ -187,10 +187,10 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     }
 }
 
-function mapStateToProps({ present: state, past, future, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({store: { present: state, past, future }, editor}: ImageEditorStore, ownProps: any) {
     if (!state) return {};
 
-    const bitmap = state.frames[state.currentFrame].bitmap;
+    const bitmap = (state as AnimationState).frames[(state as AnimationState).currentFrame].bitmap;
 
     return {
         imageDimensions: [ bitmap.width, bitmap.height ],
