@@ -80,15 +80,14 @@ namespace pxt.blocks {
         parent?: Scope;
         firstStatement: Blockly.Block;
         declaredVars: Map<VarInfo>;
-        referencedVars: number[];
-        assignedVars: number[];
         children: Scope[];
         variables: Map<ScopedVarInfo>;
     }
 
     export interface ScopedVarInfo {
-        firstReferencingBlock: Blockly.Block;
-        isDefinitivelyAssignedInFRB: boolean;
+        isFirstReferencedInDescendant?: true;
+        firstReferencingBlock?: Blockly.Block;
+        isDefinitivelyAssignedInFRB?: boolean;
     }
 
     export enum BlockDeclarationType {
@@ -110,9 +109,9 @@ namespace pxt.blocks {
         escapedName?: string;
         type?: Point;
         alreadyDeclared?: BlockDeclarationType;
-        firstReference?: Blockly.Block;
         isAssigned?: boolean;
         scopes?: Scope[];
+        declaringScope?: Scope;
     }
 
     function find(p: Point): Point {
@@ -898,7 +897,6 @@ namespace pxt.blocks {
         enums: pxtc.EnumInfo[];
         kinds: pxtc.KindInfo[];
         idToScope: pxt.Map<Scope>;
-        blockDeclarations: pxt.Map<VarInfo[]>;
         blocksInfo: pxtc.BlocksInfo;
         allVariables: VarInfo[];
     }
@@ -927,7 +925,6 @@ namespace pxt.blocks {
             enums: [],
             kinds: [],
             idToScope: {},
-            blockDeclarations: {},
             allVariables: [],
             blocksInfo: null
         }
@@ -1072,31 +1069,20 @@ namespace pxt.blocks {
 
     function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
         let binding = lookup(e, b, b.getField("VAR").getText());
-        if (!binding.firstReference) binding.firstReference = b;
 
         assert(binding != null && binding.type != null);
         return mkText(binding.escapedName);
     }
 
     function compileSet(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        let bExpr = getInputTargetBlock(b, "VALUE");
-        let binding = lookup(e, b, b.getField("VAR").getText());
+        const bExpr = getInputTargetBlock(b, "VALUE");
+        const binding = lookup(e, b, b.getField("VAR").getText());
 
         const currentScope = e.idToScope[b.id];
-        let isDef = currentScope.declaredVars[binding.name] === binding && !binding.firstReference && !binding.alreadyDeclared;
+        const varInfoInCurrentScope = currentScope.variables[binding.name];
+        const isDef = !binding.alreadyDeclared && currentScope.declaredVars[binding.name] === binding && varInfoInCurrentScope.firstReferencingBlock === b && varInfoInCurrentScope.isDefinitivelyAssignedInFRB;
 
-        if (isDef) {
-            // Check the expression of the set block to determine if it references itself and needs
-            // to be hoisted
-            forEachChildExpression(b, child => {
-                if (child.type === "variables_get") {
-                    let childBinding = lookup(e, child, child.getField("VAR").getText());
-                    if (childBinding === binding) isDef = false;
-                }
-            }, true);
-        }
-
-        let expr = compileExpression(e, bExpr, comments);
+        const expr = compileExpression(e, bExpr, comments);
 
         let bindString = binding.escapedName + " = ";
 
@@ -1114,9 +1100,6 @@ namespace pxt.blocks {
                     bindString = `let ${binding.escapedName}: ${declaredType.type} = `;
                 }
             }
-        }
-        else if (!binding.firstReference) {
-            binding.firstReference = b;
         }
 
         return mkStmt(
@@ -1421,19 +1404,13 @@ namespace pxt.blocks {
 
     function compileStatements(e: Environment, b: Blockly.Block): JsNode {
         let stmts: JsNode[] = [];
-        let firstBlock = b;
 
-        while (b) {
-            if (!b.disabled) append(stmts, compileStatementBlock(e, b));
-            b = b.getNextBlock();
+        for (; b; b = b.getNextBlock()) {
+            if (!b.disabled) {
+                append(stmts, compileStatementBlock(e, b));
+            }
         }
 
-        if (firstBlock && e.blockDeclarations[firstBlock.id]) {
-            e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
-                stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
-                varInfo.alreadyDeclared = BlockDeclarationType.Implicit;
-            });
-        }
         return mkBlock(stmts);
     }
 
@@ -1702,7 +1679,7 @@ namespace pxt.blocks {
                 if (t.type === "string" || t.type === "number" || t.type === "boolean" || isArrayType(t.type)) return;
 
                 diags.push({
-                    blockId: v.firstReference && v.firstReference.id,
+                    blockId: v.scopes.find(s => s.variables[v.name] && s.variables[v.name].firstReferencingBlock).variables[v.name].firstReferencingBlock.id,
                     message: lf("Variable '{0}' is never assigned", v.name)
                 });
             });
@@ -2049,30 +2026,6 @@ namespace pxt.blocks {
         return map;
     }
 
-    function referencedWithinScope(scope: Scope, varID: number) {
-        if (scope.referencedVars.indexOf(varID) !== -1) {
-            return true;
-        }
-        else {
-            for (const child of scope.children) {
-                if (referencedWithinScope(child, varID)) return true;
-            }
-        }
-        return false;
-    }
-
-    function assignedWithinScope(scope: Scope, varID: number) {
-        if (scope.assignedVars.indexOf(varID) !== -1) {
-            return true;
-        }
-        else {
-            for (const child of scope.children) {
-                if (assignedWithinScope(child, varID)) return true;
-            }
-        }
-        return false;
-    }
-
     function escapeVariables(current: Scope, e: Environment) {
         for (const varName of Object.keys(current.declaredVars)) {
             const info = current.declaredVars[varName];
@@ -2163,30 +2116,6 @@ namespace pxt.blocks {
         return shorter;
     }
 
-    function findCommonScope(current: Scope, varID: number): Scope {
-        let ref: Scope;
-
-        if (current.referencedVars.indexOf(varID) !== -1) {
-            return current;
-        }
-
-        for (const child of current.children) {
-            if (referencedWithinScope(child, varID)) {
-                if (assignedWithinScope(child, varID)) {
-                    return current;
-                }
-                if (!ref) {
-                    ref = child;
-                }
-                else {
-                    return current;
-                }
-            }
-        }
-
-        return ref ? findCommonScope(ref, varID) : undefined;
-    }
-
     function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
         topBlocks = topBlocks.filter(b => !b.disabled);
 
@@ -2201,9 +2130,7 @@ namespace pxt.blocks {
                     topScope = {
                         firstStatement: firstStatement,
                         declaredVars: {},
-                        referencedVars: [],
                         children: [],
-                        assignedVars: [],
                         variables: {}
                     }
                     trackVariables(firstStatement, topScope, e);
@@ -2217,9 +2144,7 @@ namespace pxt.blocks {
             topScope = {
                 firstStatement: null,
                 declaredVars: {},
-                referencedVars: [],
                 children: [],
-                assignedVars: [],
                 variables: {}
             }
         }
@@ -2236,12 +2161,11 @@ namespace pxt.blocks {
             delete topScope.declaredVars[varName];
             const declaringScope = findDeclaringScope(varInfo);
             declaringScope.declaredVars[varName] = varInfo;
+            varInfo.declaringScope = declaringScope;
         }
 
-        markDeclarationLocations(topScope, e);
+        recordAllVariables(topScope, e);
         escapeVariables(topScope, e);
-
-        console.log(e.allVariables);
 
         return topScope;
 
@@ -2254,46 +2178,49 @@ namespace pxt.blocks {
             }
         }
 
-        function referenceVariable(block: Blockly.Block, scope: Scope, isAssigned = false, isSet = false) {
+        function referenceVariableInScopeAncestors(scope: Scope, varName: string) {
+            for (let parentScope = scope.parent; parentScope !== undefined; parentScope = scope.parent) {
+                if (parentScope.variables[varName] !== undefined) {
+                    break;
+                }
+                parentScope.variables[varName] = {
+                    isFirstReferencedInDescendant: true
+                }
+            }
+        }
+
+        function referenceVariable(block: Blockly.Block, scope: Scope) {
             const varName = block.getField("VAR").getText();
             const varInfo = findOrDeclareVariable(varName, scope);
             addScopeToVarInfo(varInfo, scope);
-            scope.referencedVars.push(varInfo.id);
 
             if (scope.variables[varName] === undefined) {
+                const isDefinitivelyAssignedInFRB = block.type === "variables_set" && ((() => {
+                    let result = true;
+                    forEachChildExpression(
+                        block,
+                        child => {
+                            if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
+                                result = false;
+                            }
+                        },
+                        true
+                    );
+                    return result;
+                })());
                 scope.variables[varName] = {
                     firstReferencingBlock: block,
-                    isDefinitivelyAssignedInFRB: isSet && ((() => {
-                        let result = true;
-                        forEachChildExpression(
-                            block,
-                            child => {
-                                if (result && child.type === "variables_get" && child.getField("VAR").getText() === varName) {
-                                    result = false;
-                                }
-                            },
-                            true
-                        );
-                        return result;
-                    })())
+                    isDefinitivelyAssignedInFRB: isDefinitivelyAssignedInFRB
                 };
-            }
-            if (isAssigned) {
-                scope.assignedVars.push(varInfo.id);
+                referenceVariableInScopeAncestors(scope, varName);
             }
         }
 
         function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
             e.idToScope[block.id] = currentScope;
 
-            if (block.type === "variables_get") {
+            if (block.type === "variables_get" || block.type === "variables_change" || block.type === "variables_set") {
                 referenceVariable(block, currentScope);
-            }
-            else if (block.type === "variables_change") {
-                referenceVariable(block, currentScope, true);
-            }
-            else if (block.type === "variables_set") {
-                referenceVariable(block, currentScope, true, true);
             }
             else if (block.type === pxtc.TS_STATEMENT_TYPE) {
                 const declaredVars: string = (block as any).declaredVariables
@@ -2306,6 +2233,7 @@ namespace pxt.blocks {
                             firstReferencingBlock: block,
                             isDefinitivelyAssignedInFRB: true
                         };
+                        referenceVariableInScopeAncestors(currentScope, vName);
                         addScopeToVarInfo(info, currentScope);
                     });
                 }
@@ -2329,8 +2257,6 @@ namespace pxt.blocks {
                         parent: currentScope,
                         firstStatement: block,
                         declaredVars: {},
-                        referencedVars: [],
-                        assignedVars: [],
                         children: [],
                         variables: {}
                     };
@@ -2342,6 +2268,7 @@ namespace pxt.blocks {
                             firstReferencingBlock: block,
                             isDefinitivelyAssignedInFRB: true
                         };
+                        referenceVariableInScopeAncestors(inputScope, v.name);
                         addScopeToVarInfo(v, inputScope);
                     });
 
@@ -2362,8 +2289,6 @@ namespace pxt.blocks {
                         parent: inputScope,
                         firstStatement: connectedBlock,
                         declaredVars: {},
-                        referencedVars: [],
-                        assignedVars: [],
                         children: [],
                         variables: {}
                     };
@@ -2466,7 +2391,6 @@ namespace pxt.blocks {
 
     function printScope(scope: Scope, depth = 0) {
         const declared = Object.keys(scope.declaredVars).map(k => `${k}(${scope.declaredVars[k].id})`).join(",");
-        const referenced = scope.referencedVars.join(", ");
         console.log(`${mkIndent(depth)}SCOPE: ${scope.firstStatement ? scope.firstStatement.type : "TOP-LEVEL"}`)
         if (declared.length) {
             console.log(`${mkIndent(depth)}DECS: ${declared}`)
@@ -2483,24 +2407,16 @@ namespace pxt.blocks {
         return res;
     }
 
-    function markDeclarationLocations(scope: Scope, e: Environment) {
+    function recordAllVariables(scope: Scope, e: Environment) {
         const declared = Object.keys(scope.declaredVars);
         if (declared.length) {
             const decls = declared.map(name => scope.declaredVars[name]);
-
-            if (scope.firstStatement) {
-                // If we can't find a better place to declare the variable, we'll declare
-                // it before the first statement in the code block so we need to keep
-                // track of the blocks ids
-                e.blockDeclarations[scope.firstStatement.id] = decls.concat(e.blockDeclarations[scope.firstStatement.id] || []);
-            }
-
             for (const d of decls) {
                 e.allVariables[d.id] = d;
             }
         }
 
-        scope.children.forEach(child => markDeclarationLocations(child, e));
+        scope.children.forEach(child => recordAllVariables(child, e));
     }
 
 
