@@ -1886,6 +1886,7 @@ namespace pxt.blocks {
             else
                 tp = ": " + tpname
         }
+        v.alreadyDeclared = BlockDeclarationType.Implicit;
         return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
     }
 
