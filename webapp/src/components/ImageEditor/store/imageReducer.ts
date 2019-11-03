@@ -1,5 +1,4 @@
 import * as actions from '../actions/types'
-import { TileSet } from './tilemap';
 
 export enum ImageEditorTool {
     Paint,
@@ -37,9 +36,10 @@ export interface AnimationState {
 }
 
 export interface TilemapState {
-    tileset: TileSet;
+    tileset: pxt.sprite.TileSet;
     aspectRatioLocked: boolean;
-    tilemap: ImageState;
+    tilemap: pxt.sprite.ImageState;
+    colors: string[];
 }
 
 // State that is not on the undo/redo stack

@@ -6,7 +6,6 @@ import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation } f
 import { GestureTarget, ClientCoordinates, bindGestureEvents } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
-import { Tilemap, TileSet } from './store/tilemap';
 
 export interface ImageCanvasProps {
     dispatchImageEdit: (state: pxt.sprite.ImageState) => void;
@@ -343,7 +342,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawImage(bitmap: Bitmap, x0 = 0, y0 = 0, transparent = true) {
+    protected drawImage(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
         if (this.props.isTilemap) this.drawTilemap(bitmap, x0, y0, transparent);
         else this.drawBitmap(bitmap, x0, y0, transparent);
     }
@@ -402,10 +401,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawTilemap(tilemap: Bitmap, x0 = 0, y0 = 0, transparent = true) {
+    protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
         const { tilemapState: { tileset } } = this.props;
 
-        const tileBitmaps = tileset.tiles.map(t => Bitmap.fromData(t));
+        const tileBitmaps = tileset.tiles.map(t => pxt.sprite.Bitmap.fromData(t));
 
         const context = this.canvas.getContext("2d");
         context.imageSmoothingEnabled = false;
@@ -572,15 +571,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected getImageState(): ImageState {
+    protected getImageState(): pxt.sprite.ImageState {
         return this.props.isTilemap ? this.props.tilemapState.tilemap : this.props.imageState;
     }
 }
 
 
 function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
-
-
     if (editor.isTilemap) {
         let state = (present as TilemapState);
         if (!state) return {};
@@ -592,6 +589,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
             zoomDelta: editor.zoomDelta,
             onionSkinEnabled: false,
             backgroundColor: editor.backgroundColor,
+            colors: state.colors,
             isTilemap: editor.isTilemap
         };
     }

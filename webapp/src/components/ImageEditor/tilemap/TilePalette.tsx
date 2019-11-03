@@ -2,11 +2,10 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState } from '../store/imageReducer';
 import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground } from '../actions/dispatch';
-import { TileSet } from '../store/tilemap';
 
 export interface TilePaletteProps {
     colors: string[];
-    tileset: TileSet;
+    tileset: pxt.sprite.TileSet;
     selected: number;
     backgroundColor: number;
     dispatchChangeSelectedColor: (index: number) => void;

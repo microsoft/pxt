@@ -196,6 +196,10 @@ export function init() {
             case "animation-editor":
                 current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
                 break;
+
+            case "tilemap-editor":
+                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
+                break;
         }
 
         if (cachedBounds) current.resize(cachedBounds);

@@ -12,7 +12,7 @@ namespace pxt.sprite {
         height: number;
         x0: number;
         y0: number;
-        data: Uint8Array;
+        data: Uint8ClampedArray;
     }
 
     export interface ImageState {
@@ -129,6 +129,25 @@ namespace pxt.sprite {
         }
     }
 
+    export class Tilemap extends Bitmap {
+        public static fromData(data: BitmapData): Tilemap {
+            return new Tilemap(data.width, data.height, data.x0, data.y0, data.data);
+        }
+
+        protected setCore(index: number, value: number) {
+            this.buf[index] = value;
+        }
+
+        protected dataLength() {
+            return this.width * this.height;
+        }
+    }
+
+    export interface TileSet {
+        tileWidth: number;
+        tiles: BitmapData[];
+    }
+
     export class Bitmask {
         protected mask: Uint8Array;
 
@@ -149,6 +168,53 @@ namespace pxt.sprite {
             const offset = cellIndex & 7;
             return (this.mask[index] >> offset) & 1;
         }
+    }
+
+    export function tilemapLiteralToTilemap(text: string, defaultPattern?: string): Tilemap {
+        // Strip the tagged template string business and the whitespace. We don't have to exhaustively
+        // replace encoded characters because the compiler will catch any disallowed characters and throw
+        // an error before the decompilation happens. 96 is backtick and 9 is tab
+        text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:hex)/g, "").trim();
+        text = text.replace(/^["`\(\)]*/, '').replace(/["`\(\)]*$/, '');
+        text = text.replace(/&#10;/g, "\n");
+
+        if (!text && defaultPattern)
+            text = defaultPattern;
+
+        const width = parseInt(text.substr(0, 2), 16);
+        const height = parseInt(text.substr(2, 2), 16);
+        const data = hexToUint8Array(text.substring(4));
+
+        return Tilemap.fromData({
+            width,
+            height,
+            x0: 0,
+            y0: 0,
+            data
+        });
+    }
+
+    export function tilemapToTilemapLiteral(t: Tilemap): string {
+        return `hex\`${(t.width).toString(16)}${(t.height.toString(16))}${uint8ArrayToHex(t.data().data)}\``;
+    }
+
+
+    function hexToUint8Array(str: string) {
+        const data = new Uint8ClampedArray(str.length / 2);
+        for (let i = 0; i < str.length; i += 2) {
+            data[i >> 1] = parseInt(str.substr(i, 2), 16);
+        }
+        return data;
+    }
+
+    function uint8ArrayToHex(data: Uint8ClampedArray) {
+        let result = "";
+
+        for (let i = 0; i < data.length; i++) {
+            result += (data[i]).toString(16);
+        }
+
+        return result;
     }
 
     export function resizeBitmap(img: Bitmap, width: number, height: number) {
