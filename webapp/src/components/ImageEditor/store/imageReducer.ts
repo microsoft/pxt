@@ -1,5 +1,4 @@
 import * as actions from '../actions/types'
-import { ImageState, Bitmap } from './bitmap';
 import { TileSet } from './tilemap';
 
 export enum ImageEditorTool {
@@ -33,7 +32,7 @@ export interface AnimationState {
     aspectRatioLocked: boolean;
 
     currentFrame: number;
-    frames: ImageState[];
+    frames: pxt.sprite.ImageState[];
     interval: number;
 }
 
@@ -243,7 +242,7 @@ const animationReducer = (state: AnimationState, action: any): AnimationState =>
                 ...state,
                 frames: state.frames.map((frame, index) => ({
                     ...frame,
-                    bitmap: Bitmap.fromData(frame.bitmap).resize(width, height).data()
+                    bitmap: pxt.sprite.Bitmap.fromData(frame.bitmap).resize(width, height).data()
                 }))
             };
         case actions.IMAGE_EDIT:
@@ -347,17 +346,17 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
     return state;
 }
 
-function emptyFrame(width: number, height: number): ImageState {
+function emptyFrame(width: number, height: number): pxt.sprite.ImageState {
     return {
-        bitmap: new Bitmap(width, height).data()
+        bitmap: new pxt.sprite.Bitmap(width, height).data()
     }
 }
 
-function cloneImage(state: ImageState): ImageState {
+function cloneImage(state: pxt.sprite.ImageState): pxt.sprite.ImageState {
     return {
         ...state,
-        bitmap: Bitmap.fromData(state.bitmap).copy().data(),
-        floatingLayer: state.floatingLayer && Bitmap.fromData(state.floatingLayer).copy().data()
+        bitmap: pxt.sprite.Bitmap.fromData(state.bitmap).copy().data(),
+        floatingLayer: state.floatingLayer && pxt.sprite.Bitmap.fromData(state.floatingLayer).copy().data()
     };
 }
 

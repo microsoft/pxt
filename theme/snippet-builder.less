@@ -2,13 +2,13 @@
     /* Semantic CSS override */
     padding: 0;
 }
-    
+
 .snippet-builder.ui.modal {
     /* Semantic CSS override */
     height: 95%;
 
     display: grid !important;
-    grid-template-rows: 
+    grid-template-rows:
         70px // header
         1fr // content
         77px // footer
@@ -39,7 +39,6 @@
                 h6 {
                     font-weight: bolder;
                 }
-                padding: 1.5rem;
                 padding-top: 0;
                 padding-left: 0.5rem;
                 overflow-x: hidden;
@@ -47,13 +46,12 @@
 
             .ui.segment.raised {
                 overflow: visible;
-                width: fit-content;
                 height: fit-content;
                 box-sizing: content-box;
 
                 box-shadow: none;
                 border: 0;
-            } 
+            }
 
             .snippet-error {
                 color: red;
@@ -62,7 +60,7 @@
             .snippet.output-section {
                 padding: 1.5rem;
                 background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='m0.5,0l0,16M0,8l16,0' style='stroke:black;stroke-width:1;stroke-opacity:0.1;' /%3E%3C/svg%3E");
-                z-index: 0;            
+                z-index: 0;
                 .snippet-markdown-content {
                     pre {
                         margin: 0;
@@ -78,9 +76,6 @@
             }
             .snippet-question {
                 z-index: 1;
-                .ui.segment.raised {
-                    max-width: max-content;
-                }
                 div.snippet.hint.ui.segment {
                     border: none;
                     box-shadow: none;
@@ -94,7 +89,7 @@
             }
             div.actions {
                 bottom: 0;
-                position: absolute;   
+                position: absolute;
                 width: 100%;
                 z-index: 1002;
             }
@@ -152,7 +147,7 @@ Inputs
         margin-top: 8px;
         height: 22px;
         width: 150px;
-        max-width: 232px; 
+        max-width: 232px;
         padding: 0;
         position: relative;
         outline: none;
@@ -171,15 +166,15 @@ Inputs
     input.slider.blocklyMockSlider[type=range]::-webkit-slider-thumb {
         -webkit-appearance: none;
     }
-    
+
     input.slider.blocklyMockSlider[type=range]:focus {
-        outline: none; 
+        outline: none;
     }
-    
+
     input.slider.blocklyMockSlider[type=range]::-ms-track {
         width: 100%;
         cursor: pointer;
-        background: #547ab2; 
+        background: #547ab2;
         border-color: transparent;
         color: transparent;
     }
@@ -198,7 +193,7 @@ Inputs
         box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
         cursor: pointer;
     }
-    
+
     input.slider.blocklyMockSlider[type=range]::-moz-range-thumb {
         width: 26px;
         height: 26px;
@@ -211,7 +206,7 @@ Inputs
         box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.15);
         cursor: pointer;
     }
-    
+
     input.slider.blocklyMockSlider[type=range]::-ms-thumb {
         width: 26px;
         height: 26px;
@@ -238,11 +233,11 @@ Inputs
         background: #547AB2;
         padding: 0;
     }
-    
+
     input.slider.blocklyMockSlider[type=range]:focus::-webkit-slider-runnable-track {
         background: #547AB2;
     }
-    
+
     input.slider.blocklyMockSlider[type=range]::-ms-track {
         cursor: pointer;
         margin: 8px;
@@ -321,7 +316,7 @@ Inputs
     }
 
     .position-picker.cross-x, .position-picker.cross-y {
-        z-index: 10; 
+        z-index: 10;
         position: absolute;
         background-color: #fff;
         pointer-events: none;
@@ -392,22 +387,22 @@ Inputs
             stroke:#ccc;
             stroke-width: 3px;
         }
-        
+
         #screen {
             align-content: center;
             justify-content: center;
             align-items: center;
             height: fit-content;
         }
-        
+
         .has-focus {
             border: 5px solid #96266c !important;
         }
-        
+
         #paint-surface {
             position: absolute;
         }
-        
+
         #paint-surface.borders {
             /* filter: drop-shadow(0px 0px 10px #6B4F76) */
             border-right: 0.5rem inset #2f99a1;
@@ -417,13 +412,13 @@ Inputs
             width: calc(344px / 1.2);
             height: calc(260px / 1.2);
         }
-        
+
         #paint-surface-container {
             text-align: center;
             /* messes up safari overflow-y: hidden; */
             width: 100%;
         }
-        
+
         #debug-stats {
             position: absolute;
             bottom: 1.5%;
@@ -435,25 +430,25 @@ Inputs
             -ms-user-select: none; /* IE 10+ */
             user-select: none; /* Standard syntax */
         }
-        
+
         #controls {
             position: absolute;
             width: 100%;
             height: 100%;
             text-align: center;
         }
-        
+
         #controls * {
             pointer-events: none;
         }
-        
+
         #controls.no-focus {
             opacity: 0.5;
             -moz-filter: grayscale();
             -webkit-filter: grayscale();
             filter: grayscale();
         }
-        
+
         .no-select {
             -webkit-touch-callout: none; /* iOS Safari */
             -webkit-user-select: none;   /* Chrome/Safari/Opera */
@@ -463,30 +458,30 @@ Inputs
             user-select: none;           /* Non-prefixed version, currently
                                             not supported by any browser */
         }
-        
+
         .stats {
             margin-top: 8px;
         }
-        
+
         .blur .info {
             opacity: 0.2;
         }
-        
+
         .controller-button-overlay {
             fill: black;
             fill-opacity: 0;
             cursor: pointer;
         }
-        
+
         .controller-button-overlay:hover {
             fill-opacity: 0.125;
         }
-        
+
         .controller-button-overlay.pressed {
             fill-opacity: 0.25;
         }
-        
-    } 
+
+    }
 }
 
 /** Semantic UI's default fullscreen styling to bypass overrides (importants added by semantic)*/

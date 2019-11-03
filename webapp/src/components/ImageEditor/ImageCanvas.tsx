@@ -3,14 +3,13 @@ import { connect } from 'react-redux';
 
 import { ImageEditorStore, ImageEditorTool, AnimationState, TilemapState } from './store/imageReducer';
 import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation } from "./actions/dispatch";
-import { ImageState, Bitmap } from './store/bitmap';
 import { GestureTarget, ClientCoordinates, bindGestureEvents } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { Tilemap, TileSet } from './store/tilemap';
 
 export interface ImageCanvasProps {
-    dispatchImageEdit: (state: ImageState) => void;
+    dispatchImageEdit: (state: pxt.sprite.ImageState) => void;
     dispatchChangeZoom: (zoom: number) => void;
     dispatchChangeCursorLocation: (loc: [number, number]) => void;
     selectedColor: number;
@@ -22,9 +21,9 @@ export interface ImageCanvasProps {
     isTilemap: boolean;
 
     colors: string[];
-    imageState?: ImageState;
     tilemapState?: TilemapState;
-    prevFrame?: ImageState;
+    imageState?: pxt.sprite.ImageState;
+    prevFrame?: pxt.sprite.ImageState;
 }
 
 /**
@@ -383,7 +382,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawBitmap(bitmap: Bitmap, x0 = 0, y0 = 0, transparent = true) {
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
         const { colors } = this.props;
 
         const context = this.canvas.getContext("2d");

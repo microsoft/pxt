@@ -11,9 +11,9 @@ import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
 import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames } from './actions/dispatch';
-import { Bitmap, bitmapToImageLiteral } from './store/bitmap';
 import { EditorState, AnimationState } from './store/imageReducer';
 import { imageStateToBitmap } from './util';
+import { Unsubscribe } from 'redux';
 
 export interface ImageEditorSaveState {
     editor: EditorState;
@@ -22,15 +22,39 @@ export interface ImageEditorSaveState {
 
 export interface ImageEditorProps {
     singleFrame?: boolean;
+    onChange?: (value: string) => void;
+    initialValue?: string;
 }
 
 export class ImageEditor extends React.Component<ImageEditorProps,{}> {
+    protected unsubscribeChangeListener: Unsubscribe;
+
     componentDidMount() {
         addKeyListener();
+
+        if (this.props.initialValue) {
+            this.initSingleFrame(pxt.sprite.imageLiteralToBitmap(this.props.initialValue));
+        }
+
+        this.onResize();
     }
 
     componentWillUnmount() {
         removeKeyListener();
+
+        if (this.unsubscribeChangeListener) {
+            this.unsubscribeChangeListener()
+        }
+    }
+
+    componentDidUpdate() {
+        if (this.unsubscribeChangeListener) {
+            this.unsubscribeChangeListener()
+        }
+
+        if (this.props.onChange) {
+            this.unsubscribeChangeListener = store.subscribe(this.onStoreChange);
+        }
     }
 
     render() {
@@ -49,11 +73,11 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         </Provider>
     }
 
-    initSingleFrame(value: Bitmap) {
+    initSingleFrame(value: pxt.sprite.Bitmap) {
         store.dispatch(dispatchSetInitialFrames([{ bitmap: value.data() }], 100));
     }
 
-    initAnimation(frames: Bitmap[], interval: number) {
+    initAnimation(frames: pxt.sprite.Bitmap[], interval: number) {
         store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
@@ -66,13 +90,13 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         const animationState = state.store.present as AnimationState;
         const currentFrame = animationState.frames[animationState.currentFrame];
 
-        return bitmapToImageLiteral(imageStateToBitmap(currentFrame), "ts");
+        return pxt.sprite.bitmapToImageLiteral(imageStateToBitmap(currentFrame), "typescript");
     }
 
     getAllFrames() {
         const state = store.getState();
         const animationState = state.store.present as AnimationState;
-        return "[" + animationState.frames.map(frame => bitmapToImageLiteral(imageStateToBitmap(frame), "ts")).join(",") + "]";
+        return "[" + animationState.frames.map(frame => pxt.sprite.bitmapToImageLiteral(imageStateToBitmap(frame), "typescript")).join(",") + "]";
     }
 
     getInterval() {
@@ -94,7 +118,13 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         }
     }
 
-    setCurrentFrame(bitmap: Bitmap) {
+    setCurrentFrame(bitmap: pxt.sprite.Bitmap) {
         store.dispatch(dispatchImageEdit({ bitmap: bitmap.data() }))
+    }
+
+    protected onStoreChange = () => {
+        if (this.props.onChange) {
+            this.props.onChange(this.props.singleFrame ? this.getCurrentFrame() : this.getAllFrames())
+        }
     }
 }

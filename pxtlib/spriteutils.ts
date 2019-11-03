@@ -1,4 +1,4 @@
-namespace pxtsprite {
+namespace pxt.sprite {
     // These are the characters used to output literals (but we support aliases for some of these)
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
 
@@ -7,14 +7,33 @@ namespace pxtsprite {
         y: number
     }
 
+    export interface BitmapData {
+        width: number;
+        height: number;
+        x0: number;
+        y0: number;
+        data: Uint8Array;
+    }
+
+    export interface ImageState {
+        bitmap: BitmapData;
+        floatingLayer?: BitmapData;
+        layerOffsetX?: number;
+        layerOffsetY?: number;
+    }
+
     /**
      * 16-color sprite
      */
     export class Bitmap {
-        protected buf: Uint8Array;
+        protected buf: Uint8ClampedArray;
 
-        constructor(public width: number, public height: number, public x0 = 0, public y0 = 0) {
-            this.buf = new Uint8Array(Math.ceil(width * height / 2));
+        public static fromData(data: BitmapData): Bitmap {
+            return new Bitmap(data.width, data.height, data.x0, data.y0, data.data);
+        }
+
+        constructor(public width: number, public height: number, public x0 = 0, public y0 = 0, buf?: Uint8ClampedArray) {
+            this.buf = buf || new Uint8ClampedArray(this.dataLength());
         }
 
         set(col: number, row: number, value: number) {
@@ -67,6 +86,20 @@ namespace pxtsprite {
             return false;
         }
 
+        data(): BitmapData {
+            return {
+                width: this.width,
+                height: this.height,
+                x0: this.x0,
+                y0: this.y0,
+                data: this.buf
+            };
+        }
+
+        resize(width: number, height: number): Bitmap {
+            return resizeBitmap(this, width, height);
+        }
+
         protected coordToIndex(col: number, row: number) {
             return col + row * this.width;
         }
@@ -89,6 +122,10 @@ namespace pxtsprite {
             else {
                 this.buf[cell] = (this.buf[cell] & 0x0f) | ((value & 0xf) << 4);
             }
+        }
+
+        protected dataLength() {
+            return Math.ceil(this.width * this.height / 2);
         }
     }
 
@@ -171,7 +208,7 @@ namespace pxtsprite {
 
         const spriteHeight = sprite.length;
 
-        const result = new pxtsprite.Bitmap(spriteWidth, spriteHeight)
+        const result = new Bitmap(spriteWidth, spriteHeight)
 
         for (let r = 0; r < spriteHeight; r++) {
             const row = sprite[r];
@@ -188,10 +225,10 @@ namespace pxtsprite {
         return result;
     }
 
-    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: pxt.editor.FileType): string {
+    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: "typescript" | "python"): string {
         let res = '';
         switch (fileType) {
-            case pxt.editor.FileType.Python:
+            case "python":
                 res = "img(\"\"\"";
                 break;
             default:
@@ -211,7 +248,7 @@ namespace pxtsprite {
         res += "\n";
 
         switch (fileType) {
-            case pxt.editor.FileType.Python:
+            case "python":
                 res += "\"\"\")";
                 break;
             default:
