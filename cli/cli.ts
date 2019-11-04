@@ -89,6 +89,12 @@ export interface UserConfig {
     noSerial?: boolean;
 }
 
+interface TargetPackageInfo {
+    options: pxtc.CompileOptions;
+    api: pxtc.ApisInfo;
+    sha: string;
+}
+
 let reportDiagnostic = reportDiagnosticSimply;
 const targetJsPrefix = "var pxtTargetBundle = "
 
@@ -1923,9 +1929,16 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     }
 
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
+    let apiInfoPath = path.resolve(process.cwd(), "built", "api-cache.json");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
+
+    let builtInfo: pxt.Map<pxt.PackageApiInfo> = {};
+
+    if (fs.existsSync(apiInfoPath)) {
+        builtInfo = nodeutil.readJson(apiInfoPath);
+    }
 
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
@@ -1948,18 +1961,18 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         pxt.appTarget.simulator.dynamicBoardDefinition)
                         isPrj = true
                 })
-                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
-                .then((compileOpts) => {
+                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
+                .then(({ options, api, sha: packageSha }) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-                        if (!compileOpts) {
+                        if (!options) {
                             pxt.debug(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
                         // Place the base HEX image in the hex cache if necessary
-                        let sha = compileOpts.extinfo.sha;
-                        let hex: string[] = compileOpts.hexinfo.hex;
+                        let sha = options.extinfo.sha;
+                        let hex: string[] = options.hexinfo.hex;
                         let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
@@ -1968,6 +1981,13 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
                             pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
+                    }
+
+                    if (options && api) {
+                        builtInfo[dirname] = {
+                            apis: api,
+                            sha: packageSha
+                        };
                     }
                 })
         }, /*includeProjects*/ true))
@@ -1986,6 +2006,16 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
             })
 
+            // Trim redundant API info from packages
+            const blocksInfo = builtInfo["libs/blocksprj"];
+
+            Object.keys(builtInfo).filter(k => k !== "libs/blocksprj").map(k => builtInfo[k]).forEach(info => {
+                deleteOverlappingKeys(blocksInfo.apis.byQName, info.apis.byQName)
+                deleteOverlappingKeys(blocksInfo.apis.jres, info.apis.jres)
+            })
+
+            cfg.apiInfo = builtInfo;
+            nodeutil.writeFileSync(apiInfoPath, JSON.stringify(cfg.apiInfo));
 
             let info = travisInfo()
             cfg.versions = {
@@ -3079,8 +3109,12 @@ function testAssemblers(): Promise<void> {
 }
 
 
-function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOptions> {
+function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise<TargetPackageInfo> {
     let opts: pxtc.CompileOptions
+    let api: pxtc.ApisInfo;
+
+    let sha: string;
+
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
@@ -3096,10 +3130,18 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
             opts = o
             opts.testMode = true
             opts.ast = true
+
+            sha = pxtc.U.sha256(JSON.stringify(opts.fileSystem) + pxt.appTarget.versions.pxt);
             if (useNative)
                 return pxtc.compile(opts)
             else {
                 pxt.debug("  skip native build of non-project")
+
+                if (cachedSHA !== sha) {
+                    pxt.log(`Updating cached API info for ${opts.name}`);
+                    const res = pxtc.compile(opts);
+                    api = pxtc.getApiInfo(res.ast, opts.jres);
+                }
                 return null
             }
         })
@@ -3108,9 +3150,14 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
                 reportDiagnostics(res.diagnostics);
                 if (!res.success) U.userError("Compiler test failed")
                 simulatorCoverage(res, opts)
+
+                if (cachedSHA !== sha) {
+                    pxt.log(`Updating cached API info for ${opts.name}`);
+                    api = pxtc.getApiInfo(res.ast, opts.jres);
+                }
             }
         })
-        .then(() => opts);
+        .then(() => ({ options: opts, api: api, sha }));
 }
 
 function simshimAsync() {
@@ -5933,6 +5980,12 @@ function initGlobals() {
     g.pxt = pxt;
     g.ts = ts;
     g.pxtc = pxtc;
+}
+
+function deleteOverlappingKeys(src: any, trg: any) {
+    for (const key of Object.keys(trg)) {
+        if (src[key]) delete trg[key];
+    }
 }
 
 initGlobals();

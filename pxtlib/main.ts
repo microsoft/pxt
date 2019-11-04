@@ -33,6 +33,15 @@ namespace pxt {
         savedAppTarget = U.clone(appTarget)
     }
 
+    let apiInfo: Map<PackageApiInfo>;
+    export function setBundledApiInfo(inf: Map<PackageApiInfo>) {
+        apiInfo = inf;
+    }
+
+    export function getBundledApiInfo() {
+        return apiInfo;
+    }
+
     export function savedAppTheme(): AppTheme {
         return savedAppTarget ? savedAppTarget.appTheme : undefined;
     }
