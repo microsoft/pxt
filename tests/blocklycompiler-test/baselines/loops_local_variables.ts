@@ -1,4 +1,3 @@
-let index = 0
 for (let index2 = 0; index2 < 4; index2++) {
     let i = 0
     for (let index2 = 0; index2 < 4; index2++) {
