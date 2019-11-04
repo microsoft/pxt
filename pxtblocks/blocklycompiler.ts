@@ -78,7 +78,6 @@ namespace pxt.blocks {
 
     export interface Scope {
         parent?: Scope;
-        firstStatement: Blockly.Block;
         declaredVars: Map<VarInfo>;
         children: Scope[];
         variables: Map<ScopedVarInfo>;
@@ -2072,14 +2071,16 @@ namespace pxt.blocks {
             return undefined;
         }
         if (varInfo.scopes.length === 1) {
-            return varInfo.scopes[0];
+            const onlyScope = varInfo.scopes[0];
+            return onlyScope.variables[varInfo.name].isDefinitelyAssigned ? onlyScope : getPathToSelf(onlyScope)[0];
         }
 
         let lcaPath = findPathToLowestCommonAncestor(varInfo.scopes[0], varInfo.scopes[1]);
         for (let i = 2; i < varInfo.scopes.length; i++) {
             lcaPath = findPathToLowestCommonAncestor(lcaPath, varInfo.scopes[i]);
         }
-        return lcaPath[lcaPath.length - 1];
+        const lca = lcaPath[lcaPath.length - 1];
+        return lca.variables[varInfo.name].isDefinitelyAssigned ? lca : lcaPath[0];
     }
 
     function getPathToSelf(scope: Scope): Scope[] {
@@ -2121,32 +2122,20 @@ namespace pxt.blocks {
         topBlocks = topBlocks.filter(b => !b.disabled);
 
         let id = 0;
-        let topScope: Scope;
+        const topScope: Scope = {
+            declaredVars: {},
+            children: [],
+            variables: {}
+        };
 
         // First, look for on-start
         for (const block of topBlocks) {
             if (block.type === ts.pxtc.ON_START_TYPE) {
                 const firstStatement = block.getInputTargetBlock("HANDLER");
                 if (firstStatement) {
-                    topScope = {
-                        firstStatement: firstStatement,
-                        declaredVars: {},
-                        children: [],
-                        variables: {}
-                    }
                     trackVariables(firstStatement, topScope, e);
                 }
                 break;
-            }
-        }
-
-        // If we didn't find on-start, then create an empty top scope
-        if (!topScope) {
-            topScope = {
-                firstStatement: null,
-                declaredVars: {},
-                children: [],
-                variables: {}
             }
         }
 
@@ -2255,7 +2244,6 @@ namespace pxt.blocks {
 
                     inputScope = {
                         parent: currentScope,
-                        firstStatement: block,
                         declaredVars: {},
                         children: [],
                         variables: {}
@@ -2287,7 +2275,6 @@ namespace pxt.blocks {
                 forEachStatementInput(block, connectedBlock => {
                     const newScope: Scope = {
                         parent: inputScope,
-                        firstStatement: connectedBlock,
                         declaredVars: {},
                         children: [],
                         variables: {}
@@ -2391,11 +2378,9 @@ namespace pxt.blocks {
 
     function printScope(scope: Scope, depth = 0) {
         const declared = Object.keys(scope.declaredVars).map(k => `${k}(${scope.declaredVars[k].id})`).join(",");
-        console.log(`${mkIndent(depth)}SCOPE: ${scope.firstStatement ? scope.firstStatement.type : "TOP-LEVEL"}`)
         if (declared.length) {
-            console.log(`${mkIndent(depth)}DECS: ${declared}`)
+            console.log(mkIndent(depth) + declared);
         }
-        // console.log(`${mkIndent(depth)}REFS: ${referenced}`)
         scope.children.forEach(s => printScope(s, depth + 1));
     }
 
