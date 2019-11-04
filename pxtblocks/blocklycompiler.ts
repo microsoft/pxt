@@ -987,7 +987,7 @@ namespace pxt.blocks {
     function compileControlsRepeat(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         let bound = compileExpression(e, getInputTargetBlock(b, "TIMES"), comments);
         let body = compileStatements(e, getInputTargetBlock(b, "DO"));
-        let valid = (x: string) => !lookup(e, b, x);
+        let valid = (x: string) => e.idToScope[b.id].variables[x] === undefined;
 
         let name = "index";
         // Start at 2 because index0 and index1 are bad names
@@ -2180,7 +2180,7 @@ namespace pxt.blocks {
         }
 
         function referenceVariableInAncestors(scope: Scope, varName: string) {
-            for (let parentScope = scope.parent; parentScope !== undefined; parentScope = scope.parent) {
+            for (let parentScope = scope.parent; parentScope !== undefined; parentScope = parentScope.parent) {
                 if (parentScope.variables[varName] !== undefined) {
                     break;
                 }
