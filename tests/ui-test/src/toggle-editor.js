@@ -2,7 +2,7 @@ import { DomObject } from './lib/dom-object';
 import assert from "assert";
 let { switchButton } = require('./lib/css-value');
 
-class ToggleButton extends DomObject {
+class ToggleDisplayForm extends DomObject {
 
     async toggleDisplayForm() {
 
@@ -29,6 +29,6 @@ class ToggleButton extends DomObject {
     }
 }
 
-export let toggleButton = new ToggleButton();
+export let toggleDisplayForm = new ToggleDisplayForm();
 
 
