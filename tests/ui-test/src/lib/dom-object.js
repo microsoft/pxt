@@ -30,10 +30,22 @@ export class DomObject {
         return criteria;
     }
 
+    async backNavigation(){
+        let navigation = driver.navigate();
+        return await navigation.back();
+
+    }
+    async toUrlNavigation(url){
+        let navigation = driver.navigate();
+        return await navigation.to(url);
+
+    }
+
     async getRect(criteria) {
         let element = await driver.wait(until.elementLocated(this.findBy(criteria)), 10000);
         return element.getRect();
     }
+
     async contextClick(criteria) {
         let actions = driver.actions();
 
