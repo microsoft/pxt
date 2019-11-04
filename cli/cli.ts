@@ -2007,12 +2007,15 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             })
 
             // Trim redundant API info from packages
-            const blocksInfo = builtInfo["libs/blocksprj"];
+            const coreDirname = "libs/" + pxt.appTarget.corepkg;
+            const blocksInfo = builtInfo[coreDirname];
 
-            Object.keys(builtInfo).filter(k => k !== "libs/blocksprj").map(k => builtInfo[k]).forEach(info => {
-                deleteOverlappingKeys(blocksInfo.apis.byQName, info.apis.byQName)
-                deleteOverlappingKeys(blocksInfo.apis.jres, info.apis.jres)
-            })
+            if (blocksInfo) {
+                Object.keys(builtInfo).filter(k => k !== coreDirname).map(k => builtInfo[k]).forEach(info => {
+                    deleteOverlappingKeys(blocksInfo.apis.byQName, info.apis.byQName)
+                    deleteOverlappingKeys(blocksInfo.apis.jres, info.apis.jres)
+                });
+            }
 
             cfg.apiInfo = builtInfo;
             nodeutil.writeFileSync(apiInfoPath, JSON.stringify(cfg.apiInfo));

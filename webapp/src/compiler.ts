@@ -423,7 +423,7 @@ function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiI
         }}).filter(p => p && p.config);
 
     const usedPackages = project.pkgAndDeps();
-    const usedInfo: pxt.PackageApiInfo[] = [bundled["libs/blocksprj"]];
+    const usedInfo: pxt.PackageApiInfo[] = [bundled["libs/" + pxt.appTarget.corepkg]];
 
 
     for (const dep of usedPackages) {
@@ -447,6 +447,7 @@ function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiI
     };
 
     for (const used of usedInfo) {
+        if (!used) continue;
         pxt.Util.jsonCopyFrom(result.byQName, used.apis.byQName);
 
         if (used.apis.jres) pxt.Util.jsonCopyFrom(result.jres, used.apis.jres);
