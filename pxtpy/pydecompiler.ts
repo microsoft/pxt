@@ -128,6 +128,9 @@ namespace pxt.py {
             if (sym && sym.pyQName) {
                 return sym.pyQName
             }
+            else if (tsExp in pxtc.ts2PyFunNameMap) {
+                return pxtc.ts2PyFunNameMap[tsExp].n
+            }
             return null
         }
         function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
@@ -1046,7 +1049,7 @@ namespace pxt.py {
                 const args = argExps
                     .map(([a, _]) => a)
                     .join(", ");
-                return  [`${recv}.${fn}(${args})`, sup]
+                return [`${recv}.${fn}(${args})`, sup]
             }
 
             let args = argExps

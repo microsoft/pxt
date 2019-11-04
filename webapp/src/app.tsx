@@ -31,6 +31,7 @@ import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
 import * as scriptmanager from "./scriptmanager";
+import * as cloud from "./cloud";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
@@ -106,6 +107,7 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
+    signInDialog: cloud.SignInDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     newProjectNameDialog: projects.NewProjectNameDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -154,6 +156,7 @@ export class ProjectView
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
+        this.cloudSignInComplete = this.cloudSignInComplete.bind(this);
         this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.initScreenshots();
 
@@ -772,7 +775,7 @@ export class ProjectView
             pxsim.U.remove(document.getElementById('loading'));
             this.setState({ hasError: true });
             // Log critical error
-            pxt.tickEvent('pxt.criticalerror', { error, info });
+            pxt.tickEvent('pxt.criticalerror', { error: error || '', info: info || '' });
             // Reload the page in 2 seconds
             const lastCriticalError = pxt.storage.getLocal("lastcriticalerror") ?
                 Date.parse(pxt.storage.getLocal("lastcriticalerror")) : Date.now();
@@ -1149,6 +1152,8 @@ export class ProjectView
             if (editorState.hasCategories === undefined) editorState.hasCategories = oldEditorState.hasCategories;
             if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
         }
+
+        if (!h.cloudSync && this.cloudSync()) h.cloudSync = true;
 
         return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
@@ -1757,6 +1762,61 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////             Cloud                 ////////////
+    ///////////////////////////////////////////////////////////
+
+    cloudSync() {
+        return this.hasSync();
+    }
+
+    cloudSignInDialog() {
+        const providers = cloudsync.providers();
+        if (providers.length == 0)
+            return;
+        if (providers.length == 1)
+            providers[0].loginAsync().then(() => {
+                this.cloudSignInComplete();
+            })
+        else {
+            this.signInDialog.show();
+        }
+    }
+
+    cloudSignOut() {
+        core.confirmAsync({
+            header: lf("Sign out"),
+            body: lf("You are signing out. Make sure that you commited all your changes, local projects will be deleted."),
+            agreeClass: "red",
+            agreeIcon: "sign out",
+            agreeLbl: lf("Sign out"),
+        }).then(r => {
+            if (r) {
+                const inEditor = !!this.state.header;
+                // Reset the cloud workspace
+                return workspace.resetCloudAsync()
+                    .then(() => {
+                        if (inEditor) {
+                            this.openHome();
+                        }
+                        if (this.home) {
+                            this.home.forceUpdate();
+                        }
+                    })
+            }
+            return Promise.resolve();
+        });
+    }
+
+    cloudSignInComplete() {
+        pxt.log('cloud sign in complete');
+        initLogin();
+        cloudsync.syncAsync()
+            .then(() => {
+                this.forceUpdate();
+            }).done();
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
 
@@ -1918,6 +1978,7 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
+            cloudSync: this.cloudSync(),
             temporary: options.temporary,
             tutorial: options.tutorial,
             extensionUnderTest: options.extensionUnderTest
@@ -2550,7 +2611,7 @@ export class ProjectView
 
             simulator.stop(false, true);
 
-            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger)  ;
+            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger);
 
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
@@ -2792,6 +2853,9 @@ export class ProjectView
                     this.setState({
                         projectName: name
                     })
+            })
+            .then(() => {
+                return workspace.renameAsync(this.state.header, name);
             });
     }
 
@@ -3252,6 +3316,8 @@ export class ProjectView
     private handleScriptManagerDialogClose = () => {
         // When the script manager dialog closes, we want to refresh our projects list in case anything has changed
         this.home.forceUpdate();
+        // Sync the workspace
+        workspace.syncAsync().done();
     }
 
     ///////////////////////////////////////////////////////////
@@ -3296,6 +3362,10 @@ export class ProjectView
 
     private handleChooseHwDialogRef = (c: projects.ChooseHwDialog) => {
         this.chooseHwDialog = c;
+    }
+
+    private handleSignInDialogRef = (c: cloud.SignInDialog) => {
+        this.signInDialog = c;
     }
 
     private handleChooseRecipeDialogRef = (c: tutorial.ChooseRecipeDialog) => {
@@ -3394,8 +3464,7 @@ export class ProjectView
         const showFileList = !sandbox
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
-        // show github if token or if always vis
-        const showGithub = !!pxt.github.token || (isBlocks && targetTheme.alwaysGithubItemBlocks) || (!isBlocks && targetTheme.alwaysGithubItem);
+        const hasCloud = this.hasCloud();
         return (
             <div id='root' className={rootClasses}>
                 {greenScreen ? <greenscreen.WebCam close={this.toggleGreenScreen} /> : undefined}
@@ -3422,7 +3491,6 @@ export class ProjectView
                                 <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.openSimSerial} />
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
-                        {showGithub ? <filelist.GithubTreeItem parent={this} /> : undefined}
                         {showFileList ? <filelist.FileList parent={this} /> : undefined}
                         {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
@@ -3448,6 +3516,7 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
+                {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 {sandbox ? undefined : <projects.NewProjectNameDialog parent={this} ref={this.handleNewProjectNameDialogRef} />}
@@ -3472,33 +3541,18 @@ function getEditor() {
     return theEditor
 }
 
+function parseLocalToken() {
+    const qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
+    if (qs["local_token"]) {
+        pxt.storage.setLocal("local_token", qs["local_token"])
+        location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
+    }
+    Cloud.localToken = pxt.storage.getLocal("local_token") || "";
+}
+
 function initLogin() {
     cloudsync.loginCheck()
-
-    {
-        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
-        if (qs["access_token"]) {
-            let ex = pxt.storage.getLocal("oauthState")
-            let tp = pxt.storage.getLocal("oauthType")
-            if (ex && ex == qs["state"]) {
-                pxt.storage.removeLocal("oauthState")
-                pxt.storage.removeLocal("oauthType")
-                if (tp == "github")
-                    pxt.storage.setLocal("githubtoken", qs["access_token"])
-            }
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
-        }
-        Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
-    }
-
-    {
-        let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
-        if (qs["local_token"]) {
-            pxt.storage.setLocal("local_token", qs["local_token"])
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*local_token.*/, "")
-        }
-        Cloud.localToken = pxt.storage.getLocal("local_token") || "";
-    }
+    parseLocalToken();
 }
 
 function initSerial() {
@@ -3908,7 +3962,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
-    pxt.github.token = pxt.storage.getLocal("githubtoken");
+    // github token set in cloud provider
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();

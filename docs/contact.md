@@ -45,9 +45,7 @@ Discuss a topic or look for an answer to a question on the [MakeCode Forum](http
 
 - Think you've found a bug that affects the entire MakeCode platform? File your issue [here](https://github.com/microsoft/pxt/issues/new?labels=bug).
 - Have an idea you'd like to share with us? File a feature request [here](https://github.com/microsoft/pxt/issues/new?labels=enhancement).
-- Want to speak directly to the team? Ask your question on
-    - Forum https://forum.makecode.com/
-    - Discord [![Join the Discord channel at https://aka.ms/makecodecommunity](https://img.shields.io/badge/discord-join%20chat-blue.svg?)](https://aka.ms/makecodecommunity)
+- Want to speak directly to the team? Ask your question on our forum https://forum.makecode.com/
 
 ## Contact the MakeCode team
 
