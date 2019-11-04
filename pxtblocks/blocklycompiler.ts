@@ -87,7 +87,7 @@ namespace pxt.blocks {
     export interface ScopedVarInfo {
         isFirstReferencedInDescendant?: true;
         firstReferencingBlock?: Blockly.Block;
-        isDefinitivelyAssignedInFRB?: boolean;
+        isDefinitelyAssigned?: boolean;
     }
 
     export enum BlockDeclarationType {
@@ -1080,7 +1080,7 @@ namespace pxt.blocks {
 
         const currentScope = e.idToScope[b.id];
         const varInfoInCurrentScope = currentScope.variables[binding.name];
-        const isDef = !binding.alreadyDeclared && currentScope.declaredVars[binding.name] === binding && varInfoInCurrentScope.firstReferencingBlock === b && varInfoInCurrentScope.isDefinitivelyAssignedInFRB;
+        const isDef = !binding.alreadyDeclared && currentScope.declaredVars[binding.name] === binding && varInfoInCurrentScope.firstReferencingBlock === b && varInfoInCurrentScope.isDefinitelyAssigned;
 
         const expr = compileExpression(e, bExpr, comments);
 
@@ -2179,7 +2179,7 @@ namespace pxt.blocks {
             }
         }
 
-        function referenceVariableInScopeAncestors(scope: Scope, varName: string) {
+        function referenceVariableInAncestors(scope: Scope, varName: string) {
             for (let parentScope = scope.parent; parentScope !== undefined; parentScope = scope.parent) {
                 if (parentScope.variables[varName] !== undefined) {
                     break;
@@ -2198,7 +2198,7 @@ namespace pxt.blocks {
             if (scope.variables[varName] === undefined) {
                 scope.variables[varName] = {
                     firstReferencingBlock: block,
-                    isDefinitivelyAssignedInFRB: block.type === "variables_set" && ((() => {
+                    isDefinitelyAssigned: block.type === "variables_set" && ((() => {
                         let result = true;
                         forEachChildExpression(
                             block,
@@ -2212,7 +2212,7 @@ namespace pxt.blocks {
                         return result;
                     })())
                 };
-                referenceVariableInScopeAncestors(scope, varName);
+                referenceVariableInAncestors(scope, varName);
             }
         }
 
@@ -2231,9 +2231,9 @@ namespace pxt.blocks {
                         info.alreadyDeclared = BlockDeclarationType.Argument;
                         currentScope.variables[vName] = {
                             firstReferencingBlock: block,
-                            isDefinitivelyAssignedInFRB: true
+                            isDefinitelyAssigned: true
                         };
-                        referenceVariableInScopeAncestors(currentScope, vName);
+                        referenceVariableInAncestors(currentScope, vName);
                         addScopeToVarInfo(info, currentScope);
                     });
                 }
@@ -2266,9 +2266,9 @@ namespace pxt.blocks {
                         inputScope.declaredVars[v.name] = v;
                         inputScope.variables[v.name] = {
                             firstReferencingBlock: block,
-                            isDefinitivelyAssignedInFRB: true
+                            isDefinitelyAssigned: true
                         };
-                        referenceVariableInScopeAncestors(inputScope, v.name);
+                        referenceVariableInAncestors(inputScope, v.name);
                         addScopeToVarInfo(v, inputScope);
                     });
 
