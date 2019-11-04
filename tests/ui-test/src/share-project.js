@@ -9,19 +9,33 @@ class ShareProject extends DomObject {
         await this.click(shareTheProject.shareButton);
 
         let publishIconText = await this.getText(shareTheProject.titleOfPublishButton);
-        
+
         assert.equal(publishIconText, 'Publish project');
-        
+
         console.debug(`The name of publish project button is: "${publishIconText}"`);
 
         let sharedProjectName = await this.getAttribute(shareTheProject.shareName, "value");
-        
+
         assert.equal(sharedProjectName, "Project1");
-        
+
         console.debug(`The shared project's name is: "${sharedProjectName}"`);
 
-        await this.click(shareTheProject.publishButton, shareTheProject.copyButton, shareTheProject.closeButtonOfSharePage);
+        await this.click(shareTheProject.publishButton, shareTheProject.copyButton);
 
+        let projectUrl = await this.getAttribute(shareTheProject.projectUrl, 'value');
+
+        await this.click(shareTheProject.closeButtonOfSharePage);
+
+        try {
+            await this.toUrlNavigation(projectUrl);
+
+            await this.catchScreenShot('shared project');
+
+            await this.backNavigation();
+
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     test() {
