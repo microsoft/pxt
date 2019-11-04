@@ -1,5 +1,5 @@
-let item = 0
 let list: number[][] = []
+let item = 0
 if (true) {
     list = [[784]]
     for (let value of list) {

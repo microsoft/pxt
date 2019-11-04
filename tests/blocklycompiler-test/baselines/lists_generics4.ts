@@ -1,5 +1,5 @@
-let item = ""
 let myList: string[] = []
+let item = ""
 if (true) {
     myList = ["", ""]
     item = myList.pop()
