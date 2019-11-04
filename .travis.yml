@@ -8,7 +8,7 @@ before_install:
   - export CHROME_BIN=chromium-browser
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - pip install --user typing
+  - pyenv global 3.6
 before_script:
   - "npm install"
 sudo: false
