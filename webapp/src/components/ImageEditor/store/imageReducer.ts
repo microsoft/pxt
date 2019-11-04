@@ -210,6 +210,42 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     future: []
                 }
             }
+        case actions.SET_INITIAL_TILEMAP:
+            return {
+                ...state,
+                editor: {
+                    ...state.editor,
+                    isTilemap: true,
+                },
+                store: {
+                    ...state.store,
+                    past: [],
+                    present: {
+                        colors: [
+                            "#000000",
+                            "#ffffff",
+                            "#ff2121",
+                            "#ff93c4",
+                            "#ff8135",
+                            "#fff609",
+                            "#249ca3",
+                            "#78dc52",
+                            "#003fad",
+                            "#87f2ff",
+                            "#8e2ec4",
+                            "#a4839f",
+                            "#5c406c",
+                            "#e5cdc4",
+                            "#91463d",
+                            "#000000"
+                        ],
+                        aspectRatioLocked: false,
+                        tilemap: { bitmap: action.tilemap },
+                        tileset: action.tileset
+                    },
+                    future: []
+                }
+            };
         default:
             return {
                 ...state,
@@ -343,7 +379,29 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
 }
 
 const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
-    return state;
+    switch (action.type) {
+        case actions.TOGGLE_ASPECT_RATIO:
+            tickEvent(`toggle-aspect-ratio-lock`);
+            return { ...state, aspectRatioLocked: !state.aspectRatioLocked };
+        case actions.CHANGE_IMAGE_DIMENSIONS:
+            tickEvent(`change-dimensions`);
+            const [width, height] = action.imageDimensions as [number, number];
+            return {
+                ...state,
+                tilemap: {
+                    ...state.tilemap,
+                    bitmap: pxt.sprite.Tilemap.fromData(state.tilemap.bitmap).resize(width, height).data()
+                }
+            };
+        case actions.IMAGE_EDIT:
+            tickEvent(`image-edit`);
+            return {
+                ...state,
+                tilemap: action.newState
+            };
+        default:
+            return state;
+    }
 }
 
 function emptyFrame(width: number, height: number): pxt.sprite.ImageState {

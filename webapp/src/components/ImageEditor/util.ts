@@ -299,3 +299,16 @@ export function imageStateToBitmap(state: pxt.sprite.ImageState) {
 
     return base;
 }
+
+export function imageStateToTilemap(state: pxt.sprite.ImageState) {
+    const base = pxt.sprite.Tilemap.fromData(state.bitmap);
+    if (state.floatingLayer) {
+        const floating = pxt.sprite.Tilemap.fromData(state.floatingLayer)
+        floating.x0 = state.layerOffsetX || 0;
+        floating.y0 = state.layerOffsetY || 0;
+
+        base.apply(floating, true);
+    }
+
+    return base;
+}

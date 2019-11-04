@@ -4,6 +4,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
+import { TilemapFieldEditor } from "./components/TilemapFieldEditor";
 
 export interface EditorBounds {
     top: number;
@@ -198,7 +199,7 @@ export function init() {
                 break;
 
             case "tilemap-editor":
-                current.injectElement(<ImageFieldEditor ref={ refHandler } singleFrame={false} />);
+                current.injectElement(<TilemapFieldEditor ref={ refHandler } />);
                 break;
         }
 

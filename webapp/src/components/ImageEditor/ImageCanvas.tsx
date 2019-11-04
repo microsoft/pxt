@@ -68,6 +68,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     componentDidMount() {
+        this.cellWidth = this.props.isTilemap ? SCALE * this.props.tilemapState.tileset.tileWidth : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
@@ -90,7 +91,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         });
 
         const imageState = this.getImageState();
-        this.editState = getEditState(imageState);
+        this.editState = getEditState(imageState, this.props.isTilemap);
 
         this.redraw();
         this.updateBackground();
@@ -99,7 +100,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     componentDidUpdate() {
         if (!this.edit || !this.editState) {
             const imageState = this.getImageState();
-            this.editState = getEditState(imageState);
+            this.editState = getEditState(imageState, this.props.isTilemap);
         }
 
         this.cellWidth = this.props.isTilemap ? SCALE * this.props.tilemapState.tileset.tileWidth : SCALE;
@@ -263,7 +264,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const imageState = this.getImageState();
 
         if (this.edit) {
-            this.editState = getEditState(imageState);
+            this.editState = getEditState(imageState, this.props.isTilemap);
             this.edit.doEdit(this.editState);
             this.edit = undefined;
 
@@ -288,7 +289,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.canvas.height = imageState.bitmap.height * this.cellWidth;
 
             if (onionSkinEnabled && nextFrame) {
-                const next = getEditState(nextFrame);
+                const next = getEditState(nextFrame, this.props.isTilemap);
                 const context = this.canvas.getContext("2d");
 
                 context.globalAlpha = 0.5;
@@ -381,7 +382,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = this.cellWidth) {
         const { colors } = this.props;
 
         const context = this.canvas.getContext("2d");
@@ -392,10 +393,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
                 if (index) {
                     context.fillStyle = colors[index];
-                    context.fillRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
+                    context.fillRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
                 }
                 else {
-                    if (!transparent) context.clearRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
+                    if (!transparent) context.clearRect((x + x0) * cellWidth, (y + y0) * cellWidth, cellWidth, cellWidth);
                 }
             }
         }
@@ -414,7 +415,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
 
                 if (index) {
-                    this.drawBitmap(tileBitmaps[index], (x + x0) * this.cellWidth, (y + y0) * this.cellWidth);
+                    this.drawBitmap(tileBitmaps[index], (x + x0) * this.cellWidth / SCALE, (y + y0) * this.cellWidth / SCALE, true, SCALE);
                 }
                 else {
                     if (!transparent) context.clearRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);

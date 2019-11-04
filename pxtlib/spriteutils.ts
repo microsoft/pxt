@@ -134,6 +134,26 @@ namespace pxt.sprite {
             return new Tilemap(data.width, data.height, data.x0, data.y0, data.data);
         }
 
+        copy(col = 0, row = 0, width = this.width, height = this.height): Tilemap {
+            const sub = new Tilemap(width, height);
+            sub.x0 = col;
+            sub.y0 = row;
+            for (let c = 0; c < width; c++) {
+                for (let r = 0; r < height; r++) {
+                    sub.set(c, r, this.get(col + c, row + r));
+                }
+            }
+            return sub;
+        }
+
+        resize(width: number, height: number): Tilemap {
+            return resizeTilemap(this, width, height);
+        }
+
+        protected getCore(index: number) {
+            return this.buf[index];
+        }
+
         protected setCore(index: number, value: number) {
             this.buf[index] = value;
         }
@@ -195,6 +215,7 @@ namespace pxt.sprite {
     }
 
     export function tilemapToTilemapLiteral(t: Tilemap): string {
+        if (!t) return `hex\`\``;
         return `hex\`${(t.width).toString(16)}${(t.height.toString(16))}${uint8ArrayToHex(t.data().data)}\``;
     }
 
@@ -219,6 +240,12 @@ namespace pxt.sprite {
 
     export function resizeBitmap(img: Bitmap, width: number, height: number) {
         const result = new Bitmap(width, height);
+        result.apply(img);
+        return result;
+    }
+
+    export function resizeTilemap(img: Tilemap, width: number, height: number) {
+        const result = new Tilemap(width, height);
         result.apply(img);
         return result;
     }

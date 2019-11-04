@@ -28,3 +28,4 @@ export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FORE
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })
 export const dispatchSetInitialFrames = (frames: pxt.sprite.ImageState[], interval: number) => ({ type: actions.SET_INITIAL_FRAMES, frames, interval });
 export const dispatchSetInitialState = (state: EditorState, past: AnimationState[]) => ({ type: actions.SET_INITIAL_STATE, state, past });
+export const dispatchSetInitialTilemap = (tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet) => ({ type: actions.SET_INITIAL_TILEMAP, tilemap, tileset })

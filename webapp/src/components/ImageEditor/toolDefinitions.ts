@@ -105,12 +105,12 @@ export function getEdit(tool: ImageEditorTool, state: EditState, color: number, 
     }
 }
 
-export function getEditState(state: pxt.sprite.ImageState): EditState {
-    const res = new EditState(pxt.sprite.Bitmap.fromData(state.bitmap).copy());
+export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean): EditState {
+    const res = new EditState(isTilemap ? pxt.sprite.Tilemap.fromData(state.bitmap).copy() : pxt.sprite.Bitmap.fromData(state.bitmap).copy());
     res.layerOffsetX = state.layerOffsetX;
     res.layerOffsetY = state.layerOffsetY;
 
-    if (state.floatingLayer) res.floatingLayer = pxt.sprite.Bitmap.fromData(state.floatingLayer).copy();
+    if (state.floatingLayer) res.floatingLayer = isTilemap ? pxt.sprite.Tilemap.fromData(state.floatingLayer).copy() : pxt.sprite.Bitmap.fromData(state.floatingLayer).copy();
 
     return res;
 }

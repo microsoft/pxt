@@ -10,9 +10,9 @@ import { ImageCanvas } from './ImageCanvas';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames } from './actions/dispatch';
-import { EditorState, AnimationState } from './store/imageReducer';
-import { imageStateToBitmap } from './util';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap } from './actions/dispatch';
+import { EditorState, AnimationState, TilemapState } from './store/imageReducer';
+import { imageStateToBitmap, imageStateToTilemap } from './util';
 import { Unsubscribe } from 'redux';
 
 export interface ImageEditorSaveState {
@@ -81,6 +81,10 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
+    initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet) {
+        store.dispatch(dispatchSetInitialTilemap(tilemap, tileset));
+    }
+
     onResize() {
         store.dispatch(dispatchChangeZoom(0));
     }
@@ -102,6 +106,12 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
     getInterval() {
         const animationState = store.getState().store.present as AnimationState;
         return animationState.interval;
+    }
+
+    getTilemap() {
+        const state = store.getState();
+        const tilemapState = state.store.present as TilemapState;
+        return pxt.sprite.tilemapToTilemapLiteral(imageStateToTilemap(tilemapState.tilemap));
     }
 
     getPersistentData(): ImageEditorSaveState {
