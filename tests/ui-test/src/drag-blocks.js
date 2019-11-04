@@ -14,9 +14,9 @@ class BlocklyToolBox extends DomObject {
 
         let searchText = await this.getText(dragBlocks.searchLabel);
 
-        console.debug(`This is the blockly search label: ${searchText}`);
-
         assert.equal(searchText, "7 result matching 'basic'");
+
+        console.debug(`This is the blockly search label: ${searchText}`);
 
     }
     async dragBlocks() {
@@ -34,13 +34,17 @@ class BlocklyToolBox extends DomObject {
         await this.dragAndDropByElement(dragBlocks.showStringBlock, dragBlocks.trashArea);
 
         for (let i = 1; i < 5; i++) {
+
             await this.contextClick(dragBlocks.insertBlock);
 
             if (i == 1) {
+
                 await this.click(dragBlocks.duplicateOptionOfInsertBlock);
 
                 let classValueOfDuplication = await this.getAttribute(dragBlocks.duplicateBlock, 'class');
+
                 assert.equal(classValueOfDuplication, 'blocklyDraggable blocklySelected blocklyDisabled');
+
                 console.log(`This is the class value of duplication:${classValueOfDuplication}`);
 
                 await this.contextClick(dragBlocks.duplicateBlock);
@@ -48,6 +52,7 @@ class BlocklyToolBox extends DomObject {
                 await this.click(dragBlocks.deleteDuplicateBlock);
             }
             if (i == 2) {
+
                 await this.click(dragBlocks.addComment);
 
                 await this.sendKeys(dragBlocks.textBox, 'fortest');
@@ -55,14 +60,17 @@ class BlocklyToolBox extends DomObject {
                 await this.click(dragBlocks.commentDeleteButton);
             }
             if (i == 3) {
+
                 await this.click(dragBlocks.helpOptionOfInsertBlock);
 
                 await this.switchToIframe(dragBlocks.iframeIdOfHelp);
 
                 let sideDocsTitle = await this.getText(dragBlocks.titleOfInsertBlock);
+
                 await this.switchToDefaultFrame();
 
                 assert.equal(sideDocsTitle, 'Show String');
+                
                 console.info(`The side docs title is ${sideDocsTitle}`);
 
                 await this.click(dragBlocks.collapseButton);
