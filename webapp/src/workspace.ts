@@ -543,9 +543,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     for (let path of filenames) {
         if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
             continue
-        let sha = gitsha(files[path])
+        const fileContent = files[path];
+        let sha = gitsha(fileContent)
         let ex = lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
+            // look for unfinished merges
+            if (/^(<<<<<<<\s|=======|>>>>>>>\s)/m.test(fileContent))
+                throw mergeConflictMarkerError();
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
                 encoding: "utf-8"
@@ -603,6 +607,12 @@ interface UpdateOptions {
 function mergeError() {
     const e = new Error("Merge error");
     (e as any).isMergeError = true
+    return e
+}
+
+function mergeConflictMarkerError() {
+    const e = new Error("Merge conflict marker error");
+    (e as any).isMergeConflictMarkerError = true
     return e
 }
 

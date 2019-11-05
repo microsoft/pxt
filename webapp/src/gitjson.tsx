@@ -206,6 +206,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                 core.hideDialog()
                 this.forkAsync(true).done()
             }
+        }
+        else if (e.isMergeConflictMarkerError) {
+            pxt.tickEvent("github.commitwithconflicts");
+            core.warningNotification(lf("Please merge all conflicts before commiting changes."))
         } else {
             pxt.reportException(e);
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
