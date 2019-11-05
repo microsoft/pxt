@@ -1097,13 +1097,13 @@ namespace pxt.github {
         }
         let middleLine = startMarkerLine + 1;
         while (middleLine < lines.length) {
-            if (/^=======/.test(lines[middleLine]))
+            if (/^=======$/.test(lines[middleLine]))
                 break;
             middleLine++;
         }
         let endLine = middleLine + 1;
         while (endLine < lines.length) {
-            if (!/^>>>>>>>[^>]/.test(lines[endLine])) {
+            if (/^>>>>>>>[^>]/.test(lines[endLine])) {
                 break;
             }
             endLine++;
