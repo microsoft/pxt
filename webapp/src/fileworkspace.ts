@@ -47,7 +47,7 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
         config: null,
         header: h,
         path: h.path,
-        isDeleted: text === delText
+        isDeleted: h.isDeleted
     }
 
     if (text) {
