@@ -1097,8 +1097,11 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         return this.prevGalleries || [];
     }
 
-    private setHwVariant(cfg: pxt.PackageConfig) {
-        pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
+    private setHwVariant(cfg: pxt.PackageConfig, card: pxt.CodeCard) {
+        pxt.tickEvent("projects.choosehwvariant", {
+            hwid: cfg.name,
+            card: card ? card.name : cfg.name
+        }, { interactiveConsent: true });
         this.hide()
 
         pxt.setHwVariant(cfg.name)
@@ -1119,13 +1122,14 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                     name: v.description
                 }
             const savedV = v
-            v.card.onClick = () => this.setHwVariant(savedV)
+            v.card.onClick = () => this.setHwVariant(savedV, null)
         }
         let cards = this.fetchGallery();
         for (const card of cards) {
             const savedV = variants.find(variant => variant.name == card.variant);
+            const savedCard = card;
             if (savedV)
-                card.onClick = () => this.setHwVariant(savedV);
+                card.onClick = () => this.setHwVariant(savedV, savedCard);
             else {
                 pxt.reportError("hw", "invalid variant");
             }

@@ -2176,6 +2176,10 @@ export class ProjectView
                             }
                             if (parseInt(compile.uf2Family) === wr.familyID) {
                                 pxt.setHwVariant(v.name)
+                                pxt.tickEvent("projects.choosehwvariant", {
+                                    hwid: pxt.hwVariant,
+                                    card: "HID-" + pxt.hwVariant
+                                });
                                 this.reloadHeaderAsync()
                                     .then(() => this.compile())
                                 return
@@ -3956,8 +3960,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const query = core.parseQueryString(window.location.href)
 
-    if (query["hw"])
+    if (query["hw"]) {
         pxt.setHwVariant(query["hw"])
+        pxt.tickEvent("projects.choosehwvariant", {
+            hwid: pxt.hwVariant,
+            card: "QUERY-" + pxt.hwVariant
+        });
+    }
 
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
