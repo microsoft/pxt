@@ -618,6 +618,7 @@ ${content}
 
         const content = pxt.github.resolveMergeConflictMarker(f.content, startMarkerLine, local, remote);
         f.setContentAsync(content)
+            .then(() => delete this.diffCache[f.name]) // clear cached diff
             .done(() => this.props.parent.forceUpdate());
     }
 
