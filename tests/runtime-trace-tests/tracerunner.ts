@@ -242,7 +242,6 @@ async function convertTs2Py(tsFile: string): Promise<string> {
 
 async function convertPy2Ts(pyFile: string): Promise<string> {
     let tsCode = await util.py2tsAsync(pyFile)
-    console.dir(tsCode)
     const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
     writeFileStringSync(tsFile, tsCode.ts)
     return tsFile
