@@ -556,7 +556,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     hasUndo() {
-        return this.editor ? this.editor.undoStack_.length != 0 : false;
+        // undo is true if undoStack has items, or if both undo and redo are empty (first project load)
+        return this.editor ? this.editor.undoStack_.length != 0
+            || (this.editor.undoStack_.length == 0 && this.editor.redoStack_.length == 0) : false;
     }
 
     undo() {
