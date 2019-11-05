@@ -54,6 +54,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected lastPanX: number;
     protected lastPanY: number;
 
+    protected tileCache: HTMLCanvasElement[] = [];
+
     render() {
         const imageState = this.getImageState();
         const isPortrait = !imageState || (imageState.bitmap.height > imageState.bitmap.width);
@@ -123,6 +125,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
         this.redraw();
         this.updateBackground();
+    }
+
+    componentWillUnmount() {
+        this.tileCache = [];
     }
 
     onClick(coord: ClientCoordinates, isRightClick?: boolean): void {
@@ -382,10 +388,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = this.cellWidth) {
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = this.cellWidth, target = this.canvas) {
         const { colors } = this.props;
 
-        const context = this.canvas.getContext("2d");
+        const context = target.getContext("2d");
         context.imageSmoothingEnabled = false;
         for (let x = 0; x < bitmap.width; x++) {
             for (let y = 0; y < bitmap.height; y++) {
@@ -405,17 +411,26 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
         const { tilemapState: { tileset } } = this.props;
 
-        const tileBitmaps = tileset.tiles.map(t => pxt.sprite.Bitmap.fromData(t));
-
         const context = this.canvas.getContext("2d");
+        let index: number;
+        let tileImage: HTMLCanvasElement;
+
         context.imageSmoothingEnabled = false;
         for (let x = 0; x < tilemap.width; x++) {
             for (let y = 0; y < tilemap.height; y++) {
-                const index = tilemap.get(x, y);
-
-
+                index = tilemap.get(x, y);
                 if (index) {
-                    this.drawBitmap(tileBitmaps[index], (x + x0) * this.cellWidth / SCALE, (y + y0) * this.cellWidth / SCALE, true, SCALE);
+                    tileImage = this.tileCache[index];
+
+                    if (!tileImage) {
+                        tileImage = document.createElement("canvas");
+                        tileImage.width = tileset.tileWidth;
+                        tileImage.height = tileset.tileWidth;
+                        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index]), 0, 0, true, 1, tileImage);
+                        this.tileCache[index] = tileImage;
+                    }
+
+                    context.drawImage(tileImage,  (x + x0) * this.cellWidth,  (y + y0) * this.cellWidth);
                 }
                 else {
                     if (!transparent) context.clearRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
