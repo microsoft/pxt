@@ -855,7 +855,7 @@ ${output}</xml>`;
             const args: ts.Node[] = [];
             collectTextJoinArgs(n, args);
 
-            const inputs = [];
+            const inputs: ValueNode[] = [];
             for (let i = 0; i < args.length; i++) {
                 if (i > 0 || !isEmptyString(args[i].getText())) {
                     inputs.push(getValue("ADD" + inputs.length, args[i], stringType));
