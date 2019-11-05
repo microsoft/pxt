@@ -177,6 +177,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.SET_INITIAL_FRAMES:
             return {
                 ...state,
+                editor: {
+                    ...state.editor,
+                    isTilemap: false,
+                },
                 store: {
                     ...state.store,
                     past: [],
