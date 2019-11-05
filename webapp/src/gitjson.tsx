@@ -445,7 +445,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         cache.diff = (
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
-                    <span>{f.name}</span>
+                    {isBlocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
                     <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />
