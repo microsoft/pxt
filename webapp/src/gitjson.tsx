@@ -420,81 +420,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
-        const baseContent = f.baseGitContent || "";
-        const content = f.content;
-        let legendJSX: JSX.Element;
-        let diffJSX: JSX.Element;
+        let jsxEls: { diffJSX: JSX.Element, legendJSX: JSX.Element };
         if (isBlocks) {
-            const markdown =
-                `
-\`\`\`diffblocksxml
-${baseContent}
----------------------
-${content}
-\`\`\`
-`;
-            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
-            legendJSX = <p className="legend">
-                <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
-                <span><span className="deleted icon"></span>{lf("deleted")}</span>
-                <span><span className="notchanged icon"></span>{lf("not changed")}</span>
-                {sui.helpIconLink("/github/diff#blocks", lf("Learn about reading differences in blocks code."))}
-            </p >
+            jsxEls = this.createBlocksDiffJSX(f);
         } else {
-            const classes: pxt.Map<string> = {
-                "@": "diff-marker",
-                " ": "diff-unchanged",
-                "+": "diff-added",
-                "-": "diff-removed",
-            }
-            const diffLines = pxt.github.diff(f.baseGitContent || "", f.content, { ignoreWhitespace: true })
-            let lnA = 0, lnB = 0
-            let lastMark = ""
-            let savedDiff: JSX.Element = null
-            const linesTSX = diffLines.map((ln, idx) => {
-                const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
-                if (m) {
-                    lnA = parseInt(m[1]) - 1
-                    lnB = parseInt(m[2]) - 1
-                } else {
-                    if (ln[0] != "+")
-                        lnA++
-                    if (ln[0] != "-")
-                        lnB++
-                }
-                const nextMark = diffLines[idx + 1] ? diffLines[idx + 1][0] : ""
-                const next2Mark = diffLines[idx + 2] ? diffLines[idx + 2][0] : ""
-                let currDiff = <code>{ln.slice(2)}</code>
-
-                if (savedDiff) {
-                    currDiff = savedDiff
-                    savedDiff = null
-                } else if (ln[0] == "-" && (lastMark == " " || lastMark == "@") && nextMark == "+"
-                    && (next2Mark == " " || next2Mark == "@" || next2Mark == "")) {
-                    const r = this.lineDiff(ln.slice(2), diffLines[idx + 1].slice(2))
-                    currDiff = r.a
-                    savedDiff = r.b
-                }
-                lastMark = ln[0]
-                return (
-                    <tr key={lnA + lnB} className={classes[ln[0]]}>
-                        <td className="line-a" data-content={lnA}></td>
-                        <td className="line-b" data-content={lnB}></td>
-                        {ln[0] == "@"
-                            ? <td colSpan={2} className="change"><code>{ln}</code></td>
-                            : <td className="marker" data-content={ln[0]}></td>
-                        }
-                        {ln[0] == "@"
-                            ? undefined
-                            : <td className="change">{currDiff}</td>
-                        }
-                    </tr>)
-            })
-            diffJSX = linesTSX.length ? <table className="diffview">
-                <tbody>
-                    {linesTSX}
-                </tbody>
-            </table> : undefined;
+            jsxEls = this.createTextDiffJSX(f);
         }
 
         let deletedFiles: string[] = []
@@ -511,45 +441,7 @@ ${content}
 
         cache.gitFile = f.baseGitContent
         cache.editorFile = f.content
-        cache.revert = async () => {
-            pxt.tickEvent("github.revert", { start: 1 })
-            const res = await core.confirmAsync({
-                header: lf("Would you like to revert changes to {0}?", f.name),
-                body: lf("Changes will be lost for good. No undo."),
-                agreeLbl: lf("Revert"),
-                agreeClass: "red",
-                agreeIcon: "trash",
-            })
-
-            if (!res)
-                return
-
-            pxt.tickEvent("github.revert", { ok: 1 })
-            this.setState({ needsCommitMessage: false }); // maybe we no longer do
-
-            if (f.baseGitContent == null) {
-                await pkg.mainEditorPkg().removeFileAsync(f.name)
-                await this.props.parent.reloadHeaderAsync()
-            } else if (f.name == pxt.CONFIG_NAME) {
-                const gs = this.getGitJson()
-                for (let d of deletedFiles) {
-                    const prev = workspace.lookupFile(gs.commit, d)
-                    pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
-                }
-                for (let d of addedFiles) {
-                    delete pkg.mainEditorPkg().files[d]
-                }
-                await f.setContentAsync(f.baseGitContent)
-                await this.props.parent.reloadHeaderAsync()
-            } else {
-                await f.setContentAsync(f.baseGitContent)
-                // revert generated .ts file as well
-                if (virtualF)
-                    await virtualF.setContentAsync(virtualF.baseGitContent);
-                this.forceUpdate();
-            }
-        }
-
+        cache.revert = () => this.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
         cache.diff = (
             <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
@@ -557,7 +449,7 @@ ${content}
                     <sui.Button className="small" icon="undo" text={lf("Revert")}
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />
-                    {legendJSX}
+                    {jsxEls.legendJSX}
                     {deletedFiles.length == 0 ? undefined :
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
@@ -570,9 +462,9 @@ ${content}
                         {lf("Reverting this file will also revert: {0}", virtualF.name)}
                     </p> : undefined}
                 </div>
-                {diffJSX ?
+                {jsxEls.diffJSX ?
                     <div className="ui segment diff">
-                        {diffJSX}
+                        {jsxEls.diffJSX}
                     </div>
                     :
                     <div className="ui segment">
@@ -581,6 +473,128 @@ ${content}
                 }
             </div>)
         return cache.diff
+    }
+
+    private createBlocksDiffJSX(f: pkg.File) {
+        const baseContent = f.baseGitContent || "";
+        const content = f.content;
+        const markdown =
+            `
+\`\`\`diffblocksxml
+${baseContent}
+---------------------
+${content}
+\`\`\`
+`;
+        const diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+        const legendJSX = <p className="legend">
+            <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
+            <span><span className="deleted icon"></span>{lf("deleted")}</span>
+            <span><span className="notchanged icon"></span>{lf("not changed")}</span>
+            {sui.helpIconLink("/github/diff#blocks", lf("Learn about reading differences in blocks code."))}
+        </p>;
+        return { diffJSX, legendJSX };
+    }
+
+    private createTextDiffJSX(f: pkg.File) {
+        const baseContent = f.baseGitContent || "";
+        const content = f.content;
+        const classes: pxt.Map<string> = {
+            "@": "diff-marker",
+            " ": "diff-unchanged",
+            "+": "diff-added",
+            "-": "diff-removed",
+        }
+        const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
+        let lnA = 0, lnB = 0
+        let lastMark = ""
+        let savedDiff: JSX.Element = null
+        const linesTSX = diffLines.map((ln, idx) => {
+            const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
+            if (m) {
+                lnA = parseInt(m[1]) - 1
+                lnB = parseInt(m[2]) - 1
+            } else {
+                if (ln[0] != "+")
+                    lnA++
+                if (ln[0] != "-")
+                    lnB++
+            }
+            const nextMark = diffLines[idx + 1] ? diffLines[idx + 1][0] : ""
+            const next2Mark = diffLines[idx + 2] ? diffLines[idx + 2][0] : ""
+            let currDiff = <code>{ln.slice(2)}</code>
+
+            if (savedDiff) {
+                currDiff = savedDiff
+                savedDiff = null
+            } else if (ln[0] == "-" && (lastMark == " " || lastMark == "@") && nextMark == "+"
+                && (next2Mark == " " || next2Mark == "@" || next2Mark == "")) {
+                const r = this.lineDiff(ln.slice(2), diffLines[idx + 1].slice(2))
+                currDiff = r.a
+                savedDiff = r.b
+            }
+            lastMark = ln[0]
+            return (
+                <tr key={lnA + lnB} className={classes[ln[0]]}>
+                    <td className="line-a" data-content={lnA}></td>
+                    <td className="line-b" data-content={lnB}></td>
+                    {ln[0] == "@"
+                        ? <td colSpan={2} className="change"><code>{ln}</code></td>
+                        : <td className="marker" data-content={ln[0]}></td>
+                    }
+                    {ln[0] == "@"
+                        ? undefined
+                        : <td className="change">{currDiff}</td>
+                    }
+                </tr>)
+        })
+        const diffJSX = linesTSX.length ? <table className="diffview">
+            <tbody>
+                {linesTSX}
+            </tbody>
+        </table> : undefined;
+        const legendJSX: JSX.Element = undefined;
+
+        return { diffJSX, legendJSX }
+    }
+
+    private async revertFileAsync(f: pkg.File, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
+        pxt.tickEvent("github.revert", { start: 1 })
+        const res = await core.confirmAsync({
+            header: lf("Would you like to revert changes to {0}?", f.name),
+            body: lf("Changes will be lost for good. No undo."),
+            agreeLbl: lf("Revert"),
+            agreeClass: "red",
+            agreeIcon: "trash",
+        })
+
+        if (!res)
+            return
+
+        pxt.tickEvent("github.revert", { ok: 1 })
+        this.setState({ needsCommitMessage: false }); // maybe we no longer do
+
+        if (f.baseGitContent == null) {
+            await pkg.mainEditorPkg().removeFileAsync(f.name)
+            await this.props.parent.reloadHeaderAsync()
+        } else if (f.name == pxt.CONFIG_NAME) {
+            const gs = this.getGitJson()
+            for (let d of deletedFiles) {
+                const prev = workspace.lookupFile(gs.commit, d)
+                pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
+            }
+            for (let d of addedFiles) {
+                delete pkg.mainEditorPkg().files[d]
+            }
+            await f.setContentAsync(f.baseGitContent)
+            await this.props.parent.reloadHeaderAsync()
+        } else {
+            await f.setContentAsync(f.baseGitContent)
+            // revert generated .ts file as well
+            if (virtualF)
+                await virtualF.setContentAsync(virtualF.baseGitContent);
+            this.forceUpdate();
+        }
     }
 
     private refreshPullAsync() {
