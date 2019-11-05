@@ -424,7 +424,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
-        let jsxEls: { diffJSX: JSX.Element, legendJSX: JSX.Element };
+        let jsxEls: { diffJSX: JSX.Element, legendJSX: JSX.Element, conflicts: number };
         if (isBlocks) {
             jsxEls = this.createBlocksDiffJSX(f);
         } else {
@@ -454,6 +454,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />
                     {jsxEls.legendJSX}
+                    {jsxEls.conflicts ? <p>{lf("Conflicts found. Resolve them before commiting.")}</p> : undefined}
                     {deletedFiles.length == 0 ? undefined :
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
@@ -497,7 +498,7 @@ ${content}
             <span><span className="notchanged icon"></span>{lf("not changed")}</span>
             {sui.helpIconLink("/github/diff#blocks", lf("Learn about reading differences in blocks code."))}
         </p>;
-        return { diffJSX, legendJSX };
+        return { diffJSX, legendJSX, conflicts: 0 };
     }
 
     private createTextDiffJSX(f: pkg.File) {
@@ -510,10 +511,12 @@ ${content}
             "-": "diff-removed",
         }
         const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
+        let conflicts = 0;
         let lnA = 0, lnB = 0
         let lastMark = ""
         let savedDiff: JSX.Element = null
-        const linesTSX = diffLines.map((ln, idx) => {
+        const linesTSX: JSX.Element[] = [];
+        diffLines.forEach((ln, idx) => {
             const m = /^@@ -(\d+),\d+ \+(\d+),\d+/.exec(ln)
             if (m) {
                 lnA = parseInt(m[1]) - 1
@@ -526,7 +529,8 @@ ${content}
             }
             const nextMark = diffLines[idx + 1] ? diffLines[idx + 1][0] : ""
             const next2Mark = diffLines[idx + 2] ? diffLines[idx + 2][0] : ""
-            let currDiff = <code>{ln.slice(2)}</code>
+            const lnSrc = ln.slice(2);
+            let currDiff = <code>{lnSrc}</code>
 
             if (savedDiff) {
                 currDiff = savedDiff
@@ -537,20 +541,42 @@ ${content}
                 currDiff = r.a
                 savedDiff = r.b
             }
-            lastMark = ln[0]
-            return (
-                <tr key={lnA + lnB} className={classes[ln[0]]}>
+            lastMark = ln[0];
+            // if start of a conflict marker, render button
+            if (lastMark == "+" && /^<<<<<<<[^<]/.test(lnSrc)) {
+                conflicts++;
+                linesTSX.push(<tr key={"merge" + lnA + lnB} className="mergebtn">
+                    <td></td>
+                    <td></td>
+                    <td colSpan={2} className="merge">
+                        <sui.Button className="" text="Keep your changes" />
+                    </td>
+                </tr>);
+            }
+            else if (lastMark == "+" && /^=======$/.test(lnSrc)) {
+                linesTSX.push(<tr key={"merge" + lnA + lnB} className="mergebtn">
+                    <td></td>
+                    <td></td>
+                    <td colSpan={2} className="merge">
+                        <sui.Button className="" text="Accept their changes" />
+                    </td>
+                </tr>);
+            }
+
+            // add diff
+            linesTSX.push(
+                <tr key={lnA + lnB} className={classes[lastMark]}>
                     <td className="line-a" data-content={lnA}></td>
                     <td className="line-b" data-content={lnB}></td>
-                    {ln[0] == "@"
+                    {lastMark == "@"
                         ? <td colSpan={2} className="change"><code>{ln}</code></td>
-                        : <td className="marker" data-content={ln[0]}></td>
+                        : <td className="marker" data-content={lastMark}></td>
                     }
-                    {ln[0] == "@"
+                    {lastMark == "@"
                         ? undefined
                         : <td className="change">{currDiff}</td>
                     }
-                </tr>)
+                </tr>);
         })
         const diffJSX = linesTSX.length ? <table className="diffview">
             <tbody>
@@ -559,7 +585,7 @@ ${content}
         </table> : undefined;
         const legendJSX: JSX.Element = undefined;
 
-        return { diffJSX, legendJSX }
+        return { diffJSX, legendJSX, conflicts }
     }
 
     private async revertFileAsync(f: pkg.File, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
