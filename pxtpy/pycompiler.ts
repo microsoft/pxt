@@ -157,6 +157,11 @@ namespace pxt.py {
         const t = U.lookup(builtInTypes, tp)
         if (t) return t
 
+        // handle number litterals like "-20" (b/c TS loves to give specific types to const's)
+        let isNum = !!tp && !isNaN(tp as any as number) // https://stackoverflow.com/questions/175739
+        if (isNum)
+            return tpNumber
+
         // generic
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
@@ -274,7 +279,6 @@ namespace pxt.py {
 
         // TODO this is for testing mostly; we can do this lazily
         for (let sym of U.values(externalApis)) {
-            console.log(`filling types for: ${sym.pyQName || '!' + (sym.qName || sym.name)}`)
             if (sym)
                 getOrSetSymbolType(sym)
         }
