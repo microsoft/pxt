@@ -127,10 +127,12 @@ namespace pxt.py {
     }
 
     function mapTsType(tp: string): Type {
+        // wrapped in (...)
         if (tp[0] == "(" && U.endsWith(tp, ")")) {
             return mapTsType(tp.slice(1, -1))
         }
 
+        // lambda (...) => ...
         const arrowIdx = tp.indexOf(" => ")
         if (arrowIdx > 0) {
             const retTypeStr = tp.slice(arrowIdx + 4)
@@ -143,6 +145,7 @@ namespace pxt.py {
             }
         }
 
+        // array ...[]
         if (U.endsWith(tp, "[]")) {
             return mkArrayType(mapTsType(tp.slice(0, -2)))
         }
@@ -150,12 +153,17 @@ namespace pxt.py {
             return mkArrayType(tpAny);
         }
 
+        // builtin
         const t = U.lookup(builtInTypes, tp)
         if (t) return t
 
+        // generic
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
+        // defined by a symbol, 
+        //  either in external (non-py) APIs (like default/common packages)
+        //  or in internal (py) APIs (probably main.py)
         let sym = lookupApi(tp + "@type") || lookupApi(tp)
         if (!sym) {
             error(null, 9501, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
@@ -181,7 +189,7 @@ namespace pxt.py {
         return sym.attributes.shim && sym.attributes.shim[0] == "@"
     }
 
-    function symbolType(sym: SymbolInfo): Type {
+    function getOrSetSymbolType(sym: SymbolInfo): Type {
         if (!sym.pySymbolType) {
             currErrorCtx = sym.pyQName
 
@@ -232,19 +240,16 @@ namespace pxt.py {
         return sym.pySymbolType
     }
 
-    function fillTypes(sym: SymbolInfo) {
-        if (sym)
-            symbolType(sym)
-        return sym
-    }
-
     function lookupApi(name: string) {
         return U.lookup(internalApis, name) || U.lookup(externalApis, name)
     }
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
         if (!name) return null
-        return fillTypes(lookupApi(name))
+        let sym = lookupApi(name)
+        if (sym)
+            getOrSetSymbolType(sym)
+        return sym
     }
 
     function initApis(apisInfo: pxtc.ApisInfo, tsShadowFiles: string[]) {
@@ -269,7 +274,9 @@ namespace pxt.py {
 
         // TODO this is for testing mostly; we can do this lazily
         for (let sym of U.values(externalApis)) {
-            fillTypes(sym)
+            console.log(`filling types for: ${sym.pyQName || '!' + (sym.qName || sym.name)}`)
+            if (sym)
+                getOrSetSymbolType(sym)
         }
 
         tpBuffer = mapTsType("Buffer")
@@ -290,7 +297,7 @@ namespace pxt.py {
     }
 
     function instanceType(sym: SymbolInfo) {
-        symbolType(sym)
+        getOrSetSymbolType(sym)
         return sym.pyInstanceType
     }
 
@@ -781,7 +788,7 @@ namespace pxt.py {
         if (tpName) {
             let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
             if (sym) {
-                symbolType(sym)
+                getOrSetSymbolType(sym)
                 if (sym.kind == SK.Enum)
                     return tpNumber
 
@@ -832,7 +839,7 @@ namespace pxt.py {
 
         let lst = n.symInfo.parameters.map(p => {
             let v = defvar(p.name, { isParam: true })
-            unify(n, symbolType(v), p.pyType)
+            unify(n, getOrSetSymbolType(v), p.pyType)
             let res = [quote(p.name), typeAnnot(p.pyType)]
             if (p.default) {
                 res.push(B.mkText(" = " + p.default))
@@ -1044,7 +1051,7 @@ namespace pxt.py {
                 n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
 
             // make sure type is initialized
-            symbolType(sym)
+            getOrSetSymbolType(sym)
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
@@ -1945,7 +1952,7 @@ namespace pxt.py {
                 if (sym) {
                     n.symbolInfo = sym
                     addCaller(n, sym)
-                    unifyTypeOf(n, symbolType(sym))
+                    unifyTypeOf(n, getOrSetSymbolType(sym))
                     nm = sym.name
                 } else
                     error(n, 9514, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.pyQName, n.attr))
@@ -2014,7 +2021,7 @@ namespace pxt.py {
         }
         if (v) {
             n.symbolInfo = v
-            unify(n, n.tsType, symbolType(v))
+            unify(n, n.tsType, getOrSetSymbolType(v))
             if (v.isImport)
                 return v
             addCaller(n, v)
@@ -2093,7 +2100,7 @@ namespace pxt.py {
 
     function declareVariable(s: SymbolInfo) {
         const name = quote(s.name);
-        const type = t2s(symbolType(s));
+        const type = t2s(getOrSetSymbolType(s));
 
         return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
     }
