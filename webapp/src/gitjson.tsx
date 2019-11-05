@@ -558,24 +558,26 @@ ${content}
                         {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
+                const lnMarker = lnA;
+                const keepLocalHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, false);
+                const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
+                const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
+                // tslint:disable: react-this-binding-issue
                 linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
                     <td colSpan={4} className="ui">
-                        <sui.Button className="compact" text="Keep local" />
-                        <sui.Button className="compact" text="Keep remote" />
-                        <sui.Button className="compact" text="Keep both" />
+                        <sui.Button className="compact" text={lf("Keep local")} title={lf("Ignore the changes from GitHub.")} onClick={keepLocalHandler} />
+                        <sui.Button className="compact" text={lf("Keep remote")} title={lf("Override local changes with changes from GitHub.")} onClick={keepRemoteHandler} />
+                        <sui.Button className="compact" text={lf("Keep both")} title={lf("Keep both local and remote changes.")} onClick={keepBothHandler} />
                     </td>
                 </tr>);
-                ln = lf("Local changes");
             }
             else if (lastMark == "+" && /^>>>>>>>[^>]/.test(lnSrc)) {
                 conflictState = "footer";
                 diffMark = "@";
-                ln = "";
             }
             else if (lastMark == "+" && /^=======$/.test(lnSrc)) {
                 diffMark = "@";
                 conflictState = "remote";
-                ln = lf("Remote changes (pulled from GitHub)");
             }
 
             // add diff
@@ -611,8 +613,16 @@ ${content}
         return { diffJSX, legendJSX, conflicts }
     }
 
+    private handleMergeConflictResolution(f: pkg.File, startMarkerLine: number, local: boolean, remote: boolean) {
+        pxt.tickEvent("github.conflict.resolve", { "local": local ? 1 : 0, "remote": remote ? 1 : 0 }, { interactiveConsent: true });
+
+        const content = pxt.github.resolveMergeConflictMarker(f.content, startMarkerLine, local, remote);
+        f.setContentAsync(content)
+            .done(() => this.props.parent.forceUpdate());
+    }
+
     private async revertFileAsync(f: pkg.File, deletedFiles: string[], addedFiles: string[], virtualF: pkg.File) {
-        pxt.tickEvent("github.revert", { start: 1 })
+        pxt.tickEvent("github.revert", { start: 1 }, { interactiveConsent: true })
         const res = await core.confirmAsync({
             header: lf("Would you like to revert changes to {0}?", f.name),
             body: lf("Changes will be lost for good. No undo."),

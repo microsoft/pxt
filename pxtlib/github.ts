@@ -1088,4 +1088,42 @@ namespace pxt.github {
             return ma
         }
     }
+
+    export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
+        let lines = toLines(content);
+        if (!/^<<<<<<<[^<]/.test(lines[startMarkerLine])) {
+            // invalid line, no marker found
+            return content;
+        }
+        let middleLine = startMarkerLine + 1;
+        while (middleLine < lines.length) {
+            if (/^=======/.test(lines[middleLine]))
+                break;
+            middleLine++;
+        }
+        let endLine = middleLine + 1;
+        while (endLine < lines.length) {
+            if (!/^>>>>>>>[^>]/.test(lines[endLine])) {
+                break;
+            }
+            endLine++;
+        }
+        if (endLine >= lines.length) {
+            // no match?
+            return content;
+        }
+
+        // remove locals
+        lines[startMarkerLine] = undefined;
+        lines[middleLine] = undefined;
+        lines[endLine] = undefined;
+        if (!local)
+            for (let i = startMarkerLine; i <= middleLine; ++i)
+                lines[i] = undefined;
+        if (!remote)
+            for (let i = middleLine; i <= endLine; ++i)
+                lines[i] = undefined;
+
+        return lines.filter(line => line !== undefined).join("\r\n");
+    }
 }
