@@ -386,6 +386,12 @@ declare namespace pxt {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
+        apiInfo?: Map<PackageApiInfo>;
+    }
+
+    interface PackageApiInfo {
+        sha: string;
+        apis: pxtc.ApisInfo;
     }
 }
 
