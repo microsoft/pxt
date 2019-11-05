@@ -549,7 +549,7 @@ ${content}
                 conflicts++;
                 conflictState = "local";
                 diffMark = "@";
-                linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui header">
+                linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui small header">
                     <td colSpan={4} className="ui small header">{lf("Merge conflict")}</td>
                 </tr>);
                 linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui description">
