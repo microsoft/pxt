@@ -498,6 +498,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
+                                embedYouTube={scr.embedYouTube}
                                 label={scr.label}
                                 labelClass={scr.labelClass}
                                 tags={scr.tags}
@@ -519,6 +520,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             imageUrl={selectedElement.imageUrl}
                             largeImageUrl={selectedElement.largeImageUrl}
                             youTubeId={selectedElement.youTubeId}
+                            embedYouTube={selectedElement.embedYouTube}
                             scr={selectedElement}
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
@@ -726,50 +728,68 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         else if (youTubeId)
             clickLabel = lf("Play Video");
 
-        const action = this.isLink() ?
-            <sui.Link
-                href={this.getUrl()}
-                refCallback={this.linkRef}
-                target={'_blank'}
-                text={clickLabel}
-                className={`ui button approve huge positive`}
-            />
-            :
-            <sui.Button
-                text={clickLabel}
-                className={`approve huge positive`}
-                onClick={this.handleDetailClick}
-                onKeyDown={sui.fireClickOnEnter}
-                autoFocus={true}
-            />
 
-        return <div className="ui grid stackable padded">
-            {image && <div className="imagewrapper">
-                <div className="image" style={{ backgroundImage: `url("${image}")` }} />
-            </div>}
-            <div className="column twelve wide">
-                <div className="segment">
-                    <div className="header"> {name} </div>
-                    {tags && <div className="ui labels">
-                        {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
-                        </div>)}</div>}
-                    {descriptions && descriptions.map((desc, index) => {
-                        return <p key={`line${index}`} className="detail">
-                            {desc}
-                        </p>
-                    })}
-                    <div className="actions">
-                        {action}
-                        {cardType === "forumUrl" && <sui.Button
-                            text={lf("Open in Editor")}
-                            className={`approve huge`}
-                            onClick={this.handleOpenForumUrlInEditor}
-                            onKeyDown={sui.fireClickOnEnter}
-                        />}
+        const action = this.isLink() ?
+        <sui.Link
+            href={this.getUrl()}
+            refCallback={this.linkRef}
+            target={'_blank'}
+            text={clickLabel}
+            className={`ui button approve huge positive`}
+        />
+        :
+        <sui.Button
+            text={clickLabel}
+            className={`approve huge positive`}
+            onClick={this.handleDetailClick}
+            onKeyDown={sui.fireClickOnEnter}
+            autoFocus={true}
+        />
+
+       if (youTubeId && embedYouTube)
+           return <div className="ui grid stackable padded">
+                {image && <div className="imagewrapper">
+                    <div className="image" style={{ backgroundImage: `url("${image}")` }} />
+                </div>}
+                <div className="column twelve wide">
+                    <div className="segment">
+                        {tags && <div className="ui labels">
+                            {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
+                            </div>)}</div>}
+                        <iframe width='100%' height='90%' src={`https://www.youtube-nocookie.com/embed/${youTubeId}`} frameBorder='0' allowFullScreen style={{display: 'block', position: 'absolute', top: '5%'}}></iframe>
                     </div>
                 </div>
-            </div>
-        </div>;
+            </div>;
+        else
+            return <div className="ui grid stackable padded">
+                {image && <div className="imagewrapper">
+                    <div className="image" style={{ backgroundImage: `url("${image}")` }} />
+                </div>}
+                <div className="column twelve wide">
+                    <div className="segment">
+                        <div className="header"> {name} </div>
+                        {tags && <div className="ui labels">
+                            {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
+                            </div>)}</div>}
+                        {descriptions && descriptions.map((desc, index) => {
+                            return <p key={`line${index}`} className="detail">
+                                {desc}
+                            </p>
+                        })}
+                        <div className="actions">
+                            {action}
+                            {cardType == "forumUrl" && <sui.Button
+                                key="action_open"
+                                text={lf("Open in Editor")}
+                                className={`approve huge`}
+                                onClick={this.handleOpenForumUrlInEditor}
+                                onKeyDown={sui.fireClickOnEnter}
+                            />}
+                        </div>
+                    </div>
+                </div>
+            </div>;
+
     }
 }
 

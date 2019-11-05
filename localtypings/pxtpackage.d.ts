@@ -126,6 +126,7 @@ declare namespace pxt {
         imageUrl?: string;
         largeImageUrl?: string;
         youTubeId?: string;
+        embedYouTube?: boolean;
         time?: number;
         url?: string;
         learnMoreUrl?: string;
