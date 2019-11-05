@@ -31,7 +31,7 @@ export interface ImageCanvasProps {
  *
  * Chrome on MacOS should be fixed in the next release: https://bugs.chromium.org/p/chromium/issues/detail?id=134040
  */
-const SCALE = ((pxt.BrowserUtils.isMac() && pxt.BrowserUtils.isChrome()) || pxt.BrowserUtils.isEdge()) ? 25 : 1;
+const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
 class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
     protected canvas: HTMLCanvasElement;
@@ -70,7 +70,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     componentDidMount() {
-        this.cellWidth = this.props.isTilemap ? SCALE * this.props.tilemapState.tileset.tileWidth : SCALE;
+        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
