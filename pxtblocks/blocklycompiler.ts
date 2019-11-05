@@ -2394,12 +2394,9 @@ namespace pxt.blocks {
     }
 
     function recordAllVariables(scope: Scope, e: Environment) {
-        const declared = Object.keys(scope.declaredVars);
-        if (declared.length) {
-            const decls = declared.map(name => scope.declaredVars[name]);
-            for (const d of decls) {
-                e.allVariables[d.id] = d;
-            }
+        for (const varName of Object.keys(scope.declaredVars)) {
+            const varInfo = scope.declaredVars[varName];
+            e.allVariables[varInfo.id] = varInfo;
         }
 
         scope.children.forEach(child => recordAllVariables(child, e));
