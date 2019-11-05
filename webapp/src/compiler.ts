@@ -817,9 +817,11 @@ class ApiInfoIndexedDb {
 
         return this.db.getAsync(ApiInfoIndexedDb.TABLE, key)
             .then((value: ApiInfoIndexedDbEntry) => {
+                /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
                 if (value && value.hash === hash) {
                     return value.apis
                 }
+                /* tslint:enable:possible-timing-attack */
                 return undefined;
             });
     }
