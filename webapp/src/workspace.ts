@@ -654,7 +654,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
         if (options.tryDiff3 && hasChanges) {
             const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent)
-            if (d3.numConflicts) throw mergeError()
+            if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
+                throw mergeError()
             text = d3.merged
             if (path == pxt.CONFIG_NAME) {
                 try {
