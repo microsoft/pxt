@@ -2070,9 +2070,10 @@ namespace pxt.blocks {
         if (varInfo.scopes === undefined || varInfo.scopes.length === 0) {
             return undefined;
         }
+
         if (varInfo.scopes.length === 1) {
             const onlyScope = varInfo.scopes[0];
-            return onlyScope.variables[varInfo.name].isDefinitelyAssigned ? onlyScope : getPathToSelf(onlyScope)[0];
+            return onlyScope.parent === undefined || onlyScope.variables[varInfo.name].isDefinitelyAssigned ? onlyScope : getPathToSelf(onlyScope)[0];
         }
 
         let lcaPath = findPathToLowestCommonAncestor(varInfo.scopes[0], varInfo.scopes[1]);
@@ -2084,8 +2085,8 @@ namespace pxt.blocks {
     }
 
     function getPathToSelf(scope: Scope): Scope[] {
-        const result = [];
-        for (let s = scope; s !== undefined; s = s.parent) {
+        const result = [scope];
+        for (let s = scope.parent; s !== undefined; s = s.parent) {
             result.unshift(s);
         }
         return result;
