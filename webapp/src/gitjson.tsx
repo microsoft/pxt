@@ -454,7 +454,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                         ariaLabel={lf("Revert file")} title={lf("Revert file")}
                         textClass={"landscape only"} onClick={cache.revert} />
                     {jsxEls.legendJSX}
-                    {jsxEls.conflicts ? <p>{lf("Conflicts found. Resolve them before commiting.")}</p> : undefined}
+                    {jsxEls.conflicts ? <p>{lf("Merge conflicts found. Resolve them before commiting.")}</p> : undefined}
                     {deletedFiles.length == 0 ? undefined :
                         <p>
                             {lf("Reverting this file will also restore: {0}", deletedFiles.join(", "))}
@@ -512,6 +512,7 @@ ${content}
         }
         const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
         let conflicts = 0;
+        let conflictState: "local" | "remote" | "footer" | "" = "";
         let lnA = 0, lnB = 0
         let lastMark = ""
         let savedDiff: JSX.Element = null
@@ -542,41 +543,63 @@ ${content}
                 savedDiff = r.b
             }
             lastMark = ln[0];
-            // if start of a conflict marker, render button
+            let diffMark = lastMark;
+            let postTSX: JSX.Element;
             if (lastMark == "+" && /^<<<<<<<[^<]/.test(lnSrc)) {
                 conflicts++;
-                linesTSX.push(<tr key={"merge" + lnA + lnB} className="mergebtn">
-                    <td></td>
-                    <td></td>
-                    <td colSpan={2} className="merge">
-                        <sui.Button className="" text="Keep your changes" />
+                conflictState = "local";
+                diffMark = "@";
+                linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui header">
+                    <td colSpan={4} className="ui small header">{lf("Merge conflict")}</td>
+                </tr>);
+                linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui description">
+                    <td colSpan={4} className="ui small description">
+                        {lf("Changes from GitHub are conflicting with local changes.")}
+                        {sui.helpIconLink("/github/conflicts", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
+                linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
+                    <td colSpan={4}>
+                        <sui.Button className="compact" text="Keep local" />
+                        <sui.Button className="compact" text="Keep remote" />
+                        <sui.Button className="compact" text="Keep both" />
+                    </td>
+                </tr>);
+                ln = lf("Local changes");
+            }
+            else if (lastMark == "+" && /^>>>>>>>[^>]/.test(lnSrc)) {
+                conflictState = "footer";
+                diffMark = "@";
+                ln = "";
             }
             else if (lastMark == "+" && /^=======$/.test(lnSrc)) {
-                linesTSX.push(<tr key={"merge" + lnA + lnB} className="mergebtn">
-                    <td></td>
-                    <td></td>
-                    <td colSpan={2} className="merge">
-                        <sui.Button className="" text="Accept their changes" />
-                    </td>
-                </tr>);
+                diffMark = "@";
+                conflictState = "remote";
+                ln = lf("Remote changes (pulled from GitHub)");
             }
 
             // add diff
+            const isMarker = diffMark == "@";
+            const className = `${conflictState ? "conflict" : ""} ${conflictState} ${classes[diffMark]}`;
             linesTSX.push(
-                <tr key={lnA + lnB} className={classes[lastMark]}>
+                <tr key={lnA + lnB} className={className}>
                     <td className="line-a" data-content={lnA}></td>
                     <td className="line-b" data-content={lnB}></td>
-                    {lastMark == "@"
+                    {isMarker
                         ? <td colSpan={2} className="change"><code>{ln}</code></td>
-                        : <td className="marker" data-content={lastMark}></td>
+                        : <td className="marker" data-content={diffMark}></td>
                     }
-                    {lastMark == "@"
+                    {isMarker
                         ? undefined
                         : <td className="change">{currDiff}</td>
                     }
                 </tr>);
+
+            if (postTSX)
+                linesTSX.push(postTSX);
+
+            if (conflictState == "footer")
+                conflictState = "";
         })
         const diffJSX = linesTSX.length ? <table className="diffview">
             <tbody>
