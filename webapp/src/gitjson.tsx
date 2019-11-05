@@ -555,11 +555,11 @@ ${content}
                 linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui description">
                     <td colSpan={4} className="ui small description">
                         {lf("Changes from GitHub are conflicting with local changes.")}
-                        {sui.helpIconLink("/github/conflicts", lf("Learn about merge conflicts and resolution."))}
+                        {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
                 linesTSX.push(<tr key={"merge" + lnA + lnB} className="conflict ui mergebtn">
-                    <td colSpan={4}>
+                    <td colSpan={4} className="ui">
                         <sui.Button className="compact" text="Keep local" />
                         <sui.Button className="compact" text="Keep remote" />
                         <sui.Button className="compact" text="Keep both" />
