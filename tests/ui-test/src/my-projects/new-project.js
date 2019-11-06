@@ -1,6 +1,6 @@
-import { DomObject } from './lib/dom-object';
+import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { newProject } = require('./lib/css-value');
+let { newProject } = require('../lib/css-value');
 
 class NewProjectPage extends DomObject {
 

@@ -1,6 +1,6 @@
-import { DomObject } from './lib/dom-object';
+import { DomObject } from '../lib/dom-object';
 import assert from 'assert';
-let { moreOfProject } = require('./lib/css-value');
+let { moreOfProject } = require('../lib/css-value');
 
 class GetMoreList extends DomObject {
 

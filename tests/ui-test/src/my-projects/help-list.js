@@ -1,6 +1,6 @@
-import { DomObject } from './lib/dom-object';
+import { DomObject } from '../lib/dom-object';
 import assert from 'assert';
-let { helpOfProject } = require('./lib/css-value');
+let { helpOfProject } = require('../lib/css-value');
 
 class GetHelpList extends DomObject {
 

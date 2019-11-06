@@ -1,6 +1,6 @@
-import { DomObject } from './lib/dom-object';
+import { DomObject } from '../lib/dom-object';
 import assert from 'assert';
-import { editorTools } from './lib/css-value';
+import { editorTools } from '../lib/css-value';
 
 class EditorToolBar extends DomObject {
 

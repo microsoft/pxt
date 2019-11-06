@@ -1,6 +1,6 @@
-import { DomObject } from './lib/dom-object';
+import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { shareTheProject } = require('./lib/css-value');
+let { shareTheProject } = require('../lib/css-value');
 
 class ShareProject extends DomObject {
 
