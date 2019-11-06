@@ -842,7 +842,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.bump");
+        pxt.tickEvent("github.bump", undefined, { interactiveConsent: true});
         e.stopPropagation();
         const { needsCommit, master } = this.props;
         if (needsCommit)
