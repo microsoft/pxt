@@ -935,7 +935,7 @@ namespace pxt.cpp {
                 private: true,
                 dependencies: res.npmDependencies,
             }
-            res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4) + "\n"
+            res.generatedFiles["/package.json"] = JSON.stringify(packageJson, null, 4)
         } else if (isCodal) {
             let cs = compileService
             let cfg = U.clone(cs.codalDefinitions) || {}
@@ -955,7 +955,7 @@ namespace pxt.cpp {
                 k = k.replace(/^codal\./, "device.").toUpperCase().replace(/\./g, "_")
                 cfg[k] = v
             })
-            res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
+            res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4)
             pxt.debug(`codal.json: ${res.generatedFiles["/codal.json"]}`);
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()

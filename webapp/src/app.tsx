@@ -2851,7 +2851,7 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+        return f.setContentAsync(JSON.stringify(config, null, 4))
             .then(() => {
                 if (this.state.header)
                     this.setState({
