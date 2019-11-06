@@ -463,18 +463,13 @@ export async function pullAsync(hd: Header, checkOnly = false) {
         return PullStatus.UpToDate
     if (checkOnly)
         return PullStatus.GotChanges
-    if (hd.githubCurrent) {
-        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files })
+    try {
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
         return PullStatus.GotChanges
-    } else {
-        try {
-            await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
-            return PullStatus.GotChanges
-        } catch (e) {
-            if (e.isMergeError)
-                return PullStatus.NeedsCommit
-            else throw e
-        }
+    } catch (e) {
+        if (e.isMergeError)
+            return PullStatus.NeedsCommit
+        else throw e
     }
 }
 
@@ -645,8 +640,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         const oldEnt = lookupFile(gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
-            // strange: file in pxt.json but not in git
-            if (options.tryDiff3 && hasChanges) throw mergeError()
+            // file in pxt.json but not in git: changes were merge from the cloud but not pushed yet
+            if (options.tryDiff3 && hasChanges)
+                return files[path];
             if (!justJSON)
                 files[path] = ""
             return ""
