@@ -176,7 +176,7 @@ namespace pxt.runner {
     function emptyPrjFiles() {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
-        files[pxt.CONFIG_NAME] = JSON.stringify(p.config, null, 4) + "\n"
+        files[pxt.CONFIG_NAME] = JSON.stringify(p.config, null, 4)
         files["main.blocks"] = "";
         return files
     }
