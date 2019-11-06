@@ -677,7 +677,7 @@ namespace pxt.blocks {
 
                         firstParam = false;
                         if (!pr) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
+                            console.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
 

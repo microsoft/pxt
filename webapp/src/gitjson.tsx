@@ -742,14 +742,13 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { githubId } = this.props;
         return <div>
             <div className="ui field">
                 <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
             </div>
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
-                <span>{lf("Save your changes in GitHub.")}
+                <span>{lf("Push your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
             </div>
@@ -774,7 +773,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 agreeLbl: lf("Ok"),
                 hideAgree: true
             });
-        else if (master)
+        else if (!master)
             core.confirmAsync({
                 header: lf("Checkout the master branch..."),
                 body: lf("You need to checkout the master branch to create a release."),
@@ -803,6 +802,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </a>
                 <span>
                     {lf("Open a test project that uses this extension.")}
+                    {sui.helpIconLink("/github/test-extension", lf("Learn about testing extensions."))}
                 </span>
             </div>
             {gs.commit && gs.commit.tag ?
