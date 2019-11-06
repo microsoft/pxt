@@ -1991,12 +1991,12 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
             // Trim redundant API info from packages
             const coreDirname = "libs/" + pxt.appTarget.corepkg;
-            const blocksInfo = builtInfo[coreDirname];
+            const coreInfo = builtInfo[coreDirname];
 
-            if (blocksInfo) {
+            if (coreInfo) {
                 Object.keys(builtInfo).filter(k => k !== coreDirname).map(k => builtInfo[k]).forEach(info => {
-                    deleteOverlappingKeys(blocksInfo.apis.byQName, info.apis.byQName)
-                    deleteOverlappingKeys(blocksInfo.apis.jres, info.apis.jres)
+                    deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
+                    deleteRedundantSymbols(coreInfo.apis.jres, info.apis.jres)
                 });
             }
 
@@ -2031,6 +2031,33 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => {
             console.log("target.json built.")
         })
+}
+
+function deleteRedundantSymbols(core: pxt.Map<pxtc.SymbolInfo | pxt.JRes>, trg: pxt.Map<pxtc.SymbolInfo | pxt.JRes>) {
+    const ignoredKeys = ["fileName", "pkg"]
+
+    for (const key of Object.keys(trg)) {
+        if (flatJSONEquals(core[key], trg[key])) delete trg[key];
+    }
+
+    function flatJSONEquals(a: any, b: any) {
+        if (a === b) return true;
+
+        const tp = typeof a;
+        if (tp !== typeof b || tp !== "object") return false;
+
+        const keysa = Object.keys(a).filter(k => ignoredKeys.indexOf(k) === -1);
+        const keysb = Object.keys(b).filter(k => ignoredKeys.indexOf(k) === -1);
+
+        if (keysa.length !== keysb.length) return false;
+
+        for (const key of keysa) {
+            if (keysb.indexOf(key) === -1) return false;
+            if (!flatJSONEquals(a[key], b[key])) return false;
+        }
+
+        return true;
+    }
 }
 
 function pxtVersion(): string {
@@ -5945,12 +5972,6 @@ function initGlobals() {
     g.pxt = pxt;
     g.ts = ts;
     g.pxtc = pxtc;
-}
-
-function deleteOverlappingKeys(src: any, trg: any) {
-    for (const key of Object.keys(trg)) {
-        if (src[key]) delete trg[key];
-    }
 }
 
 initGlobals();
