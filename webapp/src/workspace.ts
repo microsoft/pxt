@@ -548,7 +548,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         let ex = lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
-            if (/^(<<<<<<<\s|=======|>>>>>>>\s)/m.test(fileContent))
+            if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(fileContent))
                 throw mergeConflictMarkerError();
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
