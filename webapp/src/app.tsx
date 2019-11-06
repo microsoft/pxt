@@ -1969,7 +1969,7 @@ export class ProjectView
                 cfg.files.push(codeStop);
             }
         }
-        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
+        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
         return workspace.installAsync({
             name: cfg.name,
             meta: {},

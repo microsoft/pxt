@@ -13,9 +13,10 @@
    Github view and diffs
 --------------------*/
 
-.diffview {
+table.diffview {
     border: 0px;
     border-spacing: 0px;
+    border-collapse: collapse;
     width: 100%;
 
     .change code {
@@ -45,6 +46,27 @@
 
     .diff-marker td {
         padding-left: 1em;
+    }
+
+    tr.conflict {
+        border-left: 2px solid @conflictBorderColor;
+        border-right: 2px solid @conflictBorderColor;
+    }
+    tr.conflict.header {
+        border-top: 2px solid @conflictBorderColor;
+        border-bottom: 2px solid @conflictBorderColor;
+        background-color: @conflictHeaderBackgroundColor;
+    }
+    tr.conflict.header td {
+        color: @conflictHeaderColor;
+    }
+    tr.conflict td.ui {
+        padding-left: 0.5rem;
+        padding-top: 0.5rem;
+    }
+
+    tr.conflict.footer {
+        border-bottom: 2px solid @conflictBorderColor;
     }
 
     .line-a,
@@ -84,6 +106,10 @@
         height: 90%;
         padding: 1rem;
 
+        .inline-help {
+            margin-left: 2rem;
+        }
+
         .ui.divider {
             margin-bottom: 5px;
         }
@@ -116,7 +142,7 @@
         }
 
         .legend > span:not(:first-child) {
-            margin-left: 0.5rem;
+            margin-left: 1.5rem;
         }
 
         .legend span.icon {

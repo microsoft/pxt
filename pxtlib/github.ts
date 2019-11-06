@@ -848,6 +848,8 @@ namespace pxt.github {
         const b = toLines(fileB)
 
         const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
+        if (MAX == 0) // nothing to diff
+            return [];
         const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array
 
         const idxmap: pxt.Map<number> = {}
@@ -997,15 +999,13 @@ namespace pxt.github {
 
     // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
     export function diff3(fileA: string, fileO: string, fileB: string,
-        lblA?: string, lblB?: string) {
-        // we're not showing these to users (yet anyways)
-        if (!lblA)
-            lblA = lf("Yours") // ours/HEAD
-        if (!lblB)
-            lblB = lf("Incoming") // theirs/upstream/origin
-
+        lblA: string, lblB: string) {
         const ma = computeMatch(fileA)
         const mb = computeMatch(fileB)
+
+        if (!ma || !mb) // diff failed, can't merge
+            return undefined;
+
         const fa = toLines(fileA)
         const fb = toLines(fileB)
         let numConflicts = 0
@@ -1062,6 +1062,8 @@ namespace pxt.github {
 
         function computeMatch(fileA: string) {
             const da = pxt.github.diff(fileO, fileA, { context: Infinity })
+            if (!da)
+                return undefined;
             const ma: number[] = []
 
             let aidx = 0
@@ -1087,5 +1089,219 @@ namespace pxt.github {
 
             return ma
         }
+    }
+
+    export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
+        let lines = toLines(content);
+        if (!/^<<<<<<<[^<]/.test(lines[startMarkerLine])) {
+            // invalid line, no marker found
+            return content;
+        }
+        let middleLine = startMarkerLine + 1;
+        while (middleLine < lines.length) {
+            if (/^=======$/.test(lines[middleLine]))
+                break;
+            middleLine++;
+        }
+        let endLine = middleLine + 1;
+        while (endLine < lines.length) {
+            if (/^>>>>>>>[^>]/.test(lines[endLine])) {
+                break;
+            }
+            endLine++;
+        }
+        if (endLine >= lines.length) {
+            // no match?
+            return content;
+        }
+
+        // remove locals
+        lines[startMarkerLine] = undefined;
+        lines[middleLine] = undefined;
+        lines[endLine] = undefined;
+        if (!local)
+            for (let i = startMarkerLine; i <= middleLine; ++i)
+                lines[i] = undefined;
+        if (!remote)
+            for (let i = middleLine; i <= endLine; ++i)
+                lines[i] = undefined;
+
+        return lines.filter(line => line !== undefined).join("\n");
+    }
+
+    /**
+     * A naive 3way merge for pxt.json files. It can mostly handle conflicts when adding/removing files concurrently.
+     * - highest version number if kept
+     * - current preferred editor is kept
+     * - conjection of public flag
+     * - files list is merged so that added files are kept and deleted files are removed
+     * @param configA 
+     * @param configO 
+     * @param configB 
+     */
+    export function mergeDiff3Config(configA: string, configO: string, configB: string): string {
+        let jsonA: any = pxt.Util.jsonTryParse(configA); //  as pxt.PackageConfig
+        let jsonO: any = pxt.Util.jsonTryParse(configO);
+        let jsonB: any = pxt.Util.jsonTryParse(configB);
+        // A is good, B destroyed
+        if (jsonA && !jsonB)
+            return configA; // keep A
+
+        // A destroyed, B good, use B or O
+        if (!jsonA)
+            return configB || configO;
+
+        // O is destroyed, B isnt, use B as O
+        if (!jsonO && jsonB)
+            jsonO = jsonB;
+
+        // final check
+        if (!jsonA || !jsonO || !jsonB)
+            return undefined;
+
+        delete jsonA.installedVersion;
+        delete jsonO.installedVersion;
+        delete jsonB.installedVersion;
+
+        const r: any = {} as pxt.PackageConfig;
+
+        const keys = pxt.U.unique(Object.keys(jsonO).concat(Object.keys(jsonA)).concat(Object.keys(jsonB)), l => l);
+        for (const key of keys) {
+            const vA = jsonA[key];
+            const vO = jsonO[key];
+            const vB = jsonB[key];
+            const svA = JSON.stringify(vA);
+            const svB = JSON.stringify(vB);
+            if (svA == svB) { // same serialized keys
+                if (vA !== undefined)
+                    r[key] = vA;
+            } else {
+                switch (key) {
+                    case "version": // pick highest version
+                        r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
+                        break;
+                    case "preferredEditor":
+                        r[key] = vA; // keep current one
+                        break;
+                    case "public":
+                        r[key] = vA && vB;
+                        break;
+                    case "files":
+                    case "testFiles": {// merge file arrays
+                        const m = mergeFiles(vA || [], vO || [], vB || []);
+                        if (!m)
+                            return undefined;
+                        r[key] = m.length ? m : undefined;
+                        break;
+                    }
+                    case "dependencies":
+                    case "testDependencies": {
+                        const m = mergeDependencies(vA || {}, vO || {}, vB || {});
+                        if (Object.keys(m).length)
+                            return undefined;
+                        r[key] = m;
+                        break;
+                    }
+                    case "description":
+                        if (vA && !vB) r[key] = vA; // new description
+                        else if (!vA && vB) r[key] = vB;
+                        else return undefined;
+                        break;
+                    default:
+                        return undefined;
+                }
+            }
+        }
+        return JSON.stringify(r, null, 4);
+
+        function mergeFiles(fA: string[], fO: string[], fB: string[]): string[] {
+            const r: string[] = [];
+            const fkeys = pxt.U.unique(fO.concat(fA).concat(fB), l => l);
+            for (const fkey of fkeys) {
+                const mA = fA.indexOf(fkey) > -1;
+                const mB = fB.indexOf(fkey) > -1;
+                const mO = fO.indexOf(fkey) > -1;
+                if (mA == mB) { // both have or have nots
+                    if (mA) // key is in set
+                        r.push(fkey);
+                } else { // conflict
+                    if (mB == mO) { // mB not changed, false conflict
+                        if (mA) // item added
+                            r.push(fkey);
+                    } else { // mA == mO, conflict
+                        if (mB) // not deleted by A
+                            r.push(fkey);
+                    }
+                }
+            }
+            return r;
+        }
+
+        function mergeDependencies(fA: pxt.Map<string>, fO: pxt.Map<string>, fB: pxt.Map<string>): pxt.Map<string> {
+            const r: pxt.Map<string> = {};
+            const fkeys = pxt.U.unique(Object.keys(fO).concat(Object.keys(fA)).concat(Object.keys(fB)), l => l);
+            for (const fkey of fkeys) {
+                const mA = fA[fkey];
+                const mB = fB[fkey];
+                const mO = fO[fkey]
+                if (mA == mB) { // both have or have nots
+                    if (mA) // key is in set
+                        r[fkey] = mA;
+                } else { // conflict
+                    // check if it is a version change in github reference
+                    const ghA = parseRepoId(mA)
+                    const ghB = parseRepoId(mB)
+                    if (ghA && ghB
+                        && pxt.semver.tryParse(ghA.tag)
+                        && pxt.semver.tryParse(ghB.tag)
+                        && ghA.owner && ghA.project
+                        && ghA.owner == ghB.owner
+                        && ghA.project == ghB.project) {
+                        const newtag = pxt.semver.strcmp(ghA.tag, ghB.tag) > 0
+                            ? ghA.tag : ghB.tag;
+                        r[fkey] = `github:${ghA.owner}/${ghA.project}#${newtag}`
+                    } else if (mB == mO) { // mB not changed, false conflict
+                        if (mA) // item added
+                            r[fkey] = mA;
+                    } else { // mA == mO, conflict
+                        if (mB) // not deleted by A
+                            r[fkey] = mB;
+                    }
+                }
+            }
+            return r;
+        }
+    }
+
+    export function testMergeDiff() {
+        const r = mergeDiff3Config(`
+{
+    "name": "test",
+    "version": "0.0.2",
+    "files": [
+        "foo.ts",
+        "buz.ts",
+        "baz.ts"
+    ]
+}
+`, `
+{
+    "name": "test",
+    "version": "0.0.0",
+    "files": [
+        "foo.ts",
+        "buz.ts",
+        "fii.ts"
+    ]
+}`, `
+{
+    "name": "test",
+    "version": "0.0.1",
+    "files": [
+        "foo.ts",
+        "bar.ts"
+    ]
+}`)
+        console.log(r);
     }
 }
