@@ -415,6 +415,8 @@ interface BundledPackage {
 }
 
 async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
+    if (!bundled) return null;
+
     const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
         const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
 
@@ -429,7 +431,10 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
-    const usedInfo: pxt.PackageApiInfo[] = [bundled["libs/" + pxt.appTarget.corepkg]];
+    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
+    if (!corePkg) return null;
+
+    const usedInfo: pxt.PackageApiInfo[] = [corePkg];
 
     for (const dep of usedPackages) {
         if (dep.id === "built" || dep.isTopLevel()) continue;
