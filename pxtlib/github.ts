@@ -1124,6 +1124,6 @@ namespace pxt.github {
             for (let i = middleLine; i <= endLine; ++i)
                 lines[i] = undefined;
 
-        return lines.filter(line => line !== undefined).join("\r\n");
+        return lines.filter(line => line !== undefined).join("\n");
     }
 }

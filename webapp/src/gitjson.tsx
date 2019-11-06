@@ -269,6 +269,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const { header } = this.props.parent.state;
             await workspace.bumpAsync(header, newVer)
+            pkg.mainPkg.loadConfig(); // refresh config
             await this.maybeReloadAsync()
             this.hideLoading();
             core.infoNotification(lf("GitHub release created."))
@@ -315,7 +316,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async pullAsync() {
-        this.showLoading(lf("pulling changes..."));
+        this.showLoading(lf("pulling changes from GitHub..."));
         try {
             this.setState({ needsPull: undefined });
             const status = await workspace.pullAsync(this.props.parent.state.header)
