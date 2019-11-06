@@ -190,9 +190,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected updateCursorLocation(coord: ClientCoordinates): boolean {
         if (!coord) {
-            this.cursorLocation = null;
-            this.props.dispatchChangeCursorLocation(null);
-            if (!this.edit) this.redraw();
+            if (this.cursorLocation) {
+                this.cursorLocation = null;
+                this.props.dispatchChangeCursorLocation(null);
+                if (!this.edit) this.redraw();
+            }
             return false;
         }
 
@@ -408,6 +410,15 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected generateTile(index: number, tileset: pxt.sprite.TileSet) {
+        const tileImage = document.createElement("canvas");
+        tileImage.width = tileset.tileWidth;
+        tileImage.height = tileset.tileWidth;
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index]), 0, 0, true, 1, tileImage);
+        this.tileCache[index] = tileImage;
+        return tileImage;
+    }
+
     protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
         const { tilemapState: { tileset } } = this.props;
 
@@ -423,11 +434,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                     tileImage = this.tileCache[index];
 
                     if (!tileImage) {
-                        tileImage = document.createElement("canvas");
-                        tileImage.width = tileset.tileWidth;
-                        tileImage.height = tileset.tileWidth;
-                        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index]), 0, 0, true, 1, tileImage);
-                        this.tileCache[index] = tileImage;
+                        tileImage = this.generateTile(index, tileset);
                     }
 
                     context.drawImage(tileImage,  (x + x0) * this.cellWidth,  (y + y0) * this.cellWidth);
@@ -439,16 +446,25 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawCursor(top: number, left: number, width: number, color: number) {
+    protected drawCursor(left: number, top: number, width: number, color: number) {
         const context = this.canvas.getContext("2d");
         context.imageSmoothingEnabled = false;
 
         if (color) {
-            context.fillStyle = this.props.isTilemap ? "#dedede" : this.props.colors[color]
-            context.fillRect(top * this.cellWidth, left * this.cellWidth, width * this.cellWidth, width * this.cellWidth);
+            if (this.props.isTilemap) {
+                let tileImage = this.tileCache[color];
+                if (!tileImage) {
+                    tileImage = this.generateTile(color, this.props.tilemapState.tileset);
+                }
+                context.drawImage(tileImage,  left * this.cellWidth,  top * this.cellWidth);
+            }
+            else {
+                context.fillStyle = this.props.colors[color]
+                context.fillRect(left * this.cellWidth, top * this.cellWidth, width * this.cellWidth, width * this.cellWidth);
+            }
         }
         else {
-            context.clearRect(top * this.cellWidth, left * this.cellWidth, width * this.cellWidth, width * this.cellWidth);
+            context.clearRect(left * this.cellWidth, top * this.cellWidth, width * this.cellWidth, width * this.cellWidth);
         }
     }
 

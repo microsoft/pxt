@@ -4,6 +4,47 @@
     background-color: var(--editing-tools-bg-color);
 }
 
+.image-editor-sidebar.tilemap{
+    width: 10rem;
+    overflow: hidden;
+}
+
+.image-editor-tilemap-minimap {
+    height: 10rem;
+    background-color: #3d3d3d
+}
+
+.image-editor-tile-buttons .timeline-frame-outer {
+    width: 2rem;
+    height: 2rem;
+}
+
+.image-editor-tile-button {
+    margin: 2px;
+    border: 1px solid transparent;
+}
+
+.image-editor-tile-button.selected {
+    border: 1px solid #ffffff;
+}
+
+.image-editor-tile-buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.image-editor-tile-buttons-outer {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.tile-palette {
+    display: flex;
+    flex-direction: column;
+}
+
 .image-editor-tool-buttons {
     display: flex;
     flex-direction: row;

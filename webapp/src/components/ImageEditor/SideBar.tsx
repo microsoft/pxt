@@ -6,9 +6,11 @@ import { IconButton } from "./Button";
 import { ImageEditorTool, ImageEditorStore } from "./store/imageReducer";
 import { dispatchChangeImageTool } from "./actions/dispatch";
 import { Palette } from "./sprite/Palette";
+import { TilePalette } from "./tilemap/TilePalette";
 
 interface SideBarProps {
     selectedTool: ImageEditorTool;
+    isTilemap: boolean;
     dispatchChangeImageTool: (tool: ImageEditorTool) => void;
 }
 
@@ -16,12 +18,14 @@ export class SideBarImpl extends React.Component<SideBarProps,{}> {
     protected handlers: (() => void)[] = [];
 
     render() {
-        const { selectedTool } = this.props;
+        const { selectedTool, isTilemap } = this.props;
         return (
-            <div className="image-editor-sidebar">
-                <div className="image-editor-size-buttons">
+            <div className={`image-editor-sidebar ${isTilemap ? "tilemap" : ""}`}>
+                {isTilemap &&
+                    <div className="image-editor-tilemap-minimap">
 
-                </div>
+                    </div>
+                }
                 <div className="image-editor-tool-buttons">
                     {tools.map(td =>
                         <IconButton
@@ -33,7 +37,7 @@ export class SideBarImpl extends React.Component<SideBarProps,{}> {
                     )}
                 </div>
                 <div className="image-editor-palette">
-                    <Palette />
+                    { isTilemap ? <TilePalette /> : <Palette /> }
                 </div>
             </div>
         );
@@ -49,6 +53,7 @@ export class SideBarImpl extends React.Component<SideBarProps,{}> {
 function mapStateToProps({ editor }: ImageEditorStore, ownProps: any) {
     if (!editor) return {};
     return {
+        isTilemap: editor.isTilemap,
         selectedTool: editor.tool
     };
 }

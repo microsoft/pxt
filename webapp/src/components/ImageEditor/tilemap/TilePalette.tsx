@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState } from '../store/imageReducer';
 import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground } from '../actions/dispatch';
+import { TimelineFrame } from '../TimelineFrame';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -31,7 +32,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const width = 3 * SPACER + 2 * HEIGHT;
 
-        return <div>
+        return <div className="tile-palette">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} ${HEIGHT * 1.5}`} onClick={dispatchSwapBackgroundForeground}>
                 <defs>
                     <pattern id="alpha-background" width="6" height="6" patternUnits="userSpaceOnUse">
@@ -61,8 +62,17 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     </rect>
                 </g>
             </svg>
-            <div className="image-editor-tile-buttons" onContextMenu={this.preventContextMenu}>
-
+            <div className="image-editor-tile-buttons-outer">
+                <div className="image-editor-tile-buttons" onContextMenu={this.preventContextMenu}>
+                    { tileset.tiles.map((t, i) =>
+                        <div className={`image-editor-tile-button ${i === selected ? selected : 0}`} onClick={this.clickHandler(i)}>
+                            <TimelineFrame
+                                frames={[{ bitmap: t }]}
+                                colors={colors} />
+                            </div>
+                        )
+                    }
+                </div>
             </div>
         </div>;
     }
@@ -90,6 +100,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
     if (!state) return {};
     return {
         selected: editor.selectedColor,
+        tileset: state.tileset,
         backgroundColor: editor.backgroundColor,
         colors: state.colors
     };
