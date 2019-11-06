@@ -737,7 +737,7 @@ ${content}
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button icon={`${needsPull === true ? "down arrow" : needsPull === false ? "check" : "sync"}`}
+                        <sui.Button icon={`${needsPull === true ? "long arrow alternate down" : needsPull === false ? "check" : "sync"}`}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken && !isBlocksMode ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
@@ -845,8 +845,8 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
-                <span>{lf("Push your changes to GitHub.")}
+                <sui.Button className="primary" text={lf("Commit changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">{lf("Push your changes to GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
             </div>
@@ -898,14 +898,14 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
                     {lf("Test Extension")}
                 </a>
-                <span>
+                <span className="inline-help">
                     {lf("Open a test project that uses this extension.")}
                     {sui.helpIconLink("/github/test-extension", lf("Learn about testing extensions."))}
                 </span>
             </div>
             {gs.commit && gs.commit.tag ?
                 <div className="ui field">
-                    <p>{lf("Current release: {0}", gs.commit.tag)}
+                    <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
                     </p>
                 </div>
@@ -914,7 +914,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     <sui.Button text={lf("Create release")}
                         onClick={this.handleBumpClick}
                         onKeyDown={sui.fireClickOnEnter} />
-                    <span>
+                    <span className="inline-help">
                         {lf("Bump up the version number and create a release on GitHub.")}
                         {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
                     </span>
@@ -925,7 +925,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     target="_blank" rel="noopener noreferrer">
                     {lf("Add license")}
                 </a>
-                <span>
+                <span className="inline-help">
                     {lf("Your project doesn't seem to have a license.")}
                     {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
                 </span>

@@ -664,7 +664,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 if (!text) // merge failed?
                     throw mergeError()
             } else {
-                const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("Your local changes"), lf("Changes pulled from Github"))
+                const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?
                     throw mergeError()
                 if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
