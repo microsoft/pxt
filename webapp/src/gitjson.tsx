@@ -549,10 +549,10 @@ ${content}
                 conflicts++;
                 conflictState = "local";
                 diffMark = "@";
-                linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui small header">
+                linesTSX.push(<tr key={"conflictheader" + lnA + lnB} className="conflict ui small header">
                     <td colSpan={4} className="ui small header">{lf("Merge conflict")}</td>
                 </tr>);
-                linesTSX.push(<tr key={"conflict" + lnA + lnB} className="conflict ui description">
+                linesTSX.push(<tr key={"conflictdescr" + lnA + lnB} className="conflict ui description">
                     <td colSpan={4} className="ui small description">
                         {lf("Changes from GitHub are conflicting with local changes.")}
                         {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
