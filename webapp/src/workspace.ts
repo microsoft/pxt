@@ -663,18 +663,17 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (gitsha(text) != treeEnt.sha)
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
         if (options.tryDiff3 && hasChanges) {
-            const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("Your local changes"), lf("Changes pulled from Github"))
-            if (!d3) // merge failed?
-                throw mergeError()
-            if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
-                throw mergeError()
-            text = d3.merged
             if (path == pxt.CONFIG_NAME) {
-                try {
-                    JSON.parse(text)
-                } catch {
+                text = pxt.github.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                if (!text) // merge failed?
                     throw mergeError()
-                }
+            } else {
+                const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("Your local changes"), lf("Changes pulled from Github"))
+                if (!d3) // merge failed?
+                    throw mergeError()
+                if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
+                    throw mergeError()
+                text = d3.merged
             }
         }
         if (!justJSON)
