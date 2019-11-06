@@ -9,7 +9,7 @@
     "name": "Mocha Tests",
     "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
     "args": [
-      "${workspaceFolder}/src/index.js",
+      "${workspaceFolder}/src/my-projects/index.js",
       "--require",
       "@babel/register",
       "--require",

@@ -14,6 +14,7 @@ exports.shareTheProject = {
     shareName: '#projectNameInput',
     publishButton: '.labeled.primary',
     copyButton: '.field i.icon',
+    projectUrl:'#projectUri',
     closeButtonOfSharePage: '.closeIcon'
 }
 
@@ -102,4 +103,26 @@ exports.dragBlocks = {
     deleteInsertBlock: '.goog-menuitem:nth-child(3)',
     fullScreenButton: '.fullscreen-button',
     exitFullScreen: '[title="Exit fullscreen mode"]'
+}
+
+exports.tutorials = {
+    flashingHeart : '[aria-label="Flashing Heart"]',
+    nameTag:'[aria-label="Name Tag"]',
+    smileyButtons:'[aria-label="Smiley Buttons"]',
+    dice:'[aria-label="Dice"]',
+    loveMeter:'[aria-label="Love Meter"]',
+    microChat:'[aria-label="Micro Chat"]',
+    startTutorialButton : '.actions button',
+    closeButton: '.closeIcon',
+    alertContent: '.scrolling.content p:nth-child(1)',
+    headerTitle:'.header-title',
+    okButton:'.actions button.green',
+    goBackButton:'.prevbutton',
+    goNextButton:'.nextbutton',
+    selectedLabel:'.blue.selected',
+    finishButton:'[aria-label="Finish the tutorial."]',
+    microbitLogo:'[aria-label="micro:bit Logo"]',
+    prograss:'[aria-label="My Projects"] .carouselitem:nth-child(2)',
+    projectName:'#fileNameInput2'
+
 }
