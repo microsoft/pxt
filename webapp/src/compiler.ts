@@ -415,6 +415,9 @@ interface BundledPackage {
 }
 
 async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
+    if (!bundled || !bundled.length)
+        return null;
+
     const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
         const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
 
