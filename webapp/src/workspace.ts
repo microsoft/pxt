@@ -61,6 +61,7 @@ export function setupWorkspace(id: string) {
     switch (id) {
         case "fs":
         case "file":
+            // Local file workspace, serializes data under target/projects/
             impl = fileworkspace.provider;
             break;
         case "mem":
@@ -68,6 +69,7 @@ export function setupWorkspace(id: string) {
             impl = memoryworkspace.provider;
             break;
         case "iframe":
+            // Iframe workspace, the editor relays sync messages back and forth when hosted in an iframe
             impl = iframeworkspace.provider;
             break;
         case "uwp":
@@ -261,7 +263,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         return Promise.resolve()
 
     let e = lookup(h.id)
-    U.assert(e.header === h)
+    //U.assert(e.header === h)
 
     if (!isCloud)
         h.recentUse = U.nowSeconds()
@@ -303,7 +305,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 .then(ver => {
                     if (text)
                         e.version = ver
-                    if (text || h.isDeleted) {
+                    if ((text && !isCloud) || h.isDeleted) {
                         h.pubCurrent = false
                         h.blobCurrent = false
                         h.saveId = null
@@ -354,6 +356,11 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
 
     return importAsync(h, text)
         .then(() => h)
+}
+
+export function renameAsync(h: Header, newName: string) {
+    checkSession();
+    return cloudsync.renameAsync(h, newName);
 }
 
 export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): Promise<Header> {
@@ -519,7 +526,7 @@ export interface CommitOptions {
 }
 
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
-    await ensureTokenAsync();
+    await ensureGitHubTokenAsync();
 
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -600,13 +607,11 @@ function mergeError() {
 }
 
 // requests token to user if needed
-async function ensureTokenAsync() {
+async function ensureGitHubTokenAsync() {
     // check that we have a token first
-    if (!pxt.github.token) {
-        await dialogs.showGithubLoginAsync();
-        if (!pxt.github.token)
-            U.userError(lf("Please sign in to GitHub to perform this operation."))
-    }
+    await cloudsync.githubProvider().loginAsync();
+    if (!pxt.github.token)
+        U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
 
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
@@ -777,7 +782,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
-    await ensureTokenAsync();
+    await ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
@@ -845,7 +850,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
-            await ensureTokenAsync();
+            await ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
@@ -887,6 +892,19 @@ export function installByIdAsync(id: string) {
 export function saveToCloudAsync(h: Header) {
     checkSession();
     return cloudsync.saveToCloudAsync(h)
+}
+
+export function resetCloudAsync(): Promise<void> {
+    checkSession();
+
+    // remove all cloudsync or github repositories
+    return cloudsync.resetAsync()
+        .then(() => Promise.all(allScripts.map(e => e.header).filter(h => h.cloudSync || h.githubId).map(h => {
+            // Remove cloud sync'ed project
+            h.isDeleted = true;
+            h.blobVersion = "DELETED";
+            return saveAsync(h, null, true);
+        }))).then(() => data.invalidate("header:*"));
 }
 
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {

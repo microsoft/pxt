@@ -856,15 +856,18 @@ ${output}</xml>`;
             const args: ts.Node[] = [];
             collectTextJoinArgs(n, args);
 
-            const result = mkExpr("text_join");
-            result.mutation = {
-                "items": args.length.toString()
-            };
-            result.inputs = [];
-
+            const inputs: ValueNode[] = [];
             for (let i = 0; i < args.length; i++) {
-                result.inputs.push(getValue("ADD" + i, args[i], stringType));
+                if (i > 0 || !isEmptyString(args[i].getText())) {
+                    inputs.push(getValue("ADD" + inputs.length, args[i], stringType));
+                }
             }
+
+            const result = mkExpr("text_join");
+            result.inputs = inputs;
+            result.mutation = {
+                "items": inputs.length.toString()
+            };
             return result;
         }
 

@@ -1,9 +1,9 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="function_definition">
 <mutation name="foo_all" >
-<arg name="num" type="number" id="ymoapcju01zuefu52ds" />
-<arg name="text" type="string" id="0y2erv8i9mab76336h2n" />
-<arg name="bool" type="boolean" id="69h09devqtwjtsbh2x35e" />
+<arg name="num" type="number" id="lzynrxan98gpdiany98i8" />
+<arg name="text" type="string" id="8hg2574rfi7u6omabek4f" />
+<arg name="bool" type="boolean" id="id2mpapb646vmxzbi0bej" />
 </mutation>
 <statement name="STACK">
 <block type="variables_set">
@@ -11,25 +11,20 @@
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="text_join">
-<mutation items="4" />
+<mutation items="3" />
 <value name="ADD0">
-<shadow type="text">
-<field name="TEXT"></field>
-</shadow>
-</value>
-<value name="ADD1">
 <shadow type="text"><field name="TEXT"></field></shadow>
 <block type="argument_reporter_number">
 <field name="VALUE">num</field>
 </block>
 </value>
-<value name="ADD2">
+<value name="ADD1">
 <shadow type="text"><field name="TEXT"></field></shadow>
 <block type="argument_reporter_string">
 <field name="VALUE">text</field>
 </block>
 </value>
-<value name="ADD3">
+<value name="ADD2">
 <shadow type="text"><field name="TEXT"></field></shadow>
 <block type="argument_reporter_boolean">
 <field name="VALUE">bool</field>

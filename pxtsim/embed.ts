@@ -21,7 +21,6 @@ namespace pxsim {
         clickTrigger?: boolean;
         breakOnStart?: boolean;
         storedState?: Map<any>;
-        fragment?: string[];
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -306,7 +305,6 @@ namespace pxsim {
                 pxsim.localization.setLocalizedStrings(msg.localizedStrings);
 
             runtime = new Runtime(msg);
-            if (runtime.board.setUrlFragment) runtime.board.setUrlFragment(msg.fragment);
             runtime.board.initAsync(msg)
                 .done(() => {
                     runtime.run((v) => {

@@ -1,146 +1,13 @@
+// tslint:disable: react-a11y-anchors
+
 import * as React from "react";
 import * as sui from "./sui";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
-import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-
-export function showGithubLoginAsync() {
-    pxt.tickEvent("github.token.dialog");
-    let input: HTMLInputElement;
-    return core.confirmAsync({
-        header: lf("Log in to GitHub"),
-        hideCancel: true,
-        hasCloseIcon: true,
-        helpUrl: "/github/token",
-        onLoaded: (el) => {
-            input = el.querySelectorAll('input')[0] as HTMLInputElement;
-        },
-        jsx: <div className="ui form">
-            <p>{lf("Host your code on GitHub and work together with friends on projects.")}
-                {sui.helpIconLink("/github", lf("Learn more about GitHub"))}</p>
-            <p>{lf("You will need a GitHub token:")}</p>
-            <ol>
-                <li>
-                    {lf("Navigate to: ")}
-                    <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
-                        {lf("GitHub token generation page")}
-                    </a>
-                </li>
-                <li>
-                    {lf("Put something like 'MakeCode {0}' in description", pxt.appTarget.name)}
-                </li>
-                <li>
-                    {lf("Select either '{0}' or '{1}' scope, depending which repos you want to edit from here", "repo", "public_repo")}
-                </li>
-                <li>
-                    {lf("Click generate token, copy it, and paste it below.")}
-                </li>
-            </ol>
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
-            </div>
-        </div>,
-    }).then(res => {
-        if (!res)
-            pxt.tickEvent("github.token.cancel");
-        else {
-            const hextoken = input.value.trim()
-            if (hextoken.length != 40 || !/^[a-f0-9]+$/.test(hextoken)) {
-                pxt.tickEvent("github.token.invalid");
-                core.errorNotification(lf("Invalid token format"))
-            } else {
-                pxt.github.token = hextoken
-                // try to create a bogus repo - it will fail with
-                // 401 - invalid token, 404 - when token doesn't have repo permission,
-                // 422 - because the request is bogus, but token OK
-                // Don't put any string in repo name - github seems to normalize these
-                return pxt.github.createRepoAsync(undefined, "")
-                    .then(r => {
-                        // what?!
-                        pxt.reportError("github", "Succeeded creating undefined repo!")
-                        core.infoNotification(lf("Something went wrong with validation; token stored"))
-                        pxt.storage.setLocal("githubtoken", hextoken)
-                        pxt.tickEvent("github.token.wrong");
-                    }, err => {
-                        pxt.github.token = ""
-                        if (!showGithubTokenError(err)) {
-                            if (err.statusCode == 422)
-                                core.infoNotification(lf("Token validated and stored"))
-                            else
-                                core.infoNotification(lf("Token stored but not validated"))
-                            pxt.github.token = hextoken
-                            pxt.storage.setLocal("githubtoken", hextoken)
-                            pxt.tickEvent("github.token.ok");
-                        }
-                    })
-            }
-        }
-        return Promise.resolve()
-    })
-}
-
-export function showGithubTokenError(err: any) {
-    if (err.statusCode == 401) {
-        core.errorNotification(lf("GitHub didn't accept token"))
-        return true
-    } else if (err.statusCode == 404) {
-        core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
-        return true
-    } else {
-        return false
-    }
-}
-
-export function githubFooter(msg: string, close: () => void) {
-    function githubLogin(e: React.MouseEvent<HTMLElement>) {
-        e.preventDefault()
-        close()
-        showGithubLoginAsync()
-    }
-
-    function githubLogout(e: React.MouseEvent<HTMLElement>) {
-        e.preventDefault()
-        close()
-        pxt.storage.removeLocal("githubtoken")
-        pxt.github.token = ""
-        core.infoNotification(lf("Logged out from GitHub"))
-    }
-
-    if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.githubPackages)
-        return <div />
-
-    /* tslint:disable:react-a11y-anchors */
-    if (pxt.github.token) {
-        return (
-            <p>
-                <br />
-                <br />
-                <a href="#github" onClick={githubLogout}>
-                    {lf("Logout from GitHub")}
-                </a>
-                <br />
-                <br />
-            </p>)
-    } else {
-        return (
-            <p>
-                <br />
-                <br />
-                {msg}
-                {" "}
-                <a href="#github" onClick={githubLogin}>
-                    {lf("Login to GitHub")}
-                </a>
-                <br />
-                <br />
-            </p>)
-    }
-}
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
@@ -176,7 +43,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                         (!pxt.Cloud.isOnline() || !electronManifest)
                             ? <p>{lf("Please connect to internet to check for updates")}</p>
                             : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
-                                ? <a href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
+                                ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
                     {githubUrl && versions ?
@@ -567,6 +434,17 @@ export function showImportUrlDialogAsync() {
     })
 }
 
+export function showGithubTokenError(err: any) {
+    if (err.statusCode == 401) {
+        core.errorNotification(lf("GitHub didn't accept token"))
+        return true
+    } else if (err.statusCode == 404) {
+        core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
+        return true
+    } else {
+        return false
+    }
+}
 
 export function showCreateGithubRepoDialogAsync(name?: string) {
     pxt.tickEvent("github.create.dialog");
@@ -836,30 +714,6 @@ export function showResetDialogAsync() {
         agreeIcon: "sign out",
         disagreeLbl: lf("Cancel")
     })
-}
-
-export function showCloudSignInDialog() {
-    const providers = cloudsync.providers();
-    if (providers.length == 0)
-        return;
-    if (providers.length == 1)
-        providers[0].login()
-    else {
-        core.dialogAsync({
-            header: lf("Sign in"),
-            body: lf("Please choose your cloud storage provider."),
-            hideCancel: true,
-            buttons:
-                providers.map(p => ({
-                    label: p.friendlyName,
-                    className: "positive small",
-                    icon: "user circle",
-                    onclick: () => {
-                        p.login()
-                    }
-                }))
-        })
-    }
 }
 
 export function promptTranslateBlock(blockid: string, blockTranslationIds: string[]) {

@@ -1436,6 +1436,8 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
+        else
+            return stmtTODO(n)
         if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
@@ -1572,7 +1574,7 @@ namespace pxt.py {
         "micropython.const": { n: "", t: tpNumber }
     }
 
-    function getFunMap(): Map<FunOverride> {
+    function getPy2TsFunMap(): Map<FunOverride> {
         let funMap: Map<FunOverride> = {};
         Object.keys(pxtc.ts2PyFunNameMap).forEach(k => {
             let tsOverride = pxtc.ts2PyFunNameMap[k];
@@ -1594,7 +1596,7 @@ namespace pxt.py {
         return funMap
     }
 
-    const funMap: Map<FunOverride> = getFunMap();
+    const py2TsFunMap: Map<FunOverride> = getPy2TsFunMap();
 
     function isSuper(v: py.Expr) {
         return isCallTo(v, "super") && (v as py.Call).args.length == 0
@@ -1759,16 +1761,16 @@ namespace pxt.py {
             }
 
             if (!fun) {
-                let over = U.lookup(funMap, nm)
+                let over = U.lookup(py2TsFunMap, nm)
                 if (over)
                     methName = ""
 
                 if (methName) {
                     nm = t2s(recvTp) + "." + methName
-                    over = U.lookup(funMap, nm)
+                    over = U.lookup(py2TsFunMap, nm)
                     if (!over && typeCtor(find(recvTp)) == "@array") {
                         nm = "Array." + methName
-                        over = U.lookup(funMap, nm)
+                        over = U.lookup(py2TsFunMap, nm)
                     }
                 }
 
@@ -2005,7 +2007,7 @@ namespace pxt.py {
         let v = lookupSymbol(n.id)
         if (!v) {
             // check if the symbol has an override py<->ts mapping
-            let over = U.lookup(funMap, n.id)
+            let over = U.lookup(py2TsFunMap, n.id)
             if (over) {
                 v = lookupSymbol(over.n)
             }

@@ -359,11 +359,11 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
-export function snippetAsync(qName: string, python?: boolean) {
+export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     return workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    });
+    }).then(res => res as string)
 }
 
 export function typecheckAsync() {
@@ -386,14 +386,75 @@ export function getApisInfoAsync() {
 }
 
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
-    return cachedBlocks
-        ? Promise.resolve(cachedBlocks)
-        : getApisInfoAsync().then(info => {
+    if (!cachedBlocks) {
+        // Used packaged info
+        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+        const apis = getApiInfo(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
+        if (apis) {
+            return Promise.resolve(cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories));
+        }
+
+        return getApisInfoAsync().then(info => {
             const bannedCategories = pkg.mainPkg.resolveBannedCategories();
             cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
             return cachedBlocks;
         });
+    }
+
+    return Promise.resolve(cachedBlocks);
 }
+
+interface BundledPackage {
+    dirname: string;
+    config: pxt.PackageConfig;
+    files: pxt.Map<string>;
+}
+
+function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>) {
+    const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
+        const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
+
+        if (!pack) return null;
+
+        return {
+            dirname,
+            files: pack,
+            config: JSON.parse(pack[pxt.CONFIG_NAME]) as pxt.PackageConfig
+        }}).filter(p => p && p.config);
+
+    const usedPackages = project.pkgAndDeps();
+    const usedInfo: pxt.PackageApiInfo[] = [bundled["libs/" + pxt.appTarget.corepkg]];
+
+
+    for (const dep of usedPackages) {
+        if (dep.id === "built" || dep.isTopLevel()) continue;
+
+        let foundIt = false;
+        for (const bundle of bundledPackages) {
+            if (bundle.config.name === dep.getKsPkg().config.name) {
+                usedInfo.push(bundled[bundle.dirname]);
+                foundIt = true;
+                break;
+            }
+        }
+
+        if (!foundIt) return undefined;
+    }
+
+    const result: pxtc.ApisInfo = {
+        byQName: {},
+        jres: {}
+    };
+
+    for (const used of usedInfo) {
+        if (!used) continue;
+        pxt.Util.jsonCopyFrom(result.byQName, used.apis.byQName);
+
+        if (used.apis.jres) pxt.Util.jsonCopyFrom(result.jres, used.apis.jres);
+    }
+
+    return result;
+ }
 
 export interface UpgradeResult {
     success: boolean;
@@ -650,6 +711,6 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 function blocksOptions(): pxtc.service.BlocksOptions {
     const bannedCategories = pkg.mainPkg.resolveBannedCategories();
     if (bannedCategories)
-        return {  bannedCategories };
+        return { bannedCategories };
     return undefined;
 }
