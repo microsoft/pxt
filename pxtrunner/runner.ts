@@ -119,7 +119,7 @@ namespace pxt.runner {
                             dependencies.forEach((d: string) => {
                                 addPackageToConfig(cfg, d);
                             });
-                            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                         }
                         return Promise.resolve()
                     } else if (proto == "docs") {
@@ -134,7 +134,7 @@ namespace pxt.runner {
 
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
-                        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                         epkg.setFiles(files);
                         return Promise.resolve();
                     } else if (proto == "invalid") {
@@ -176,7 +176,7 @@ namespace pxt.runner {
     function emptyPrjFiles() {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
-        files[pxt.CONFIG_NAME] = JSON.stringify(p.config, null, 4)
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(p.config);
         files["main.blocks"] = "";
         return files
     }
@@ -277,7 +277,7 @@ namespace pxt.runner {
                         //set the custom doc name from the URL.
                         let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
-                        epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        epkg.files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
                         //Propgate the change to main package
                         mainPkg.config.name = cfg.name;

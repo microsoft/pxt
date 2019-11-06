@@ -1056,7 +1056,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // path config before storing
                             const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                             if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
-                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+                            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
                         })
                         data = Buffer.from((isJs ? targetJsPrefix : '') + JSON.stringify(trg, null, 2), "utf8")
                     } else {
@@ -1075,7 +1075,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             // path config before storing
                             const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                             if (config.icon) config.icon = uploadArtFile(config.icon);
-                            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+                            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
                         })
                         content = JSON.stringify(trg, null, 4);
                         if (isJs)
@@ -2007,7 +2007,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         .filter(ip => fs.existsSync("docs" + ip))
                         .forEach(ip => config.icon = ip);
 
-                res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+                res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
             })
 
             // Trim redundant API info from packages
