@@ -11,6 +11,8 @@ import * as markedui from "./marked";
 import * as compiler from "./compiler";
 import * as cloudsync from "./cloudsync";
 
+const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
+
 interface DiffCache {
     file: pkg.File;
     gitFile: string;
@@ -385,10 +387,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private lineDiff(lineA: string, lineB: string) {
+    private lineDiff(lineA: string, lineB: string): { a: JSX.Element, b: JSX.Element } {
         const df = pxt.github.diff(lineA.split("").join("\n"), lineB.split("").join("\n"), {
             context: Infinity
         })
+        if (!df) // diff failed
+            return {
+                a: <div className="inline-diff"><code>{lineA}</code></div>,
+                b: <div className="inline-diff"><code>{lineB}</code></div>
+            }
+
         const ja: JSX.Element[] = []
         const jb: JSX.Element[] = []
         for (let i = 0; i < df.length;) {
@@ -425,7 +433,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
-        let jsxEls: { diffJSX: JSX.Element, legendJSX: JSX.Element, conflicts: number };
+        let jsxEls: { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number };
         if (isBlocks) {
             jsxEls = this.createBlocksDiffJSX(f);
         } else {
@@ -481,7 +489,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         return cache.diff
     }
 
-    private createBlocksDiffJSX(f: pkg.File) {
+    private createBlocksDiffJSX(f: pkg.File): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
         const baseContent = f.baseGitContent || "";
         const content = f.content;
         const markdown =
@@ -502,7 +510,7 @@ ${content}
         return { diffJSX, legendJSX, conflicts: 0 };
     }
 
-    private createTextDiffJSX(f: pkg.File) {
+    private createTextDiffJSX(f: pkg.File): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
         const baseContent = f.baseGitContent || "";
         const content = f.content;
         const classes: pxt.Map<string> = {
@@ -512,6 +520,13 @@ ${content}
             "-": "diff-removed",
         }
         const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
+        if (!diffLines) {
+            pxt.tickEvent("github.diff.toobig");
+            return {
+                diffJSX: <div>{lf("Too many differences to render diff.")}</div>,
+                conflicts: 0
+            }
+        }
         let conflicts = 0;
         let conflictState: "local" | "remote" | "footer" | "" = "";
         let lnA = 0, lnB = 0
@@ -821,9 +836,13 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
+        const { description } = this.props.parent.state;
+        const descrError = description && description.length > MAX_COMMIT_DESCRIPTION_LENGTH
+            ? lf("Your description is getting long...") : undefined;
         return <div>
             <div className="ui field">
-                <sui.Input type="url" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange} />
+                <sui.Input type="text" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange}
+                    error={descrError} />
             </div>
             <div className="ui field">
                 <sui.Button className="primary" text={lf("Commit changes")} icon="up arrow" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
@@ -842,7 +861,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.bump", undefined, { interactiveConsent: true});
+        pxt.tickEvent("github.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
         if (needsCommit)

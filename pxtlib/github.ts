@@ -848,6 +848,8 @@ namespace pxt.github {
         const b = toLines(fileB)
 
         const MAX = Math.min(options.maxDiffSize || 1024, a.length + b.length)
+        if (MAX == 0) // nothing to diff
+            return [];
         const ctor = a.length > 0xfff0 ? Uint32Array : Uint16Array
 
         const idxmap: pxt.Map<number> = {}
@@ -1006,6 +1008,10 @@ namespace pxt.github {
 
         const ma = computeMatch(fileA)
         const mb = computeMatch(fileB)
+
+        if (!ma || !mb) // diff failed, can't merge
+            return undefined;
+
         const fa = toLines(fileA)
         const fb = toLines(fileB)
         let numConflicts = 0
@@ -1062,6 +1068,8 @@ namespace pxt.github {
 
         function computeMatch(fileA: string) {
             const da = pxt.github.diff(fileO, fileA, { context: Infinity })
+            if (!da)
+                return undefined;
             const ma: number[] = []
 
             let aidx = 0
