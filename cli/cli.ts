@@ -1962,7 +1962,11 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         isPrj = true
                 })
                 .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
-                .then(({ options, api, sha: packageSha }) => {
+                .then(res => {
+                    if (!res)
+                        return;
+
+                    const { options, api, sha: packageSha } = res;
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
                         if (!options) {
@@ -1989,7 +1993,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             sha: packageSha
                         };
                     }
-                })
+                });
         }, /*includeProjects*/ true))
         .then(() => {
             // patch icons in bundled packages

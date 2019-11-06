@@ -389,16 +389,20 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
     if (!cachedBlocks) {
         // Used packaged info
         const bannedCategories = pkg.mainPkg.resolveBannedCategories();
-        const apis = getApiInfo(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
-        if (apis) {
-            return Promise.resolve(cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories));
-        }
+        return getCachedApiInfoAsync(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
+            .then(apis => {
+                if (apis) {
+                    return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+                }
+                else {
+                    return getApisInfoAsync().then(info => {
+                        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+                        cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
 
-        return getApisInfoAsync().then(info => {
-            const bannedCategories = pkg.mainPkg.resolveBannedCategories();
-            cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
-            return cachedBlocks;
-        });
+                        return cacheApiInfoAsync(pkg.mainEditorPkg(), info);
+                    }).then(() => cachedBlocks)
+                }
+            })
     }
 
     return Promise.resolve(cachedBlocks);
@@ -410,7 +414,9 @@ interface BundledPackage {
     files: pxt.Map<string>;
 }
 
-function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>) {
+async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
+    if (!bundled) return null;
+
     const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
         const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
 
@@ -420,11 +426,15 @@ function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiI
             dirname,
             files: pack,
             config: JSON.parse(pack[pxt.CONFIG_NAME]) as pxt.PackageConfig
-        }}).filter(p => p && p.config);
+        }
+    }).filter(p => p && p.config);
 
     const usedPackages = project.pkgAndDeps();
-    const usedInfo: pxt.PackageApiInfo[] = [bundled["libs/" + pxt.appTarget.corepkg]];
+    const externalPackages: pkg.EditorPackage[] = [];
+    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
+    if (!corePkg) return null;
 
+    const usedInfo: pxt.PackageApiInfo[] = [corePkg];
 
     for (const dep of usedPackages) {
         if (dep.id === "built" || dep.isTopLevel()) continue;
@@ -438,7 +448,24 @@ function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiI
             }
         }
 
-        if (!foundIt) return undefined;
+        if (!foundIt) externalPackages.push(dep);
+    }
+
+    if (externalPackages.length) {
+        const db = await ApiInfoIndexedDb.createAsync();
+
+        for (const dep of externalPackages) {
+            const entry = await db.getAsync(dep);
+
+            if (!entry) {
+                pxt.debug(`Could not find cached API info for ${dep.getKsPkg().config.name}, waiting for full compile`);
+                return null;
+            }
+            else {
+                pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
+                usedInfo.push(entry);
+            }
+        }
     }
 
     const result: pxtc.ApisInfo = {
@@ -454,7 +481,35 @@ function getApiInfo(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiI
     }
 
     return result;
- }
+}
+
+async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
+    const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+    const externalPackages = project.pkgAndDeps().filter(p => p.id !== "built" && !p.isTopLevel() && corePkgs.indexOf(p.getKsPkg().config.name) === -1);
+
+    if (externalPackages.length) {
+        const apiList = Object.keys(info.byQName);
+        const db = await ApiInfoIndexedDb.createAsync();
+
+        for (const dep of externalPackages) {
+            const entry: pxt.PackageApiInfo = {
+                sha: null,
+                apis: { byQName: {} }
+            }
+
+            const name = dep.getKsPkg().config.name;
+
+            for (const api of apiList) {
+                if (info.byQName[api].pkg === name) {
+                    entry.apis.byQName[api] = info.byQName[api];
+                }
+            }
+
+            await db.setAsync(dep, entry);
+            pxt.debug(`Stored API info for ${dep}`);
+        }
+    }
+}
 
 export interface UpgradeResult {
     success: boolean;
@@ -713,4 +768,79 @@ function blocksOptions(): pxtc.service.BlocksOptions {
     if (bannedCategories)
         return { bannedCategories };
     return undefined;
+}
+
+function getPackageHash(pack: pkg.EditorPackage) {
+    const input = JSON.stringify(pack.getAllFiles()) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
+    return pxtc.U.sha256(input);
+}
+
+function getPackageKey(pack: pkg.EditorPackage) {
+    return pack.getKsPkg().config.name;
+}
+
+interface ApiInfoIndexedDbEntry {
+    id: string;
+    hash: string;
+    apis: pxt.PackageApiInfo;
+}
+
+class ApiInfoIndexedDb {
+    static TABLE = "files";
+    static KEYPATH = "id";
+
+    static dbName() {
+        return `__pxt_apis_${pxt.appTarget.id || ""}`;
+    }
+
+    static createAsync(): Promise<ApiInfoIndexedDb> {
+        function openAsync() {
+            const idbWrapper = new pxt.BrowserUtils.IDBWrapper(ApiInfoIndexedDb.dbName(), 2, (ev, r) => {
+                const db = r.result as IDBDatabase;
+                db.createObjectStore(ApiInfoIndexedDb.TABLE, { keyPath: ApiInfoIndexedDb.KEYPATH });
+            }, () => {
+                // quota exceeeded, nuke db
+                pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+            });
+            return idbWrapper.openAsync()
+                .then(() => new ApiInfoIndexedDb(idbWrapper));
+        }
+        return openAsync()
+            .catch(e => {
+                console.log(`db: failed to open api database, try delete entire store...`)
+                return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+                    .then(() => openAsync());
+            })
+    }
+
+    private constructor(protected readonly db: pxt.BrowserUtils.IDBWrapper) {
+    }
+
+    getAsync(pack: pkg.EditorPackage): Promise<pxt.PackageApiInfo> {
+        const key = getPackageKey(pack);
+        const hash = getPackageHash(pack);
+
+        return this.db.getAsync(ApiInfoIndexedDb.TABLE, key)
+            .then((value: ApiInfoIndexedDbEntry) => {
+                /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
+                if (value && value.hash === hash) {
+                    return value.apis
+                }
+                /* tslint:enable:possible-timing-attack */
+                return undefined;
+            });
+    }
+
+    setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
+        const key = getPackageKey(pack);
+        const hash = getPackageHash(pack);
+
+        const entry: ApiInfoIndexedDbEntry = {
+            id: key,
+            hash,
+            apis
+        };
+
+        return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry);
+    }
 }
