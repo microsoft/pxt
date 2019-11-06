@@ -1187,12 +1187,21 @@ namespace pxt.github {
                         r[key] = vA && vB;
                         break;
                     case "files":
-                    case "testFiles": // merge file arrays
+                    case "testFiles": {// merge file arrays
                         const m = mergeFiles(vA || [], vO || [], vB || []);
                         if (!m)
                             return undefined;
                         r[key] = m.length ? m : undefined;
                         break;
+                    }
+                    case "dependencies":
+                    case "testDependencies": {
+                        const m = mergeDependencies(vA || {}, vO || {}, vB || {});
+                        if (Object.keys(m).length)
+                            return undefined;
+                        r[key] = m;
+                        break;
+                    }
                     case "description":
                         if (vA && !vB) r[key] = vA; // new description
                         else if (!vA && vB) r[key] = vB;
@@ -1222,6 +1231,41 @@ namespace pxt.github {
                     } else { // mA == mO, conflict
                         if (mB) // not deleted by A
                             r.push(fkey);
+                    }
+                }
+            }
+            return r;
+        }
+
+        function mergeDependencies(fA: pxt.Map<string>, fO: pxt.Map<string>, fB: pxt.Map<string>): pxt.Map<string> {
+            const r: pxt.Map<string> = {};
+            const fkeys = pxt.U.unique(Object.keys(fO).concat(Object.keys(fA)).concat(Object.keys(fB)), l => l);
+            for (const fkey of fkeys) {
+                const mA = fA[fkey];
+                const mB = fB[fkey];
+                const mO = fO[fkey]
+                if (mA == mB) { // both have or have nots
+                    if (mA) // key is in set
+                        r[fkey] = mA;
+                } else { // conflict
+                    // check if it is a version change in github reference
+                    const ghA = parseRepoId(mA)
+                    const ghB = parseRepoId(mB)
+                    if (ghA && ghB
+                        && pxt.semver.tryParse(ghA.tag)
+                        && pxt.semver.tryParse(ghB.tag)
+                        && ghA.owner && ghA.project
+                        && ghA.owner == ghB.owner
+                        && ghA.project == ghB.project) {
+                        const newtag = pxt.semver.strcmp(ghA.tag, ghB.tag) > 0
+                            ? ghA.tag : ghB.tag;
+                        r[fkey] = `github:${ghA.owner}/${ghA.project}#${newtag}`
+                    } else if (mB == mO) { // mB not changed, false conflict
+                        if (mA) // item added
+                            r[fkey] = mA;
+                    } else { // mA == mO, conflict
+                        if (mB) // not deleted by A
+                            r[fkey] = mB;
                     }
                 }
             }
