@@ -269,7 +269,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         try {
             const { header } = this.props.parent.state;
             await workspace.bumpAsync(header, newVer)
-            pkg.mainPkg.loadConfig(); // refresh config
+            pkg.mainPkg.config.version = newVer;
             await this.maybeReloadAsync()
             this.hideLoading();
             core.infoNotification(lf("GitHub release created."))
