@@ -999,13 +999,7 @@ namespace pxt.github {
 
     // based on "A Formal Investigation of Diff3" by Sanjeev Khanna, Keshav Kunal, and Benjamin C. Pierce
     export function diff3(fileA: string, fileO: string, fileB: string,
-        lblA?: string, lblB?: string) {
-        // we're not showing these to users (yet anyways)
-        if (!lblA)
-            lblA = lf("Yours") // ours/HEAD
-        if (!lblB)
-            lblB = lf("Incoming") // theirs/upstream/origin
-
+        lblA: string, lblB: string) {
         const ma = computeMatch(fileA)
         const mb = computeMatch(fileB)
 
