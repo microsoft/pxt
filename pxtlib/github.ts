@@ -1140,9 +1140,22 @@ namespace pxt.github {
      * @param configB 
      */
     export function mergeDiff3Config(configA: string, configO: string, configB: string): string {
-        const jsonA: any = pxt.Util.jsonTryParse(configA); //  as pxt.PackageConfig
-        const jsonO: any = pxt.Util.jsonTryParse(configO);
-        const jsonB: any = pxt.Util.jsonTryParse(configB);
+        let jsonA: any = pxt.Util.jsonTryParse(configA); //  as pxt.PackageConfig
+        let jsonO: any = pxt.Util.jsonTryParse(configO);
+        let jsonB: any = pxt.Util.jsonTryParse(configB);
+        // A is good, B destroyed
+        if (jsonA && !jsonB)
+            return configA; // keep A
+
+        // A destroyed, B good, use B or O
+        if (!jsonA)
+            return configB || configO;
+
+        // O is destroyed, B isnt, use B as O
+        if (!jsonO && jsonB)
+            jsonO = jsonB;
+
+        // final check
         if (!jsonA || !jsonO || !jsonB)
             return undefined;
 
@@ -1180,8 +1193,12 @@ namespace pxt.github {
                             return undefined;
                         r[key] = m.length ? m : undefined;
                         break;
+                    case "description":
+                        if (vA && !vB) r[key] = vA; // new description
+                        else if (!vA && vB) r[key] = vB;
+                        else return undefined;
+                        break;
                     default:
-                        // TODO regular diff/merge
                         return undefined;
                 }
             }
