@@ -510,7 +510,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let diffJSX: JSX.Element;
         if (!content) {
             // the xml payload needs to be decompiled
-            diffJSX = <p>{lf("Your blocks were updated. Open the editor to view the changes.")}</p>
+            diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
         } else {
             const markdown =
                 `

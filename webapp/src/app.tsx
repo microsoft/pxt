@@ -448,9 +448,12 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
-        // any other editeable .ts or pxt.json
-        else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+
+        const mainBlocks = pkg.mainEditorPkg().files["main.blocks"];
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+            this.textEditor.openBlocks();
+        // any other editeable .ts or pxt.json; or empty mainblocks
+        else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
             this.saveFileAsync().then(() => this.textEditor.openBlocks());
         } else {
             const header = this.state.header;
@@ -460,7 +463,7 @@ export class ProjectView
                 this.textEditor.openBlocks();
             }
             else {
-                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+                this.setFile(mainBlocks)
             }
         }
 
