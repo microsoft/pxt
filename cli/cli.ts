@@ -1940,6 +1940,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         builtInfo = nodeutil.readJson(apiInfoPath);
     }
 
+    let coreDependencies: string[];
+    const corepkg = "libs/" + pxt.appTarget.corepkg;
+
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
@@ -1992,6 +1995,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             apis: api,
                             sha: packageSha
                         };
+
+                        if (dirname === corepkg) {
+                            coreDependencies = mainPkg.sortedDeps().map(p => p.config.name).filter(n => n !== pxt.appTarget.corepkg);
+                        }
                     }
                 });
         }, /*includeProjects*/ true))
@@ -2011,11 +2018,17 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             })
 
             // Trim redundant API info from packages
-            const coreDirname = "libs/" + pxt.appTarget.corepkg;
-            const coreInfo = builtInfo[coreDirname];
+            const coreInfo = builtInfo[corepkg];
 
             if (coreInfo) {
-                Object.keys(builtInfo).filter(k => k !== coreDirname).map(k => builtInfo[k]).forEach(info => {
+                // Don't bother with dependencies of the core package
+                if (coreDependencies) {
+                    for (const dep of coreDependencies) {
+                        builtInfo["libs/" + dep].apis.byQName = {};
+                    }
+                }
+
+                Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
                     deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
                     deleteRedundantSymbols(coreInfo.apis.jres, info.apis.jres)
                 });
