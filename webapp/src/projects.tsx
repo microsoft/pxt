@@ -756,7 +756,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         {tags && <div className="ui labels">
                             {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
                             </div>)}</div>}
-                        <iframe width='100%' height='90%' src={`https://www.youtube-nocookie.com/embed/${youTubeId}`} frameBorder='0' allowFullScreen style={{display: 'block', position: 'absolute', top: '5%'}} sandbox="allow-scripts allow-same-origin"></iframe>
+                        <iframe width='100%' height='90%' src={`https://www.youtube-nocookie.com/embed/${youTubeId}`} frameBorder='0' allowFullScreen style={{display: 'block', position: 'absolute', top: '5%'}} sandbox='allow-scripts allow-same-origin'></iframe>
                     </div>
                 </div>
             </div>;
