@@ -1579,12 +1579,12 @@ namespace pxt.blocks {
             return 0;
         }
         const api = e.stdCallTable[b.type];
-        if (api && api.attrs.afterOnStart) {
-            return 1;
-        }
-        else {
-            return -1;
-        }
+        const key = callKey(e, b);
+        const hash = ts.pxtc.Util.codalHash16(key);
+        if (api && api.attrs.afterOnStart)
+            return hash;
+        else
+            return -hash;
     }
 
     function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
