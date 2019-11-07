@@ -883,6 +883,10 @@ namespace pxt.cpp {
                 } else {
                     U.assert(!seenMain)
                 }
+                // Generally, headers need to be processed before sources, as they contain definitions
+                // (in particular of enums, which are needed to decide if we're doing conversions for 
+                // function arguments). This can still fail if one header uses another and they are 
+                // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"
                 const files = pkg.getFiles().filter(isHeaderFn)
