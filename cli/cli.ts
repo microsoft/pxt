@@ -1115,7 +1115,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // check size
     const maxSize = checkFileSize(opts.fileList);
-    if (maxSize > 15000000) // 15Mb max
+    if (maxSize > 30000000) // 30Mb max
         U.userError(`file too big for upload`);
     pxt.log('');
 
@@ -1929,7 +1929,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     }
 
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
-    let apiInfoPath = path.resolve(process.cwd(), "built", "api-cache.json");
+    let apiInfoPath = path.resolve(process.cwd(), "temp", "api-cache.json");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
@@ -2042,9 +2042,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
-            delete targetlight.bundleddirs
-            delete targetlight.bundledpkgs
-            delete targetlight.appTheme
+            delete targetlight.bundleddirs;
+            delete targetlight.bundledpkgs;
+            delete targetlight.appTheme;
+            delete targetlight.apiInfo;
             const targetlightjson = JSON.stringify(targetlight, null, 2);
             nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
             nodeutil.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
