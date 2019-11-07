@@ -1800,7 +1800,7 @@ export class ProjectView
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
             // On embedded pages, preserve the loaded project
-            if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+            if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             else if (this.state && this.state.home) {
