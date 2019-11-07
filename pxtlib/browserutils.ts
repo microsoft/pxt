@@ -668,7 +668,7 @@ namespace pxt.BrowserUtils {
             }
         }
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
-            this.set(lang, filename, branch, etag, Date.now(), strings);
+            this.set(lang, filename, branch, etag, Util.now(), strings);
             return Promise.resolve();
         }
         clearAsync() {
@@ -855,7 +855,7 @@ namespace pxt.BrowserUtils {
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
-            let time = Date.now();
+            let time = Util.now();
             this.mem.set(lang, filename, branch, etag, time, strings, md);
 
             if (strings) {
