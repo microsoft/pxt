@@ -376,4 +376,9 @@ namespace pxt.blocks {
                 visDom(child, f);
         }
     }
+
+    export function mergeXml(xmlA: string, xmlO: string, xmlB: string): string {
+        // TODO
+        return undefined;
+    }
 }

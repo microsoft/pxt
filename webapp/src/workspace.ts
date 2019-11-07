@@ -640,7 +640,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         const oldEnt = lookupFile(gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
-            // file in pxt.json but not in git: changes were merge from the cloud but not pushed yet
+            // file in pxt.json but not in git: 
+            // changes were merged from the cloud but not pushed yet
             if (options.tryDiff3 && hasChanges)
                 return files[path];
             if (!justJSON)
@@ -663,6 +664,11 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 text = pxt.github.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 if (!text) // merge failed?
                     throw mergeError()
+            } if (/\.blocks$/.test(path)) {
+                // blocks file, try merging the blocks or clear it so that ts merge picks it up
+                const d3 = pxt.blocks.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                // if xml merge fails, leave an empty xml payload to force decompilation
+                text = d3 || "";
             } else {
                 const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?
