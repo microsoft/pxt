@@ -506,15 +506,22 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private createBlocksDiffJSX(f: pkg.File): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
         const baseContent = f.baseGitContent || "";
         const content = f.content;
-        const markdown =
-            `
+
+        let diffJSX: JSX.Element;
+        if (!content) {
+            // the xml payload needs to be decompiled
+            diffJSX = <p>{lf("Your blocks were updated. Open the editor to view the changes.")}</p>
+        } else {
+            const markdown =
+                `
 \`\`\`diffblocksxml
 ${baseContent}
 ---------------------
 ${content}
 \`\`\`
 `;
-        const diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+        }
         const legendJSX = <p className="legend">
             <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
             <span><span className="deleted icon"></span>{lf("deleted")}</span>

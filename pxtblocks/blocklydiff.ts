@@ -378,7 +378,10 @@ namespace pxt.blocks {
     }
 
     export function mergeXml(xmlA: string, xmlO: string, xmlB: string): string {
-        // TODO
+        if (xmlA == xmlO) return xmlB;
+        if (xmlB == xmlO) return xmlA;
+
+        // TODO merge
         return undefined;
     }
 }

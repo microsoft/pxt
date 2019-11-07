@@ -664,7 +664,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 text = pxt.github.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 if (!text) // merge failed?
                     throw mergeError()
-            } if (/\.blocks$/.test(path)) {
+            } else if (/\.blocks$/.test(path)) {
                 // blocks file, try merging the blocks or clear it so that ts merge picks it up
                 const d3 = pxt.blocks.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 // if xml merge fails, leave an empty xml payload to force decompilation
