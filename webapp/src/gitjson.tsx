@@ -18,6 +18,7 @@ interface DiffCache {
     gitFile: string;
     editorFile: string;
     diff: JSX.Element;
+    whitespace?: boolean;
     revert: () => void;
 }
 
@@ -429,34 +430,26 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             cache = { file: f } as any
             this.diffCache[f.name] = cache
         }
-        if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
+        if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content && cache.diff)
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
-        let jsxEls: { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number };
-        if (isBlocks) {
-            jsxEls = this.createBlocksDiffJSX(f);
-        } else {
-            jsxEls = this.createTextDiffJSX(f);
+        const showWhitespace = () => {
+            if (!cache.whitespace) {
+                cache.whitespace = true;
+                cache.diff = createDiff();
+                this.forceUpdate();
+            }
         }
-
-        let deletedFiles: string[] = []
-        let addedFiles: string[] = []
-        if (f.name == pxt.CONFIG_NAME) {
-            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
-            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
-            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
-            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
-        }
-        // backing .ts for .blocks/.py files
-        let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
-        if (virtualF == f) virtualF = undefined;
-
-        cache.gitFile = f.baseGitContent
-        cache.editorFile = f.content
-        cache.revert = () => this.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
-        cache.diff = (
-            <div key={f.name} className="ui segments filediff">
+        const createDiff = () => {
+            let jsxEls: { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number };
+            if (isBlocks) {
+                jsxEls = this.createBlocksDiffJSX(f);
+            } else {
+                jsxEls = this.createTextDiffJSX(f, !cache.whitespace);
+            }
+            // tslint:disable: react-this-binding-issue
+            return <div key={f.name} className="ui segments filediff">
                 <div className="ui segment diffheader">
                     {isBlocksMode && f.name == "main.blocks" ? undefined : <span>{f.name}</span>}
                     <sui.Button className="small" icon="undo" text={lf("Revert")}
@@ -482,11 +475,32 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     </div>
                     :
                     <div className="ui segment">
-                        <p>{lf("Whitespace changes only.")}</p>
+                        <p>
+                            {lf("Whitespace changes only.")}
+                            <sui.Link className="link" text={lf("Show")} onClick={showWhitespace} />
+                        </p>
                     </div>
                 }
-            </div>)
-        return cache.diff
+            </div>;
+        }
+
+        let deletedFiles: string[] = []
+        let addedFiles: string[] = []
+        if (f.name == pxt.CONFIG_NAME) {
+            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
+            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
+            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
+            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+        }
+        // backing .ts for .blocks/.py files
+        let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        if (virtualF == f) virtualF = undefined;
+
+        cache.gitFile = f.baseGitContent
+        cache.editorFile = f.content
+        cache.revert = () => this.revertFileAsync(f, deletedFiles, addedFiles, virtualF);
+        cache.diff = createDiff()
+        return cache.diff;
     }
 
     private createBlocksDiffJSX(f: pkg.File): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
@@ -510,7 +524,7 @@ ${content}
         return { diffJSX, legendJSX, conflicts: 0 };
     }
 
-    private createTextDiffJSX(f: pkg.File): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
+    private createTextDiffJSX(f: pkg.File, ignoreWhitespace: boolean): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
         const baseContent = f.baseGitContent || "";
         const content = f.content;
         const classes: pxt.Map<string> = {
@@ -519,7 +533,7 @@ ${content}
             "+": "diff-added",
             "-": "diff-removed",
         }
-        const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: true })
+        const diffLines = pxt.github.diff(baseContent, content, { ignoreWhitespace: !!ignoreWhitespace })
         if (!diffLines) {
             pxt.tickEvent("github.diff.toobig");
             return {
