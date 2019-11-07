@@ -374,7 +374,7 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
         h.name = createDuplicateName(h);
         let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
         cfg.name = h.name
-        text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+        text[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     delete h._rev
     delete (h as any)._id
@@ -500,7 +500,7 @@ export async function bumpAsync(hd: Header, newVer = "") {
     let files = await getTextAsync(hd.id)
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
     cfg.version = newVer || bumpedVersion(cfg)
-    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
@@ -692,7 +692,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
         if (!cfg.name) {
             cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
-            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         }
     }
 
@@ -821,7 +821,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
         if (testFiles.indexOf("test.ts") < 0) {
             testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 4);
+            currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
         }
     }
 

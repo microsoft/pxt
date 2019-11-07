@@ -1212,7 +1212,7 @@ namespace pxt.github {
                 }
             }
         }
-        return JSON.stringify(r, null, 4);
+        return pxt.Package.stringifyConfig(r);
 
         function mergeFiles(fA: string[], fO: string[], fB: string[]): string[] {
             const r: string[] = [];

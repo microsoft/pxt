@@ -1969,7 +1969,7 @@ export class ProjectView
                 cfg.files.push(codeStop);
             }
         }
-        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -2851,7 +2851,7 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+        return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
                     this.setState({

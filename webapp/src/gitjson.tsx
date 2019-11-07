@@ -758,7 +758,10 @@ ${content}
                     </h3>
                     {needsCommit ?
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
-                        : <div className="ui segment">{lf("No local changes found.")}</div>}
+                        : <div className="ui segment">
+                            {lf("No local changes found.")}
+                            {lf("Your project is saved in GitHub.")}
+                        </div>}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
