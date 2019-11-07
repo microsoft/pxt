@@ -1295,10 +1295,6 @@ export class ProjectView
 
         const template = header.tutorial.templateCode;
 
-        // Delete from the header so that we don't overwrite the user code if the tutorial is
-        // re-opened
-        delete header.tutorial.templateCode;
-
         let decompilePromise = Promise.resolve();
 
         if (header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
@@ -1321,7 +1317,11 @@ export class ProjectView
                 })
         }
 
-        return decompilePromise.then(() => workspace.saveAsync(header));
+        return decompilePromise.then(() => {
+            // Delete from header after adding template, so that we don't
+            // overwrite the user code if the tutorial is re-opened
+            workspace.saveAsync(header).then(() => { delete header.tutorial.templateCode })
+        });
     }
 
     removeProject() {
