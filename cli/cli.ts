@@ -1115,7 +1115,7 @@ function uploadCoreAsync(opts: UploadOptions) {
 
     // check size
     const maxSize = checkFileSize(opts.fileList);
-    if (maxSize > 30000000) // 15Mb max
+    if (maxSize > 30000000) // 30Mb max
         U.userError(`file too big for upload`);
     pxt.log('');
 
