@@ -1440,6 +1440,7 @@ ${output}</xml>`;
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:
                 case SK.Identifier:
+                case SK.ElementAccessExpression:
                     return undefined;
                 case SK.BinaryExpression:
                     return checkBooleanBinaryExpression(unwrappedExpr as BinaryExpression);
