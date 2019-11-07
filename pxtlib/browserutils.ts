@@ -839,7 +839,7 @@ namespace pxt.BrowserUtils {
             const r = this.mem.get(lang, filename, branch);
             if (r) return Promise.resolve(r);
 
-            return this.db.getAsync<cEntry>(IndexedDbTranslationDb.TABLE, id)
+            return this.db.getAsync<ITranslationDbEntry>(IndexedDbTranslationDb.TABLE, id)
                 .then((res) => {
                     if (res) {
                         // store in-memory so that we don't try to download again
