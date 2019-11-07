@@ -19,8 +19,6 @@
         @BODY@
     </aside>
 
-
-
     <div class="ui main container mainbody">
 
         @breadcrumb@
@@ -59,6 +57,10 @@
     <script>
         const pkgJson = @JSON@;
 // do something with it
+        // remove h1 from markdown
+        $(function() {
+            $('h1:contains(@title@)').not('#templateh1').remove();
+        })
     </script>
 
     <!-- @include footer.html -->
