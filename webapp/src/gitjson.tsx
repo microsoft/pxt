@@ -430,7 +430,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             cache = { file: f } as any
             this.diffCache[f.name] = cache
         }
-        if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content && cache.diff)
+        if (cache.gitFile == f.baseGitContent && cache.editorFile == f.content)
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
