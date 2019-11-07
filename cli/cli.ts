@@ -1929,7 +1929,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     }
 
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
-    let apiInfoPath = path.resolve(process.cwd(), "built", "api-cache.json");
+    let apiInfoPath = path.resolve(process.cwd(), "temp", "api-cache.json");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
