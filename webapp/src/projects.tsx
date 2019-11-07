@@ -710,9 +710,14 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     renderCore() {
         const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
 
-        const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
+        let image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
+
+        if (/\.mp4$/.test(image) && pxt.BrowserUtils.isElectron()) {
+            // we don't support mp4 in electron, so try out luck as gif
+            image = image.replace(/\.mp4$/, ".gif");
+        }
 
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial")
@@ -745,7 +750,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         return <div className="ui grid stackable padded">
             {image && <div className="imagewrapper">
-                <div className="image" style={{ backgroundImage: `url("${image}")` }} />
+                {/\.mp4$/.test(image) ? <video className="video" src={image} autoPlay={true} controls={false} loop={true} playsinline={true} />
+                    : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
             <div className="column twelve wide">
                 <div className="segment">
