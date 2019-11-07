@@ -3838,7 +3838,7 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.dumpheapAsync())
 }
 
-function buildDalDTSAsync(c: commandParser.ParsedCommand) {
+async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
     forceLocalBuild = true;
     forceBuild = true; // make sure we actually build
     forceCloudBuild = false;
@@ -3870,9 +3870,11 @@ function buildDalDTSAsync(c: commandParser.ParsedCommand) {
             }));
     } else {
         ensurePkgDir()
-        return prepAsync()
-            .then(() => mainPkg.loadAsync())
-            .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+        await mainPkg.loadAsync()
+        setBuildEngine();
+        build.buildDalConst(build.thisBuild, mainPkg, true, true)
+        await prepAsync()
+        build.buildDalConst(build.thisBuild, mainPkg, true, true)
     }
 }
 
