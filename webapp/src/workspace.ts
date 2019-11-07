@@ -821,7 +821,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
         if (testFiles.indexOf("test.ts") < 0) {
             testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+            currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
         }
     }
 

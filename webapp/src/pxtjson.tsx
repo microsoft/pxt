@@ -52,7 +52,7 @@ export class Editor extends srceditor.Editor {
             return;
         }
         const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-        f.setContentAsync(pxt.Package.stringifyConfig(cfg)).then(() => {
+        f.setContentAsync(pxt.Package.stringifyConfig(c)).then(() => {
             pkg.mainPkg.config.name = c.name;
             this.parent.setState({ projectName: c.name });
             this.parent.forceUpdate()
