@@ -750,7 +750,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         return <div className="ui grid stackable padded">
             {image && <div className="imagewrapper">
-                {/\.mp4$/.test(image) ? <video className="video" src={image} autoPlay={true} controls={false} loop={true} playsinline={true} />
+                {/\.mp4$/.test(image) ? <video className="video" src={image} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
             <div className="column twelve wide">
