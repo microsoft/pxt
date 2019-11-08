@@ -377,7 +377,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async commitAsync() {
         this.setState({ needsCommitMessage: false });
-        this.showLoading(lf("commit and push..."));
+        this.showLoading(lf("commit and push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
