@@ -2207,7 +2207,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
     const docFolders = ["node_modules/pxt-core/common-docs"];
 
     if (fs.existsSync("node_modules/pxt-common-packages/docs")) {
-        docFolders.push("node_modules/pxt-core/common-docs");
+        docFolders.push("node_modules/pxt-common-packages/docs");
     }
 
     const handledDirectories = {}
