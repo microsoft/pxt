@@ -3730,12 +3730,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
-        case "recipe": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
+        case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
             pxt.tickEvent("hash.recipe")
             editor.startTutorial(hash.arg, undefined, true);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
