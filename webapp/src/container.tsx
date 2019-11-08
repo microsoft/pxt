@@ -5,8 +5,9 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
-import * as greenscreen from "./greenscreen";
 import * as core from "./core";
+import * as cloud from "./cloud";
+import * as cloudsync from "./cloudsync";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -158,6 +159,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+        this.signOutGithub = this.signOutGithub.bind(this);
     }
 
     showShareDialog() {
@@ -246,6 +248,15 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.printCode();
     }
 
+    signOutGithub() {
+        pxt.tickEvent("home.github.signout");
+        const githubProvider = cloudsync.githubProvider();
+        if (githubProvider) {
+            githubProvider.logout();
+            this.props.parent.forceUpdate();
+        }
+    }
+
     componentWillReceiveProps(nextProps: SettingsMenuProps) {
         const newState: SettingsMenuState = {};
         if (nextProps.highContrast != undefined) {
@@ -276,8 +287,10 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
+        const docItem = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial)[0];
 
         // Electron does not currently support webusb
+        const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
         const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -293,17 +306,23 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
+            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
+            {docItem ? <DocsMenuItem key={"mobiledocsmenudocs"} role="menuitem" ariaLabel={pxt.Util.rlf(docItem.name)} text={pxt.Util.rlf(docItem.name)} className={"ui mobile only"} parent={this.props.parent} path={docItem.path} onItemClick={openDocs} /> : undefined}
+            {githubUser ? <div className="ui divider"></div> : undefined}
+            {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
+                <div className="avatar" role="presentation">
+                    <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
+                </div>
+                {lf("Sign out")}
+            </div> : undefined}
+            <div className="ui divider"></div>
+            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
-            {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
-            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
-            <div className="ui mobile only divider"></div>
-            {renderDocItems(this.props.parent, "mobile only")}
-            <div className="ui divider"></div>
-            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
+            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
         </sui.DropdownMenu>;
     }
 }
@@ -345,7 +364,7 @@ class JavascriptMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="javascript-menuitem" icon="xicon js" text="JavaScript" title={lf("Convert code to JavaScript")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -364,7 +383,7 @@ class PythonMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="python-menuitem" icon="xicon python" text="Python" title={lf("Convert code to Python")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -383,7 +402,7 @@ class BlocksMenuItem extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="blocks-menuitem" icon="xicon blocks" text={lf("Blocks")} title={lf("Convert code to Blocks")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -406,7 +425,7 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
         const isRunning = this.props.parent.state.simState == pxt.editor.SimState.Running;
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
-        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip}  onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
+        return <BaseMenuItemProps className="sim-menuitem" icon={active && isRunning ? "stop" : "play"} text={lf("Simulator")} title={!active ? lf("Show Simulator") : runTooltip} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
 
@@ -420,7 +439,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         super(props);
     }
 
-    renderCore () {
+    renderCore() {
         const pythonEnabled = this.props.python;
         const dropdownActive = pythonEnabled && (this.props.parent.isJavaScriptActive() || this.props.parent.isPythonActive());
 
@@ -516,7 +535,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const activityName = tutorialOptions && tutorialOptions.tutorialActivityInfo ?
             tutorialOptions.tutorialActivityInfo[tutorialOptions.tutorialStepInfo[tutorialOptions.tutorialStep].activity].name :
             null;
-        const hideIteration = tutorialOptions && tutorialOptions.metadata.hideIteration;
+        const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
         const hc = !!this.props.parent.state.highContrast;
@@ -527,6 +546,10 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
+
+        const hasCloud = this.hasCloud();
+        const user = hasCloud ? this.getUser() : undefined;
+        const showCloud = !sandbox && !inTutorial && !debugging && !!user;
 
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
@@ -558,7 +581,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
                 {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
-
+                {showCloud ? <cloud.UserMenu parent={this.props.parent} /> : undefined}
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {(inTutorial && !lockedEditor && !hideIteration) && <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} />}

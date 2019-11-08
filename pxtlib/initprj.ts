@@ -235,7 +235,7 @@ cache:
                 newCfg[f] = configMap[f]
         }
 
-        files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4)
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(newCfg);
 
         return files
     }

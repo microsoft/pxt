@@ -141,9 +141,14 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
-        cloudProviders?: pxt.Map<{}>;
         maxFileSize?: number; // maximum file size in bytes
         warnFileSize?: number; // warn aboutfile size in bytes
+        cloudProviders?: pxt.Map<AppCloudProvider>;
+    }
+
+    interface AppCloudProvider {
+        client_id: string;
+        redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
     }
 
     interface AppSimulator {
@@ -349,8 +354,6 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
-        alwaysGithubItemBlocks?: boolean; // show Github item in blocks; even when token is not available
-        alwaysGithubItem?: boolean; // show Github item; even when token is not available
     }
 
     interface SocialOptions {
@@ -383,6 +386,12 @@ declare namespace pxt {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
+        apiInfo?: Map<PackageApiInfo>;
+    }
+
+    interface PackageApiInfo {
+        sha: string;
+        apis: ts.pxtc.ApisInfo;
     }
 }
 

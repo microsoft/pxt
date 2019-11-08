@@ -152,6 +152,16 @@ namespace pxt.editor {
         openHomeIfFailed?: boolean;
     }
 
+    export interface UserInfo {
+        id: string;
+        userName?: string;
+        name: string;
+        profile?: string;
+        loginHint?: string;
+        initials?: string;
+        photo?: string;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -187,6 +197,9 @@ namespace pxt.editor {
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
+        cloudSync(): boolean;
+        cloudSignInDialog(): void;
+        cloudSignOut(): void;
         removeProject(): void;
         editText(): void;
 

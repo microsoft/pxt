@@ -52,7 +52,7 @@ export class Editor extends srceditor.Editor {
             return;
         }
         const f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
-        f.setContentAsync(JSON.stringify(this.config, null, 4) + "\n").then(() => {
+        f.setContentAsync(pxt.Package.stringifyConfig(c)).then(() => {
             pkg.mainPkg.config.name = c.name;
             this.parent.setState({ projectName: c.name });
             this.parent.forceUpdate()
@@ -169,7 +169,7 @@ export class Editor extends srceditor.Editor {
     }
 
     getCurrentSource() {
-        return JSON.stringify(this.config, null, 4) + "\n"
+        return pxt.Package.stringifyConfig(this.config);
     }
 
     acceptsFile(file: pkg.File) {
@@ -236,7 +236,7 @@ class UserConfigCheckbox extends data.Component<UserConfigCheckboxProps, {}> {
 
         return <sui.Checkbox
             key={`userconfig-${uc.description}`}
-            inputLabel={uc.description}
+            inputLabel={pxt.Util.rlf(uc.description)}
             checked={isChecked}
             onChange={this.applyUserConfig} />
     }
