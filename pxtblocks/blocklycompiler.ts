@@ -1580,7 +1580,7 @@ namespace pxt.blocks {
         }
         const api = e.stdCallTable[b.type];
         const key = callKey(e, b);
-        const hash = ts.pxtc.Util.codalHash16(key);
+        const hash = 1 + ts.pxtc.Util.codalHash16(key);
         if (api && api.attrs.afterOnStart)
             return hash;
         else
@@ -1725,6 +1725,8 @@ namespace pxt.blocks {
     export function callKey(e: Environment, b: Blockly.Block): string {
         if (b.type == ts.pxtc.ON_START_TYPE)
             return JSON.stringify({ name: ts.pxtc.ON_START_TYPE });
+        else if (b.type == ts.pxtc.FUNCTION_DEFINITION_TYPE)
+            return JSON.stringify({ type: "function", name: b.getFieldValue("function_name") });
 
         const call = e.stdCallTable[b.type];
         if (call) {
