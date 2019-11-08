@@ -666,7 +666,7 @@ namespace pxt.py {
     function resolvePrimTypes(primType: string): SymbolInfo[] {
         let res: SymbolInfo[] = []
         if (primType == "@array") {
-            res = [lookupApi("_py.Array")]
+            res = [lookupApi("_py.Array"), lookupApi("Array")]
         } else if (primType == "string") {
             // we need to check both the special "_py" namespace and the typescript "String"
             // class because for example ".length" is only defined in the latter
