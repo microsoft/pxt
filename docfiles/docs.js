@@ -216,9 +216,9 @@ function setupSemantic() {
 }
 
 function setupBlocklyAsync() {
-    let promise = Promise.resolve();
+    var promise = Promise.resolve();
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-        let opts = {};
+        var opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
         }).then(function () {
@@ -235,7 +235,7 @@ function setupBlocklyAsync() {
     if (pxt.appTarget.versions &&
         pxt.semver.strcmp(pxt.appTarget.versions.pxt, "3.9.0") < 0 &&
         pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor) {
-        let opts = {};
+        var opts = {};
         promise = promise.then(function () {
             return pxt.BrowserUtils.loadScriptAsync(pxt.webConfig.commitCdnUrl + "editor.js")
         }).then(function () {
@@ -247,6 +247,7 @@ function setupBlocklyAsync() {
                 })
         })
     }
+    setupLangPicker();
     return promise;
 }
 
@@ -277,6 +278,108 @@ function renderSnippets() {
                 });
             }).done();
     });
+}
+
+function languageOption(code) {
+    var locale = pxt.Util.allLanguages[code];
+
+    var headerEl = document.createElement('div');
+    headerEl.className = 'header';
+    headerEl.textContent = locale.localizedName;
+
+    var descriptionEl = document.createElement('div');
+    descriptionEl.className = 'description tall';
+    descriptionEl.textContent = locale.englishName;
+
+    var contentEl = document.createElement('div');
+    contentEl.className = 'content';
+    contentEl.appendChild(headerEl);
+    contentEl.appendChild(descriptionEl);
+
+    var cardEl = document.createElement('div');
+    cardEl.className = 'ui card link card-selected langoption';
+    cardEl.dataset.lang = code;
+    cardEl.setAttribute('role', 'option');
+    cardEl.setAttribute('aria-label', locale.englishName);
+    cardEl.setAttribute('tabindex', '0');
+    cardEl.appendChild(contentEl);
+
+    return cardEl;
+}
+
+function setupLangPicker() {
+    var appTheme = pxt.appTarget.appTheme;
+    var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
+    var modalContainer = document.querySelector("#langmodal");
+
+    if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
+        var localesContainer = document.querySelector("#availablelocales");
+        appTheme.availableLocales.forEach(function(locale) {
+            var card = languageOption(locale);
+            localesContainer.appendChild(card);
+        });
+
+        modalContainer.className += `  ${appTheme.availableLocales.length > 4 ? "large" : "small"}`;
+
+        $(modalContainer).modal({
+            onShow: function() {
+                $(document).off("focusin.focusJail");
+                $(document).on("focusin.focusJail", function(event) {
+                    if (event.target !== modalContainer && !$.contains(modalContainer, event.target)) {
+                        modalContainer.focus();
+                    }
+                });
+            },
+            onHide: function() {
+                $(document).off("focusin.focusJail");
+            }
+        });
+
+        var langPicker = document.querySelector("#langpicker");
+        langPicker.onclick = function() {
+            $(modalContainer).modal('show');
+        }
+        langPicker.onkeydown = handleEnterKey;
+
+        var closeIcon = modalContainer.querySelector(".closeIcon");
+        closeIcon.onclick = function() {
+            $(modalContainer).modal('hide');
+        }
+        closeIcon.onkeydown = handleEnterKey;
+
+        var buttons = modalContainer.querySelectorAll(".ui.button");
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].onkeydown = handleEnterKey;
+        }
+
+        var langOptions = modalContainer.querySelectorAll(".langoption");
+
+        for (var i = 0; i < langOptions.length; i++) {
+            var currentOption = langOptions[i];
+
+            currentOption.onclick =  function(e) {
+                var langId = e.currentTarget.dataset.lang;
+                if (!pxt.Util.allLanguages[langId]) {
+                    return;
+                }
+                pxt.BrowserUtils.setCookieLang(langId, /** docs **/ true);
+                if (langId !== initialLang) {
+                    pxt.tickEvent("menu.lang.changelang", { lang: langId, docs: "true" });
+                    // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
+                    // In docs we currently don't have access to pxt.winrt
+                    location.reload();
+                } else {
+                    pxt.tickEvent(`menu.lang.samelang`, { lang: langId, docs: "true" });
+                    $('.ui.modal').modal('hide');
+                }
+            }
+            currentOption.onkeydown = handleEnterKey;
+        }
+    } else {
+        // remove the locale picker and modal if unavailable in this editor
+        document.querySelector("#langpicker").remove();
+        modalContainer.remove();
+    }
 }
 
 $(document).ready(function () {
