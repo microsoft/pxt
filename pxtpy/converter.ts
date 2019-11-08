@@ -658,11 +658,14 @@ namespace pxt.py {
             if (f) {
                 if (!f.isInstance)
                     error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
-                if (!ctx.currClass)
-                    error(null, 9529, U.lf("no class context found for {0}", f.pyQName))
-                if (isSuper(recv) ||
-                    (isThis(recv) && f.namespace != ctx.currClass!.symInfo.qName)) {
+                if (isSuper(recv)) {
                     f.isProtected = true
+                }
+                else if (isThis(recv)) {
+                    if (!ctx.currClass)
+                        error(null, 9529, U.lf("no class context found for {0}", f.pyQName))
+                    if (f.namespace != ctx.currClass!.symInfo.qName)
+                        f.isProtected = true
                 }
             }
 
@@ -866,7 +869,7 @@ namespace pxt.py {
 
         let lst = n.symInfo.parameters.map(p => {
             let v = defvar(p.name, { isParam: true })
-            if (p.pyType)
+            if (!p.pyType)
                 error(n, 9530, U.lf("parameter '{0}' missing pyType", p.name))
             unify(n, symbolType(v), p.pyType!)
             let res = [quote(p.name), typeAnnot(p.pyType!)]
@@ -2205,16 +2208,17 @@ namespace pxt.py {
         return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
     }
 
-    function findNonlocalDeclaration(name: string, scope: py.ScopeDef): py.ScopeDef {
+    function findNonlocalDeclaration(name: string, scope: py.ScopeDef | undefined): py.ScopeDef | undefined {
+        if (!scope)
+            return undefined
+
         const symbolInfo = scope.vars && scope.vars[name];
 
         if (symbolInfo && symbolInfo.modifier != VarModifier.NonLocal) {
             return scope;
         }
         else {
-            if (!scope.parent)
-                error(null, 9564, lf("missing scope.parent"));
-            return findNonlocalDeclaration(name, scope.parent!);
+            return findNonlocalDeclaration(name, scope.parent);
         }
     }
 
