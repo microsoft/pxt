@@ -238,7 +238,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
-        this.signInGithub = this.signInGithub.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
 
@@ -267,15 +266,6 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showAboutDialog();
     }
 
-    signInGithub() {
-        pxt.tickEvent("home.github.signin");
-        const githubProvider = cloudsync.githubProvider();
-        if (githubProvider) {
-            githubProvider.loginAsync()
-                .done(() => this.props.parent.forceUpdate());
-        }
-    }
-
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
@@ -286,15 +276,13 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     renderCore() {
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
-
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
-            <div className="ui divider"></div>
-            {!githubUser ? <sui.Item role="menuitem" title={lf("Host your code on GitHub and work together with friends on projects.")} text={lf("Sign in with GitHub")} icon="github" onClick={this.signInGithub} /> : undefined}
+            {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">
                     <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
@@ -347,7 +335,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                     {targetTheme.portraitLogo ? (<img className={`ui ${targetTheme.logoWide ? "small" : "mini"} image portrait only`} src={targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
             </div>
-            {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
+            <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
                 {!showCloudHead ? undefined : <cloud.UserMenu parent={this.props.parent} />}
                 <ProjectSettingsMenu parent={this.props.parent} highContrast={this.props.parent.state.highContrast} />
@@ -510,6 +498,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 url={scr.url}
                                 imageUrl={scr.imageUrl}
                                 youTubeId={scr.youTubeId}
+                                buttonLabel={scr.buttonLabel}
                                 label={scr.label}
                                 labelClass={scr.labelClass}
                                 tags={scr.tags}
@@ -531,6 +520,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             imageUrl={selectedElement.imageUrl}
                             largeImageUrl={selectedElement.largeImageUrl}
                             youTubeId={selectedElement.youTubeId}
+                            buttonLabel={selectedElement.buttonLabel}
                             scr={selectedElement}
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
@@ -638,6 +628,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     imageUrl?: string;
     largeImageUrl?: string;
     youTubeId?: string;
+    buttonLabel?: string;
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
@@ -720,14 +711,21 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
 
-        const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
+        let image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
 
+        if (/\.mp4$/.test(image) && pxt.BrowserUtils.isElectron()) {
+            // we don't support mp4 in electron, so try out luck as gif
+            image = image.replace(/\.mp4$/, ".gif");
+        }
+
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial")
+        if (buttonLabel)
+            clickLabel = ts.pxtc.Util.rlf(buttonLabel);
+        else if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
         else if (cardType == "codeExample" || cardType == "example")
             clickLabel = lf("Open Example");
@@ -757,7 +755,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         return <div className="ui grid stackable padded">
             {image && <div className="imagewrapper">
-                <div className="image" style={{ backgroundImage: `url("${image}")` }} />
+                {/\.mp4$/.test(image) ? <video className="video" src={image} autoPlay={true} controls={false} loop={true} playsInline={true} />
+                    : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
             <div className="column twelve wide">
                 <div className="segment">
@@ -1109,8 +1108,11 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         return this.prevGalleries || [];
     }
 
-    private setHwVariant(cfg: pxt.PackageConfig) {
-        pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
+    private setHwVariant(cfg: pxt.PackageConfig, card: pxt.CodeCard) {
+        pxt.tickEvent("projects.choosehwvariant", {
+            hwid: cfg.name,
+            card: card ? card.name : cfg.name
+        }, { interactiveConsent: true });
         this.hide()
 
         pxt.setHwVariant(cfg.name)
@@ -1131,13 +1133,14 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                     name: v.description
                 }
             const savedV = v
-            v.card.onClick = () => this.setHwVariant(savedV)
+            v.card.onClick = () => this.setHwVariant(savedV, null)
         }
         let cards = this.fetchGallery();
         for (const card of cards) {
             const savedV = variants.find(variant => variant.name == card.variant);
+            const savedCard = card;
             if (savedV)
-                card.onClick = () => this.setHwVariant(savedV);
+                card.onClick = () => this.setHwVariant(savedV, savedCard);
             else {
                 pxt.reportError("hw", "invalid variant");
             }

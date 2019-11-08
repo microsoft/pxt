@@ -1860,7 +1860,7 @@ export class ProjectView
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
             // On embedded pages, preserve the loaded project
-            if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+            if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             else if (this.state && this.state.home) {
@@ -1969,7 +1969,7 @@ export class ProjectView
                 cfg.files.push(codeStop);
             }
         }
-        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -2176,6 +2176,10 @@ export class ProjectView
                             }
                             if (parseInt(compile.uf2Family) === wr.familyID) {
                                 pxt.setHwVariant(v.name)
+                                pxt.tickEvent("projects.choosehwvariant", {
+                                    hwid: pxt.hwVariant,
+                                    card: "HID-" + pxt.hwVariant
+                                });
                                 this.reloadHeaderAsync()
                                     .then(() => this.compile())
                                 return
@@ -2847,7 +2851,7 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+        return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
                     this.setState({
@@ -3723,12 +3727,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
-        case "recipe": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
+        case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
             pxt.tickEvent("hash.recipe")
             editor.startTutorial(hash.arg, undefined, true);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
@@ -3930,7 +3934,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         pxt.options.wsPort = 3233;
     }
-    pkg.setupAppTarget((window as any).pxtTargetBundle)
+    pkg.setupAppTarget((window as any).pxtTargetBundle);
+    pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
 
     enableAnalytics()
 
@@ -3956,8 +3961,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const query = core.parseQueryString(window.location.href)
 
-    if (query["hw"])
+    if (query["hw"]) {
         pxt.setHwVariant(query["hw"])
+        pxt.tickEvent("projects.choosehwvariant", {
+            hwid: pxt.hwVariant,
+            card: "QUERY-" + pxt.hwVariant
+        });
+    }
 
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 

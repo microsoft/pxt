@@ -385,39 +385,44 @@ export function resetAsync() {
 function updateNameAsync(provider: IdentityProvider) {
     if (!provider)
         return Promise.resolve()
-    let user = provider.user();
+    const user = provider.user();
     if (user)
         return Promise.resolve()
     return provider.getUserInfoAsync()
         .then(info => {
-            let id = provider.name + ":" + info.id
-            let currId = pxt.storage.getLocal("cloudId")
-            if (currId && currId != id) {
-                core.confirmAsync({
-                    header: lf("Sign in mismatch"),
-                    body: lf("You have previously signed in with a different account. You can sign out now, which will locally clear all projects, or you can try to sign in again."),
-                    agreeClass: "red",
-                    agreeIcon: "sign out",
-                    agreeLbl: lf("Sign out"),
-                    disagreeLbl: lf("Sign in again"),
-                    disagreeIcon: "user circle"
-                }).then(res => {
-                    if (res) {
-                        ws.resetAsync()
-                            .then(() => {
-                                // FIXME: should call ProjectView.reloadEditor()
-                                location.hash = "#reload"
-                                location.reload()
-                            })
-                    } else {
-                        console.log("Show the cloud sign in dialog")
-                        //dialogs.showCloudSignInDialog()
-                    }
-                })
-                // never return
-                return new Promise<void>(() => { })
-            } else {
-                pxt.storage.setLocal("cloudId", id)
+            if (!info) // invalid token or info
+                return Promise.resolve();
+            // check for new identity
+            if (provider.hasSync()) {
+                const id = provider.name + ":" + info.id
+                const currId = pxt.storage.getLocal("cloudId")
+                if (currId && currId != id) {
+                    core.confirmAsync({
+                        header: lf("Sign in mismatch"),
+                        body: lf("You have previously signed in with a different account. You can sign out now, which will locally clear all projects, or you can try to sign in again."),
+                        agreeClass: "red",
+                        agreeIcon: "sign out",
+                        agreeLbl: lf("Sign out"),
+                        disagreeLbl: lf("Sign in again"),
+                        disagreeIcon: "user circle"
+                    }).then(res => {
+                        if (res) {
+                            ws.resetAsync()
+                                .then(() => {
+                                    // FIXME: should call ProjectView.reloadEditor()
+                                    location.hash = "#reload"
+                                    location.reload()
+                                })
+                        } else {
+                            console.log("Show the cloud sign in dialog")
+                            //dialogs.showCloudSignInDialog()
+                        }
+                    })
+                    // never return
+                    return new Promise<void>(() => { })
+                } else {
+                    pxt.storage.setLocal("cloudId", id)
+                }
             }
             if (!info.initials)
                 info.initials = userInitials(info.name);

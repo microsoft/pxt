@@ -374,7 +374,7 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
         h.name = createDuplicateName(h);
         let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
         cfg.name = h.name
-        text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+        text[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     delete h._rev
     delete (h as any)._id
@@ -463,18 +463,13 @@ export async function pullAsync(hd: Header, checkOnly = false) {
         return PullStatus.UpToDate
     if (checkOnly)
         return PullStatus.GotChanges
-    if (hd.githubCurrent) {
-        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files })
+    try {
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
         return PullStatus.GotChanges
-    } else {
-        try {
-            await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
-            return PullStatus.GotChanges
-        } catch (e) {
-            if (e.isMergeError)
-                return PullStatus.NeedsCommit
-            else throw e
-        }
+    } catch (e) {
+        if (e.isMergeError)
+            return PullStatus.NeedsCommit
+        else throw e
     }
 }
 
@@ -505,7 +500,7 @@ export async function bumpAsync(hd: Header, newVer = "") {
     let files = await getTextAsync(hd.id)
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
     cfg.version = newVer || bumpedVersion(cfg)
-    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
@@ -543,9 +538,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     for (let path of filenames) {
         if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
             continue
-        let sha = gitsha(files[path])
+        const fileContent = files[path];
+        let sha = gitsha(fileContent)
         let ex = lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
+            // look for unfinished merges
+            if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(fileContent))
+                throw mergeConflictMarkerError();
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
                 encoding: "utf-8"
@@ -606,6 +605,12 @@ function mergeError() {
     return e
 }
 
+function mergeConflictMarkerError() {
+    const e = new Error("Merge conflict marker error");
+    (e as any).isMergeConflictMarkerError = true
+    return e
+}
+
 // requests token to user if needed
 async function ensureGitHubTokenAsync() {
     // check that we have a token first
@@ -635,8 +640,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         const oldEnt = lookupFile(gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
-            // strange: file in pxt.json but not in git
-            if (options.tryDiff3 && hasChanges) throw mergeError()
+            // file in pxt.json but not in git: changes were merge from the cloud but not pushed yet
+            if (options.tryDiff3 && hasChanges)
+                return files[path];
             if (!justJSON)
                 files[path] = ""
             return ""
@@ -653,15 +659,17 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (gitsha(text) != treeEnt.sha)
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
         if (options.tryDiff3 && hasChanges) {
-            const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent)
-            if (d3.numConflicts) throw mergeError()
-            text = d3.merged
             if (path == pxt.CONFIG_NAME) {
-                try {
-                    JSON.parse(text)
-                } catch {
+                text = pxt.github.mergeDiff3Config(files[path], oldEnt.blobContent, treeEnt.blobContent);
+                if (!text) // merge failed?
                     throw mergeError()
-                }
+            } else {
+                const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
+                if (!d3) // merge failed?
+                    throw mergeError()
+                if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
+                    throw mergeError()
+                text = d3.merged
             }
         }
         if (!justJSON)
@@ -684,7 +692,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
         if (!cfg.name) {
             cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
-            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         }
     }
 
@@ -813,7 +821,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
         if (testFiles.indexOf("test.ts") < 0) {
             testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = JSON.stringify(pxtjson, null, 4);
+            currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
         }
     }
 

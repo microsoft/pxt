@@ -51,7 +51,7 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         const ghid = pxt.github.parseRepoId(githubId);
         // new github repo
         if (!ghid)
-            return <sui.Button className={`ui icon button editortools-btn editortools-github-btn`}
+            return <sui.Button key="githubcreatebtn" className={`ui icon button editortools-btn editortools-github-btn`}
                 icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")}
                 onClick={this.createRepository} />
 
@@ -63,10 +63,10 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
         const title = lf("Review and commit changes for {0}", repoName);
 
-        return <div role="button" className={`ui icon button editortools-btn editortools-github-btn`}
+        return <div key="githubeditorbtn" role="button" className={`ui icon button editortools-btn editortools-github-btn`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            {modified ? <i className="up arrow icon" /> : undefined}
+            {modified ? <i className="long arrow alternate up icon" /> : undefined}
         </div>;
     }
 }

@@ -5,6 +5,11 @@
 
 namespace pxt {
     export class Package {
+        static stringifyConfig(config: pxt.PackageConfig): string {
+            // github adds a newline when web editing
+            return JSON.stringify(config, null, 4) + "\n"
+        }
+
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {
@@ -109,7 +114,7 @@ namespace pxt {
         saveConfig() {
             const cfg = U.clone(this.config)
             delete cfg.additionalFilePaths
-            const text = JSON.stringify(cfg, null, 4)
+            const text = pxt.Package.stringifyConfig(cfg);
             this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
@@ -919,7 +924,7 @@ namespace pxt {
                             cfg.dependencies[k] = v
                         }
                     })
-                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
                         // already stored
                         if (f == pxt.CONFIG_NAME) continue;

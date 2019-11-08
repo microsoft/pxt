@@ -251,7 +251,7 @@ export class EditorPackage {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
-                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
+                return cfgFile.setContentAsync(pxt.Package.stringifyConfig(cfg))
                     .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }

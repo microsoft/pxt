@@ -39,15 +39,13 @@ function getAsync(h: Header) {
         })
 }
 
-const delText = {}
-
 function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText): Promise<pxt.workspace.Version> {
     let pkg: pxt.FsPkg = {
         files: [],
         config: null,
         header: h,
         path: h.path,
-        isDeleted: text === delText
+        isDeleted: h.isDeleted
     }
 
     if (text) {
@@ -84,7 +82,8 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
 }
 
 function deleteAsync(h: Header, prevVer: any) {
-    return setAsync(h, prevVer, delText)
+    h.isDeleted = true;
+    return setAsync(h, prevVer, {});
 }
 
 async function listAsync(): Promise<Header[]> {
