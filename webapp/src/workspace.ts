@@ -633,6 +633,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     const downloadedFiles: pxt.Map<boolean> = {}
+    let conflicts = 0;
+    let blocksNeedDecompilation = false;
 
     const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
@@ -668,11 +670,13 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // blocks file, try merging the blocks or clear it so that ts merge picks it up
                 const d3 = pxt.blocks.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 // if xml merge fails, leave an empty xml payload to force decompilation
+                blocksNeedDecompilation = blocksNeedDecompilation && !!d3;
                 text = d3 || "";
             } else {
                 const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?
                     throw mergeError()
+                conflicts += d3.numConflicts
                 if (d3.numConflicts && !/\.ts$/.test(path)) // only allow conflict markers in typescript files
                     throw mergeError()
                 text = d3.merged
@@ -692,6 +696,10 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     if (!justJSON) {
+        // if any block needs decompilation, don't allow merge error markers
+        if (blocksNeedDecompilation && conflicts)
+            throw mergeError()
+
         for (let k of Object.keys(files)) {
             if (k[0] != "." && !downloadedFiles[k])
                 delete files[k]
