@@ -724,9 +724,6 @@ ${content}
     }
 
     renderCore(): JSX.Element {
-        // TODO: disable commit changes if no changes available
-        // TODO: commitAsync handle missing token or failed push
-
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const diffFiles = pkg.mainEditorPkg().sortedFiles().filter(p => p.baseGitContent != p.content)
         const needsCommit = diffFiles.length > 0;
@@ -779,6 +776,7 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
+                    {!isBlocksMode ? <CollaborationZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} /> : undefined}
                     {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} /> : undefined}
                 </div>
             </div>
@@ -945,6 +943,62 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <span className="inline-help">
                     {lf("Your project doesn't seem to have a license.")}
                     {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                </span>
+            </div> : undefined}
+        </div>
+    }
+}
+
+class CollaborationZone extends sui.StatelessUIElement<GitHubViewProps> {
+    constructor(props: GitHubViewProps) {
+        super(props);
+        this.handleMergeBranchClick = this.handleMergeBranchClick.bind(this);
+        this.handleCreateBranchClick = this.handleCreateBranchClick.bind(this);
+        this.handlePullUpstreamBranchClick = this.handlePullUpstreamBranchClick.bind(this);
+    }
+
+    private handleMergeBranchClick() {
+
+    }
+
+    private handleCreateBranchClick() {
+
+    }
+
+    private handlePullUpstreamBranchClick() {
+
+    }
+
+    renderCore() {
+        const { githubId, gs, needsCommit } = this.props;
+        const master = githubId.tag == "master";
+        return <div className="ui transparent segment">
+            <div className="ui header">{lf("Collaboration zone")}</div>
+            {master ? <div className="ui field">
+                <sui.Button text={lf("Create branch")}
+                    onClick={this.handleCreateBranchClick}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Create a separate branch to make changes without impacting the master branch.")}
+                    {sui.helpIconLink("/github/branch", lf("Learn more about branches."))}
+                </span>
+            </div> : undefined}
+            {!master ? <div className="ui field">
+                <sui.Button text={lf("Pull master changes")}
+                    onClick={this.handleMergeBranchClick}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Pull changes from the master branch.")}
+                    {sui.helpIconLink("/github/branch", lf("Learn more about branches."))}
+                </span>
+            </div> : undefined}
+            {!master && !needsCommit ? <div className="ui field">
+                <sui.Button text={lf("Merge branch")}
+                    onClick={this.handleMergeBranchClick}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Integrate the changes from this branch into the master branch.")}
+                    {sui.helpIconLink("/github/branch", lf("Learn more about branches."))}
                 </span>
             </div> : undefined}
         </div>
