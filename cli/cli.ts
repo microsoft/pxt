@@ -2259,49 +2259,32 @@ function renderDocs(builtPackaged: string, localDir: string) {
     }
     pxt.log(`All docs written.`);
 
-    function getPackageDocs(dir: string, folders: string[], enqueued: Map<boolean>) {
-        if (enqueued[dir])
+    function getPackageDocs(dir: string, folders: string[], resolvedDirectories: Map<boolean>) {
+        if (resolvedDirectories[dir])
             return;
 
-        enqueued[dir] = true;
+        resolvedDirectories[dir] = true;
 
-        const pxtjson = nodeutil.readJson(
-            path.join(
-                dir,
-                "pxt.json"
-            )
-        ) as pxt.PackageConfig;
+        const jsonDir = path.join(dir, "pxt.json");
+        const pxtjson = fs.existsSync(jsonDir) && (nodeutil.readJson(jsonDir) as pxt.PackageConfig);
 
         if (pxtjson) {
             if (pxtjson.additionalFilePath) {
-                getPackageDocs(
-                    path.join(
-                        dir,
-                        pxtjson.additionalFilePath
-                    ),
-                    docFolders,
-                    enqueued
-                );
+                getPackageDocs(path.join(dir, pxtjson.additionalFilePath), folders, resolvedDirectories);
             }
 
             if (pxtjson.dependencies) {
                 Object.keys(pxtjson.dependencies).forEach(dep => {
                     const parts = /^file:(.+)$/i.exec(pxtjson.dependencies[dep]);
                     if (parts) {
-                        getPackageDocs(
-                            path.join(dir, parts[1]),
-                            folders,
-                            enqueued
-                        );
+                        getPackageDocs(path.join(dir, parts[1]), folders, resolvedDirectories);
                     }
                 });
             }
         }
 
-        const docsDir = path.join(
-            dir,
-            "docs"
-        );
+        const docsDir = path.join(dir, "docs");
+
         if (fs.existsSync(docsDir)) {
             folders.push(docsDir);
         }
