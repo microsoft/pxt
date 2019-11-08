@@ -127,6 +127,9 @@ namespace pxt.py {
     }
 
     function mapTsType(tp: string): Type {
+        // TODO handle specifc generic types like: SparseArray<number[]>
+        // TODO handle union types like: Sprite | particles.ParticleAnchor
+
         // wrapped in (...)
         if (tp[0] == "(" && U.endsWith(tp, ")")) {
             return mapTsType(tp.slice(1, -1))
@@ -626,48 +629,50 @@ namespace pxt.py {
         return null
     }
 
+    function getTypesForFieldLookup(recvType: Type): SymbolInfo[] {
+        let t = find(recvType)
+        return [
+            t.classType,
+            ...resolvePrimTypes(t.primType),
+            t.moduleType
+        ].filter(a => !!a)
+    }
+
     function getTypeField(recv: Expr, n: string, checkOnly = false) {
-        let t = find(typeOf(recv))
+        const recvType = typeOf(recv)
+        const constructorTypes = getTypesForFieldLookup(recvType)
 
-        let ct = t.classType
-
-        if (!ct) {
-            ct = resolvePrimType(t.primType);
-        }
-
-        if (ct) {
+        for (let ct of constructorTypes) {
             let f = getClassField(ct, n, checkOnly)
-
             if (f) {
-                if (!f.isInstance)
-                    error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
-                if (isSuper(recv) ||
-                    (isThis(recv) && f.namespace != ctx.currClass.symInfo.qName)) {
-                    f.isProtected = true
+                let isModule = !!ct.moduleTypeMarker
+                if (isModule) {
+                    if (f.isInstance)
+                        error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
+                } else {
+                    if (!f.isInstance)
+                        error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
+                    if (isSuper(recv) ||
+                        (isThis(recv) && f.namespace != ctx.currClass.symInfo.qName)) {
+                        f.isProtected = true
+                    }
                 }
+                return f
             }
-
-            return f
         }
-
-        ct = t.moduleType
-        if (ct) {
-            let f = getClassField(ct, n, checkOnly)
-            if (f && f.isInstance)
-                error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
-            return f
-        }
-
         return null
     }
 
-    function resolvePrimType(primType: string) {
+    function resolvePrimTypes(primType: string): SymbolInfo[] {
+        let res: SymbolInfo[] = []
         if (primType == "@array") {
-            return lookupApi("_py.Array")
+            res = [lookupApi("_py.Array")]
         } else if (primType == "string") {
-            return lookupApi("_py.String")
+            // we need to check both the special "_py" namespace and the typescript "String"
+            // class because for example ".length" is only defined in the latter
+            res = [lookupApi("_py.String"), lookupApi("String")]
         }
-        return undefined
+        return res.filter(a => !!a)
     }
 
     function lookupVar(n: string) {
@@ -1736,6 +1741,7 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
+            // TODO(dz): move body out; needs seperate PR that doesn't touch content
             n.func.inCalledPosition = true
 
             let nm = getName(n.func)
@@ -1806,8 +1812,9 @@ namespace pxt.py {
                 return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
             }
 
-            if (!fun)
-                error(n, 9508, U.lf("can't find called function"))
+            if (!fun) {
+                error(n, 9508, U.lf(`can't find called function "${nm}"`))
+            }
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
@@ -2303,7 +2310,8 @@ namespace pxt.py {
                         }
                     }
                 } else if (tp.classType || tp.primType) {
-                    const ct = tp.classType || resolvePrimType(tp.primType);
+                    const ct = tp.classType
+                        || resolvePrimTypes(tp.primType).reduce((p, n) => p || n, null);
 
                     if (ct) {
                         let types = ct.extendsTypes.concat(ct.qName)
