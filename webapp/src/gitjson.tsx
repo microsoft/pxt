@@ -66,7 +66,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         await this.saveGitJsonAsync(gs)
     }
 
-    private async newBranchAsync() {
+    async createBranchAsync() {
         const gid = this.parsedRepoId()
         const initialBranchName = await pxt.github.getNewBranchNameAsync(gid.fullName, "patch-")
         const branchName = await core.promptAsync({
@@ -124,7 +124,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             description: lf("Based on {0}", gid.tag),
             onClick: () => {
                 core.hideDialog()
-                return this.newBranchAsync()
+                pxt.tickEvent("github.branchselector.create", undefined, { interactiveConsent: true })
+                return this.createBranchAsync()
             }
         })
 
@@ -962,7 +963,8 @@ class CollaborationZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private handleCreateBranchClick() {
-
+        pxt.tickEvent("github.collabzone.createbranch", undefined, { interactiveConsent: true })
+        this.props.parent.createBranchAsync().done();
     }
 
     private handlePullUpstreamBranchClick() {
@@ -975,7 +977,7 @@ class CollaborationZone extends sui.StatelessUIElement<GitHubViewProps> {
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Collaboration zone")}</div>
             {master ? <div className="ui field">
-                <sui.Button text={lf("Create branch")}
+                <sui.Button text={lf("Create new branch")}
                     onClick={this.handleCreateBranchClick}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
