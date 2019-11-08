@@ -724,7 +724,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         let clickLabel = lf("Show Instructions");
         if (buttonLabel)
-        clickLabel = buttonLabel;
+            clickLabel = ts.pxtc.Util.rlf(buttonLabel);
         else if (cardType == "tutorial")
             clickLabel = lf("Start Tutorial");
         else if (cardType == "codeExample" || cardType == "example")
