@@ -2259,16 +2259,6 @@ function renderDocs(builtPackaged: string, localDir: string) {
     }
     pxt.log(`All docs written.`);
 
-    function appendDocsIfPresent(dir: string, folders: string[]) {
-        const docsDir = path.join(
-            dir,
-            "docs"
-        );
-        if (fs.existsSync(docsDir)) {
-            folders.push(docsDir);
-        }
-    }
-
     function getPackageDocs(dir: string, folders: string[], enqueued: Map<boolean>) {
         if (enqueued[dir])
             return;
@@ -2308,7 +2298,13 @@ function renderDocs(builtPackaged: string, localDir: string) {
             }
         }
 
-        appendDocsIfPresent(dir, folders);
+        const docsDir = path.join(
+            dir,
+            "docs"
+        );
+        if (fs.existsSync(docsDir)) {
+            folders.push(docsDir);
+        }
     }
 }
 
