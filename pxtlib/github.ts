@@ -1178,7 +1178,7 @@ namespace pxt.github {
             } else {
                 switch (key) {
                     case "name":
-                        r[key] = mergeString(vA, vO, vB);
+                        r[key] = mergeName(vA, vO, vB);
                         break;
                     case "version": // pick highest version
                         r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
@@ -1217,8 +1217,11 @@ namespace pxt.github {
         }
         return pxt.Package.stringifyConfig(r);
 
-        function mergeString(fA: string, fO: string, fB: string): string {
-            return fA == fO ? fB : fA;
+        function mergeName(fA: string, fO: string, fB: string): string {
+            if (fA == fO) return fB;
+            if (fB == fO) return fA;
+            if (fA == lf("Untitled")) return fB;
+            return fA;
         }
 
         function mergeFiles(fA: string[], fO: string[], fB: string[]): string[] {
