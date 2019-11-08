@@ -670,7 +670,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // blocks file, try merging the blocks or clear it so that ts merge picks it up
                 const d3 = pxt.blocks.mergeXml(files[path], oldEnt.blobContent, treeEnt.blobContent);
                 // if xml merge fails, leave an empty xml payload to force decompilation
-                blocksNeedDecompilation = blocksNeedDecompilation || !!d3;
+                blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
             } else {
                 const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
