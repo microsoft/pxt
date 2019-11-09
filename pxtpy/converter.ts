@@ -1410,7 +1410,7 @@ namespace pxt.py {
 
                 const sym = defvar(name, { modifier: VarModifier.Global });
 
-                if (!sym.firstRefPos || sym.firstRefPos < n.startPos) {
+                if (sym.firstRefPos! < n.startPos) {
                     error(n, 9522, U.lf("Variable referenced before global declaration"))
                 }
             }
@@ -1430,7 +1430,7 @@ namespace pxt.py {
 
                 const sym = defvar(name, { modifier: VarModifier.NonLocal });
 
-                if (!sym.firstRefPos || sym.firstRefPos < n.startPos) {
+                if (sym.firstRefPos! < n.startPos) {
                     error(n, 9524, U.lf("Variable referenced before nonlocal declaration"))
                 }
             }
