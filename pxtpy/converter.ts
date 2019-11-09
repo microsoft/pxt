@@ -48,6 +48,14 @@ namespace pxt.py {
     let infoNode: AST | undefined = undefined
     let infoScope: ScopeDef
 
+    // TODO: move to utils
+    function isFalsy<T>(t: T | null | undefined): t is null | undefined {
+        return t === null || t === undefined
+    }
+    function isTruthy<T>(t: T | null | undefined): t is T {
+        return t !== null && t !== undefined
+    }
+
     function stmtTODO(v: py.Stmt) {
         pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -223,11 +231,11 @@ namespace pxt.py {
 
             if (sym.kind == SK.Function || sym.kind == SK.Method) {
                 let paramTypes = sym.parameters.map(p => p.pyType)
-                if (paramTypes.some(p => !p)) {
+                if (paramTypes.some(isFalsy)) {
                     error(null, 9526, U.lf("function symbol is missing parameter types near '{1}'", currErrorCtx || "???"))
                     return mkType({})
                 }
-                sym.pySymbolType = mkFunType(sym.pyRetType, paramTypes as Type[])
+                sym.pySymbolType = mkFunType(sym.pyRetType, paramTypes.filter(isTruthy))
             }
             else
                 sym.pySymbolType = sym.pyRetType
@@ -251,7 +259,8 @@ namespace pxt.py {
         return U.lookup(internalApis, name) || U.lookup(externalApis, name)
     }
 
-    function lookupGlobalSymbol(name: string): SymbolInfo {
+    function lookupGlobalSymbol(name: string): SymbolInfo | undefined {
+        if (!name) return undefined
         return fillTypes(lookupApi(name))
     }
 
@@ -273,17 +282,16 @@ namespace pxt.py {
 
             if (!sym2.pyQName || !sym2.qName) {
                 error(null, 9526, U.lf("Symbol '{0}' is missing qName for '{1}'", sym2.name, !sym2.pyQName ? "py" : "ts"))
-            } else {
-                externalApis[sym2.pyQName] = sym2
-                externalApis[sym2.qName] = sym2
             }
+            externalApis[sym2.pyQName!] = sym2
+            externalApis[sym2.qName!] = sym2
         }
 
         // TODO(dz):
         // TODO this is for testing mostly; we can do this lazily
-        // for (let sym of U.values(externalApis)) {
-        //     fillTypes(sym)
-        // }
+        for (let sym of U.values(externalApis)) {
+            fillTypes(sym)
+        }
 
         tpBuffer = mapTsType("Buffer")
     }
@@ -327,11 +335,11 @@ namespace pxt.py {
         return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
     }
 
-    function addImport(a: AST, name: string, scope?: ScopeDef) {
+    function addImport(a: AST, name: string, scope?: ScopeDef): SymbolInfo {
         const sym = lookupGlobalSymbol(name)
         if (!sym)
             error(a, 9503, U.lf("No module named '{0}'", name))
-        return sym
+        return sym!
     }
 
     function defvar(n: string, opts: py.VarDescOptions, scope?: ScopeDef) {
@@ -389,8 +397,8 @@ namespace pxt.py {
                     error(null, 9553, lf("missing pyName"));
                 return v.pyName!
             }
-            if (v.isImport && v.expandsTo && U.startsWith(s, v.expandsTo + ".")) {
-                return v.pyName + s.slice(v.expandsTo.length)
+            if (v.isImport && U.startsWith(s, (v.expandsTo || "") + ".")) {
+                return v.pyName + s.slice(v.expandsTo!.length)
             }
         }
         return s
@@ -684,8 +692,6 @@ namespace pxt.py {
     }
 
     function resolvePrimType(primType: string | undefined) {
-        if (!primType)
-            return undefined;
         if (primType == "@array") {
             return lookupApi("_py.Array")
         } else if (primType == "string") {
@@ -765,7 +771,7 @@ namespace pxt.py {
         lastFile = m.tsFilename.replace(/\.ts$/, ".py")
     }
 
-    function isModule(s: SymbolInfo) {
+    function isModule(s: SymbolInfo | undefined) {
         if (!s) return false
         switch (s.kind) {
             case SK.Module:
@@ -1065,8 +1071,8 @@ namespace pxt.py {
                         let vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass!.symInfo, "__get__")
-                            if (cf && cf.pyRetType && cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.pyRetType!, cf.pyRetType)
+                            if (cf && cf.pyAST && cf.pyAST.kind == "FunctionDef")
+                                unify(n, vv.pyRetType!, cf.pyRetType!)
                         }
                         funname = funname.replace(/_/g, "")
                     }
@@ -1580,8 +1586,7 @@ namespace pxt.py {
             n.isdef = false;
         }
 
-        if (curr)
-            markUsage(curr, n);
+        markUsage(curr, n);
 
         if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
@@ -1613,7 +1618,7 @@ namespace pxt.py {
                 return pref + "." + (e as py.Attribute).attr
         }
         error(null, 9542, lf("Cannot get name of unknown expression kind '{0}'", e.kind));
-        return null!
+        return undefined!
     }
 
     function quote(id: py.identifier) {
@@ -1626,7 +1631,7 @@ namespace pxt.py {
         if (n.kind != "Call")
             return false
         let c = n as py.Call
-        return getName(c.func) == fn
+        return getName(c.func) === fn
     }
 
     function binop(left: B.JsNode, pyName: string, right: B.JsNode) {
@@ -2073,7 +2078,7 @@ namespace pxt.py {
                 let s = n.slice as py.Slice
                 return B.mkInfix(expr(n.value), ".",
                     B.H.mkCall("slice", [s.lower ? expr(s.lower) : B.mkText("0"),
-                    s.upper ? expr(s.upper) : null].filter(x => !!x).map(x => x as B.JsNode)))
+                    s.upper ? expr(s.upper) : null].filter(isTruthy)))
             }
             else {
                 return exprTODO(n)
@@ -2132,7 +2137,7 @@ namespace pxt.py {
         return v!
     }
 
-    function markUsage(s: SymbolInfo, location: py.AST) {
+    function markUsage(s: SymbolInfo | null | undefined, location: py.AST) {
         if (s) {
             if (s.modifier === VarModifier.Global) {
                 const declaringScope = topScope();
@@ -2244,16 +2249,16 @@ namespace pxt.py {
 
     // TODO look at scopes of let
 
-    function toTS(mod: py.Module): B.JsNode[] | null {
+    function toTS(mod: py.Module): B.JsNode[] | undefined {
         U.assert(mod.kind == "Module")
         if (mod.tsBody)
-            return null
+            return undefined
         resetCtx(mod)
         if (!mod.vars) mod.vars = {}
 
         const hoisted = collectHoistedDeclarations(mod);
         let res = hoisted.concat(mod.body.map(stmt))
-        if (res.every(isEmpty)) return null
+        if (res.every(isEmpty)) return undefined
         else if (mod.name == "main") return res
         return [
             B.mkText("namespace " + mod.name + " "),
