@@ -1905,7 +1905,7 @@ function buildSimAsync() {
 function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
     function leanSymbol(sym: pxtc.SymbolInfo) {
         const isEmpty = (v: any) => !v || Object.keys(v).length == 0
-        const attrs = U.clone(sym.attributes)
+        let attrs = U.clone(sym.attributes)
         if (attrs.callingConvention == 0)
             delete attrs.callingConvention
         if (isEmpty(attrs.paramDefl))
@@ -1917,6 +1917,8 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
         delete attrs._source
         delete attrs.shim
         delete attrs._name
+        if (isEmpty(attrs))
+            attrs = undefined
         return {
             kind: sym.kind == 7 ? undefined : sym.kind,
             retType: sym.retType == "void" ? undefined : sym.retType,
@@ -1929,7 +1931,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
                 default: p.default,
                 options: isEmpty(p.options) ? undefined : p.options,
                 isEnum: p.isEnum || undefined
-            })) : null,
+            })) : undefined,
             isInstance: sym.isInstance || undefined,
             isReadOnly: sym.isReadOnly || undefined,
         } as any

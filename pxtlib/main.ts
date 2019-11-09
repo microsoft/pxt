@@ -48,7 +48,7 @@ namespace pxt {
                     namespace: apiName.slice(0, lastDot),
                     name: apiName.slice(lastDot + 1),
                     fileName: "",
-                    attributes: sym.attributes,
+                    attributes: sym.attributes || ({} as any),
                     retType: sym.retType || "void",
                     parameters: sym.parameters ? sym.parameters.map(p => ({
                         name: p.name,
