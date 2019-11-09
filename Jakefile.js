@@ -77,7 +77,8 @@ function runKarma(that, flags) {
 
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testpy', 'testlang', 'testtutorials', 'karma', 'testtraces'])
+task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testpy', 'testlang', 'testtutorials', 'karma'])
+task('testpy', ['testpycomp', 'testpytraces']) // TODO: turn on 'testpydecomp'
 
 task('clean', function () {
     ["built", "temp"].forEach(d => {
@@ -96,9 +97,9 @@ setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
 setupTest('testlang', 'compile-test', 'compilerunner.js')
 setupTest('testerr', 'errors-test', 'errorrunner.js')
 setupTest('testfmt', 'format-test', 'formatrunner.js')
-setupTest('testpydecompiler', 'pydecompile-test', 'pydecompilerunner.js')
-setupTest('testpy', 'pyconverter-test', 'pyconvertrunner.js')
-setupTest('testtraces', 'runtime-trace-tests', 'tracerunner.js')
+setupTest('testpydecomp', 'pydecompile-test', 'pydecompilerunner.js')
+setupTest('testpycomp', 'pyconverter-test', 'pyconvertrunner.js')
+setupTest('testpytraces', 'runtime-trace-tests', 'tracerunner.js')
 setupTest('testtutorials', 'tutorial-test', 'tutorialrunner.js')
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
