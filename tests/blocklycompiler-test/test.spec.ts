@@ -291,6 +291,10 @@ describe("blockly compiler", function () {
         it("should correctly infer types for arrays initialized to empty", (done: () => void) => {
             blockTestAsync("empty_array_inference").then(done, done);
         });
+
+        it("should give variables that are only assigned the empty array a type of number[]", (done: () => void) => {
+            blockTestAsync("just_empty_array").then(done, done);
+        });
     });
 
     describe("compiling logic", () => {

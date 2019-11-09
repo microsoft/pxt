@@ -33,6 +33,15 @@ namespace pxt {
         savedAppTarget = U.clone(appTarget)
     }
 
+    let apiInfo: Map<PackageApiInfo>;
+    export function setBundledApiInfo(inf: Map<PackageApiInfo>) {
+        apiInfo = inf;
+    }
+
+    export function getBundledApiInfo() {
+        return apiInfo;
+    }
+
     export function savedAppTheme(): AppTheme {
         return savedAppTarget ? savedAppTarget.appTheme : undefined;
     }
@@ -142,7 +151,7 @@ namespace pxt {
             // path config before storing
             const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
             if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
         })
 
         // patch any pre-configured query url appTheme overrides

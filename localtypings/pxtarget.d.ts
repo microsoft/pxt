@@ -220,6 +220,7 @@ declare namespace pxt {
         highContrastPortraitLogo?: string;
         rightLogo?: string;
         docsLogo?: string;
+        docsHeader?: string;
         organization?: string;
         organizationUrl?: string;
         organizationLogo?: string;
@@ -386,6 +387,12 @@ declare namespace pxt {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
+        apiInfo?: Map<PackageApiInfo>;
+    }
+
+    interface PackageApiInfo {
+        sha: string;
+        apis: ts.pxtc.ApisInfo;
     }
 }
 
