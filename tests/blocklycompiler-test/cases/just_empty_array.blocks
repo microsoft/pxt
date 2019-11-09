@@ -1,0 +1,20 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+<variables>
+<variable id="PZJKN]1!XrDxHe`+(NM%">list</variable>
+</variables>
+<block type="function_definition" x="0" y="16">
+<mutation name="doSomething" functionid=";PBXo6rs4B^lRZgUFhnT" />
+<field name="function_name">doSomething</field>
+<statement name="STACK">
+<block type="variables_set">
+<field name="VAR" id="PZJKN]1!XrDxHe`+(NM%">list</field>
+<value name="VALUE">
+<block type="lists_create_with">
+<mutation items="0" />
+</block>
+</value>
+</block>
+</statement>
+</block>
+<block type="pxt-on-start" x="390" y="10" />
+</xml>

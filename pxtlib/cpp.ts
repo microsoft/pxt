@@ -883,9 +883,16 @@ namespace pxt.cpp {
                 } else {
                     U.assert(!seenMain)
                 }
-                let ext = ".cpp"
-                for (let fn of pkg.getFiles()) {
-                    let isHeader = U.endsWith(fn, ".h")
+                // Generally, headers need to be processed before sources, as they contain definitions
+                // (in particular of enums, which are needed to decide if we're doing conversions for 
+                // function arguments). This can still fail if one header uses another and they are 
+                // listed in invalid order...
+                const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
+                const ext = ".cpp"
+                const files = pkg.getFiles().filter(isHeaderFn)
+                    .concat(pkg.getFiles().filter(s => !isHeaderFn(s)))
+                for (let fn of files) {
+                    const isHeader = isHeaderFn(fn)
                     if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
                         if ((pkg.config.name == "base" || /^core($|---)/.test(pkg.config.name)) && isHeader)

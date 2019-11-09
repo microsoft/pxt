@@ -13,8 +13,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
     }
 
     logout() {
-        super.logout();
         pxt.github.token = undefined;
+        super.logout();
     }
 
     hasSync(): boolean {
@@ -31,18 +31,17 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     loginAsync(redirect?: boolean, silent?: boolean): Promise<cloudsync.ProviderLoginResponse> {
         this.loginCheck()
-        if (this.token())
-            return Promise.resolve({ accessToken: this.token() } as cloudsync.ProviderLoginResponse);
+        let p = Promise.resolve();
+        if (!this.token()) {
+            // auth flow
+            const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
+            if (cl)
+                p = p.then(() => this.oauthLoginAsync());
+            else
+                p = p.then(() => this.showGithubLoginAsync());
+        }
+        return p.then(() => { return { accessToken: this.token() } as cloudsync.ProviderLoginResponse; });
 
-        // auth flow
-        const cl = pxt.appTarget && pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
-        if (cl)
-            return this.oauthLoginAsync().then(() => undefined);
-
-        // dev token
-        return this.showGithubLoginAsync().then(() => {
-            return { accessToken: this.token() } as cloudsync.ProviderLoginResponse;
-        });
     }
 
     private oauthLoginAsync(): Promise<void> {
@@ -60,6 +59,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
     }
 
     getUserInfoAsync(): Promise<pxt.editor.UserInfo> {
+        if (!this.token())
+            return Promise.resolve(undefined);
         return pxt.github.authenticatedUserAsync()
             .then(ghuser => {
                 return {
@@ -164,6 +165,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                                 pxt.tickEvent("github.token.ok");
                             }
                         })
+                        .then(() => cloudsync.syncAsync())
                 }
             }).finally(() => core.hideLoading(LOAD_ID))
     }

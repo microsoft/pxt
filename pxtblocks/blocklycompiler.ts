@@ -71,8 +71,8 @@ namespace pxt.blocks {
             public link: Point,
             public type: string,
             public parentType?: Point,
-            public childType?: Point
-
+            public childType?: Point,
+            public isArrayType?: boolean
         ) { }
     }
 
@@ -150,13 +150,14 @@ namespace pxt.blocks {
 
         p1.link = _p2;
         _p1.link = _p2;
+        _p1.isArrayType = _p2.isArrayType;
         p1.type = null;
         p2.type = t;
     }
 
     // Ground types.
-    function mkPoint(t: string): Point {
-        return new Point(null, t);
+    function mkPoint(t: string, isArrayType = false): Point {
+        return new Point(null, t, null, null, isArrayType);
     }
     const pNumber = mkPoint("number");
     const pBoolean = mkPoint("boolean");
@@ -224,7 +225,9 @@ namespace pxt.blocks {
                     }
                 }
             }
-            return tp || mkPoint(null);
+
+            if (tp) tp.isArrayType = true;
+            return tp || mkPoint(null, true);
         }
         else if (check === "T") {
             const func = e.stdCallTable[b.type];
@@ -478,7 +481,7 @@ namespace pxt.blocks {
         // assigned to), just unify it with int...
         e.allVariables.forEach((v: VarInfo) => {
             if (getConcreteType(v.type).type == null)
-                union(v.type, ground(pNumber.type));
+                union(v.type, ground(v.type.isArrayType ? "number[]" : pNumber.type));
         });
 
         function connectionCheck(i: Blockly.Input) {
@@ -517,6 +520,8 @@ namespace pxt.blocks {
         else if (!c.type) {
             c.parentType = p;
         }
+
+        p.isArrayType = true;
     }
 
     function getConcreteType(point: Point, found: Point[] = []) {
@@ -775,7 +780,7 @@ namespace pxt.blocks {
             t = find(t);
         }
 
-        if (isArrayType(t.type)) {
+        if (isArrayType(t.type) || t.isArrayType) {
             return mkText("[]");
         }
 
@@ -1557,12 +1562,12 @@ namespace pxt.blocks {
             return 0;
         }
         const api = e.stdCallTable[b.type];
-        if (api && api.attrs.afterOnStart) {
-            return 1;
-        }
-        else {
-            return -1;
-        }
+        const key = callKey(e, b);
+        const hash = 1 + ts.pxtc.Util.codalHash16(key);
+        if (api && api.attrs.afterOnStart)
+            return hash;
+        else
+            return -hash;
     }
 
     function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
@@ -1703,6 +1708,8 @@ namespace pxt.blocks {
     export function callKey(e: Environment, b: Blockly.Block): string {
         if (b.type == ts.pxtc.ON_START_TYPE)
             return JSON.stringify({ name: ts.pxtc.ON_START_TYPE });
+        else if (b.type == ts.pxtc.FUNCTION_DEFINITION_TYPE)
+            return JSON.stringify({ type: "function", name: b.getFieldValue("function_name") });
 
         const call = e.stdCallTable[b.type];
         if (call) {
