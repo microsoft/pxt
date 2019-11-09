@@ -817,6 +817,9 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
     } else {
+        // special handling of broken/missing pxt.json
+        if (currFiles[pxt.CONFIG_NAME] && !pxt.Util.jsonTryParse(currFiles[pxt.CONFIG_NAME]))
+            delete currFiles[pxt.CONFIG_NAME];
         // special case override README.md if empty
         let templateREADME = templateFiles["README.md"];
         if (currFiles["README.md"] && currFiles["README.md"].trim())
@@ -866,6 +869,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
     let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
     let parsed = pxt.github.parseRepoId(repoid)
     let isEmpty = false
+    let forceTemplateFiles = true
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     } catch (e) {
@@ -882,12 +886,17 @@ export async function importGithubAsync(id: string): Promise<Header> {
             U.userError(lf("No such repository or branch."));
         }
     }
-    return await githubUpdateToAsync(null, { repo: repoid, sha, files: {} })
-        .then(hd => {
-            if (isEmpty)
-                return initializeGithubRepoAsync(hd, repoid, true);
-            return hd
-        })
+    const hd = await githubUpdateToAsync(null, { repo: repoid, sha, files: {} })
+    // check the size of pxt.json; otherwise initialize
+    if (!isEmpty) {
+        const files = await getTextAsync(hd.id)
+        const pxtJson = files[pxt.CONFIG_NAME];
+        isEmpty = !pxtJson || pxtJson.length < 20 || !pxt.Util.jsonTryParse(pxtJson);
+        forceTemplateFiles = false
+    }
+    if (isEmpty)
+        return initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
+    return hd
 }
 
 export function downloadFilesByIdAsync(id: string): Promise<pxt.Map<string>> {
