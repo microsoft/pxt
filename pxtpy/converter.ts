@@ -2240,11 +2240,14 @@ namespace pxt.py {
         return hoisted;
     }
 
-    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef) {
-        return sym.kind === SK.Variable
+    function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef): boolean {
+        let result =
+            sym.kind === SK.Variable
             && sym.modifier === undefined
-            && ((sym.firstRefPos && sym.firstAssignPos && sym.firstRefPos < sym.firstAssignPos)
-                || (sym.firstAssignDepth && scope.blockDepth && sym.firstAssignDepth > scope.blockDepth));
+            && (
+                sym.firstRefPos! < sym.firstAssignPos!
+                || sym.firstAssignDepth! > scope.blockDepth!);
+        return !!result
     }
 
     // TODO look at scopes of let
