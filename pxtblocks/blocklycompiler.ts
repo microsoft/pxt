@@ -2264,7 +2264,6 @@ namespace pxt.blocks {
                             firstReferencingBlock: block,
                             isDefinitelyAssigned: true
                         };
-                        referenceVariableInAncestors(inputScope, v.name);
                         addScopeToVarInfo(v, inputScope);
                     });
 
@@ -2346,6 +2345,12 @@ namespace pxt.blocks {
             case 'pxt_controls_for_of':
             case 'controls_for_of':
                 return [[getLoopVariableField(block).getField("VAR").getText(), mkPoint(null)]];
+            case 'function_definition':
+                const vars: [string, Point][] = [];
+                for (const a of (block as Blockly.FunctionDefinitionBlock).getArguments()) {
+                    vars.push([a.name, mkPoint(a.type)]);
+                }
+                return vars;
             default:
                 break;
         }
