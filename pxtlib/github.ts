@@ -463,7 +463,7 @@ namespace pxt.github {
     export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
-            pxt.log('Unknown github syntax');
+            pxt.log('Unknown GitHub syntax');
             return Promise.resolve<CachedPackage>(undefined);
         }
 

@@ -3795,7 +3795,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 }
 
 async function importGithubProject(id: string) {
-    core.showLoading("loadingheader", lf("importing github project..."));
+    core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // try to find project with same id
         let hd = workspace.getHeaders().find(h => h.githubId == id);
