@@ -10,6 +10,15 @@ namespace pxt {
             return JSON.stringify(config, null, 4) + "\n"
         }
 
+        static isValidConfigSyntax(configStr: string): boolean {
+            const json = Util.jsonTryParse(configStr) as pxt.PackageConfig;
+            return json
+                && json.name !== undefined && typeof json.name === "string"
+                // && json.version && typeof json.version === "string", default to 0.0.0
+                && json.files && Array.isArray(json.files) && json.files.every(f => typeof f === "string")
+                && json.dependencies && Object.keys(json.dependencies).every(k => typeof json.dependencies[k] === "string");
+        }
+
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {

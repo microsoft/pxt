@@ -688,9 +688,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    const cfg = pxt.Util.jsonTryParse(cfgText || "{}") as pxt.PackageConfig
-    if (!cfg)
+    if (!pxt.Package.isValidConfigSyntax(cfgText))
         U.userError(lf("Invalid pxt.json file."));
+    const cfg = JSON.parse(cfgText) as pxt.PackageConfig
     for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
         await downloadAsync(fn)
     }
@@ -817,8 +817,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
     } else {
-        // special handling of broken/missing pxt.json
-        if (currFiles[pxt.CONFIG_NAME] && !pxt.Util.jsonTryParse(currFiles[pxt.CONFIG_NAME]))
+        // special handling of broken/missing/corrupted pxt.json
+        if (!pxt.Package.isValidConfigSyntax(currFiles[pxt.CONFIG_NAME]))
             delete currFiles[pxt.CONFIG_NAME];
         // special case override README.md if empty
         let templateREADME = templateFiles["README.md"];
@@ -891,7 +891,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
     if (!isEmpty) {
         const files = await getTextAsync(hd.id)
         const pxtJson = files[pxt.CONFIG_NAME];
-        isEmpty = !pxtJson || pxtJson.length < 20 || !pxt.Util.jsonTryParse(pxtJson);
+        isEmpty = !pxt.Package.isValidConfigSyntax(pxtJson);
         forceTemplateFiles = false
     }
     if (isEmpty)
