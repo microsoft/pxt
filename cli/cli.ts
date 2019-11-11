@@ -2220,21 +2220,21 @@ function renderDocs(builtPackaged: string, localDir: string) {
     for (const docFolder of docFolders) {
         for (const f of nodeutil.allFiles(docFolder, 8)) {
             pxt.log(`rendering ${f}`)
-            const fileInDocs = "docs" + f.slice(docFolder.length);
-            let targetPath = path.join(dst, fileInDocs)
+            const pathUnderDocs = f.slice(docFolder.length + 1);
+            let targetPath = path.join(dst, "docs", pathUnderDocs);
             const dir = path.dirname(targetPath)
             if (!validatedDirs[dir]) {
                 nodeutil.mkdirP(dir)
                 validatedDirs[dir] = true
             }
             let buf = fs.readFileSync(f)
-            if (/\.(md|html)$/.test(fileInDocs)) {
+            if (/\.(md|html)$/.test(f)) {
                 const fileData = buf.toString("utf8");
                 let html = ""
-                if (U.endsWith(fileInDocs, ".md")) {
+                if (U.endsWith(f, ".md")) {
                     const md = nodeutil.resolveMd(
                         ".",
-                        fileInDocs.substr(5, fileInDocs.length - 8),
+                        pathUnderDocs.slice(0, -3),
                         fileData
                     );
                     // patch any /static/... url to /docs/static/...
@@ -2245,7 +2245,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                         template: docsTemplate,
                         markdown: patchedMd,
                         theme: pxt.appTarget.appTheme,
-                        filepath: fileInDocs,
+                        filepath: path.join("docs", pathUnderDocs),
                     });
 
                     // replace .md with .html for rendered page drop
