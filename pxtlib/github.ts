@@ -1294,7 +1294,7 @@ namespace pxt.github {
             .filter(f => /\.(ts|blocks|md|jres|asm|json)$/.test(f))
             .filter(f => f != pxt.CONFIG_NAME)
         const cfg: pxt.PackageConfig = {
-            name: "?",
+            name: "",
             files,
             dependencies: {}
         };
