@@ -2219,20 +2219,19 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
     for (let docFolder of docFolders) {
         for (let f of nodeutil.allFiles(docFolder, 8)) {
-            let origF = f
             pxt.log(`rendering ${f}`)
-            f = "docs" + f.slice(docFolder.length)
-            let dd = path.join(dst, f)
-            let dir = path.dirname(dd)
+            const targetFile = "docs" + f.slice(docFolder.length);
+            let dd = path.join(dst, targetFile)
+            const dir = path.dirname(dd)
             if (!validatedDirs[dir]) {
                 nodeutil.mkdirP(dir)
                 validatedDirs[dir] = true
             }
             let buf: Buffer;
-            if (/\.(md|html)$/.test(f)) {
+            if (/\.(md|html)$/.test(targetFile)) {
                 let html = ""
-                if (U.endsWith(f, ".md")) {
-                    const md = nodeutil.resolveMd(".", f.substr(5, f.length - 8))
+                if (U.endsWith(targetFile, ".md")) {
+                    const md = nodeutil.resolveMd(".", targetFile.substr(5, targetFile.length - 8))
                     // patch any /static/... url to /docs/static/...
                     const patchedMd = md.replace(/\"\/static\//g, `"/docs/static/`);
                     nodeutil.writeFileSync(dd, patchedMd, { encoding: "utf8" });
@@ -2241,13 +2240,13 @@ function renderDocs(builtPackaged: string, localDir: string) {
                         template: docsTemplate,
                         markdown: patchedMd,
                         theme: pxt.appTarget.appTheme,
-                        filepath: f,
+                        filepath: targetFile,
                     });
 
                     dd = dd.slice(0, dd.length - 3) + ".html"
                 } else {
                     html = server.expandHtml(
-                        fs.readFileSync(origF, { encoding: "utf8"})
+                        fs.readFileSync(f, { encoding: "utf8"})
                     );
                 }
                 html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
@@ -2255,7 +2254,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 })
                 buf = Buffer.from(html, "utf8")
             } else {
-                buf = fs.readFileSync(origF);
+                buf = fs.readFileSync(f);
             }
             nodeutil.writeFileSync(dd, buf)
         }
