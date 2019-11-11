@@ -2189,13 +2189,13 @@ function buildCommonSimAsync() {
 }
 
 function renderDocs(builtPackaged: string, localDir: string) {
-    let dst = path.resolve(path.join(builtPackaged, localDir))
+    const dst = path.resolve(path.join(builtPackaged, localDir))
 
     nodeutil.cpR("node_modules/pxt-core/docfiles", path.join(dst, "/docfiles"))
     if (fs.existsSync("docfiles"))
         nodeutil.cpR("docfiles", dst + "/docfiles")
 
-    let webpath = localDir
+    const webpath = localDir
     let docsTemplate = server.expandDocFileTemplate("docs.html")
     docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/doccdn/", webpath)
@@ -2217,33 +2217,34 @@ function renderDocs(builtPackaged: string, localDir: string) {
 
     docFolders.push("docs");
 
-    for (let docFolder of docFolders) {
-        for (let f of nodeutil.allFiles(docFolder, 8)) {
+    for (const docFolder of docFolders) {
+        for (const f of nodeutil.allFiles(docFolder, 8)) {
             pxt.log(`rendering ${f}`)
-            const targetFile = "docs" + f.slice(docFolder.length);
-            let dd = path.join(dst, targetFile)
-            const dir = path.dirname(dd)
+            const fileInDocs = "docs" + f.slice(docFolder.length);
+            let targetPath = path.join(dst, fileInDocs)
+            const dir = path.dirname(targetPath)
             if (!validatedDirs[dir]) {
                 nodeutil.mkdirP(dir)
                 validatedDirs[dir] = true
             }
             let buf: Buffer;
-            if (/\.(md|html)$/.test(targetFile)) {
+            if (/\.(md|html)$/.test(fileInDocs)) {
                 let html = ""
-                if (U.endsWith(targetFile, ".md")) {
-                    const md = nodeutil.resolveMd(".", targetFile.substr(5, targetFile.length - 8))
+                if (U.endsWith(fileInDocs, ".md")) {
+                    const md = nodeutil.resolveMd(".", fileInDocs.substr(5, fileInDocs.length - 8))
                     // patch any /static/... url to /docs/static/...
                     const patchedMd = md.replace(/\"\/static\//g, `"/docs/static/`);
-                    nodeutil.writeFileSync(dd, patchedMd, { encoding: "utf8" });
+                    nodeutil.writeFileSync(targetPath, patchedMd, { encoding: "utf8" });
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
                         markdown: patchedMd,
                         theme: pxt.appTarget.appTheme,
-                        filepath: targetFile,
+                        filepath: fileInDocs,
                     });
 
-                    dd = dd.slice(0, dd.length - 3) + ".html"
+                    // replace .md with .html for rendered page drop
+                    targetPath = targetPath.slice(0, targetPath.length - 3) + ".html";
                 } else {
                     html = server.expandHtml(
                         fs.readFileSync(f, { encoding: "utf8"})
@@ -2251,12 +2252,12 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 }
                 html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                     return beg + ` href="${webpath}docs${url}.html"`
-                })
-                buf = Buffer.from(html, "utf8")
+                });
+                buf = Buffer.from(html, "utf8");
             } else {
                 buf = fs.readFileSync(f);
             }
-            nodeutil.writeFileSync(dd, buf)
+            nodeutil.writeFileSync(targetPath, buf)
         }
         pxt.log(`All docs written from ${docFolder}.`);
     }
