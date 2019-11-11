@@ -2222,15 +2222,15 @@ function renderDocs(builtPackaged: string, localDir: string) {
             pxt.log(`rendering ${f}`)
             const pathUnderDocs = f.slice(docFolder.length + 1);
             let targetPath = path.join(dst, "docs", pathUnderDocs);
-            const dir = path.dirname(targetPath)
+            const dir = path.dirname(targetPath);
             if (!validatedDirs[dir]) {
                 nodeutil.mkdirP(dir)
                 validatedDirs[dir] = true
             }
-            let buf = fs.readFileSync(f)
+            let buf = fs.readFileSync(f);
             if (/\.(md|html)$/.test(f)) {
                 const fileData = buf.toString("utf8");
-                let html = ""
+                let html = "";
                 if (U.endsWith(f, ".md")) {
                     const md = nodeutil.resolveMd(
                         ".",
