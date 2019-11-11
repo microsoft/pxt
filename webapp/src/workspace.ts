@@ -43,7 +43,9 @@ function lookup(id: string) {
     return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
 }
 
-export function gitsha(data: string) {
+export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
+    if (encoding == "base64")
+        data = ts.pxtc.decodeBase64(data);
     return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
@@ -536,9 +538,8 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         tree: []
     }
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
-    for (let path of filenames) {
-        if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
-            continue;
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0)) {
         const fileContent = files[path];
         await addToTree(path, fileContent);
     }
@@ -549,7 +550,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (options && options.blocksScreenshotAsync && treeUpdate.tree.find(e => e.path == "main.blocks")) {
         const png = await options.blocksScreenshotAsync();
         if (png)
-            addImageToTree("blocks.png", png);
+            await addToTree("blocks.png", png);
     }
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
@@ -578,29 +579,36 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         return ""
     }
 
-    async function addToTree(path: string, content: string) {
-        const sha = gitsha(content)
+    async function addToTree(path: string, content: string): Promise<string> {
+        const data = {
+            content: content,
+            encoding: "utf-8"
+        } as pxt.github.CreateBlobReq;
+        const m = /^data:([^;]+);base64,/.exec(content);
+        if (m) {
+            data.encoding = "base64";
+            data.content = content.substr(m[0].length);
+        }
+        const sha = gitsha(data.content, data.encoding)
         const ex = lookupFile(gitjson.commit, path)
+        let res: string;
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
-            if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(content))
+            if (data.encoding == "utf-8" &&
+                /^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(data.content))
                 throw mergeConflictMarkerError();
-            const res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
-                content: content,
-                encoding: "utf-8"
-            } as pxt.github.CreateBlobReq)
-            U.assert(res == sha)
+            res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
+            if (data.encoding == "utf-8")
+                U.assert(res == sha, `sha not matching ${res} != ${sha}`)
             treeUpdate.tree.push({
                 "path": path,
                 "mode": "100644",
                 "type": "blob",
-                "sha": sha,
+                "sha": res,
                 "url": undefined
             })
         }
-    }
-    async function addImageToTree(path: string, content: string) {
-        // TODO
+        return res;
     }
 }
 
