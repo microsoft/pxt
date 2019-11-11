@@ -300,10 +300,10 @@ namespace pxt.py {
         }
 
         // TODO this is for testing mostly; we can do this lazily
-        for (let sym of U.values(externalApis)) {
-            if (sym)
-                getOrSetSymbolType(sym)
-        }
+        // for (let sym of U.values(externalApis)) {
+        //     if (sym)
+        //         getOrSetSymbolType(sym)
+        // }
 
         tpBuffer = mapTsType("Buffer")
     }
