@@ -1283,6 +1283,25 @@ namespace pxt.github {
         }
     }
 
+    export function lookupFile(commit: pxt.github.Commit, path: string) {
+        if (!commit)
+            return null
+        return commit.tree.tree.find(e => e.path == path)
+    }
+
+    export function reconstructConfig(commit: pxt.github.Commit) {
+        const files = commit.tree.tree.map(f => f.path)
+            .filter(f => /\.(ts|blocks|md|jres|asm|json)$/.test(f))
+            .filter(f => f != pxt.CONFIG_NAME)
+        const cfg: pxt.PackageConfig = {
+            name: "?",
+            files,
+            dependencies: {}
+        };
+        cfg.dependencies[pxt.appTarget.corepkg] = "*";
+        return cfg;
+    }
+
     export function testMergeDiff() {
         const r = mergeDiff3Config(`
 {

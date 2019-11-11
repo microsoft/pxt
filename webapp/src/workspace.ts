@@ -508,12 +508,6 @@ export async function bumpAsync(hd: Header, newVer = "") {
     })
 }
 
-export function lookupFile(commit: pxt.github.Commit, path: string) {
-    if (!commit)
-        return null
-    return commit.tree.tree.find(e => e.path == path)
-}
-
 export interface CommitOptions {
     message?: string;
     createTag?: string;
@@ -540,7 +534,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             continue
         const fileContent = files[path];
         let sha = gitsha(fileContent)
-        let ex = lookupFile(gitjson.commit, path)
+        let ex = pxt.github.lookupFile(gitjson.commit, path)
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
             if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(fileContent))
@@ -638,8 +632,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
-        const treeEnt = lookupFile(commit, path)
-        const oldEnt = lookupFile(gitjson.commit, path)
+        const treeEnt = pxt.github.lookupFile(commit, path)
+        const oldEnt = pxt.github.lookupFile(gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
             // file in pxt.json but not in git: 
@@ -770,7 +764,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     for (let k of Object.keys(files)) {
         if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
             continue
-        let treeEnt = lookupFile(gitjson.commit, k)
+        let treeEnt = pxt.github.lookupFile(gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
             isCurrent = false
             continue
