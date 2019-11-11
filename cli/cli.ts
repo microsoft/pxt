@@ -1905,7 +1905,7 @@ function buildSimAsync() {
 function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
     function leanSymbol(sym: pxtc.SymbolInfo) {
         const isEmpty = (v: any) => !v || Object.keys(v).length == 0
-        let attrs = U.clone(sym.attributes)
+        let attrs: pxtc.CommentAttrs = U.clone(sym.attributes || ({} as any))
         if (attrs.callingConvention == 0)
             delete attrs.callingConvention
         if (isEmpty(attrs.paramDefl))
