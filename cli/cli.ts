@@ -2202,7 +2202,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
-    const dirs: Map<boolean> = {}
+    const validatedDirs: Map<boolean> = {}
 
     const docFolders = ["node_modules/pxt-core/common-docs"];
 
@@ -2224,9 +2224,9 @@ function renderDocs(builtPackaged: string, localDir: string) {
             f = "docs" + f.slice(docFolder.length)
             let dd = path.join(dst, f)
             let dir = path.dirname(dd)
-            if (!U.lookup(dirs, dir)) {
+            if (!validatedDirs[dir]) {
                 nodeutil.mkdirP(dir)
-                dirs[dir] = true
+                validatedDirs[dir] = true
             }
             let buf: Buffer;
             if (/\.(md|html)$/.test(f)) {
@@ -2243,6 +2243,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                         theme: pxt.appTarget.appTheme,
                         filepath: f,
                     });
+
                     dd = dd.slice(0, dd.length - 3) + ".html"
                 } else {
                     html = server.expandHtml(
