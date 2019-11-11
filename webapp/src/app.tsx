@@ -2747,6 +2747,12 @@ export class ProjectView
             });
     }
 
+    blocksScreenshotAsync(): Promise<string> {
+        if (this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
+            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor)
+        return Promise.resolve(undefined);
+    }
+
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))

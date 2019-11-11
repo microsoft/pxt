@@ -518,6 +518,7 @@ export interface CommitOptions {
     message?: string;
     createTag?: string;
     filenamesToCommit?: string[];
+    blocksScreenshotAsync?: () => Promise<string>;
 }
 
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
@@ -545,12 +546,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
-    if (treeUpdate.tree.find(e => e.path == "main.blocks")) {
-        await pxt.BrowserUtils.loadBlocklyAsync();
-        await compiler.getBlocksAsync();
-        const ws = pxt.blocks.loadWorkspaceXml(files["main.blocks"], true);
-        const png = await pxt.blocks.layout.toPngAsync(ws);
-        addToTree("blocks.png", png);
+    if (options && options.blocksScreenshotAsync && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        const png = await options.blocksScreenshotAsync();
+        if (png)
+            addImageToTree("blocks.png", png);
     }
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
@@ -587,7 +586,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(content))
                 throw mergeConflictMarkerError();
             const res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
-                content: files[path],
+                content: content,
                 encoding: "utf-8"
             } as pxt.github.CreateBlobReq)
             U.assert(res == sha)
@@ -599,6 +598,9 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
                 "url": undefined
             })
         }
+    }
+    async function addImageToTree(path: string, content: string) {
+        // TODO
     }
 }
 

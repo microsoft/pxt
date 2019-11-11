@@ -356,10 +356,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async commitCoreAsync() {
-        const { header } = this.props.parent.state;
+        const { parent } = this.props;
+        const { header } = parent.state;
         const repo = header.githubId;
         let commitId = await workspace.commitAsync(header, {
-            message: this.state.description
+            message: this.state.description,
+            blocksScreenshotAsync: () => parent.blocksScreenshotAsync()
         })
         if (commitId) {
             // merge failure; do a PR
