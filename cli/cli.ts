@@ -2228,30 +2228,33 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 nodeutil.mkdirP(dir)
                 dirs[dir] = true
             }
-            let buf = fs.readFileSync(origF)
+            let buf: Buffer;
             if (/\.(md|html)$/.test(f)) {
-                let str = buf.toString("utf8")
                 let html = ""
                 if (U.endsWith(f, ".md")) {
-                    str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                    const md = nodeutil.resolveMd(".", f.substr(5, f.length - 8))
                     // patch any /static/... url to /docs/static/...
-                    str = str.replace(/\"\/static\//g, `"/docs/static/`);
-                    nodeutil.writeFileSync(dd, str, { encoding: "utf8" });
+                    const patchedMd = md.replace(/\"\/static\//g, `"/docs/static/`);
+                    nodeutil.writeFileSync(dd, patchedMd, { encoding: "utf8" });
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
-                        markdown: str,
+                        markdown: patchedMd,
                         theme: pxt.appTarget.appTheme,
                         filepath: f,
                     });
+                } else {
+                    html = server.expandHtml(
+                        fs.readFileSync(origF, { encoding: "utf8"})
+                    );
                 }
-                else
-                    html = server.expandHtml(str)
                 html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                     return beg + ` href="${webpath}docs${url}.html"`
                 })
                 buf = Buffer.from(html, "utf8")
                 dd = dd.slice(0, dd.length - 3) + ".html"
+            } else {
+                buf = fs.readFileSync(origF);
             }
             nodeutil.writeFileSync(dd, buf)
         }
