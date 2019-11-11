@@ -2227,11 +2227,16 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 nodeutil.mkdirP(dir)
                 validatedDirs[dir] = true
             }
-            let buf: Buffer;
+            let buf = fs.readFileSync(f)
             if (/\.(md|html)$/.test(fileInDocs)) {
+                const fileData = buf.toString("utf8");
                 let html = ""
                 if (U.endsWith(fileInDocs, ".md")) {
-                    const md = nodeutil.resolveMd(".", fileInDocs.substr(5, fileInDocs.length - 8))
+                    const md = nodeutil.resolveMd(
+                        ".",
+                        fileInDocs.substr(5, fileInDocs.length - 8),
+                        fileData
+                    );
                     // patch any /static/... url to /docs/static/...
                     const patchedMd = md.replace(/\"\/static\//g, `"/docs/static/`);
                     nodeutil.writeFileSync(targetPath, patchedMd, { encoding: "utf8" });
@@ -2246,17 +2251,15 @@ function renderDocs(builtPackaged: string, localDir: string) {
                     // replace .md with .html for rendered page drop
                     targetPath = targetPath.slice(0, targetPath.length - 3) + ".html";
                 } else {
-                    html = server.expandHtml(
-                        fs.readFileSync(f, { encoding: "utf8"})
-                    );
+                    html = server.expandHtml(fileData);
                 }
+
                 html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                     return beg + ` href="${webpath}docs${url}.html"`
                 });
                 buf = Buffer.from(html, "utf8");
-            } else {
-                buf = fs.readFileSync(f);
             }
+
             nodeutil.writeFileSync(targetPath, buf)
         }
         pxt.log(`All docs written from ${docFolder}.`);

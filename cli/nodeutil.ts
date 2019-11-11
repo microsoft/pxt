@@ -489,8 +489,7 @@ export function fileExistsSync(p: string): boolean {
 export let lastResolveMdDirs: string[] = []
 
 // returns undefined if not found
-export function resolveMd(root: string, pathname: string): string {
-
+export function resolveMd(root: string, pathname: string, md?: string): string {
     const docs = path.join(root, "docs");
 
     const tryRead = (fn: string) => {
@@ -501,7 +500,7 @@ export function resolveMd(root: string, pathname: string): string {
         return null
     }
 
-    const targetMd = tryRead(path.join(docs, pathname))
+    const targetMd = md ? md : tryRead(path.join(docs, pathname))
     if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
         return targetMd
 
