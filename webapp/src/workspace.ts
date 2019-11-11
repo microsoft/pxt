@@ -889,7 +889,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         forceTemplateFiles = false
     }
     if (isEmpty)
-        return initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
+        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
     return hd
 }
 
