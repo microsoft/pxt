@@ -80,7 +80,7 @@ namespace pxt.blocks {
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
-    export function loadWorkspaceXml(xml: string, skipReport = false) {
+    export function loadWorkspaceXml(xml: string, skipReport = false): Blockly.Workspace {
         const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);

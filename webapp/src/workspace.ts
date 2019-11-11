@@ -537,31 +537,21 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
     for (let path of filenames) {
         if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
-            continue
+            continue;
         const fileContent = files[path];
-        let sha = gitsha(fileContent)
-        let ex = lookupFile(gitjson.commit, path)
-        if (!ex || ex.sha != sha) {
-            // look for unfinished merges
-            if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(fileContent))
-                throw mergeConflictMarkerError();
-            let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
-                content: files[path],
-                encoding: "utf-8"
-            } as pxt.github.CreateBlobReq)
-            U.assert(res == sha)
-            treeUpdate.tree.push({
-                "path": path,
-                "mode": "100644",
-                "type": "blob",
-                "sha": sha,
-                "url": undefined
-            })
-        }
+        await addToTree(path, fileContent);
     }
 
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
+
+    if (treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        await pxt.BrowserUtils.loadBlocklyAsync();
+        await compiler.getBlocksAsync();
+        const ws = pxt.blocks.loadWorkspaceXml(files["main.blocks"], true);
+        const png = await pxt.blocks.layout.toPngAsync(ws);
+        addToTree("blocks.png", png);
+    }
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
@@ -587,6 +577,28 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (options.createTag)
             await pxt.github.createTagAsync(parsed.fullName, options.createTag, newCommit)
         return ""
+    }
+
+    async function addToTree(path: string, content: string) {
+        const sha = gitsha(content)
+        const ex = lookupFile(gitjson.commit, path)
+        if (!ex || ex.sha != sha) {
+            // look for unfinished merges
+            if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(content))
+                throw mergeConflictMarkerError();
+            const res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
+                content: files[path],
+                encoding: "utf-8"
+            } as pxt.github.CreateBlobReq)
+            U.assert(res == sha)
+            treeUpdate.tree.push({
+                "path": path,
+                "mode": "100644",
+                "type": "blob",
+                "sha": sha,
+                "url": undefined
+            })
+        }
     }
 }
 

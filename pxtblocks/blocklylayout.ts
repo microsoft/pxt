@@ -159,11 +159,11 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: Blockly.Workspace): Promise<string> {
+    export function screenshotAsync(ws: Blockly.WorkspaceSvg): Promise<string> {
         return toPngAsync(ws);
     }
 
-    export function toPngAsync(ws: Blockly.Workspace): Promise<string> {
+    export function toPngAsync(ws: Blockly.WorkspaceSvg): Promise<string> {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
@@ -203,14 +203,14 @@ namespace pxt.blocks.layout {
 
     const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
 
-    export function toSvgAsync(ws: Blockly.Workspace): Promise<{
+    export function toSvgAsync(ws: Blockly.WorkspaceSvg): Promise<{
         width: number; height: number; xml: string;
     }> {
         if (!ws)
             return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
-        const metrics = (ws as any).getBlocksBoundingBox() as Blockly.utils.Rect;
-        const sg = (ws as any).getParentSvg().cloneNode(true) as SVGElement;
+        const metrics = ws.getBlocksBoundingBox();
+        const sg = ws.getParentSvg().cloneNode(true) as SVGElement;
         cleanUpBlocklySvg(sg);
 
         let width = metrics.right - metrics.left;
