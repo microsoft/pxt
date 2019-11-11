@@ -2251,7 +2251,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                     });
 
                     // replace .md with .html for rendered page drop
-                    outputFile = outputFile.slice(0, outputFile.length - 3) + ".html";
+                    outputFile = outputFile.slice(0, -3) + ".html";
                 } else {
                     html = server.expandHtml(fileData);
                 }
