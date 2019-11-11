@@ -2243,6 +2243,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                         theme: pxt.appTarget.appTheme,
                         filepath: f,
                     });
+                    dd = dd.slice(0, dd.length - 3) + ".html"
                 } else {
                     html = server.expandHtml(
                         fs.readFileSync(origF, { encoding: "utf8"})
@@ -2252,7 +2253,6 @@ function renderDocs(builtPackaged: string, localDir: string) {
                     return beg + ` href="${webpath}docs${url}.html"`
                 })
                 buf = Buffer.from(html, "utf8")
-                dd = dd.slice(0, dd.length - 3) + ".html"
             } else {
                 buf = fs.readFileSync(origF);
             }
