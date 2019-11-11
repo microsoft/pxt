@@ -2221,12 +2221,14 @@ function renderDocs(builtPackaged: string, localDir: string) {
         for (const f of nodeutil.allFiles(docFolder, 8)) {
             pxt.log(`rendering ${f}`)
             const pathUnderDocs = f.slice(docFolder.length + 1);
-            let targetPath = path.join(dst, "docs", pathUnderDocs);
-            const dir = path.dirname(targetPath);
-            if (!validatedDirs[dir]) {
-                nodeutil.mkdirP(dir)
-                validatedDirs[dir] = true
+            let outputFile = path.join(dst, "docs", pathUnderDocs);
+
+            const outputDir = path.dirname(outputFile);
+            if (!validatedDirs[outputDir]) {
+                nodeutil.mkdirP(outputDir);
+                validatedDirs[outputDir] = true;
             }
+
             let buf = fs.readFileSync(f);
             if (/\.(md|html)$/.test(f)) {
                 const fileData = buf.toString("utf8");
@@ -2239,7 +2241,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                     );
                     // patch any /static/... url to /docs/static/...
                     const patchedMd = md.replace(/\"\/static\//g, `"/docs/static/`);
-                    nodeutil.writeFileSync(targetPath, patchedMd, { encoding: "utf8" });
+                    nodeutil.writeFileSync(outputFile, patchedMd, { encoding: "utf8" });
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
@@ -2249,7 +2251,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                     });
 
                     // replace .md with .html for rendered page drop
-                    targetPath = targetPath.slice(0, targetPath.length - 3) + ".html";
+                    outputFile = outputFile.slice(0, outputFile.length - 3) + ".html";
                 } else {
                     html = server.expandHtml(fileData);
                 }
@@ -2260,7 +2262,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 buf = Buffer.from(html, "utf8");
             }
 
-            nodeutil.writeFileSync(targetPath, buf)
+            nodeutil.writeFileSync(outputFile, buf)
         }
         pxt.log(`All docs written from ${docFolder}.`);
     }
