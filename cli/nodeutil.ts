@@ -493,7 +493,7 @@ export function resolveMd(root: string, pathname: string): string {
 
     const docs = path.join(root, "docs");
 
-    let tryRead = (fn: string) => {
+    const tryRead = (fn: string) => {
         if (fileExistsSync(fn + ".md"))
             return fs.readFileSync(fn + ".md", "utf8")
         if (fileExistsSync(fn + "/index.md"))
@@ -501,25 +501,25 @@ export function resolveMd(root: string, pathname: string): string {
         return null
     }
 
-    let targetMd = tryRead(path.join(docs, pathname))
+    const targetMd = tryRead(path.join(docs, pathname))
     if (targetMd && !/^\s*#+\s+@extends/m.test(targetMd))
         return targetMd
 
-    let dirs = [
+    const dirs = [
         path.join(root, "/node_modules/pxt-core/common-docs"),
     ]
     lastResolveMdDirs = dirs
-    for (let pkg of pxt.appTarget.bundleddirs) {
+    for (const pkg of pxt.appTarget.bundleddirs) {
         let d = path.join(pkg, "docs");
         if (!path.isAbsolute(d)) d = path.join(root, d);
         dirs.push(d)
 
-        let cfg = readPkgConfig(path.join(d, ".."))
-        for (let add of cfg.additionalFilePaths)
+        const cfg = readPkgConfig(path.join(d, ".."))
+        for (const add of cfg.additionalFilePaths)
             dirs.push(path.join(d, "..", add, "docs"))
     }
-    for (let d of dirs) {
-        let template = tryRead(path.join(d, pathname))
+    for (const d of dirs) {
+        const template = tryRead(path.join(d, pathname))
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }
