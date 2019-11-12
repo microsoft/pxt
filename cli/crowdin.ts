@@ -61,14 +61,14 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                             pxt.log("uploading docs...");
                             return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
                                 // scan for docs in bundled packages
-                                .then(() => Promise.all(pxt.appTarget.bundleddirs
-                                    // there must be a folder under .../docs
-                                    .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
-                                    // upload to crowdin
-                                    .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                                    )).then(() => {
+                                .then(() => {
+                                    return Promise.all(
+                                        nodeutil.getBundledPackagesDocs()
+                                            .map(pkgDir => uploadDocsTranslationsAsync(pkgDir, crowdinDir, cred.branch, cred.prj, cred.key))
+                                    ).then(() => {
                                         pxt.log("docs uploaded");
-                                    }))
+                                    });
+                                });
                         }
                         pxt.log("skipping docs upload (not a release)");
                         return Promise.resolve();
@@ -115,8 +115,8 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
 
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
-    pxt.appTarget.bundleddirs.forEach(dir => {
-        const locdir = path.join(dir, "_locales");
+    nodeutil.getBundledPackagesDocs().forEach(dir => {
+        const locdir = path.join(dir, "..", "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
                 .filter(f => /strings\.json$/i.test(f))
@@ -148,10 +148,14 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                 .then(() => downloadFilesAsync(cred, ["target-strings.json"], "target"))
                 .then(() => {
                     const files: string[] = [];
-                    pxt.appTarget.bundleddirs
-                        .filter(dir => !name || dir == "libs/" + name)
+                    nodeutil.getBundledPackagesDocs()
+                        .filter(dir => {
+                            if (!name) return true;
+                            const pkgName = /(?:.*\/)?libs\/([^\/]+)/.exec(dir);
+                            return !!pkgName && pkgName[1] == name;
+                        })
                         .forEach(dir => {
-                            const locdir = path.join(dir, "_locales");
+                            const locdir = path.join(dir, "..", "_locales");
                             if (fs.existsSync(locdir))
                                 fs.readdirSync(locdir)
                                     .filter(f => /\.json$/i.test(f))
