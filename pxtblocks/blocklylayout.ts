@@ -105,15 +105,15 @@ namespace pxt.blocks.layout {
         comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
             commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
         blocks.forEach((block, blocki) => {
-                const size = block.getHeightWidth();
-                const translate = { x: 0, y: 0 };
-                if (block.getStartHat()) {
-                    size.height += emPixels;
-                    translate.y += emPixels;
-                }
-                extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-                    blocki, size, translate)
-            });
+            const size = block.getHeightWidth();
+            const translate = { x: 0, y: 0 };
+            if (block.getStartHat()) {
+                size.height += emPixels;
+                translate.y += emPixels;
+            }
+            extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
+                blocki, size, translate)
+        });
         return div;
     }
 
@@ -168,7 +168,10 @@ namespace pxt.blocks.layout {
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
                 return toPngAsyncInternal(sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml);
-            });
+            }).catch(e => {
+                pxt.reportException(e);
+                return undefined;
+            })
     }
 
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
