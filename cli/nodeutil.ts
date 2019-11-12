@@ -506,23 +506,57 @@ export function resolveMd(root: string, pathname: string, md?: string): string {
 
     const dirs = [
         path.join(root, "/node_modules/pxt-core/common-docs"),
-    ]
-    lastResolveMdDirs = dirs
-    for (const pkg of pxt.appTarget.bundleddirs) {
-        let d = path.join(pkg, "docs");
-        if (!path.isAbsolute(d)) d = path.join(root, d);
-        dirs.push(d)
+        ...getBundledPackages()
+    ];
 
-        const cfg = readPkgConfig(path.join(d, ".."))
-        for (const add of cfg.additionalFilePaths)
-            dirs.push(path.join(d, "..", add, "docs"))
-    }
     for (const d of dirs) {
         const template = tryRead(path.join(d, pathname))
         if (template)
             return pxt.docs.augmentDocs(template, targetMd)
     }
     return undefined;
+}
+
+export function getBundledPackages(): string[] {
+    const handledDirectories = {};
+    const docFolders: string[] = [];
+
+    for (const bundledDir of pxt.appTarget.bundleddirs || []) {
+        getPackageDocs(bundledDir, docFolders, handledDirectories);
+    }
+
+    return docFolders;
+
+    function getPackageDocs(dir: string, folders: string[], resolvedDirs: pxt.Map<boolean>) {
+        if (resolvedDirs[dir])
+            return;
+
+        resolvedDirs[dir] = true;
+
+        const jsonDir = path.join(dir, "pxt.json");
+        const pxtjson = fs.existsSync(jsonDir) && (readJson(jsonDir) as pxt.PackageConfig);
+
+        if (pxtjson) {
+            if (pxtjson.additionalFilePath) {
+                getPackageDocs(path.join(dir, pxtjson.additionalFilePath), folders, resolvedDirs);
+            }
+
+            if (pxtjson.dependencies) {
+                Object.keys(pxtjson.dependencies).forEach(dep => {
+                    const parts = /^file:(.+)$/i.exec(pxtjson.dependencies[dep]);
+                    if (parts) {
+                        getPackageDocs(path.join(dir, parts[1]), folders, resolvedDirs);
+                    }
+                });
+            }
+        }
+
+        const docsDir = path.join(dir, "docs");
+
+        if (fs.existsSync(docsDir)) {
+            folders.push(docsDir);
+        }
+    }
 }
 
 export function lazyDependencies(): pxt.Map<string> {

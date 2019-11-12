@@ -2210,11 +2210,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
         docFolders.push("node_modules/pxt-common-packages/docs");
     }
 
-    const handledDirectories = {}
-    for (const bundledDir of pxt.appTarget.bundleddirs || []) {
-        getPackageDocs(bundledDir, docFolders, handledDirectories);
-    }
-
+    docFolders.push(...nodeutil.getBundledPackages());
     docFolders.push("docs");
 
     for (const docFolder of docFolders) {
@@ -2267,37 +2263,6 @@ function renderDocs(builtPackaged: string, localDir: string) {
         pxt.log(`All docs written from ${docFolder}.`);
     }
     pxt.log(`All docs written.`);
-
-    function getPackageDocs(dir: string, folders: string[], resolvedDirs: Map<boolean>) {
-        if (resolvedDirs[dir])
-            return;
-
-        resolvedDirs[dir] = true;
-
-        const jsonDir = path.join(dir, "pxt.json");
-        const pxtjson = fs.existsSync(jsonDir) && (nodeutil.readJson(jsonDir) as pxt.PackageConfig);
-
-        if (pxtjson) {
-            if (pxtjson.additionalFilePath) {
-                getPackageDocs(path.join(dir, pxtjson.additionalFilePath), folders, resolvedDirs);
-            }
-
-            if (pxtjson.dependencies) {
-                Object.keys(pxtjson.dependencies).forEach(dep => {
-                    const parts = /^file:(.+)$/i.exec(pxtjson.dependencies[dep]);
-                    if (parts) {
-                        getPackageDocs(path.join(dir, parts[1]), folders, resolvedDirs);
-                    }
-                });
-            }
-        }
-
-        const docsDir = path.join(dir, "docs");
-
-        if (fs.existsSync(docsDir)) {
-            folders.push(docsDir);
-        }
-    }
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
