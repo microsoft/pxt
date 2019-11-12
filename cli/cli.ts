@@ -1962,7 +1962,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     let builtInfo: pxt.Map<pxt.PackageApiInfo> = {};
 
-    if (fs.existsSync(apiInfoPath)) {
+    if (!pxt.appTarget.appTheme.disableAPICache && fs.existsSync(apiInfoPath)) {
         builtInfo = nodeutil.readJson(apiInfoPath);
     }
 
@@ -3210,7 +3210,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
             else {
                 pxt.debug("  skip native build of non-project")
 
-                if (cachedSHA !== sha) {
+                if (cachedSHA !== sha && !pxt.appTarget.appTheme.disableAPICache) {
                     pxt.log(`Updating cached API info for ${opts.name}`);
                     const res = pxtc.compile(opts);
                     api = pxtc.getApiInfo(res.ast, opts.jres);
@@ -3224,7 +3224,7 @@ function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise
                 if (!res.success) U.userError("Compiler test failed")
                 simulatorCoverage(res, opts)
 
-                if (cachedSHA !== sha) {
+                if (cachedSHA !== sha && !pxt.appTarget.appTheme.disableAPICache) {
                     pxt.log(`Updating cached API info for ${opts.name}`);
                     api = pxtc.getApiInfo(res.ast, opts.jres);
                 }
