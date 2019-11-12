@@ -30,14 +30,14 @@ export class DomObject {
         return criteria;
     }
 
-    async backNavigation(){
-        let navigation = driver.navigate();
-        return await navigation.back();
+    async backNavigation() {
+        let navigation = await driver.navigate();
+        return navigation.back();
 
     }
-    async toUrlNavigation(url){
-        let navigation = driver.navigate();
-        return await navigation.to(url);
+    async toUrlNavigation(url) {
+        let navigation = await driver.navigate();
+        return navigation.to(url);
 
     }
 
@@ -86,13 +86,16 @@ export class DomObject {
         return true;
     }
 
-    async switchToWindow() {
+    async closeCurrentWindow() {
         let handles = await driver.getAllWindowHandles();
-        await driver.switchTo().window(handles[1]);
         await driver.close();
         await driver.switchTo().window(handles[0]);
-
         return true;
+    }
+
+    async switchToNewWindow() {
+        let handles = await driver.getAllWindowHandles();
+        return driver.switchTo().window(handles[1]);
     }
 
 
@@ -129,7 +132,7 @@ export class DomObject {
 
         } else {
             element.sendKeys(keys);
-            
+
         }
     }
 
