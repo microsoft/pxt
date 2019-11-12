@@ -43,8 +43,12 @@ function lookup(id: string) {
     return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
 }
 
-export function gitsha(data: string) {
-    return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
+export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
+    if (encoding == "base64") {
+        const d = atob(data);
+        return (sha1("blob " + d.length + "\u0000" + d) + "")
+    } else
+        return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
 export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
@@ -518,8 +522,14 @@ export interface CommitOptions {
     message?: string;
     createTag?: string;
     filenamesToCommit?: string[];
+    // render blocks to png
+    blocksScreenshotAsync?: () => Promise<string>;
+    // render blocks diff to png
+    blocksDiffScreenshotAsync?: () => Promise<string>;
 }
 
+const BLOCKS_PREVIEW_PATH = ".makecode/blocks.png";
+const BLOCKSDIFF_PREVIEW_PATH = ".makecode/blocksdiff.png";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await ensureGitHubTokenAsync();
 
@@ -535,37 +545,34 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         tree: []
     }
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
-    for (let path of filenames) {
-        if (path == GIT_JSON || path == pxt.SIMSTATE_JSON || path == pxt.SERIAL_EDITOR_FILE)
-            continue
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0)) {
         const fileContent = files[path];
-        let sha = gitsha(fileContent)
-        let ex = lookupFile(gitjson.commit, path)
-        if (!ex || ex.sha != sha) {
-            // look for unfinished merges
-            if (/^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(fileContent))
-                throw mergeConflictMarkerError();
-            let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
-                content: files[path],
-                encoding: "utf-8"
-            } as pxt.github.CreateBlobReq)
-            U.assert(res == sha)
-            treeUpdate.tree.push({
-                "path": path,
-                "mode": "100644",
-                "type": "blob",
-                "sha": sha,
-                "url": undefined
-            })
-        }
+        await addToTree(path, fileContent);
     }
 
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
+    let blocksScreenshotSha: string;
+    let blocksDiffSha: string;
+    if (options
+        && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        if (options.blocksScreenshotAsync) {
+            const png = await options.blocksScreenshotAsync();
+            if (png)
+                blocksScreenshotSha = await addToTree(BLOCKS_PREVIEW_PATH, png);
+        }
+        if (options.blocksDiffScreenshotAsync) {
+            const png = await options.blocksDiffScreenshotAsync();
+            if (png)
+                blocksDiffSha = await addToTree(BLOCKSDIFF_PREVIEW_PATH, png);
+        }
+    }
+
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
-        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).join(", ")),
+        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.makecode\//.test(f)).join(", ")),
         parents: [gitjson.commit.sha],
         tree: treeId
     }
@@ -578,6 +585,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
+        // if we created a block preview, add as comment
+        if (blocksDiffSha)
+            await pxt.github.postCommitComment(
+                parsed.fullName,
+                commitId,
+                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${parsed.fullName}/${commitId}/${BLOCKSDIFF_PREVIEW_PATH})`);
+
         await githubUpdateToAsync(hd, {
             repo: gitjson.repo,
             sha: newCommit,
@@ -587,6 +601,38 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (options.createTag)
             await pxt.github.createTagAsync(parsed.fullName, options.createTag, newCommit)
         return ""
+    }
+
+    async function addToTree(path: string, content: string): Promise<string> {
+        const data = {
+            content: content,
+            encoding: "utf-8"
+        } as pxt.github.CreateBlobReq;
+        const m = /^data:([^;]+);base64,/.exec(content);
+        if (m) {
+            data.encoding = "base64";
+            data.content = content.substr(m[0].length);
+        }
+        const sha = gitsha(data.content, data.encoding)
+        const ex = lookupFile(gitjson.commit, path)
+        let res: string;
+        if (!ex || ex.sha != sha) {
+            // look for unfinished merges
+            if (data.encoding == "utf-8" &&
+                /^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(data.content))
+                throw mergeConflictMarkerError();
+            res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
+            if (data.encoding == "utf-8")
+                U.assert(res == sha, `sha not matching ${res} != ${sha}`)
+            treeUpdate.tree.push({
+                "path": path,
+                "mode": "100644",
+                "type": "blob",
+                "sha": res,
+                "url": undefined
+            })
+        }
+        return res;
     }
 }
 
@@ -812,7 +858,9 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     let currFiles = await getTextAsync(hd.id);
 
     const templateFiles = pxt.template.packageFiles(name);
-    pxt.template.packageFilesFixup(templateFiles, false);
+    pxt.template.packageFilesFixup(templateFiles, {
+        repo: parsed.fullName
+    });
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
