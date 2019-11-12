@@ -1318,11 +1318,13 @@ namespace ts.pxtc.service {
             let shadowSymbol = getShadowSymbol(name)
             if (shadowSymbol) {
                 let tsSymbol = getTsSymbolFromPxtSymbol(shadowSymbol, param)
-                let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
-                if (shadowType) {
-                    let shadowDef = getDefaultValueOfType(shadowType)
-                    if (shadowDef) {
-                        return shadowDef
+                if (tsSymbol) {
+                    let shadowType = checker.getTypeOfSymbolAtLocation(tsSymbol, param)
+                    if (shadowType) {
+                        let shadowDef = getDefaultValueOfType(shadowType)
+                        if (shadowDef) {
+                            return shadowDef
+                        }
                     }
                 }
             }

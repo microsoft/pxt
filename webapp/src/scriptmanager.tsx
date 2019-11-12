@@ -182,7 +182,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     // Set the name in the pxt.json (config)
                     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
                     cfg.name = clonedHeader.name
-                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     return clonedHeader;
                 })
                 .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))

@@ -66,7 +66,7 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         return <div key="githubeditorbtn" role="button" className={`ui icon button editortools-btn editortools-github-btn`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            {modified ? <i className="up arrow icon" /> : undefined}
+            {modified ? <i className="long arrow alternate up icon" /> : undefined}
         </div>;
     }
 }
