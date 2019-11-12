@@ -64,7 +64,7 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                                 .then(() => {
                                     return Promise.all(
                                         nodeutil.getBundledPackagesDocs()
-                                            .map(pkgDir => uploadDocsTranslationsAsync(pkgDir, crowdinDir, cred.branch, cred.prj, cred.key))
+                                            .map(docsDir => uploadDocsTranslationsAsync(docsDir, crowdinDir, cred.branch, cred.prj, cred.key))
                                     ).then(() => {
                                         pxt.log("docs uploaded");
                                     });
@@ -115,8 +115,8 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
 
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
-    nodeutil.getBundledPackagesDocs().forEach(dir => {
-        const locdir = path.join(dir, "..", "_locales");
+    nodeutil.getBundledPackagesDocs().forEach(docsDir => {
+        const locdir = path.join(docsDir, "..", "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
                 .filter(f => /strings\.json$/i.test(f))
@@ -154,8 +154,8 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                             const pkgName = /(?:.*\/)?libs\/([^\/]+)/.exec(dir);
                             return !!pkgName && pkgName[1] == name;
                         })
-                        .forEach(dir => {
-                            const locdir = path.join(dir, "..", "_locales");
+                        .forEach(docsDir => {
+                            const locdir = path.join(docsDir, "..", "_locales");
                             if (fs.existsSync(locdir))
                                 fs.readdirSync(locdir)
                                     .filter(f => /\.json$/i.test(f))
