@@ -522,9 +522,14 @@ export interface CommitOptions {
     message?: string;
     createTag?: string;
     filenamesToCommit?: string[];
+    // render blocks to png
     blocksScreenshotAsync?: () => Promise<string>;
+    // render blocks diff to png
+    blocksDiffScreenshotAsync?: () => Promise<string>;
 }
 
+const BLOCKS_PREVIEW_PATH = ".makecode/blocks.png";
+const BLOCKSDIFF_PREVIEW_PATH = ".makecode/blocksdiff.png";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await ensureGitHubTokenAsync();
 
@@ -549,12 +554,20 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
-    const blocksPreviewPath = ".makecode/blocks.png";
     let blocksScreenshotSha: string;
-    if (options && options.blocksScreenshotAsync && treeUpdate.tree.find(e => e.path == "main.blocks")) {
-        const png = await options.blocksScreenshotAsync();
-        if (png)
-            blocksScreenshotSha = await addToTree(blocksPreviewPath, png);
+    let blocksDiffSha: string;
+    if (options
+        && treeUpdate.tree.find(e => e.path == "main.blocks")) {
+        if (options.blocksScreenshotAsync) {
+            const png = await options.blocksScreenshotAsync();
+            if (png)
+                blocksScreenshotSha = await addToTree(BLOCKS_PREVIEW_PATH, png);
+        }
+        if (options.blocksDiffScreenshotAsync) {
+            const png = await options.blocksDiffScreenshotAsync();
+            if (png)
+                blocksDiffSha = await addToTree(BLOCKSDIFF_PREVIEW_PATH, png);
+        }
     }
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
@@ -573,11 +586,11 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         return commitId
     } else {
         // if we created a block preview, add as comment
-        if (blocksScreenshotSha)
+        if (blocksDiffSha)
             await pxt.github.postCommitComment(
                 parsed.fullName,
                 commitId,
-                `![${lf("Snapshot")}](https://raw.githubusercontent.com/${parsed.fullName}/${commitId}/${blocksPreviewPath})`);
+                `![${lf("Difference between blocks")}](https://raw.githubusercontent.com/${parsed.fullName}/${commitId}/${BLOCKSDIFF_PREVIEW_PATH})`);
 
         await githubUpdateToAsync(hd, {
             repo: gitjson.repo,

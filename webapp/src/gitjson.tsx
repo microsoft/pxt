@@ -361,7 +361,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const repo = header.githubId;
         let commitId = await workspace.commitAsync(header, {
             message: this.state.description,
-            blocksScreenshotAsync: () => parent.blocksScreenshotAsync()
+            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(),
+            blocksDiffScreenshotAsync: () => {
+                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
+                if (diff && diff.ws)
+                    return pxt.blocks.layout.toPngAsync(diff.ws);
+                return Promise.resolve(undefined);
+            }
         })
         if (commitId) {
             // merge failure; do a PR
