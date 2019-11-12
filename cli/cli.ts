@@ -2236,20 +2236,20 @@ function buildCommonSimAsync() {
 }
 
 function renderDocs(builtPackaged: string, localDir: string) {
-    let dst = path.resolve(path.join(builtPackaged, localDir))
+    const dst = path.resolve(path.join(builtPackaged, localDir))
 
     nodeutil.cpR("node_modules/pxt-core/docfiles", path.join(dst, "/docfiles"))
     if (fs.existsSync("docfiles"))
         nodeutil.cpR("docfiles", dst + "/docfiles")
 
-    let webpath = localDir
+    const webpath = localDir
     let docsTemplate = server.expandDocFileTemplate("docs.html")
     docsTemplate = U.replaceAll(docsTemplate, "/cdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/doccdn/", webpath)
     docsTemplate = U.replaceAll(docsTemplate, "/docfiles/", webpath + "docfiles/")
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
-    const dirs: Map<boolean> = {}
+    const validatedDirs: Map<boolean> = {}
 
     const docFolders = ["node_modules/pxt-core/common-docs"];
 
@@ -2257,85 +2257,59 @@ function renderDocs(builtPackaged: string, localDir: string) {
         docFolders.push("node_modules/pxt-common-packages/docs");
     }
 
-    const handledDirectories = {}
-    for (const bundledDir of pxt.appTarget.bundleddirs || []) {
-        getPackageDocs(bundledDir, docFolders, handledDirectories);
-    }
-
+    docFolders.push(...nodeutil.getBundledPackagesDocs());
     docFolders.push("docs");
 
-    for (let docFolder of docFolders) {
-        for (let f of nodeutil.allFiles(docFolder, 8)) {
-            let origF = f
+    for (const docFolder of docFolders) {
+        for (const f of nodeutil.allFiles(docFolder, 8)) {
             pxt.log(`rendering ${f}`)
-            f = "docs" + f.slice(docFolder.length)
-            let dd = path.join(dst, f)
-            let dir = path.dirname(dd)
-            if (!U.lookup(dirs, dir)) {
-                nodeutil.mkdirP(dir)
-                dirs[dir] = true
+            const pathUnderDocs = f.slice(docFolder.length + 1);
+            let outputFile = path.join(dst, "docs", pathUnderDocs);
+
+            const outputDir = path.dirname(outputFile);
+            if (!validatedDirs[outputDir]) {
+                nodeutil.mkdirP(outputDir);
+                validatedDirs[outputDir] = true;
             }
-            let buf = fs.readFileSync(origF)
+
+            let buf = fs.readFileSync(f);
             if (/\.(md|html)$/.test(f)) {
-                let str = buf.toString("utf8")
-                let html = ""
+                const fileData = buf.toString("utf8");
+                let html = "";
                 if (U.endsWith(f, ".md")) {
-                    str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                    const md = nodeutil.resolveMd(
+                        ".",
+                        pathUnderDocs.slice(0, -3),
+                        fileData
+                    );
                     // patch any /static/... url to /docs/static/...
-                    str = str.replace(/\"\/static\//g, `"/docs/static/`);
-                    nodeutil.writeFileSync(dd, str, { encoding: "utf8" });
+                    const patchedMd = md.replace(/\"\/static\//g, `"/docs/static/`);
+                    nodeutil.writeFileSync(outputFile, patchedMd, { encoding: "utf8" });
 
                     html = pxt.docs.renderMarkdown({
                         template: docsTemplate,
-                        markdown: str,
+                        markdown: patchedMd,
                         theme: pxt.appTarget.appTheme,
-                        filepath: f,
+                        filepath: path.join("docs", pathUnderDocs),
                     });
+
+                    // replace .md with .html for rendered page drop
+                    outputFile = outputFile.slice(0, -3) + ".html";
+                } else {
+                    html = server.expandHtml(fileData);
                 }
-                else
-                    html = server.expandHtml(str)
+
                 html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
                     return beg + ` href="${webpath}docs${url}.html"`
-                })
-                buf = Buffer.from(html, "utf8")
-                dd = dd.slice(0, dd.length - 3) + ".html"
+                });
+                buf = Buffer.from(html, "utf8");
             }
-            nodeutil.writeFileSync(dd, buf)
+
+            nodeutil.writeFileSync(outputFile, buf)
         }
         pxt.log(`All docs written from ${docFolder}.`);
     }
     pxt.log(`All docs written.`);
-
-    function getPackageDocs(dir: string, folders: string[], resolvedDirs: Map<boolean>) {
-        if (resolvedDirs[dir])
-            return;
-
-        resolvedDirs[dir] = true;
-
-        const jsonDir = path.join(dir, "pxt.json");
-        const pxtjson = fs.existsSync(jsonDir) && (nodeutil.readJson(jsonDir) as pxt.PackageConfig);
-
-        if (pxtjson) {
-            if (pxtjson.additionalFilePath) {
-                getPackageDocs(path.join(dir, pxtjson.additionalFilePath), folders, resolvedDirs);
-            }
-
-            if (pxtjson.dependencies) {
-                Object.keys(pxtjson.dependencies).forEach(dep => {
-                    const parts = /^file:(.+)$/i.exec(pxtjson.dependencies[dep]);
-                    if (parts) {
-                        getPackageDocs(path.join(dir, parts[1]), folders, resolvedDirs);
-                    }
-                });
-            }
-        }
-
-        const docsDir = path.join(dir, "docs");
-
-        if (fs.existsSync(docsDir)) {
-            folders.push(docsDir);
-        }
-    }
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
