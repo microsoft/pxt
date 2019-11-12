@@ -547,7 +547,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
-    const blocksPreviewPath = "blocks.png";
+    const blocksPreviewPath = ".makecode/blocks.png";
     let blocksScreenshotSha: string;
     if (options && options.blocksScreenshotAsync && treeUpdate.tree.find(e => e.path == "main.blocks")) {
         const png = await options.blocksScreenshotAsync();
