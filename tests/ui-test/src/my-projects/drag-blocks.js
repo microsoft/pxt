@@ -80,7 +80,7 @@ class BlocklyToolBox extends DomObject {
 
                 await this.catchScreenShot('LaunchInFullScreen');
 
-                await this.click(dragBlocks.exitFullScreen);
+                await this.click(dragBlocks.exitFullScreen, dragBlocks.microbitLogo);
         }
     }
 }
