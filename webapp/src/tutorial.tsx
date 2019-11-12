@@ -521,6 +521,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
         const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
+        const unplugged = tutorialStepInfo[tutorialStep].unplugged;
 
         let tutorialAriaLabel = '',
             tutorialHintTooltip = '';
@@ -531,7 +532,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         let hintOnClick = this.hintOnClick;
         // double-click issue on edge when closing hint from tutorial card click
-        if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && !this.state.showHintTooltip && !tutorialStepInfo[tutorialStep].unplugged) {
+        if ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && !this.state.showHintTooltip && !unplugged) {
             hintOnClick = null;
         }
 
@@ -549,7 +550,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={hasHint ? hintOnClick : undefined} onKeyDown={hasHint ? sui.fireClickOnEnter : undefined}>
                         <div className="content">
-                            <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
+                            {!unplugged && <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />}
                         </div>
                     </div>
                     {this.state.showSeeMore && !tutorialStepExpanded && <sui.Button className="fluid compact lightgrey" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} />}
