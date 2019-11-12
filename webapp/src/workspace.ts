@@ -547,10 +547,12 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
+    const blocksPreviewPath = "blocks.png";
+    let blocksScreenshotSha: string;
     if (options && options.blocksScreenshotAsync && treeUpdate.tree.find(e => e.path == "main.blocks")) {
         const png = await options.blocksScreenshotAsync();
         if (png)
-            await addToTree("blocks.png", png);
+            blocksScreenshotSha = await addToTree(blocksPreviewPath, png);
     }
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
@@ -568,6 +570,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (newCommit == null) {
         return commitId
     } else {
+        // if we created a block preview, add as comment
+        if (blocksScreenshotSha)
+            await pxt.github.postCommitComment(
+                parsed.fullName,
+                commitId,
+                `![${lf("Snapshot")}](https://raw.githubusercontent.com/${parsed.fullName}/${commitId}/${blocksPreviewPath})`);
+
         await githubUpdateToAsync(hd, {
             repo: gitjson.repo,
             sha: newCommit,
