@@ -14,7 +14,7 @@ exports.shareTheProject = {
     shareName: '#projectNameInput',
     publishButton: '.labeled.primary',
     copyButton: '.field i.icon',
-    projectUrl:'#projectUri',
+    projectUrl: '#projectUri',
     closeButtonOfSharePage: '.closeIcon'
 }
 
@@ -39,7 +39,9 @@ exports.helpOfProject = {
     iframeOfSideDocs: '#sidedocsframe',
     titleOfBlocksPage: '#blocks-language',
     titleOfReferencePage: '#reference',
-    titleOfJavaScriptPage: '#javascript'
+    titleOfJavaScriptPage: '#javascript',
+    headerTitleOfSupport:'h2.hide-in-mobile',
+    headerTitleOfBuy:'.alpha'
 }
 
 exports.moreOfProject = {
@@ -102,27 +104,72 @@ exports.dragBlocks = {
     collapseButton: '[id="sidedocstoggle"]',
     deleteInsertBlock: '.goog-menuitem:nth-child(3)',
     fullScreenButton: '.fullscreen-button',
-    exitFullScreen: '[title="Exit fullscreen mode"]'
+    exitFullScreen: '[title="Exit fullscreen mode"]',
+    microbitLogo:'[aria-label="micro:bit Logo"]'
 }
 
 exports.tutorials = {
-    flashingHeart : '[aria-label="Flashing Heart"]',
-    nameTag:'[aria-label="Name Tag"]',
-    smileyButtons:'[aria-label="Smiley Buttons"]',
-    dice:'[aria-label="Dice"]',
-    loveMeter:'[aria-label="Love Meter"]',
-    microChat:'[aria-label="Micro Chat"]',
-    startTutorialButton : '.actions button',
+    flashingHeart: '[aria-label="Flashing Heart"]',
+    nameTag: '[aria-label="Name Tag"]',
+    smileyButtons: '[aria-label="Smiley Buttons"]',
+    dice: '[aria-label="Dice"]',
+    loveMeter: '[aria-label="Love Meter"]',
+    microChat: '[aria-label="Micro Chat"]',
+    //-----------------------------------------------------------------
+    rockPaperScissors: '[aria-label="Rock Paper Scissors"]',
+    coinFlipper: '[aria-label="Coin Flipper"]',
+    reactionTime: '[aria-label="Reaction Time"]',
+    magicButtonTrick: '[aria-label="Magic Button Trick"]',
+    snapTheDot: '[aria-label="Snap the dot"]',
+    salute: '[aria-label="Salute!"]',
+    karelTheLed: '[aria-label="Karel the LED"]',
+    crashyBird: '[aria-label="Crashy bird"]',
+    //-----------------------------------------------------------------
+    multiDice:'[aria-label="Multi Dice"]',
+    moodRadio:'[aria-label="Mood Radio"]',
+    telePotato:'[aria-label="Tele-potato"]',
+    fireFlies:'[aria-label="Fireflies"]',
+    hotOrCold:'[aria-label="Hot or Cold"]',
+    redLightGreenLight:'[aria-label="Red Light Green Light"]',
+    votingMachine:'[aria-label="Voting Machine"]',
+    rockPaperScissorsTeams:'[aria-label="Rock Paper Scissors Teams"]',
+    microCoin:'[aria-label="Micro:Coin"]',
+    infection:'[aria-label="Infection"]',
+    bestFriends:'[aria-label="Best Friends"]',
+    //-----------------------------------------------------------------
+    startTutorial: '.actions button',
+    showInstructions: '.actions .positive',
+    titleOfReactionTime: '#reaction-time',
+    titleOfMagic: '#magic-button-trick',
+    titleOfSalute: '#salute-',
+    titleOfKarelTheLed:'#karel-the-led',
+    titleOfCrashyBird:'#crashy-bird',
+    titleOfMoodRadio:'#mood-radio',
+    titleOfTelePotato:'#tele-potato',
+    titleOfFireflies:'#fireflies',
+    titleOfHotOrCold:'#hot-or-cold',
+    titleOfRedLightGreenLight:'#red-light-green-light',
+    titleOfVotingMachine:'#voting-machine',
+    titleOfRockPaperScissorsTeams:'#rock-paper-scissors-teams',
+    titleOfMicroCoin:'#micro-coin',
+    titleOfInfection:'#infection',
+    titleOfBestFriends:'#best-friends',
+    playButton: '.video',
+    videoPlay: '[aria-label="Play"]',
+    videoTitle: '.yt-uix-sessionlink',
     closeButton: '.closeIcon',
     alertContent: '.scrolling.content p:nth-child(1)',
-    headerTitle:'.header-title',
-    okButton:'.actions button.green',
-    goBackButton:'.prevbutton',
-    goNextButton:'.nextbutton',
-    selectedLabel:'.blue.selected',
-    finishButton:'[aria-label="Finish the tutorial."]',
-    microbitLogo:'[aria-label="micro:bit Logo"]',
-    prograss:'[aria-label="My Projects"] .carouselitem:nth-child(2)',
-    projectName:'#fileNameInput2'
+    headerTitle: '.header-title',
+    okButton: '.actions button.green',
+    goBackButton: '.prevbutton',
+    goNextButton: '.buttons .nextbutton',
+    selectedLabel: 'a.blue.selected',
+    finishButton: '[aria-label="Finish the tutorial."]',
+    microbitLogo: '[aria-label="micro:bit Logo"]',
+    prograss: '[aria-label="My Projects"] .carouselitem:nth-child(2)',
+    projectName: '#fileNameInput2',
+    seeMoreOfTutorials: '[aria-label="Tutorials"] [aria-label="See more"]',
+    seeMoreOfGames: '[aria-label="Games"] [aria-label="See more"]',
+    //-----------------------------------------------------------------
 
 }
