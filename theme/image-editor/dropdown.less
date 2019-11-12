@@ -1,0 +1,47 @@
+.image-editor-dropdown-outer {
+    position: relative;
+    margin-left: 0.25rem;
+}
+
+.image-editor-dropdown {
+    width: calc(100% - 0.5rem);
+    text-align: center;
+    line-height: 2rem;
+    height: 1.75rem;
+    width: 100%;
+
+    border: none;
+    border-bottom: solid 1px var(--sidebar-icon-inactive-color);
+    background: none;;
+
+    transition: color 0.1s;
+    color: var(--sidebar-icon-active-color);
+
+    cursor: pointer;
+    user-select: none;
+}
+
+.image-editor-dropdown-outer > ul {
+    position: absolute;
+    top: 1rem;
+    background-color: #3d3d3d;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    list-style: none;
+    width: calc(100% - 0.5rem);
+    z-index: 1;
+}
+
+.image-editor-dropdown-outer > ul > li {
+    color: var(--sidebar-icon-inactive-color);
+    font-family: sans-serif;
+    transition: color 0.1s;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.25rem 0;
+}
+
+.image-editor-dropdown-outer > ul > li.selected, .image-editor-dropdown-outer > ul > li:hover {
+    color: var(--sidebar-icon-active-color);
+}
+

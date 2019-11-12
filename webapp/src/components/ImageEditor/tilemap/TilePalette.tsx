@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState } from '../store/imageReducer';
 import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
+import { Dropdown, DropdownOption } from '../Dropdown';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -21,6 +22,22 @@ export interface TilePaletteProps {
  * Chrome on MacOS should be fixed in the next release: https://bugs.chromium.org/p/chromium/issues/detail?id=134040
  */
 const SCALE = ((pxt.BrowserUtils.isMac() && pxt.BrowserUtils.isChrome()) || pxt.BrowserUtils.isEdge()) ? 25 : 1;
+
+const options: DropdownOption[] = [
+    {
+        id: "grass",
+        text: "Grass Tiles"
+    }, {
+        id: "water",
+        text: "Water Tiles"
+    }, {
+        id: "cave",
+        text: "Cave Tiles"
+    }, {
+        id: "dungeon",
+        text: "Dungeon Tiles"
+    }
+]
 
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected handlers: ((ev: React.MouseEvent<HTMLDivElement>) => void)[] = [];
@@ -62,6 +79,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     </rect>
                 </g>
             </svg>
+            <Dropdown onChange={this.dropdownHandler} options={options} />
             <div className="image-editor-tile-buttons-outer">
                 <div className="image-editor-tile-buttons" onContextMenu={this.preventContextMenu}>
                     { tileset.tiles.map((t, i) =>
@@ -90,6 +108,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         }
 
         return this.handlers[index];
+    }
+
+    protected dropdownHandler = (option: DropdownOption, index: number) => {
+
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
