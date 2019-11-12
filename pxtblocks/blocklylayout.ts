@@ -159,15 +159,15 @@ namespace pxt.blocks.layout {
             && !BrowserUtils.isUwpEdge(); // TODO figure out why screenshots are not working in UWP; disable for now
     }
 
-    export function screenshotAsync(ws: Blockly.WorkspaceSvg): Promise<string> {
-        return toPngAsync(ws);
+    export function screenshotAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number): Promise<string> {
+        return toPngAsync(ws, pixelDensity);
     }
 
-    export function toPngAsync(ws: Blockly.WorkspaceSvg): Promise<string> {
+    export function toPngAsync(ws: Blockly.WorkspaceSvg, pixelDensity?: number): Promise<string> {
         return toSvgAsync(ws)
             .then(sg => {
                 if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, 4, sg.xml);
+                return toPngAsyncInternal(sg.width, sg.height, (pixelDensity | 0) || 4, sg.xml);
             });
     }
 

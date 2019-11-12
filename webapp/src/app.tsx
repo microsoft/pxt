@@ -2747,9 +2747,10 @@ export class ProjectView
             });
     }
 
-    blocksScreenshotAsync(): Promise<string> {
-        if (this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
-            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor)
+    blocksScreenshotAsync(pixelDensity?: number): Promise<string> {
+        if (pxt.blocks.layout.screenshotEnabled()
+            && this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
+            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity)
         return Promise.resolve(undefined);
     }
 

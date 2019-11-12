@@ -572,7 +572,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
-        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).join(", ")),
+        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.makecode\//.test(f)).join(", ")),
         parents: [gitjson.commit.sha],
         tree: treeId
     }
@@ -858,7 +858,9 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     let currFiles = await getTextAsync(hd.id);
 
     const templateFiles = pxt.template.packageFiles(name);
-    pxt.template.packageFilesFixup(templateFiles, false);
+    pxt.template.packageFilesFixup(templateFiles, {
+        repo: parsed.fullName
+    });
 
     if (forceTemplateFiles) {
         U.jsonMergeFrom(currFiles, templateFiles);
