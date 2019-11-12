@@ -10,7 +10,13 @@ class GetHelpList extends DomObject {
 
         await this.click(helpOfProject.helpButton, helpOfProject.support);
 
-        await this.switchToWindow();
+        await this.switchToNewWindow();
+
+        let titleOfSupport = await this.getText(helpOfProject.headerTitleOfSupport);
+        assert.equal(titleOfSupport, 'How can we help you today?');
+        console.log(`The title of support page is "${titleOfSupport}"`);
+
+        await this.closeCurrentWindow();
 
         await this.click(helpOfProject.helpButton, helpOfProject.reference);
 
@@ -26,9 +32,15 @@ class GetHelpList extends DomObject {
 
         await this.click(helpOfProject.openLinkButton);
 
-        await driver.sleep(2000);
+        await this.switchToNewWindow();
 
-        await this.switchToWindow();
+        let newPageTitle = await this.getText(helpOfProject.titleOfReferencePage);
+
+        assert.equal(newPageTitle, 'Reference');
+
+        console.debug(`The title of new page is: ${newPageTitle}`);
+
+        await this.closeCurrentWindow();
 
         await this.click(helpOfProject.helpButton, helpOfProject.blocks);
 
@@ -70,7 +82,16 @@ class GetHelpList extends DomObject {
 
         await this.click(helpOfProject.helpButton, helpOfProject.buy);
 
-        await this.switchToWindow();
+        await this.switchToNewWindow();
+
+        let headerOfBuyPage = await this.getText(helpOfProject.headerTitleOfBuy);
+
+        assert.equal(headerOfBuyPage, 'Where to buy the BBC micro:bit and BBC micro:bit accessories');
+
+        console.debug(`The header of buy page is: ${headerOfBuyPage}`);
+
+        await this.closeCurrentWindow();
+
     }
 
     test() {
