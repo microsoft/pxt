@@ -115,7 +115,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     handleScreenshotMessage(msg: pxt.editor.ScreenshotData) {
-        if (!msg) return;
+        const { visible } = this.state;
+
+        if (!msg || !visible) return;
 
         if (msg.event === "start") {
             switch (this.state.recordingState) {
@@ -506,11 +508,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     protected handleKeyDown = (e: KeyboardEvent) => {
+        const { visible } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const pressed = e.key.toLocaleLowerCase();
 
-        // Don't fire events if they are typing in a name
-        if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+        // Don't fire events if component is hidden or if they are typing in a name
+        if (!visible || (document.activeElement && document.activeElement.tagName === "INPUT")) return;
 
         if (targetTheme.simScreenshotKey && pressed === targetTheme.simScreenshotKey.toLocaleLowerCase()) {
             this.handleScreenshotClick();
