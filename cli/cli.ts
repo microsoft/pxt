@@ -2210,7 +2210,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
         docFolders.push("node_modules/pxt-common-packages/docs");
     }
 
-    docFolders.push(...nodeutil.getBundledPackages());
+    docFolders.push(...nodeutil.getBundledPackagesDocs());
     docFolders.push("docs");
 
     for (const docFolder of docFolders) {

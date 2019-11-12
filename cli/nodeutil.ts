@@ -506,7 +506,7 @@ export function resolveMd(root: string, pathname: string, md?: string): string {
 
     const dirs = [
         path.join(root, "/node_modules/pxt-core/common-docs"),
-        ...getBundledPackages()
+        ...getBundledPackagesDocs()
     ];
 
     for (const d of dirs) {
@@ -517,41 +517,51 @@ export function resolveMd(root: string, pathname: string, md?: string): string {
     return undefined;
 }
 
-export function getBundledPackages(): string[] {
+export function getBundledPackagesDocs(): string[] {
     const handledDirectories = {};
-    const docFolders: string[] = [];
+    const outputDocFolders: string[] = [];
 
     for (const bundledDir of pxt.appTarget.bundleddirs || []) {
-        getPackageDocs(bundledDir, docFolders, handledDirectories);
+        getPackageDocs(bundledDir, outputDocFolders, handledDirectories);
     }
 
-    return docFolders;
+    return outputDocFolders;
 
-    function getPackageDocs(dir: string, folders: string[], resolvedDirs: pxt.Map<boolean>) {
-        if (resolvedDirs[dir])
+    /**
+     * This needs to produce a topologically sorted array of the docs of `dir` and any required packages,
+     * such that any package listed as a dependency / additionalFilePath of another
+     * package is added to `folders` before the one that requires it.
+     */
+    function getPackageDocs(packageDir: string, folders: string[], resolvedDirs: pxt.Map<boolean>) {
+        if (resolvedDirs[packageDir])
             return;
+        resolvedDirs[packageDir] = true;
 
-        resolvedDirs[dir] = true;
-
-        const jsonDir = path.join(dir, "pxt.json");
+        const jsonDir = path.join(packageDir, "pxt.json");
         const pxtjson = fs.existsSync(jsonDir) && (readJson(jsonDir) as pxt.PackageConfig);
 
+        // before adding this package, include the docs of any package this one depends upon.
         if (pxtjson) {
+            /**
+             * include the package this extends from first;
+             * that may have dependencies that overlap with this one or that will later be
+             * overwritten by this one
+             **/
             if (pxtjson.additionalFilePath) {
-                getPackageDocs(path.join(dir, pxtjson.additionalFilePath), folders, resolvedDirs);
+                getPackageDocs(path.join(packageDir, pxtjson.additionalFilePath), folders, resolvedDirs);
             }
 
             if (pxtjson.dependencies) {
                 Object.keys(pxtjson.dependencies).forEach(dep => {
                     const parts = /^file:(.+)$/i.exec(pxtjson.dependencies[dep]);
                     if (parts) {
-                        getPackageDocs(path.join(dir, parts[1]), folders, resolvedDirs);
+                        getPackageDocs(path.join(packageDir, parts[1]), folders, resolvedDirs);
                     }
                 });
             }
         }
 
-        const docsDir = path.join(dir, "docs");
+        const docsDir = path.join(packageDir, "docs");
 
         if (fs.existsSync(docsDir)) {
             folders.push(docsDir);
