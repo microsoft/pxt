@@ -1320,7 +1320,7 @@ export class ProjectView
         return decompilePromise.then(() => {
             // Delete from header after adding template, so that we don't
             // overwrite the user code if the tutorial is re-opened
-            workspace.saveAsync(header).then(() => { delete header.tutorial.templateCode })
+            return workspace.saveAsync(header).then(() => { delete header.tutorial.templateCode })
         });
     }
 
