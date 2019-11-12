@@ -7,17 +7,18 @@ class NameTag extends DomObject {
     async nameTag() {
 
         await this.click(tutorials.nameTag, tutorials.closeButton,
-            tutorials.nameTag, tutorials.startTutorialButton);
+            tutorials.nameTag, tutorials.startTutorial);
 
         let headerTitle = await this.getText(tutorials.headerTitle);
         assert.equal(headerTitle, 'Name Tag');
         console.debug(`The title of the current window is "${headerTitle}"`);
-
+       
         await this.click(tutorials.okButton);
 
         for (let i = 1; i < 4; i++) {
 
             await this.click(tutorials.goNextButton);
+            
             let cssValueOfSelectLabel = await this.getAttribute(tutorials.selectedLabel, 'class');
             assert.equal(cssValueOfSelectLabel, 'ui circular label blue selected ');
 
@@ -25,13 +26,12 @@ class NameTag extends DomObject {
             console.log(selectLabel);
         }
 
-        await this.click(tutorials.okButton,tutorials.finishButton, tutorials.microbitLogo);
-        await this.click(tutorials.prograss)
+        await this.click(tutorials.okButton,tutorials.finishButton);
 
         let projectName = await this.getAttribute(tutorials.projectName, 'value');
         assert.equal(projectName, 'Name Tag');
         console.debug(`The current project name is "${projectName}"`);
-
+    
         await this.click(tutorials.microbitLogo);
 
     }
