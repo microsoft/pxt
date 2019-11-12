@@ -44,9 +44,11 @@ function lookup(id: string) {
 }
 
 export function gitsha(data: string, encoding: "utf-8" | "base64" = "utf-8") {
-    if (encoding == "base64")
-        data = ts.pxtc.decodeBase64(data);
-    return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
+    if (encoding == "base64") {
+        const d = atob(data);
+        return (sha1("blob " + d.length + "\u0000" + d) + "")
+    } else
+        return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
 export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
