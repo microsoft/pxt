@@ -1915,7 +1915,9 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
         if (!attrs.jsDoc)
             delete attrs.jsDoc
         delete attrs._source
-        delete attrs.shim
+        // keep shim=ENUM_GET etc
+        if (!attrs.shim || attrs.shim.indexOf("::") > 0)
+            delete attrs.shim
         delete attrs._name
         if (isEmpty(attrs))
             attrs = undefined
