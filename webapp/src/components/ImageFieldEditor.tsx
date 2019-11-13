@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
-import { Bitmap, imageLiteralToBitmap } from './ImageEditor/store/bitmap';
 import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
 export interface ImageFieldEditorProps {
@@ -122,10 +121,10 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
     }
 
     protected initSingleFrame(value: string, options?: any) {
-        let bitmap = imageLiteralToBitmap(value);
+        let bitmap = pxt.sprite.imageLiteralToBitmap(value);
 
         if (bitmap.width === 0 || bitmap.height === 0) {
-            bitmap = new Bitmap(options.initWidth || 16, options.initHeight || 16)
+            bitmap = new pxt.sprite.Bitmap(options.initWidth || 16, options.initHeight || 16)
         }
 
         this.ref.initSingleFrame(bitmap);
@@ -138,7 +137,7 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         let frames = parseImageArrayString(frameString);
 
         if (!frames || !frames.length || frames[0].width === 0 && frames[0].height === 0) {
-            frames = [new Bitmap(options.initWidth || 16, options.initHeight || 16)];
+            frames = [new pxt.sprite.Bitmap(options.initWidth || 16, options.initHeight || 16)];
         }
 
         this.ref.initAnimation(frames, Number(intervalString));
@@ -240,7 +239,7 @@ function getBitmap(blocksInfo: pxtc.BlocksInfo, qName: string) {
         data = data.slice(4);
     }
 
-    const out = new Bitmap(w, h);
+    const out = new pxt.sprite.Bitmap(w, h);
 
     let index = 4
     if (magic === 0xe1) {
@@ -353,5 +352,5 @@ function tickImageEditorEvent(event: string) {
 
 function parseImageArrayString(str: string) {
     str = str.replace(/[\[\]]/mg, "");
-    return str.split(",").map(s => imageLiteralToBitmap(s));
+    return str.split(",").map(s => pxt.sprite.imageLiteralToBitmap(s));
 }

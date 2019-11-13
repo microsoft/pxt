@@ -265,7 +265,14 @@ function compileTsToJs(filename: string): ts.Program {
         // noLib: true,
         skipLibCheck: true
     }
-    return ts.pxtc.plainTscCompileFiles([filename], cOpts)
+    // TODO: it'd be great to include the python helper fns so we can cover
+    // more scenarios however this doesn't work easily since we use custom methods 
+    // like Array.removeAt which don't exist in vanilla JS. We'd need to provide
+    // an implementation for these tests
+    // const pyHelpers = ["pxt-python-helpers.ts"]
+    //     .map(f => path.resolve("libs", "pxt-python", f), 'utf8')
+    let files = [filename /*, ...pyHelpers*/]
+    return ts.pxtc.plainTscCompileFiles(files, cOpts)
 }
 async function compileAndRunTs(filename: string): Promise<string> {
     let prog = compileTsToJs(filename)

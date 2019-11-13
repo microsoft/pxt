@@ -2370,7 +2370,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                simulator.driver.focus()
+                if (opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
@@ -2446,6 +2446,7 @@ export class ProjectView
     toggleSimulatorFullscreen() {
         if (!this.state.fullscreen) {
             document.addEventListener('keydown', this.closeOnEscape);
+            simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
@@ -2745,6 +2746,13 @@ export class ProjectView
             .then(resp => {
                 return { python: resp };
             });
+    }
+
+    blocksScreenshotAsync(pixelDensity?: number): Promise<string> {
+        if (pxt.blocks.layout.screenshotEnabled()
+            && this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
+            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity)
+        return Promise.resolve(undefined);
     }
 
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {

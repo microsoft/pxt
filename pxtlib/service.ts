@@ -75,8 +75,8 @@ namespace ts.pxtc {
         length: number;
 
         //derived
-        line: number;
-        column: number;
+        line?: number;
+        column?: number;
         endLine?: number;
         endColumn?: number;
     }

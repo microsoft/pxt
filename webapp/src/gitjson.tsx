@@ -356,10 +356,33 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async commitCoreAsync() {
-        const { header } = this.props.parent.state;
+        const { parent } = this.props;
+        const { header } = parent.state;
         const repo = header.githubId;
+
+        // pull changes and merge; if any conflicts, bail out
+        await workspace.pullAsync(header);
+        // check if any merge markers
+        const hasConflicts = await workspace.hasMergeConflictMarkers(header);
+        if (hasConflicts) {
+            // bail out
+            // maybe needs a reload
+            await this.maybeReloadAsync();
+            core.warningNotification(lf("Merge conflicts found. Resolve them before commiting."))
+            return;
+        }
+
+        // continue with commit
         let commitId = await workspace.commitAsync(header, {
-            message: this.state.description
+            message: this.state.description,
+            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1),
+            blocksDiffScreenshotAsync: () => {
+                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
+                if (diff && diff.ws)
+                    return pxt.blocks.layout.toPngAsync(diff.ws, 1);
+                return Promise.resolve(undefined);
+            }
         })
         if (commitId) {
             // merge failure; do a PR
@@ -371,6 +394,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // has resolved the conflict in the meantime
             await workspace.pullAsync(header)
             // skip bump in this case - we don't know if it was merged
+        } else {
+            // maybe needs a reload
+            await this.maybeReloadAsync();
         }
         this.setState({ description: "" });
     }
@@ -595,7 +621,7 @@ ${content}
                         {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
-                const lnMarker = idx - 1;
+                const lnMarker = Math.min(lnA, lnB);
                 const keepLocalHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, false);
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
