@@ -1299,6 +1299,10 @@ namespace pxt.github {
         }
     }
 
+    export function hasMergeConflictMarker(content: string) {
+        return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
+    }
+
     export function testMergeDiff() {
         const r = mergeDiff3Config(`
 {
