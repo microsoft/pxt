@@ -2961,12 +2961,9 @@ export class ProjectView
         dialogs.showResetDialogAsync().done(r => {
             if (!r) return Promise.resolve();
             return Promise.resolve()
-                .then(() => {
-                    return pxt.winrt.releaseAllDevicesAsync();
-                })
-                .then(() => {
-                    return this.resetWorkspace();
-                });
+                .then(() => pxt.winrt.releaseAllDevicesAsync(), e => {})
+                .then(() => clearPersistentCachesAsync(), e => {})
+                .then(() => this.resetWorkspace())
         });
     }
 
@@ -3789,7 +3786,9 @@ function clearPersistentCachesAsync(): Promise<void> {
         pxt.BrowserUtils.clearTranslationDbAsync(),
         compiler.clearApiCachesAsync(),
         pxt.github.clearCacheAsync()
-    ]).then(() => { });
+    ]).then(() => { }, e => {
+        pxt.reportException(e);
+    });
 }
 
 // Determines whether the hash argument affects the starting project
