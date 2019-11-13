@@ -513,10 +513,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let deletedFiles: string[] = []
         let addedFiles: string[] = []
         if (f.name == pxt.CONFIG_NAME) {
-            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
-            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
-            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
-            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            const oldConfig = pxt.Package.parseAndValidConfig(f.baseGitContent);
+            const newConfig = pxt.Package.parseAndValidConfig(f.content);
+            if (oldConfig && newConfig) {
+                const oldCfg = pxt.allPkgFiles(oldConfig);
+                const newCfg = pxt.allPkgFiles(newConfig);
+                deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
+                addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            }
         }
         // backing .ts for .blocks/.py files
         let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];

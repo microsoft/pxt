@@ -641,7 +641,6 @@ interface UpdateOptions {
     saveTag?: string;
     justJSON?: boolean;
     tryDiff3?: boolean;
-    importing?: boolean;
 }
 
 function mergeError() {
@@ -733,17 +732,19 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    const cfg = pxt.Package.parseAndValidConfig(cfgText);
-    if (!cfg && !options.importing)
-        U.userError(lf("Invalid pxt.json file."));
+    let cfg = pxt.Package.parseAndValidConfig(cfgText);
+    if (!cfg || !cfg.files.length) {
+        if (hd) // not importing
+            U.userError(lf("Invalid pxt.json file."));
+        cfg = pxt.github.reconstructConfig(commit);
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+    }
 
-    if (cfg)
-        for (const fn of pxt.allPkgFiles(cfg).slice(1))
-            await downloadAsync(fn)
+    for (const fn of pxt.allPkgFiles(cfg).slice(1))
+        await downloadAsync(fn)
 
-    const name = (cfg && cfg.name) || parsed.fullName.replace(/[^\w\-]/g, "");
-    if (cfg && cfg.name != name) {
-        cfg.name = name
+    if (!cfg.name) {
+        cfg.name = parsed.fullName.replace(/[^\w\-]/g, "");
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
@@ -763,7 +764,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     if (!hd) {
         hd = await installAsync({
-            name: name,
+            name: cfg.name,
             githubId: repo,
             pubId: "",
             pubCurrent: false,
@@ -773,7 +774,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             targetVersion: pxt.appTarget.versions.target,
         }, files)
     } else {
-        hd.name = name
+        hd.name = cfg.name
         await saveAsync(hd, files)
     }
 
@@ -935,8 +936,12 @@ export async function importGithubAsync(id: string): Promise<Header> {
             U.userError(lf("No such repository or branch."));
         }
     }
-    const hd = await githubUpdateToAsync(null, { repo: repoid, sha, files: {}, importing: true })
-    if (isEmpty)
+    const hd = await githubUpdateToAsync(null, {
+        repo: repoid,
+        sha,
+        files: {}
+    })
+    if (hd && isEmpty)
         await initializeGithubRepoAsync(hd, repoid, true);
     return hd
 }
