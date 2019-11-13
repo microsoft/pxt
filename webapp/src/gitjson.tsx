@@ -707,7 +707,7 @@ ${content}
         } else if (f.name == pxt.CONFIG_NAME) {
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
-                const prev = workspace.lookupFile(gs.commit, d)
+                const prev = pxt.github.lookupFile(gs.commit, d)
                 pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {
