@@ -1919,8 +1919,9 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
         delete attrs._name
         if (isEmpty(attrs))
             attrs = undefined
+        const kind = sym.snippet !== undefined ? -sym.kind : sym.kind
         return {
-            kind: sym.kind == 7 ? undefined : sym.kind,
+            kind: kind == 7 ? undefined : kind,
             retType: sym.retType == "void" ? undefined : sym.retType,
             attributes: attrs,
             parameters: sym.parameters ? sym.parameters.map(p => ({
