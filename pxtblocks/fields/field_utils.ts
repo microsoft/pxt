@@ -27,7 +27,7 @@ namespace pxtblockly {
      * Converts a bitmap into a square image suitable for display. In light mode the preview
      * is drawn with no transparency (alpha is filled with background color)
      */
-    export function bitmapToImageURI(frame: pxtsprite.Bitmap, sideLength: number, lightMode: boolean) {
+    export function bitmapToImageURI(frame: pxt.sprite.Bitmap, sideLength: number, lightMode: boolean) {
         const colors = pxt.appTarget.runtime.palette.slice(1);
         const canvas = document.createElement("canvas");
         canvas.width = sideLength;
