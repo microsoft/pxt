@@ -368,6 +368,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // bail out
             // maybe needs a reload
             await this.maybeReloadAsync();
+            core.warningNotification(lf("Merge conflicts found. Resolve them before commiting."))
             return;
         }
 
