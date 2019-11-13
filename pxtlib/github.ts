@@ -765,7 +765,7 @@ namespace pxt.github {
         return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
     }
 
-    export function noramlizeRepoId(id: string) {
+    export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
         gid.tag = gid.tag || "master";
         return stringifyRepo(gid);

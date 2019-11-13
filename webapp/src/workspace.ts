@@ -422,7 +422,7 @@ export function getPublishedScriptAsync(id: string) {
     checkSession();
     //if (scriptCache.hasOwnProperty(id)) return Promise.resolve(scriptCache[id])
     if (pxt.github.isGithubId(id))
-        id = pxt.github.noramlizeRepoId(id)
+        id = pxt.github.normalizeRepoId(id)
     let eid = encodeURIComponent(id)
     return pxt.packagesConfigAsync()
         .then(config => scriptDlQ.enqueue(id, () => scripts.getAsync(eid)
@@ -642,6 +642,7 @@ interface UpdateOptions {
     saveTag?: string;
     justJSON?: boolean;
     tryDiff3?: boolean;
+    importing?: boolean;
 }
 
 function mergeError() {
@@ -664,7 +665,7 @@ async function ensureGitHubTokenAsync() {
         U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
 
-async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
+async function githubUpdateToAsync(hd: Header, options: UpdateOptions = {}) {
     const { repo, sha, files, justJSON } = options
     const parsed = pxt.github.parseRepoId(repo)
     const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
@@ -733,25 +734,27 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
-    if (!pxt.Package.isValidConfigSyntax(cfgText))
+    const cfg = pxt.Package.parseAndValidConfig(cfgText);
+    if (!cfg && !options.importing)
         U.userError(lf("Invalid pxt.json file."));
-    const cfg = JSON.parse(cfgText) as pxt.PackageConfig
-    for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
-        await downloadAsync(fn)
-    }
 
+    if (cfg)
+        for (const fn of pxt.allPkgFiles(cfg).slice(1))
+            await downloadAsync(fn)
+
+    const name = (cfg && cfg.name) || parsed.fullName.replace(/[^\w\-]/g, "");
+    if (cfg && cfg.name != name) {
+        cfg.name = name
+        if (!justJSON)
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+    }
     if (!justJSON) {
         // if any block needs decompilation, don't allow merge error markers
         if (blocksNeedDecompilation && conflicts)
             throw mergeError()
-
         for (let k of Object.keys(files)) {
             if (k[0] != "." && !downloadedFiles[k])
                 delete files[k]
-        }
-        if (!cfg.name) {
-            cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
-            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         }
     }
 
@@ -761,7 +764,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     if (!hd) {
         hd = await installAsync({
-            name: cfg.name,
+            name: name,
             githubId: repo,
             pubId: "",
             pubCurrent: false,
@@ -771,7 +774,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
             targetVersion: pxt.appTarget.versions.target,
         }, files)
     } else {
-        hd.name = cfg.name
+        hd.name = name
         await saveAsync(hd, files)
     }
 
@@ -865,7 +868,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         U.jsonMergeFrom(currFiles, templateFiles);
     } else {
         // special handling of broken/missing/corrupted pxt.json
-        if (!pxt.Package.isValidConfigSyntax(currFiles[pxt.CONFIG_NAME]))
+        if (!pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
             delete currFiles[pxt.CONFIG_NAME];
         // special case override README.md if empty
         let templateREADME = templateFiles["README.md"];
@@ -912,11 +915,11 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 }
 
 export async function importGithubAsync(id: string): Promise<Header> {
+    const repoid = pxt.github.normalizeRepoId(id).replace(/^github:/, "")
+    const parsed = pxt.github.parseRepoId(repoid)
+
     let sha = ""
-    let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
-    let parsed = pxt.github.parseRepoId(repoid)
     let isEmpty = false
-    let forceTemplateFiles = true
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     } catch (e) {
@@ -933,16 +936,9 @@ export async function importGithubAsync(id: string): Promise<Header> {
             U.userError(lf("No such repository or branch."));
         }
     }
-    const hd = await githubUpdateToAsync(null, { repo: repoid, sha, files: {} })
-    // check the size of pxt.json; otherwise initialize
-    if (!isEmpty) {
-        const files = await getTextAsync(hd.id)
-        const pxtJson = files[pxt.CONFIG_NAME];
-        isEmpty = !pxt.Package.isValidConfigSyntax(pxtJson);
-        forceTemplateFiles = false
-    }
+    const hd = await githubUpdateToAsync(null, { repo: repoid, sha, files: {}, importing: true })
     if (isEmpty)
-        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
+        await initializeGithubRepoAsync(hd, repoid, true);
     return hd
 }
 
