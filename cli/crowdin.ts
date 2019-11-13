@@ -151,7 +151,7 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                     nodeutil.getBundledPackagesDocs()
                         .filter(dir => {
                             if (!name) return true;
-                            const pkgName = /(?:.*\/)?libs\/([^\/]+)/.exec(dir);
+                            const pkgName = /^(?:.*\/)?libs\/([^\/]+)/.exec(dir);
                             return !!pkgName && pkgName[1] == name;
                         })
                         .forEach(docsDir => {
