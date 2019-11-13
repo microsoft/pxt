@@ -192,7 +192,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private serializeBlocks(normalize?: boolean): string {
         // store ids when using github
         let xml = pxt.blocks.saveWorkspaceXml(this.editor,
-            !normalize && this.parent.state 
+            !normalize && this.parent.state
             && this.parent.state.header
             && !!this.parent.state.header.githubId);
         // strip out id, x, y attributes
