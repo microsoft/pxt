@@ -354,10 +354,9 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
-    const cfg: pxt.PackageConfig = JSON.parse(text[pxt.CONFIG_NAME] || "{}")
-    if (cfg.preferredEditor)
+    const cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
+    if (cfg)
         h.editor = cfg.preferredEditor
-
     return importAsync(h, text)
         .then(() => h)
 }
@@ -665,7 +664,7 @@ async function ensureGitHubTokenAsync() {
         U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
 
-async function githubUpdateToAsync(hd: Header, options: UpdateOptions = {}) {
+async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     const { repo, sha, files, justJSON } = options
     const parsed = pxt.github.parseRepoId(repo)
     const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
