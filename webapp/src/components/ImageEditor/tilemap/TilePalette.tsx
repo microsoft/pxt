@@ -25,71 +25,51 @@ const SCALE = ((pxt.BrowserUtils.isMac() && pxt.BrowserUtils.isChrome()) || pxt.
 
 const options: DropdownOption[] = [
     {
-        id: "grass",
-        text: "Grass Tiles"
+        id: "forest",
+        text: "Forest"
     }, {
-        id: "water",
-        text: "Water Tiles"
-    }, {
-        id: "cave",
-        text: "Cave Tiles"
+        id: "aquatic",
+        text: "Aquatic"
     }, {
         id: "dungeon",
-        text: "Dungeon Tiles"
+        text: "Dungeon"
+    }, {
+        id: "misc",
+        text: "Miscellaneous"
     }
-]
+];
 
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected handlers: ((ev: React.MouseEvent<HTMLDivElement>) => void)[] = [];
 
     render() {
         const { colors, selected, backgroundColor, dispatchSwapBackgroundForeground, tileset } = this.props;
-        const SPACER = 1;
-        const HEIGHT = 10;
-
-        const width = 3 * SPACER + 2 * HEIGHT;
 
         return <div className="tile-palette">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} ${HEIGHT * 1.5}`} onClick={dispatchSwapBackgroundForeground}>
-                <defs>
-                    <pattern id="alpha-background" width="6" height="6" patternUnits="userSpaceOnUse">
-                        <rect x="0" y="0" width="6px" height="6px" fill="#aeaeae" />
-                        <rect x="0" y="0" width="3px" height="3px" fill="#dedede"/>
-                        <rect x="3" y="3" width="3px" height="3px" fill="#dedede"/>
-                    </pattern>
-                </defs>
-                <g>
-                    <rect
-                        fill={backgroundColor ? colors[backgroundColor] : "url(#alpha-background)"}
-                        x={width - (SPACER << 1) - (HEIGHT * 1.5)}
-                        y={SPACER << 2}
-                        width={HEIGHT * 1.5}
-                        height={HEIGHT}
-                        stroke="#3c3c3c"
-                        strokeWidth="0.5">
-                    </rect>
-                    <rect
-                        fill={selected ? colors[selected] : "url(#alpha-background)"}
-                        x={SPACER << 1}
-                        y={SPACER}
-                        width={HEIGHT * 1.5}
-                        height={HEIGHT}
-                        stroke="#3c3c3c"
-                        strokeWidth="0.5">
-                    </rect>
-                </g>
-            </svg>
+            <div className="tile-palette-fg-bg" onClick={dispatchSwapBackgroundForeground}>
+                <div className="tile-palette-swatch fg">
+                    <TimelineFrame
+                        frames={[{ bitmap: tileset.tiles[selected] }]}
+                        colors={colors} />
+                </div>
+                <div className="tile-palette-swatch">
+                    <TimelineFrame
+                        frames={[{ bitmap: tileset.tiles[backgroundColor] }]}
+                        colors={colors} />
+                </div>
+                <div className="tile-palette-swatch">
+                    <TimelineFrame
+                        frames={[{ bitmap: tileset.tiles[backgroundColor] }]}
+                        colors={colors} />
+                </div>
+            </div>
             <Dropdown onChange={this.dropdownHandler} options={options} />
-            <div className="image-editor-tile-buttons-outer">
-                <div className="image-editor-tile-buttons" onContextMenu={this.preventContextMenu}>
-                    { tileset.tiles.map((t, i) =>
-                        <div className={`image-editor-tile-button ${i === selected ? selected : 0}`} onClick={this.clickHandler(i)}>
-                            <TimelineFrame
-                                frames={[{ bitmap: t }]}
-                                colors={colors} />
-                            </div>
-                        )
-                    }
+            <div className="tile-canvas-outer">
+                <div className="tile-canvas">
+                    <canvas ref="tile-canvas-surface"></canvas>
+                </div>
+                <div className="tile-canvas-controls">
+
                 </div>
             </div>
         </div>;
