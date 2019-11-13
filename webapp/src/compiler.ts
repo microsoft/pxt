@@ -785,6 +785,10 @@ function getPackageKey(pack: pkg.EditorPackage) {
     return pack.getKsPkg().config.name;
 }
 
+export function clearApiCaches() {
+    return ApiInfoIndexedDb.clearAsync();
+}
+
 interface ApiInfoIndexedDbEntry {
     id: string;
     hash: string;
@@ -806,7 +810,7 @@ class ApiInfoIndexedDb {
                 db.createObjectStore(ApiInfoIndexedDb.TABLE, { keyPath: ApiInfoIndexedDb.KEYPATH });
             }, () => {
                 // quota exceeeded, nuke db
-                pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+                ApiInfoIndexedDb.clearAsync()
             });
             return idbWrapper.openAsync()
                 .then(() => new ApiInfoIndexedDb(idbWrapper));
@@ -814,9 +818,13 @@ class ApiInfoIndexedDb {
         return openAsync()
             .catch(e => {
                 console.log(`db: failed to open api database, try delete entire store...`)
-                return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+                return ApiInfoIndexedDb.clearAsync()
                     .then(() => openAsync());
             })
+    }
+
+    static clearAsync() {
+        return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName());
     }
 
     private constructor(protected readonly db: pxt.BrowserUtils.IDBWrapper) {

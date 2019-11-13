@@ -3772,9 +3772,23 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
+        case "clearcaches":
+            pxt.tickEvent("hash." + hash.cmd);
+            pxt.BrowserUtils.changeHash("");
+            clearPersistentCachesAsync().finally(() => {
+                location.reload()
+            })
+            break;
     }
 
     return false;
+}
+
+function clearPersistentCachesAsync(): Promise<void> {
+    return Promise.all([
+        pxt.BrowserUtils.clearTranslationDbAsync(),
+        compiler.clearApiCaches()
+    ]).then(() => { });
 }
 
 // Determines whether the hash argument affects the starting project
