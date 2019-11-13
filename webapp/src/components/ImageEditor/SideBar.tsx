@@ -7,6 +7,7 @@ import { ImageEditorTool, ImageEditorStore } from "./store/imageReducer";
 import { dispatchChangeImageTool } from "./actions/dispatch";
 import { Palette } from "./sprite/Palette";
 import { TilePalette } from "./tilemap/TilePalette";
+import { Minimap } from "./tilemap/Minimap";
 
 interface SideBarProps {
     selectedTool: ImageEditorTool;
@@ -23,7 +24,7 @@ export class SideBarImpl extends React.Component<SideBarProps,{}> {
             <div className={`image-editor-sidebar ${isTilemap ? "tilemap" : ""}`}>
                 {isTilemap &&
                     <div className="image-editor-tilemap-minimap">
-
+                        <Minimap />
                     </div>
                 }
                 <div className="image-editor-tool-buttons">
