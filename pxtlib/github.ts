@@ -1300,7 +1300,7 @@ namespace pxt.github {
     }
 
     export function hasMergeConflictMarker(content: string) {
-        return content && /^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(content);
+        return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
     }
 
     export function testMergeDiff() {
