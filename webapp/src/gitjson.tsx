@@ -201,7 +201,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
+            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        else if (statusCode == 404)
+            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (e.needsWritePermission) {
             if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
