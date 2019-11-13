@@ -3809,21 +3809,6 @@ async function importGithubProject(repoid: string) {
         let hd = workspace.getHeaders().find(h => h.githubId == repoid);
         if (!hd)
             hd = await workspace.importGithubAsync(repoid)
-        const text = await workspace.getTextAsync(hd.id)
-        let cfg = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
-        if (!cfg || !cfg.files.length) {
-            const ok = await core.confirmAsync({
-                header: lf("Initialize GitHub repository?"),
-                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
-                agreeLbl: lf("Initialize!")
-            })
-            if (!ok) {
-                hd.isDeleted = true
-                await workspace.saveAsync(hd)
-                return
-            }
-            await workspace.initializeGithubRepoAsync(hd, repoid, false)
-        }
         await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
         core.handleNetworkError(e)
