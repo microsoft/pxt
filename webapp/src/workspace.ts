@@ -744,7 +744,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         await downloadAsync(fn)
 
     if (!cfg.name) {
-        cfg.name = parsed.fullName.replace(/[^\w\-]/g, "");
+        cfg.name = (parsed.project || parsed.fullName).replace(/[^\w\-]/g, "");
         if (!justJSON)
             files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
