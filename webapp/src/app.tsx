@@ -2370,7 +2370,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                simulator.driver.focus()
+                if (opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
@@ -2446,6 +2446,7 @@ export class ProjectView
     toggleSimulatorFullscreen() {
         if (!this.state.fullscreen) {
             document.addEventListener('keydown', this.closeOnEscape);
+            simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
