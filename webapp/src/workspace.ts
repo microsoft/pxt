@@ -477,6 +477,11 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     }
 }
 
+export async function hasMergeConflictMarkers(hd: Header): Promise<boolean> {
+    const files = await getTextAsync(hd.id)
+    return !!Object.keys(files).find(k => pxt.github.hasMergeConflictMarker(files[k]));
+}
+
 export async function prAsync(hd: Header, commitId: string, msg: string) {
     let parsed = pxt.github.parseRepoId(hd.githubId)
     // merge conflict - create a Pull Request
@@ -619,7 +624,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (!ex || ex.sha != sha) {
             // look for unfinished merges
             if (data.encoding == "utf-8" &&
-                /^(<<<<<<<[^<]|=======|>>>>>>>[^>])/m.test(data.content))
+                pxt.github.hasMergeConflictMarker(data.content))
                 throw mergeConflictMarkerError();
             res = await pxt.github.createObjectAsync(parsed.fullName, "blob", data)
             if (data.encoding == "utf-8")
