@@ -183,7 +183,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
             return false;
 
         pxt.tickEvent("github.filelist.create.export");
-        core.showLoading("creategithub", lf("creating {0} repository...", pxt.github.parseRepoId(repoid).fullName))
+        const parsed = pxt.github.parseRepoId(repoid);
+        core.showLoading("creategithub", lf("preparing {0} repository...", parsed.project || parsed.fullName))
         try {
             await workspace.exportToGithubAsync(header, repoid);
             return true;
