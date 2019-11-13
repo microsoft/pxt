@@ -44,6 +44,8 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
         return <div className="image-editor-dropdown-outer">
             <button className="image-editor-dropdown" aria-haspopup="listbox" onClick={this.handleDropdownClick}>
                 { selectedOption.text }
+                <span className="image-editor-dropdown-chevron ms-Icon ms-Icon--ChevronDown">
+                </span>
             </button>
             <ul tabIndex={-1} role="listbox" aria-activedescendant={selectedOption.id} className={open ? "" : "hidden"}>
                 {
