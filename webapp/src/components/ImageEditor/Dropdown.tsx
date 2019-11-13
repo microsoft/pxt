@@ -7,12 +7,12 @@ export interface DropdownOption {
 
 export interface DropdownProps {
     options: DropdownOption[];
+    selected: number;
     onChange: (selected: DropdownOption, index: number) => void;
 }
 
 export interface DropdownState {
     open: boolean;
-    selected: number;
 }
 
 export class Dropdown extends React.Component<DropdownProps, DropdownState> {
@@ -22,8 +22,7 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
         super(props);
 
         this.state = {
-            open: false,
-            selected: 0
+            open: false
         };
     }
 
@@ -36,8 +35,8 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
     }
 
     render() {
-        const { options } = this.props;
-        const { open, selected } = this.state;
+        const { options, selected } = this.props;
+        const { open } = this.state;
 
         const selectedOption = options[selected];
 
@@ -68,7 +67,7 @@ export class Dropdown extends React.Component<DropdownProps, DropdownState> {
             const { onChange, options } = this.props;
 
             this.handlers[index] = () => {
-                this.setState({ selected: index, open: false });
+                this.setState({ open: false });
                 onChange(options[index], index);
             };
         }

@@ -99,7 +99,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
             this.blocksInfo = options.blocksInfo;
 
             tileset.tiles = filterItems(getGalleryItems(this.blocksInfo, "Image"), ["tile"])
-                .map(g => getBitmap(this.blocksInfo, g.qName).data());
+                .map((g, index) => ({ data: getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, globalId: index }));
 
         }
 

@@ -1,5 +1,5 @@
 import * as actions from './types'
-import { ImageEditorTool, CursorSize, EditorState, AnimationState } from '../store/imageReducer';
+import { ImageEditorTool, CursorSize, EditorState, AnimationState, TileCategory } from '../store/imageReducer';
 
 export const dispatchChangeImageTool = (tool: ImageEditorTool) => ({ type: actions.CHANGE_IMAGE_TOOL, tool });
 export const dispatchChangeCursorSize = (cursorSize: CursorSize) => ({ type: actions.CHANGE_CURSOR_SIZE, cursorSize });
@@ -28,4 +28,6 @@ export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FORE
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })
 export const dispatchSetInitialFrames = (frames: pxt.sprite.ImageState[], interval: number) => ({ type: actions.SET_INITIAL_FRAMES, frames, interval });
 export const dispatchSetInitialState = (state: EditorState, past: AnimationState[]) => ({ type: actions.SET_INITIAL_STATE, state, past });
-export const dispatchSetInitialTilemap = (tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet) => ({ type: actions.SET_INITIAL_TILEMAP, tilemap, tileset })
+export const dispatchSetInitialTilemap = (tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet) => ({ type: actions.SET_INITIAL_TILEMAP, tilemap, tileset });
+export const dispatchChangeTilePaletteCategory = (category: TileCategory) => ({ type: actions.CHANGE_TILE_PALETTE_CATEGORY, category });
+export const dispatchChangeTilePalettePage = (page: number) => ({ type: actions.CHANGE_TILE_PALETTE_PAGE, page });

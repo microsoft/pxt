@@ -165,7 +165,13 @@ namespace pxt.sprite {
 
     export interface TileSet {
         tileWidth: number;
-        tiles: BitmapData[];
+        tiles: TileInfo[];
+    }
+
+    export interface TileInfo {
+        data: BitmapData;
+        globalId: number;
+        tags: string[];
     }
 
     export class Bitmask {

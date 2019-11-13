@@ -23,6 +23,13 @@ export const enum KeyModifiers {
     Shift = 1 << 1
 }
 
+export enum TileCategory {
+    Forest,
+    Aquatic,
+    Dungeon,
+    Misc,
+}
+
 // State that goes on the undo/redo stack
 export interface AnimationState {
     visible: boolean;
@@ -55,6 +62,12 @@ export interface EditorState {
     cursorLocation?: [number, number];
     zoomDelta?: number;
     onionSkinEnabled: boolean;
+    tilemapPalette?: TilemapPaletteState;
+}
+
+export interface TilemapPaletteState {
+    category: TileCategory;
+    page: number;
 }
 
 export interface ImageEditorStore {
@@ -134,6 +147,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.CHANGE_BACKGROUND_COLOR:
         case actions.SWAP_FOREGROUND_BACKGROUND:
         case actions.TOGGLE_ONION_SKIN_ENABLED:
+        case actions.CHANGE_TILE_PALETTE_PAGE:
+        case actions.CHANGE_TILE_PALETTE_CATEGORY:
             return {
                 ...state,
                 editor: editorReducer(state.editor, action)
@@ -220,6 +235,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 editor: {
                     ...state.editor,
                     isTilemap: true,
+                    tilemapPalette: {
+                        category: TileCategory.Forest,
+                        page: 0
+                    }
                 },
                 store: {
                     ...state.store,
@@ -378,6 +397,12 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.TOGGLE_ONION_SKIN_ENABLED:
             tickEvent(`toggle-onion-skin`);
             return { ...state, onionSkinEnabled: !state.onionSkinEnabled };
+        case actions.CHANGE_TILE_PALETTE_CATEGORY:
+            tickEvent(`change-tile-category-${TileCategory[action.category]}`);
+            return { ...state, tilemapPalette: { ...state.tilemapPalette, category: action.category, page: 0 } };
+        case actions.CHANGE_TILE_PALETTE_PAGE:
+            tickEvent(`change-tile-page`);
+            return { ...state, tilemapPalette: { ...state.tilemapPalette, page: action.page } };
     }
     return state;
 }
