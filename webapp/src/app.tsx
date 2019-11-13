@@ -3787,7 +3787,8 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
 function clearPersistentCachesAsync(): Promise<void> {
     return Promise.all([
         pxt.BrowserUtils.clearTranslationDbAsync(),
-        compiler.clearApiCaches()
+        compiler.clearApiCachesAsync(),
+        pxt.github.clearCacheAsync()
     ]).then(() => { });
 }
 

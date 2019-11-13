@@ -62,7 +62,7 @@ namespace pxt.github {
         body: string;
         path?: string;
         position?: number;
-        user: User;
+        user: GitUser;
     }
 
     export let forceProxy = false;
@@ -144,7 +144,7 @@ namespace pxt.github {
             }
 
             const cacheConfig = (v: string) => {
-                const cfg = JSON.parse(v) as pxt.PackageConfig;
+                const cfg = pxt.Util.jsonTryParse(v);
                 this.configs[key] = cfg;
                 return U.clone(cfg);
             }
@@ -199,6 +199,94 @@ namespace pxt.github {
         }
     }
 
+    interface IndexedDbGithubDbEntry {
+        id: string;
+        package?: pxt.github.CachedPackage;
+    }
+
+    export class IndexedDbGithubDb implements pxt.github.IGithubDb {
+        static TABLE = "repos"
+        static KEYPATH = "id"
+        // in memory cache
+        private _mem: pxt.github.MemoryGithubDb;
+        private _tablePromise: Promise<pxt.BrowserUtils.IDBWrapper>;
+
+        private get mem() {
+            if (!this._mem)
+                this._mem = new pxt.github.MemoryGithubDb();
+            return this._mem;
+        }
+
+        private get tablePromise() {
+            if (!this._tablePromise)
+                this._tablePromise = IndexedDbGithubDb.createAsync()
+            return this._tablePromise;
+        }
+
+        static dbName() {
+            return `__pxt_github_${pxt.appTarget.id || ""}`;
+        }
+
+        private static createAsync(): Promise<pxt.BrowserUtils.IDBWrapper> {
+            function openAsync() {
+                const idbWrapper = new pxt.BrowserUtils.IDBWrapper(IndexedDbGithubDb.dbName(), 2, (ev, r) => {
+                    const db = r.result as IDBDatabase;
+                    db.createObjectStore(IndexedDbGithubDb.TABLE, { keyPath: IndexedDbGithubDb.KEYPATH });
+                }, () => {
+                    // quota exceeeded, nuke db
+                    IndexedDbGithubDb.clearAsync()
+                });
+                return idbWrapper.openAsync()
+                    .then(() => idbWrapper);
+            }
+            return openAsync()
+                .catch(e => {
+                    return IndexedDbGithubDb.clearAsync()
+                        .then(() => openAsync());
+                })
+        }
+
+        static clearAsync() {
+            return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(IndexedDbGithubDb.dbName())
+        }
+
+        loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
+            // don't cache master
+            if (tag == "master")
+                return this.mem.loadConfigAsync(repopath, tag);
+
+            return this.loadPackageAsync(repopath, tag)
+                .then(entry => entry.files && pxt.Util.jsonTryParse(entry.files[pxt.CONFIG_NAME]));
+        }
+
+        loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+            // don't cache master
+            if (tag == "master")
+                return this.mem.loadPackageAsync(repopath, tag);
+
+            const id = `${repopath}/${tag}`;
+            return this.tablePromise
+                .then(table => table.getAsync(IndexedDbGithubDb.TABLE, id))
+                .then((entry: IndexedDbGithubDbEntry) => {
+                    pxt.debug(`github offline cache hit ${id}`);
+                    return entry.package;
+                }, e => {
+                    pxt.debug(`github offline cache miss ${id}`);
+                    return this.mem.loadPackageAsync(repopath, tag)
+                        .then(p => this.tablePromise
+                            .then(table => table.setAsync(IndexedDbGithubDb.TABLE, <IndexedDbGithubDbEntry>{
+                                id,
+                                package: p
+                            })).then(() => p, e => p));
+                }); // not found
+        }
+    }
+
+    // requires reload
+    export function clearCacheAsync() {
+        return IndexedDbGithubDb.clearAsync();
+    }
+
     function fallbackDownloadTextAsync(repopath: string, commitid: string, filepath: string) {
         return ghRequestAsync({
             url: "https://api.github.com/repos/" + repopath + "/contents/" + filepath + "?ref=" + commitid
@@ -231,12 +319,16 @@ namespace pxt.github {
     }
 
     // overriden by client
-    export let db: IGithubDb = new MemoryGithubDb();
+    export let db: IGithubDb = new IndexedDbGithubDb();
 
     export interface GitUser {
-        login: string,
-        avatar_url: string,
-        name: string
+        login: string; // "Microsoft",
+        id: number; // 6154722,
+        name: string;
+        avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
+        gravatar_id: string; // "",
+        html_url: string; // "https://github.com/microsoft",
+        type: string; // "Organization"
     }
 
     export function authenticatedUserAsync(): Promise<GitUser> {
@@ -300,7 +392,7 @@ namespace pxt.github {
         return ghPostAsync(`${repopath}/commits/${commitSha}/comments`, {
             body, path, position
         })
-        .then((resp: CommitComment) => resp.id);
+            .then((resp: CommitComment) => resp.id);
     }
 
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
@@ -490,20 +582,11 @@ namespace pxt.github {
         return db.loadPackageAsync(p.fullName, p.tag);
     }
 
-    export interface User {
-        login: string; // "Microsoft",
-        id: number; // 6154722,
-        avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
-        gravatar_id: string; // "",
-        html_url: string; // "https://github.com/microsoft",
-        type: string; // "Organization"
-    }
-
     interface Repo {
         id: number;
         name: string; // "pxt-microbit-cppsample",
         full_name: string; // "Microsoft/pxt-microbit-cppsample",
-        owner: User;
+        owner: GitUser;
         private: boolean;
         html_url: string; // "https://github.com/microsoft/pxt-microbit-cppsample",
         description: string; // "Sample C++ extension for PXT/microbit",

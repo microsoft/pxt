@@ -1025,6 +1025,7 @@ export function resetAsync() {
     return impl.resetAsync()
         .then(cloudsync.resetAsync)
         .then(db.destroyAsync)
+        .then(compiler.clearApiCachesAsync)
         .then(() => {
             pxt.storage.clearLocal();
             data.clearCache();

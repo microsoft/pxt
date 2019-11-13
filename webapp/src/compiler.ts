@@ -785,7 +785,7 @@ function getPackageKey(pack: pkg.EditorPackage) {
     return pack.getKsPkg().config.name;
 }
 
-export function clearApiCaches() {
+export function clearApiCachesAsync(): Promise<void> {
     return ApiInfoIndexedDb.clearAsync();
 }
 
