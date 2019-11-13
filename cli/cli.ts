@@ -1943,7 +1943,10 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
     for (const pkgName of Object.keys(inf)) {
         const byQName = inf[pkgName].apis.byQName
         for (const apiName of Object.keys(byQName)) {
-            byQName[apiName] = leanSymbol(byQName[apiName])
+            if (/^DAL\./.test(apiName))
+                delete byQName[apiName]
+            else
+                byQName[apiName] = leanSymbol(byQName[apiName])
         }
     }
 
