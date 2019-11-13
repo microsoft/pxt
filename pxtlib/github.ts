@@ -1299,6 +1299,10 @@ namespace pxt.github {
         }
     }
 
+    export function hasMergeConflictMarker(content: string) {
+        return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
+    }
+
     export function lookupFile(commit: pxt.github.Commit, path: string) {
         if (!commit)
             return null
@@ -1316,9 +1320,5 @@ namespace pxt.github {
         };
         cfg.dependencies[pxt.appTarget.corepkg] = "*";
         return cfg;
-    }
-
-    export function hasMergeConflictMarker(content: string) {
-        return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
     }
 }
