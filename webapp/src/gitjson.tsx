@@ -621,7 +621,7 @@ ${content}
                         {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
-                const lnMarker = idx - 1;
+                const lnMarker = Math.min(lnA, lnB);
                 const keepLocalHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, false);
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
