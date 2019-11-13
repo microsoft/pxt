@@ -417,6 +417,15 @@ interface BundledPackage {
 async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
     if (!bundled) return null;
 
+    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
+    if (!corePkg) return null;
+
+    // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
+    const files = project.getAllFiles();
+    if (Object.keys(files).some(filename => filename != "main.ts" && filename.indexOf("/") === -1 && pxt.Util.endsWith(filename, ".ts"))) {
+        return null;
+    }
+
     const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
         const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
 
@@ -431,9 +440,6 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
-    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
-    if (!corePkg) return null;
-
     const usedInfo: pxt.PackageApiInfo[] = [corePkg];
 
     for (const dep of usedPackages) {

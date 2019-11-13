@@ -46,7 +46,6 @@
             "check-operator",
             "check-type"
         ],
-
         /**
          * Security Rules. The following rules should be turned on because they find security issues
          * or are recommended in the Microsoft Secure Development Lifecycle (SDL)
@@ -76,7 +75,6 @@
         "react-anchor-blank-noopener": true,
         "react-iframe-missing-sandbox": true,
         "react-no-dangerous-html": true,
-
         /**
           * Common Bugs and Correctness. The following rules should be turned on because they find
           * common bug patterns in the code or enforce type safety.
@@ -111,7 +109,7 @@
         // pxt:override "no-invalid-this": true,
         "no-jquery-raw-elements": true,
         "no-misused-new": true,
-        "no-non-null-assertion": true,
+        "no-non-null-assertion": false, // sometimes we're smarter than the typechecker
         // pxt:override (TODO) "no-object-literal-type-assertion": true,
         // pxt:override "no-parameter-reassignment": true,
         "no-reference-import": true,
@@ -144,7 +142,6 @@
         ], // pxt-override
         "use-isnan": true,
         // pxt:override (TODO) "use-named-parameter": true,
-
         /**
           * Code Clarity. The following rules should be turned on because they make the code
           * generally more clear to the reader.

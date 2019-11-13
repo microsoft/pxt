@@ -448,9 +448,12 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
-        // any other editeable .ts or pxt.json
-        else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+
+        const mainBlocks = pkg.mainEditorPkg().files["main.blocks"];
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+            this.textEditor.openBlocks();
+        // any other editeable .ts or pxt.json; or empty mainblocks
+        else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
             this.saveFileAsync().then(() => this.textEditor.openBlocks());
         } else {
             const header = this.state.header;
@@ -460,7 +463,7 @@ export class ProjectView
                 this.textEditor.openBlocks();
             }
             else {
-                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+                this.setFile(mainBlocks)
             }
         }
 
@@ -1860,7 +1863,7 @@ export class ProjectView
             // Prevent us from stripping out the hash before the reload is complete
             clearHashChange();
             // On embedded pages, preserve the loaded project
-            if (hash && pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
+            if (hash && ((pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) || hash.cmd == "tutorial")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
             }
             else if (this.state && this.state.home) {
@@ -1969,7 +1972,7 @@ export class ProjectView
                 cfg.files.push(codeStop);
             }
         }
-        files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
@@ -2851,7 +2854,7 @@ export class ProjectView
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
         let config = JSON.parse(f.content) as pxt.PackageConfig;
         config.name = name;
-        return f.setContentAsync(JSON.stringify(config, null, 4) + "\n")
+        return f.setContentAsync(pxt.Package.stringifyConfig(config))
             .then(() => {
                 if (this.state.header)
                     this.setState({
@@ -3727,12 +3730,12 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "tutorial": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
             pxt.tickEvent("hash.tutorial")
             editor.startTutorial(hash.arg);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
-        case "recipe": // shortcut to a tutorial. eg: #tutorial:tutorials/getting-started
+        case "recipe": // shortcut to a recipe. eg: #recipe:recipes/getting-started
             pxt.tickEvent("hash.recipe")
             editor.startTutorial(hash.arg, undefined, true);
-            pxt.BrowserUtils.changeHash("");
+            pxt.BrowserUtils.changeHash("editor");
             return true;
         case "home": // shortcut to home
             pxt.tickEvent("hash.home");
@@ -3997,7 +4000,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                     pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
                 }
-                useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
                 force = !!mlang && !!mlang[2];
@@ -4016,7 +4019,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 force)
                 .then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
-                        lang.setCookieLang(useLang);
+                        pxt.BrowserUtils.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });
