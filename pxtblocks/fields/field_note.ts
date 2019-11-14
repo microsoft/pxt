@@ -462,9 +462,6 @@ namespace pxtblockly {
             let pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
             pianoDiv.className = "blocklyPianoDiv";
             contentDiv.appendChild(pianoDiv);
-            let scrollOffset = goog.style.getViewportPageOffset(document);
-            let xy = this.getAbsoluteXY_();
-            let borderBBox = this.getScaledBBox_();
 
             let leftPosition = 0; //-(<HTMLElement>document.getElementsByClassName("blocklyDropdownDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
             let topPosition = 0; //(keyHeight + labelHeight + prevNextHeight);
@@ -630,22 +627,6 @@ namespace pxtblockly {
                         pxt.AudioContextManager.stop();
                 }, 300);
                 (FieldNote as any).superClass_.dispose.call(this);
-            }
-            /** get width of blockly editor space
-             * @return {number} width of the blockly editor workspace
-             * @private
-             */
-            function getEditorWidth(): number {
-                let windowSize = goog.dom.getViewportSize();
-                return windowSize.width;
-            }
-            /** get height of blockly editor space
-             * @return {number} Height of the blockly editor workspace
-             * @private
-             */
-            function getEditorHeight(): number {
-                let editorHeight = document.getElementById("blocklyDiv").offsetHeight;
-                return editorHeight;
             }
             /**
              * create a DOM to assing a style to the button (piano Key)
