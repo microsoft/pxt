@@ -552,14 +552,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
-    let blocksScreenshotSha: string;
     let blocksDiffSha: string;
     if (options
         && treeUpdate.tree.find(e => e.path == "main.blocks")) {
         if (options.blocksScreenshotAsync) {
             const png = await options.blocksScreenshotAsync();
             if (png)
-                blocksScreenshotSha = await addToTree(BLOCKS_PREVIEW_PATH, png);
+                await addToTree(BLOCKS_PREVIEW_PATH, png);
         }
         if (options.blocksDiffScreenshotAsync) {
             const png = await options.blocksDiffScreenshotAsync();
