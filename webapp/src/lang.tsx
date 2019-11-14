@@ -89,21 +89,19 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 closeOnEscape
             >
                 <div id="langmodal">
-                    <div id="availablelocales">
-                        <div className="ui cards centered" role="listbox">
-                            {languageList.map(langId => {
-                                const lang = pxt.Util.allLanguages[langId];
-                                return <LanguageCard
-                                    key={langId}
-                                    langId={langId}
-                                    name={lang.localizedName}
-                                    ariaLabel={lang.englishName}
-                                    description={lang.englishName}
-                                    onClick={this.changeLanguage}
-                                />
-                                }
-                            )}
-                        </div>
+                    <div id="availablelocales" className="ui cards centered" role="listbox">
+                        {languageList.map(langId => {
+                            const lang = pxt.Util.allLanguages[langId];
+                            return <LanguageCard
+                                key={langId}
+                                langId={langId}
+                                name={lang.localizedName}
+                                ariaLabel={lang.englishName}
+                                description={lang.englishName}
+                                onClick={this.changeLanguage}
+                            />
+                            }
+                        )}
                     </div>
                     {targetTheme.crowdinProject ?
                         <div className="ui" id="langmodalfooter">
