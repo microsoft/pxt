@@ -349,7 +349,7 @@ namespace pxtblockly {
                     this.sourceBlock_, "field", this.name, String(this.note_), String(note)));
             }
             this.note_ = note;
-            this.setText(this.getNoteName_());
+            this.setText(note)
             this.value_ = this.note_;
         }
 
@@ -361,26 +361,6 @@ namespace pxtblockly {
             if (Math.floor(Number(this.note_)) == Number(this.note_))
                 return Number(this.note_).toFixed(0);
             return Number(this.note_).toFixed(2);
-        }
-
-        /**
-         * Set the text in this field and NOT fire a change event.
-         * @param {*} newText New text.
-         */
-        setText(newText: string) {
-            if (newText === null) {
-                // No change if null.
-                return;
-            }
-            newText = String(newText);
-            if (!isNaN(Number(newText)))
-                newText = this.getNoteName_();
-
-            if (newText === this.text_) {
-                // No change.
-                return;
-            }
-            Blockly.Field.prototype.setText.call(this, newText);
         }
 
         /**
@@ -428,8 +408,8 @@ namespace pxtblockly {
 
             let contentDiv = Blockly.DropDownDiv.getContentDiv();
 
-            //  change Note name to number frequency
-            Blockly.FieldNumber.prototype.setText.call(this, this.getText());
+            // change Note name to number frequency
+            this.setText(this.getText());
 
             const quietInput = (goog.userAgent.MOBILE || goog.userAgent.ANDROID ||
                 goog.userAgent.IPAD);
@@ -825,6 +805,18 @@ namespace pxtblockly {
          * Callback for when the drop-down is hidden.
          */
         private onHide() {
+            let newText = this.note_;
+            if (newText === null) {
+                // No change if null.
+                return;
+            }
+            newText = String(newText);
+            if (!isNaN(Number(newText)))
+                newText = this.getNoteName_();
+
+            if (newText !== this.text_) {
+                Blockly.Field.prototype.setText.call(this, newText);
+            }
         };
 
         /**
