@@ -98,6 +98,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
+    async pullUpstreamAsync() {
+        // pull from branch, pull from remote
+        await this.pullAsync(true);
+    }
+
     private async switchBranchAsync() {
         const gid = this.parsedRepoId()
         const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
@@ -321,25 +326,41 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async pullAsync() {
+    private async pullAsync(upstream?: boolean) {
         this.showLoading(lf("pulling changes from GitHub..."));
         try {
+            const { header } = this.props.parent.state;
             this.setState({ needsPull: undefined });
-            const status = await workspace.pullAsync(this.props.parent.state.header)
+            // pull branch
+            const status = await workspace.pullAsync(header, false, false)
                 .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
+                    await this.setStateAsync({ needsPull: false });
+                    return;
                 case workspace.PullStatus.UpToDate:
-                    this.setState({ needsPull: false });
-                    break
+                    await this.setStateAsync({ needsPull: false });
+                    break;
                 case workspace.PullStatus.NeedsCommit:
-                    this.setState({ needsCommitMessage: true });
+                    await this.setStateAsync({ needsCommitMessage: true });
                     await this.refreshPullAsync();
-                    break
+                    return;
                 case workspace.PullStatus.GotChanges:
                     await this.maybeReloadAsync();
-                    break
+                    break;
             }
+
+            let upstreamStatus = workspace.PullStatus.NoSourceControl;
+            if (upstream) {
+                upstreamStatus = await workspace.pullAsync(header, false, true)
+                    .catch(this.handleGithubError)
+            }
+
+            // reload if any changes
+            if (status == workspace.PullStatus.GotChanges
+                || upstreamStatus == workspace.PullStatus.GotChanges)
+                await this.maybeReloadAsync();
+
         } catch (e) {
             this.handleGithubError(e);
         } finally {
@@ -1006,12 +1027,13 @@ class CollaborationZone extends sui.StatelessUIElement<GitHubViewProps> {
         this.props.parent.createBranchAsync().done();
     }
 
-    private handlePullUpstreamBranchClick() {
-
+    private async handlePullUpstreamBranchClick() {
+        pxt.tickEvent("github.collabzone.pullupstream", undefined, { interactiveConsent: true })
+        this.props.parent.pullUpstreamAsync().done();
     }
 
     renderCore() {
-        const { githubId, gs, needsCommit } = this.props;
+        const { githubId, needsCommit } = this.props;
         const master = githubId.tag == "master";
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Collaboration zone")}</div>
@@ -1026,7 +1048,7 @@ class CollaborationZone extends sui.StatelessUIElement<GitHubViewProps> {
             </div> : undefined}
             {!master ? <div className="ui field">
                 <sui.Button text={lf("Pull master changes")}
-                    onClick={this.handleMergeBranchClick}
+                    onClick={this.handlePullUpstreamBranchClick}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Pull changes from the master branch.")}

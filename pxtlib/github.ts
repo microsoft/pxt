@@ -817,6 +817,7 @@ namespace pxt.github {
         repo: string;
         prUrl?: string; // if any
         commit: pxt.github.Commit;
+        upstreamCommit?: pxt.github.Commit;
         isFork?: boolean;
     }
 

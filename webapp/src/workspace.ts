@@ -453,21 +453,22 @@ export async function hasPullAsync(hd: Header) {
     return (await pullAsync(hd, true)) == PullStatus.GotChanges
 }
 
-export async function pullAsync(hd: Header, checkOnly = false) {
-    let files = await getTextAsync(hd.id)
+export async function pullAsync(hd: Header, checkOnly = false, upstream = false) {
+    const files = await getTextAsync(hd.id)
     await recomputeHeaderFlagsAsync(hd, files)
-    let gitjsontext = files[GIT_JSON]
+    const gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         return PullStatus.NoSourceControl
-    let gitjson = JSON.parse(gitjsontext) as GitJson
-    let parsed = pxt.github.parseRepoId(gitjson.repo)
-    let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    if (sha == gitjson.commit.sha)
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const commit = upstream ? gitjson.upstreamCommit : gitjson.commit;
+    const parsed = pxt.github.parseRepoId(gitjson.repo)
+    const sha = await pxt.github.getRefAsync(parsed.fullName, upstream ? "master" : parsed.tag)
+    if (commit && sha == commit.sha)
         return PullStatus.UpToDate
     if (checkOnly)
         return PullStatus.GotChanges
     try {
-        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true })
+        await githubUpdateToAsync(hd, { repo: gitjson.repo, sha, files, tryDiff3: true, upstream })
         return PullStatus.GotChanges
     } catch (e) {
         if (e.isMergeError)
@@ -531,14 +532,14 @@ const BLOCKSDIFF_PREVIEW_PATH = ".makecode/blocksdiff.png";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await ensureGitHubTokenAsync();
 
-    let files = await getTextAsync(hd.id)
-    let gitjsontext = files[GIT_JSON]
+    const files = await getTextAsync(hd.id)
+    const gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         U.userError(lf("Not a git extension."))
-    let gitjson = JSON.parse(gitjsontext) as GitJson
-    let parsed = pxt.github.parseRepoId(gitjson.repo)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-    let treeUpdate: pxt.github.CreateTreeReq = {
+    const gitjson = JSON.parse(gitjsontext) as GitJson
+    const parsed = pxt.github.parseRepoId(gitjson.repo)
+    const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+    const treeUpdate: pxt.github.CreateTreeReq = {
         base_tree: gitjson.commit.tree.sha,
         tree: []
     }
@@ -549,7 +550,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         await addToTree(path, fileContent);
     }
 
-    if (treeUpdate.tree.length == 0)
+    if (treeUpdate.tree.length == 0 && !gitjson.upstreamCommit)
         U.userError(lf("Nothing to commit!"))
 
     let blocksDiffSha: string;
@@ -573,6 +574,8 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         parents: [gitjson.commit.sha],
         tree: treeId
     }
+    if (gitjson.upstreamCommit)
+        commit.parents.unshift(gitjson.upstreamCommit.sha);
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
     let ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
     let newCommit = commitId
@@ -640,6 +643,7 @@ interface UpdateOptions {
     saveTag?: string;
     justJSON?: boolean;
     tryDiff3?: boolean;
+    upstream?: boolean;
 }
 
 function mergeError() {
@@ -675,6 +679,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         }
     }
 
+    const baseCommit = gitjson.commit;
     const downloadedFiles: pxt.Map<boolean> = {}
     let conflicts = 0;
     let blocksNeedDecompilation = false;
@@ -682,7 +687,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     const downloadAsync = async (path: string) => {
         downloadedFiles[path] = true
         const treeEnt = pxt.github.lookupFile(commit, path)
-        const oldEnt = pxt.github.lookupFile(gitjson.commit, path)
+        const oldEnt = pxt.github.lookupFile(baseCommit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
             // file in pxt.json but not in git: 
@@ -758,7 +763,12 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
     }
 
     commit.tag = options.saveTag
-    gitjson.commit = commit
+    if (options.upstream)
+        gitjson.upstreamCommit = commit
+    else {
+        gitjson.commit = commit
+        gitjson.upstreamCommit = undefined;
+    }
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 
     if (!hd) {
