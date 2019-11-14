@@ -226,7 +226,7 @@ namespace pxtblockly {
             let thisField = this;
             //  Create arrays of name/frequency of the notes
             createNotesArray();
-            this.setValue(this.callValidator(this.getValue()));
+            this.setValue(this.getValue());
 
             /**
              * create Array of notes name and frequencies
@@ -348,7 +348,7 @@ namespace pxtblockly {
                 Blockly.Events.fire(new Blockly.Events.Change(
                     this.sourceBlock_, "field", this.name, String(this.note_), String(note)));
             }
-            this.note_ = this.callValidator(note);
+            this.note_ = note;
             this.setText(this.getNoteName_());
             this.value_ = this.note_;
         }
@@ -637,8 +637,8 @@ namespace pxtblockly {
                 script = this.getContent() as HTMLElement;
                 if (currentSelectedKey !== this) { // save color and change values only if is clicking different key
                     previousColor = script.style.backgroundColor;
-                    thisField.setValue(thisField.callValidator(freq));
-                    thisField.setText(thisField.callValidator(freq));
+                    thisField.setValue(freq);
+                    thisField.setText(freq);
                 }
                 currentSelectedKey = this;
                 script.style.backgroundColor = selectedKeyColor;
