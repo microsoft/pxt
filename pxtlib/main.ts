@@ -43,9 +43,9 @@ namespace pxt {
                 // re-create the object - this will hint the JIT that these are objects of the same type
                 // and the same hidden class should be used
                 const newsym = byQName[apiName] = {
-                    kind: sym.kind || 7,
+                    kind: Math.abs(sym.kind || 7),
                     qName: apiName,
-                    namespace: apiName.slice(0, lastDot),
+                    namespace: apiName.slice(0, lastDot < 0 ? 0 : lastDot),
                     name: apiName.slice(lastDot + 1),
                     fileName: "",
                     attributes: sym.attributes || ({} as any),
@@ -59,6 +59,8 @@ namespace pxt {
                         options: p.options || {},
                         isEnum: !!p.isEnum
                     })) : null,
+                    extendsTypes: sym.extendsTypes,
+                    snippet: sym.kind && sym.kind < 0 ? null as any : undefined,
                     isInstance: !!sym.isInstance,
                     isReadOnly: !!sym.isReadOnly,
                 }
