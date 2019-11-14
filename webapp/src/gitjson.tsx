@@ -202,7 +202,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
+            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        else if (statusCode == 404)
+            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (e.needsWritePermission) {
             if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
@@ -357,10 +359,33 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async commitCoreAsync() {
-        const { header } = this.props.parent.state;
+        const { parent } = this.props;
+        const { header } = parent.state;
         const repo = header.githubId;
+
+        // pull changes and merge; if any conflicts, bail out
+        await workspace.pullAsync(header);
+        // check if any merge markers
+        const hasConflicts = await workspace.hasMergeConflictMarkers(header);
+        if (hasConflicts) {
+            // bail out
+            // maybe needs a reload
+            await this.maybeReloadAsync();
+            core.warningNotification(lf("Merge conflicts found. Resolve them before commiting."))
+            return;
+        }
+
+        // continue with commit
         let commitId = await workspace.commitAsync(header, {
-            message: this.state.description
+            message: this.state.description,
+            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1),
+            blocksDiffScreenshotAsync: () => {
+                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
+                if (diff && diff.ws)
+                    return pxt.blocks.layout.toPngAsync(diff.ws, 1);
+                return Promise.resolve(undefined);
+            }
         })
         if (commitId) {
             // merge failure; do a PR
@@ -372,13 +397,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // has resolved the conflict in the meantime
             await workspace.pullAsync(header)
             // skip bump in this case - we don't know if it was merged
+        } else {
+            // maybe needs a reload
+            await this.maybeReloadAsync();
         }
         this.setState({ description: "" });
     }
 
     async commitAsync() {
         this.setState({ needsCommitMessage: false });
-        this.showLoading(lf("commit and push..."));
+        this.showLoading(lf("commit and push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
@@ -488,10 +516,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let deletedFiles: string[] = []
         let addedFiles: string[] = []
         if (f.name == pxt.CONFIG_NAME) {
-            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
-            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
-            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
-            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            const oldConfig = pxt.Package.parseAndValidConfig(f.baseGitContent);
+            const newConfig = pxt.Package.parseAndValidConfig(f.content);
+            if (oldConfig && newConfig) {
+                const oldCfg = pxt.allPkgFiles(oldConfig);
+                const newCfg = pxt.allPkgFiles(newConfig);
+                deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
+                addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            }
         }
         // backing .ts for .blocks/.py files
         let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
@@ -507,15 +539,22 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     private createBlocksDiffJSX(f: pkg.File): { diffJSX: JSX.Element, legendJSX?: JSX.Element, conflicts: number } {
         const baseContent = f.baseGitContent || "";
         const content = f.content;
-        const markdown =
-            `
+
+        let diffJSX: JSX.Element;
+        if (!content) {
+            // the xml payload needs to be decompiled
+            diffJSX = <div className="ui basic segment">{lf("Your blocks were updated. Go back to the editor to view the changes.")}</div>
+        } else {
+            const markdown =
+                `
 \`\`\`diffblocksxml
 ${baseContent}
 ---------------------
 ${content}
 \`\`\`
 `;
-        const diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+            diffJSX = <markedui.MarkedContent key={`diffblocksxxml${f.name}`} parent={this.props.parent} markdown={markdown} />
+        }
         const legendJSX = <p className="legend">
             <span><span className="added icon"></span>{lf("added, changed or moved")}</span>
             <span><span className="deleted icon"></span>{lf("deleted")}</span>
@@ -589,7 +628,7 @@ ${content}
                         {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
-                const lnMarker = idx - 1;
+                const lnMarker = Math.min(lnA, lnB);
                 const keepLocalHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, false);
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
@@ -675,7 +714,7 @@ ${content}
         } else if (f.name == pxt.CONFIG_NAME) {
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
-                const prev = workspace.lookupFile(gs.commit, d)
+                const prev = pxt.github.lookupFile(gs.commit, d)
                 pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {

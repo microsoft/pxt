@@ -49,11 +49,9 @@ ${lf("To edit this repository in MakeCode.")}
 * ${lf("click on **Import** then click on **Import URL**")}
 * ${lf("paste the repository URL and click import")}
 
-## ${lf("Collaborators")}
+## ${lf("Blocks preview")}
 
-${lf("You can invite users to become collaborators to this repository.")}
-${lf("This will allow multiple users to work on the same project at the same time.")}
-[${lf("Learn more...")}](https://help.github.com/en/articles/inviting-collaborators-to-a-personal-repository)
+![${lf("A rendered view of the blocks")}](https://raw.github.com/@REPO@/blob/master/.makecode/blocks.png)
 
 ## ${lf("Supported targets")}
 
@@ -240,18 +238,14 @@ cache:
         return files
     }
 
-    export function packageFilesFixup(files: Map<string>, removeSubdirs = false) {
+    export function packageFilesFixup(files: Map<string>, options?: pxt.Map<string>) {
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
+        if (options)
+            Util.jsonMergeFrom(configMap, options);
         configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
         configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
-
-        if (removeSubdirs)
-            for (let k of Object.keys(files)) {
-                if (k.indexOf("/") >= 0)
-                    delete files[k]
-            }
 
         U.iterMap(files, (k, v) => {
             v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")

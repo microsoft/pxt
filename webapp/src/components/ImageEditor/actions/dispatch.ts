@@ -1,6 +1,5 @@
 import * as actions from './types'
 import { ImageEditorTool, CursorSize, EditorState, AnimationState } from '../store/imageReducer';
-import { ImageState } from '../store/bitmap';
 
 export const dispatchChangeImageTool = (tool: ImageEditorTool) => ({ type: actions.CHANGE_IMAGE_TOOL, tool });
 export const dispatchChangeCursorSize = (cursorSize: CursorSize) => ({ type: actions.CHANGE_CURSOR_SIZE, cursorSize });
@@ -9,7 +8,7 @@ export const dispatchChangeImageDimensions = (imageDimensions: [number, number])
 export const dispatchChangeKeyModifiers = (keyModifiers: number) => ({ type: actions.CHANGE_KEY_MODIFIERS, keyModifiers });
 export const dispatchChangeCursorLocation = (cursorLocation: [number, number]) => ({ type: actions.CHANGE_CURSOR_LOCATION, cursorLocation });
 
-export const dispatchImageEdit = (newState: ImageState) => ({ type: actions.IMAGE_EDIT, newState });
+export const dispatchImageEdit = (newState: pxt.sprite.ImageState) => ({ type: actions.IMAGE_EDIT, newState });
 export const dispatchUndoImageEdit = () => ({ type: actions.UNDO_IMAGE_EDIT });
 export const dispatchRedoImageEdit = () => ({ type: actions.REDO_IMAGE_EDIT });
 
@@ -27,5 +26,5 @@ export const dispatchChangeZoom = (zoom: number) => ({ type: actions.CHANGE_CANV
 
 export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FOREGROUND_BACKGROUND });
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })
-export const dispatchSetInitialFrames = (frames: ImageState[], interval: number) => ({ type: actions.SET_INITIAL_FRAMES, frames, interval });
+export const dispatchSetInitialFrames = (frames: pxt.sprite.ImageState[], interval: number) => ({ type: actions.SET_INITIAL_FRAMES, frames, interval });
 export const dispatchSetInitialState = (state: EditorState, past: AnimationState[]) => ({ type: actions.SET_INITIAL_STATE, state, past });

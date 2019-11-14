@@ -1162,7 +1162,7 @@ p.ui.font.small {
     .hideEditorFloats #editortools {
         height: @editorToolsCollapsedHeight;
     }
-    .hideEditorFloats #editortools > div > div > .ui.grid {
+    .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
         margin: auto;
     }
     .hideEditorFloats #editorToolbarArea {
@@ -1493,6 +1493,21 @@ img.pixelart {
     image-rendering: auto;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+}
+
+
+/** language modal **/
+#langmodal {
+    #availablelocales .langoption .header{
+        color: #4c4ca6;
+    }
+
+    #langmodalfooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2em;
+    }
 }
 
 #blocks-editor-field-div {

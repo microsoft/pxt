@@ -1579,12 +1579,12 @@ namespace pxt.blocks {
             return 0;
         }
         const api = e.stdCallTable[b.type];
-        if (api && api.attrs.afterOnStart) {
-            return 1;
-        }
-        else {
-            return -1;
-        }
+        const key = callKey(e, b);
+        const hash = 1 + ts.pxtc.Util.codalHash16(key);
+        if (api && api.attrs.afterOnStart)
+            return hash;
+        else
+            return -hash;
     }
 
     function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
@@ -1725,6 +1725,8 @@ namespace pxt.blocks {
     export function callKey(e: Environment, b: Blockly.Block): string {
         if (b.type == ts.pxtc.ON_START_TYPE)
             return JSON.stringify({ name: ts.pxtc.ON_START_TYPE });
+        else if (b.type == ts.pxtc.FUNCTION_DEFINITION_TYPE)
+            return JSON.stringify({ type: "function", name: b.getFieldValue("function_name") });
 
         const call = e.stdCallTable[b.type];
         if (call) {

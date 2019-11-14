@@ -38,7 +38,7 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private state: pxtsprite.Bitmap;
+        private state: pxt.sprite.Bitmap;
         private lightMode: boolean;
         private undoRedoState: any;
 
@@ -50,7 +50,7 @@ namespace pxtblockly {
             this.blocksInfo = params.blocksInfo;
 
             if (!this.state) {
-                this.state = new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight);
+                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             }
         }
 
@@ -66,7 +66,7 @@ namespace pxtblockly {
             }
 
             if (!this.state) {
-                this.state = new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight);
+                this.state = new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight);
             }
 
             this.redrawPreview();
@@ -93,7 +93,7 @@ namespace pxtblockly {
                 if (result) {
                     const old = this.getValue();
 
-                    this.state = pxtsprite.imageLiteralToBitmap(result);
+                    this.state = pxt.sprite.imageLiteralToBitmap(result);
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -115,7 +115,7 @@ namespace pxtblockly {
         }
 
         getValue() {
-            return pxtsprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
+            return pxt.sprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
         }
 
         doValueUpdate_(newValue: string) {
@@ -153,7 +153,7 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            const bmp = pxtsprite.imageLiteralToBitmap(newText);
+            const bmp = pxt.sprite.imageLiteralToBitmap(newText);
 
             // Ignore invalid bitmaps
             if (bmp && bmp.width && bmp.height) {

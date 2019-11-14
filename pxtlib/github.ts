@@ -57,6 +57,14 @@ namespace pxt.github {
         download_url: string;
     }
 
+    interface CommitComment {
+        id: number;
+        body: string;
+        path?: string;
+        position?: number;
+        user: User;
+    }
+
     export let forceProxy = false;
 
     export function useProxy() {
@@ -288,6 +296,12 @@ namespace pxt.github {
             .then((resp: SHAObject) => resp.sha)
     }
 
+    export function postCommitComment(repopath: string, commitSha: string, body: string, path?: string, position?: number) {
+        return ghPostAsync(`${repopath}/commits/${commitSha}/comments`, {
+            body, path, position
+        })
+            .then((resp: CommitComment) => resp.id);
+    }
 
     export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
         let resp = await ghRequestAsync({
@@ -463,7 +477,7 @@ namespace pxt.github {
     export function downloadPackageAsync(repoWithTag: string, config: pxt.PackagesConfig): Promise<CachedPackage> {
         let p = parseRepoId(repoWithTag)
         if (!p) {
-            pxt.log('Unknown github syntax');
+            pxt.log('Unknown GitHub syntax');
             return Promise.resolve<CachedPackage>(undefined);
         }
 
@@ -476,18 +490,20 @@ namespace pxt.github {
         return db.loadPackageAsync(p.fullName, p.tag);
     }
 
+    export interface User {
+        login: string; // "Microsoft",
+        id: number; // 6154722,
+        avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
+        gravatar_id: string; // "",
+        html_url: string; // "https://github.com/microsoft",
+        type: string; // "Organization"
+    }
+
     interface Repo {
         id: number;
         name: string; // "pxt-microbit-cppsample",
         full_name: string; // "Microsoft/pxt-microbit-cppsample",
-        owner: {
-            login: string; // "Microsoft",
-            id: number; // 6154722,
-            avatar_url: string; // "https://avatars.githubusercontent.com/u/6154722?v=3",
-            gravatar_id: string; // "",
-            html_url: string; // "https://github.com/microsoft",
-            type: string; // "Organization"
-        },
+        owner: User;
         private: boolean;
         html_url: string; // "https://github.com/microsoft/pxt-microbit-cppsample",
         description: string; // "Sample C++ extension for PXT/microbit",
@@ -749,7 +765,7 @@ namespace pxt.github {
         return p ? "github:" + p.fullName.toLowerCase() + "#" + (p.tag || "master") : undefined;
     }
 
-    export function noramlizeRepoId(id: string) {
+    export function normalizeRepoId(id: string) {
         const gid = parseRepoId(id);
         gid.tag = gid.tag || "master";
         return stringifyRepo(gid);
@@ -1177,6 +1193,9 @@ namespace pxt.github {
                     r[key] = vA;
             } else {
                 switch (key) {
+                    case "name":
+                        r[key] = mergeName(vA, vO, vB);
+                        break;
                     case "version": // pick highest version
                         r[key] = pxt.semver.strcmp(vA, vB) > 0 ? vA : vB;
                         break;
@@ -1213,6 +1232,13 @@ namespace pxt.github {
             }
         }
         return pxt.Package.stringifyConfig(r);
+
+        function mergeName(fA: string, fO: string, fB: string): string {
+            if (fA == fO) return fB;
+            if (fB == fO) return fA;
+            if (fA == lf("Untitled")) return fB;
+            return fA;
+        }
 
         function mergeFiles(fA: string[], fO: string[], fB: string[]): string[] {
             const r: string[] = [];
@@ -1273,35 +1299,26 @@ namespace pxt.github {
         }
     }
 
-    export function testMergeDiff() {
-        const r = mergeDiff3Config(`
-{
-    "name": "test",
-    "version": "0.0.2",
-    "files": [
-        "foo.ts",
-        "buz.ts",
-        "baz.ts"
-    ]
-}
-`, `
-{
-    "name": "test",
-    "version": "0.0.0",
-    "files": [
-        "foo.ts",
-        "buz.ts",
-        "fii.ts"
-    ]
-}`, `
-{
-    "name": "test",
-    "version": "0.0.1",
-    "files": [
-        "foo.ts",
-        "bar.ts"
-    ]
-}`)
-        console.log(r);
+    export function hasMergeConflictMarker(content: string) {
+        return content && /^(<<<<<<<[^<]|>>>>>>>[^>])/m.test(content);
+    }
+
+    export function lookupFile(commit: pxt.github.Commit, path: string) {
+        if (!commit)
+            return null
+        return commit.tree.tree.find(e => e.path == path)
+    }
+
+    export function reconstructConfig(commit: pxt.github.Commit) {
+        const files = commit.tree.tree.map(f => f.path)
+            .filter(f => /\.(ts|blocks|md|jres|asm|json)$/.test(f))
+            .filter(f => f != pxt.CONFIG_NAME)
+        const cfg: pxt.PackageConfig = {
+            name: "",
+            files,
+            dependencies: {}
+        };
+        cfg.dependencies[pxt.appTarget.corepkg] = "*";
+        return cfg;
     }
 }

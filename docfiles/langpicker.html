@@ -1,0 +1,24 @@
+<div id="langmodal" class="ui modal docs" role="dialog" aria-modal="true" aria-describedby="langmodalheader" tabindex="-1">
+    <h2 id="langmodalheader" class="header">Select Language</h2>
+    <div role="button" class="closeIcon" tabindex="0" aria-label="Close">
+        <i class="icon close remove circle" aria-hidden="true"></i>
+    </div>
+
+	<div class="content">
+	    <div class="group">
+            <div id="availablelocales" class="ui cards centered" role="listbox" aria-label="List of available locales"></div>
+        </div>
+        <div class="ui" id="langmodalfooter">
+            <a class="ui" href="/translate" target="_blank" rel="noopener noreferrer">
+                How do I add a new language?
+            </a>
+
+            <!-- @ifdef crowdinproject -->
+            <a id="translatebtn" class="ui button" role="button" tabindex="0">
+                Translate this page
+            </a>
+            <!-- @endif -->
+        </div>
+    </div>
+</div>
+

@@ -448,9 +448,12 @@ export class ProjectView
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
         }
-        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
-        // any other editeable .ts or pxt.json
-        else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
+
+        const mainBlocks = pkg.mainEditorPkg().files["main.blocks"];
+        if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView))
+            this.textEditor.openBlocks();
+        // any other editeable .ts or pxt.json; or empty mainblocks
+        else if (this.isAnyEditeableJavaScriptOrPackageActive() || !mainBlocks.content) {
             this.saveFileAsync().then(() => this.textEditor.openBlocks());
         } else {
             const header = this.state.header;
@@ -460,7 +463,7 @@ export class ProjectView
                 this.textEditor.openBlocks();
             }
             else {
-                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+                this.setFile(mainBlocks)
             }
         }
 
@@ -1176,7 +1179,7 @@ export class ProjectView
                     file = main.lookupFile(e.name) || file
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
-                if ((!e && file.getVirtualFileName(h.editor)))
+                if ((!e && h.editor && file.getVirtualFileName(h.editor)))
                     file = main.lookupFile("this/" + file.getVirtualFileName(h.editor)) || file;
 
                 if (pxt.editor.isBlocks(file) && !file.content) {
@@ -2367,7 +2370,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                simulator.driver.focus()
+                if (opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
@@ -2443,6 +2446,7 @@ export class ProjectView
     toggleSimulatorFullscreen() {
         if (!this.state.fullscreen) {
             document.addEventListener('keydown', this.closeOnEscape);
+            simulator.driver.focus();
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
@@ -2742,6 +2746,13 @@ export class ProjectView
             .then(resp => {
                 return { python: resp };
             });
+    }
+
+    blocksScreenshotAsync(pixelDensity?: number): Promise<string> {
+        if (pxt.blocks.layout.screenshotEnabled()
+            && this.blocksEditor && this.blocksEditor.isReady && this.blocksEditor.editor)
+            return pxt.blocks.layout.screenshotAsync(this.blocksEditor.editor, pixelDensity)
+        return Promise.resolve(undefined);
     }
 
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
@@ -3791,27 +3802,13 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
     }
 }
 
-async function importGithubProject(id: string) {
-    core.showLoading("loadingheader", lf("importing github project..."));
+async function importGithubProject(repoid: string) {
+    core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // try to find project with same id
-        let hd = workspace.getHeaders().find(h => h.githubId == id);
+        let hd = workspace.getHeaders().find(h => h.githubId == repoid);
         if (!hd)
-            hd = await workspace.importGithubAsync(id)
-        const text = await workspace.getTextAsync(hd.id)
-        if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
-            const ok = await core.confirmAsync({
-                header: lf("Initialize MakeCode extension?"),
-                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
-                agreeLbl: lf("Initialize!")
-            })
-            if (!ok) {
-                hd.isDeleted = true
-                await workspace.saveAsync(hd)
-                return
-            }
-            await workspace.initializeGithubRepoAsync(hd, id, true)
-        }
+            hd = await workspace.importGithubAsync(repoid)
         await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
         core.handleNetworkError(e)
@@ -3997,7 +3994,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                     pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
                 }
-                useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+                useLang = mlang ? mlang[3] : (pxt.BrowserUtils.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
                 const locstatic = /staticlang=1/i.test(window.location.href);
                 live = !(locstatic || pxt.BrowserUtils.isPxtElectron() || theme.disableLiveTranslations) || (mlang && !!mlang[1]);
                 force = !!mlang && !!mlang[2];
@@ -4016,7 +4013,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 force)
                 .then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
-                        lang.setCookieLang(useLang);
+                        pxt.BrowserUtils.setCookieLang(useLang);
                         lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale", { lang: useLang, force: (force ? "true" : "false") });

@@ -4,13 +4,12 @@ import { connect } from "react-redux";
 import { ImageEditorStore } from "./store/imageReducer";
 import { dispatchChangeCurrentFrame, dispatchNewFrame, dispatchDuplicateFrame, dispatchDeleteFrame, dispatchMoveFrame } from "./actions/dispatch";
 
-import { ImageState, Bitmap } from "./store/bitmap";
 import { TimelineFrame } from "./TimelineFrame";
 import { bindGestureEvents, ClientCoordinates } from "./util";
 
 interface TimelineProps {
     colors: string[];
-    frames: ImageState[];
+    frames: pxt.sprite.ImageState[];
     currentFrame: number;
     interval: number;
     previewAnimating: boolean;
@@ -44,7 +43,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
         const { isMovingFrame, dropPreviewIndex } = this.state;
 
         let renderFrames = frames.slice();
-        let dragFrame: ImageState;
+        let dragFrame: pxt.sprite.ImageState;
 
         if (isMovingFrame) {
             dragFrame = frames[currentFrame];
@@ -218,16 +217,16 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
         this.canvas.height = imageState.bitmap.height;
         this.canvas.width = imageState.bitmap.width;
 
-        const bitmap = Bitmap.fromData(imageState.bitmap);
+        const bitmap = pxt.sprite.Bitmap.fromData(imageState.bitmap);
         this.drawBitmap(bitmap);
 
         if (imageState.floatingLayer) {
-            const floating = Bitmap.fromData(imageState.floatingLayer);
+            const floating = pxt.sprite.Bitmap.fromData(imageState.floatingLayer);
             this.drawBitmap(floating, imageState.layerOffsetX, imageState.layerOffsetY, true);
         }
     }
 
-    protected drawBitmap(bitmap: Bitmap, x0 = 0, y0 = 0, transparent = false) {
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false) {
         const { colors } = this.props;
 
         const context = this.canvas.getContext("2d");

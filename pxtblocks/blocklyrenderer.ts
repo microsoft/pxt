@@ -6,6 +6,7 @@ namespace pxt.blocks {
     let blocklyDiv: HTMLElement;
 
     export enum BlockLayout {
+        None = 0,
         Align = 1,
         // Shuffle deprecated
         Clean = 3,
@@ -64,6 +65,8 @@ namespace pxt.blocks {
             case BlockLayout.Clean:
                 if ((<any>workspace).cleanUp_)
                     (<any>workspace).cleanUp_();
+                break;
+            default: // do nothing
                 break;
         }
 
