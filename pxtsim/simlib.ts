@@ -409,7 +409,6 @@ namespace pxsim {
                     return Promise.delay(timeOff).then(finish)
 
                 const soundWaveIdx = b.data[idx]
-                const flags = b.data[idx + 1]
                 const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
                 const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
                 const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
