@@ -191,7 +191,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private serializeBlocks(normalize?: boolean): string {
         // store ids when using github
-        let xml = pxt.blocks.saveWorkspaceXml(this.editor, !normalize && !!this.parent.state.header.githubId);
+        let xml = pxt.blocks.saveWorkspaceXml(this.editor,
+            !normalize && this.parent.state
+            && this.parent.state.header
+            && !!this.parent.state.header.githubId);
         // strip out id, x, y attributes
         if (normalize) xml = xml.replace(/(x|y|id)="[^"]*"/g, '')
         pxt.debug(xml)
@@ -453,7 +456,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("blocks.create", { "block": blockId });
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
-                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata  || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
+                if (!this.parent.state.tutorialOptions || !this.parent.state.tutorialOptions.metadata || !this.parent.state.tutorialOptions.metadata.flyoutOnly)
                     this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }

@@ -395,7 +395,8 @@ namespace pxsim {
                 channels[0].remove()
             channels.push(ch)
 
-            const scaleVol = (n: number) => (n / 1024) * 2
+            /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
+            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 2 * (isSqWave ? .7 : 1);
 
             const finish = () => {
                 ch.mute()
@@ -409,12 +410,15 @@ namespace pxsim {
                     return Promise.delay(timeOff).then(finish)
 
                 const soundWaveIdx = b.data[idx]
-                const flags = b.data[idx + 1]
                 const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
                 const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
                 const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
                 const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
                 const endFreq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 10)
+
+                const isSquareWave = 11 <= soundWaveIdx && soundWaveIdx <= 15;
+                const scaledStart = scaleVol(startVol, isSquareWave);
+                const scaledEnd = scaleVol(endVol, isSquareWave);
 
                 if (!ctx || prevStop != instrStopId)
                     return Promise.delay(duration)
@@ -436,7 +440,7 @@ namespace pxsim {
                     currWave = soundWaveIdx
                     currFreq = freq
                     ch.gain = ctx.createGain()
-                    ch.gain.gain.value = scaleVol(startVol)
+                    ch.gain.gain.value = scaledStart;
 
                     if (endFreq != freq) {
                         if ((ch.generator as any).frequency != undefined) {
@@ -457,9 +461,9 @@ namespace pxsim {
 
                 idx += 12
 
-                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + (timeOff / 1000))
+                ch.gain.gain.setValueAtTime(scaledStart, ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
-                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + (timeOff / 1000))
+                ch.gain.gain.linearRampToValueAtTime(scaledEnd, ctx.currentTime + (timeOff / 1000))
 
                 return loopAsync()
             }

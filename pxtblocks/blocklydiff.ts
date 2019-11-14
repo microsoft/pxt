@@ -49,6 +49,25 @@ namespace pxt.blocks {
         const log = pxt.options.debug || (window && /diffdbg=1/.test(window.location.href))
             ? console.log : (message?: any, ...args: any[]) => { };
 
+        if (!oldWs) {
+            return {
+                ws: undefined,
+                message: lf("All blocks are new."),
+                added: 0,
+                deleted: 0,
+                modified: 1
+            }; // corrupted blocks
+        }
+        if (!newWs) {
+            return {
+                ws: undefined,
+                message: lf("The current blocks seem corrupted."),
+                added: 0,
+                deleted: 0,
+                modified: 1
+            }; // corrupted blocks
+        }
+
         // remove all unmodified topblocks
         // when doing a Blocks->TS roundtrip, all ids are trashed.
         const oldXml: pxt.Map<Blockly.Block> = pxt.Util.toDictionary(oldWs.getTopBlocks(false), b => normalizedDom(b, true));

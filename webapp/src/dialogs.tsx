@@ -417,7 +417,7 @@ export function showImportUrlDialogAsync() {
             const url = input.value;
             let projectId: string;
             if (/^(github:|https:\/\/github\.com\/)/.test(url)) {
-                projectId = pxt.github.noramlizeRepoId(url)
+                projectId = pxt.github.normalizeRepoId(url)
             } else {
                 projectId = pxt.Cloud.parseScriptId(url);
             }
@@ -526,7 +526,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
                         pxt.tickEvent("github.create.ok");
-                        return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName);
+                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName);
                     }, err => {
                         if (!showGithubTokenError(err)) {
                             if (err.statusCode == 422)
@@ -563,7 +563,7 @@ export function showImportGithubDialogAsync() {
                     description: r.description,
                     updatedAt: r.updatedAt,
                     onClick: () => {
-                        res = pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                        res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName)
                         core.hideDialog()
                     },
                 }))
