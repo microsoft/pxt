@@ -105,7 +105,6 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                             )}
                         </div>
                     </div>
-                    <br/>
                     {targetTheme.crowdinProject ?
                         <div className="ui" id="langmodalfooter">
                             <sui.Link aria-label={lf("How do I add a new language?")} href="/translate" text={lf("How do I add a new language?")} target="_blank" />
