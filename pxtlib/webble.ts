@@ -170,7 +170,7 @@ namespace pxt.webBluetooth {
                     this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleValueChanged);
                     return this.txCharacteristic.startNotifications()
                 }).then(() => {
-                    pxt.tickEvent(`webble.connected`, {id : this.id});
+                    pxt.tickEvent(`webble.connected`, { id: this.id });
                 });
         }
 
@@ -798,6 +798,8 @@ namespace pxt.webBluetooth {
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
             optionalServices
         }).then(device => {
+            if (!device) throw lf("No device selected");
+
             pxt.log(`ble: received device ${device.name}`)
             bleDevice = new BLEDevice(device);
             bleDevice.startServices(); // some services have rety logic even if the first GATT connect fails
@@ -819,6 +821,7 @@ namespace pxt.webBluetooth {
                 if (bleDevice && bleDevice.aliveToken)
                     bleDevice.aliveToken.resolveCancel();
                 pxt.log(`ble: error ${e.message}`)
+                throw e;
             })
     }
 
