@@ -395,7 +395,7 @@ namespace pxsim {
                 channels[0].remove()
             channels.push(ch)
 
-            const scaleVol = (n: number) => (n / 1024) * 2
+            const scaleVol = (n: number) => (n / 1024) / 2
 
             const finish = () => {
                 ch.mute()
