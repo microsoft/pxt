@@ -395,7 +395,7 @@ namespace pxsim {
                 channels[0].remove()
             channels.push(ch)
 
-            const scaleVol = (n: number, isSqWave: boolean) => (n / 1024) / 2 * (isSqWave ? .7 : 1);
+            const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 2 * (isSqWave ? .7 : 1);
 
             const finish = () => {
                 ch.mute()
