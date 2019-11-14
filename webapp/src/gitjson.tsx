@@ -201,7 +201,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
+            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        else if (statusCode == 404)
+            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (e.needsWritePermission) {
             if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
@@ -513,10 +515,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let deletedFiles: string[] = []
         let addedFiles: string[] = []
         if (f.name == pxt.CONFIG_NAME) {
-            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
-            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
-            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
-            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            const oldConfig = pxt.Package.parseAndValidConfig(f.baseGitContent);
+            const newConfig = pxt.Package.parseAndValidConfig(f.content);
+            if (oldConfig && newConfig) {
+                const oldCfg = pxt.allPkgFiles(oldConfig);
+                const newCfg = pxt.allPkgFiles(newConfig);
+                deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
+                addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            }
         }
         // backing .ts for .blocks/.py files
         let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
@@ -707,7 +713,7 @@ ${content}
         } else if (f.name == pxt.CONFIG_NAME) {
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
-                const prev = workspace.lookupFile(gs.commit, d)
+                const prev = pxt.github.lookupFile(gs.commit, d)
                 pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {

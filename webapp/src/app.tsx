@@ -1179,7 +1179,7 @@ export class ProjectView
                     file = main.lookupFile(e.name) || file
 
                 // no history entry, and there is a virtual file for the current file in the language recorded in the header
-                if ((!e && file.getVirtualFileName(h.editor)))
+                if ((!e && h.editor && file.getVirtualFileName(h.editor)))
                     file = main.lookupFile("this/" + file.getVirtualFileName(h.editor)) || file;
 
                 if (pxt.editor.isBlocks(file) && !file.content) {
@@ -3802,27 +3802,13 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
     }
 }
 
-async function importGithubProject(id: string) {
-    core.showLoading("loadingheader", lf("importing github project..."));
+async function importGithubProject(repoid: string) {
+    core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // try to find project with same id
-        let hd = workspace.getHeaders().find(h => h.githubId == id);
+        let hd = workspace.getHeaders().find(h => h.githubId == repoid);
         if (!hd)
-            hd = await workspace.importGithubAsync(id)
-        const text = await workspace.getTextAsync(hd.id)
-        if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
-            const ok = await core.confirmAsync({
-                header: lf("Initialize MakeCode extension?"),
-                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
-                agreeLbl: lf("Initialize!")
-            })
-            if (!ok) {
-                hd.isDeleted = true
-                await workspace.saveAsync(hd)
-                return
-            }
-            await workspace.initializeGithubRepoAsync(hd, id, true)
-        }
+            hd = await workspace.importGithubAsync(repoid)
         await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
         core.handleNetworkError(e)
