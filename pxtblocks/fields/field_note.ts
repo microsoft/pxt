@@ -698,16 +698,20 @@ namespace pxtblockly {
                     yPosition = keyHeight + topPosition;
                 let div = goog.dom.createDom("div",
                     {
-                        "style": "top: " + yPosition
-                        + "px; left: " + xPosition
-                        + "px; "
-                        + ";" + (isMobile ? "height: " + prevNextHeight + "px; font-size:" + (prevNextHeight - 10) + "px;" : "")
-                        + "width: " + Math.ceil(pianoWidth / 2) + "px;"
-                        + "background-color: " + thisField.colour_
-                        + ";" + (isPrev ? "border-left-color: " : "border-right-color: ") + thisField.colour_
-                        + ";" + (!isMobile ? "border-bottom-color: " + thisField.colour_ : "")
-                        + ";"
-                    });
+                        "style": `top: ${yPosition}px;
+                        left: ${xPosition}px;
+                        width: ${Math.ceil(pianoWidth / 2)}px;
+                        background-color: ${thisField.colour_};
+                        ${isPrev ? "border-left-color" : "border-right-color"}: ${thisField.colour_};
+                        ${isMobile ?
+                            `height: ${prevNextHeight}px;
+                            font-size: ${prevNextHeight - 10} px;`
+                            :
+                            `border-bottom-color: ${thisField.colour_};`
+                        }
+                        `
+                    }
+                );
                 div.className = "blocklyNotePrevNext";
                 return div;
             }
