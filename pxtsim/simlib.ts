@@ -395,6 +395,7 @@ namespace pxsim {
                 channels[0].remove()
             channels.push(ch)
 
+            /** Square waves are perceved as much louder than other sounds, so scale it down a bit to make it less jarring **/
             const scaleVol = (n: number, isSqWave?: boolean) => (n / 1024) / 2 * (isSqWave ? .7 : 1);
 
             const finish = () => {
