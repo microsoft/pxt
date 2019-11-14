@@ -35,41 +35,6 @@ namespace pxt {
 
     let apiInfo: Map<PackageApiInfo>;
     export function setBundledApiInfo(inf: Map<PackageApiInfo>) {
-        for (const pkgName of Object.keys(inf)) {
-            const byQName = inf[pkgName].apis.byQName
-            for (const apiName of Object.keys(byQName)) {
-                const sym = byQName[apiName]
-                const lastDot = apiName.lastIndexOf(".")
-                // re-create the object - this will hint the JIT that these are objects of the same type
-                // and the same hidden class should be used
-                const newsym = byQName[apiName] = {
-                    kind: sym.kind || 7,
-                    qName: apiName,
-                    namespace: apiName.slice(0, lastDot),
-                    name: apiName.slice(lastDot + 1),
-                    fileName: "",
-                    attributes: sym.attributes || ({} as any),
-                    retType: sym.retType || "void",
-                    parameters: sym.parameters ? sym.parameters.map(p => ({
-                        name: p.name,
-                        description: p.description || "",
-                        type: p.type || "number",
-                        initializer: p.initializer,
-                        default: p.default,
-                        options: p.options || {},
-                        isEnum: !!p.isEnum
-                    })) : null,
-                    isInstance: !!sym.isInstance,
-                    isReadOnly: !!sym.isReadOnly,
-                }
-                const attr = newsym.attributes
-                if (!attr.paramDefl) attr.paramDefl = {}
-                if (!attr.callingConvention) attr.callingConvention = 0
-                if (!attr.paramHelp) attr.paramHelp = {}
-                if (!attr.jsDoc) attr.jsDoc = ""
-                attr._name = newsym.name.replace(/@.*/, "")
-            }
-        }
         apiInfo = inf;
     }
 

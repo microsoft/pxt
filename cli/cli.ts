@@ -1881,53 +1881,6 @@ function buildSimAsync() {
     return buildFolderAsync(simDir(), true, pxt.appTarget.id === "common" ? "common-sim" : "sim");
 }
 
-function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
-    function leanSymbol(sym: pxtc.SymbolInfo) {
-        const isEmpty = (v: any) => !v || Object.keys(v).length == 0
-        let attrs: pxtc.CommentAttrs = U.clone(sym.attributes || ({} as any))
-        if (attrs.callingConvention == 0)
-            delete attrs.callingConvention
-        if (isEmpty(attrs.paramDefl))
-            delete attrs.paramDefl
-        if (isEmpty(attrs.paramHelp))
-            delete attrs.paramHelp
-        if (!attrs.jsDoc)
-            delete attrs.jsDoc
-        delete attrs._source
-        delete attrs.shim
-        delete attrs._name
-        if (isEmpty(attrs))
-            attrs = undefined
-        return {
-            kind: sym.kind == 7 ? undefined : sym.kind,
-            retType: sym.retType == "void" ? undefined : sym.retType,
-            attributes: attrs,
-            parameters: sym.parameters ? sym.parameters.map(p => ({
-                name: p.name,
-                description: p.description || undefined,
-                type: p.type == "number" ? undefined : p.type,
-                initializer: p.initializer,
-                default: p.default,
-                options: isEmpty(p.options) ? undefined : p.options,
-                isEnum: p.isEnum || undefined
-            })) : undefined,
-            isInstance: sym.isInstance || undefined,
-            isReadOnly: sym.isReadOnly || undefined,
-        } as any
-    }
-
-    inf = U.clone(inf)
-
-    for (const pkgName of Object.keys(inf)) {
-        const byQName = inf[pkgName].apis.byQName
-        for (const apiName of Object.keys(byQName)) {
-            byQName[apiName] = leanSymbol(byQName[apiName])
-        }
-    }
-
-    return inf
-}
-
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
@@ -2060,7 +2013,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 });
             }
 
-            cfg.apiInfo = compressApiInfo(builtInfo);
+            cfg.apiInfo = builtInfo;
             nodeutil.writeFileSync(apiInfoPath, JSON.stringify(cfg.apiInfo));
 
             let info = travisInfo()
