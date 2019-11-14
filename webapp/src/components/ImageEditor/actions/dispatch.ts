@@ -1,5 +1,5 @@
 import * as actions from './types'
-import { ImageEditorTool, CursorSize, EditorState, AnimationState, TileCategory } from '../store/imageReducer';
+import { ImageEditorTool, CursorSize, EditorState, AnimationState, TileCategory, TileDrawingMode } from '../store/imageReducer';
 
 export const dispatchChangeImageTool = (tool: ImageEditorTool) => ({ type: actions.CHANGE_IMAGE_TOOL, tool });
 export const dispatchChangeCursorSize = (cursorSize: CursorSize) => ({ type: actions.CHANGE_CURSOR_SIZE, cursorSize });
@@ -31,3 +31,4 @@ export const dispatchSetInitialState = (state: EditorState, past: AnimationState
 export const dispatchSetInitialTilemap = (tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet) => ({ type: actions.SET_INITIAL_TILEMAP, tilemap, tileset });
 export const dispatchChangeTilePaletteCategory = (category: TileCategory) => ({ type: actions.CHANGE_TILE_PALETTE_CATEGORY, category });
 export const dispatchChangeTilePalettePage = (page: number) => ({ type: actions.CHANGE_TILE_PALETTE_PAGE, page });
+export const dispatchChangeDrawingMode = (drawingMode: TileDrawingMode) => ({ type: actions.CHANGE_DRAWING_MODE, drawingMode });
