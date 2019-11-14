@@ -156,7 +156,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
-        this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
@@ -231,13 +230,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.pair();
     }
 
-    pairBluetooth() {
-        pxt.tickEvent("menu.pair.bluetooth")
-        core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
-        pxt.webBluetooth.pairAsync()
-            .then(() => core.hideLoading("webblepair"));
-    }
-
     showAboutDialog() {
         pxt.tickEvent("menu.about");
         this.props.parent.showAboutDialog();
@@ -291,7 +283,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         // Electron does not currently support webusb
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
-        const showPairDevice = pxt.usb.isEnabled && !pxt.BrowserUtils.isElectron();
+        const showPairDevice = pxt.usb.isEnabled;
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             {showProjectSettings ? <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} /> : undefined}
@@ -307,7 +299,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {showPairDevice ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
-            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             {docItem ? <DocsMenuItem key={"mobiledocsmenudocs"} role="menuitem" ariaLabel={pxt.Util.rlf(docItem.name)} text={pxt.Util.rlf(docItem.name)} className={"ui mobile only"} parent={this.props.parent} path={docItem.path} onItemClick={openDocs} /> : undefined}
             {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>

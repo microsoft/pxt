@@ -40,6 +40,7 @@ import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
+import * as pair from "./pair";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -2098,22 +2099,12 @@ export class ProjectView
             );
     }
 
+    canPair(): boolean {
+        return pxt.usb.isEnabled || pxt.webBluetooth.hasPartialFlash();
+    }
+
     pair() {
-        const prePairAsync = pxt.commands.webUsbPairDialogAsync
-            ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
-            : Promise.resolve(1);
-        return prePairAsync.then((res) => {
-            if (res) {
-                return pxt.usb.pairAsync()
-                    .then(() => {
-                        cmds.setWebUSBPaired(true);
-                        core.infoNotification(lf("Device paired! Try downloading now."))
-                    }, (err: Error) => {
-                        core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-                    });
-            }
-            return Promise.resolve();
-        });
+        await pair.pairAsync();
     }
 
     ///////////////////////////////////////////////////////////

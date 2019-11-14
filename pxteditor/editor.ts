@@ -273,8 +273,10 @@ namespace pxt.editor {
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
-        pair(): void;
         launchFullEditor(): void;
+
+        canPair(): boolean;
+        pair(): void;
 
         settings: EditorSettings;
 
