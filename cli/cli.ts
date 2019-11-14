@@ -4360,8 +4360,17 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                     key = basename
                 }
 
-                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) =>
-                    closestColor(img.data, 4 * (x + y * img.width)))
+                let hasNonTransparent = false;
+                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) => {
+                    const col = closestColor(img.data, 4 * (x + y * img.width));
+                    if (col)
+                        hasNonTransparent = true;
+                    return col;
+                });
+
+                if (!hasNonTransparent)
+                    continue;
+
                 let data = Buffer.from(hex, "hex").toString(star.dataEncoding)
 
                 let storeIcon = false
