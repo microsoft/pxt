@@ -2104,7 +2104,7 @@ export class ProjectView
     }
 
     pair() {
-        await pair.pairAsync();
+        pair.pairAsync().done();
     }
 
     ///////////////////////////////////////////////////////////

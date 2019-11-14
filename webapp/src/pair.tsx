@@ -5,7 +5,7 @@ import * as sui from "./sui";
 import * as core from "./core";
 import * as cmds from "./cmds";
 
-export function pairAsync() {
+export function pairAsync(): Promise<void> {
     const webUsb = pxt.usb.isEnabled;
     const webBluetooth = pxt.webBluetooth.hasPartialFlash();
 
@@ -19,6 +19,7 @@ export function pairAsync() {
 }
 
 function pairUsbAsync() {
+    pxt.tickEvent("pair.usb")
     const prePairAsync = pxt.commands.webUsbPairDialogAsync
         ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
         : Promise.resolve(1);
@@ -36,10 +37,10 @@ function pairUsbAsync() {
     });
 }
 
-function pairBluetoothAsync() {
+function pairBluetoothAsync(): Promise<void> {
     pxt.tickEvent("menu.pair.bluetooth")
     core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
-    pxt.webBluetooth.pairAsync()
+    return pxt.webBluetooth.pairAsync()
         .then(() => {
             core.infoNotification(lf("Device paired! Try downloading now."))
             core.hideLoading("webblepair")
