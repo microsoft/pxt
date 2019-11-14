@@ -59,6 +59,7 @@ namespace pxt {
                         options: p.options || {},
                         isEnum: !!p.isEnum
                     })) : null,
+                    extendsTypes: sym.extendsTypes,
                     snippet: sym.kind && sym.kind < 0 ? null as any : undefined,
                     isInstance: !!sym.isInstance,
                     isReadOnly: !!sym.isReadOnly,

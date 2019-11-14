@@ -1926,6 +1926,7 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
             kind: kind == 7 ? undefined : kind,
             retType: sym.retType == "void" ? undefined : sym.retType,
             attributes: attrs,
+            extendsTypes: sym.extendsTypes,
             parameters: sym.parameters ? sym.parameters.map(p => ({
                 name: p.name,
                 description: p.description || undefined,
