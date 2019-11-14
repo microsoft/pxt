@@ -1,9 +1,7 @@
 import * as React from "react";
-import * as pkg from "./package";
-import * as srceditor from "./srceditor"
-import * as sui from "./sui";
 import * as core from "./core";
 import * as cmds from "./cmds";
+import * as codecard from "./codecard";
 
 export function pairAsync(): Promise<void> {
     const webUsb = pxt.usb.isEnabled;
@@ -15,7 +13,28 @@ export function pairAsync(): Promise<void> {
     if (webUsb && !webBluetooth) return pairUsbAsync();
     if (!webUsb && webBluetooth) return pairBluetoothAsync();
     // multiple pairing options
-    return Promise.resolve();
+    return showPairingDialogAsync();
+}
+
+function showPairingDialogAsync() {
+    return core.dialogAsync({
+        header: lf("Pair device"),
+        hasCloseIcon: true,
+        jsx: <div className="ui cards">
+            <codecard.CodeCardView
+                header={lf("USB")}
+                description={lf("Connect via a USB cable.")}
+                icon="usb"
+                onClick={pairUsbAsync}
+             />
+            <codecard.CodeCardView
+                header={lf("Bluetooth")}
+                description={lf("Connect wirelessly using Bluetooth Low Energy.")}
+                icon="bluetooth"
+                onClick={pairBluetoothAsync}
+             />
+        </div>
+    })
 }
 
 function pairUsbAsync() {
