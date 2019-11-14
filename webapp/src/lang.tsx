@@ -89,7 +89,7 @@ export class LanguagePicker extends data.Component<ISettingsProps, LanguagesStat
                 closeOnEscape
             >
                 <div id="langmodal">
-                    <div className="group">
+                    <div id="availablelocales">
                         <div className="ui cards centered" role="listbox">
                             {languageList.map(langId => {
                                 const lang = pxt.Util.allLanguages[langId];
