@@ -650,15 +650,15 @@ namespace pxtblockly {
             function getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number, keyBorderColour: string, isMobile: boolean) {
                 let div = goog.dom.createDom("div",
                     {
-                        "style": "background-color: " + bgColor
-                        + "; width: " + width
-                        + "px; height: " + height
-                        + "px; left: " + leftPosition
-                        + "px; top: " + topPosition
-                        + "px; z-index: " + z_index
-                        + ";   border-color: " + keyBorderColour
-                        + ";"
-                    });
+                        "style": `background-color: ${bgColor};
+                        width: ${width}px;
+                        height: ${height}px;
+                        left: ${leftPosition}px;
+                        top: ${topPosition}px;
+                        z-index: ${z_index};
+                        border-color: ${keyBorderColour};`
+                    }
+                );
                 div.className = "blocklyNote";
                 return div;
             }
@@ -676,13 +676,19 @@ namespace pxtblockly {
                     topPosition += prevNextHeight;
                 let div = goog.dom.createDom("div",
                     {
-                        "style": "top: " + topPosition
-                        + "px; left: " + leftPosition
-                        + "px; background-color: " + thisField.colour_
-                        + "; width: " + pianoWidth
-                        + "px; border-color: " + thisField.colour_
-                        + ";" + (isMobile ? " font-size: " + (labelHeight - 10) + "px; height: " + labelHeight + "px;" : "")
-                    });
+                        "style": `top: ${topPosition}px;
+                        left: ${leftPosition}px;
+                        background-color: ${thisField.colour_};
+                        width: ${pianoWidth}px;
+                        border-color: ${thisField.colour_};
+                        ${isMobile ?
+                            `font-size ${labelHeight - 10}px;
+                            height: ${labelHeight}px;`
+                            :
+                            ""
+                        }`
+                    }
+                );
                 div.className = "blocklyNoteLabel";
                 return div;
             }
@@ -714,8 +720,7 @@ namespace pxtblockly {
                             font-size: ${prevNextHeight - 10} px;`
                             :
                             `border-bottom-color: ${thisField.colour_};`
-                        }
-                        `
+                        }`
                     }
                 );
                 div.className = "blocklyNotePrevNext";
