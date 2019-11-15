@@ -226,9 +226,11 @@ namespace pxtblockly {
             this.noteFreq_.length = 0;
             this.noteName_.length = 0;
             const thisField = this;
-            //  Create arrays of name/frequency of the notes
+            // Create arrays of name/frequency of the notes
             createNotesArray();
 
+            // explicitly update the value with the newly defined notes;
+            // a call to setValue here gets dropped
             this.doValueUpdate_(this.getValue())
 
             /**
@@ -353,6 +355,7 @@ namespace pxtblockly {
             }
             this.note_ = note;
             this.value_ = this.note_;
+            // render texts
             this.setText(this.getText());
         }
 
@@ -776,7 +779,8 @@ namespace pxtblockly {
          */
         private onHide() {
             this.isExpanded = false;
-            this.setText(this.getText())
+            // force resetting text to get back to `{num} hz` or named note view
+            this.setText(this.getText());
         };
 
         /**
