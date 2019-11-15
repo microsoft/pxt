@@ -54,13 +54,22 @@
     background-color: #3d3d3d;
 }
 
-.tile-palette-swatch.fg {
+.tile-palette-swatch.selected {
     border: solid 2px var(--sidebar-icon-active-color);
+}
+
+.tile-palette-swatch:not(.selected) {
+    margin: 2px;
 }
 
 .tile-palette-fg-bg .timeline-frame-outer {
     width: 2.5rem;
     height: 2.5rem;
+}
+
+.tile-palette-spacer {
+    height: 2.5rem;
+    border-right: solid 1px var(--sidebar-icon-inactive-color);
 }
 
 .tile-canvas-controls {

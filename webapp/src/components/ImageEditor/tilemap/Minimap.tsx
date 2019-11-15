@@ -72,7 +72,6 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
 
             const numPixels = bitmap.width * bitmap.height;
             this.tileColors[index] = "#" + toHex(averageColor.map(c => Math.floor(c / numPixels)));
-            
         }
 
         return this.tileColors[index];

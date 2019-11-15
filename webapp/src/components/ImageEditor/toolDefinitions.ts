@@ -1,4 +1,4 @@
-import { ImageEditorTool } from "./store/imageReducer";
+import { ImageEditorTool, TileDrawingMode } from "./store/imageReducer";
 
 export enum ToolCursor {
     None = "none",
@@ -105,12 +105,17 @@ export function getEdit(tool: ImageEditorTool, state: EditState, color: number, 
     }
 }
 
-export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean): EditState {
-    const res = new EditState(isTilemap ? pxt.sprite.Tilemap.fromData(state.bitmap).copy() : pxt.sprite.Bitmap.fromData(state.bitmap).copy());
+export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean, drawingMode: TileDrawingMode = TileDrawingMode.Default): EditState {
+    const res =  new EditState(isTilemap
+        ? pxt.sprite.Tilemap.fromData(state.bitmap).copy()
+        : pxt.sprite.Bitmap.fromData(state.bitmap).copy());
     res.layerOffsetX = state.layerOffsetX;
     res.layerOffsetY = state.layerOffsetY;
 
     if (state.floatingLayer) res.floatingLayer = isTilemap ? pxt.sprite.Tilemap.fromData(state.floatingLayer).copy() : pxt.sprite.Bitmap.fromData(state.floatingLayer).copy();
+    if (state.overlayLayers) res.overlayLayers = state.overlayLayers.map(layer => pxt.sprite.Bitmap.fromData(layer).copy());
+
+    res.setActiveLayer(drawingMode);
 
     return res;
 }
@@ -118,8 +123,11 @@ export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean): 
 export class EditState {
     image: pxt.sprite.Bitmap;
     floatingLayer: pxt.sprite.Bitmap;
+    overlayLayers: pxt.sprite.Bitmap[];
     layerOffsetX: number;
     layerOffsetY: number;
+
+    protected activeLayerIndex: number = -1;
 
     constructor(bitmap?: pxt.sprite.Bitmap) {
         this.image = bitmap;
@@ -135,6 +143,25 @@ export class EditState {
         return this.image.height;
     }
 
+    get activeLayer(): pxt.sprite.Bitmap {
+        if (this.activeLayerIndex < 0) {
+            return this.image;
+        } else {
+            return this.overlayLayers[this.activeLayerIndex];
+        }
+    }
+
+    setActiveLayer(drawingMode: TileDrawingMode) {
+        switch (drawingMode) {
+            case TileDrawingMode.Wall:
+                this.activeLayerIndex = 0;
+                break;
+            default:
+                this.activeLayerIndex = -1;
+                break;
+        }
+    }
+
     copy() {
         const res = new EditState();
         res.image = this.image.copy();
@@ -146,11 +173,13 @@ export class EditState {
         }
         res.layerOffsetX = this.layerOffsetX;
         res.layerOffsetY = this.layerOffsetY;
+        res.overlayLayers = this.overlayLayers.map(layer => layer.copy()); // todo copy each
 
         return res;
     }
 
     equals(other: EditState) {
+        // todo add overlay layers
         if (!this.image.equals(other.image) || (this.floatingLayer && !other.floatingLayer) || (!this.floatingLayer && other.floatingLayer)) return false;
 
         if (this.floatingLayer) return this.floatingLayer.equals(other.floatingLayer) && this.layerOffsetX === other.layerOffsetX && this.layerOffsetY === other.layerOffsetY;
@@ -164,7 +193,7 @@ export class EditState {
         this.floatingLayer.x0 = this.layerOffsetX;
         this.floatingLayer.y0 = this.layerOffsetY;
 
-        this.image.apply(this.floatingLayer, true);
+        this.activeLayer.apply(this.floatingLayer, true);
         this.floatingLayer = undefined;
     }
 
@@ -181,7 +210,7 @@ export class EditState {
             height = -height;
         }
 
-        this.floatingLayer = this.image.copy(left, top, width, height);
+        this.floatingLayer = this.activeLayer.copy(left, top, width, height);
         this.layerOffsetX = this.floatingLayer.x0;
         this.layerOffsetY = this.floatingLayer.y0;
 
@@ -191,7 +220,7 @@ export class EditState {
         if (cut) {
             for (let c = 0; c < width; c++) {
                 for (let r = 0; r < height; r++) {
-                    this.image.set(left + c, top + r, 0);
+                    this.activeLayer.set(left + c, top + r, 0);
                 }
             }
         }
@@ -328,7 +357,7 @@ export class PaintEdit extends Edit {
         for (let c = 0; c < state.width; c++) {
             for (let r = 0; r < state.height; r++) {
                 if (this.mask.get(c, r)) {
-                    state.image.set(c, r, this.color);
+                    state.activeLayer.set(c, r, this.color);
                 }
             }
         }
@@ -366,7 +395,7 @@ export class RectangleEdit extends SelectionEdit {
         const br = this.bottomRight();
         for (let c = tl.x; c <= br.x; c++) {
             for (let r = tl.y; r <= br.y; r++) {
-                state.image.set(c, r, this.color);
+                state.activeLayer.set(c, r, this.color);
             }
         }
     }
@@ -400,12 +429,12 @@ export class OutlineEdit extends SelectionEdit {
         if (tl.x > br.x || tl.y > br.y) return;
 
         for (let c = tl.x; c <= br.x; c++) {
-            state.image.set(c, tl.y, this.color);
-            state.image.set(c, br.y, this.color);
+            state.activeLayer.set(c, tl.y, this.color);
+            state.activeLayer.set(c, br.y, this.color);
         }
         for (let r = tl.y; r <= br.y; r++) {
-            state.image.set(tl.x, r, this.color);
-            state.image.set(br.x, r, this.color);
+            state.activeLayer.set(tl.x, r, this.color);
+            state.activeLayer.set(br.x, r, this.color);
         }
     }
 
@@ -445,7 +474,7 @@ export class LineEdit extends SelectionEdit {
     protected bresenham(x0: number, y0: number, x1: number, y1: number, state: EditState) {
         const dx = x1 - x0;
         const dy = y1 - y0;
-        const draw = (c: number, r: number) => state.image.set(c, r, this.color);
+        const draw = (c: number, r: number) => state.activeLayer.set(c, r, this.color);
         if (dx === 0) {
             const startY = dy >= 0 ? y0 : y1;
             const endY = dy >= 0 ? y1 : y0;
@@ -521,14 +550,14 @@ export class CircleEdit extends SelectionEdit {
         let dy = 1;
         let err = dx - (radius * 2);
         while (x >= y) {
-            state.image.set(cx + x, cy + y, this.color);
-            state.image.set(cx + x, cy - y, this.color);
-            state.image.set(cx + y, cy + x, this.color);
-            state.image.set(cx + y, cy - x, this.color);
-            state.image.set(cx - y, cy + x, this.color);
-            state.image.set(cx - y, cy - x, this.color);
-            state.image.set(cx - x, cy + y, this.color);
-            state.image.set(cx - x, cy - y, this.color);
+            state.activeLayer.set(cx + x, cy + y, this.color);
+            state.activeLayer.set(cx + x, cy - y, this.color);
+            state.activeLayer.set(cx + y, cy + x, this.color);
+            state.activeLayer.set(cx + y, cy - x, this.color);
+            state.activeLayer.set(cx - y, cy + x, this.color);
+            state.activeLayer.set(cx - y, cy - x, this.color);
+            state.activeLayer.set(cx - x, cy + y, this.color);
+            state.activeLayer.set(cx - x, cy - y, this.color);
             if (err <= 0) {
                 y++;
                 err += dy;
@@ -561,7 +590,7 @@ export class FillEdit extends Edit {
     }
 
     protected doEditCore(state: EditState) {
-        const replColor = state.image.get(this.col, this.row);
+        const replColor = state.activeLayer.get(this.col, this.row);
         if (replColor === this.color) {
             return;
         }
@@ -572,8 +601,8 @@ export class FillEdit extends Edit {
         const q: pxt.sprite.Coord[] = [{x: this.col, y: this.row}];
         while (q.length) {
             const curr = q.pop();
-            if (state.image.get(curr.x, curr.y) === replColor) {
-                state.image.set(curr.x, curr.y, this.color);
+            if (state.activeLayer.get(curr.x, curr.y) === replColor) {
+                state.activeLayer.set(curr.x, curr.y, this.color);
                 tryPush(curr.x + 1, curr.y);
                 tryPush(curr.x - 1, curr.y);
                 tryPush(curr.x, curr.y + 1);

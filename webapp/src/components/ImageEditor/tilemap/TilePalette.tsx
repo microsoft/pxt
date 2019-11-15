@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ImageEditorStore, TilemapState, TileCategory } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage } from '../actions/dispatch';
+import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode } from '../store/imageReducer';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 
@@ -14,11 +14,14 @@ export interface TilePaletteProps {
     category: TileCategory;
     page: number;
 
+    drawingMode: TileDrawingMode;
+
     dispatchChangeSelectedColor: (index: number) => void;
     dispatchChangeBackgroundColor: (index: number) => void;
     dispatchSwapBackgroundForeground: () => void;
     dispatchChangeTilePalettePage: (index: number) => void;
     dispatchChangeTilePaletteCategory: (category: TileCategory) => void;
+    dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
 }
 
 /**
@@ -57,30 +60,31 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     render() {
-        const { colors, selected, backgroundColor, dispatchSwapBackgroundForeground, tileset, category, page } = this.props;
+        const { colors, selected, backgroundColor, tileset, category, page, drawingMode } = this.props;
 
         return <div className="tile-palette">
-            <div className="tile-palette-fg-bg" onClick={dispatchSwapBackgroundForeground}>
-                <div className="tile-palette-swatch fg">
+            <div className="tile-palette-fg-bg">
+                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: tileset.tiles[selected].data }]}
                         colors={colors} />
                 </div>
-                <div className="tile-palette-swatch">
+                <div className="tile-palette-swatch" onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: tileset.tiles[backgroundColor].data }]}
                         colors={colors} />
                 </div>
-                <div className="tile-palette-swatch">
+                <div className="tile-palette-spacer"></div>
+                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler} role="button">
                     <TimelineFrame
-                        frames={[{ bitmap: tileset.tiles[backgroundColor].data }]}
+                        frames={[{ bitmap: tileset.tiles[0].data }]}
                         colors={colors} />
                 </div>
             </div>
             <Dropdown onChange={this.dropdownHandler} options={options} selected={category} />
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
-                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler}></canvas>
+                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} role="complementary"></canvas>
                 </div>
                 <div className="tile-canvas-controls">
                     { pageControls(3, page, this.pageHandler) }
@@ -155,6 +159,18 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         }
     }
 
+    protected foregroundBackgroundClickHandler = () => {
+        if (this.props.drawingMode != TileDrawingMode.Default) {
+            this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
+        } else {
+            this.props.dispatchSwapBackgroundForeground();
+        }
+    }
+
+    protected wallClickHandler = () => {
+        this.props.dispatchChangeDrawingMode(TileDrawingMode.Wall);
+    }
+
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
 }
 
@@ -197,7 +213,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         backgroundColor: editor.backgroundColor,
         category: editor.tilemapPalette.category,
         page: editor.tilemapPalette.page,
-        colors: state.colors
+        colors: state.colors,
+        drawingMode: editor.drawingMode
     };
 }
 
@@ -206,7 +223,8 @@ const mapDispatchToProps = {
     dispatchChangeBackgroundColor,
     dispatchSwapBackgroundForeground,
     dispatchChangeTilePalettePage,
-    dispatchChangeTilePaletteCategory
+    dispatchChangeTilePaletteCategory,
+    dispatchChangeDrawingMode
 };
 
 

@@ -30,6 +30,11 @@ export enum TileCategory {
     Misc,
 }
 
+export enum TileDrawingMode {
+    Default = "default",
+    Wall = "wall"
+}
+
 // State that goes on the undo/redo stack
 export interface AnimationState {
     visible: boolean;
@@ -62,7 +67,9 @@ export interface EditorState {
     cursorLocation?: [number, number];
     zoomDelta?: number;
     onionSkinEnabled: boolean;
+    overlayEnabled?: boolean;
     tilemapPalette?: TilemapPaletteState;
+    drawingMode?: TileDrawingMode;
 }
 
 export interface TilemapPaletteState {
@@ -147,8 +154,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.CHANGE_BACKGROUND_COLOR:
         case actions.SWAP_FOREGROUND_BACKGROUND:
         case actions.TOGGLE_ONION_SKIN_ENABLED:
+        case actions.CHANGE_OVERLAY_ENABLED:
         case actions.CHANGE_TILE_PALETTE_PAGE:
         case actions.CHANGE_TILE_PALETTE_CATEGORY:
+        case actions.CHANGE_DRAWING_MODE:
             return {
                 ...state,
                 editor: editorReducer(state.editor, action)
@@ -238,7 +247,9 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     tilemapPalette: {
                         category: TileCategory.Forest,
                         page: 0
-                    }
+                    },
+                    drawingMode: TileDrawingMode.Default,
+                    overlayEnabled: true
                 },
                 store: {
                     ...state.store,
@@ -263,7 +274,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                             "#000000"
                         ],
                         aspectRatioLocked: false,
-                        tilemap: { bitmap: action.tilemap },
+                        tilemap: {
+                            bitmap: action.tilemap,
+                            overlayLayers: action.layers
+                        },
                         tileset: action.tileset
                     },
                     future: []
@@ -403,6 +417,12 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.CHANGE_TILE_PALETTE_PAGE:
             tickEvent(`change-tile-page`);
             return { ...state, tilemapPalette: { ...state.tilemapPalette, page: action.page } };
+        case actions.CHANGE_DRAWING_MODE:
+            tickEvent(`change-drawing-mode`);
+            return { ...state, drawingMode: action.drawingMode || TileDrawingMode.Default };
+        case actions.CHANGE_OVERLAY_ENABLED:
+                tickEvent(`change-overlay-enabled`);
+                return { ...state, overlayEnabled: action.enabled };
     }
     return state;
 }
