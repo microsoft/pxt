@@ -676,12 +676,16 @@ namespace pxt {
 
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
+
+            let [initialLang, baseLang]  = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
-            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1)
+
+            let fn = `_locales/${initialLang}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
-            if (lang.length > 2) {
-                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+            }
+            else if (baseLang) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
             }
