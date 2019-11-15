@@ -910,7 +910,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)
-    const allfiles = pxt.allPkgFiles(pxtjson)
+    const allfiles = pxt.allPkgFiles(pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
     const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE, pxt.CONFIG_NAME];
     Object.keys(currFiles)
         .filter(f => ignoredFiles.indexOf(f) < 0 && allfiles.indexOf(f) > -1)
