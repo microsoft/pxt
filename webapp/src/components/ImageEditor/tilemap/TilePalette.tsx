@@ -64,18 +64,18 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
-                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler}>
+                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: tileset.tiles[selected].data }]}
                         colors={colors} />
                 </div>
-                <div className="tile-palette-swatch" onClick={this.foregroundBackgroundClickHandler}>
+                <div className="tile-palette-swatch" onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: tileset.tiles[backgroundColor].data }]}
                         colors={colors} />
                 </div>
                 <div className="tile-palette-spacer"></div>
-                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler}>
+                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: tileset.tiles[0].data }]}
                         colors={colors} />
@@ -84,7 +84,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             <Dropdown onChange={this.dropdownHandler} options={options} selected={category} />
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
-                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler}></canvas>
+                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} role="complementary"></canvas>
                 </div>
                 <div className="tile-canvas-controls">
                     { pageControls(3, page, this.pageHandler) }

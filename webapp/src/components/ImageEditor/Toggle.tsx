@@ -6,17 +6,11 @@ export interface ToggleProps {
     onChange?: (on: boolean) => void;
 }
 
-export interface ToggleState {
-    on?: boolean
-}
-
-export class Toggle extends React.Component<ToggleProps, ToggleState> {
+export class Toggle extends React.Component<ToggleProps, {}> {
+    protected checked = false;
     constructor(props: ToggleProps) {
         super(props);
-
-        this.state = {
-            on: props.initialValue
-        };
+        this.checked = props.initialValue;
     }
 
     render() {
@@ -24,13 +18,15 @@ export class Toggle extends React.Component<ToggleProps, ToggleState> {
         return  <div className="image-editor-toggle-container" >
             {label && <span>{label}</span>}
             <label className="image-editor-toggle">
-                <input type="checkbox" onClick={this.handleToggleClick} defaultChecked={initialValue} />
+                <input type="checkbox" onClick={this.handleToggleClick}
+                    defaultChecked={initialValue} aria-checked={this.checked} />
                 <span className="image-editor-toggle-switch" />
             </label>
         </div>
     }
 
     protected handleToggleClick = (evt: any) => {
+        this.checked = !this.checked;
         if (this.props.onChange) this.props.onChange(evt.target.checked);
     }
 }
