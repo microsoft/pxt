@@ -36,7 +36,6 @@ exports.helpOfProject = {
     goBackButton: '#sidedocs-back-button',
     titleAfterGoBack: '.ui.text h1',
     openLinkButton: '#sidedocsbar',
-    iframeOfSideDocs: '#sidedocsframe',
     titleOfBlocksPage: '#blocks-language',
     titleOfReferencePage: '#reference',
     titleOfJavaScriptPage: '#javascript',
@@ -99,7 +98,6 @@ exports.dragBlocks = {
     textBox: 'body textarea',
     commentDeleteButton: 'g.blocklyCommentDeleteIcon',
     helpOptionOfInsertBlock: '.goog-menuitem:nth-child(4)',
-    iframeIdOfHelp: '#sidedocsframe',
     titleOfInsertBlock: '#show-string',
     collapseButton: '[id="sidedocstoggle"]',
     deleteInsertBlock: '.goog-menuitem:nth-child(3)',
@@ -115,7 +113,9 @@ exports.tutorials = {
     dice: '[aria-label="Dice"]',
     loveMeter: '[aria-label="Love Meter"]',
     microChat: '[aria-label="Micro Chat"]',
-    //-----------------------------------------------------------------
+}
+
+exports.games = {
     rockPaperScissors: '[aria-label="Rock Paper Scissors"]',
     coinFlipper: '[aria-label="Coin Flipper"]',
     reactionTime: '[aria-label="Reaction Time"]',
@@ -124,7 +124,14 @@ exports.tutorials = {
     salute: '[aria-label="Salute!"]',
     karelTheLed: '[aria-label="Karel the LED"]',
     crashyBird: '[aria-label="Crashy bird"]',
-    //-----------------------------------------------------------------
+    titleOfReactionTime: '#reaction-time',
+    titleOfMagic: '#magic-button-trick',
+    titleOfSalute: '#salute-',
+    titleOfKarelTheLed:'#karel-the-led',
+    titleOfCrashyBird:'#crashy-bird',
+}
+
+exports.radioGames = {
     multiDice:'[aria-label="Multi Dice"]',
     moodRadio:'[aria-label="Mood Radio"]',
     telePotato:'[aria-label="Tele-potato"]',
@@ -136,14 +143,6 @@ exports.tutorials = {
     microCoin:'[aria-label="Micro:Coin"]',
     infection:'[aria-label="Infection"]',
     bestFriends:'[aria-label="Best Friends"]',
-    //-----------------------------------------------------------------
-    startTutorial: '.actions button',
-    showInstructions: '.actions .positive',
-    titleOfReactionTime: '#reaction-time',
-    titleOfMagic: '#magic-button-trick',
-    titleOfSalute: '#salute-',
-    titleOfKarelTheLed:'#karel-the-led',
-    titleOfCrashyBird:'#crashy-bird',
     titleOfMoodRadio:'#mood-radio',
     titleOfTelePotato:'#tele-potato',
     titleOfFireflies:'#fireflies',
@@ -154,6 +153,79 @@ exports.tutorials = {
     titleOfMicroCoin:'#micro-coin',
     titleOfInfection:'#infection',
     titleOfBestFriends:'#best-friends',
+}
+    
+exports.fashion = {
+    ductTapeWallet:'[aria-label="Duct Tape Wallet"]',
+    watch: '[aria-label="Watch"]',
+    stopWatch:'[aria-label="Stopwatch"]',
+    stepCounter:'[aria-label="Step counter"]',
+    ductTapeWatch:'[aria-label="Duct Tape Watch"]',
+    nameBadge:'[aria-label="Name badge"]',
+    titleOfWallet:'#wallet',
+    titleOfNewPage:'#make',
+    titleOfWatch:'#the-watch',
+    titleOfMakeWatch:'#the-watch-make',
+    titleOfStopWatch:'#stopwatch',
+    titleOfStepCounter:'#step-counter',
+    titleOfDuctTapeWatch:'#duct-tape-watch',
+    titleOfNameBadge:'#name-badge',
+
+}
+
+exports.music = {
+    hackYourHeadphones:'[aria-label="Hack Your Headphones"]',
+    bananaKeyboard:'[aria-label="Banana Keyboard"]',
+    guitar:'[aria-label="Guitar"]',
+    titleOfHeadphones:'#hack-your-headphones',
+    titleOfkeyBoard:'#banana-keyboard',
+    titleOfGuitar:'#guitar',
+}
+
+exports.toys = {
+    inchworm:'[aria-label="Inchworm"]',
+    milkCartonRobot:'[aria-label="Milk Carton Robot"]',
+    robotUnicorn:'[aria-label="Robot Unicorn"]',
+    milkMonster:'[aria-label="Milky Monster"]',
+    railwayCrossing:'[aria-label="Railway Crossing"]',
+    kitronikRCCarHack:'[aria-label="Kitronik RC Car Hack"]',
+    rotaryDialRadio:'[aria-label="Rotary Dial Radio"]',
+    titleOfInchworm:'#inchworm',
+    titleOfMilkCartonRobot:'#milk-carton-robot',
+    titleOfRobotUnicorn:'#robot-unicorn',
+    titleOfMilkMonster:'#milk-monster',
+    titleOfRailwayCrossing:'#railway-crossing',
+    titleOfRCCar:'#rc-car',
+    titleOfRotaryDialRadio:'#rotary-dial-radio',
+}
+
+exports.science = {
+    timingGates:'[aria-label="Timing Gates"]',
+    soilMoisture:'[aria-label="Soil Moisture"]',
+    plantWatering:'[aria-label="Plant Watering"]',
+    statesOfMatter:'[aria-label="States of Matter"]',
+    titleOfTimingGates:'#timing-gates',
+    titleOfSoilMoisture:'#soil-moisture',
+    titleOfPlantWatering:'#plant-watering',
+    titleOfStatesOfMatter:'#states-of-matter'
+}
+
+exports.tools = {
+    plotAcceleration:'[aria-label="Plot Acceleration"]',
+    lightLevelMeter:'[aria-label="Light Level Meter"]',
+    analogPinTester:'[aria-label="Analog Pin Tester"]',
+    servoCalibrator:'[aria-label="Servo Calibrator"]',
+    radioBridge:'[aria-label="Radio Bridge"]',
+    titleOfPlotAcceleration:'#plot-acceleration',
+    titleOfLightLevelMeter:'#light-level-meter',
+    titleOfAnalogPinTester:'#analog-pin-tester',
+    titleOfServoCalibrator:'#servo-calibrator',
+    openExample:'.actions .positive'
+}
+
+exports.commonActions = {
+    startTutorial: '.actions button',
+    showInstructions: '.actions .positive',
     playButton: '.video',
     videoPlay: '[aria-label="Play"]',
     videoTitle: '.yt-uix-sessionlink',
@@ -170,6 +242,8 @@ exports.tutorials = {
     projectName: '#fileNameInput2',
     seeMoreOfTutorials: '[aria-label="Tutorials"] [aria-label="See more"]',
     seeMoreOfGames: '[aria-label="Games"] [aria-label="See more"]',
-    //-----------------------------------------------------------------
-
+    idOfIframe: '#sidedocsframe',
+    getStartButton:'.docbutton',
+    openInNewTab:'#sidedocsbar'
 }
+
