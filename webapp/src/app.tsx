@@ -3876,7 +3876,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         pxt.options.wsPort = 3233;
     }
-    pkg.setupAppTarget((window as any).pxtTargetBundle)
+    pkg.setupAppTarget((window as any).pxtTargetBundle);
+    pxt.setBundledApiInfo((window as any).pxtTargetBundle.apiInfo);
 
     enableAnalytics()
 

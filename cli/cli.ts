@@ -89,6 +89,12 @@ export interface UserConfig {
     noSerial?: boolean;
 }
 
+interface TargetPackageInfo {
+    options: pxtc.CompileOptions;
+    api: pxtc.ApisInfo;
+    sha: string;
+}
+
 let reportDiagnostic = reportDiagnosticSimply;
 const targetJsPrefix = "var pxtTargetBundle = "
 
@@ -1902,9 +1908,19 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     }
 
     let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
+    let apiInfoPath = path.resolve(process.cwd(), "built", "api-cache.json");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
+
+    let builtInfo: pxt.Map<pxt.PackageApiInfo> = {};
+
+    if (!pxt.appTarget.appTheme.disableAPICache && fs.existsSync(apiInfoPath)) {
+        builtInfo = nodeutil.readJson(apiInfoPath);
+    }
+
+    let coreDependencies: string[];
+    const corepkg = "libs/" + pxt.appTarget.corepkg;
 
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
@@ -1927,18 +1943,22 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         pxt.appTarget.simulator.dynamicBoardDefinition)
                         isPrj = true
                 })
-                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
-                .then((compileOpts) => {
+                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
+                .then(res => {
+                    if (!res)
+                        return;
+
+                    const { options, api, sha: packageSha } = res;
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
-                        if (!compileOpts) {
-                            console.error(`Failed to extract native image for project ${dirname}`);
+                        if (!options) {
+                            pxt.debug(`Failed to extract native image for project ${dirname}`);
                             return;
                         }
 
                         // Place the base HEX image in the hex cache if necessary
-                        let sha = compileOpts.extinfo.sha;
-                        let hex: string[] = compileOpts.hexinfo.hex;
+                        let sha = options.extinfo.sha;
+                        let hex: string[] = options.hexinfo.hex;
                         let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
@@ -1948,7 +1968,18 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                             pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
-                })
+
+                    if (options && api) {
+                        builtInfo[dirname] = {
+                            apis: api,
+                            sha: packageSha
+                        };
+
+                        if (dirname === corepkg) {
+                            coreDependencies = mainPkg.sortedDeps().map(p => p.config.name).filter(n => n !== pxt.appTarget.corepkg);
+                        }
+                    }
+                });
         }, /*includeProjects*/ true))
         .then(() => {
             // patch icons in bundled packages
@@ -1965,6 +1996,25 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
             })
 
+            // Trim redundant API info from packages
+            const coreInfo = builtInfo[corepkg];
+
+            if (coreInfo) {
+                // Don't bother with dependencies of the core package
+                if (coreDependencies) {
+                    for (const dep of coreDependencies) {
+                        builtInfo["libs/" + dep].apis.byQName = {};
+                    }
+                }
+
+                Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
+                    deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
+                    deleteRedundantSymbols(coreInfo.apis.jres, info.apis.jres)
+                });
+            }
+
+            cfg.apiInfo = builtInfo;
+            nodeutil.writeFileSync(apiInfoPath, JSON.stringify(cfg.apiInfo));
 
             let info = travisInfo()
             cfg.versions = {
@@ -1994,6 +2044,33 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => {
             console.log("target.json built.")
         })
+}
+
+function deleteRedundantSymbols(core: pxt.Map<pxtc.SymbolInfo | pxt.JRes>, trg: pxt.Map<pxtc.SymbolInfo | pxt.JRes>) {
+    const ignoredKeys = ["fileName", "pkg"]
+
+    for (const key of Object.keys(trg)) {
+        if (flatJSONEquals(core[key], trg[key])) delete trg[key];
+    }
+
+    function flatJSONEquals(a: any, b: any) {
+        if (a === b) return true;
+
+        const tp = typeof a;
+        if (tp !== typeof b || tp !== "object") return false;
+
+        const keysa = Object.keys(a).filter(k => ignoredKeys.indexOf(k) === -1);
+        const keysb = Object.keys(b).filter(k => ignoredKeys.indexOf(k) === -1);
+
+        if (keysa.length !== keysb.length) return false;
+
+        for (const key of keysa) {
+            if (keysb.indexOf(key) === -1) return false;
+            if (!flatJSONEquals(a[key], b[key])) return false;
+        }
+
+        return true;
+    }
 }
 
 function pxtVersion(): string {
@@ -3058,8 +3135,12 @@ function testAssemblers(): Promise<void> {
 }
 
 
-function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOptions> {
+function testForBuildTargetAsync(useNative: boolean, cachedSHA: string): Promise<TargetPackageInfo> {
     let opts: pxtc.CompileOptions
+    let api: pxtc.ApisInfo;
+
+    let sha: string;
+
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
@@ -3075,10 +3156,18 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
             opts = o
             opts.testMode = true
             opts.ast = true
+
+            sha = pxtc.U.sha256(JSON.stringify(opts.fileSystem) + pxt.appTarget.versions.pxt);
             if (useNative)
                 return pxtc.compile(opts)
             else {
                 pxt.debug("  skip native build of non-project")
+
+                if (cachedSHA !== sha && !pxt.appTarget.appTheme.disableAPICache) {
+                    pxt.log(`Updating cached API info for ${opts.name}`);
+                    const res = pxtc.compile(opts);
+                    api = pxtc.getApiInfo(res.ast, opts.jres);
+                }
                 return null
             }
         })
@@ -3087,9 +3176,14 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
                 reportDiagnostics(res.diagnostics);
                 if (!res.success) U.userError("Compiler test failed")
                 simulatorCoverage(res, opts)
+
+                if (cachedSHA !== sha && !pxt.appTarget.appTheme.disableAPICache) {
+                    pxt.log(`Updating cached API info for ${opts.name}`);
+                    api = pxtc.getApiInfo(res.ast, opts.jres);
+                }
             }
         })
-        .then(() => opts);
+        .then(() => ({ options: opts, api: api, sha }));
 }
 
 function simshimAsync() {
