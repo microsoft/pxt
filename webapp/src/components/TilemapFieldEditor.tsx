@@ -84,7 +84,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
     }
 
     protected initTilemap(value: string, options?: any) {
-        let tilemap = pxt.sprite.tilemapLiteralToTilemap(value);
+        let { tilemap, layers } = pxt.sprite.tilemapLiteralToTilemap(value);
 
         if (tilemap.width === 0 || tilemap.height === 0) {
             tilemap = new pxt.sprite.Tilemap(options.initWidth || 16, options.initHeight || 16)
@@ -95,6 +95,11 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
             tiles: []
         };
 
+        if (!layers) {
+            let bitmap = new pxt.sprite.Bitmap(tilemap.width, tilemap.height);
+            layers = [bitmap.data()];
+        }
+
         if (options) {
             this.blocksInfo = options.blocksInfo;
 
@@ -103,7 +108,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
 
         }
 
-        this.ref.initTilemap(tilemap, tileset);
+        this.ref.initTilemap(tilemap, tileset, layers);
     }
 
     protected onDoneClick = () => {

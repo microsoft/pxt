@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { ImageEditorStore, ImageEditorTool, AnimationState, TilemapState } from './store/imageReducer';
-import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation } from "./actions/dispatch";
+import { ImageEditorStore, ImageEditorTool, AnimationState, TilemapState, TileDrawingMode } from './store/imageReducer';
+import { dispatchImageEdit, dispatchLayerEdit, dispatchChangeZoom, dispatchChangeCursorLocation } from "./actions/dispatch";
 import { GestureTarget, ClientCoordinates, bindGestureEvents } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 
+
 export interface ImageCanvasProps {
     dispatchImageEdit: (state: pxt.sprite.ImageState) => void;
+    dispatchLayerEdit: (index: number, data: pxt.sprite.BitmapData) => void;
     dispatchChangeZoom: (zoom: number) => void;
     dispatchChangeCursorLocation: (loc: [number, number]) => void;
     selectedColor: number;
@@ -18,6 +20,7 @@ export interface ImageCanvasProps {
     zoomDelta: number;
     onionSkinEnabled: boolean;
     isTilemap: boolean;
+    drawingMode: TileDrawingMode;
 
     colors: string[];
     tilemapState?: TilemapState;
@@ -41,6 +44,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected background: HTMLCanvasElement;
     protected floatingLayer: HTMLDivElement;
+    protected canvasLayers: HTMLCanvasElement[];
     protected cellWidth: number;
 
     protected edit: Edit;
@@ -64,6 +68,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
+                <canvas ref="paint-surface-layer" className="paint-surface overlay" />
                 <div ref="floating-layer-border" className="image-editor-floating-layer" />
             </div>
         </div>
@@ -74,6 +79,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
+        this.canvasLayers = [this.refs["paint-surface-layer"] as HTMLCanvasElement];
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
         // bindGestureEvents(this.floatingLayer, this);
 
@@ -93,7 +99,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         });
 
         const imageState = this.getImageState();
-        this.editState = getEditState(imageState, this.props.isTilemap);
+        this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
 
         this.redraw();
         this.updateBackground();
@@ -102,7 +108,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     componentDidUpdate() {
         if (!this.edit || !this.editState) {
             const imageState = this.getImageState();
-            this.editState = getEditState(imageState, this.props.isTilemap);
+            this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
         }
 
         this.cellWidth = this.props.isTilemap ? SCALE * this.props.tilemapState.tileset.tileWidth : SCALE;
@@ -268,25 +274,30 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected commitEdit() {
-        const { dispatchImageEdit } = this.props;
+        const { dispatchImageEdit, dispatchLayerEdit, drawingMode } = this.props;
         const imageState = this.getImageState();
 
         if (this.edit) {
-            this.editState = getEditState(imageState, this.props.isTilemap);
+            this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
             this.edit.doEdit(this.editState);
             this.edit = undefined;
 
-            dispatchImageEdit({
-                bitmap: this.editState.image.data(),
-                layerOffsetX: this.editState.layerOffsetX,
-                layerOffsetY: this.editState.layerOffsetY,
-                floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data()
-            });
+            if (drawingMode == TileDrawingMode.Wall) {
+                dispatchLayerEdit(0, this.editState.overlayLayers[0].data());
+            } else {
+                dispatchImageEdit({
+                    bitmap: this.editState.image.data(),
+                    layerOffsetX: this.editState.layerOffsetX,
+                    layerOffsetY: this.editState.layerOffsetY,
+                    floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data(),
+                    overlayLayers: this.editState.overlayLayers.map(el => el.data())
+                });
+            }
         }
     }
 
     protected redraw() {
-        const { prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth } = this.props;
+        const { prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth, drawingMode } = this.props;
         const imageState = this.getImageState();
 
         if (this.canvas) {
@@ -295,9 +306,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             this.canvas.width = imageState.bitmap.width * this.cellWidth;
             this.canvas.height = imageState.bitmap.height * this.cellWidth;
+            this.canvasLayers[0].width = imageState.bitmap.width * this.cellWidth;
+            this.canvasLayers[0].height = imageState.bitmap.height * this.cellWidth;
 
             if (onionSkinEnabled && nextFrame) {
-                const next = getEditState(nextFrame, this.props.isTilemap);
+                const next = getEditState(nextFrame, this.props.isTilemap, this.props.drawingMode);
                 const context = this.canvas.getContext("2d");
 
                 context.globalAlpha = 0.5;
@@ -312,15 +325,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             if (this.edit) {
                 const clone = this.editState.copy();
+                clone.setActiveLayer(this.props.drawingMode);
                 this.edit.doEdit(clone);
                 this.drawImage(clone.image);
+                if (this.editState.overlayLayers && this.editState.overlayLayers[0]) this.drawBitmap(clone.overlayLayers[0], 0, 0, true, this.cellWidth, this.canvasLayers[0]);
                 this.redrawFloatingLayer(clone);
             }
             else {
                 this.drawImage(this.editState.image);
+                if (this.editState.overlayLayers && this.editState.overlayLayers[0]) this.drawBitmap(this.editState.overlayLayers[0], 0, 0, true, this.cellWidth, this.canvasLayers[0]);
                 this.redrawFloatingLayer(this.editState);
 
                 if (this.cursorLocation && this.shouldDrawCursor()) {
+                    // TODO switch cursor for wall mode
                     this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, selectedColor );
                 }
             }
@@ -419,10 +436,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         return tileImage;
     }
 
-    protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true) {
+    protected drawTilemap(tilemap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, target = this.canvas) {
         const { tilemapState: { tileset } } = this.props;
 
-        const context = this.canvas.getContext("2d");
+        const context = target.getContext("2d");
         let index: number;
         let tileImage: HTMLCanvasElement;
 
@@ -551,6 +568,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.background.style.top = this.canvas.style.top;
             this.background.style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
 
+            // todo generalize
+            this.canvasLayers[0].style.position = "fixed"
+            this.canvasLayers[0].style.width = `${newWidth}px`;
+            this.canvasLayers[0].style.height = `${newHeight}px`;
+            this.canvasLayers[0].style.left = `${-this.panX}px`;
+            this.canvasLayers[0].style.top = `${-this.panY}px`;
+            this.canvasLayers[0].style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
+            
             this.redrawFloatingLayer(this.editState, true);
         }
     }
@@ -622,7 +647,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
             onionSkinEnabled: false,
             backgroundColor: editor.backgroundColor,
             colors: state.colors,
-            isTilemap: editor.isTilemap
+            isTilemap: editor.isTilemap,
+            drawingMode: editor.drawingMode
         };
     }
 
@@ -645,6 +671,7 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
 
 const mapDispatchToProps = {
     dispatchImageEdit,
+    dispatchLayerEdit,
     dispatchChangeCursorLocation,
     dispatchChangeZoom
 };

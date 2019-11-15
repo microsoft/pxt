@@ -81,8 +81,8 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
-    initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet) {
-        store.dispatch(dispatchSetInitialTilemap(tilemap, tileset));
+    initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet, layers?: pxt.sprite.BitmapData[]) {
+        store.dispatch(dispatchSetInitialTilemap(tilemap, tileset, layers));
     }
 
     onResize() {

@@ -86,7 +86,8 @@ namespace pxtblockly {
                 if (result) {
                     const old = this.getValue();
 
-                    this.state = pxt.sprite.tilemapLiteralToTilemap(result);
+                    const { tilemap, layers } = pxt.sprite.tilemapLiteralToTilemap(result)
+                    this.state = tilemap;
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -146,11 +147,11 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            const bmp = pxt.sprite.tilemapLiteralToTilemap(newText);
+            const { tilemap, layers } = pxt.sprite.tilemapLiteralToTilemap(newText);
 
             // Ignore invalid bitmaps
-            if (bmp && bmp.width && bmp.height) {
-                this.state = bmp;
+            if (tilemap && tilemap.width && tilemap.height) {
+                this.state = tilemap;
             }
         }
     }

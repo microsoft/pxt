@@ -20,6 +20,7 @@ namespace pxt.sprite {
         floatingLayer?: BitmapData;
         layerOffsetX?: number;
         layerOffsetY?: number;
+        overlayLayers?: pxt.sprite.BitmapData[];
     }
 
     /**
@@ -196,7 +197,7 @@ namespace pxt.sprite {
         }
     }
 
-    export function tilemapLiteralToTilemap(text: string, defaultPattern?: string): Tilemap {
+    export function tilemapLiteralToTilemap(text: string, defaultPattern?: string): { tilemap: Tilemap, layers?: pxt.sprite.BitmapData[] } {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
@@ -211,13 +212,15 @@ namespace pxt.sprite {
         const height = parseInt(text.substr(2, 2), 16);
         const data = hexToUint8Array(text.substring(4));
 
-        return Tilemap.fromData({
-            width,
-            height,
-            x0: 0,
-            y0: 0,
-            data
-        });
+        return {
+            tilemap: Tilemap.fromData({
+                width,
+                height,
+                x0: 0,
+                y0: 0,
+                data
+            })
+        };
     }
 
     export function tilemapToTilemapLiteral(t: Tilemap): string {

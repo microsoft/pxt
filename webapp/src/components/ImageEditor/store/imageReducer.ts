@@ -271,7 +271,10 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                             "#000000"
                         ],
                         aspectRatioLocked: false,
-                        tilemap: { bitmap: action.tilemap },
+                        tilemap: {
+                            bitmap: action.tilemap,
+                            overlayLayers: action.layers
+                        },
                         tileset: action.tileset
                     },
                     future: []
@@ -439,6 +442,18 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                 ...state,
                 tilemap: action.newState
             };
+        case actions.LAYER_EDIT:
+            tickEvent(`layer-edit`);
+            let layers = state.tilemap.overlayLayers;
+            if (action.index > layers.length - 1) return state
+            layers[action.index] = action.data;
+            return {
+                ...state,
+                tilemap: {
+                    ...state.tilemap,
+                    overlayLayers: layers
+                }
+            }
         default:
             return state;
     }
