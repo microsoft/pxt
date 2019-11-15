@@ -9,7 +9,6 @@ export const dispatchChangeKeyModifiers = (keyModifiers: number) => ({ type: act
 export const dispatchChangeCursorLocation = (cursorLocation: [number, number]) => ({ type: actions.CHANGE_CURSOR_LOCATION, cursorLocation });
 
 export const dispatchImageEdit = (newState: pxt.sprite.ImageState) => ({ type: actions.IMAGE_EDIT, newState });
-export const dispatchLayerEdit = (index: number, data: pxt.sprite.BitmapData) => ({ type: actions.LAYER_EDIT, index, data });
 export const dispatchUndoImageEdit = () => ({ type: actions.UNDO_IMAGE_EDIT });
 export const dispatchRedoImageEdit = () => ({ type: actions.REDO_IMAGE_EDIT });
 
@@ -23,6 +22,7 @@ export const dispatchMoveFrame = (oldIndex: number, newIndex: number) => ({ type
 export const dispatchChangeInterval = (newInterval: number) => ({ type: actions.CHANGE_INTERVAL, newInterval });
 export const dispatchChangePreviewAnimating = (animating: boolean) => ({ type: actions.CHANGE_PREVIEW_ANIMATING, animating });
 export const dispatchToggleOnionSkinEnabled = () => ({ type: actions.TOGGLE_ONION_SKIN_ENABLED })
+export const dispatchChangeOverlayEnabled = (enabled: boolean) => ({ type: actions.CHANGE_OVERLAY_ENABLED, enabled })
 export const dispatchChangeZoom = (zoom: number) => ({ type: actions.CHANGE_CANVAS_ZOOM, zoom });
 
 export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FOREGROUND_BACKGROUND });

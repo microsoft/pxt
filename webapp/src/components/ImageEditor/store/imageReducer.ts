@@ -67,6 +67,7 @@ export interface EditorState {
     cursorLocation?: [number, number];
     zoomDelta?: number;
     onionSkinEnabled: boolean;
+    overlayEnabled?: boolean;
     tilemapPalette?: TilemapPaletteState;
     drawingMode?: TileDrawingMode;
 }
@@ -153,6 +154,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.CHANGE_BACKGROUND_COLOR:
         case actions.SWAP_FOREGROUND_BACKGROUND:
         case actions.TOGGLE_ONION_SKIN_ENABLED:
+        case actions.CHANGE_OVERLAY_ENABLED:
         case actions.CHANGE_TILE_PALETTE_PAGE:
         case actions.CHANGE_TILE_PALETTE_CATEGORY:
         case actions.CHANGE_DRAWING_MODE:
@@ -246,7 +248,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                         category: TileCategory.Forest,
                         page: 0
                     },
-                    drawingMode: TileDrawingMode.Default
+                    drawingMode: TileDrawingMode.Default,
+                    overlayEnabled: true
                 },
                 store: {
                     ...state.store,
@@ -417,6 +420,9 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.CHANGE_DRAWING_MODE:
             tickEvent(`change-drawing-mode`);
             return { ...state, drawingMode: action.drawingMode || TileDrawingMode.Default };
+        case actions.CHANGE_OVERLAY_ENABLED:
+                tickEvent(`change-overlay-enabled`);
+                return { ...state, overlayEnabled: action.enabled };
     }
     return state;
 }
@@ -442,18 +448,6 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                 ...state,
                 tilemap: action.newState
             };
-        case actions.LAYER_EDIT:
-            tickEvent(`layer-edit`);
-            let layers = state.tilemap.overlayLayers;
-            if (action.index > layers.length - 1) return state
-            layers[action.index] = action.data;
-            return {
-                ...state,
-                tilemap: {
-                    ...state.tilemap,
-                    overlayLayers: layers
-                }
-            }
         default:
             return state;
     }
