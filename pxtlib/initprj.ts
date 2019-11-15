@@ -123,20 +123,7 @@ jobs:
         env:
           CI: true
 `,
-            ".travis.yml": `language: node_js
-node_js:
-    - "8.9.4"
-script:
-    - "npm install -g pxt"
-    - "pxt target @TARGET@"
-    - "pxt install"
-    - "pxt build"
-sudo: false
-cache:
-    directories:
-    - npm_modules
-    - pxt_modules`,
-            ".vscode/tasks.json":
+        ".vscode/tasks.json":
                 `
 // A task runner that calls the MakeCode (PXT) compiler
 {

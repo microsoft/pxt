@@ -882,15 +882,23 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
             currFiles["README.md"] = templateREADME;
     }
 
-    // special case, add test.ts in tests if needed
-    if (currFiles["test.ts"]) {
-        const pxtjson = JSON.parse(currFiles[pxt.CONFIG_NAME]);
-        const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
-        if (testFiles.indexOf("test.ts") < 0) {
-            testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
-        }
+    // update config with files if needed
+    const pxtjson = pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]);
+    const files = pxtjson.files;
+    // if no ts files, add existing ones
+    if (!files.filter(f => /\.ts$/.test(f)).length) {
+        // add files from the template
+        Object.keys(currFiles)
+            .filter(f => /\.(blocks|ts|py|asm|md)$/.test(f))
+            .forEach(f => files.push(f));
     }
+    // update test file if needed
+    const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
+    if (currFiles["test.ts"] && testFiles.indexOf("test.ts") < 0) {
+        testFiles.push("test.ts");
+    }
+    // save updated pxtjson
+    currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
 
     // save
     await saveAsync(hd, currFiles)
@@ -901,13 +909,11 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)
-    let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
-    for (let k of Object.keys(currFiles)) {
-        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
-            continue
-        if (allfiles.indexOf(k) < 0)
-            delete currFiles[k];
-    }
+    const allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    Object.keys(currFiles)
+        .filter(f => ignoredFiles.indexOf(f) < 0 && allfiles.indexOf(f) > -1)
+        .forEach(f => delete currFiles[f]);
 
     await saveAsync(hd, currFiles)
 
