@@ -1934,7 +1934,8 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
                 initializer: p.initializer,
                 default: p.default,
                 options: isEmpty(p.options) ? undefined : p.options,
-                isEnum: p.isEnum || undefined
+                isEnum: p.isEnum || undefined,
+                handlerParameters: p.handlerParameters
             })) : undefined,
             isInstance: sym.isInstance || undefined,
             isReadOnly: sym.isReadOnly || undefined,
