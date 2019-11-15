@@ -27,6 +27,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
     }
 
     // Strip all non alphanumeric characters other than _
+    textOnChange = (v: string) => this.props.onChange(v);
     variableNameOnChange = (v: string) => this.props.onChange(ts.pxtc.escapeIdentifier(v));
 
     renderInput() {
@@ -86,7 +87,7 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                         <sui.Input
                             label={input.label && input.label}
                             value={value || ''}
-                            onChange={input.type == 'variableName' ? this.variableNameOnChange : undefined}
+                            onChange={input.type == 'variableName' ? this.variableNameOnChange : this.textOnChange}
                             autoFocus={true}
                             selectOnMount={true}
                         />
