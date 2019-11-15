@@ -552,14 +552,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
-    let blocksScreenshotSha: string;
     let blocksDiffSha: string;
     if (options
         && treeUpdate.tree.find(e => e.path == "main.blocks")) {
         if (options.blocksScreenshotAsync) {
             const png = await options.blocksScreenshotAsync();
             if (png)
-                blocksScreenshotSha = await addToTree(BLOCKS_PREVIEW_PATH, png);
+                await addToTree(BLOCKS_PREVIEW_PATH, png);
         }
         if (options.blocksDiffScreenshotAsync) {
             const png = await options.blocksDiffScreenshotAsync();
@@ -733,10 +732,18 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
     let cfg = pxt.Package.parseAndValidConfig(cfgText);
-    if (!cfg || !cfg.files.length) {
+    // invalid cfg or no TypeScript files
+    if (!cfg || !cfg.files.find(f => /\.ts$/.test(f))) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
+        pxt.log(`github: reconstructing pxt.json`)
         cfg = pxt.github.reconstructConfig(commit);
+        // ensure that there is at least 1 ts file in the project
+        if (!cfg.files.find(f => /\.ts$/.test(f))) {
+            cfg.files.push("main.ts");
+            if (!justJSON)
+                files["main.ts"] = "\n";
+        }
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
 

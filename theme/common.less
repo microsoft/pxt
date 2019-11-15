@@ -123,10 +123,11 @@ pre {
 }
 
 .hideEditorToolbar #blocksArea,
-    .hideEditorToolbar #monacoEditor,
-    .hideEditorToolbar #pxtJsonEditor,
-    .hideEditorToolbar #serialEditor,
-    .hideEditorToolbar #filelist {
+.hideEditorToolbar #monacoEditor,
+.hideEditorToolbar #pxtJsonEditor,
+.hideEditorToolbar #serialEditor,
+.hideEditorToolbar #githubEditor,
+.hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
 
@@ -789,6 +790,10 @@ p.ui.font.small {
     .collapse-button.ui.computer.only {
         display:none !important; // hide desktop simulator toggle
     }
+
+    .hideEditorToolbar #filelist {
+        display:none !important;
+    }
 }
 
 /* Mobile only */
@@ -1165,7 +1170,7 @@ p.ui.font.small {
     .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
         margin: auto;
     }
-    .hideEditorFloats #editorToolbarArea {
+    .hideEditorFloats.transparentEditorTools #editorToolbarArea {
         padding-top: 0;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
