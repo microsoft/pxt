@@ -392,7 +392,10 @@ export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
         return getCachedApiInfoAsync(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
             .then(apis => {
                 if (apis) {
-                    return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+                    return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg)
+                        .then(apis => {
+                            return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+                        });
                 }
                 else {
                     return getApisInfoAsync().then(info => {
