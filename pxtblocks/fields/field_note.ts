@@ -214,8 +214,9 @@ namespace pxtblockly {
                 // Invalid number.
                 return null;
             }
+            const showDecimal = Math.floor(n) != n;
             // Get the value in range.
-            return String(n);
+            return "" + n.toFixed(showDecimal ? 2 : 0);
         }
 
         /**
@@ -355,7 +356,7 @@ namespace pxtblockly {
             }
             this.note_ = note;
             this.value_ = this.note_;
-            // render texts
+            // render text
             this.setText(this.getText());
         }
 
@@ -364,11 +365,10 @@ namespace pxtblockly {
          * @return {string} Current text.
          */
         getText(): string {
-            const note = +this.note_;
             if (this.isExpanded) {
-                const showDecimal = Math.floor(note) != note;
-                return note.toFixed(showDecimal ? 2 : 0);
+                return this.note_;
             } else {
+                const note = +this.note_;
                 for (let i = 0; i < this.nKeys_; i++) {
                     if (Math.abs(this.noteFreq_[i] - note) < this.eps) {
                         return this.noteName_[i];
@@ -390,6 +390,11 @@ namespace pxtblockly {
         setNumberOfKeys(size: number): FieldNote {
             this.nKeys_ = size;
             return this;
+        }
+
+        onHtmlInputChange_(e: any) {
+            super.onHtmlInputChange_(e);
+            Blockly.DropDownDiv.hideWithoutAnimation();
         }
 
         /**
