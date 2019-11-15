@@ -2370,7 +2370,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (opts.clickTrigger) simulator.driver.focus();
+                if (opts && opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
