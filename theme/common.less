@@ -123,10 +123,11 @@ pre {
 }
 
 .hideEditorToolbar #blocksArea,
-    .hideEditorToolbar #monacoEditor,
-    .hideEditorToolbar #pxtJsonEditor,
-    .hideEditorToolbar #serialEditor,
-    .hideEditorToolbar #filelist {
+.hideEditorToolbar #monacoEditor,
+.hideEditorToolbar #pxtJsonEditor,
+.hideEditorToolbar #serialEditor,
+.hideEditorToolbar #githubEditor,
+.hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
 
@@ -788,6 +789,10 @@ p.ui.font.small {
     }
     .collapse-button.ui.computer.only {
         display:none !important; // hide desktop simulator toggle
+    }
+
+    .hideEditorToolbar #filelist {
+        display:none !important;
     }
 }
 
