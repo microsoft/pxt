@@ -592,16 +592,16 @@ namespace pxtblockly {
                 const cnt = ++soundingKeys;
                 const freq = this.getContent().getAttribute("tag");
                 if (currentSelectedKey != null) {
-                    const script = currentSelectedKey.getContent() as HTMLElement;
-                    script.style.backgroundColor = previousColor;
+                    const currKeyEl = currentSelectedKey.getContent() as HTMLElement;
+                    currKeyEl.style.backgroundColor = previousColor;
                 }
-                const script = this.getContent() as HTMLElement;
+                const thisKeyEl = this.getContent() as HTMLElement;
                 if (currentSelectedKey !== this) { // save color and change values only if is clicking different key
-                    previousColor = script.style.backgroundColor;
+                    previousColor = thisKeyEl.style.backgroundColor;
                     thisField.setValue(freq);
                 }
                 currentSelectedKey = this;
-                script.style.backgroundColor = selectedKeyColor;
+                thisKeyEl.style.backgroundColor = selectedKeyColor;
                 (thisField as any).htmlInput_.value = thisField.getText();
                 pxt.AudioContextManager.tone(freq);
                 setTimeout(function () {
