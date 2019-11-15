@@ -113,7 +113,7 @@ export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean, d
     res.layerOffsetY = state.layerOffsetY;
 
     if (state.floatingLayer) res.floatingLayer = isTilemap ? pxt.sprite.Tilemap.fromData(state.floatingLayer).copy() : pxt.sprite.Bitmap.fromData(state.floatingLayer).copy();
-    if (state.overlayLayers && state.overlayLayers[0]) res.overlayLayers = [pxt.sprite.Bitmap.fromData(state.overlayLayers[0]).copy()];
+    if (state.overlayLayers) res.overlayLayers = state.overlayLayers.map(layer => pxt.sprite.Bitmap.fromData(layer).copy());
 
     res.setActiveLayer(drawingMode);
 
@@ -173,7 +173,7 @@ export class EditState {
         }
         res.layerOffsetX = this.layerOffsetX;
         res.layerOffsetY = this.layerOffsetY;
-        res.overlayLayers = this.overlayLayers; // todo copy each
+        res.overlayLayers = this.overlayLayers.map(layer => layer.copy()); // todo copy each
 
         return res;
     }

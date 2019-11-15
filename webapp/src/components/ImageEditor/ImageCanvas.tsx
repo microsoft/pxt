@@ -36,6 +36,11 @@ export interface ImageCanvasProps {
  */
 const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
+/**
+ * Each overlay layer is associated with a specific drawing mode
+ */
+const overlayLayers = [TileDrawingMode.Wall];
+
 class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
     protected canvas: HTMLCanvasElement;
 
@@ -68,7 +73,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
-                <canvas ref="paint-surface-layer" className="paint-surface overlay" />
+                { overlayLayers.map( (layer, index) => {
+                    return <canvas ref={`paint-surface-${layer.toString()}`} className="paint-surface overlay" key={index} />
+                }) }
                 <div ref="floating-layer-border" className="image-editor-floating-layer" />
             </div>
         </div>
@@ -79,7 +86,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
-        this.canvasLayers = [this.refs["paint-surface-layer"] as HTMLCanvasElement];
+        this.canvasLayers = overlayLayers.map(layer => this.refs[`paint-surface-${layer.toString()}`] as HTMLCanvasElement);
+
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
         // bindGestureEvents(this.floatingLayer, this);
 
@@ -282,16 +290,19 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.edit.doEdit(this.editState);
             this.edit = undefined;
 
-            if (drawingMode == TileDrawingMode.Wall) {
-                dispatchLayerEdit(0, this.editState.overlayLayers[0].data());
-            } else {
-                dispatchImageEdit({
-                    bitmap: this.editState.image.data(),
-                    layerOffsetX: this.editState.layerOffsetX,
-                    layerOffsetY: this.editState.layerOffsetY,
-                    floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data(),
-                    overlayLayers: this.editState.overlayLayers.map(el => el.data())
-                });
+            switch (drawingMode) {
+                case TileDrawingMode.Wall:
+                    let index = overlayLayers.indexOf(TileDrawingMode.Wall);
+                    dispatchLayerEdit(0, this.editState.overlayLayers[index].data());
+                    break;
+                default:
+                    dispatchImageEdit({
+                        bitmap: this.editState.image.data(),
+                        layerOffsetX: this.editState.layerOffsetX,
+                        layerOffsetY: this.editState.layerOffsetY,
+                        floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data(),
+                        overlayLayers: this.editState.overlayLayers.map(el => el.data())
+                    });
             }
         }
     }
@@ -306,11 +317,14 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             this.canvas.width = imageState.bitmap.width * this.cellWidth;
             this.canvas.height = imageState.bitmap.height * this.cellWidth;
-            this.canvasLayers[0].width = imageState.bitmap.width * this.cellWidth;
-            this.canvasLayers[0].height = imageState.bitmap.height * this.cellWidth;
+
+            this.canvasLayers.forEach(layer => {
+                layer.width = this.canvas.width;
+                layer.height = this.canvas.height;
+            })
 
             if (onionSkinEnabled && nextFrame) {
-                const next = getEditState(nextFrame, this.props.isTilemap, this.props.drawingMode);
+                const next = getEditState(nextFrame, this.props.isTilemap, drawingMode);
                 const context = this.canvas.getContext("2d");
 
                 context.globalAlpha = 0.5;
@@ -325,15 +339,23 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
             if (this.edit) {
                 const clone = this.editState.copy();
-                clone.setActiveLayer(this.props.drawingMode);
+                clone.setActiveLayer(drawingMode);
                 this.edit.doEdit(clone);
                 this.drawImage(clone.image);
-                if (this.editState.overlayLayers && this.editState.overlayLayers[0]) this.drawBitmap(clone.overlayLayers[0], 0, 0, true, this.cellWidth, this.canvasLayers[0]);
+                if (clone.overlayLayers) {
+                    clone.overlayLayers.forEach((layer, index) => {
+                        this.drawBitmap(layer, 0, 0, true, this.cellWidth, this.canvasLayers[index]);
+                    })
+                }
                 this.redrawFloatingLayer(clone);
             }
             else {
                 this.drawImage(this.editState.image);
-                if (this.editState.overlayLayers && this.editState.overlayLayers[0]) this.drawBitmap(this.editState.overlayLayers[0], 0, 0, true, this.cellWidth, this.canvasLayers[0]);
+                if (this.editState.overlayLayers) {
+                    this.editState.overlayLayers.forEach((layer, index) => {
+                        this.drawBitmap(layer, 0, 0, true, this.cellWidth, this.canvasLayers[index]);
+                    })
+                }
                 this.redrawFloatingLayer(this.editState);
 
                 if (this.cursorLocation && this.shouldDrawCursor()) {
@@ -561,23 +583,20 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.canvas.style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
             // this.canvas.style.imageRendering = "pixelated"
 
-            this.background.style.position = this.canvas.style.position;
-            this.background.style.width = this.canvas.style.width;
-            this.background.style.height = this.canvas.style.height;
-            this.background.style.left = this.canvas.style.left;
-            this.background.style.top = this.canvas.style.top;
-            this.background.style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
+            this.cloneCanvasStyle(this.canvas, this.background);
+            this.canvasLayers.forEach(layer => this.cloneCanvasStyle(this.canvas, layer));
 
-            // todo generalize
-            this.canvasLayers[0].style.position = "fixed"
-            this.canvasLayers[0].style.width = `${newWidth}px`;
-            this.canvasLayers[0].style.height = `${newHeight}px`;
-            this.canvasLayers[0].style.left = `${-this.panX}px`;
-            this.canvasLayers[0].style.top = `${-this.panY}px`;
-            this.canvasLayers[0].style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
-            
             this.redrawFloatingLayer(this.editState, true);
         }
+    }
+
+    protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
+        target.style.position = base.style.position;
+        target.style.width = base.style.width;
+        target.style.height = base.style.height;
+        target.style.left = base.style.left;
+        target.style.top = base.style.top;
+        target.style.clipPath = base.style.clipPath;
     }
 
     protected clientToCanvas(clientX: number, clientY: number, bounds: ClientRect) {
