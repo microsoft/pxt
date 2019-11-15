@@ -228,7 +228,8 @@ namespace pxtblockly {
             const thisField = this;
             //  Create arrays of name/frequency of the notes
             createNotesArray();
-            this.setValue(this.getValue());
+
+            this.doValueUpdate_(this.getValue())
 
             /**
              * create Array of notes name and frequencies
@@ -351,38 +352,30 @@ namespace pxtblockly {
                     this.sourceBlock_, "field", this.name, String(this.note_), String(note)));
             }
             this.note_ = note;
-            this.setText(note)
             this.value_ = this.note_;
+            this.setText(this.getText());
         }
 
         /**
-         * Get the text from this field.  Used when the block is collapsed.
+         * Get the text from this field
          * @return {string} Current text.
          */
         getText(): string {
+            const note = +this.note_;
             if (this.isExpanded) {
-                const showDecimal = Math.floor(+this.note_) != +this.note_;
-                return Number(this.note_).toFixed(showDecimal ? 2 : 0);
+                const showDecimal = Math.floor(note) != note;
+                return note.toFixed(showDecimal ? 2 : 0);
             } else {
-                return this.getNoteName_();
+                for (let i = 0; i < this.nKeys_; i++) {
+                    if (Math.abs(this.noteFreq_[i] - note) < this.eps) {
+                        return this.noteName_[i];
+                    }
+                }
+                let text = note.toString();
+                if (!isNaN(note))
+                    text += " Hz";
+                return text;
             }
-        }
-
-        /**
-        * get the note name to be displayed in the field
-        * @return {string} note name
-        * @private
-        */
-        private getNoteName_(): string {
-            let note: string = this.getValue();
-            let text: string = note.toString();
-            for (let i: number = 0; i < this.nKeys_; i++) {
-                if (Math.abs(this.noteFreq_[i] - Number(note)) < this.eps)
-                    return this.noteName_[i];
-            }
-            if (!isNaN(Number(note)))
-                text += " Hz";
-            return text;
         }
 
         /**
@@ -394,11 +387,6 @@ namespace pxtblockly {
         setNumberOfKeys(size: number): FieldNote {
             this.nKeys_ = size;
             return this;
-        }
-
-        onHtmlInputChange_(e: any) {
-            super.onHtmlInputChange_(e);
-            Blockly.DropDownDiv.hideWithoutAnimation();
         }
 
         /**
@@ -413,9 +401,6 @@ namespace pxtblockly {
             Blockly.DropDownDiv.clearContent();
 
             const contentDiv = Blockly.DropDownDiv.getContentDiv();
-
-            // change Note name to number frequency
-            this.setText(this.getText());
 
             const quietInput = (goog.userAgent.MOBILE || goog.userAgent.ANDROID ||
                 goog.userAgent.IPAD);
@@ -611,7 +596,6 @@ namespace pxtblockly {
                 if (currentSelectedKey !== this) { // save color and change values only if is clicking different key
                     previousColor = script.style.backgroundColor;
                     thisField.setValue(freq);
-                    thisField.setText(freq);
                 }
                 currentSelectedKey = this;
                 script.style.backgroundColor = selectedKeyColor;
@@ -625,7 +609,7 @@ namespace pxtblockly {
                 (FieldNote as any).superClass_.dispose.call(this);
             }
             /**
-             * create a DOM to assing a style to the button (piano Key)
+             * create a DOM to assign a style to the button (piano Key)
              * @param {string} bgColor color of the key background
              * @param {number} width width of the key
              * @param {number} heigth heigth of the key
@@ -653,7 +637,7 @@ namespace pxtblockly {
                 return div;
             }
             /**
-             * create a DOM to assing a style to the note label
+             * create a DOM to assign a style to the note label
              * @param {number} topPosition vertical position of the label
              * @param {number} leftPosition horizontal position of the label
              * @param {boolean} isMobile true if the device is a mobile
@@ -792,6 +776,7 @@ namespace pxtblockly {
          */
         private onHide() {
             this.isExpanded = false;
+            this.setText(this.getText())
         };
 
         /**
