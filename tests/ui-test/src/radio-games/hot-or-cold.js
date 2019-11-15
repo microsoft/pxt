@@ -1,33 +1,33 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { radioGames, commonActions } = require('../lib/css-value');
 
 class HotOrCold extends DomObject {
 
     async hotOrCold() {
 
-        await this.click(tutorials.hotOrCold, tutorials.closeButton,
-            tutorials.hotOrCold, tutorials.showInstructions);
+        await this.click(radioGames.hotOrCold, commonActions.closeButton,
+            radioGames.hotOrCold, commonActions.showInstructions);
 
         await this.switchToNewWindow();
 
-        let headerTitle = await this.getText(tutorials.titleOfHotOrCold);
+        let headerTitle = await this.getText(radioGames.titleOfHotOrCold);
         assert.equal(headerTitle, 'Hot or Cold');
         console.debug(`The title of the current page is "${headerTitle}"`);
 
-        await this.click(tutorials.playButton);
+        await this.click(commonActions.playButton);
 
         await this.switchToIframe('.embed iframe');
 
-        await this.click(tutorials.videoPlay);
+        await this.click(commonActions.videoPlay);
 
-        let videoTitle = await this.getText(tutorials.videoTitle);
+        let videoTitle = await this.getText(commonActions.videoTitle);
         assert.equal(videoTitle, 'micro:bit hot or cold');
         console.debug(`The video title is "${videoTitle}"`);
 
         await this.closeCurrentWindow();
 
-        await this.click(tutorials.closeButton);
+        await this.click(commonActions.closeButton);
 
     }
 

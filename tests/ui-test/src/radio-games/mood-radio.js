@@ -1,26 +1,26 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { radioGames, commonActions } = require('../lib/css-value');
 
 class MoodRadio extends DomObject {
 
     async moodRadio() {
 
-        await this.click(tutorials.moodRadio, tutorials.closeButton,
-            tutorials.moodRadio, tutorials.showInstructions);
+        await this.click(radioGames.moodRadio, commonActions.closeButton,
+            radioGames.moodRadio, commonActions.showInstructions);
 
-        await this.switchToIframe('#sidedocsframe');
-        try{
-            let headerTitle = await this.getText(tutorials.titleOfMoodRadio);
+        await this.switchToIframe(commonActions.idOfIframe);
+        try {
+            let headerTitle = await this.getText(radioGames.titleOfMoodRadio);
             assert.equal(headerTitle, 'Mood Radio');
             console.debug(`The header of the sidedocs is "${headerTitle}"`);
-        }catch(error){
+        } catch (error) {
             console.error(error);
         }
-        
+
         await this.switchToDefaultFrame();
 
-        await this.click(tutorials.microbitLogo);
+        await this.click(commonActions.microbitLogo);
 
     }
 

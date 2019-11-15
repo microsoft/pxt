@@ -1,41 +1,41 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { radioGames, commonActions } = require('../lib/css-value');
 
 class Infection extends DomObject {
 
     async infection() {
 
-        await this.click(tutorials.infection, tutorials.closeButton,
-            tutorials.infection, tutorials.showInstructions);
+        await this.click(radioGames.infection, commonActions.closeButton,
+            radioGames.infection, commonActions.showInstructions);
 
         await this.switchToNewWindow();
 
         try {
 
-            let headerTitle = await this.getText(tutorials.titleOfInfection);
+            let headerTitle = await this.getText(radioGames.titleOfInfection);
             assert.equal(headerTitle, 'Infection');
             console.debug(`The title of the current page is "${headerTitle}"`);
 
-            await this.click(tutorials.playButton);
+            await this.click(commonActions.playButton);
 
             await this.switchToIframe('.embed iframe');
 
-            await this.click(tutorials.videoPlay);
+            await this.click(commonActions.videoPlay);
 
-            let videoTitle = await this.getText(tutorials.videoTitle);
+            let videoTitle = await this.getText(commonActions.videoTitle);
             assert.equal(videoTitle, 'Behind the MakeCode Hardware - Radio in micro:bit');
             console.debug(`The video title is "${videoTitle}"`);
 
         } catch (error) {
-            
+
             console.error(error);
-            
+
         }
-        
+
         await this.closeCurrentWindow();
 
-        await this.click(tutorials.closeButton);
+        await this.click(commonActions.closeButton);
 
     }
 

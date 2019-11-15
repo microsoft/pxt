@@ -33,8 +33,8 @@ class ShareProject extends DomObject {
 
             await this.backNavigation();
 
-        } catch (err) {
-            console.log(err);
+        } catch (error) {
+            console.log(error);
         }
     }
 

@@ -1,38 +1,38 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { radioGames, commonActions } = require('../lib/css-value');
 
 class MultiDice extends DomObject {
 
     async multiDice() {
 
-        await this.click(tutorials.multiDice, tutorials.closeButton,
-            tutorials.multiDice, tutorials.startTutorial);
-            
-        let headerTitle = await this.getText(tutorials.headerTitle);
+        await this.click(radioGames.multiDice, commonActions.closeButton,
+            radioGames.multiDice, commonActions.startTutorial);
+
+        let headerTitle = await this.getText(commonActions.headerTitle);
         assert.equal(headerTitle, 'Multi Dice');
         console.debug(`The title of the current window is "${headerTitle}"`);
 
-        await this.click(tutorials.okButton);
+        await this.click(commonActions.okButton);
 
         for (let i = 1; i < 6; i++) {
 
-            await this.click(tutorials.goNextButton);
+            await this.click(commonActions.goNextButton);
 
-            let cssValueOfSelectLabel = await this.getAttribute(tutorials.selectedLabel, 'class');
+            let cssValueOfSelectLabel = await this.getAttribute(commonActions.selectedLabel, 'class');
             assert.equal(cssValueOfSelectLabel, 'ui circular label blue selected ');
 
-            let selectLabel = await this.getAttribute(tutorials.selectedLabel, 'aria-label');
+            let selectLabel = await this.getAttribute(commonActions.selectedLabel, 'aria-label');
             console.log(selectLabel);
         }
 
-        await this.click(tutorials.finishButton);
+        await this.click(commonActions.finishButton);
 
-        let projectName = await this.getAttribute(tutorials.projectName, 'value');
+        let projectName = await this.getAttribute(commonActions.projectName, 'value');
         assert.equal(projectName, 'Multi Dice');
         console.debug(`The current project name is "${projectName}"`);
-        
-        await this.click(tutorials.microbitLogo);
+
+        await this.click(commonActions.microbitLogo);
 
     }
 

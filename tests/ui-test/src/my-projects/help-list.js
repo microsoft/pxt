@@ -1,6 +1,6 @@
 import { DomObject } from '../lib/dom-object';
 import assert from 'assert';
-let { helpOfProject } = require('../lib/css-value');
+let { helpOfProject, commonActions } = require('../lib/css-value');
 
 class GetHelpList extends DomObject {
 
@@ -20,7 +20,7 @@ class GetHelpList extends DomObject {
 
         await this.click(helpOfProject.helpButton, helpOfProject.reference);
 
-        await this.switchToIframe(helpOfProject.iframeOfSideDocs);
+        await this.switchToIframe(commonActions.idOfIframe);
 
         let referenceTitle = await this.getText(helpOfProject.titleOfReferencePage);
 
