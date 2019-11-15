@@ -889,7 +889,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     if (!files.filter(f => /\.ts$/.test(f)).length) {
         // add files from the template
         Object.keys(currFiles)
-            .filter(f => /\.(blocks|ts|py|asm|md)$/.test(f))
+            .filter(f => /\.(blocks|ts|py|asm|md|json)$/.test(f))
+            .filter(f => f != pxt.CONFIG_NAME)
             .forEach(f => files.push(f));
     }
     // update test file if needed
@@ -909,8 +910,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)
-    const allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
-    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE];
+    const allfiles = pxt.allPkgFiles(pxtjson)
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE, pxt.CONFIG_NAME];
     Object.keys(currFiles)
         .filter(f => ignoredFiles.indexOf(f) < 0 && allfiles.indexOf(f) > -1)
         .forEach(f => delete currFiles[f]);
