@@ -97,7 +97,7 @@ pxt_modules
         "**/pxt_modules": true
     }
 }`,
-            ".github/workflows/makecode.yml": `name: MakeCode CI
+            ".github/workflows/makecode.yml": `name: MakeCode
 
 on: [push]
 
