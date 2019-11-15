@@ -196,12 +196,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             <div className="column mobile only">
                 {collapsed ?
                     <div className="ui grid">
-                        {!targetTheme.bigRunButton && <div className="left aligned column six wide">
+                        {!targetTheme.bigRunButton && <div className="left aligned column four wide">
                             <div className="ui icon small buttons">
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
                             </div>
                         </div>}
-                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
+                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'twelve'} wide`}>
                             {!readOnly &&
                                 <div className="ui icon small buttons">
                                     {this.getSaveInput(mobile, showSave)}
