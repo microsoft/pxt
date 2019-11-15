@@ -901,8 +901,8 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="primary" text={lf("Commit changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
-                <span className="inline-help">{lf("Push your changes to GitHub.")}
+                <sui.Button className="primary" text={lf("Commit & push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">{lf("Save your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
             </div>
