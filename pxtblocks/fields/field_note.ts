@@ -127,7 +127,7 @@ namespace pxtblockly {
         75: {name: "B", prefixedName: "High B", freq: 1976}
     }
 
-    let regex: RegExp = /^Note\.(.+)$/;
+    const noteEnumRegex: RegExp = /^Note\.(.+)$/;
 
     export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
         editorColour?: string;
@@ -340,7 +340,7 @@ namespace pxtblockly {
          */
         doValueUpdate_(note: string) {
             // accommodate note strings like "Note.GSharp5" as well as numbers
-            let match: Array<string> = regex.exec(note);
+            let match: Array<string> = noteEnumRegex.exec(note);
             let noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
