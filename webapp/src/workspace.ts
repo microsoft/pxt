@@ -733,7 +733,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
 
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
     let cfg = pxt.Package.parseAndValidConfig(cfgText);
-    if (!cfg || !cfg.files.length) {
+    // invalid cfg or no TypeScript files
+    if (!cfg || !cfg.files.filter(f => /\.ts$/.test(f)).length) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         cfg = pxt.github.reconstructConfig(commit);
