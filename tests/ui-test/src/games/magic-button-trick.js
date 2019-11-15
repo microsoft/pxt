@@ -1,33 +1,33 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { games, commonActions } = require('../lib/css-value');
 
 class MagicButtonTrick extends DomObject {
 
     async magicButtonTrick() {
 
-        await this.click(tutorials.magicButtonTrick, tutorials.closeButton,
-            tutorials.magicButtonTrick, tutorials.showInstructions);
+        await this.click(games.magicButtonTrick, commonActions.closeButton,
+            games.magicButtonTrick, commonActions.showInstructions);
 
         await this.switchToNewWindow();
          
-        let headerTitle = await this.getText(tutorials.titleOfMagic);
+        let headerTitle = await this.getText(games.titleOfMagic);
         assert.equal(headerTitle, 'Magic Button Trick');
         console.debug(`The title of the current page is "${headerTitle}"`);
 
-        await this.click(tutorials.playButton);
+        await this.click(commonActions.playButton);
 
         await this.switchToIframe('.embed iframe');
 
-        await this.click(tutorials.videoPlay);
+        await this.click(commonActions.videoPlay);
 
-        let videoTitle = await this.getText(tutorials.videoTitle);
+        let videoTitle = await this.getText(commonActions.videoTitle);
         assert.equal(videoTitle, 'microbit magic button trick demo');
         console.debug(`The video title is "${videoTitle}"`); 
 
         await this.closeCurrentWindow();
 
-        await this.click(tutorials.closeButton);
+        await this.click(commonActions.closeButton);
 
     }
 

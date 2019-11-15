@@ -1,6 +1,6 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { dragBlocks } = require('../lib/css-value');
+let { dragBlocks, commonActions } = require('../lib/css-value');
 
 class BlocklyToolBox extends DomObject {
 
@@ -63,7 +63,7 @@ class BlocklyToolBox extends DomObject {
 
                 await this.click(dragBlocks.helpOptionOfInsertBlock);
 
-                await this.switchToIframe(dragBlocks.iframeIdOfHelp);
+                await this.switchToIframe(commonActions.idOfIframe);
 
                 let sideDocsTitle = await this.getText(dragBlocks.titleOfInsertBlock);
 

@@ -1,23 +1,23 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { radioGames, commonActions } = require('../lib/css-value');
 
 class BestFriends extends DomObject {
 
     async bestFriends() {
 
-        await this.click(tutorials.bestFriends, tutorials.closeButton,
-            tutorials.bestFriends, tutorials.showInstructions);
+        await this.click(radioGames.bestFriends, commonActions.closeButton,
+            radioGames.bestFriends, commonActions.showInstructions);
 
         await this.switchToNewWindow();
 
-        let headerTitle = await this.getText(tutorials.titleOfBestFriends);
+        let headerTitle = await this.getText(radioGames.titleOfBestFriends);
         assert.equal(headerTitle, 'Best Friends');
         console.debug(`The header of the new page is "${headerTitle}"`);
-        
+
         await this.closeCurrentWindow();
-        
-        await this.click(tutorials.closeButton);
+
+        await this.click(commonActions.closeButton);
 
     }
 

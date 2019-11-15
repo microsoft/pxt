@@ -1,34 +1,32 @@
 import { DomObject } from '../lib/dom-object';
 import assert from "assert";
-let { tutorials } = require('../lib/css-value');
+let { radioGames, commonActions } = require('../lib/css-value');
 
 class TelePotato extends DomObject {
 
     async telePotato() {
 
-        await this.click(tutorials.telePotato, tutorials.closeButton,
-            tutorials.telePotato, tutorials.showInstructions);
+        await this.click(radioGames.telePotato, commonActions.closeButton,
+            radioGames.telePotato, commonActions.showInstructions);
 
         await driver.sleep(3000);
-        await this.switchToIframe('#sidedocsframe');
+        await this.switchToIframe(commonActions.idOfIframe);
 
-        try{
+        try {
 
-            let headerTitle = await this.getText(tutorials.titleOfTelePotato);
+            let headerTitle = await this.getText(radioGames.titleOfTelePotato);
             assert.equal(headerTitle, 'Tele-Potato');
             console.debug(`The header of the sidedocs is "${headerTitle}"`);
 
-        }catch(error){
+        } catch (error) {
 
             console.error(error);
-            
+
         }
-        
 
         await this.switchToDefaultFrame();
 
-        await this.click(tutorials.microbitLogo);
-
+        await this.click(commonActions.microbitLogo);
     }
 
     test() {
