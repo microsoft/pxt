@@ -146,6 +146,7 @@ namespace pxtblockly {
         private colour_: string;
         //  colour of the dropdown border
         private colourBorder_: string;
+        protected isExpanded: Boolean;
 
         /**
          * default number of piano keys
@@ -181,6 +182,7 @@ namespace pxtblockly {
 
             (FieldNote as any).superClass_.constructor.call(this, text, validator);
             this.note_ = text;
+            this.isExpanded = false;
 
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
@@ -201,7 +203,7 @@ namespace pxtblockly {
          * @param {string} text The user's text.
          * @return {?string} A string representing a valid positive number, or null if invalid.
          */
-        classValidator(text: string) {
+        doClassValidation_(text: string) {
             if (text === null) {
                 return null;
             }
@@ -358,9 +360,12 @@ namespace pxtblockly {
          * @return {string} Current text.
          */
         getText(): string {
-            if (Math.floor(Number(this.note_)) == Number(this.note_))
-                return Number(this.note_).toFixed(0);
-            return Number(this.note_).toFixed(2);
+            if (this.isExpanded) {
+                const showDecimal = Math.floor(+this.note_) != +this.note_;
+                return Number(this.note_).toFixed(showDecimal ? 2 : 0);
+            } else {
+                return this.getNoteName_();
+            }
         }
 
         /**
@@ -400,6 +405,7 @@ namespace pxtblockly {
          * Create a piano under the note field.
          */
         showEditor_(e: Event): void {
+            this.isExpanded = true;
             this.updateColor();
 
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
@@ -790,18 +796,7 @@ namespace pxtblockly {
          * Callback for when the drop-down is hidden.
          */
         private onHide() {
-            let newText = this.note_;
-            if (newText === null) {
-                // No change if null.
-                return;
-            }
-            newText = String(newText);
-            if (!isNaN(Number(newText)))
-                newText = this.getNoteName_();
-
-            if (newText !== this.text_) {
-                Blockly.Field.prototype.setText.call(this, newText);
-            }
+            this.isExpanded = false;
         };
 
         /**
