@@ -3,14 +3,16 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+interface GithubButtonProps extends pxt.editor.ISettingsProps {
+    className?: string;
+}
 
 interface GithubButtonState {
     pushPulling?: boolean;
 }
 
-export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonState> {
-    constructor(props: ISettingsProps) {
+export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonState> {
+    constructor(props: GithubButtonProps) {
         super(props);
         this.state = {};
         this.handleClick = this.handleClick.bind(this);
@@ -51,7 +53,7 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         const ghid = pxt.github.parseRepoId(githubId);
         // new github repo
         if (!ghid)
-            return <sui.Button key="githubcreatebtn" className={`ui icon button editortools-btn editortools-github-btn`}
+            return <sui.Button key="githubcreatebtn" className={`ui icon button editortools-btn editortools-github-btn ${this.props.className || ""}`}
                 icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")}
                 onClick={this.createRepository} />
 

@@ -166,6 +166,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename && !debugging;
         const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
+        const showGithub = !!pxt.appTarget.cloud && !!pxt.appTarget.cloud.githubPackages;
 
         const trace = !!targetTheme.enableTrace;
         const tracing = this.props.parent.state.tracing;
@@ -249,6 +250,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                         {showSave && <div className="column four wide">
                             <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtntablet`} className={"small"} />}
                         </div>}
                         <div className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
                             {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(tablet)}</div>}
