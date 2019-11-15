@@ -1915,14 +1915,18 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
         if (!attrs.jsDoc)
             delete attrs.jsDoc
         delete attrs._source
-        delete attrs.shim
+        // keep shim=ENUM_GET etc
+        if (!attrs.shim || attrs.shim.indexOf("::") > 0)
+            delete attrs.shim
         delete attrs._name
         if (isEmpty(attrs))
             attrs = undefined
+        const kind = sym.snippet !== undefined ? -sym.kind : sym.kind
         return {
-            kind: sym.kind == 7 ? undefined : sym.kind,
+            kind: kind == 7 ? undefined : kind,
             retType: sym.retType == "void" ? undefined : sym.retType,
             attributes: attrs,
+            extendsTypes: sym.extendsTypes,
             parameters: sym.parameters ? sym.parameters.map(p => ({
                 name: p.name,
                 description: p.description || undefined,
@@ -1942,7 +1946,10 @@ function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
     for (const pkgName of Object.keys(inf)) {
         const byQName = inf[pkgName].apis.byQName
         for (const apiName of Object.keys(byQName)) {
-            byQName[apiName] = leanSymbol(byQName[apiName])
+            if (/^DAL\./.test(apiName))
+                delete byQName[apiName]
+            else
+                byQName[apiName] = leanSymbol(byQName[apiName])
         }
     }
 
@@ -2081,8 +2088,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 });
             }
 
+            nodeutil.writeFileSync(apiInfoPath, JSON.stringify(builtInfo, null, 1));
             cfg.apiInfo = compressApiInfo(builtInfo);
-            nodeutil.writeFileSync(apiInfoPath, JSON.stringify(cfg.apiInfo));
 
             let info = travisInfo()
             cfg.versions = {
@@ -4360,8 +4367,17 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                     key = basename
                 }
 
-                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) =>
-                    closestColor(img.data, 4 * (x + y * img.width)))
+                let hasNonTransparent = false;
+                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) => {
+                    const col = closestColor(img.data, 4 * (x + y * img.width));
+                    if (col)
+                        hasNonTransparent = true;
+                    return col;
+                });
+
+                if (!hasNonTransparent)
+                    continue;
+
                 let data = Buffer.from(hex, "hex").toString(star.dataEncoding)
 
                 let storeIcon = false
