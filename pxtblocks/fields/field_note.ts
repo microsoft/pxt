@@ -189,8 +189,8 @@ namespace pxtblockly {
                 this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
             }
 
-            let minNote = parseInt(params.minNote) || this.minNote_;
-            let maxNote = parseInt(params.maxNote) || this.maxNote_;
+            const minNote = parseInt(params.minNote) || this.minNote_;
+            const maxNote = parseInt(params.maxNote) || this.maxNote_;
             if (minNote >= 28 && maxNote <= 76 && maxNote > minNote) {
                 this.minNote_ = minNote;
                 this.maxNote_ = maxNote;
@@ -225,7 +225,7 @@ namespace pxtblockly {
             (FieldNote as any).superClass_.init.call(this);
             this.noteFreq_.length = 0;
             this.noteName_.length = 0;
-            let thisField = this;
+            const thisField = this;
             //  Create arrays of name/frequency of the notes
             createNotesArray();
             this.setValue(this.getValue());
@@ -340,8 +340,8 @@ namespace pxtblockly {
          */
         doValueUpdate_(note: string) {
             // accommodate note strings like "Note.GSharp5" as well as numbers
-            let match: Array<string> = noteEnumRegex.exec(note);
-            let noteName: any = (match && match.length > 1) ? match[1] : null;
+            const match: Array<string> = noteEnumRegex.exec(note);
+            const noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
@@ -412,7 +412,7 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
 
-            let contentDiv = Blockly.DropDownDiv.getContentDiv();
+            const contentDiv = Blockly.DropDownDiv.getContentDiv();
 
             // change Note name to number frequency
             this.setText(this.getText());
@@ -429,15 +429,16 @@ namespace pxtblockly {
             let labelHeight: number = 24;
             let prevNextHeight: number = 20;
             let whiteKeyCounter: number = 0;
-            let selectedKeyColor: string = "yellowgreen";
             let soundingKeys: number = 0;
-            let thisField = this;
+            const selectedKeyColor: string = "yellowgreen";
+            const thisField = this;
             //  Record windowSize and scrollOffset before adding the piano.
-            let windowSize = goog.dom.getViewportSize();
+            const windowSize = goog.dom.getViewportSize();
+            const editorWidth = windowSize.width;
+            const piano: Array<goog.ui.CustomButton> = [];
+
             let pagination: boolean = false;
             let mobile: boolean = false;
-            let editorWidth = windowSize.width;
-            let piano: Array<goog.ui.CustomButton> = [];
             //  initializate
             pianoWidth = keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
             pianoHeight = keyHeight + labelHeight;
@@ -465,7 +466,7 @@ namespace pxtblockly {
             }
 
             //  create piano div
-            let pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            const pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
             pianoDiv.className = "blocklyPianoDiv";
             contentDiv.appendChild(pianoDiv);
 
@@ -482,21 +483,21 @@ namespace pxtblockly {
             for (let i = 0; i < this.nKeys_; i++) {
                 if (i > 0 && i % 12 == 0)
                     octaveCounter++;
-                let key = piano[i];
+                const key = piano[i];
                 //  What color is i key
-                let bgColor = (isWhite(i)) ? "white" : "black";
-                let width = getKeyWidth(i);
-                let height = getKeyHeight(i);
+                const bgColor = (isWhite(i)) ? "white" : "black";
+                const width = getKeyWidth(i);
+                const height = getKeyHeight(i);
                 let position = getPosition(i);
 
                 //  modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * keyWidth;
-                let style = getKeyStyle(bgColor, width, height, position + leftPosition, topPosition, isWhite(i) ? 1000 : 1001, isWhite(i) ? this.colour_ : "black", mobile);
+                const style = getKeyStyle(bgColor, width, height, position + leftPosition, topPosition, isWhite(i) ? 1000 : 1001, isWhite(i) ? this.colour_ : "black", mobile);
                 key.setContent(style);
                 key.setId(this.noteName_[i]);
                 key.render(pianoDiv);
-                let script = key.getContent() as HTMLElement;
+                const script = key.getContent() as HTMLElement;
                 script.setAttribute("tag", this.noteFreq_[i].toString());
 
                 //  highlight current selected key
@@ -526,7 +527,7 @@ namespace pxtblockly {
                 goog.events.listen(key.getElement(),
                     goog.events.EventType.MOUSEOVER,
                     function () {
-                        let script = showNoteLabel.getContent() as HTMLElement;
+                        const script = showNoteLabel.getContent() as HTMLElement;
                         script.textContent = this.getId();
                     }, false, key
                 );
@@ -539,18 +540,18 @@ namespace pxtblockly {
                     key.setVisible(false);
             }
             //  render note label
-            let showNoteLabel = new goog.ui.CustomButton();
-            let showNoteStyle = getShowNoteStyle(topPosition, leftPosition, mobile);
+            const showNoteLabel = new goog.ui.CustomButton();
+            const showNoteStyle = getShowNoteStyle(topPosition, leftPosition, mobile);
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
-            let scriptLabel = showNoteLabel.getContent() as HTMLElement;
+            const scriptLabel = showNoteLabel.getContent() as HTMLElement;
             scriptLabel.textContent = "-";
 
             // create next and previous CustomButtons for pagination
-            let prevButton = new goog.ui.CustomButton();
-            let nextButton = new goog.ui.CustomButton();
-            let prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
-            let nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
+            const prevButton = new goog.ui.CustomButton();
+            const nextButton = new goog.ui.CustomButton();
+            const prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
+            const nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
             if (pagination) {
                 scriptLabel.textContent = "Octave #1";
                 //  render previous button
@@ -567,7 +568,7 @@ namespace pxtblockly {
                 //  right arrow - next button
                 script.textContent = ">";
 
-                let Npages = this.nKeys_ / 12;
+                const Npages = this.nKeys_ / 12;
                 let currentPage = 0;
                 goog.events.listen(prevButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
@@ -576,8 +577,8 @@ namespace pxtblockly {
                             scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
-                        let curFirstKey = currentPage * 12;
-                        let newFirstKey = currentPage * 12 - 12;
+                        const curFirstKey = currentPage * 12;
+                        const newFirstKey = currentPage * 12 - 12;
                         //  hide current octave
                         for (let i = 0; i < 12; i++)
                             piano[i + curFirstKey].setVisible(false);
@@ -595,8 +596,8 @@ namespace pxtblockly {
                             scriptLabel.textContent = "Octave #" + (currentPage + 1);
                             return;
                         }
-                        let curFirstKey = currentPage * 12;
-                        let newFirstKey = currentPage * 12 + 12;
+                        const curFirstKey = currentPage * 12;
+                        const newFirstKey = currentPage * 12 + 12;
                         //  hide current octave
                         for (let i = 0; i < 12; i++)
                             piano[i + curFirstKey].setVisible(false);
@@ -610,14 +611,13 @@ namespace pxtblockly {
             }
             // create the key sound
             function soundKey() {
-                let cnt = ++soundingKeys;
-                let freq = this.getContent().getAttribute("tag");
-                let script: HTMLElement;
+                const cnt = ++soundingKeys;
+                const freq = this.getContent().getAttribute("tag");
                 if (currentSelectedKey != null) {
-                    script = currentSelectedKey.getContent() as HTMLElement;
+                    const script = currentSelectedKey.getContent() as HTMLElement;
                     script.style.backgroundColor = previousColor;
                 }
-                script = this.getContent() as HTMLElement;
+                const script = this.getContent() as HTMLElement;
                 if (currentSelectedKey !== this) { // save color and change values only if is clicking different key
                     previousColor = script.style.backgroundColor;
                     thisField.setValue(freq);
@@ -648,7 +648,7 @@ namespace pxtblockly {
              * @private
              */
             function getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number, keyBorderColour: string, isMobile: boolean) {
-                let div = goog.dom.createDom("div",
+                const div = goog.dom.createDom("div",
                     {
                         "style": `background-color: ${bgColor};
                         width: ${width}px;
@@ -674,7 +674,7 @@ namespace pxtblockly {
                 topPosition += keyHeight;
                 if (isMobile)
                     topPosition += prevNextHeight;
-                let div = goog.dom.createDom("div",
+                const div = goog.dom.createDom("div",
                     {
                         "style": `top: ${topPosition}px;
                         left: ${leftPosition}px;
@@ -693,7 +693,7 @@ namespace pxtblockly {
                 return div;
             }
             /**
-             * create a DOM to assing a style to the previous and next buttons
+             * create a DOM to assign a style to the previous and next buttons
              * @param {number} topPosition vertical position of the label
              * @param {number} leftPosition horizontal position of the label
              * @param {boolean} isPrev true if is previous button, false otherwise
@@ -703,12 +703,12 @@ namespace pxtblockly {
              */
             function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
                 //  x position of the prev/next button
-                let xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
+                const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
                 //  y position of the prev/next button
                 let yPosition = (keyHeight + labelHeight + topPosition);
                 if (isMobile)
                     yPosition = keyHeight + topPosition;
-                let div = goog.dom.createDom("div",
+                const div = goog.dom.createDom("div",
                     {
                         "style": `top: ${yPosition}px;
                         left: ${xPosition}px;
@@ -770,7 +770,7 @@ namespace pxtblockly {
              * @return {number} position of the key
              */
             function getPosition(idx: number): number {
-                let pos: number = (whiteKeyCounter * keyWidth);
+                const pos: number = (whiteKeyCounter * keyWidth);
                 if (isWhite(idx))
                     return pos;
                 return pos - (keyWidth / 4);
@@ -782,15 +782,15 @@ namespace pxtblockly {
             (Blockly.DropDownDiv as any).setColour(this.colour_, this.colourBorder_);
 
             // Calculate positioning based on the field position.
-            let scale = (this.sourceBlock_.workspace as any).scale;
-            let bBox = {width: this.size_.width, height: this.size_.height};
+            const scale = (this.sourceBlock_.workspace as any).scale;
+            const bBox = {width: this.size_.width, height: this.size_.height};
             bBox.width *= scale;
             bBox.height *= scale;
-            let position = this.fieldGroup_.getBoundingClientRect();
-            let primaryX = position.left + bBox.width / 2;
-            let primaryY = position.top + bBox.height;
-            let secondaryX = primaryX;
-            let secondaryY = position.top;
+            const position = this.fieldGroup_.getBoundingClientRect();
+            const primaryX = position.left + bBox.width / 2;
+            const primaryY = position.top + bBox.height;
+            const secondaryX = primaryX;
+            const secondaryY = position.top;
             // Set bounds to workspace; show the drop-down.
             (Blockly.DropDownDiv as any).setBoundsElement((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode);
             (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
