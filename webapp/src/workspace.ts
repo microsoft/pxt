@@ -737,13 +737,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.log(`github: reconstructing pxt.json`)
-        cfg = pxt.github.reconstructConfig(commit);
-        // ensure that there is at least 1 ts file in the project
-        if (!cfg.files.find(f => /\.ts$/.test(f))) {
-            cfg.files.push("main.ts");
-            if (!justJSON)
-                files["main.ts"] = "\n";
-        }
+        cfg = pxt.github.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
 
