@@ -569,43 +569,33 @@ namespace pxtblockly {
                 script.textContent = ">";
 
                 const Npages = this.nKeys_ / 12;
+                const changePage = (next: boolean) => {
+                    if (currentPage == (next ? Npages - 1 : 0)) {
+                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
+                        return;
+                    }
+                    const curFirstKey = currentPage * 12;
+                    const newFirstKey = currentPage * 12 + (next ? 12 : -12);
+                    //  hide current octave
+                    for (let i = 0; i < 12; i++)
+                        piano[i + curFirstKey].setVisible(false);
+                    //  show new octave
+                    for (let i = 0; i < 12; i++)
+                        piano[i + newFirstKey].setVisible(true);
+                    currentPage = currentPage + (next ? 1 : -1);
+                    scriptLabel.textContent = "Octave #" + (currentPage + 1);
+                };
                 let currentPage = 0;
                 goog.events.listen(prevButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
-                        if (currentPage == 0) {
-                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
-                            return;
-                        }
-                        const curFirstKey = currentPage * 12;
-                        const newFirstKey = currentPage * 12 - 12;
-                        //  hide current octave
-                        for (let i = 0; i < 12; i++)
-                            piano[i + curFirstKey].setVisible(false);
-                        //  show new octave
-                        for (let i = 0; i < 12; i++)
-                            piano[i + newFirstKey].setVisible(true);
-                        currentPage--;
-                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
+                        changePage(/** next **/ false);
                     }, false, prevButton
                 );
                 goog.events.listen(nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
-                        if (currentPage == Npages - 1) {
-                            scriptLabel.textContent = "Octave #" + (currentPage + 1);
-                            return;
-                        }
-                        const curFirstKey = currentPage * 12;
-                        const newFirstKey = currentPage * 12 + 12;
-                        //  hide current octave
-                        for (let i = 0; i < 12; i++)
-                            piano[i + curFirstKey].setVisible(false);
-                        //  show new octave
-                        for (let i = 0; i < 12; i++)
-                            piano[i + newFirstKey].setVisible(true);
-                        currentPage++;
-                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
+                        changePage(/** next **/ true);
                     }, false, nextButton
                 );
             }
