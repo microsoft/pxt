@@ -3809,7 +3809,8 @@ async function importGithubProject(repoid: string) {
         let hd = workspace.getHeaders().find(h => h.githubId == repoid);
         if (!hd)
             hd = await workspace.importGithubAsync(repoid)
-        await theEditor.loadHeaderAsync(hd, null)
+        if (hd)
+            await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
         core.handleNetworkError(e)
     } finally {

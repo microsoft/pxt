@@ -920,15 +920,33 @@ export async function importGithubAsync(id: string): Promise<Header> {
 
     let sha = ""
     let isEmpty = false
+    let forceTemplateFiles = false;
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+        // if the repo does not have a pxt.json file, treat as empty 
+        // (must be done before)
+        const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
+        if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
+            pxt.log(`github: detected import non-makecode project`)
+            isEmpty = true; // needs initialization
+            forceTemplateFiles = false;
+            // ask user before modifying project
+            const r = await core.confirmAsync({
+                header: lf("Initialize repository for MakeCode?"),
+                body: lf("We need to add a few files to your repository to make it work with MakeCode."),
+                agreeLbl: lf("Ok"),
+            })
+            if (!r) return Promise.resolve(undefined);
+        }
     } catch (e) {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
+            pxt.log(`github: detected import empty project`)
             await ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
-            isEmpty = true
+            isEmpty = true;
+            forceTemplateFiles = true;
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
         else if (e.statusCode == 404) {
@@ -936,13 +954,14 @@ export async function importGithubAsync(id: string): Promise<Header> {
             U.userError(lf("No such repository or branch."));
         }
     }
+
     const hd = await githubUpdateToAsync(null, {
         repo: repoid,
         sha,
         files: {}
     })
     if (hd && isEmpty)
-        await initializeGithubRepoAsync(hd, repoid, true);
+        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
     return hd
 }
 
