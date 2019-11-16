@@ -127,8 +127,6 @@ namespace pxtblockly {
         75: {name: lf("B"), prefixedName: lf("High B"), freq: 1976}
     }
 
-    const noteEnumRegex: RegExp = /^Note\.(.+)$/;
-
     export interface FieldNoteOptions extends Blockly.FieldCustomOptions {
         editorColour?: string;
         minNote?: string;
@@ -270,7 +268,7 @@ namespace pxtblockly {
          */
         doValueUpdate_(note: string) {
             // accommodate note strings like "Note.GSharp5" as well as numbers
-            const match: Array<string> = noteEnumRegex.exec(note);
+            const match: Array<string> = /^Note\.(.+)$/.exec(note);
             const noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
@@ -292,7 +290,7 @@ namespace pxtblockly {
          */
         getText(): string {
             if (this.isExpanded) {
-                return this.note_;
+                return `${this.note_} hz`;
             } else {
                 const note = +this.note_;
                 for (let i = 0; i < this.nKeys_; i++) {
@@ -336,49 +334,43 @@ namespace pxtblockly {
 
             const contentDiv = Blockly.DropDownDiv.getContentDiv();
 
-            const quietInput = (goog.userAgent.MOBILE || goog.userAgent.ANDROID ||
-                goog.userAgent.IPAD);
-            const readOnly = quietInput;
-            (FieldNote as any).superClass_.showEditor_.call(this, e, false, readOnly);
+            const mobile = goog.userAgent.MOBILE || goog.userAgent.ANDROID || goog.userAgent.IPHONE;
+            // invoke FieldTextInputs showeditor, so we can set quiet / readonly
+            (FieldNote as any).superClass_.showEditor_.call(
+                this,
+                e,
+                /** quiet **/ mobile || goog.userAgent.IPAD,
+                /** readonly **/ mobile || goog.userAgent.IPAD
+            );
 
-            let keyWidth = 22;
-            let keyHeight = 90;
-            let labelHeight = 24;
-            let prevNextHeight = 20;
+            this.setText(this.getText());
+            this.isDirty_ = true;
+
+            const keyWidth = 22;
+            const keyHeight = 90;
             let whiteKeyCounter = 0;
             let soundingKeys = 0;
             const selectedKeyColor = "yellowgreen";
             const thisField = this;
             //  Record windowSize and scrollOffset before adding the piano.
-            const windowSize = goog.dom.getViewportSize();
-            const editorWidth = windowSize.width;
+            const editorWidth = goog.dom.getViewportSize().editorWidth;
             const piano: Array<goog.ui.CustomButton> = [];
 
-            let pagination = false;
-            let mobile = false;
             //  initializate
+            const labelHeight = 24;
+            const prevNextHeight = 20;
             let pianoWidth = keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
             let pianoHeight = keyHeight + labelHeight;
+
+            const pagination = mobile || editorWidth < pianoWidth;
 
             //  Create the piano using Closure (CustomButton).
             for (let i = 0; i < this.nKeys_; i++) {
                 piano.push(new goog.ui.CustomButton());
             }
 
-            if (editorWidth < pianoWidth) {
-                pagination = true;
+            if (pagination) {
                 pianoWidth = 7 * keyWidth;
-                pianoHeight = keyHeight + labelHeight + prevNextHeight;
-            }
-            //  Check if Mobile, pagination -> true
-            if (!quietInput && (goog.userAgent.MOBILE || goog.userAgent.ANDROID)) {
-                pagination = true;
-                mobile = true;
-                keyWidth = keyWidth * 2;
-                keyHeight = keyHeight * 2;
-                pianoWidth = 7 * keyWidth;
-                labelHeight = labelHeight * 1.2;
-                prevNextHeight = prevNextHeight * 2;
                 pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
 
