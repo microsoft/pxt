@@ -260,6 +260,10 @@ namespace pxtblockly {
             return this.note_;
         }
 
+        onFinishEditing_(text: string) {
+            this.setText(this.getText());
+        }
+
         /**
          * Called by setValue if the text input is valid. Updates the value of the
          * field, and updates the text of the field if it is not currently being
