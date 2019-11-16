@@ -194,18 +194,20 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
             .then(buf => {
                 if (f.name == pxt.CONFIG_NAME) {
                     try {
-                        let cfg: pxt.PackageConfig = JSON.parse(f.content)
-                        if (!cfg.name) {
-                            console.log("Trying to save invalid JSON config")
+                        if (!pxt.Package.parseAndValidConfig(f.content)) {
+                            pxt.log("Trying to save invalid JSON config")
+                            pxt.debug(f.content);
                             throwError(410)
                         }
                     } catch (e) {
-                        console.log("Trying to save invalid format JSON config")
+                        pxt.log("Trying to save invalid format JSON config")
+                        pxt.log(e)
+                        pxt.debug(f.content);
                         throwError(410)
                     }
                 }
                 if (buf.toString("utf8") !== f.prevContent) {
-                    console.log(`merge error for ${f.name}: previous content changed...`);
+                    pxt.log(`merge error for ${f.name}: previous content changed...`);
                     throwError(409)
                 }
             }, err => { }))

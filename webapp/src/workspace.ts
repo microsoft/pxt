@@ -737,13 +737,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         if (hd) // not importing
             U.userError(lf("Invalid pxt.json file."));
         pxt.log(`github: reconstructing pxt.json`)
-        cfg = pxt.github.reconstructConfig(commit);
-        // ensure that there is at least 1 ts file in the project
-        if (!cfg.files.find(f => /\.ts$/.test(f))) {
-            cfg.files.push("main.ts");
-            if (!justJSON)
-                files["main.ts"] = "\n";
-        }
+        cfg = pxt.github.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
 
@@ -889,15 +883,24 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
             currFiles["README.md"] = templateREADME;
     }
 
-    // special case, add test.ts in tests if needed
-    if (currFiles["test.ts"]) {
-        const pxtjson = JSON.parse(currFiles[pxt.CONFIG_NAME]);
-        const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
-        if (testFiles.indexOf("test.ts") < 0) {
-            testFiles.push("test.ts");
-            currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
-        }
+    // update config with files if needed
+    const pxtjson = pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]);
+    const files = pxtjson.files;
+    // if no ts files, add existing ones
+    if (!files.filter(f => /\.ts$/.test(f)).length) {
+        // add files from the template
+        Object.keys(currFiles)
+            .filter(f => /\.(blocks|ts|py|asm|md)$/.test(f))
+            .filter(f => f != pxt.CONFIG_NAME)
+            .forEach(f => files.push(f));
     }
+    // update test file if needed
+    const testFiles = pxtjson.testFiles || (pxtjson.testFiles = []);
+    if (currFiles["test.ts"] && testFiles.indexOf("test.ts") < 0) {
+        testFiles.push("test.ts");
+    }
+    // save updated pxtjson
+    currFiles[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(pxtjson);
 
     // save
     await saveAsync(hd, currFiles)
@@ -908,13 +911,11 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)
-    let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
-    for (let k of Object.keys(currFiles)) {
-        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
-            continue
-        if (allfiles.indexOf(k) < 0)
-            delete currFiles[k];
-    }
+    const allfiles = pxt.allPkgFiles(pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE, pxt.CONFIG_NAME];
+    Object.keys(currFiles)
+        .filter(f => ignoredFiles.indexOf(f) < 0 && allfiles.indexOf(f) < 0)
+        .forEach(f => delete currFiles[f]);
 
     await saveAsync(hd, currFiles)
 
@@ -927,15 +928,35 @@ export async function importGithubAsync(id: string): Promise<Header> {
 
     let sha = ""
     let isEmpty = false
+    let forceTemplateFiles = false;
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+        // if the repo does not have a pxt.json file, treat as empty 
+        // (must be done before)
+        const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
+        if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
+            pxt.log(`github: detected import non-makecode project`)
+            isEmpty = true; // needs initialization
+            forceTemplateFiles = false;
+            // ask user before modifying project
+            const r = await core.confirmAsync({
+                header: lf("Initialize repository for MakeCode?"),
+                body: lf("We need to add a few files to your repository to make it work with MakeCode.")
+                    + " "
+                    + lf("Your existing files will not be modified."),
+                agreeLbl: lf("Ok")
+            })
+            if (!r) return Promise.resolve(undefined);
+        }
     } catch (e) {
         if (e.statusCode == 409) {
             // this means repo is completely empty; 
             // put all default files in there
+            pxt.log(`github: detected import empty project`)
             await ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
-            isEmpty = true
+            isEmpty = true;
+            forceTemplateFiles = true;
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
         else if (e.statusCode == 404) {
@@ -943,13 +964,14 @@ export async function importGithubAsync(id: string): Promise<Header> {
             U.userError(lf("No such repository or branch."));
         }
     }
+
     const hd = await githubUpdateToAsync(null, {
         repo: repoid,
         sha,
         files: {}
     })
     if (hd && isEmpty)
-        await initializeGithubRepoAsync(hd, repoid, true);
+        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
     return hd
 }
 

@@ -51,6 +51,8 @@ ${lf("To edit this repository in MakeCode.")}
 
 ## ${lf("Blocks preview")}
 
+${lf("This section shows the blocks code from the last commit in master.")}
+
 ![${lf("A rendered view of the blocks")}](https://raw.github.com/@REPO@/blob/master/.makecode/blocks.png)
 
 ## ${lf("Supported targets")}
@@ -95,7 +97,7 @@ pxt_modules
         "**/pxt_modules": true
     }
 }`,
-            ".github/workflows/makecode.yml": `name: MakeCode CI
+            ".github/workflows/makecode.yml": `name: MakeCode
 
 on: [push]
 
@@ -123,20 +125,7 @@ jobs:
         env:
           CI: true
 `,
-            ".travis.yml": `language: node_js
-node_js:
-    - "8.9.4"
-script:
-    - "npm install -g pxt"
-    - "pxt target @TARGET@"
-    - "pxt install"
-    - "pxt build"
-sudo: false
-cache:
-    directories:
-    - npm_modules
-    - pxt_modules`,
-            ".vscode/tasks.json":
+        ".vscode/tasks.json":
                 `
 // A task runner that calls the MakeCode (PXT) compiler
 {
