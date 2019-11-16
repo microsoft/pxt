@@ -374,8 +374,8 @@ namespace pxtblockly {
                 pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
 
-            //  create piano div
-            const pianoDiv = goog.dom.createDom("div", {}) as HTMLElement;
+            // create piano div
+            const pianoDiv = document.createElement("div");
             pianoDiv.className = "blocklyPianoDiv";
             contentDiv.appendChild(pianoDiv);
 
@@ -546,16 +546,14 @@ namespace pxtblockly {
              * @private
              */
             function getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number, keyBorderColour: string, isMobile: boolean) {
-                const div = goog.dom.createDom("div",
-                    {
-                        "style": `background-color: ${bgColor};
-                        width: ${width}px;
-                        height: ${height}px;
-                        left: ${leftPosition}px;
-                        top: ${topPosition}px;
-                        z-index: ${z_index};
-                        border-color: ${keyBorderColour};`
-                    }
+                const div = document.createElement("div")
+                div.setAttribute("style", `background-color: ${bgColor};
+                    width: ${width}px;
+                    height: ${height}px;
+                    left: ${leftPosition}px;
+                    top: ${topPosition}px;
+                    z-index: ${z_index};
+                    border-color: ${keyBorderColour};`
                 );
                 div.className = "blocklyNote";
                 return div;
@@ -572,20 +570,18 @@ namespace pxtblockly {
                 topPosition += keyHeight;
                 if (isMobile)
                     topPosition += prevNextHeight;
-                const div = goog.dom.createDom("div",
-                    {
-                        "style": `top: ${topPosition}px;
-                        left: ${leftPosition}px;
-                        background-color: ${thisField.colour_};
-                        width: ${pianoWidth}px;
-                        border-color: ${thisField.colour_};
-                        ${isMobile ?
-                            `font-size ${labelHeight - 10}px;
-                            height: ${labelHeight}px;`
-                            :
-                            ""
-                        }`
-                    }
+                const div = document.createElement("div");
+                div.setAttribute("style", `top: ${topPosition}px;
+                    left: ${leftPosition}px;
+                    background-color: ${thisField.colour_};
+                    width: ${pianoWidth}px;
+                    border-color: ${thisField.colour_};
+                    ${isMobile ?
+                        `font-size ${labelHeight - 10}px;
+                        height: ${labelHeight}px;`
+                        :
+                        ""
+                    }`
                 );
                 div.className = "blocklyNoteLabel";
                 return div;
@@ -606,20 +602,18 @@ namespace pxtblockly {
                 let yPosition = (keyHeight + labelHeight + topPosition);
                 if (isMobile)
                     yPosition = keyHeight + topPosition;
-                const div = goog.dom.createDom("div",
-                    {
-                        "style": `top: ${yPosition}px;
-                        left: ${xPosition}px;
-                        width: ${Math.ceil(pianoWidth / 2)}px;
-                        background-color: ${thisField.colour_};
-                        ${isPrev ? "border-left-color" : "border-right-color"}: ${thisField.colour_};
-                        ${isMobile ?
-                            `height: ${prevNextHeight}px;
-                            font-size: ${prevNextHeight - 10} px;`
-                            :
-                            `border-bottom-color: ${thisField.colour_};`
-                        }`
-                    }
+                const div = document.createElement("div");
+                div.setAttribute("style", `top: ${yPosition}px;
+                    left: ${xPosition}px;
+                    width: ${Math.ceil(pianoWidth / 2)}px;
+                    background-color: ${thisField.colour_};
+                    ${isPrev ? "border-left-color" : "border-right-color"}: ${thisField.colour_};
+                    ${isMobile ?
+                        `height: ${prevNextHeight}px;
+                        font-size: ${prevNextHeight - 10} px;`
+                        :
+                        `border-bottom-color: ${thisField.colour_};`
+                    }`
                 );
                 div.className = "blocklyNotePrevNext";
                 return div;
