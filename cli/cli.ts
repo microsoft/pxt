@@ -1983,8 +1983,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         }
     }
 
-    let hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
-    let apiInfoPath = path.resolve(process.cwd(), "temp", "api-cache.json");
+    const hexCachePath = path.resolve(process.cwd(), "built", "hexcache");
+    const apiInfoPath = path.resolve(process.cwd(), "temp", "api-cache.json");
+    const apiInfoCompressedPath = path.resolve(process.cwd(), "temp", "api-cache-compressed.json");
     nodeutil.mkdirP(hexCachePath);
 
     pxt.log(`building target.json in ${process.cwd()}...`)
@@ -2090,7 +2091,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             }
 
             nodeutil.writeFileSync(apiInfoPath, JSON.stringify(builtInfo, null, 1));
-            cfg.apiInfo = compressApiInfo(builtInfo);
+            const compressedBuiltInfo = compressApiInfo(builtInfo);
+            nodeutil.writeFileSync(apiInfoCompressedPath, JSON.stringify(compressedBuiltInfo, null, 1));
+            cfg.apiInfo = compressedBuiltInfo;
 
             let info = travisInfo()
             cfg.versions = {
