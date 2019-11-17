@@ -2091,9 +2091,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             }
 
             nodeutil.writeFileSync(apiInfoPath, JSON.stringify(builtInfo, null, 1));
-            builtInfo = compressApiInfo(builtInfo);
-            nodeutil.writeFileSync(apiInfoCompressedPath, JSON.stringify(builtInfo, null, 1));
-            cfg.apiInfo = builtInfo;
+            const compressedBuiltInfo = compressApiInfo(builtInfo);
+            nodeutil.writeFileSync(apiInfoCompressedPath, JSON.stringify(compressedBuiltInfo, null, 1));
+            cfg.apiInfo = compressedBuiltInfo;
 
             let info = travisInfo()
             cfg.versions = {
