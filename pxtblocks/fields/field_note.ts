@@ -148,8 +148,6 @@ namespace pxtblockly {
 
         /**
          * default number of piano keys
-         * @type {number}
-         * @private
          */
         private nKeys_: number = 36;
         private minNote_: number = 28;
@@ -162,21 +160,16 @@ namespace pxtblockly {
 
         /**
          * Absolute error for note frequency identification (Hz)
-         * @type {number}
          */
         eps: number = 2;
 
         /**
          * array of notes frequency
-         * @type {Array.<number>}
-         * @private
          */
         private noteFreq_: Array<number> = [];
 
         /**
          * array of notes names
-         * @type {Array.<string>}
-         * @private
          */
         private noteName_: Array<string> = [];
 
@@ -571,7 +564,7 @@ namespace pxtblockly {
             pianoDiv.style.width = pianoWidth + "px";
             pianoDiv.style.height = (pianoHeight + 1) + "px";
 
-            (Blockly.DropDownDiv as any).setColour(this.colour_, this.colourBorder_);
+            Blockly.DropDownDiv.setColour(this.colour_, this.colourBorder_);
 
             // Calculate positioning based on the field position.
             const scale = (this.sourceBlock_.workspace as any).scale;
@@ -584,9 +577,17 @@ namespace pxtblockly {
             const secondaryX = primaryX;
             const secondaryY = position.top;
             // Set bounds to workspace; show the drop-down.
-            (Blockly.DropDownDiv as any).setBoundsElement((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode);
-            (Blockly.DropDownDiv as any).show(this, primaryX, primaryY, secondaryX, secondaryY,
-                this.onHide.bind(this));
+            Blockly.DropDownDiv.setBoundsElement(
+                (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode as Element
+            );
+            Blockly.DropDownDiv.show(
+                this,
+                primaryX,
+                primaryY,
+                secondaryX,
+                secondaryY,
+                this.onHide.bind(this)
+            );
         }
 
         /**
