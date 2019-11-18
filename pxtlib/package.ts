@@ -230,6 +230,9 @@ namespace pxt {
         }
 
         loadConfig() {
+            if (this.level != 0 && this.invalid())
+                return; // don't try load invalid dependency
+
             const confStr = this.readFile(pxt.CONFIG_NAME)
             if (!confStr)
                 U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
@@ -677,7 +680,7 @@ namespace pxt {
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
 
-            let [initialLang, baseLang]  = pxt.Util.normalizeLanguageCode(lang);
+            let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
 
             let fn = `_locales/${initialLang}/${filename}-strings.json`;
