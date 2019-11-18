@@ -480,7 +480,11 @@ class Host
         let fromWorkspaceAsync = (arg: string) =>
             workspace.getTextAsync(arg)
                 .then(scr => {
-                    if (!scr)
+                    if (!epkg.isTopLevel() && !scr) {
+                        pkg.configureAsInvalidPackage(`cannot find '${arg}' in the workspace.`);
+                        return Promise.resolve();
+                    }
+                    if (!scr) // this should not happen;
                         return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
                     if (epkg.isTopLevel() && epkg.header)
                         return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
