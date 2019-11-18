@@ -252,6 +252,7 @@ namespace pxtblockly {
                 }
             }
         }
+
         /**
          * Return the current note frequency.
          * @return {string} Current note in string format.
@@ -261,7 +262,7 @@ namespace pxtblockly {
         }
 
         onFinishEditing_(text: string) {
-            this.setText(this.getText());
+            this.forceRerender();
         }
 
         /**
@@ -284,8 +285,7 @@ namespace pxtblockly {
             }
             this.note_ = note;
             this.value_ = this.note_;
-            // render text
-            this.setText(this.getText());
+            this.refreshText();
         }
 
         /**
@@ -347,7 +347,7 @@ namespace pxtblockly {
                 /** readonly **/ mobile || goog.userAgent.IPAD
             );
 
-            this.setText(this.getText());
+            this.refreshText();
             this.isDirty_ = true;
 
             const keyWidth = 22;
@@ -696,10 +696,9 @@ namespace pxtblockly {
         /**
          * Callback for when the drop-down is hidden.
          */
-        private onHide() {
+        protected onHide() {
             this.isExpanded = false;
-            // force resetting text to get back to `{num} hz` or named note view
-            this.setText(this.getText());
+            this.refreshText()
         };
 
         /**
@@ -719,6 +718,16 @@ namespace pxtblockly {
                 this.colour_ = this.sourceBlock_.getColourTertiary();
                 this.colourBorder_ = this.sourceBlock_.getColourTertiary();
             }
+        }
+
+        /**
+         * This block shows up differently when it's being edited;
+         * on any transition between `editing <--> not-editing`
+         * or other change in state,
+         * refresh the text to get back into a valid state.
+         **/
+        protected refreshText() {
+            this.setText(this.getText());
         }
     }
 
