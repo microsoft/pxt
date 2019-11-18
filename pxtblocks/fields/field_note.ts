@@ -379,8 +379,8 @@ namespace pxtblockly {
             pianoDiv.className = "blocklyPianoDiv";
             contentDiv.appendChild(pianoDiv);
 
-            let leftPosition = 0; //-(<HTMLElement>document.getElementsByClassName("blocklyDropdownDiv")[0]).offsetLeft;   //+ ((windowSize.width - this.pianoWidth_) / 2);
-            let topPosition = 0; //(keyHeight + labelHeight + prevNextHeight);
+            let leftPosition = 0;
+            let topPosition = 0;
 
             //  save all changes in the same group of events
             Blockly.Events.setGroup(true);
@@ -394,10 +394,10 @@ namespace pxtblockly {
                     octaveCounter++;
                 const key = piano[i];
                 //  What color is i key
-                const bgColor = isWhite(i) ? "white" : "black";
-                const width = getKeyWidth(i);
-                const height = getKeyHeight(i);
-                let position = getPosition(i);
+                const bgColor = this.isWhite(i) ? "white" : "black";
+                const width = this.getKeyWidth(i);
+                const height = this.getKeyHeight(i);
+                let position = this.getPosition(i, whiteKeyCounter);
 
                 //  modify original position in pagination
                 if (pagination && i >= 12)
@@ -408,7 +408,7 @@ namespace pxtblockly {
                     height,
                     position + leftPosition,
                     topPosition,
-                    isWhite(i) ? 1000 : 1001
+                    this.isWhite(i) ? 1000 : 1001
                 );
                 key.setContent(style);
                 key.setId(this.noteName_[i]);
@@ -427,8 +427,10 @@ namespace pxtblockly {
                 if (!mobile) {
                     goog.events.listen(
                         key.getElement(),
-                        goog.events.EventType.MOUSEDOWN, soundKey
-                        , false, key
+                        goog.events.EventType.MOUSEDOWN,
+                        soundKey,
+                        false,
+                        key
                     );
                 } else {
                     /**  Listener when a new key is selected in MOBILE
@@ -437,8 +439,10 @@ namespace pxtblockly {
                      */
                     goog.events.listen(
                         key.getElement(),
-                        goog.events.EventType.TOUCHSTART, soundKey
-                        , false, key
+                        goog.events.EventType.TOUCHSTART,
+                        soundKey,
+                        false,
+                        key
                     );
                 }
                 //  Listener when the mouse is over a key
@@ -448,11 +452,13 @@ namespace pxtblockly {
                     function () {
                         const script = showNoteLabel.getContent() as HTMLElement;
                         script.textContent = this.getId();
-                    }, false, key
+                    },
+                    false,
+                    key
                 );
 
                 //  increment white key counter
-                if (isWhite(i))
+                if (this.isWhite(i))
                     whiteKeyCounter++;
                 // set octaves different from first octave invisible
                 if (pagination && i > 11)
@@ -525,16 +531,16 @@ namespace pxtblockly {
                 goog.events.listen(
                     prevButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
-                    function () {
-                        changePage(/** next **/ false);
-                    }, false, prevButton
+                    () => changePage(/** next **/ false),
+                    false,
+                    prevButton
                 );
                 goog.events.listen(
                     nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
-                    function () {
-                        changePage(/** next **/ true);
-                    }, false, nextButton
+                    () => changePage(/** next **/ true),
+                    false,
+                    nextButton
                 );
             }
             // create the key sound
@@ -560,55 +566,6 @@ namespace pxtblockly {
                         pxt.AudioContextManager.stop();
                 }, 300);
                 (FieldNote as any).superClass_.dispose.call(this);
-            }
-
-            /**
-             * @param idx index of the key
-             * @return true if idx is white
-             * @private
-             */
-            function isWhite(idx: number): boolean {
-                let octavePosition: number = idx % 12;
-                if (octavePosition == 1 || octavePosition == 3 || octavePosition == 6 ||
-                    octavePosition == 8 || octavePosition == 10)
-                    return false;
-                return true;
-            }
-
-            /**
-             * get width of the piano key
-             * @param idx index of the key
-             * @return width of the key
-             * @private
-             */
-            function getKeyWidth(idx: number): number {
-                if (isWhite(idx))
-                    return FieldNote.keyWidth;
-                return FieldNote.keyWidth / 2;
-            }
-
-            /**
-             * get height of the piano key
-             * @param idx index of the key
-             * @return height of the key
-             * @private
-             */
-            function getKeyHeight(idx: number): number {
-                if (isWhite(idx))
-                    return FieldNote.keyHeight;
-                return FieldNote.keyHeight / 2;
-            }
-
-            /**
-             * get the position of the key in the piano
-             * @param idx index of the key
-             * @return position of the key
-             */
-            function getPosition(idx: number): number {
-                const pos: number = (whiteKeyCounter * FieldNote.keyWidth);
-                if (isWhite(idx))
-                    return pos;
-                return pos - (FieldNote.keyWidth / 4);
             }
 
             pianoDiv.style.width = pianoWidth + "px";
@@ -760,6 +717,56 @@ namespace pxtblockly {
             );
             div.className = "blocklyNotePrevNext";
             return div;
+        }
+
+        /**
+         * @param idx index of the key
+         * @return true if idx is white
+         * @private
+         */
+        protected isWhite(idx: number): boolean {
+            switch (idx % 12) {
+                case 1: case 3: case 6:
+                case 8: case 10:
+                    return false;
+                default:
+                    return true;
+            }
+        }
+
+        /**
+         * get width of the piano key
+         * @param idx index of the key
+         * @return width of the key
+         */
+        protected getKeyWidth(idx: number): number {
+            if (this.isWhite(idx))
+                return FieldNote.keyWidth;
+            return FieldNote.keyWidth / 2;
+        }
+
+        /**
+         * get height of the piano key
+         * @param idx index of the key
+         * @return height of the key
+         */
+        protected getKeyHeight(idx: number): number {
+            if (this.isWhite(idx))
+                return FieldNote.keyHeight;
+            return FieldNote.keyHeight / 2;
+        }
+
+        /**
+         * get the position of the key in the piano
+         * @param idx index of the key
+         * @param whiteKeyCounter the curent count of white keys
+         * @return position of the key
+         */
+        protected getPosition(idx: number, whiteKeyCounter: number): number {
+            const pos = whiteKeyCounter * FieldNote.keyWidth;
+            if (this.isWhite(idx))
+                return pos;
+            return pos - (FieldNote.keyWidth / 4);
         }
 
     }
