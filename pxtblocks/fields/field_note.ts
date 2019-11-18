@@ -184,7 +184,7 @@ namespace pxtblockly {
 
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
-                this.colourBorder_ = goog.color.rgbArrayToHex(goog.color.darken(goog.color.hexToRgb(this.colour_), 0.2));
+                this.colourBorder_ = Blockly.utils.colour.darken(this.colour_, 0.2);
             }
 
             const minNote = parseInt(params.minNote) || this.minNote_;
@@ -424,7 +424,8 @@ namespace pxtblockly {
 
                 //  Listener when a new key is selected
                 if (!mobile) {
-                    goog.events.listen(key.getElement(),
+                    goog.events.listen(
+                        key.getElement(),
                         goog.events.EventType.MOUSEDOWN, soundKey
                         , false, key
                     );
@@ -433,13 +434,15 @@ namespace pxtblockly {
                      *   It is necessary to use TOUCHSTART event to allow passive event listeners
                      *   to avoid preventDefault() call that blocks listener
                      */
-                    goog.events.listen(key.getElement(),
+                    goog.events.listen(
+                        key.getElement(),
                         goog.events.EventType.TOUCHSTART, soundKey
                         , false, key
                     );
                 }
                 //  Listener when the mouse is over a key
-                goog.events.listen(key.getElement(),
+                goog.events.listen(
+                    key.getElement(),
                     goog.events.EventType.MOUSEOVER,
                     function () {
                         const script = showNoteLabel.getContent() as HTMLElement;
@@ -501,13 +504,15 @@ namespace pxtblockly {
                     scriptLabel.textContent = "Octave #" + (currentPage + 1);
                 };
                 let currentPage = 0;
-                goog.events.listen(prevButton.getElement(),
+                goog.events.listen(
+                    prevButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         changePage(/** next **/ false);
                     }, false, prevButton
                 );
-                goog.events.listen(nextButton.getElement(),
+                goog.events.listen(
+                    nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
                     function () {
                         changePage(/** next **/ true);
@@ -541,10 +546,10 @@ namespace pxtblockly {
 
             /**
              * create a DOM to assign a style to the note label
-             * @param {number} topPosition vertical position of the label
-             * @param {number} leftPosition horizontal position of the label
-             * @param {boolean} isMobile true if the device is a mobile
-             * @return {goog.dom} DOM with the new css style.
+             * @param topPosition vertical position of the label
+             * @param leftPosition horizontal position of the label
+             * @param isMobile true if the device is a mobile
+             * @return DOM with the new css style.
              * @private
              */
             function getShowNoteStyle(topPosition: number, leftPosition: number, isMobile: boolean) {
@@ -569,11 +574,11 @@ namespace pxtblockly {
             }
             /**
              * create a DOM to assign a style to the previous and next buttons
-             * @param {number} topPosition vertical position of the label
-             * @param {number} leftPosition horizontal position of the label
-             * @param {boolean} isPrev true if is previous button, false otherwise
-             * @param {boolean} isMobile true if the device is a mobile
-             * @return {goog.dom} DOM with the new css style.
+             * @param topPosition vertical position of the label
+             * @param leftPosition horizontal position of the label
+             * @param isPrev true if is previous button, false otherwise
+             * @param isMobile true if the device is a mobile
+             * @return DOM with the new css style.
              * @private
              */
             function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
@@ -601,8 +606,8 @@ namespace pxtblockly {
             }
 
             /**
-             * @param {number} idx index of the key
-             * @return {boolean} true if idx is white
+             * @param idx index of the key
+             * @return true if idx is white
              * @private
              */
             function isWhite(idx: number): boolean {
@@ -615,8 +620,8 @@ namespace pxtblockly {
 
             /**
              * get width of the piano key
-             * @param {number} idx index of the key
-             * @return {number} width of the key
+             * @param idx index of the key
+             * @return width of the key
              * @private
              */
             function getKeyWidth(idx: number): number {
@@ -627,8 +632,8 @@ namespace pxtblockly {
 
             /**
              * get height of the piano key
-             * @param {number} idx index of the key
-             * @return {number} height of the key
+             * @param idx index of the key
+             * @return height of the key
              * @private
              */
             function getKeyHeight(idx: number): number {
@@ -639,8 +644,8 @@ namespace pxtblockly {
 
             /**
              * get the position of the key in the piano
-             * @param {number} idx index of the key
-             * @return {number} position of the key
+             * @param idx index of the key
+             * @return position of the key
              */
             function getPosition(idx: number): number {
                 const pos: number = (whiteKeyCounter * keyWidth);
