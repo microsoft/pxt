@@ -9,6 +9,9 @@ namespace pxt.github {
         }
     }
 
+    /**
+     * Commit user info
+     */
     export interface UserInfo {
         date: string; // "2014-11-07T22:01:45Z",
         name: string; // "Scott Chacon",
@@ -233,13 +236,7 @@ namespace pxt.github {
     // overriden by client
     export let db: IGithubDb = new MemoryGithubDb();
 
-    export interface GitUser {
-        login: string,
-        avatar_url: string,
-        name: string
-    }
-
-    export function authenticatedUserAsync(): Promise<GitUser> {
+    export function authenticatedUserAsync(): Promise<User> {
         return ghGetJsonAsync("https://api.github.com/user");
     }
 
@@ -497,6 +494,8 @@ namespace pxt.github {
         gravatar_id: string; // "",
         html_url: string; // "https://github.com/microsoft",
         type: string; // "Organization"
+        name: string;
+        company: string;
     }
 
     interface Repo {

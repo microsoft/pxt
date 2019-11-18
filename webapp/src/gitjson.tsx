@@ -167,21 +167,22 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.pullAsync().done();
     }
 
-    private async forkAsync(fromError: boolean) {
+    async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
         const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
             body: pref +
-                lf("Forking repo creates a copy under your account. You can later ask {0} to include your changes via a pull request.",
-                    parsed.owner),
+                lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
+                    parsed.fullName),
             agreeLbl: "Fork",
             agreeIcon: "copy outline"
         })
         if (!res)
             return
 
-        this.showLoading(lf("forking repo (this may take a minute or two)..."))
+        pxt.tickEvent("github.fork")
+        this.showLoading(lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
@@ -775,6 +776,8 @@ ${content}
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const gs = this.getGitJson();
+        const user = this.getData("github:user");
+
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
@@ -797,7 +800,7 @@ ${content}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -810,7 +813,7 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
                         : <div className="ui segment">
                             {lf("No local changes found.")}
                             {lf("Your project is saved in GitHub.")}
@@ -818,7 +821,7 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} /> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} /> : undefined}
                 </div>
             </div>
         )
@@ -833,6 +836,7 @@ interface GitHubViewProps {
     gs: pxt.github.GitJson;
     isBlocks: boolean;
     needsCommit: boolean;
+    user: pxt.editor.UserInfo;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -914,10 +918,17 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleBumpClick = this.handleBumpClick.bind(this);
+        this.handleForkClick = this.handleForkClick.bind(this);
+    }
+
+    private handleForkClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
+        e.stopPropagation();
+        this.props.parent.forkAsync(false).done();
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.bump", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.extensionzone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
         if (needsCommit)
@@ -941,11 +952,13 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId, gs } = this.props;
+        const { needsToken, githubId, gs, user } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
+        const showFork = user && user.id != githubId.owner;
+
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">
@@ -959,6 +972,15 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/test-extension", lf("Learn about testing extensions."))}
                 </span>
             </div>
+            {showFork && <div className="ui field">
+                <sui.Button text={lf("Fork repository")}
+                    onClick={this.handleForkClick}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Fork your own copy of {0} to your account.", githubId.fullName)}
+                    {sui.helpIconLink("/github/fork", lf("Learn more about forking repositories."))}
+                </span>
+            </div>}
             {gs.commit && gs.commit.tag ?
                 <div className="ui field">
                     <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}
