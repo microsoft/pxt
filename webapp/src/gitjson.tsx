@@ -181,6 +181,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (!res)
             return
 
+        pxt.tickEvent("github.fork")
         this.showLoading(lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
@@ -921,13 +922,13 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     private handleForkClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.fork", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
         e.stopPropagation();
         this.props.parent.forkAsync(false).done();
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.bump", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.extensionzone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
         if (needsCommit)
