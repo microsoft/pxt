@@ -181,7 +181,8 @@ declare namespace pxt {
         yottaBinary?: string; // defaults to "pxt-microbit-app-combined.hex"
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
-
+        yottaConfigCompatibility?: boolean; // enforce emitting backward compatible yotta config entries (YOTTA_CFG_)
+        
         platformioIni?: string[];
 
         codalTarget?: string | {
