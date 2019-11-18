@@ -155,6 +155,11 @@ namespace pxtblockly {
         private minNote_: number = 28;
         private maxNote_: number = 63;
 
+        protected static readonly keyWidth = 22;
+        protected static readonly keyHeight = 90;
+        protected static readonly labelHeight = 24;
+        protected static readonly prevNextHeight = 20;
+
         /**
          * Absolute error for note frequency identification (Hz)
          * @type {number}
@@ -345,8 +350,6 @@ namespace pxtblockly {
 
             this.refreshText();
 
-            const keyWidth = 22;
-            const keyHeight = 90;
             let whiteKeyCounter = 0;
             let soundingKeys = 0;
             const selectedKeyColor = "yellowgreen";
@@ -356,10 +359,8 @@ namespace pxtblockly {
             const piano: Array<goog.ui.CustomButton> = [];
 
             //  initializate
-            const labelHeight = 24;
-            const prevNextHeight = 20;
-            let pianoWidth = keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
-            let pianoHeight = keyHeight + labelHeight;
+            let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
+            let pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight;
 
             const pagination = mobile || editorWidth < pianoWidth;
 
@@ -369,8 +370,8 @@ namespace pxtblockly {
             }
 
             if (pagination) {
-                pianoWidth = 7 * keyWidth;
-                pianoHeight = keyHeight + labelHeight + prevNextHeight;
+                pianoWidth = 7 * FieldNote.keyWidth;
+                pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight + FieldNote.prevNextHeight;
             }
 
             // create piano div
@@ -400,7 +401,7 @@ namespace pxtblockly {
 
                 //  modify original position in pagination
                 if (pagination && i >= 12)
-                    position -= 7 * octaveCounter * keyWidth;
+                    position -= 7 * octaveCounter * FieldNote.keyWidth;
                 const style = this.getKeyStyle(
                     bgColor,
                     width,
@@ -459,7 +460,12 @@ namespace pxtblockly {
             }
             //  render note label
             const showNoteLabel = new goog.ui.CustomButton();
-            const showNoteStyle = getShowNoteStyle(topPosition, leftPosition, mobile);
+            const showNoteStyle = this.getShowNoteStyle(
+                topPosition,
+                leftPosition,
+                pianoWidth,
+                mobile
+            );
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
             const scriptLabel = showNoteLabel.getContent() as HTMLElement;
@@ -468,8 +474,20 @@ namespace pxtblockly {
             // create next and previous CustomButtons for pagination
             const prevButton = new goog.ui.CustomButton();
             const nextButton = new goog.ui.CustomButton();
-            const prevButtonStyle = getNextPrevStyle(topPosition, leftPosition, true, mobile);
-            const nextButtonStyle = getNextPrevStyle(topPosition, leftPosition, false, mobile);
+            const prevButtonStyle = this.getNextPrevStyle(
+                topPosition,
+                leftPosition,
+                pianoWidth,
+                true,
+                mobile
+            );
+            const nextButtonStyle = this.getNextPrevStyle(
+                topPosition,
+                leftPosition,
+                pianoWidth,
+                false,
+                mobile
+            );
             if (pagination) {
                 scriptLabel.textContent = "Octave #1";
                 //  render previous button
@@ -545,67 +563,6 @@ namespace pxtblockly {
             }
 
             /**
-             * create a DOM to assign a style to the note label
-             * @param topPosition vertical position of the label
-             * @param leftPosition horizontal position of the label
-             * @param isMobile true if the device is a mobile
-             * @return DOM with the new css style.
-             * @private
-             */
-            function getShowNoteStyle(topPosition: number, leftPosition: number, isMobile: boolean) {
-                topPosition += keyHeight;
-                if (isMobile)
-                    topPosition += prevNextHeight;
-                const div = document.createElement("div");
-                div.setAttribute("style", `top: ${topPosition}px;
-                    left: ${leftPosition}px;
-                    background-color: ${thisField.colour_};
-                    width: ${pianoWidth}px;
-                    border-color: ${thisField.colour_};
-                    ${isMobile ?
-                        `font-size ${labelHeight - 10}px;
-                        height: ${labelHeight}px;`
-                        :
-                        ""
-                    }`
-                );
-                div.className = "blocklyNoteLabel";
-                return div;
-            }
-            /**
-             * create a DOM to assign a style to the previous and next buttons
-             * @param topPosition vertical position of the label
-             * @param leftPosition horizontal position of the label
-             * @param isPrev true if is previous button, false otherwise
-             * @param isMobile true if the device is a mobile
-             * @return DOM with the new css style.
-             * @private
-             */
-            function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
-                // x position of the prev/next button
-                const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
-                // y position of the prev/next button
-                let yPosition = (keyHeight + labelHeight + topPosition);
-                if (isMobile)
-                    yPosition = keyHeight + topPosition;
-                const div = document.createElement("div");
-                div.setAttribute("style", `top: ${yPosition}px;
-                    left: ${xPosition}px;
-                    width: ${Math.ceil(pianoWidth / 2)}px;
-                    background-color: ${thisField.colour_};
-                    ${isPrev ? "border-left-color" : "border-right-color"}: ${thisField.colour_};
-                    ${isMobile ?
-                        `height: ${prevNextHeight}px;
-                        font-size: ${prevNextHeight - 10} px;`
-                        :
-                        `border-bottom-color: ${thisField.colour_};`
-                    }`
-                );
-                div.className = "blocklyNotePrevNext";
-                return div;
-            }
-
-            /**
              * @param idx index of the key
              * @return true if idx is white
              * @private
@@ -626,8 +583,8 @@ namespace pxtblockly {
              */
             function getKeyWidth(idx: number): number {
                 if (isWhite(idx))
-                    return keyWidth;
-                return keyWidth / 2;
+                    return FieldNote.keyWidth;
+                return FieldNote.keyWidth / 2;
             }
 
             /**
@@ -638,8 +595,8 @@ namespace pxtblockly {
              */
             function getKeyHeight(idx: number): number {
                 if (isWhite(idx))
-                    return keyHeight;
-                return keyHeight / 2;
+                    return FieldNote.keyHeight;
+                return FieldNote.keyHeight / 2;
             }
 
             /**
@@ -648,10 +605,10 @@ namespace pxtblockly {
              * @return position of the key
              */
             function getPosition(idx: number): number {
-                const pos: number = (whiteKeyCounter * keyWidth);
+                const pos: number = (whiteKeyCounter * FieldNote.keyWidth);
                 if (isWhite(idx))
                     return pos;
-                return pos - (keyWidth / 4);
+                return pos - (FieldNote.keyWidth / 4);
             }
 
             pianoDiv.style.width = pianoWidth + "px";
@@ -740,6 +697,71 @@ namespace pxtblockly {
             div.className = "blocklyNote";
             return div;
         }
+
+        /**
+         * create a DOM to assign a style to the note label
+         * @param topPosition vertical position of the label
+         * @param leftPosition horizontal position of the label
+         * @param pianoWidth the width of the containing piano
+         * @param isMobile true if the device is a mobile
+         * @return DOM with the new css style.
+         * @private
+         */
+        getShowNoteStyle(topPosition: number, leftPosition: number, pianoWidth: number, isMobile: boolean) {
+            topPosition += FieldNote.keyHeight;
+            if (isMobile)
+                topPosition += FieldNote.prevNextHeight;
+            const div = document.createElement("div");
+            div.setAttribute("style", `top: ${topPosition}px;
+                left: ${leftPosition}px;
+                background-color: ${this.colour_};
+                width: ${pianoWidth}px;
+                border-color: ${this.colour_};
+                ${isMobile ?
+                    `font-size ${FieldNote.labelHeight - 10}px;
+                    height: ${FieldNote.labelHeight}px;`
+                    :
+                    ""
+                }`
+            );
+            div.className = "blocklyNoteLabel";
+            return div;
+        }
+
+        /**
+         * create a DOM to assign a style to the previous and next buttons
+         * @param topPosition vertical position of the label
+         * @param leftPosition horizontal position of the label
+         * @param pianoWidth the width of the containing piano
+         * @param isPrev true if is previous button, false otherwise
+         * @param isMobile true if the device is a mobile
+         * @return DOM with the new css style.
+         * @private
+         */
+        getNextPrevStyle(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean, isMobile: boolean) {
+            // x position of the prev/next button
+            const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
+            // y position of the prev/next button
+            let yPosition = (FieldNote.keyHeight + FieldNote.labelHeight + topPosition);
+            if (isMobile)
+                yPosition = FieldNote.keyHeight + topPosition;
+            const div = document.createElement("div");
+            div.setAttribute("style", `top: ${yPosition}px;
+                left: ${xPosition}px;
+                width: ${Math.ceil(pianoWidth / 2)}px;
+                background-color: ${this.colour_};
+                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
+                ${isMobile ?
+                    `height: ${FieldNote.prevNextHeight}px;
+                    font-size: ${FieldNote.prevNextHeight - 10} px;`
+                    :
+                    `border-bottom-color: ${this.colour_};`
+                }`
+            );
+            div.className = "blocklyNotePrevNext";
+            return div;
+        }
+
     }
 
     function hasOnlyOneField(block: Blockly.Block) {
