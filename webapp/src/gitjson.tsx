@@ -173,15 +173,15 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
             body: pref +
-                lf("Forking repo creates a copy under your account. You can later ask {0} to include your changes via a pull request.",
-                    parsed.owner),
+                lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
+                    parsed.fullName),
             agreeLbl: "Fork",
             agreeIcon: "copy outline"
         })
         if (!res)
             return
 
-        this.showLoading(lf("forking repo (this may take a minute or two)..."))
+        this.showLoading(lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
