@@ -406,7 +406,14 @@ namespace pxtblockly {
                 //  modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * keyWidth;
-                const style = getKeyStyle(bgColor, width, height, position + leftPosition, topPosition, isWhite(i) ? 1000 : 1001, this.colour_, mobile);
+                const style = this.getKeyStyle(
+                    bgColor,
+                    width,
+                    height,
+                    position + leftPosition,
+                    topPosition,
+                    isWhite(i) ? 1000 : 1001
+                );
                 key.setContent(style);
                 key.setId(this.noteName_[i]);
                 key.render(pianoDiv);
@@ -536,32 +543,7 @@ namespace pxtblockly {
                 }, 300);
                 (FieldNote as any).superClass_.dispose.call(this);
             }
-            /**
-             * create a DOM to assign a style to the button (piano Key)
-             * @param {string} bgColor color of the key background
-             * @param {number} width width of the key
-             * @param {number} heigth heigth of the key
-             * @param {number} leftPosition horizontal position of the key
-             * @param {number} topPosition vertical position of the key
-             * @param {number} z_index z-index of the key
-             * @param {string} keyBorderColour border color of the key
-             * @param {boolean} isMobile true if the device is a mobile
-             * @return {goog.dom} DOM with the new css style.
-             * @private
-             */
-            function getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number, keyBorderColour: string, isMobile: boolean) {
-                const div = document.createElement("div")
-                div.setAttribute("style", `background-color: ${bgColor};
-                    width: ${width}px;
-                    height: ${height}px;
-                    left: ${leftPosition}px;
-                    top: ${topPosition}px;
-                    z-index: ${z_index};
-                    border-color: ${keyBorderColour};`
-                );
-                div.className = "blocklyNote";
-                return div;
-            }
+
             /**
              * create a DOM to assign a style to the note label
              * @param {number} topPosition vertical position of the label
@@ -728,6 +710,30 @@ namespace pxtblockly {
          **/
         protected refreshText() {
             this.setText(this.getText());
+        }
+
+        /**
+         * create a DOM to assign a style to the button (piano Key)
+         * @param bgColor color of the key background
+         * @param width width of the key
+         * @param heigth heigth of the key
+         * @param leftPosition horizontal position of the key
+         * @param topPosition vertical position of the key
+         * @param z_index z-index of the key
+         * @return DOM with the new css style.
+         */
+        protected getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number) {
+            const div = document.createElement("div")
+            div.setAttribute("style", `background-color: ${bgColor};
+                width: ${width}px;
+                height: ${height}px;
+                left: ${leftPosition}px;
+                top: ${topPosition}px;
+                z-index: ${z_index};
+                border-color: ${this.colour_};`
+            );
+            div.className = "blocklyNote";
+            return div;
         }
     }
 
