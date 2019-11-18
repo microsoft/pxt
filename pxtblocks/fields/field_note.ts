@@ -490,20 +490,18 @@ namespace pxtblockly {
             if (pagination) {
                 scriptLabel.textContent = "Octave #1";
                 //  render previous button
-                let script: HTMLElement;
                 prevButton.setContent(prevButtonStyle);
                 prevButton.render(pianoDiv);
-                script = prevButton.getContent() as HTMLElement;
-                //  left arrow - previous button
-                script.textContent = "<";
+                const leftArrow = prevButton.getContent() as HTMLElement;
+                const rightArrow = nextButton.getContent() as HTMLElement;
+                leftArrow.textContent = "<";
                 //  render next button
                 nextButton.setContent(nextButtonStyle);
                 nextButton.render(pianoDiv);
-                script = nextButton.getContent() as HTMLElement;
-                //  right arrow - next button
-                script.textContent = ">";
+                rightArrow.textContent = ">";
 
                 const pageCount = this.nKeys_ / 12;
+                let currentPage = 0;
                 const changePage = (next: boolean) => {
                     if (currentPage == (next ? pageCount - 1 : 0)) {
                         scriptLabel.textContent = "Octave #" + (currentPage + 1);
@@ -520,7 +518,6 @@ namespace pxtblockly {
                     currentPage = currentPage + (next ? 1 : -1);
                     scriptLabel.textContent = "Octave #" + (currentPage + 1);
                 };
-                let currentPage = 0;
                 goog.events.listen(
                     prevButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
@@ -643,8 +640,9 @@ namespace pxtblockly {
          * @return DOM with the new css style.
          */
         protected getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number) {
-            const div = document.createElement("div")
-            div.setAttribute("style", `background-color: ${bgColor};
+            return createStyledDiv(
+                "blocklyNote",
+                `background-color: ${bgColor};
                 width: ${width}px;
                 height: ${height}px;
                 left: ${leftPosition}px;
@@ -652,8 +650,6 @@ namespace pxtblockly {
                 z-index: ${z_index};
                 border-color: ${this.colour_};`
             );
-            div.className = "blocklyNote";
-            return div;
         }
 
         /**
@@ -665,12 +661,13 @@ namespace pxtblockly {
          * @return DOM with the new css style.
          * @private
          */
-        getShowNoteStyle(topPosition: number, leftPosition: number, pianoWidth: number, isMobile: boolean) {
+        protected getShowNoteStyle(topPosition: number, leftPosition: number, pianoWidth: number, isMobile: boolean) {
             topPosition += FieldNote.keyHeight;
             if (isMobile)
                 topPosition += FieldNote.prevNextHeight;
-            const div = document.createElement("div");
-            div.setAttribute("style", `top: ${topPosition}px;
+            return createStyledDiv(
+                "blocklyNoteLabel",
+                `top: ${topPosition}px;
                 left: ${leftPosition}px;
                 background-color: ${this.colour_};
                 width: ${pianoWidth}px;
@@ -682,8 +679,6 @@ namespace pxtblockly {
                     ""
                 }`
             );
-            div.className = "blocklyNoteLabel";
-            return div;
         }
 
         /**
@@ -696,15 +691,15 @@ namespace pxtblockly {
          * @return DOM with the new css style.
          * @private
          */
-        getNextPrevStyle(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean, isMobile: boolean) {
-            // x position of the prev/next button
+        protected getNextPrevStyle(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean, isMobile: boolean) {
             const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
-            // y position of the prev/next button
-            let yPosition = (FieldNote.keyHeight + FieldNote.labelHeight + topPosition);
+            let yPosition = FieldNote.keyHeight + FieldNote.labelHeight + topPosition;
             if (isMobile)
                 yPosition = FieldNote.keyHeight + topPosition;
-            const div = document.createElement("div");
-            div.setAttribute("style", `top: ${yPosition}px;
+
+            return createStyledDiv(
+                "blocklyNotePrevNext",
+                `top: ${yPosition}px;
                 left: ${xPosition}px;
                 width: ${Math.ceil(pianoWidth / 2)}px;
                 background-color: ${this.colour_};
@@ -716,8 +711,6 @@ namespace pxtblockly {
                     `border-bottom-color: ${this.colour_};`
                 }`
             );
-            div.className = "blocklyNotePrevNext";
-            return div;
         }
 
         /**
@@ -769,10 +762,16 @@ namespace pxtblockly {
                 return pos;
             return pos - (FieldNote.keyWidth / 4);
         }
-
     }
 
     function hasOnlyOneField(block: Blockly.Block) {
         return block.inputList.length === 1 && block.inputList[0].fieldRow.length === 1;
+    }
+
+    function createStyledDiv(className: string, style: string) {
+        const output = document.createElement("div");
+        output.className = className;
+        output.setAttribute("style", style.replace(/s+/g, ""));
+        return output;
     }
 }
