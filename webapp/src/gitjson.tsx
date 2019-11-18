@@ -978,7 +978,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
                     {lf("Fork your own copy of {0} to your account.", githubId.fullName)}
-                    {sui.helpIconLink("/github#forks", lf("Learn more about forking repositories."))}
+                    {sui.helpIconLink("/github/fork", lf("Learn more about forking repositories."))}
                 </span>
             </div>}
             {gs.commit && gs.commit.tag ?
