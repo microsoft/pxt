@@ -261,10 +261,6 @@ namespace pxtblockly {
             return this.note_;
         }
 
-        onFinishEditing_(text: string) {
-            this.forceRerender();
-        }
-
         /**
          * Called by setValue if the text input is valid. Updates the value of the
          * field, and updates the text of the field if it is not currently being
@@ -294,7 +290,7 @@ namespace pxtblockly {
          */
         getText(): string {
             if (this.isExpanded) {
-                return `${this.note_} hz`;
+                return "" + this.note_;
             } else {
                 const note = +this.note_;
                 for (let i = 0; i < this.nKeys_; i++) {
@@ -348,7 +344,6 @@ namespace pxtblockly {
             );
 
             this.refreshText();
-            this.isDirty_ = true;
 
             const keyWidth = 22;
             const keyHeight = 90;
@@ -582,9 +577,9 @@ namespace pxtblockly {
              * @private
              */
             function getNextPrevStyle(topPosition: number, leftPosition: number, isPrev: boolean, isMobile: boolean) {
-                //  x position of the prev/next button
+                // x position of the prev/next button
                 const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
-                //  y position of the prev/next button
+                // y position of the prev/next button
                 let yPosition = (keyHeight + labelHeight + topPosition);
                 if (isMobile)
                     yPosition = keyHeight + topPosition;
@@ -607,7 +602,7 @@ namespace pxtblockly {
 
             /**
              * @param {number} idx index of the key
-             * @return {boolean} true if key_idx is white
+             * @return {boolean} true if idx is white
              * @private
              */
             function isWhite(idx: number): boolean {
@@ -702,6 +697,10 @@ namespace pxtblockly {
             }
         }
 
+        onFinishEditing_(text: string) {
+            this.refreshText();
+        }
+
         /**
          * This block shows up differently when it's being edited;
          * on any transition between `editing <--> not-editing`
@@ -710,6 +709,7 @@ namespace pxtblockly {
          **/
         protected refreshText() {
             this.setText(this.getText());
+            this.forceRerender();
         }
 
         /**
