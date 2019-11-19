@@ -157,7 +157,10 @@ namespace pxtblockly {
         protected static readonly keyHeight = 90;
         protected static readonly labelHeight = 24;
         protected static readonly prevNextHeight = 20;
+        protected static readonly notesPerOctave = 12;
 
+        protected currentPage: number;
+        protected piano: goog.ui.CustomButton[];
         /**
          * Absolute error for note frequency identification (Hz)
          */
@@ -179,6 +182,7 @@ namespace pxtblockly {
             (FieldNote as any).superClass_.constructor.call(this, text, validator);
             this.note_ = text;
             this.isExpanded = false;
+            this.currentPage = 0;
 
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
@@ -489,39 +493,23 @@ namespace pxtblockly {
                 );
 
                 scriptLabel.textContent = "Octave #1";
-                const pageCount = this.nKeys_ / 12;
-                let currentPage = 0;
-                const changePage = (next: boolean) => {
-                    if (currentPage == (next ? pageCount - 1 : 0)) {
-                        scriptLabel.textContent = "Octave #" + (currentPage + 1);
-                        return;
-                    }
-                    const curFirstKey = currentPage * 12;
-                    const newFirstKey = currentPage * 12 + (next ? 12 : -12);
-                    //  hide current octave
-                    for (let i = 0; i < 12; i++)
-                        piano[i + curFirstKey].setVisible(false);
-                    //  show new octave
-                    for (let i = 0; i < 12; i++)
-                        piano[i + newFirstKey].setVisible(true);
-                    currentPage = currentPage + (next ? 1 : -1);
-                    scriptLabel.textContent = "Octave #" + (currentPage + 1);
-                };
+
                 goog.events.listen(
                     prevButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
-                    () => changePage(/** next **/ false),
+                    () => this.changePage(/** next **/ false, scriptLabel, piano),
                     false,
                     prevButton
                 );
                 goog.events.listen(
                     nextButton.getElement(),
                     goog.events.EventType.MOUSEDOWN,
-                    () => changePage(/** next **/ true),
+                    () => this.changePage(/** next **/ true, scriptLabel, piano),
                     false,
                     nextButton
                 );
             }
+
             // create the key sound
             function soundKey() {
                 const cnt = ++soundingKeys;
@@ -570,7 +558,7 @@ namespace pxtblockly {
                 primaryY,
                 secondaryX,
                 secondaryY,
-                this.onHide.bind(this)
+                () => this.onHide()
             );
         }
 
@@ -615,6 +603,25 @@ namespace pxtblockly {
             this.setText(this.getText());
             this.forceRerender();
         }
+
+        protected changePage(next: boolean, scriptLabel: HTMLElement, piano: goog.ui.CustomButton[]) {
+            const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
+            if (this.currentPage == (next ? pageCount - 1 : 0)) {
+                scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
+                return;
+            }
+            const nextPage = this.currentPage + (next ? 1 : -1);
+            const curFirstKey = this.currentPage * FieldNote.notesPerOctave;
+            const newFirstKey = nextPage * FieldNote.notesPerOctave;
+            //  hide current octave
+            for (let i = 0; i < FieldNote.notesPerOctave; i++)
+                piano[i + curFirstKey].setVisible(false);
+            //  show new octave
+            for (let i = 0; i < FieldNote.notesPerOctave; i++)
+                piano[i + newFirstKey].setVisible(true);
+            this.currentPage = nextPage;
+            scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
+        };
 
         /**
          * create a DOM to assign a style to the button (piano Key)
@@ -693,7 +700,7 @@ namespace pxtblockly {
                 ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
                 ${isMobile ?
                     `height: ${FieldNote.prevNextHeight}px;
-                    font-size: ${FieldNote.prevNextHeight - 10} px;`
+                    font-size: ${FieldNote.prevNextHeight - 10}px;`
                     :
                     `border-bottom-color: ${this.colour_};`
                 }`
@@ -775,7 +782,7 @@ namespace pxtblockly {
     function createStyledDiv(className: string, style: string) {
         const output = document.createElement("div");
         output.className = className;
-        output.setAttribute("style", style.replace(/s+/g, ""));
+        output.setAttribute("style", style.replace(/\s+/g, ""));
         return output;
     }
 }
