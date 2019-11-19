@@ -361,7 +361,7 @@ function travisAsync() {
     // upload locs on build on master
     const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
         && /^false$/.test(process.env.TRAVIS_PULL_REQUEST)
-        && !pxt.appTarget.disableDocsUpload;
+        && pxt.appTarget.uploadDocs;
 
     console.log("TRAVIS_TAG:", rel);
     console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
