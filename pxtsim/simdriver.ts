@@ -9,6 +9,7 @@ namespace pxsim {
         onTraceMessage?: (msg: TraceMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
+        onSimulatorReady?: () => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
@@ -520,6 +521,8 @@ namespace pxsim {
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
                     }
+                    if (this.options.onSimulatorReady)
+                        this.options.onSimulatorReady();
                     break;
                 }
                 case 'status': {

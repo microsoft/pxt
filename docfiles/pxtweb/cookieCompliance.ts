@@ -70,14 +70,11 @@ namespace pxt {
     let eventLogger: TelemetryQueue<string, Map<string>, Map<number>>;
     let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
-    // performance measuring
+    // performance measuring, added here because this is amongst the first (typescript) code ever executed
     export namespace perf {
-        export let startTimeMs: number = Date.now()
-        export function reset() {
-            startTimeMs = Date.now()
-        }
+        export let startTimeMs: number;
         export function splitMs(): number {
-            return Date.now() - startTimeMs
+            return Math.round(performance.now() - startTimeMs)
         }
         export function splitStr(): string {
             let ms = splitMs()
@@ -97,7 +94,18 @@ namespace pxt {
         export function logSplit(msg: string) {
             console.log(`[PERF] ${msg} @ ${splitStr()}`)
         }
-        console.log("[PERF MEASURE STARTED]")
+        export function reset() {
+            startTimeMs = performance.now()
+        }
+        export function initFromNavStart() {
+            performance.measure("measure from the start of navigation to now")
+            let navStartMeasure = performance.getEntriesByType("measure")[0]
+            startTimeMs = navStartMeasure.startTime
+        }
+        (function () {
+            initFromNavStart()
+            logSplit("pxt.perf interpreted")
+        })()
     }
 
     export function initAnalyticsAsync() {

@@ -2192,6 +2192,9 @@ export class ProjectView
                     this.checkWebUSBVariant = false
                     this.checkForHwVariant()
                 }, pairAsync)
+                .then(() => {
+                    pxt.perf.logSplit("HID bridge init finished")
+                })
             return true
         }
         this.showChooseHwDialog()
