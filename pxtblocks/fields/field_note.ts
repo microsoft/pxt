@@ -466,8 +466,7 @@ namespace pxtblockly {
             const showNoteStyle = this.getShowNoteStyle(
                 topPosition,
                 leftPosition,
-                pianoWidth,
-                mobile
+                pianoWidth
             );
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
@@ -655,23 +654,14 @@ namespace pxtblockly {
          * @return DOM with the new css style.
          * @private
          */
-        protected getShowNoteStyle(topPosition: number, leftPosition: number, pianoWidth: number, isMobile: boolean) {
-            topPosition += FieldNote.keyHeight;
-            if (isMobile)
-                topPosition += FieldNote.prevNextHeight;
+        protected getShowNoteStyle(topPosition: number, leftPosition: number, pianoWidth: number) {
             return createStyledDiv(
                 "blocklyNoteLabel",
-                `top: ${topPosition}px;
+                `top: ${topPosition + FieldNote.keyHeight}px;
                 left: ${leftPosition}px;
                 background-color: ${this.colour_};
                 width: ${pianoWidth}px;
-                border-color: ${this.colour_};
-                ${isMobile ?
-                    `font-size ${FieldNote.labelHeight - 10}px;
-                    height: ${FieldNote.labelHeight}px;`
-                    :
-                    ""
-                }`
+                border-color: ${this.colour_};`
             );
         }
 
@@ -685,11 +675,9 @@ namespace pxtblockly {
          * @return DOM with the new css style.
          * @private
          */
-        protected getNextPrevStyle(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean, isMobile: boolean) {
+        protected getNextPrevStyle(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean) {
             const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
-            let yPosition = FieldNote.keyHeight + FieldNote.labelHeight + topPosition;
-            if (isMobile)
-                yPosition = FieldNote.keyHeight + topPosition;
+            const yPosition = FieldNote.keyHeight + FieldNote.labelHeight + topPosition;
 
             return createStyledDiv(
                 "blocklyNotePrevNext",
@@ -698,12 +686,7 @@ namespace pxtblockly {
                 width: ${Math.ceil(pianoWidth / 2)}px;
                 background-color: ${this.colour_};
                 ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
-                ${isMobile ?
-                    `height: ${FieldNote.prevNextHeight}px;
-                    font-size: ${FieldNote.prevNextHeight - 10}px;`
-                    :
-                    `border-bottom-color: ${this.colour_};`
-                }`
+                border-bottom-color: ${this.colour_};`
             );
         }
 
@@ -713,8 +696,7 @@ namespace pxtblockly {
                 topPosition,
                 leftPosition,
                 pianoWidth,
-                isPrev,
-                isMobile
+                isPrev
             );
 
             output.setContent(style);
