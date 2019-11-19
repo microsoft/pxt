@@ -114,11 +114,11 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
 
 function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
-    nodeutil.getBundledPackagesDocs().forEach(docsDir => {
-        const locdir = path.join(docsDir, "..", "_locales");
+    pxt.appTarget.bundleddirs.forEach(dir => {
+        const locdir = path.join(dir, "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
-                .filter(f => /-strings\.json$/i.test(f) && !/node_modules/.test(f))
+                .filter(f => /-strings\.json$/i.test(f))
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
 
