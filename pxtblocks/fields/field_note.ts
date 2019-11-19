@@ -357,9 +357,6 @@ namespace pxtblockly {
             pianoDiv.className = "blocklyPianoDiv";
             contentDiv.appendChild(pianoDiv);
 
-            let leftPosition = 0;
-            let topPosition = 0;
-
             //  save all changes in the same group of events
             Blockly.Events.setGroup(true);
 
@@ -371,21 +368,16 @@ namespace pxtblockly {
                 if (i > 0 && i % 12 == 0)
                     octaveCounter++;
                 const key = piano[i];
-                //  What color is i key
-                const bgColor = this.isWhite(i) ? "white" : "black";
-                const width = this.getKeyWidth(i);
-                const height = this.getKeyHeight(i);
                 let position = this.getPosition(i, whiteKeyCounter);
 
                 //  modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
                 const style = this.getKeyStyle(
-                    bgColor,
-                    width,
-                    height,
-                    position + leftPosition,
-                    topPosition,
+                    this.isWhite(i) ? "white" : "black",
+                    this.getKeyWidth(i),
+                    this.getKeyHeight(i),
+                    position,
                     this.isWhite(i) ? 1000 : 1001
                 );
                 key.setContent(style);
@@ -444,33 +436,15 @@ namespace pxtblockly {
             }
             //  render note label
             const showNoteLabel = new goog.ui.CustomButton();
-            const showNoteStyle = this.getShowNoteStyle(
-                topPosition,
-                leftPosition,
-                pianoWidth
-            );
+            const showNoteStyle = this.getShowNoteStyle(pianoWidth);
             showNoteLabel.setContent(showNoteStyle);
             showNoteLabel.render(pianoDiv);
             const scriptLabel = showNoteLabel.getContent() as HTMLElement;
             scriptLabel.textContent = "-";
 
             if (pagination) {
-                const prevButton = this.getNextPrevButton(
-                    topPosition,
-                    leftPosition,
-                    pianoWidth,
-                    true,
-                    mobile,
-                    pianoDiv
-                );
-                const nextButton = this.getNextPrevButton(
-                    topPosition,
-                    leftPosition,
-                    pianoWidth,
-                    false,
-                    mobile,
-                    pianoDiv
-                );
+                const prevButton = this.getNextPrevButton(pianoWidth, true, pianoDiv);
+                const nextButton = this.getNextPrevButton(pianoWidth, false, pianoDiv);
 
                 scriptLabel.textContent = "Octave #1";
 
@@ -607,20 +581,18 @@ namespace pxtblockly {
          * create a DOM to assign a style to the button (piano Key)
          * @param bgColor color of the key background
          * @param width width of the key
-         * @param heigth heigth of the key
+         * @param height heigth of the key
          * @param leftPosition horizontal position of the key
-         * @param topPosition vertical position of the key
          * @param z_index z-index of the key
          * @return DOM with the new css style.
          */
-        protected getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, topPosition: number, z_index: number) {
+        protected getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, z_index: number) {
             return createStyledDiv(
                 "blocklyNote",
                 `background-color: ${bgColor};
                 width: ${width}px;
                 height: ${height}px;
                 left: ${leftPosition}px;
-                top: ${topPosition}px;
                 z-index: ${z_index};
                 border-color: ${this.colour_};`
             );
@@ -628,18 +600,14 @@ namespace pxtblockly {
 
         /**
          * create a DOM to assign a style to the note label
-         * @param topPosition vertical position of the label
-         * @param leftPosition horizontal position of the label
          * @param pianoWidth the width of the containing piano
-         * @param isMobile true if the device is a mobile
          * @return DOM with the new css style.
          * @private
          */
-        protected getShowNoteStyle(topPosition: number, leftPosition: number, pianoWidth: number) {
+        protected getShowNoteStyle(pianoWidth: number) {
             return createStyledDiv(
                 "blocklyNoteLabel",
-                `top: ${topPosition + FieldNote.keyHeight}px;
-                left: ${leftPosition}px;
+                `top: ${FieldNote.keyHeight}px;
                 background-color: ${this.colour_};
                 width: ${pianoWidth}px;
                 border-color: ${this.colour_};`
@@ -648,17 +616,14 @@ namespace pxtblockly {
 
         /**
          * create a DOM to assign a style to the previous and next buttons
-         * @param topPosition vertical position of the label
-         * @param leftPosition horizontal position of the label
          * @param pianoWidth the width of the containing piano
          * @param isPrev true if is previous button, false otherwise
-         * @param isMobile true if the device is a mobile
          * @return DOM with the new css style.
          * @private
          */
-        protected getNextPrevStyle(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean) {
-            const xPosition = (isPrev ? 0 : (pianoWidth / 2)) + leftPosition;
-            const yPosition = FieldNote.keyHeight + FieldNote.labelHeight + topPosition;
+        protected getNextPrevStyle(pianoWidth: number, isPrev: boolean) {
+            const xPosition = isPrev ? 0 : (pianoWidth / 2);
+            const yPosition = FieldNote.keyHeight + FieldNote.labelHeight;
 
             return createStyledDiv(
                 "blocklyNotePrevNext",
@@ -671,11 +636,9 @@ namespace pxtblockly {
             );
         }
 
-        protected getNextPrevButton(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean, isMobile: boolean, container: HTMLDivElement) {
+        protected getNextPrevButton(pianoWidth: number, isPrev: boolean, container: HTMLDivElement) {
             const output = new goog.ui.CustomButton();
             const style = this.getNextPrevStyle(
-                topPosition,
-                leftPosition,
                 pianoWidth,
                 isPrev
             );
