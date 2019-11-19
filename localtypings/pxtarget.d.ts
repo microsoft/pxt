@@ -47,6 +47,7 @@ declare namespace pxt {
         appTheme: AppTheme;
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
+        disableDocsUpload?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
@@ -265,7 +266,6 @@ declare namespace pxt {
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification for localization files
-        disableCrowdinUpload?: boolean; // don't upload this branch
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
