@@ -11,7 +11,7 @@ import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
 import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap } from './actions/dispatch';
-import { EditorState, AnimationState, TilemapState } from './store/imageReducer';
+import { EditorState, AnimationState, TilemapState, GalleryTile } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap } from './util';
 import { Unsubscribe } from 'redux';
 
@@ -81,8 +81,8 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
         store.dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
-    initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet, layers?: pxt.sprite.BitmapData[]) {
-        store.dispatch(dispatchSetInitialTilemap(tilemap, tileset, layers));
+    initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet, gallery: GalleryTile[], layers?: pxt.sprite.BitmapData[]) {
+        store.dispatch(dispatchSetInitialTilemap(tilemap, tileset, gallery, layers));
     }
 
     onResize() {
@@ -111,7 +111,7 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
     getTilemap() {
         const state = store.getState();
         const tilemapState = state.store.present as TilemapState;
-        return pxt.sprite.tilemapToTilemapLiteral(imageStateToTilemap(tilemapState.tilemap));
+        return pxt.sprite.encodeTilemap(new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, tilemapState.tilemap.overlayLayers[0]), "typescript");
     }
 
     getPersistentData(): ImageEditorSaveState {

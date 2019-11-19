@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode } from '../actions/dispatch';
+import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 
@@ -14,6 +14,7 @@ export interface TilePaletteProps {
     category: TileCategory;
     page: number;
 
+    gallery: GalleryTile[];
     drawingMode: TileDrawingMode;
 
     dispatchChangeSelectedColor: (index: number) => void;
@@ -22,6 +23,7 @@ export interface TilePaletteProps {
     dispatchChangeTilePalettePage: (index: number) => void;
     dispatchChangeTilePaletteCategory: (category: TileCategory) => void;
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
+    dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
 }
 
 /**
@@ -46,9 +48,11 @@ const options: DropdownOption[] = [
     }
 ];
 
+const emptyTile = new pxt.sprite.Bitmap(16, 16);
+
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected canvas: HTMLCanvasElement;
-    protected renderedTiles: pxt.sprite.TileInfo[];
+    protected renderedTiles: GalleryTile[];
 
     componentDidMount() {
         this.canvas = this.refs["tile-canvas-surface"] as HTMLCanvasElement;
@@ -62,22 +66,26 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     render() {
         const { colors, selected, backgroundColor, tileset, category, page, drawingMode } = this.props;
 
+        const fg = tileset.tiles[selected] ? tileset.tiles[selected].data : emptyTile.data();
+        const bg = tileset.tiles[backgroundColor] ? tileset.tiles[backgroundColor].data : emptyTile.data();
+        const wall = emptyTile.data();
+
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
                 <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
-                        frames={[{ bitmap: tileset.tiles[selected].data }]}
+                        frames={[{ bitmap: fg }]}
                         colors={colors} />
                 </div>
                 <div className="tile-palette-swatch" onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
-                        frames={[{ bitmap: tileset.tiles[backgroundColor].data }]}
+                        frames={[{ bitmap: bg }]}
                         colors={colors} />
                 </div>
                 <div className="tile-palette-spacer"></div>
                 <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler} role="button">
                     <TimelineFrame
-                        frames={[{ bitmap: tileset.tiles[0].data }]}
+                        frames={[{ bitmap: wall }]}
                         colors={colors} />
                 </div>
             </div>
@@ -98,9 +106,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const rows = 4;
         const margin = 1;
 
-        const { tileset, category, page } = this.props;
+        const { tileset, gallery, category, page } = this.props;
 
-        const tiles = tileset.tiles.filter(t => t.tags.indexOf(options[category].id) !== -1);
+        const tiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
         const startIndex = page * columns * rows;
         this.renderedTiles = tiles.slice(startIndex, startIndex + rows * columns);
 
@@ -114,7 +122,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 const tile = tiles[startIndex + r * columns + c];
 
                 if (tile)
-                    this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.data), c * width, r * width)
+                    this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), c * width, r * width)
             }
         }
     }
@@ -154,8 +162,24 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const tile = this.renderedTiles[row * 4 + column];
         if (tile) {
-            if (ev.button > 0) this.props.dispatchChangeBackgroundColor(tile.globalId);
-            else this.props.dispatchChangeSelectedColor(tile.globalId);
+            const index = this.getTileIndex(tile);
+            const isRightClick = ev.button > 0;
+
+            if (index >= 0) {
+                if (isRightClick) this.props.dispatchChangeBackgroundColor(index);
+                else this.props.dispatchChangeSelectedColor(index);
+            }
+            else {
+                const { selected, backgroundColor, tileset } = this.props;
+                const newIndex = tileset.tiles.length;
+
+                this.props.dispatchCreateNewTile(
+                    tile.bitmap,
+                    isRightClick ? selected : newIndex,
+                    isRightClick ? newIndex: backgroundColor,
+                    tile.qualifiedName
+                );
+            }
         }
     }
 
@@ -172,6 +196,16 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
+
+    protected getTileIndex(g: GalleryTile) {
+        const { tileset } = this.props;
+
+        for (let i = 0; i < tileset.tiles.length; i++) {
+            if (tileset.tiles[i].qualifiedName === g.qualifiedName) return i;
+        }
+
+        return -1;
+    }
 }
 
 
@@ -214,7 +248,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         category: editor.tilemapPalette.category,
         page: editor.tilemapPalette.page,
         colors: state.colors,
-        drawingMode: editor.drawingMode
+        drawingMode: editor.drawingMode,
+        gallery: editor.tileGallery
     };
 }
 
@@ -224,7 +259,8 @@ const mapDispatchToProps = {
     dispatchSwapBackgroundForeground,
     dispatchChangeTilePalettePage,
     dispatchChangeTilePaletteCategory,
-    dispatchChangeDrawingMode
+    dispatchChangeDrawingMode,
+    dispatchCreateNewTile
 };
 
 

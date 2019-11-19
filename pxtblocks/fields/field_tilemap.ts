@@ -31,7 +31,7 @@ namespace pxtblockly {
 
         private params: ParsedFieldTilemapOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private state: pxt.sprite.Tilemap;
+        private state: pxt.sprite.TilemapData;
         private lightMode: boolean;
         private undoRedoState: any;
 
@@ -42,9 +42,7 @@ namespace pxtblockly {
             this.params = parseFieldOptions(params);
             this.blocksInfo = params.blocksInfo;
 
-            if (!this.state) {
-                this.state = new pxt.sprite.Tilemap(this.params.initWidth, this.params.initHeight);
-            }
+            this.initState();
         }
 
         init() {
@@ -58,9 +56,7 @@ namespace pxtblockly {
                 (this.fieldGroup_ as any).style.display = 'none';
             }
 
-            if (!this.state) {
-                this.state = new pxt.sprite.Tilemap(this.params.initWidth, this.params.initHeight);
-            }
+            this.initState();
 
             this.redrawPreview();
 
@@ -86,8 +82,7 @@ namespace pxtblockly {
                 if (result) {
                     const old = this.getValue();
 
-                    const { tilemap, layers } = pxt.sprite.tilemapLiteralToTilemap(result)
-                    this.state = tilemap;
+                    this.state = pxt.sprite.decodeTilemap(result, "typescript");
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -109,7 +104,7 @@ namespace pxtblockly {
         }
 
         getValue() {
-            return pxt.sprite.tilemapToTilemapLiteral(this.state);
+            return pxt.sprite.encodeTilemap(this.state, "typescript");
         }
 
         doValueUpdate_(newValue: string) {
@@ -137,7 +132,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                const data = bitmapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode);
+                const data = bitmapToImageURI(this.state.tilemap, PREVIEW_WIDTH, this.lightMode);
                 const img = new svg.Image()
                     .src(data)
                     .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
@@ -147,11 +142,21 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            const { tilemap, layers } = pxt.sprite.tilemapLiteralToTilemap(newText);
+            const tilemap = pxt.sprite.decodeTilemap(newText, "typescript");
 
             // Ignore invalid bitmaps
-            if (tilemap && tilemap.width && tilemap.height) {
+            if (tilemap && tilemap.tilemap.width && tilemap.tilemap.height) {
                 this.state = tilemap;
+            }
+        }
+
+        protected initState() {
+            if (!this.state) {
+                this.state = new pxt.sprite.TilemapData(
+                    new pxt.sprite.Tilemap(this.params.initWidth, this.params.initHeight),
+                    { tiles: [], tileWidth: 8 },
+                    new pxt.sprite.Bitmap(this.params.initHeight, this.params.initWidth).data()
+                );
             }
         }
     }

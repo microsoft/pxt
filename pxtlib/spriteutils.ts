@@ -171,8 +171,11 @@ namespace pxt.sprite {
 
     export interface TileInfo {
         data: BitmapData;
-        globalId: number;
-        tags: string[];
+        qualifiedName?: string;
+    }
+
+    export class TilemapData {
+        constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
     }
 
     export class Bitmask {
@@ -197,7 +200,45 @@ namespace pxt.sprite {
         }
     }
 
-    export function tilemapLiteralToTilemap(text: string, defaultPattern?: string): { tilemap: Tilemap, layers?: pxt.sprite.BitmapData[] } {
+    export function encodeTilemap(t: TilemapData, fileType: "typescript" | "python"): string {
+        if (!t) return `null`;
+
+        return `tiles.createTilemap(
+            ${tilemapToTilemapLiteral(t.tilemap)},
+            ${bitmapToImageLiteral(Bitmap.fromData(t.layers), fileType)},
+            [${t.tileset.tiles.map(tile => encodeTile(tile, fileType))}],
+            ${tileWidthToTileScale(t.tileset.tileWidth)}
+        )`
+    }
+
+    export function decodeTilemap(literal: string, fileType: "typescript" | "python"): TilemapData {
+        if (!literal.trim()) {
+            return new TilemapData(new Tilemap(16, 16), {tileWidth: 16, tiles: []}, new Bitmap(16, 16).data());
+        }
+
+        literal = literal.substr(literal.indexOf("(") + 1);
+        literal = literal.substr(0, literal.lastIndexOf(")") - 1);
+
+        const tm = literal.substr(0, literal.indexOf(","));
+        literal = literal.substr(tm.length + 1);
+
+        const layer = literal.substr(0, literal.indexOf(","));
+        literal = literal.substr(layer.length + 1);
+
+        const tileset = literal.substr(0, literal.lastIndexOf("]") + 1);
+        literal = literal.substr(tileset.length + 1);
+
+        const tilescale = literal;
+
+        const result = new TilemapData(tilemapLiteralToTilemap(tm), {
+            tiles: decodeTileset(tileset),
+            tileWidth: tileScaleToTileWidth(tilescale)
+        }, imageLiteralToBitmap(layer).data());
+
+        return result;
+    }
+
+    function tilemapLiteralToTilemap(text: string, defaultPattern?: string): Tilemap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
@@ -208,40 +249,60 @@ namespace pxt.sprite {
         if (!text && defaultPattern)
             text = defaultPattern;
 
-        const width = parseInt(text.substr(0, 2), 16);
-        const height = parseInt(text.substr(2, 2), 16);
-        const data = hexToUint8Array(text.substring(4));
+        const width = parseInt(text.substr(0, 4), 16);
+        const height = parseInt(text.substr(4, 4), 16);
+        const data = hexToUint8Array(text.substring(8));
+
+        return Tilemap.fromData({
+            width,
+            height,
+            x0: 0,
+            y0: 0,
+            data
+        })
+    }
+
+    function tilemapToTilemapLiteral(t: Tilemap): string {
+        if (!t) return `hex\`\``;
+        return `hex\`${formatByte(t.width, 2)}${formatByte(t.height, 2)}${uint8ArrayToHex(t.data().data)}\``;
+    }
+
+    function decodeTileset(tileset: string) {
+        tileset = tileset.replace(/[\[\]\s]/g, "");
+        return tileset ? tileset.split(",").map(t => decodeTile(t)) : [];
+    }
+
+    function encodeTile(tile: TileInfo, fileType: "typescript" | "python") {
+        if (tile.qualifiedName) {
+            return `"${tile.qualifiedName}"`;
+        }
+        else {
+            return bitmapToImageLiteral(Bitmap.fromData(tile.data), fileType);
+        }
+    }
+
+    function decodeTile(literal: string): TileInfo {
+        literal = literal.trim();
+        if (literal.indexOf("img") === 0) {
+            const bitmap = imageLiteralToBitmap(literal);
+            return {
+                data: bitmap.data()
+            }
+        }
 
         return {
-            tilemap: Tilemap.fromData({
-                width,
-                height,
-                x0: 0,
-                y0: 0,
-                data
-            })
-        };
-    }
-
-    export function tilemapToTilemapLiteral(t: Tilemap): string {
-        if (!t) return `hex\`\``;
-        return `hex\`${(t.width).toString(16)}${(t.height.toString(16))}${uint8ArrayToHex(t.data().data)}\``;
-    }
-
-
-    function hexToUint8Array(str: string) {
-        const data = new Uint8ClampedArray(str.length / 2);
-        for (let i = 0; i < str.length; i += 2) {
-            data[i >> 1] = parseInt(str.substr(i, 2), 16);
+            data: null,
+            qualifiedName: literal.substr(1, literal.length - 2)
         }
-        return data;
     }
 
-    function uint8ArrayToHex(data: Uint8ClampedArray) {
-        let result = "";
+    function formatByte(value: number, bytes: number) {
+        let result = value.toString(16);
 
-        for (let i = 0; i < data.length; i++) {
-            result += (data[i]).toString(16);
+        const digits = bytes << 1;
+
+        while (result.length < digits) {
+            result = "0" + result;
         }
 
         return result;
@@ -358,6 +419,42 @@ namespace pxt.sprite {
                 break;
         }
 
+        return res;
+    }
+
+    function tileWidthToTileScale(tileWidth: number) {
+        switch (tileWidth) {
+            case 8: return `TileScale.Eight`;
+            case 16: return `TileScale.Sixteen`;
+            case 32: return `TileScale.ThirtyTwo`;
+            default: return Math.floor(Math.log2(tileWidth)).toString();
+        }
+    }
+
+    function tileScaleToTileWidth(tileScale: string) {
+        tileScale = tileScale.replace(/\s/g, "");
+        switch (tileScale) {
+            case `TileScale.Eight`: return 8;
+            case `TileScale.Sixteen`: return 16;
+            case `TileScale.ThirtyTwo`: return 32;
+            default: return Math.pow(2, parseInt(tileScale));
+        }
+    }
+
+    function hexToUint8Array(hex: string) {
+        let r = new Uint8ClampedArray(hex.length >> 1);
+        for (let i = 0; i < hex.length; i += 2)
+            r[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+        return r
+    }
+
+    function uint8ArrayToHex(data: Uint8ClampedArray) {
+        const hex = "0123456789abcdef";
+        let res = "";
+        for (let i = 0; i < data.length; ++i) {
+            res += hex[data[i] >> 4];
+            res += hex[data[i] & 0xf];
+        }
         return res;
     }
 }

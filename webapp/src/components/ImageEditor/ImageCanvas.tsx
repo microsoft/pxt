@@ -471,7 +471,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         for (let x = 0; x < tilemap.width; x++) {
             for (let y = 0; y < tilemap.height; y++) {
                 index = tilemap.get(x, y);
-                if (index) {
+                if (index && index < tileset.tiles.length) {
                     tileImage = this.tileCache[index];
 
                     if (!tileImage) {
@@ -493,6 +493,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
         if (color) {
             if (this.props.isTilemap && this.props.drawingMode != TileDrawingMode.Wall) {
+                if (color >= this.props.tilemapState.tileset.tiles.length) return;
+
                 let tileImage = this.tileCache[color];
                 if (!tileImage) {
                     tileImage = this.generateTile(color, this.props.tilemapState.tileset);

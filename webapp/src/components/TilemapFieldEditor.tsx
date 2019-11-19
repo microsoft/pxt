@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
-import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { setTelemetryFunction, GalleryTile } from './ImageEditor/store/imageReducer';
 
 import { getBitmap, getGalleryItems, GalleryItem, filterItems } from './gallery';
 
@@ -84,31 +84,26 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
     }
 
     protected initTilemap(value: string, options?: any) {
-        let { tilemap, layers } = pxt.sprite.tilemapLiteralToTilemap(value);
+        let { tilemap, layers, tileset } = pxt.sprite.decodeTilemap(value, "typescript");
 
         if (tilemap.width === 0 || tilemap.height === 0) {
             tilemap = new pxt.sprite.Tilemap(options.initWidth || 16, options.initHeight || 16)
         }
 
-        const tileset: pxt.sprite.TileSet = {
-            tileWidth: 16,
-            tiles: []
-        };
-
         if (!layers) {
-            let bitmap = new pxt.sprite.Bitmap(tilemap.width, tilemap.height);
-            layers = [bitmap.data()];
+            layers = new pxt.sprite.Bitmap(tilemap.width, tilemap.height).data();
         }
+
+        let gallery: GalleryTile[];
 
         if (options) {
             this.blocksInfo = options.blocksInfo;
 
-            tileset.tiles = filterItems(getGalleryItems(this.blocksInfo, "Image"), ["tile"])
-                .map((g, index) => ({ data: getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, globalId: index }));
-
+            gallery = filterItems(getGalleryItems(this.blocksInfo, "Image"), ["tile"])
+                .map((g, index) => ({ bitmap: getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
 
-        this.ref.initTilemap(tilemap, tileset, layers);
+        this.ref.initTilemap(tilemap, tileset, gallery, [layers]);
     }
 
     protected onDoneClick = () => {

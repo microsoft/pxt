@@ -70,6 +70,14 @@ export interface EditorState {
     overlayEnabled?: boolean;
     tilemapPalette?: TilemapPaletteState;
     drawingMode?: TileDrawingMode;
+    tileGallery?: GalleryTile[];
+}
+
+export interface GalleryTile {
+    qualifiedName: string;
+    bitmap: pxt.sprite.BitmapData;
+    tags: string[];
+    tileWidth: number;
 }
 
 export interface TilemapPaletteState {
@@ -249,7 +257,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                         page: 0
                     },
                     drawingMode: TileDrawingMode.Default,
-                    overlayEnabled: true
+                    overlayEnabled: true,
+                    tileGallery: action.gallery
                 },
                 store: {
                     ...state.store,
@@ -278,7 +287,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                             bitmap: action.tilemap,
                             overlayLayers: action.layers
                         },
-                        tileset: action.tileset
+                        tileset: restoreSprites(action.tileset, action.gallery)
                     },
                     future: []
                 }
@@ -286,6 +295,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         default:
             return {
                 ...state,
+                editor: editorReducer(state.editor, action),
                 store: {
                     ...state.store,
                     past: [...state.store.past, state.store.present],
@@ -421,8 +431,11 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             tickEvent(`change-drawing-mode`);
             return { ...state, drawingMode: action.drawingMode || TileDrawingMode.Default };
         case actions.CHANGE_OVERLAY_ENABLED:
-                tickEvent(`change-overlay-enabled`);
-                return { ...state, overlayEnabled: action.enabled };
+            tickEvent(`change-overlay-enabled`);
+            return { ...state, overlayEnabled: action.enabled };
+        case actions.CREATE_NEW_TILE:
+            // tick event covered elsewhere
+            return { ...state, selectedColor: action.foreground, backgroundColor: action.background };
     }
     return state;
 }
@@ -442,6 +455,15 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                     bitmap: pxt.sprite.Tilemap.fromData(state.tilemap.bitmap).resize(width, height).data()
                 }
             };
+        case actions.CREATE_NEW_TILE:
+            tickEvent(action.qualifiedName ? `used-tile-${action.qualifiedName}` : `new-tile`);
+            return {
+                ...state,
+                tileset: {
+                    ...state.tileset,
+                    tiles: [...state.tileset.tiles, { data: action.bitmap, qualifiedName: action.qualifiedName }]
+                }
+            }
         case actions.IMAGE_EDIT:
             tickEvent(`image-edit`);
             return {
@@ -473,6 +495,21 @@ function tickEvent(event: string) {
     if (tickCallback) {
         tickCallback(event)
     }
+}
+
+function restoreSprites(tileset: pxt.sprite.TileSet, gallery: GalleryTile[]) {
+    for (const t of tileset.tiles) {
+        if (!t.data && t.qualifiedName) {
+            for (const g of gallery) {
+                if (g.qualifiedName === t.qualifiedName) {
+                    t.data = g.bitmap;
+                    break;
+                }
+            }
+        }
+    }
+
+    return tileset;
 }
 
 export function setTelemetryFunction(cb: (event: string) => void) {

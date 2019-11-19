@@ -55,6 +55,10 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
         if (!this.tileColors[index]) {
             const { tileset, colors } = this.props;
 
+            if (index >= tileset.tiles.length) {
+                return "#ffffff";
+            }
+
             const averageColor = [0, 0, 0];
 
             const bitmap = pxt.sprite.Bitmap.fromData(tileset.tiles[index].data);
