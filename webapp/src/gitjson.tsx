@@ -842,7 +842,6 @@ interface GitHubViewProps {
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
-        this.handleSignInClick = this.handleSignInClick.bind(this);
     }
 
     renderCore() {

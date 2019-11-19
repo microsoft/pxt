@@ -58,7 +58,8 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 input = el.querySelectorAll('input')[0] as HTMLInputElement;
             },
             jsx: <div className="ui form">
-                <p>{lf("Host your code on GitHub and work together with friends on projects.")}</p>
+                <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
+                <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
                 {useToken && <ol>
                     <li>
                         {lf("Navigate to: ")}
