@@ -158,6 +158,7 @@ namespace pxtblockly {
         protected static readonly labelHeight = 24;
         protected static readonly prevNextHeight = 20;
         protected static readonly notesPerOctave = 12;
+        protected static readonly selectedKeyColor = "yellowgreen";
 
         protected currentPage: number;
         protected piano: goog.ui.CustomButton[];
@@ -226,33 +227,25 @@ namespace pxtblockly {
             (FieldNote as any).superClass_.init.call(this);
             this.noteFreq_.length = 0;
             this.noteName_.length = 0;
-            const thisField = this;
+
             // Create arrays of name/frequency of the notes
-            createNotesArray();
+            for (let i = this.minNote_; i <= this.maxNote_; i++) {
+                let name = Notes[i].prefixedName;
+                // special case: one octave
+                if (this.nKeys_ < 13) {
+                    name = Notes[i].name;
+                }
+                // special case: centered
+                else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
+                    name = Notes[i].altPrefixedName || name;
+                }
+                this.noteName_.push(name);
+                this.noteFreq_.push(Notes[i].freq);
+            }
 
             // explicitly update the value with the newly defined notes;
             // a call to setValue here gets dropped
-            this.doValueUpdate_(this.getValue())
-
-            /**
-             * create Array of notes name and frequencies
-             * @private
-             */
-            function createNotesArray() {
-                for (let i = thisField.minNote_; i <= thisField.maxNote_; i++) {
-                    let name = Notes[i].prefixedName;
-                    // special case: one octave
-                    if (thisField.nKeys_ < 13) {
-                        name = Notes[i].name;
-                    }
-                    // special case: centered
-                    else if (thisField.minNote_ >= 28 && thisField.maxNote_ <= 63) {
-                        name = Notes[i].altPrefixedName || name;
-                    }
-                    thisField.noteName_.push(name);
-                    thisField.noteFreq_.push(Notes[i].freq);
-                }
-            }
+            this.doValueUpdate_(this.getValue());
         }
 
         /**
@@ -307,17 +300,6 @@ namespace pxtblockly {
             }
         }
 
-        /**
-         * Set a custom number of keys for this field.
-         * @param {number} nkeys Number of keys for this block,
-         *     or 26 to use default.
-         * @return {!Blockly.FieldNote} Returns itself (for method chaining).
-         */
-        setNumberOfKeys(size: number): FieldNote {
-            this.nKeys_ = size;
-            return this;
-        }
-
         onHtmlInputChange_(e: any) {
             super.onHtmlInputChange_(e);
             Blockly.DropDownDiv.hideWithoutAnimation();
@@ -349,7 +331,6 @@ namespace pxtblockly {
 
             let whiteKeyCounter = 0;
             let soundingKeys = 0;
-            const selectedKeyColor = "yellowgreen";
             const thisField = this;
             //  Record windowSize and scrollOffset before adding the piano.
             const editorWidth = goog.dom.getViewportSize().editorWidth;
@@ -416,7 +397,7 @@ namespace pxtblockly {
                 //  highlight current selected key
                 if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
                     previousColor = script.style.backgroundColor;
-                    script.style.backgroundColor = selectedKeyColor;
+                    script.style.backgroundColor = FieldNote.selectedKeyColor;
                     currentSelectedKey = key;
                 }
 
@@ -523,7 +504,7 @@ namespace pxtblockly {
                     thisField.setValue(freq);
                 }
                 currentSelectedKey = this;
-                thisKeyEl.style.backgroundColor = selectedKeyColor;
+                thisKeyEl.style.backgroundColor = FieldNote.selectedKeyColor;
                 (thisField as any).htmlInput_.value = thisField.getText();
                 pxt.AudioContextManager.tone(freq);
                 setTimeout(function () {
