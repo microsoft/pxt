@@ -118,7 +118,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
         const locdir = path.join(docsDir, "..", "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
-                .filter(f => /strings\.json$/i.test(f))
+                .filter(f => /-strings\.json$/i.test(f) && !/node_modules/.test(f))
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
 
