@@ -9,7 +9,7 @@ namespace pxt.crowdin {
     }
 
     function multipartPostAsync(key: string, uri: string, data: any = {}, filename: string = null, filecontents: string = null): Promise<ts.pxtc.Util.HttpResponse> {
-        if (key == TEST_KEY) {
+        if (testMode || key == TEST_KEY) {
             const resp = {
                 success: true
             }
