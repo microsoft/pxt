@@ -374,7 +374,7 @@ namespace pxtblockly {
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
                 const style = this.getKeyStyle(
-                    this.isWhite(i) ? "white" : "black",
+                    this.isWhite(i),
                     this.getKeyWidth(i),
                     this.getKeyHeight(i),
                     position,
@@ -586,14 +586,15 @@ namespace pxtblockly {
          * @param z_index z-index of the key
          * @return DOM with the new css style.
          */
-        protected getKeyStyle(bgColor: string, width: number, height: number, leftPosition: number, z_index: number) {
+        protected getKeyStyle(white: boolean, width: number, height: number, leftPosition: number, z_index: number) {
             return createStyledDiv(
                 "blocklyNote",
-                `background-color: ${bgColor};
+                `background-color: ${white ? "white" : "black"};
                 width: ${width}px;
                 height: ${height}px;
                 left: ${leftPosition}px;
                 z-index: ${z_index};
+                box-shadow: ${white ? "inset -3px -3px 5px -4px" : "0px 0px 2px"};
                 border-color: ${this.colour_};`
             );
         }
@@ -708,7 +709,7 @@ namespace pxtblockly {
     function createStyledDiv(className: string, style: string) {
         const output = document.createElement("div");
         output.className = className;
-        output.setAttribute("style", style.replace(/\s+/g, ""));
+        output.setAttribute("style", style.replace(/\s+/g, " "));
         return output;
     }
 }
