@@ -845,27 +845,10 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
         this.handleSignInClick = this.handleSignInClick.bind(this);
     }
 
-    private handleSignInClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.signin");
-        e.stopPropagation();
-        cloudsync.githubProvider().loginAsync()
-            .done(() => this.props.parent.forceUpdate());
-    }
-
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const targetTheme = pxt.appTarget.appTheme;
-        const needsToken = !pxt.github.token;
 
-        if (needsToken)
-            return <div className={`ui ${targetTheme.invertedMenu ? 'inverted' : ''} info message join`}>
-                <p>{lf("Host your code on GitHub and work together with friends on projects.")}
-                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
-                </p>
-                <sui.Button className="tiny green" text={lf("Sign in")} onClick={this.handleSignInClick} />
-            </div>;
-
-        if (!needsToken && needsCommitMessage)
+        if (needsCommitMessage)
             return <div className="ui warning message">
                 <div className="content">
                     {lf("You need to commit your changes before you can pull from GitHub.")}
