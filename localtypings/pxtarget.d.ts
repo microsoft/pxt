@@ -265,6 +265,7 @@ declare namespace pxt {
         hasAudio?: boolean; // target uses the Audio manager. if true: a mute button is added to the simulator toolbar.
         crowdinProject?: string;
         crowdinBranch?: string; // optional branch specification for localization files
+        disableCrowdinUpload?: boolean; // don't upload this branch
         monacoToolbox?: boolean; // if true: show the monaco toolbox when in the monaco editor
         blockHats?: boolean; // if true, event blocks have hats
         allowParentController?: boolean; // allow parent iframe to control editor
