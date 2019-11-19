@@ -3039,7 +3039,7 @@ ${lbl}: .short 0xffff
             } else if (node.expression.kind == SK.ElementAccessExpression) {
                 const inner = node.expression as ElementAccessExpression
                 objExpr = inner.expression
-                keyExpr = () => emitExpr(inner.argumentExpression)
+                keyExpr = () => emitExpr(asString(inner.argumentExpression))
             } else {
                 throw userError(9276, lf("expression not supported as argument to 'delete'"))
             }
