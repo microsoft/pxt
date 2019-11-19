@@ -1,10 +1,29 @@
 namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
+    export let testMode = false;
+    export const TEST_KEY = "!!!testmode!!!";
+
+    export function setTestMode() {
+        pxt.crowdin.testMode = true;
+        pxt.log(`CROWDIN TEST MODE - files will NOT be uploaded`);
+    }
+
+    function multipartPostAsync(key: string, uri: string, data: any = {}, filename: string = null, filecontents: string = null): Promise<ts.pxtc.Util.HttpResponse> {
+        if (testMode || key == TEST_KEY) {
+            const resp = {
+                success: true
+            }
+            return Promise.resolve({ statusCode: 200, headers: {}, text: JSON.stringify(resp), json: resp })
+        }
+        return Util.multipartPostAsync(uri, data, filename, filecontents);
+    }
 
     function apiUri(branch: string, prj: string, key: string, cmd: string, args?: Map<string>) {
         Util.assert(!!prj && !!key && !!cmd);
         const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
-        let suff = "?key=" + key;
+        let suff = "?";
+        if (!testMode)
+            suff = "key=" + key;
         if (branch) {
             if (!args) args = {};
             args["branch"] = branch;
@@ -88,7 +107,7 @@ namespace pxt.crowdin {
         name = normalizeFileName(name);
         pxt.debug(`create directory ${branch || ""}/${name}`)
         if (!incr) incr = mkIncr(name);
-        return Util.multipartPostAsync(apiUri(branch, prj, key, "add-directory"), { json: "true", name: name })
+        return multipartPostAsync(key, apiUri(branch, prj, key, "add-directory"), { json: "true", name: name })
             .then(resp => {
                 pxt.debug(`crowdin resp: ${resp.statusCode}`)
                 // 400 returned by folder already exists
@@ -137,7 +156,7 @@ namespace pxt.crowdin {
             opts["json"] = "";
             opts["escape_quotes"] = "0";
             incr();
-            return Util.multipartPostAsync(apiUri(branch, prj, key, op), opts, filename, data)
+            return multipartPostAsync(key, apiUri(branch, prj, key, op), opts, filename, data)
                 .then(resp => handleResponseAsync(resp))
         }
 
