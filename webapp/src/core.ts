@@ -29,6 +29,7 @@ export function isLoading() {
 
 export function hideLoading(id: string) {
     pxt.debug("hideloading: " + id);
+    pxt.perf.logSplit(`loading done #${id}`)
     if (loadingQueueMsg[id] != undefined) {
         // loading exists, remove from queue
         const index = loadingQueue.indexOf(id);
@@ -62,6 +63,7 @@ export function killLoadingQueue() {
 export function showLoading(id: string, msg: string) {
     pxt.debug("showloading: " + id);
     if (loadingQueueMsg[id]) return; // already loading?
+    pxt.perf.logSplit(`loading started #${id}`)
     initializeDimmer();
     loadingDimmer.show(lf("Please wait"));
     loadingQueue.push(id);

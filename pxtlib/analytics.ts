@@ -4,6 +4,13 @@ namespace pxt {
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
     export declare function aiTrackEvent(id: string, data?: any, measures?: any): void;
     export declare function aiTrackException(err: any, kind: string, props: any): void;
+
+    export declare namespace perf {
+        export function reset(): void;
+        export function splitMs(): number;
+        export function splitStr(): string;
+        export function logSplit(msg: string): void;
+    }
 }
 
 namespace pxt.analytics {

@@ -70,6 +70,36 @@ namespace pxt {
     let eventLogger: TelemetryQueue<string, Map<string>, Map<number>>;
     let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
+    // performance measuring
+    export namespace perf {
+        export let startTimeMs: number = Date.now()
+        export function reset() {
+            startTimeMs = Date.now()
+        }
+        export function splitMs(): number {
+            return Date.now() - startTimeMs
+        }
+        export function splitStr(): string {
+            let ms = splitMs()
+            let r_ms = ms % 1000
+            let s = Math.floor(ms / 1000)
+            let r_s = s % 60
+            let m = Math.floor(s / 60)
+            if (m > 0)
+                return `${m}m${r_s}s`
+            else if (s > 5)
+                return `${s}s`
+            else if (s > 0)
+                return `${s}s${r_ms}ms`
+            else
+                return `${ms}ms`
+        }
+        export function logSplit(msg: string) {
+            console.log(`[PERF] ${msg} @ ${splitStr()}`)
+        }
+        console.log("[PERF MEASURE STARTED]")
+    }
+
     export function initAnalyticsAsync() {
         if (isNativeApp() || shouldHideCookieBanner()) {
             initializeAppInsightsInternal(true);

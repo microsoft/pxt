@@ -3917,6 +3917,7 @@ function initExtensionsAsync(): Promise<void> {
 
 pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", () => {
+    pxt.perf.logSplit(`DOM loaded`)
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
