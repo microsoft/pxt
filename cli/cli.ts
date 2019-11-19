@@ -5896,7 +5896,8 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         name: "uploadtrgtranslations",
         help: "upload translations for target",
         flags: {
-            docs: { description: "upload markdown docs folder as well" }
+            docs: { description: "upload markdown docs folder as well" },
+            test: { description: "test run, do not upload files to crowdin"}
         },
         advanced: true
     }, crowdin.uploadTargetTranslationsAsync);
