@@ -470,36 +470,25 @@ namespace pxtblockly {
             const scriptLabel = showNoteLabel.getContent() as HTMLElement;
             scriptLabel.textContent = "-";
 
-            // create next and previous CustomButtons for pagination
-            const prevButton = new goog.ui.CustomButton();
-            const nextButton = new goog.ui.CustomButton();
-            const prevButtonStyle = this.getNextPrevStyle(
-                topPosition,
-                leftPosition,
-                pianoWidth,
-                true,
-                mobile
-            );
-            const nextButtonStyle = this.getNextPrevStyle(
-                topPosition,
-                leftPosition,
-                pianoWidth,
-                false,
-                mobile
-            );
             if (pagination) {
-                scriptLabel.textContent = "Octave #1";
-                //  render previous button
-                prevButton.setContent(prevButtonStyle);
-                prevButton.render(pianoDiv);
-                const leftArrow = prevButton.getContent() as HTMLElement;
-                const rightArrow = nextButton.getContent() as HTMLElement;
-                leftArrow.textContent = "<";
-                //  render next button
-                nextButton.setContent(nextButtonStyle);
-                nextButton.render(pianoDiv);
-                rightArrow.textContent = ">";
+                const prevButton = this.getNextPrevButton(
+                    topPosition,
+                    leftPosition,
+                    pianoWidth,
+                    true,
+                    mobile,
+                    pianoDiv
+                );
+                const nextButton = this.getNextPrevButton(
+                    topPosition,
+                    leftPosition,
+                    pianoWidth,
+                    false,
+                    mobile,
+                    pianoDiv
+                );
 
+                scriptLabel.textContent = "Octave #1";
                 const pageCount = this.nKeys_ / 12;
                 let currentPage = 0;
                 const changePage = (next: boolean) => {
@@ -565,12 +554,10 @@ namespace pxtblockly {
 
             // Calculate positioning based on the field position.
             const scale = (this.sourceBlock_.workspace as any).scale;
-            const bBox = {width: this.size_.width, height: this.size_.height};
-            bBox.width *= scale;
-            bBox.height *= scale;
             const position = this.fieldGroup_.getBoundingClientRect();
-            const primaryX = position.left + bBox.width / 2;
-            const primaryY = position.top + bBox.height;
+
+            const primaryX = position.left + (this.size_.width * scale) / 2;
+            const primaryY = position.top + this.size_.height;
             const secondaryX = primaryX;
             const secondaryY = position.top;
             // Set bounds to workspace; show the drop-down.
@@ -711,6 +698,23 @@ namespace pxtblockly {
                     `border-bottom-color: ${this.colour_};`
                 }`
             );
+        }
+
+        protected getNextPrevButton(topPosition: number, leftPosition: number, pianoWidth: number, isPrev: boolean, isMobile: boolean, container: HTMLDivElement) {
+            const output = new goog.ui.CustomButton();
+            const style = this.getNextPrevStyle(
+                topPosition,
+                leftPosition,
+                pianoWidth,
+                isPrev,
+                isMobile
+            );
+
+            output.setContent(style);
+            output.render(container);
+            const leftArrow = output.getContent() as HTMLElement;
+            leftArrow.textContent = isPrev ? "<" : ">";
+            return output;
         }
 
         /**
