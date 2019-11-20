@@ -107,9 +107,6 @@ namespace pxt {
 
         export function recordMilestone(msg: string, time: number = splitMs()) {
             stats.milestones.push([msg, time])
-            if (time > 5000 && !perfReportLogged) {
-                console.log(`[perf alert] ${msg} @ ${prettyStr(time)}`)
-            }
         }
         export function init() {
             performance.measure("measure from the start of navigation to now")
@@ -128,9 +125,6 @@ namespace pxt {
                 if (e && e.length === 1) {
                     let measure = e[0]
                     let durMs = measure.duration
-                    if (durMs > 1000) {
-                        console.log(`[perf alert] ${name} took ~ ${prettyStr(durMs)}`)
-                    }
                     if (durMs > 10) {
                         stats.durations.push([name, measure.startTime, durMs])
                     }
