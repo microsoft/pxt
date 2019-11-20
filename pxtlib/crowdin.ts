@@ -15,10 +15,10 @@ namespace pxt.crowdin {
             const resp = {
                 success: true
             }
-            return Promise.resolve(undefined)
-                .then(() => {
+            return new Promise(resolve => {
                     if (filename && filecontents && testPostHandler)
                         testPostHandler(filename, filecontents)
+                    resolve();
                 })
                 .then(() => ({ statusCode: 200, headers: {}, text: JSON.stringify(resp), json: resp }));
         }
