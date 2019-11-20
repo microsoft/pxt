@@ -606,7 +606,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
         if (path == pxt.CONFIG_NAME)
-            data.content = await prepareConfigForPublished(data.content);
+            data.content = await prepareConfigForPublished(data.content, options.createTag);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
             data.encoding = "base64";
@@ -858,7 +858,8 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 }
 
 // replace all file|worspace references with github sha
-async function prepareConfigForPublished(content: string) {
+// createTag: determine if tags need to be enforced
+async function prepareConfigForPublished(content: string, createTag?: boolean) {
     // replace workspace: references with resolve github sha/tags.
     const cfg = pxt.Package.parseAndValidConfig(content);
     if (!cfg) return content;
@@ -879,10 +880,12 @@ async function prepareConfigForPublished(content: string) {
 
     async function resolveDependencyAsync(d: string) {
         const v = cfg.dependencies[d];
-        const hid = d.substring(d.indexOf(':') + 1);
+        const hid = d.substring(v.indexOf(':') + 1);
         const hfiles = await getTextAsync(hid);
         const gitjson = hfiles && pxt.Util.jsonTryParse(hfiles[GIT_JSON]) as pxt.github.GitJson;
         if (gitjson && gitjson.commit) {
+            if (createTag && !gitjson.commit.tag)
+                U.userError(lf("You need to create a release for {0}.", d))
             cfg.dependencies[d] = `github:${gitjson.commit.tag || gitjson.commit.sha}`;
         }
     }
