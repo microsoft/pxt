@@ -58,6 +58,22 @@ When you download the program for your project, the name you gave the project be
 
 Packages were renamed to **Extensions** to align with other code editors. You will now find the **Extensions** menu selection that replaces the **Add Package** button.
 
+## How can I share tutorials?
+
+Tutorials load in the editor, which can make it tricky to share.
+If you want to make a direct link to a tutorial, you need to find the location of the tutorial in the target's documentation, and then you can create a link to go directly to the tutorial from that.
+For example, to make a link to micro:bit's Flashing Heart tutorial, you need to...
+
+1. Find the tutorial in the documentation: [https://makecode.microbit.org/projects/flashing-heart](https://makecode.microbit.org/projects/flashing-heart).
+2. Take that url, and split it into two parts: the main domain (`https://makecode.microbit.org`), and the location of the tutorial (`/projects/flashing-heart`).
+3. In between those two pieces, add `/#tutorial:`: [https://makecode.microbit.org/#tutorial:/projects/flashing-heart](https://makecode.microbit.org/#tutorial:/projects/flashing-heart).
+
+If you're looking at the GitHub repository for the target, the link will be the following:
+
+    https://[editor url]/#tutorial:/[tutorial location under the docs folder]
+
+If you want to create your own tutorial, there is more documentation describing how to do so [here](https://makecode.com/writing-docs/user-tutorials).
+
 ## I don't see my question here. What's next?
 
 Can't find your question? Please see our [support](/support) page.
