@@ -826,7 +826,11 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
         }
         if (treeEnt.blobContent == null)
             needsBlobs = true
-        if (files[k] && treeEnt.sha != gitsha(files[k])) {
+        let content = files[k];
+        if (k == pxt.CONFIG_NAME) {
+            // replace workspace: references with resolve github sha/tags.
+        }
+        if (content && treeEnt.sha != gitsha(content)) {
             isCurrent = false
             continue
         }

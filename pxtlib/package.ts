@@ -914,33 +914,37 @@ namespace pxt {
                 })
         }
 
-        filesToBePublishedAsync(allowPrivate = false) {
-            let files: Map<string> = {};
+        private prepareConfigToBePublish(): pxt.PackageConfig {
+            const cfg = U.clone(this.config)
+            delete (<any>cfg).installedVersion // cleanup old pxt.json files
+            delete cfg.additionalFilePath
+            delete cfg.additionalFilePaths
+            if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
+            U.iterMap(cfg.dependencies, (k, v) => {
+                if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
+                    v = "*"
+                    try {
+                        let d = this.resolveDep(k)
+                        let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
+                        if (gitjson.repo) {
+                            let parsed = pxt.github.parseRepoId(gitjson.repo)
+                            parsed.tag = gitjson.commit.tag || gitjson.commit.sha
+                            v = pxt.github.stringifyRepo(parsed)
+                        }
+                    } catch (e) { }
+                    cfg.dependencies[k] = v
+                }
+            })
+            return cfg;
+        }
 
+        filesToBePublishedAsync(allowPrivate = false) {
+            const files: Map<string> = {};
             return this.loadAsync()
                 .then(() => {
                     if (!allowPrivate && !this.config.public)
                         U.userError('Only packages with "public":true can be published')
-                    let cfg = U.clone(this.config)
-                    delete (<any>cfg).installedVersion // cleanup old pxt.json files
-                    delete cfg.additionalFilePath
-                    delete cfg.additionalFilePaths
-                    if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
-                    U.iterMap(cfg.dependencies, (k, v) => {
-                        if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
-                            v = "*"
-                            try {
-                                let d = this.resolveDep(k)
-                                let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
-                                if (gitjson.repo) {
-                                    let parsed = pxt.github.parseRepoId(gitjson.repo)
-                                    parsed.tag = gitjson.commit.tag || gitjson.commit.sha
-                                    v = pxt.github.stringifyRepo(parsed)
-                                }
-                            } catch (e) { }
-                            cfg.dependencies[k] = v
-                        }
-                    })
+                    const cfg = this.prepareConfigToBePublish();
                     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
                         // already stored
@@ -950,7 +954,6 @@ namespace pxt {
                             U.userError("referenced file missing: " + f)
                         files[f] = str
                     }
-
                     return U.sortObjectFields(files)
                 })
         }
