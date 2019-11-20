@@ -31,7 +31,13 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
     if (parsed && !!parsed.flags["test"]) {
-        pxt.crowdin.setTestMode((f, data) => nodeutil.writeFileSync(path.join("temp", "crowdin", f), data, { encoding: "utf8" }));
+        pxt.crowdin.setTestMode((f, data) => {
+            if (/.json$/i.test(f)) {
+                // pretty print the json
+                data = JSON.stringify(JSON.parse(data), null, 4);
+            }
+            nodeutil.writeFileSync(path.join("temp", "crowdin", f), data, { encoding: "utf8" })
+        });
     }
     return internalUploadTargetTranslationsAsync(uploadDocs);
 }
@@ -59,12 +65,10 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                     .then(() => {
                         if (uploadDocs || pxt.crowdin.testMode) {
                             pxt.log("uploading docs...");
-                            // scan for docs in bundled packages
                             return Promise.all(
                                     nodeutil.getBundledPackagesDocs()
                                         .map(docsDir => uploadDocsTranslationsAsync(docsDir, crowdinDir, cred.branch, cred.prj, cred.key))
                                 )
-                                // then scan for docs (overwriting docs defined inside packages)
                                 .then(() => uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key))
                                 .then(() => pxt.log("docs uploaded"));
                         }
