@@ -249,8 +249,8 @@ namespace pxt.sprite {
         if (!text && defaultPattern)
             text = defaultPattern;
 
-        const width = parseInt(text.substr(0, 4), 16);
-        const height = parseInt(text.substr(4, 4), 16);
+        const width = parseInt(text.substr(0, 2), 16) | (parseInt(text.substr(2, 2), 16) << 8);
+        const height = parseInt(text.substr(4, 2), 16) | (parseInt(text.substr(6, 2), 16) << 8);
         const data = hexToUint8Array(text.substring(8));
 
         return Tilemap.fromData({
@@ -274,7 +274,7 @@ namespace pxt.sprite {
 
     function encodeTile(tile: TileInfo, fileType: "typescript" | "python") {
         if (tile.qualifiedName) {
-            return `"${tile.qualifiedName}"`;
+            return `${tile.qualifiedName}`;
         }
         else {
             return bitmapToImageLiteral(Bitmap.fromData(tile.data), fileType);
@@ -292,7 +292,7 @@ namespace pxt.sprite {
 
         return {
             data: null,
-            qualifiedName: literal.substr(1, literal.length - 2)
+            qualifiedName: literal
         }
     }
 
@@ -301,8 +301,12 @@ namespace pxt.sprite {
 
         const digits = bytes << 1;
 
-        while (result.length < digits) {
+        if (result.length & 1) {
             result = "0" + result;
+        }
+
+        while (result.length < digits) {
+            result += "0"
         }
 
         return result;
