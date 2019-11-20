@@ -15,8 +15,12 @@ interface CrowdinCredentials {
 interface TestResult {
     [file: string]: { size: number, hash: string }
 }
-let testResultStore: TestResult;
-let baseline: string;
+
+interface TestState {
+    resultStore: TestResult;
+    baseline: string;
+}
+let testState: TestState;
 
 function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
@@ -41,8 +45,10 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
     if (parsed && !!parsed.flags["test"]) {
-        testResultStore = {};
-        baseline = parsed.flags["baseline"] as string;
+        testState = {
+            resultStore: {},
+            baseline: parsed.flags["baseline"] as string
+        };
 
         pxt.crowdin.setTestMode((f, data) => {
             if (/.json$/i.test(f)) {
@@ -50,7 +56,7 @@ export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedComma
                 data = JSON.stringify(JSON.parse(data), null, 4);
             }
 
-            testResultStore[f] = {
+            testState.resultStore[f] = {
                 size: data.length,
                 hash: pxt.Util.sha256(data)
             };
@@ -98,18 +104,18 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                         pxt.log("skipping docs upload (not a release)");
                         return Promise.resolve();
                     }).then(() => {
-                        if (pxt.crowdin.testMode) {
+                        if (pxt.crowdin.testMode && testState) {
                             const resultPath = path.join("temp", "crowdin", "test-result.json");
                             pxt.log(`test finished: writing output log to ${resultPath}`);
                             nodeutil.writeFileSync(
                                 resultPath,
-                                JSON.stringify(testResultStore, null, 4),
+                                JSON.stringify(testState.resultStore, null, 4),
                                 { encoding: "utf8" }
                             );
 
-                            if (baseline) {
-                                const baselineResult = nodeutil.readJson(baseline);
-                                compareTestResults(baselineResult, testResultStore);
+                            if (testState.baseline) {
+                                const baselineResult = nodeutil.readJson(testState.baseline);
+                                compareTestResults(baselineResult, testState.resultStore);
                             }
                         }
                     });
