@@ -106,7 +106,7 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                     }).then(() => {
                         if (pxt.crowdin.testMode && testState) {
                             const resultPath = path.join("temp", "crowdin", "test-result.json");
-                            pxt.log(`test finished: writing output log to ${resultPath}`);
+                            pxt.log(`--- test finished: writing output log to ${resultPath} ---s`);
                             nodeutil.writeFileSync(
                                 resultPath,
                                 JSON.stringify(testState.resultStore, null, 4),
@@ -124,17 +124,18 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
 }
 
 function compareTestResults(prev: TestResult, curr: TestResult) {
-    pxt.log("--- Comparing Result against baseline ---")
+    pxt.log("--- Comparing result against baseline ---")
     const prevKeys = Object.keys(prev);
     const currKeys = Object.keys(curr);
 
     for (const key of prevKeys) {
         const prevRes = prev[key];
         const currRes = curr[key];
+
         if (!currRes) {
             pxt.log(`Missing: ${key}`);
         } else if (prev[key].hash != curr[key].hash) {
-            pxt.log(`Different hash: ${key} - previously: ${prevRes.size} chars, now ${currRes.size} chars`);
+            pxt.log(`Different hash: ${key} - previously ${prevRes.size} chars, now ${currRes.size} chars`);
         }
     }
 
