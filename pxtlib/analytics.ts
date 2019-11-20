@@ -6,14 +6,6 @@ namespace pxt {
     export declare function aiTrackException(err: any, kind: string, props: any): void;
 }
 
-namespace pxt.perf {
-    // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
-    export declare function report(): void;
-    export declare function recordMilestone(msg: string, time?: number): void;
-    export declare function measureStart(name: string): void;
-    export declare function measureEnd(name: string): void;
-}
-
 namespace pxt.analytics {
     const defaultProps: Map<string> = {};
     const defaultMeasures: Map<number> = {};
