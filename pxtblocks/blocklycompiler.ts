@@ -865,7 +865,7 @@ namespace pxt.blocks {
                 let call = e.stdCallTable[b.type];
                 if (call) {
                     if (call.imageLiteral)
-                        expr = compileImage(e, b, call.imageLiteral, call.namespace, call.f,
+                        expr = compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f,
                             visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments)))
                     else
                         expr = compileStdCall(e, b, call, comments);
@@ -1289,11 +1289,11 @@ namespace pxt.blocks {
         return !!(b as MutatingBlock).mutation;
     }
 
-    function compileImage(e: Environment, b: Blockly.Block, frames: number, n: string, f: string, args?: JsNode[]): JsNode {
+    function compileImage(e: Environment, b: Blockly.Block, frames: number, columns: number, rows: number, n: string, f: string, args?: JsNode[]): JsNode {
         args = args === undefined ? [] : args;
         let state = "\n";
-        let rows = 5;
-        let columns = frames * 5;
+        rows =  rows || 5;
+        columns = columns || frames * 5;
         let leds = b.getFieldValue("LEDS");
         leds = leds.replace(/[ `\n]+/g, '');
         for (let i = 0; i < rows; ++i) {
@@ -1327,6 +1327,8 @@ namespace pxt.blocks {
         isExtensionMethod?: boolean;
         isExpression?: boolean;
         imageLiteral?: number;
+        imageLiteralColumns?: number;
+        imageLiteralRows?: number;
         hasHandler?: boolean;
         property?: boolean;
         namespace?: string;
@@ -1549,6 +1551,8 @@ namespace pxt.blocks {
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
+                        imageLiteralColumns: fn.attributes.imageLiteralColumns,
+                        imageLiteralRows: fn.attributes.imageLiteralRows,
                         hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || p.type == "Action" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"

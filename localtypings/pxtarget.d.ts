@@ -557,6 +557,8 @@ declare namespace ts.pxtc {
         jresURL?: string;
         iconURL?: string;
         imageLiteral?: number;
+        imageLiteralColumns?: number; // optional number of columns
+        imageLiteralRows?: number; // optional number of rows
         weight?: number;
         parts?: string;
         trackArgs?: number[];

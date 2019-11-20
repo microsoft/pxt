@@ -1336,13 +1336,14 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = attributes.imageLiteral * 5;
-            if (nc * 5 != leds.length) {
+            const nc = attributes.imageLiteralColumns || attributes.imageLiteral * 5;
+            const nr = attributes.imageLiteralRows || 5;
+            if (nc * nr != leds.length) {
                 error(node, Util.lf("Invalid image pattern"));
                 return undefined;
             }
             let ledString = '';
-            for (let r = 0; r < 5; ++r) {
+            for (let r = 0; r < nr; ++r) {
                 for (let c = 0; c < nc; ++c) {
                     ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
                 }
@@ -2506,8 +2507,9 @@ ${output}</xml>`;
                     return Util.lf("Only string literals supported for image literals")
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-                const nc = attributes.imageLiteral * 5;
-                if (nc * 5 != leds.length) {
+                const nr = attributes.imageLiteralRows || 5;
+                const nc = attributes.imageLiteralColumns || attributes.imageLiteral * 5;
+                if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern");
                 }
                 return undefined;
