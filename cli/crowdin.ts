@@ -30,8 +30,9 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
-    if (parsed && !!parsed.flags["test"])
-        pxt.crowdin.setTestMode();
+    if (parsed && !!parsed.flags["test"]) {
+        pxt.crowdin.setTestMode((f, data) => nodeutil.writeFileSync(path.join("temp", "crowdin", f), data, { encoding: "utf8" }));
+    }
     return internalUploadTargetTranslationsAsync(uploadDocs);
 }
 
@@ -56,18 +57,16 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                     .then(() => fs.existsSync("built/sim-strings.json") ? execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir) : Promise.resolve())
                     .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
                     .then(() => {
-                        if (uploadDocs) {
+                        if (uploadDocs || pxt.crowdin.testMode) {
                             pxt.log("uploading docs...");
-                            return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-                                // scan for docs in bundled packages
-                                .then(() => {
-                                    return Promise.all(
-                                        nodeutil.getBundledPackagesDocs()
-                                            .map(docsDir => uploadDocsTranslationsAsync(docsDir, crowdinDir, cred.branch, cred.prj, cred.key))
-                                    ).then(() => {
-                                        pxt.log("docs uploaded");
-                                    });
-                                });
+                            // scan for docs in bundled packages
+                            return Promise.all(
+                                    nodeutil.getBundledPackagesDocs()
+                                        .map(docsDir => uploadDocsTranslationsAsync(docsDir, crowdinDir, cred.branch, cred.prj, cred.key))
+                                )
+                                // then scan for docs (overwriting docs defined inside packages)
+                                .then(() => uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key))
+                                .then(() => pxt.log("docs uploaded"));
                         }
                         pxt.log("skipping docs upload (not a release)");
                         return Promise.resolve();
