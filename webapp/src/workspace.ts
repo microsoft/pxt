@@ -863,9 +863,18 @@ async function prepareConfigForPublished(content: string) {
     const cfg = pxt.Package.parseAndValidConfig(content);
     if (!cfg) return content;
 
+    // cleanup
+    delete (<any>cfg).installedVersion // cleanup old pxt.json files
+    delete cfg.additionalFilePath
+    delete cfg.additionalFilePaths
+    if (!cfg.targetVersions)
+        cfg.targetVersions = pxt.appTarget.versions;
+
+    // patch dependencies
     for (const d of Object.keys(cfg.dependencies)
         .filter(d => /^(file|workspace):)/.test(cfg.dependencies[d])))
         await resolveDependencyAsync(d);
+
     return pxt.Package.stringifyConfig(cfg);
 
     async function resolveDependencyAsync(d: string) {
