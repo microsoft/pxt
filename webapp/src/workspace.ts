@@ -537,7 +537,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         U.userError(lf("Not a git extension."))
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     let treeUpdate: pxt.github.CreateTreeReq = {
         base_tree: gitjson.commit.tree.sha,
         tree: []
@@ -605,6 +605,8 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             content: content,
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
+        if (path == pxt.CONFIG_NAME)
+            data.content = await prepareConfigForPublished(data.content);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
             data.encoding = "base64";
@@ -827,9 +829,8 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
         if (treeEnt.blobContent == null)
             needsBlobs = true
         let content = files[k];
-        if (k == pxt.CONFIG_NAME) {
-            // replace workspace: references with resolve github sha/tags.
-        }
+        if (k == pxt.CONFIG_NAME)
+            content = await prepareConfigForPublished(content);
         if (content && treeEnt.sha != gitsha(content)) {
             isCurrent = false
             continue
@@ -853,6 +854,28 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
         gitjson.isFork = !!r.fork
         files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
         await saveAsync(h, files)
+    }
+}
+
+// replace all file|worspace references with github sha
+async function prepareConfigForPublished(content: string) {
+    // replace workspace: references with resolve github sha/tags.
+    const cfg = pxt.Package.parseAndValidConfig(content);
+    if (!cfg) return content;
+
+    for (const d of Object.keys(cfg.dependencies)
+        .filter(d => /^(file|workspace):)/.test(cfg.dependencies[d])))
+        await resolveDependencyAsync(d);
+    return pxt.Package.stringifyConfig(cfg);
+
+    async function resolveDependencyAsync(d: string) {
+        const v = cfg.dependencies[d];
+        const hid = d.substring(d.indexOf(':') + 1);
+        const hfiles = await getTextAsync(hid);
+        const gitjson = hfiles && pxt.Util.jsonTryParse(hfiles[GIT_JSON]) as pxt.github.GitJson;
+        if (gitjson && gitjson.commit) {
+            cfg.dependencies[d] = `github:${gitjson.commit.tag || gitjson.commit.sha}`;
+        }
     }
 }
 
@@ -909,7 +932,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     // save
     await saveAsync(hd, currFiles)
     await commitAsync(hd, {
-        message: "Auto-initialized.",
+        message: lf("Initial files for MakeCode project"),
         filenamesToCommit: Object.keys(currFiles)
     })
 

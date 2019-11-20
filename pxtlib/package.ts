@@ -921,7 +921,7 @@ namespace pxt {
             delete cfg.additionalFilePaths
             if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
             U.iterMap(cfg.dependencies, (k, v) => {
-                if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
+                if (!v || /^(file|workspace):/.test(v)) {
                     v = "*"
                     try {
                         let d = this.resolveDep(k)
