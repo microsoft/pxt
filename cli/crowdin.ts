@@ -6,7 +6,15 @@ import Map = pxt.Map;
 
 import * as commandParser from './commandparser';
 
-interface CrowdinCredentials { prj: string; key: string; branch: string; }
+interface CrowdinCredentials {
+    prj: string;
+    key: string;
+    branch: string;
+}
+
+let testResultStore: {
+    [file: string]: { size: number, hash: string }
+};
 
 function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
@@ -15,7 +23,6 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
         return Promise.resolve(undefined);
     }
-
     let key: string;
     if (pxt.crowdin.testMode)
         key = pxt.crowdin.TEST_KEY;
@@ -31,12 +38,23 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
     if (parsed && !!parsed.flags["test"]) {
+        testResultStore = {};
         pxt.crowdin.setTestMode((f, data) => {
             if (/.json$/i.test(f)) {
                 // pretty print the json
                 data = JSON.stringify(JSON.parse(data), null, 4);
             }
-            nodeutil.writeFileSync(path.join("temp", "crowdin", f), data, { encoding: "utf8" })
+
+            testResultStore[f] = {
+                size: data.length,
+                hash: pxt.Util.sha256(data)
+            };
+
+            nodeutil.writeFileSync(
+                path.join("temp", "crowdin", f),
+                data,
+                { encoding: "utf8" }
+            );
         });
     }
     return internalUploadTargetTranslationsAsync(uploadDocs);
@@ -74,6 +92,16 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                         }
                         pxt.log("skipping docs upload (not a release)");
                         return Promise.resolve();
+                    }).then(() => {
+                        if (pxt.crowdin.testMode) {
+                            const resultPath = path.join("temp", "crowdin", "test-result.json");
+                            pxt.log(`test finished: writing output log to ${resultPath}`);
+                            nodeutil.writeFileSync(
+                                resultPath,
+                                JSON.stringify(testResultStore, null, 4),
+                                { encoding: "utf8" }
+                            );
+                        }
                     });
             }
         });
