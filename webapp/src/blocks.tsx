@@ -762,7 +762,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.prepareBlockly();
                 })
                 .then(() => pxt.editor.initEditorExtensionsAsync())
-                .then(() => pxt.perf.measureStart("loadBlockly"))
+                .then(() => pxt.perf.measureEnd("loadBlockly"))
         }
         return this._loadBlocklyPromise;
     }

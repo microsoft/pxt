@@ -74,7 +74,9 @@ namespace pxt {
     export namespace perf {
         export let startTimeMs: number;
         export let stats: {
-            durations: [string, number][],
+            // name, start, duration
+            durations: [string, number, number][],
+            // name, event
             milestones: [string, number][]
         } = {
             durations: [],
@@ -106,7 +108,7 @@ namespace pxt {
         export function recordMilestone(msg: string, time: number = splitMs()) {
             stats.milestones.push([msg, time])
             if (time > 5000 && !perfReportLogged) {
-                console.log(`[PERF ALERT] ${msg} @ ${prettyStr(time)}`)
+                console.log(`[perf alert] ${msg} @ ${prettyStr(time)}`)
             }
         }
         export function init() {
@@ -119,21 +121,24 @@ namespace pxt {
             performance.mark(`${name} start`)
         }
         export function measureEnd(name: string) {
-            performance.mark(`${name} end`)
-            performance.measure(`${name} elapsed`, `${name} start`, `${name} end`)
-            let e = performance.getEntriesByName(`${name} elapsed`, "measure")
-            if (e && e.length === 1) {
-                let durMs = e[0].duration
-                if (durMs > 1000) {
-                    console.log(`[PERF ALERT] ${name} took ~ ${prettyStr(durMs)}`)
+            if (performance.getEntriesByName(`${name} start`).length) {
+                performance.mark(`${name} end`)
+                performance.measure(`${name} elapsed`, `${name} start`, `${name} end`)
+                let e = performance.getEntriesByName(`${name} elapsed`, "measure")
+                if (e && e.length === 1) {
+                    let measure = e[0]
+                    let durMs = measure.duration
+                    if (durMs > 1000) {
+                        console.log(`[perf alert] ${name} took ~ ${prettyStr(durMs)}`)
+                    }
+                    if (durMs > 10) {
+                        stats.durations.push([name, measure.startTime, durMs])
+                    }
                 }
-                if (durMs > 10) {
-                    stats.durations.push([name, durMs])
-                }
+                performance.clearMarks(`${name} start`)
+                performance.clearMarks(`${name} end`)
+                performance.clearMeasures(`${name} elapsed`)
             }
-            performance.clearMarks(`${name} start`)
-            performance.clearMarks(`${name} end`)
-            performance.clearMeasures(`${name} elapsed`)
         }
         export function report() {
             let report = `performance report:\n`
@@ -141,10 +146,15 @@ namespace pxt {
                 let pretty = prettyStr(time)
                 report += `\t\t${msg} @ ${pretty}\n`
             }
-            for (let [msg, time] of stats.durations) {
-                if (time > 50) {
-                    let pretty = prettyStr(time)
-                    report += `\t\t${msg} took ~ ${pretty}\n`
+            report += `\n`
+            for (let [msg, start, duration] of stats.durations) {
+                if (duration > 50) {
+                    let pretty = prettyStr(duration)
+                    report += `\t\t${msg} took ~ ${pretty}`
+                    if (duration > 1000) {
+                        report += ` (${prettyStr(start)} - ${prettyStr(start + duration)})`
+                    }
+                    report += `\n`
                 }
             }
             console.log(report)
