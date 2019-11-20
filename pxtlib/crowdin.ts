@@ -1,12 +1,12 @@
 namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
     export let testMode = false;
-    export let testPostHandler: (f: string, data: any) => void;
     export const TEST_KEY = "!!!testmode!!!";
+    let testPostHandler: (f: string, data: any) => void;
 
-    export function setTestMode(handler?: (f: string, data: any) => void) {
+    export function setTestMode(postHandler?: (f: string, data: any) => void) {
         pxt.crowdin.testMode = true;
-        testPostHandler = handler;
+        testPostHandler = postHandler;
         pxt.log(`CROWDIN TEST MODE - files will NOT be uploaded`);
     }
 
