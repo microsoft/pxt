@@ -82,7 +82,7 @@ export class ImageEditor extends React.Component<ImageEditorProps,{}> {
     }
 
     initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet, gallery: GalleryTile[], layers?: pxt.sprite.BitmapData[]) {
-        store.dispatch(dispatchSetInitialTilemap(tilemap, tileset, gallery, layers));
+        store.dispatch(dispatchSetInitialTilemap(tilemap.data(), tileset, gallery, layers));
     }
 
     onResize() {
