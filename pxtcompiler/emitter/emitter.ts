@@ -3039,7 +3039,7 @@ ${lbl}: .short 0xffff
             } else if (node.expression.kind == SK.ElementAccessExpression) {
                 const inner = node.expression as ElementAccessExpression
                 objExpr = inner.expression
-                keyExpr = () => emitExpr(ts.isStringLiteral(inner.argumentExpression) ? inner.argumentExpression : ts.createTemplateExpression(ts.createTemplateHead(""), [ts.createTemplateSpan(inner.argumentExpression, ts.createTemplateTail(""))]))
+                keyExpr = () => emitExpr(ts.isStringLiteral(inner.argumentExpression) || ts.isTemplateExpression(inner.argumentExpression) ? inner.argumentExpression : ts.createTemplateExpression(ts.createTemplateHead(""), [ts.createTemplateSpan(inner.argumentExpression, ts.createTemplateTail(""))]))
             } else {
                 throw userError(9276, lf("expression not supported as argument to 'delete'"))
             }
