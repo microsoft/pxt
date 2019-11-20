@@ -12,9 +12,11 @@ interface CrowdinCredentials {
     branch: string;
 }
 
-let testResultStore: {
+interface TestResult {
     [file: string]: { size: number, hash: string }
-};
+}
+let testResultStore: TestResult;
+let baseline: string;
 
 function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
@@ -23,6 +25,7 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
         return Promise.resolve(undefined);
     }
+
     let key: string;
     if (pxt.crowdin.testMode)
         key = pxt.crowdin.TEST_KEY;
@@ -39,6 +42,8 @@ export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedComma
     const uploadDocs = parsed && !!parsed.flags["docs"];
     if (parsed && !!parsed.flags["test"]) {
         testResultStore = {};
+        baseline = parsed.flags["baseline"] as string;
+
         pxt.crowdin.setTestMode((f, data) => {
             if (/.json$/i.test(f)) {
                 // pretty print the json
@@ -101,10 +106,38 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                                 JSON.stringify(testResultStore, null, 4),
                                 { encoding: "utf8" }
                             );
+
+                            if (baseline) {
+                                const baselineResult = nodeutil.readJson(baseline);
+                                compareTestResults(baselineResult, testResultStore);
+                            }
                         }
                     });
             }
         });
+}
+
+function compareTestResults(prev: TestResult, curr: TestResult) {
+    pxt.log("--- Comparing Result against baseline ---")
+    const prevKeys = Object.keys(prev);
+    const currKeys = Object.keys(curr);
+
+    for (const key of prevKeys) {
+        const prevRes = prev[key];
+        const currRes = curr[key];
+        if (!currRes) {
+            pxt.log(`Missing: ${key}`);
+        } else if (prev[key].hash != curr[key].hash) {
+            pxt.log(`Different hash: ${key} - previously: ${prevRes.size} chars, now ${currRes.size} chars`);
+        }
+    }
+
+    for (const key of currKeys) {
+        const prevRes = prev[key];
+        if (!prevRes) {
+            pxt.log(`New file: ${key}`);
+        }
+    }
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
