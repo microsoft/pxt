@@ -163,7 +163,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             cfg.onStateChanged(state);
         },
         onSimulatorReady: function () {
-            pxt.perf.logSplit("simulator ready")
+            pxt.perf.recordMilestone("simulator ready")
+            pxt.perf.report()
         },
         onSimulatorCommand: (msg: pxsim.SimulatorCommandMessage): void => {
             switch (msg.command) {

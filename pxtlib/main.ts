@@ -210,6 +210,7 @@ namespace pxt {
     }
 
     export function reloadAppTargetVariant() {
+        pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = JSON.stringify(appTarget);
         appTarget = U.clone(savedAppTarget)
         if (appTargetVariant) {
@@ -223,6 +224,7 @@ namespace pxt {
         // check if apptarget changed
         if (onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
+        pxt.perf.measureEnd("reloadAppTargetVariant")
     }
 
     // this is set by compileServiceVariant in pxt.json

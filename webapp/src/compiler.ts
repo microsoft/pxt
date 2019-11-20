@@ -841,6 +841,7 @@ class ApiInfoIndexedDb {
     }
 
     setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
+        pxt.perf.measureStart("compiler db setAsync")
         const key = getPackageKey(pack);
         const hash = getPackageHash(pack);
 
@@ -850,6 +851,9 @@ class ApiInfoIndexedDb {
             apis
         };
 
-        return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry);
+        return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry)
+            .then(() => {
+                pxt.perf.measureEnd("compiler db setAsync")
+            })
     }
 }

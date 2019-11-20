@@ -73,11 +73,19 @@ namespace pxt {
     // performance measuring, added here because this is amongst the first (typescript) code ever executed
     export namespace perf {
         export let startTimeMs: number;
+        export let stats: {
+            durations: [string, number][],
+            milestones: [string, number][]
+        } = {
+            durations: [],
+            milestones: []
+        }
+        export let perfReportLogged = false
         export function splitMs(): number {
             return Math.round(performance.now() - startTimeMs)
         }
-        export function splitStr(): string {
-            let ms = splitMs()
+        export function prettyStr(ms: number): string {
+            ms = Math.round(ms)
             let r_ms = ms % 1000
             let s = Math.floor(ms / 1000)
             let r_s = s % 60
@@ -91,20 +99,60 @@ namespace pxt {
             else
                 return `${ms}ms`
         }
-        export function logSplit(msg: string) {
-            console.log(`[PERF] ${msg} @ ${splitStr()}`)
+        export function splitStr(): string {
+            return prettyStr(splitMs())
         }
-        export function reset() {
-            startTimeMs = performance.now()
+
+        export function recordMilestone(msg: string, time: number = splitMs()) {
+            stats.milestones.push([msg, time])
+            if (time > 5000 && !perfReportLogged) {
+                console.log(`[PERF ALERT] ${msg} @ ${prettyStr(time)}`)
+            }
         }
-        export function initFromNavStart() {
+        export function init() {
             performance.measure("measure from the start of navigation to now")
             let navStartMeasure = performance.getEntriesByType("measure")[0]
             startTimeMs = navStartMeasure.startTime
+            // startTimeMs = performance.timing.navigationStart
+        }
+        export function measureStart(name: string) {
+            performance.mark(`${name} start`)
+        }
+        export function measureEnd(name: string) {
+            performance.mark(`${name} end`)
+            performance.measure(`${name} elapsed`, `${name} start`, `${name} end`)
+            let e = performance.getEntriesByName(`${name} elapsed`, "measure")
+            if (e && e.length === 1) {
+                let durMs = e[0].duration
+                if (durMs > 1000) {
+                    console.log(`[PERF ALERT] ${name} took ~ ${prettyStr(durMs)}`)
+                }
+                if (durMs > 10) {
+                    stats.durations.push([name, durMs])
+                }
+            }
+            performance.clearMarks(`${name} start`)
+            performance.clearMarks(`${name} end`)
+            performance.clearMeasures(`${name} elapsed`)
+        }
+        export function report() {
+            let report = `performance report:\n`
+            for (let [msg, time] of stats.milestones) {
+                let pretty = prettyStr(time)
+                report += `\t\t${msg} @ ${pretty}\n`
+            }
+            for (let [msg, time] of stats.durations) {
+                if (time > 50) {
+                    let pretty = prettyStr(time)
+                    report += `\t\t${msg} took ~ ${pretty}\n`
+                }
+            }
+            console.log(report)
+            perfReportLogged = true
         }
         (function () {
-            initFromNavStart()
-            logSplit("pxt.perf interpreted")
+            init()
+            recordMilestone("first JS running")
         })()
     }
 

@@ -181,8 +181,9 @@ export function initAsync() {
 
     return syncAsync()
         .then(state => cleanupBackupsAsync().then(() => state))
-        .then(() => {
-            pxt.perf.logSplit("workspace init finished")
+        .then(_ => {
+            pxt.perf.recordMilestone("workspace init finished")
+            return _
         })
 }
 
