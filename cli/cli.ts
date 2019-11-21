@@ -1486,7 +1486,7 @@ interface CiBuildInfo {
     tag: string;
     commit: string;
     commitUrl: string;
-    pullRequest?: number;
+    pullRequest?: boolean;
 }
 
 const isTravis = (process.env.TRAVIS === "true");
@@ -1508,7 +1508,7 @@ function ciBuildInfo(): CiBuildInfo {
             commit,
             commitUrl: !commit ? undefined :
                 "https://github.com/" + repoSlug + "/commits/" + commit,
-            pullRequest: pr === "false" ? undefined : parseInt(pr)
+            pullRequest: pr !== "false"
         }
     }
 
@@ -1519,12 +1519,14 @@ function ciBuildInfo(): CiBuildInfo {
         const ref = process.env.GITHUB_REF;
         const branch = ref.replace(/^refs\/heads\//, '');
         const tag = branch;
+        const eventName = process.env.GITHUB_EVENT_NAME;
 
         return {
             branch,
             tag,
             commit,
-            commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit
+            commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit,
+            pullRequest: eventName == "pull"
         }
     }
 }
