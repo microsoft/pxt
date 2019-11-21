@@ -1137,7 +1137,7 @@ namespace pxt.blocks {
     function compileCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const call = e.stdCallTable[b.type];
         if (call.imageLiteral)
-            return mkStmt(compileImage(e, b, call.imageLiteral, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
+            return mkStmt(compileImage(e, b, call.imageLiteral, call.imageLiteralColumns, call.imageLiteralRows, call.namespace, call.f, visibleParams(call, countOptionals(b)).map(ar => compileArgument(e, b, ar, comments))))
         else if (call.hasHandler)
             return compileEvent(e, b, call, eventArgs(call, b), call.namespace, comments)
         else
