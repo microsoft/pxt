@@ -16,29 +16,29 @@ This will produce a view of the code from your project that is printer friendly.
 ### Snapshot
 
 You can save a ``.png`` file with an image of all the blocks in your current projects using the ``Snapshot`` feature.
-Right click on the workspace (or press and hold on touch devices), and select "Snapshot".
+Right click on the Workspace (press and hold on touch devices) and select **Snapshot**.
 
 ![Animation showing how to take a snapshot](/static/teachers/how-to-snapshot.gif)
 
 ## Sharing
 
-You can create links to share your project using the ``Share`` project in the top left corner of the editor.
+You can create links to share your project using the ``Share`` button in the top left corner of the editor.
 
 ![Animation showing how to share a project](/static/teachers/how-to-share.gif)
 
 ### Embed
 
-If you have a class website that supports posting ``HTML``,
+If you have a class website that supports adding ``HTML`` elements to web pages,
 you can embed the simulator, code, or the full editor from the share screen.
 
 ![Animation showing how to embed a project](/static/teachers/how-to-embed.gif)
 
 ## Tutorials
 
-Tutorials are examples that guide students through creating a program step by step,
-with features and blocks limited to focus on what is most important.
-Typically, the first examples on the home page are tutorials,
-to help introduce students to the concepts they need to write simple programs.
+Tutorials are examples that guide students through the process of creating programs step by step,
+using just the features and blocks limited what is most important.
+Typically, the first examples on the home page are tutorials.
+They help introduce students to the concepts they need to write simple programs.
 
 ### Writing your own
 
@@ -49,7 +49,7 @@ you can [create a tutorial yourself](https://makecode.com/writing-docs/user-tuto
 
 If you are using a tutorial in a class,
 it may be helpful to give your students a link that goes directly to the tutorial.
-Instructions to do so are available in the [FAQ](/faq#share-tutorials).
+Instructions to do this are available in the [FAQ](/faq#share-tutorials).
 
 ## Courses
 
@@ -59,7 +59,7 @@ the entire course into a single page. The format for this is:
 
     https://[editor url]/--docs#book:/[course location under the docs folder]
 
-For example, here are the steps to create a 'book' view for an introductory course
+For example, here are the steps to create a 'book' view of an introductory course
 for MakeCode Arcade. The course is found at https://arcade.makecode.com/courses/csintro1,
 so the first step is to split that into two parts: the editor url (`https://arcade.makecode.com`)
 and the location of the course (`/courses/csintro1`).
@@ -68,4 +68,4 @@ To get the course book, you combine the two with `/--docs#book:` in between them
 
     https://arcade.makecode.com/--docs#book:/courses/csintro1
 
-and after a few moments of compiling the page, you should have a printable book for the course!
+and after a few moments of compiling the page, you should have a complete printable book for the course!
