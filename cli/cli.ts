@@ -343,11 +343,20 @@ function semverCmp(a: string, b: string) {
 let readJson = nodeutil.readJson;
 
 function travisAsync() {
-    forceCloudBuild = true
+    return ciBuildAsync(travisInfo())
+}
 
-    const rel = process.env.TRAVIS_TAG || ""
+function ciBuildAsync(buildInfo: BuildInfo) {
+    forceCloudBuild = true;
+
+    if (!buildInfo.tag)
+        buildInfo.tag = "";
+    if (!buildInfo.branch)
+        buildInfo.branch = "local"
+
+    const { tag, branch, pullRequest } = buildInfo
     const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(rel) && atok;
+    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(tag) && atok;
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
@@ -356,17 +365,16 @@ function travisAsync() {
         fs.writeFileSync(npmrc, cfg)
     }
 
-    const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
-        && /^false$/.test(process.env.TRAVIS_PULL_REQUEST)
+    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(branch)
+        && !pullRequest
         && !!pxt.appTarget.uploadDocs;
 
-    console.log("TRAVIS_TAG:", rel);
-    console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
-    console.log("TRAVIS_PULL_REQUEST:", process.env.TRAVIS_PULL_REQUEST);
-    console.log("uploadLocs:", uploadLocs);
+    console.log("tag:", tag);
+    console.log("branch:", branch);
+    console.log("pull request:", pullRequest);
+    console.log("upload locs:", uploadLocs);
     console.log("latest:", latest);
 
     function npmPublishAsync() {
@@ -383,7 +391,7 @@ function travisAsync() {
                 .then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
                 .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => crowdin.internalUploadTargetTranslationsAsync(!!rel));
+                .then(() => crowdin.internalUploadTargetTranslationsAsync(!!tag));
         return p;
     } else {
         pxt.log("target build");
@@ -398,7 +406,7 @@ function travisAsync() {
                     return Promise.resolve();
                 }
                 const trg = readLocalPxTarget();
-                const label = `${trg.id}/${rel || latest}`;
+                const label = `${trg.id}/${tag || latest}`;
                 pxt.log(`uploading target with label ${label}...`);
                 return uploadTargetAsync(label);
             })
@@ -406,7 +414,7 @@ function travisAsync() {
                 pxt.log("target uploaded");
                 if (uploadLocs) {
                     pxt.log("uploading translations...");
-                    return crowdin.internalUploadTargetTranslationsAsync(!!rel)
+                    return crowdin.internalUploadTargetTranslationsAsync(!!tag)
                         .then(() => pxt.log("translations uploaded"));
                 }
                 pxt.log("skipping translations upload");
@@ -1476,13 +1484,22 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 
 let dirsToWatch: string[] = []
 
-function travisInfo() {
+interface BuildInfo {
+    branch: string;
+    tag: string;
+    commit: string;
+    commitUrl: string;
+    pullRequest?: number;
+}
+
+function travisInfo(): BuildInfo {
     return {
         branch: process.env['TRAVIS_BRANCH'],
         tag: process.env['TRAVIS_TAG'],
         commit: process.env['TRAVIS_COMMIT'],
         commitUrl: !process.env['TRAVIS_COMMIT'] ? undefined :
             "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
+        pullRequest: process.env.TRAVIS_PULL_REQUEST === "false" ? undefined : parseInt(process.env.TRAVIS_PULL_REQUEST)
     }
 }
 
@@ -5901,7 +5918,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "upload translations for target",
         flags: {
             docs: { description: "upload markdown docs folder as well" },
-            test: { description: "test run, do not upload files to crowdin"}
+            test: { description: "test run, do not upload files to crowdin" }
         },
         advanced: true
     }, crowdin.uploadTargetTranslationsAsync);
