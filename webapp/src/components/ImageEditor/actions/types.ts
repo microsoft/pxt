@@ -14,6 +14,7 @@ export const UNDO_IMAGE_EDIT = "UNDO_IMAGE_EDIT";
 export const REDO_IMAGE_EDIT = "REDO_IMAGE_EDIT";
 
 export const TOGGLE_ASPECT_RATIO = "TOGGLE_ASPECT_RATIO";
+export const SET_GALLERY_OPEN = "SET_GALLERY_OPEN";
 
 export const NEW_FRAME = "NEW_FRAME";
 export const DELETE_FRAME = "DELETE_FRAME";

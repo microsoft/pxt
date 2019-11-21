@@ -71,6 +71,7 @@ export interface EditorState {
     tilemapPalette?: TilemapPaletteState;
     drawingMode?: TileDrawingMode;
     tileGallery?: GalleryTile[];
+    tileGalleryOpen?: boolean;
 }
 
 export interface GalleryTile {
@@ -166,6 +167,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.CHANGE_TILE_PALETTE_PAGE:
         case actions.CHANGE_TILE_PALETTE_CATEGORY:
         case actions.CHANGE_DRAWING_MODE:
+        case actions.SET_GALLERY_OPEN:
             return {
                 ...state,
                 editor: editorReducer(state.editor, action)
@@ -436,6 +438,9 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.CREATE_NEW_TILE:
             // tick event covered elsewhere
             return { ...state, selectedColor: action.foreground, backgroundColor: action.background };
+        case actions.SET_GALLERY_OPEN:
+            tickEvent(`set-gallery-open-${action.open}`);
+            return { ...state, tileGalleryOpen: action.open }
     }
     return state;
 }

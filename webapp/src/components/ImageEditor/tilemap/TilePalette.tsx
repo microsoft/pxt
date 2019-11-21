@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile } from '../actions/dispatch';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
+import { Pivot, PivotOption } from '../Pivot';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -15,6 +16,7 @@ export interface TilePaletteProps {
     page: number;
 
     gallery: GalleryTile[];
+    galleryOpen: boolean;
     drawingMode: TileDrawingMode;
 
     dispatchChangeSelectedColor: (index: number) => void;
@@ -24,6 +26,7 @@ export interface TilePaletteProps {
     dispatchChangeTilePaletteCategory: (category: TileCategory) => void;
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
     dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
+    dispatchSetGalleryOpen: (open: boolean) => void;
 }
 
 /**
@@ -48,14 +51,26 @@ const options: DropdownOption[] = [
     }
 ];
 
+const tabs: PivotOption[] = [
+    {
+        id: "custom",
+        text: "Custom"
+    }, {
+        id: "gallery",
+        text: "Gallery"
+    }
+]
+
 const emptyTile = new pxt.sprite.Bitmap(16, 16);
 
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected canvas: HTMLCanvasElement;
     protected renderedTiles: GalleryTile[];
+    protected categoryTiles: GalleryTile[];
 
     componentDidMount() {
         this.canvas = this.refs["tile-canvas-surface"] as HTMLCanvasElement;
+        this.updateGalleryTiles();
         this.redrawCanvas();
     }
 
@@ -64,11 +79,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     render() {
-        const { colors, selected, backgroundColor, tileset, category, page, drawingMode } = this.props;
+        const { colors, selected, backgroundColor, tileset, category, page, drawingMode, galleryOpen } = this.props;
 
         const fg = tileset.tiles[selected] ? tileset.tiles[selected].data : emptyTile.data();
         const bg = tileset.tiles[backgroundColor] ? tileset.tiles[backgroundColor].data : emptyTile.data();
         const wall = emptyTile.data();
+        this.updateGalleryTiles();
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
@@ -89,16 +105,24 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                         colors={colors} />
                 </div>
             </div>
+            <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <Dropdown onChange={this.dropdownHandler} options={options} selected={category} />
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
                     <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} role="complementary"></canvas>
                 </div>
                 <div className="tile-canvas-controls">
-                    { pageControls(3, page, this.pageHandler) }
+                    { pageControls(Math.ceil(this.categoryTiles.length / 16), page, this.pageHandler) }
                 </div>
             </div>
         </div>;
+    }
+
+    protected updateGalleryTiles() {
+        const { tileset, gallery, category } = this.props;
+        const tiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
+
+        this.categoryTiles = tiles;
     }
 
     protected redrawCanvas() {
@@ -106,11 +130,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const rows = 4;
         const margin = 1;
 
-        const { tileset, gallery, category, page } = this.props;
+        const { tileset, page } = this.props;
 
-        const tiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
         const startIndex = page * columns * rows;
-        this.renderedTiles = tiles.slice(startIndex, startIndex + rows * columns);
+        this.renderedTiles = this.categoryTiles.slice(startIndex, startIndex + rows * columns);
 
         const width = tileset.tileWidth + margin;
 
@@ -119,7 +142,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < columns; c++) {
-                const tile = tiles[startIndex + r * columns + c];
+                const tile = this.categoryTiles[startIndex + r * columns + c];
 
                 if (tile)
                     this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), c * width, r * width)
@@ -149,6 +172,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
     protected dropdownHandler = (option: DropdownOption, index: number) => {
         this.props.dispatchChangeTilePaletteCategory(index);
+    }
+
+    protected pivotHandler = (option: PivotOption, index: number) => {
+        this.props.dispatchSetGalleryOpen(index === 1);
     }
 
     protected pageHandler = (page: number) => {
@@ -249,7 +276,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         page: editor.tilemapPalette.page,
         colors: state.colors,
         drawingMode: editor.drawingMode,
-        gallery: editor.tileGallery
+        gallery: editor.tileGallery,
+        galleryOpen: editor.tileGalleryOpen
     };
 }
 
@@ -260,7 +288,8 @@ const mapDispatchToProps = {
     dispatchChangeTilePalettePage,
     dispatchChangeTilePaletteCategory,
     dispatchChangeDrawingMode,
-    dispatchCreateNewTile
+    dispatchCreateNewTile,
+    dispatchSetGalleryOpen
 };
 
 
