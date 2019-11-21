@@ -606,7 +606,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
         if (path == pxt.CONFIG_NAME)
-            data.content = await prepareConfigForPublished(data.content, options.createTag);
+            data.content = await prepareConfigForPublished(data.content, !!options.createTag);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
             data.encoding = "base64";
@@ -873,7 +873,7 @@ async function prepareConfigForPublished(content: string, createTag?: boolean) {
 
     // patch dependencies
     for (const d of Object.keys(cfg.dependencies)
-        .filter(d => /^(file|workspace):)/.test(cfg.dependencies[d])))
+        .filter(d => /^(file|workspace):/.test(cfg.dependencies[d])))
         await resolveDependencyAsync(d);
 
     return pxt.Package.stringifyConfig(cfg);
