@@ -343,10 +343,10 @@ function semverCmp(a: string, b: string) {
 let readJson = nodeutil.readJson;
 
 function travisAsync() {
-    return ciBuildAsync(buildInfo())
+    return ciBuildAsync(ciBuildInfo())
 }
 
-function ciBuildAsync(buildInfo: BuildInfo) {
+function ciBuildAsync(buildInfo: CiBuildInfo) {
     forceCloudBuild = true;
 
     if (!buildInfo.tag)
@@ -589,7 +589,7 @@ function uploadTaggedTargetAsync() {
                         .then(() => info))
                 .then(info => {
                     const repoSlug = "microsoft/pxt-" + pxt.appTarget.id
-                    setBuildInfo(info[0], info[1], info[2], repoSlug)
+                    setCiBuildInfo(info[0], info[1], info[2], repoSlug)
                     process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
                     let v = pkgVersion()
                     pxt.log("uploading " + v)
@@ -606,7 +606,7 @@ function uploadTaggedTargetAsync() {
 
 function pkgVersion() {
     let ver = readJson("package.json")["version"]
-    const info = buildInfo()
+    const info = ciBuildInfo()
     if (!info.tag)
         ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
     return ver
@@ -738,7 +738,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                 let e = lookup(roottree, fn)
                 e.hash = uplReqs[fn].hash
             }
-            const info = buildInfo()
+            const info = ciBuildInfo()
             let data: CommitInfo = {
                 message: "Upload from " + info.commitUrl,
                 parents: [],
@@ -811,7 +811,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         cwd: trgPath,
         args: cred.concat(args)
     })
-    const info = buildInfo()
+    const info = ciBuildInfo()
     return Promise.resolve()
         .then(() => {
             if (fs.existsSync(trgPath)) {
@@ -1481,7 +1481,7 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 
 let dirsToWatch: string[] = []
 
-interface BuildInfo {
+interface CiBuildInfo {
     branch: string;
     tag: string;
     commit: string;
@@ -1490,30 +1490,46 @@ interface BuildInfo {
 }
 
 const isTravis = (process.env.TRAVIS === "true");
+const isGithubAction = (!!process.env.GITHUB_ACTION);
 
-function buildInfo(): BuildInfo {
+function ciBuildInfo(): CiBuildInfo {
     if (isTravis) return travisInfo();
-    else return githubActionInfo();
+    else if (isGithubAction) return githubActionInfo();
+    else
+        U.userError("unknown continuous integration environment")
 
-    function travisInfo(): BuildInfo {
+    function travisInfo(): CiBuildInfo {
         const commit = process.env.TRAVIS_COMMIT;
         const pr = process.env.TRAVIS_PULL_REQUEST;
+        const repoSlug = process.env.TRAVIS_REPO_SLUG;
         return {
-            branch: process.env['TRAVIS_BRANCH'],
-            tag: process.env['TRAVIS_TAG'],
+            branch: process.env.TRAVIS_BRANCH,
+            tag: process.env.TRAVIS_TAG,
             commit,
             commitUrl: !commit ? undefined :
-                "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + commit,
+                "https://github.com/" + repoSlug + "/commits/" + commit,
             pullRequest: pr === "false" ? undefined : parseInt(pr)
         }
     }
 
-    function githubActionInfo(): BuildInfo {
+    function githubActionInfo(): CiBuildInfo {
+        // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables
+        const repoSlug = process.env.GITHUB_REPOSITORY;
+        const commit = process.env.GITHUB_SHA;
+        const ref = process.env.GITHUB_REF;
+        const branch = ref.replace(/^refs\/heads\//, '');
+        const tag = branch;
 
+        return {
+            branch,
+            tag,
+            commit,
+            commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit
+        }
     }
 }
 
-function setBuildInfo(tag: string, branch: string, commit: string, repoSlug: string) {
+function setCiBuildInfo(tag: string, branch: string, commit: string, repoSlug: string) {
     // travis
     process.env["TRAVIS_TAG"] = tag;
     process.env['TRAVIS_BRANCH'] = branch;
@@ -2135,7 +2151,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             nodeutil.writeFileSync(apiInfoCompressedPath, nodeutil.stringify(compressedBuiltInfo));
             cfg.apiInfo = compressedBuiltInfo;
 
-            const info = buildInfo()
+            const info = ciBuildInfo()
             cfg.versions = {
                 branch: info.branch,
                 tag: info.tag,
