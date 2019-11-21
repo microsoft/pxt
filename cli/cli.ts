@@ -343,7 +343,7 @@ function semverCmp(a: string, b: string) {
 let readJson = nodeutil.readJson;
 
 function travisAsync() {
-    return ciBuildAsync(travisInfo())
+    return ciBuildAsync(buildInfo())
 }
 
 function ciBuildAsync(buildInfo: BuildInfo) {
@@ -589,7 +589,7 @@ function uploadTaggedTargetAsync() {
                         .then(() => info))
                 .then(info => {
                     const repoSlug = "microsoft/pxt-" + pxt.appTarget.id
-                    setTravisInfo(info[0], info[1], info[2], repoSlug)
+                    setBuildInfo(info[0], info[1], info[2], repoSlug)
                     process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
                     let v = pkgVersion()
                     pxt.log("uploading " + v)
@@ -606,7 +606,7 @@ function uploadTaggedTargetAsync() {
 
 function pkgVersion() {
     let ver = readJson("package.json")["version"]
-    let info = travisInfo()
+    const info = buildInfo()
     if (!info.tag)
         ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
     return ver
@@ -738,7 +738,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                 let e = lookup(roottree, fn)
                 e.hash = uplReqs[fn].hash
             }
-            let info = travisInfo()
+            const info = buildInfo()
             let data: CommitInfo = {
                 message: "Upload from " + info.commitUrl,
                 parents: [],
@@ -811,7 +811,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         cwd: trgPath,
         args: cred.concat(args)
     })
-    let info = travisInfo()
+    const info = buildInfo()
     return Promise.resolve()
         .then(() => {
             if (fs.existsSync(trgPath)) {
@@ -1489,24 +1489,32 @@ interface BuildInfo {
     pullRequest?: number;
 }
 
-function isTravisBuild() {
-    return process.env.TRAVIS === "true"
-}
+const isTravis = (process.env.TRAVIS === "true");
 
-function travisInfo(): BuildInfo {
-    const commit = process.env.TRAVIS_COMMIT;
-    const pr = process.env.TRAVIS_PULL_REQUEST;
-    return {
-        branch: process.env['TRAVIS_BRANCH'],
-        tag: process.env['TRAVIS_TAG'],
-        commit,
-        commitUrl: !commit ? undefined :
-            "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + commit,
-        pullRequest: pr === "false" ? undefined : parseInt(pr)
+function buildInfo(): BuildInfo {
+    if (isTravis) return travisInfo();
+    else return githubActionInfo();
+
+    function travisInfo(): BuildInfo {
+        const commit = process.env.TRAVIS_COMMIT;
+        const pr = process.env.TRAVIS_PULL_REQUEST;
+        return {
+            branch: process.env['TRAVIS_BRANCH'],
+            tag: process.env['TRAVIS_TAG'],
+            commit,
+            commitUrl: !commit ? undefined :
+                "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + commit,
+            pullRequest: pr === "false" ? undefined : parseInt(pr)
+        }
+    }
+
+    function githubActionInfo(): BuildInfo {
+
     }
 }
 
-function setTravisInfo(tag: string, branch: string, commit: string, repoSlug: string) {
+function setBuildInfo(tag: string, branch: string, commit: string, repoSlug: string) {
+    // travis
     process.env["TRAVIS_TAG"] = tag;
     process.env['TRAVIS_BRANCH'] = branch;
     process.env['TRAVIS_COMMIT'] = commit;
@@ -2127,7 +2135,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             nodeutil.writeFileSync(apiInfoCompressedPath, nodeutil.stringify(compressedBuiltInfo));
             cfg.apiInfo = compressedBuiltInfo;
 
-            let info = travisInfo()
+            const info = buildInfo()
             cfg.versions = {
                 branch: info.branch,
                 tag: info.tag,
