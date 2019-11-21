@@ -50,3 +50,22 @@ you can [create a tutorial yourself](https://makecode.com/writing-docs/user-tuto
 If you are using a tutorial in a class,
 it may be helpful to give your students a link that goes directly to the tutorial.
 Instructions to do so are available in the [FAQ](/faq#share-tutorials).
+
+## Courses
+
+Many editors include free courses that you can use in your class;
+if you want to print or save these courses, you can use a special url to convert
+the entire course into a single page. The format for this is:
+
+    https://[editor url]/--docs#book:/[course location under the docs folder]
+
+For example, here are the steps to create a 'book' view for an introductory course
+for MakeCode Arcade. The course is found at https://arcade.makecode.com/courses/csintro1,
+so the first step is to split that into two parts: the editor url (`https://arcade.makecode.com`)
+and the location of the course (`/courses/csintro1`).
+
+To get the course book, you combine the two with `/--docs#book:` in between them:
+
+    https://arcade.makecode.com/--docs#book:/courses/csintro1
+
+and after a few moments of compiling the page, you should have a printable book for the course!
