@@ -303,7 +303,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 layerOffsetX: this.editState.layerOffsetX,
                 layerOffsetY: this.editState.layerOffsetY,
                 floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data(),
-                overlayLayers: this.editState.overlayLayers.map(el => el.data())
+                overlayLayers: this.editState.overlayLayers && this.editState.overlayLayers.map(el => el.data())
             });
         }
     }

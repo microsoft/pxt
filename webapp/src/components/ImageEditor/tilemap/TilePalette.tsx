@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen } from '../actions/dispatch';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchSetTileEditorOpen } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
+import { IconButton } from '../Button';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -27,6 +28,7 @@ export interface TilePaletteProps {
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
     dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
+    dispatchSetTileEditorOpen: (open: boolean) => void;
 }
 
 /**
@@ -54,7 +56,7 @@ const options: DropdownOption[] = [
 const tabs: PivotOption[] = [
     {
         id: "custom",
-        text: "Custom"
+        text: "Tiles"
     }, {
         id: "gallery",
         text: "Gallery"
@@ -63,10 +65,17 @@ const tabs: PivotOption[] = [
 
 const emptyTile = new pxt.sprite.Bitmap(16, 16);
 
+interface UserTile {
+    index: number;
+    bitmap: pxt.sprite.BitmapData;
+}
+
+type RenderedTile = GalleryTile | UserTile
+
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected canvas: HTMLCanvasElement;
-    protected renderedTiles: GalleryTile[];
-    protected categoryTiles: GalleryTile[];
+    protected renderedTiles: RenderedTile[];
+    protected categoryTiles: RenderedTile[];
 
     componentDidMount() {
         this.canvas = this.refs["tile-canvas-surface"] as HTMLCanvasElement;
@@ -85,6 +94,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const bg = tileset.tiles[backgroundColor] ? tileset.tiles[backgroundColor].data : emptyTile.data();
         const wall = emptyTile.data();
         this.updateGalleryTiles();
+
+        const totalPages = Math.max(Math.ceil(this.categoryTiles.length / 16), 1);
+        const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1);
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
@@ -106,23 +118,66 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 </div>
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
-            <Dropdown onChange={this.dropdownHandler} options={options} selected={category} />
+            <div className="tile-palette-controls-outer">
+                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={options} selected={category} /> }
+
+                { !galleryOpen &&
+                    <div className="tile-palette-controls">
+                        <IconButton
+                            onClick={this.tileEditHandler}
+                            iconClass={"ms-Icon ms-Icon--SingleColumnEdit"}
+                            title={lf("Edit the selected tile")}
+                            toggle={true}
+                        />
+                        <IconButton
+                            onClick={this.tileDuplicateHandler}
+                            iconClass={"ms-Icon ms-Icon--Copy"}
+                            title={lf("Duplicate the selected tile")}
+                            toggle={true}
+                        />
+                        <IconButton
+                            onClick={this.tileDeleteHandler}
+                            iconClass={"ms-Icon ms-Icon--Delete"}
+                            title={lf("Delete the selected tile")}
+                            toggle={true}
+                        />
+                    </div>
+                }
+            </div>
+
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
                     <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} role="complementary"></canvas>
+                    { showCreateTile &&
+                        <div ref="create-tile-ref">
+                            <IconButton
+                                onClick={this.tileCreateHandler}
+                                iconClass={"ms-Icon ms-Icon--Add"}
+                                title={lf("Create a new tile")}
+                                toggle={true}
+                            />
+                        </div>
+                    }
                 </div>
                 <div className="tile-canvas-controls">
-                    { pageControls(Math.ceil(this.categoryTiles.length / 16), page, this.pageHandler) }
+                    { pageControls(totalPages, page, this.pageHandler) }
                 </div>
             </div>
         </div>;
     }
 
     protected updateGalleryTiles() {
-        const { tileset, gallery, category } = this.props;
-        const tiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
+        const { tileset, gallery, category, galleryOpen } = this.props;
 
-        this.categoryTiles = tiles;
+        if (galleryOpen) {
+            this.categoryTiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
+        }
+        else {
+            this.categoryTiles = tileset.tiles
+                .map((t, i) => ([t, i] as [pxt.sprite.TileInfo, number]))
+                .filter(([t]) => !t.qualifiedName)
+                .map(([t, i]) => ({ index: i, bitmap: t.data }));
+        }
     }
 
     protected redrawCanvas() {
@@ -148,6 +203,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), c * width, r * width)
             }
         }
+
+        this.positionCreateTileButton();
     }
 
     protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = true, cellWidth = SCALE, target = this.canvas) {
@@ -182,6 +239,22 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         this.props.dispatchChangeTilePalettePage(page);
     }
 
+    protected tileCreateHandler = () => {
+        this.props.dispatchSetTileEditorOpen(true);
+    }
+
+    protected tileEditHandler = () => {
+
+    }
+
+    protected tileDuplicateHandler = () => {
+
+    }
+
+    protected tileDeleteHandler = () => {
+
+    }
+
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
         const bounds = this.canvas.getBoundingClientRect();
         const column = ((ev.clientX - bounds.left) / (bounds.width / 4)) | 0;
@@ -189,7 +262,17 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const tile = this.renderedTiles[row * 4 + column];
         if (tile) {
-            const index = this.getTileIndex(tile);
+            let index: number;
+            let qname: string;
+
+            if (isGalleryTile(tile)) {
+                index = this.getTileIndex(tile);
+                qname = tile.qualifiedName;
+            }
+            else {
+                index = tile.index;
+            }
+
             const isRightClick = ev.button > 0;
 
             if (index >= 0) {
@@ -204,9 +287,24 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     tile.bitmap,
                     isRightClick ? selected : newIndex,
                     isRightClick ? newIndex: backgroundColor,
-                    tile.qualifiedName
+                    qname
                 );
             }
+        }
+    }
+
+    protected positionCreateTileButton() {
+        const button = this.refs["create-tile-ref"] as HTMLDivElement;
+
+        if (button) {
+            const bounds = this.canvas.parentElement.getBoundingClientRect();
+
+            const column = this.categoryTiles.length % 4;
+            const row = Math.floor(this.categoryTiles.length / 4);
+
+            button.style.position = "absolute";
+            button.style.left = (column * bounds.width / 4) + "px";
+            button.style.top = (row * bounds.height / 4) + "px";
         }
     }
 
@@ -281,6 +379,10 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
     };
 }
 
+function isGalleryTile(t: RenderedTile): t is GalleryTile {
+    return !!(t as GalleryTile).qualifiedName;
+}
+
 const mapDispatchToProps = {
     dispatchChangeSelectedColor,
     dispatchChangeBackgroundColor,
@@ -289,7 +391,8 @@ const mapDispatchToProps = {
     dispatchChangeTilePaletteCategory,
     dispatchChangeDrawingMode,
     dispatchCreateNewTile,
-    dispatchSetGalleryOpen
+    dispatchSetGalleryOpen,
+    dispatchSetTileEditorOpen
 };
 
 

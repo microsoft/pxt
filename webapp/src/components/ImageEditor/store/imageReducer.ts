@@ -90,6 +90,8 @@ export interface ImageEditorStore {
     store: EditorStore;
 
     editor: EditorState;
+
+    editingTile?: boolean;
 }
 
 export interface EditorStore {
@@ -154,6 +156,8 @@ const initialStore: ImageEditorStore = {
 
 const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageEditorStore => {
     switch (action.type) {
+        case actions.SET_TILE_EDITOR_OPEN:
+            return { ...state, editingTile: action.open };
         case actions.CHANGE_PREVIEW_ANIMATING:
         case actions.CHANGE_CANVAS_ZOOM:
         case actions.CHANGE_IMAGE_TOOL:

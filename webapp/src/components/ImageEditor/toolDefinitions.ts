@@ -173,7 +173,7 @@ export class EditState {
         }
         res.layerOffsetX = this.layerOffsetX;
         res.layerOffsetY = this.layerOffsetY;
-        res.overlayLayers = this.overlayLayers.map(layer => layer.copy()); // todo copy each
+        res.overlayLayers = this.overlayLayers && this.overlayLayers.map(layer => layer.copy()); // todo copy each
 
         return res;
     }
