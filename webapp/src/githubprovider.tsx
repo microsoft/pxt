@@ -48,7 +48,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             && !!pxt.appTarget.cloud.cloudProviders[this.name];
 
         let useToken = !oAuthSupported;
-        let input: HTMLInputElement;
+        let form: HTMLElement;
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
             hideCancel: true,
@@ -56,7 +56,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
             helpUrl: "/github",
             agreeLbl: lf("Sign in"),
             onLoaded: (el) => {
-                input = el.querySelectorAll('input')[0] as HTMLInputElement;
+                form = el;
             },
             jsxd: () => <div className="ui form">
                 <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
@@ -93,6 +93,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 return Promise.resolve()
             } else {
                 if (useToken) {
+                    const input = form.querySelectorAll('input')[0] as HTMLInputElement;
                     const hextoken = input.value.trim();
                     return this.saveAndValidateTokenAsync(hextoken);
                 }
