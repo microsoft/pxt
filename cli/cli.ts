@@ -1970,6 +1970,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     }
 
                     if (options && api) {
+                        // JRES is already included in the target bundle
+                        api.jres = undefined;
                         builtInfo[dirname] = {
                             apis: api,
                             sha: packageSha
@@ -2009,8 +2011,18 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
                 Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
                     deleteRedundantSymbols(coreInfo.apis.byQName, info.apis.byQName)
-                    deleteRedundantSymbols(coreInfo.apis.jres, info.apis.jres)
                 });
+
+                for (const pkgName of Object.keys(builtInfo)) {
+                    const byQName = builtInfo[pkgName].apis.byQName
+                    for (const apiName of Object.keys(byQName)) {
+                        const symbol = byQName[apiName];
+
+                        if (symbol && symbol.attributes && symbol.attributes.iconURL && symbol.attributes.jres) {
+                            delete symbol.attributes.iconURL;
+                        }
+                    }
+                }
             }
 
             cfg.apiInfo = builtInfo;
