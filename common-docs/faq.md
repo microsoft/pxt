@@ -74,6 +74,10 @@ If you're looking at the GitHub repository for the target, the link will be the 
 
 If you want to create your own tutorial, more documentation describing how to do so is [here](https://makecode.com/writing-docs/user-tutorials).
 
+## I am a teacher. Is there anything special I should know?
+
+Yes! We have prepared a list of tips and tricks for teachers. [Check it out](/teachers).
+
 ## I don't see my question here. What's next?
 
 Can't find your question? Please see our [support](/support) page.
