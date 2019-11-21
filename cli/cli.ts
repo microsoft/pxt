@@ -588,11 +588,8 @@ function uploadTaggedTargetAsync() {
                         .then(() => internalCheckDocsAsync(true))
                         .then(() => info))
                 .then(info => {
-                    process.env["TRAVIS_TAG"] = info[0]
-                    process.env['TRAVIS_BRANCH'] = info[1]
-                    process.env['TRAVIS_COMMIT'] = info[2]
-                    let repoSlug = "microsoft/pxt-" + pxt.appTarget.id
-                    process.env['TRAVIS_REPO_SLUG'] = repoSlug
+                    const repoSlug = "microsoft/pxt-" + pxt.appTarget.id
+                    setTravisInfo(info[0], info[1], info[2], repoSlug)
                     process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
                     let v = pkgVersion()
                     pxt.log("uploading " + v)
@@ -1493,14 +1490,23 @@ interface BuildInfo {
 }
 
 function travisInfo(): BuildInfo {
+    const commit = process.env.TRAVIS_COMMIT;
+    const pr = process.env.TRAVIS_PULL_REQUEST;
     return {
         branch: process.env['TRAVIS_BRANCH'],
         tag: process.env['TRAVIS_TAG'],
-        commit: process.env['TRAVIS_COMMIT'],
-        commitUrl: !process.env['TRAVIS_COMMIT'] ? undefined :
-            "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
-        pullRequest: process.env.TRAVIS_PULL_REQUEST === "false" ? undefined : parseInt(process.env.TRAVIS_PULL_REQUEST)
+        commit,
+        commitUrl: !commit ? undefined :
+            "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + commit,
+        pullRequest: pr === "false" ? undefined : parseInt(pr)
     }
+}
+
+function setTravisInfo(tag: string, branch: string, commit: string, repoSlug: string) {
+    process.env["TRAVIS_TAG"] = tag;
+    process.env['TRAVIS_BRANCH'] = branch;
+    process.env['TRAVIS_COMMIT'] = commit;
+    process.env['TRAVIS_REPO_SLUG'] = repoSlug;
 }
 
 function buildWebManifest(cfg: pxt.TargetBundle) {
