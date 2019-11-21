@@ -28,7 +28,8 @@ You can create links to share your project using the ``Share`` project in the to
 
 ### Embed
 
-If you have a class website that supports posting ``HTML``, you can embed the simulator, code, or the full editor from the share screen.
+If you have a class website that supports posting ``HTML``,
+you can embed the simulator, code, or the full editor from the share screen.
 
 ![Animation showing how to embed a project](/static/teachers/how-to-embed.gif)
 
@@ -39,3 +40,13 @@ with features and blocks limited to focus on what is most important.
 Typically, the first examples on the home page are tutorials,
 to help introduce students to the concepts they need to write simple programs.
 
+### Writing your own
+
+If you want to create your own examples for your students to follow,
+you can [create a tutorial yourself](https://makecode.com/writing-docs/user-tutorials)!
+
+### Sharing a tutorial
+
+If you are using a tutorial in a class,
+it may be helpful to give your students a link that goes directly to the tutorial.
+Instructions to do so are available in the [FAQ](/faq#share-tutorials).
