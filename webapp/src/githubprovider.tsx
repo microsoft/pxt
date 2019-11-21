@@ -33,20 +33,21 @@ export class GithubProvider extends cloudsync.ProviderBase {
         this.loginCheck()
         let p = Promise.resolve();
         if (!this.token()) {
-            // auth flow if github provider is prsent
-            const useOAuth = pxt.appTarget
-                && pxt.appTarget.cloud
-                && pxt.appTarget.cloud.cloudProviders
-                && !!pxt.appTarget.cloud.cloudProviders[this.name];
-            p = p.then(() => this.showLoginAsync(useOAuth));
+            p = p.then(() => this.showLoginAsync());
         }
         return p.then(() => { return { accessToken: this.token() } as cloudsync.ProviderLoginResponse; });
 
     }
 
-    private showLoginAsync(useOAuth: boolean): Promise<void> {
+    private showLoginAsync(): Promise<void> {
         pxt.tickEvent("github.login.dialog");
-        const useToken = !useOAuth;
+        // auth flow if github provider is prsent
+        const oAuthSupported = pxt.appTarget
+            && pxt.appTarget.cloud
+            && pxt.appTarget.cloud.cloudProviders
+            && !!pxt.appTarget.cloud.cloudProviders[this.name];
+
+        let useToken = !oAuthSupported;
         let input: HTMLInputElement;
         return core.confirmAsync({
             header: lf("Sign in with GitHub"),
@@ -57,9 +58,13 @@ export class GithubProvider extends cloudsync.ProviderBase {
             onLoaded: (el) => {
                 input = el.querySelectorAll('input')[0] as HTMLInputElement;
             },
-            jsx: <div className="ui form">
+            jsxd: () => <div className="ui form">
                 <p>{lf("You need to sign in with GitHub to use this feature.")}</p>
                 <p>{lf("You can host your code on GitHub and collaborate with friends on projects.")}</p>
+                {!useToken && <p className="small">
+                    {lf("Looking to use a Developer token instead?")}
+                    <sui.Link text={lf("Click here")} onClick={showToken} />
+                </p>}
                 {useToken && <ol>
                     <li>
                         {lf("Navigate to: ")}
@@ -87,14 +92,20 @@ export class GithubProvider extends cloudsync.ProviderBase {
                 pxt.tickEvent("github.login.cancel");
                 return Promise.resolve()
             } else {
-                if (useOAuth)
-                    return this.oauthRedirectAsync();
-                else {
+                if (useToken) {
                     const hextoken = input.value.trim();
                     return this.saveAndValidateTokenAsync(hextoken);
                 }
+                else {
+                    return this.oauthRedirectAsync();
+                }
             }
         })
+
+        function showToken() {
+            useToken = true;
+            core.forceUpdate();
+        }
     }
 
     private oauthRedirectAsync(): Promise<void> {
