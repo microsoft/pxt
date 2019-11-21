@@ -1489,14 +1489,13 @@ interface CiBuildInfo {
     pullRequest?: boolean;
 }
 
-const isTravis = (process.env.TRAVIS === "true");
-const isGithubAction = (!!process.env.GITHUB_ACTION);
-
 function ciBuildInfo(): CiBuildInfo {
+    const isTravis = (process.env.TRAVIS === "true");
+    const isGithubAction = (!!process.env.GITHUB_ACTION);
+
     if (isTravis) return travisInfo();
     else if (isGithubAction) return githubActionInfo();
-    else
-        U.userError("unknown continuous integration environment")
+    else throw new Error("unknown continuous integration environment");
 
     function travisInfo(): CiBuildInfo {
         const commit = process.env.TRAVIS_COMMIT;
