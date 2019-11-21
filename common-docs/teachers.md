@@ -51,6 +51,14 @@ If you are using a tutorial in a class,
 it may be helpful to give your students a link that goes directly to the tutorial.
 Instructions to do this are available in the [FAQ](/faq#share-tutorials).
 
+## Classroom
+
+These features are specially designed to be used in a classroom.
+
+## Green screen
+
+You can enable the ``Green Screen`` feature from the cogwheel menu in the editor. It will render the video stream of a webcam on the background of the code editor. Great to mix coding and filming the device.
+
 ## Courses
 
 Many editors include free courses that you can use in your class;
