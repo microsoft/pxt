@@ -18,8 +18,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: npm install
-        run: npm install
+        run: |
+          sudo apt-get install xvfb
+          npm install
       - name: npm test
-        run: npm test
+        run: |
+          xvfb-run npm test
         env:
+          CHROME_BIN: chromium-browser
+          DISPLAY: :99.0
           CI: true
