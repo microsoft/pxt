@@ -191,6 +191,10 @@ export function hideDialog() {
     coretsx.hideDialog();
 }
 
+export function forceUpdate() {
+    coretsx.forceUpdate();
+}
+
 export function confirmAsync(options: ConfirmOptions): Promise<number> {
     options.type = 'confirm';
     if (!options.buttons) options.buttons = []
