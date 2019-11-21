@@ -872,21 +872,26 @@ async function prepareConfigForPublished(content: string, createTag?: boolean) {
         cfg.targetVersions = pxt.appTarget.versions;
 
     // patch dependencies
-    for (const d of Object.keys(cfg.dependencies)
-        .filter(d => /^(file|workspace):/.test(cfg.dependencies[d])))
+    const localDependencies = Object.keys(cfg.dependencies)
+    .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
+    for (const d of localDependencies)
         await resolveDependencyAsync(d);
 
     return pxt.Package.stringifyConfig(cfg);
 
     async function resolveDependencyAsync(d: string) {
         const v = cfg.dependencies[d];
-        const hid = d.substring(v.indexOf(':') + 1);
+        const hid = v.substring(v.indexOf(':') + 1);
         const hfiles = await getTextAsync(hid);
         const gitjson = hfiles && pxt.Util.jsonTryParse(hfiles[GIT_JSON]) as pxt.github.GitJson;
         if (gitjson && gitjson.commit) {
-            if (createTag && !gitjson.commit.tag)
+            let branch = gitjson.commit.tag;
+            if (!branch && createTag)
                 U.userError(lf("You need to create a release for {0}.", d))
-            cfg.dependencies[d] = `github:${gitjson.commit.tag || gitjson.commit.sha}`;
+            // bind to master if not branch is specified
+            if (!branch)
+                branch = "master";
+            cfg.dependencies[d] = `${gitjson.repo.substring(0, gitjson.repo.indexOf('#'))}#${branch}`;
         }
     }
 }
