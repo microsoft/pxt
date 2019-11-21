@@ -1489,6 +1489,10 @@ interface BuildInfo {
     pullRequest?: number;
 }
 
+function isTravisBuild() {
+    return process.env.TRAVIS === "true"
+}
+
 function travisInfo(): BuildInfo {
     const commit = process.env.TRAVIS_COMMIT;
     const pr = process.env.TRAVIS_PULL_REQUEST;
