@@ -1,9 +1,8 @@
 import * as React from "react";
-import { ImageState, Bitmap } from "./store/bitmap";
 import { IconButton } from "./Button";
 
 interface TimelineFrameProps {
-    frames: ImageState[];
+    frames: pxt.sprite.ImageState[];
     colors: string[];
     animating?: boolean;
     interval?: number;
@@ -90,11 +89,11 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
         this.canvas.height = imageState.bitmap.height * SCALE;
         this.canvas.width = imageState.bitmap.width * SCALE;
 
-        const bitmap = Bitmap.fromData(imageState.bitmap);
+        const bitmap = pxt.sprite.Bitmap.fromData(imageState.bitmap);
         this.drawBitmap(bitmap);
 
         if (imageState.floatingLayer) {
-            const floating = Bitmap.fromData(imageState.floatingLayer);
+            const floating = pxt.sprite.Bitmap.fromData(imageState.floatingLayer);
             this.drawBitmap(floating, imageState.layerOffsetX, imageState.layerOffsetY, true);
         }
     }
@@ -118,7 +117,7 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
         }
     }
 
-    protected drawBitmap(bitmap: Bitmap, x0 = 0, y0 = 0, transparent = false) {
+    protected drawBitmap(bitmap: pxt.sprite.Bitmap, x0 = 0, y0 = 0, transparent = false) {
         const { colors } = this.props;
 
         const context = this.canvas.getContext("2d");

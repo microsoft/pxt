@@ -167,21 +167,22 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.pullAsync().done();
     }
 
-    private async forkAsync(fromError: boolean) {
+    async forkAsync(fromError: boolean) {
         const parsed = this.parsedRepoId()
         const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
             body: pref +
-                lf("Forking repo creates a copy under your account. You can later ask {0} to include your changes via a pull request.",
-                    parsed.owner),
+                lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
+                    parsed.fullName),
             agreeLbl: "Fork",
             agreeIcon: "copy outline"
         })
         if (!res)
             return
 
-        this.showLoading(lf("forking repo (this may take a minute or two)..."))
+        pxt.tickEvent("github.fork")
+        this.showLoading(lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
@@ -201,7 +202,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
         else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; logout and try again."));
+            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        else if (statusCode == 404)
+            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (e.needsWritePermission) {
             if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
@@ -356,10 +359,33 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async commitCoreAsync() {
-        const { header } = this.props.parent.state;
+        const { parent } = this.props;
+        const { header } = parent.state;
         const repo = header.githubId;
+
+        // pull changes and merge; if any conflicts, bail out
+        await workspace.pullAsync(header);
+        // check if any merge markers
+        const hasConflicts = await workspace.hasMergeConflictMarkers(header);
+        if (hasConflicts) {
+            // bail out
+            // maybe needs a reload
+            await this.maybeReloadAsync();
+            core.warningNotification(lf("Merge conflicts found. Resolve them before commiting."))
+            return;
+        }
+
+        // continue with commit
         let commitId = await workspace.commitAsync(header, {
-            message: this.state.description
+            message: this.state.description,
+            blocksScreenshotAsync: () => this.props.parent.blocksScreenshotAsync(1),
+            blocksDiffScreenshotAsync: () => {
+                const f = pkg.mainEditorPkg().sortedFiles().find(f => f.name == "main.blocks");
+                const diff = pxt.blocks.diffXml(f.baseGitContent, f.content);
+                if (diff && diff.ws)
+                    return pxt.blocks.layout.toPngAsync(diff.ws, 1);
+                return Promise.resolve(undefined);
+            }
         })
         if (commitId) {
             // merge failure; do a PR
@@ -371,6 +397,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             // has resolved the conflict in the meantime
             await workspace.pullAsync(header)
             // skip bump in this case - we don't know if it was merged
+        } else {
+            // maybe needs a reload
+            await this.maybeReloadAsync();
         }
         this.setState({ description: "" });
     }
@@ -487,10 +516,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         let deletedFiles: string[] = []
         let addedFiles: string[] = []
         if (f.name == pxt.CONFIG_NAME) {
-            const oldCfg = pxt.allPkgFiles(JSON.parse(f.baseGitContent))
-            const newCfg = pxt.allPkgFiles(JSON.parse(f.content))
-            deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
-            addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            const oldConfig = pxt.Package.parseAndValidConfig(f.baseGitContent);
+            const newConfig = pxt.Package.parseAndValidConfig(f.content);
+            if (oldConfig && newConfig) {
+                const oldCfg = pxt.allPkgFiles(oldConfig);
+                const newCfg = pxt.allPkgFiles(newConfig);
+                deletedFiles = oldCfg.filter(fn => newCfg.indexOf(fn) == -1)
+                addedFiles = newCfg.filter(fn => oldCfg.indexOf(fn) == -1)
+            }
         }
         // backing .ts for .blocks/.py files
         let virtualF = isBlocksMode && pkg.mainEditorPkg().files[f.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
@@ -595,7 +628,7 @@ ${content}
                         {sui.helpIconLink("/github/merge-conflict", lf("Learn about merge conflicts and resolution."))}
                     </td>
                 </tr>);
-                const lnMarker = idx - 1;
+                const lnMarker = Math.min(lnA, lnB);
                 const keepLocalHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, false);
                 const keepRemoteHandler = () => this.handleMergeConflictResolution(f, lnMarker, false, true);
                 const keepBothHandler = () => this.handleMergeConflictResolution(f, lnMarker, true, true);
@@ -681,7 +714,7 @@ ${content}
         } else if (f.name == pxt.CONFIG_NAME) {
             const gs = this.getGitJson()
             for (let d of deletedFiles) {
-                const prev = workspace.lookupFile(gs.commit, d)
+                const prev = pxt.github.lookupFile(gs.commit, d)
                 pkg.mainEditorPkg().setFile(d, prev && prev.blobContent || "// Cannot restore.")
             }
             for (let d of addedFiles) {
@@ -743,6 +776,8 @@ ${content}
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const gs = this.getGitJson();
+        const user = this.getData("github:user");
+
         // don't use gs.prUrl, as it gets cleared often
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
@@ -765,7 +800,7 @@ ${content}
                         <sui.Link className="ui button" icon="github" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -778,7 +813,7 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
                         : <div className="ui segment">
                             {lf("No local changes found.")}
                             {lf("Your project is saved in GitHub.")}
@@ -786,7 +821,7 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} /> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} /> : undefined}
                 </div>
             </div>
         )
@@ -801,6 +836,7 @@ interface GitHubViewProps {
     gs: pxt.github.GitJson;
     isBlocks: boolean;
     needsCommit: boolean;
+    user: pxt.editor.UserInfo;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -869,8 +905,8 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
                     error={descrError} />
             </div>
             <div className="ui field">
-                <sui.Button className="primary" text={lf("Commit changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
-                <span className="inline-help">{lf("Push your changes to GitHub.")}
+                <sui.Button className="primary" text={lf("Commit & push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">{lf("Save your changes in GitHub.")}
                     {sui.helpIconLink("/github/commit", lf("Learn about commiting and pushing code into GitHub."))}
                 </span>
             </div>
@@ -882,10 +918,17 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleBumpClick = this.handleBumpClick.bind(this);
+        this.handleForkClick = this.handleForkClick.bind(this);
+    }
+
+    private handleForkClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
+        e.stopPropagation();
+        this.props.parent.forkAsync(false).done();
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.bump", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.extensionzone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
         if (needsCommit)
@@ -909,11 +952,13 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { needsToken, githubId, gs } = this.props;
+        const { needsToken, githubId, gs, user } = this.props;
         const header = this.props.parent.props.parent.state.header;
         const needsLicenseMessage = !needsToken && gs.commit && !gs.commit.tree.tree.some(f =>
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
+        const showFork = user && user.id != githubId.owner;
+
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">
@@ -927,6 +972,15 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/test-extension", lf("Learn about testing extensions."))}
                 </span>
             </div>
+            {showFork && <div className="ui field">
+                <sui.Button text={lf("Fork repository")}
+                    onClick={this.handleForkClick}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Fork your own copy of {0} to your account.", githubId.fullName)}
+                    {sui.helpIconLink("/github/fork", lf("Learn more about forking repositories."))}
+                </span>
+            </div>}
             {gs.commit && gs.commit.tag ?
                 <div className="ui field">
                     <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}

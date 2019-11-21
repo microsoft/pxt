@@ -3,14 +3,16 @@ import * as sui from "./sui";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
 
-type ISettingsProps = pxt.editor.ISettingsProps;
+interface GithubButtonProps extends pxt.editor.ISettingsProps {
+    className?: string;
+}
 
 interface GithubButtonState {
     pushPulling?: boolean;
 }
 
-export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonState> {
-    constructor(props: ISettingsProps) {
+export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonState> {
+    constructor(props: GithubButtonProps) {
         super(props);
         this.state = {};
         this.handleClick = this.handleClick.bind(this);
@@ -49,9 +51,10 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
 
         const { githubId } = header;
         const ghid = pxt.github.parseRepoId(githubId);
+        const defaultCls = "ui icon button editortools-btn editortools-github-btn"
         // new github repo
         if (!ghid)
-            return <sui.Button key="githubcreatebtn" className={`ui icon button editortools-btn editortools-github-btn`}
+            return <sui.Button key="githubcreatebtn" className={`${defaultCls} ${this.props.className || ""}`}
                 icon="github" title={lf("create GitHub repository")} ariaLabel={lf("create GitHub repository")}
                 onClick={this.createRepository} />
 
@@ -63,10 +66,10 @@ export class GithubButton extends sui.UIElement<ISettingsProps, GithubButtonStat
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
         const title = lf("Review and commit changes for {0}", repoName);
 
-        return <div key="githubeditorbtn" role="button" className={`ui icon button editortools-btn editortools-github-btn`}
+        return <div key="githubeditorbtn" role="button" className={`${defaultCls} ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            {modified ? <i className="long arrow alternate up icon" /> : undefined}
+            {modified ? <i className="ui long arrow alternate up icon mobile hide" /> : undefined}
         </div>;
     }
 }

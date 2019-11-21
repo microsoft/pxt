@@ -10,6 +10,16 @@ namespace pxt {
             return JSON.stringify(config, null, 4) + "\n"
         }
 
+        static parseAndValidConfig(configStr: string): pxt.PackageConfig {
+            const json = Util.jsonTryParse(configStr) as pxt.PackageConfig;
+            return json
+                && json.name !== undefined && typeof json.name === "string"
+                // && json.version && typeof json.version === "string", default to 0.0.0
+                && json.files && Array.isArray(json.files) && json.files.every(f => typeof f === "string")
+                && json.dependencies && Object.keys(json.dependencies).every(k => typeof json.dependencies[k] === "string")
+                && json;
+        }
+
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {
@@ -220,6 +230,9 @@ namespace pxt {
         }
 
         loadConfig() {
+            if (this.level != 0 && this.invalid())
+                return; // don't try load invalid dependency
+
             const confStr = this.readFile(pxt.CONFIG_NAME)
             if (!confStr)
                 U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
@@ -666,12 +679,16 @@ namespace pxt {
 
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
+
+            let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
-            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1)
+
+            let fn = `_locales/${initialLang}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
-            if (lang.length > 2) {
-                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+            }
+            else if (baseLang) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
             }

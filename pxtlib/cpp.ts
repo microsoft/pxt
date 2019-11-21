@@ -935,6 +935,18 @@ namespace pxt.cpp {
                 delete optSettings[k];
             }
         })
+        // fix keys - ==> _
+        Object.keys(optSettings)
+            .filter(k => /-/.test(k)).forEach(k => {
+                const v = optSettings[k];
+                delete optSettings[k];
+                optSettings[k.replace(/-/g, '_')] = v;
+            })
+        if (!isYotta && compileService.yottaConfigCompatibility) { // yotta automatically adds YOTTA_CFG_
+            Object.keys(optSettings)
+                .forEach(k => optSettings["YOTTA_CFG_" + k] = optSettings[k]);
+        }
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {

@@ -137,10 +137,15 @@ namespace pxt.py {
     }
 
     function mapTsType(tp: string): Type {
+        // TODO handle specifc generic types like: SparseArray<number[]>
+        // TODO handle union types like: Sprite | particles.ParticleAnchor
+
+        // wrapped in (...)
         if (tp[0] == "(" && U.endsWith(tp, ")")) {
             return mapTsType(tp.slice(1, -1))
         }
 
+        // lambda (...) => ...
         const arrowIdx = tp.indexOf(" => ")
         if (arrowIdx > 0) {
             const retTypeStr = tp.slice(arrowIdx + 4)
@@ -153,6 +158,7 @@ namespace pxt.py {
             }
         }
 
+        // array ...[]
         if (U.endsWith(tp, "[]")) {
             return mkArrayType(mapTsType(tp.slice(0, -2)))
         }
@@ -160,12 +166,22 @@ namespace pxt.py {
             return mkArrayType(tpAny);
         }
 
+        // builtin
         const t = U.lookup(builtInTypes, tp)
         if (t) return t
 
+        // handle number litterals like "-20" (b/c TS loves to give specific types to const's)
+        let isNum = !!tp && !isNaN(tp as any as number) // https://stackoverflow.com/questions/175739
+        if (isNum)
+            return tpNumber
+
+        // generic
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
+        // defined by a symbol, 
+        //  either in external (non-py) APIs (like default/common packages)
+        //  or in internal (py) APIs (probably main.py)
         let sym = lookupApi(tp + "@type") || lookupApi(tp)
         if (!sym) {
             error(null, 9501, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
@@ -191,7 +207,7 @@ namespace pxt.py {
         return sym.attributes.shim && sym.attributes.shim[0] == "@"
     }
 
-    function symbolType(sym: SymbolInfo): Type {
+    function getOrSetSymbolType(sym: SymbolInfo): Type {
         if (!sym.pySymbolType) {
             currErrorCtx = sym.pyQName
 
@@ -249,19 +265,16 @@ namespace pxt.py {
         return sym.pySymbolType
     }
 
-    function fillTypes(sym: SymbolInfo) {
-        if (sym)
-            symbolType(sym)
-        return sym
-    }
-
     function lookupApi(name: string) {
         return U.lookup(internalApis, name) || U.lookup(externalApis, name)
     }
 
     function lookupGlobalSymbol(name: string): SymbolInfo | undefined {
         if (!name) return undefined
-        return fillTypes(lookupApi(name))
+        let sym = lookupApi(name)
+        if (sym)
+            getOrSetSymbolType(sym)
+        return sym
     }
 
     function initApis(apisInfo: pxtc.ApisInfo, tsShadowFiles: string[]) {
@@ -270,7 +283,6 @@ namespace pxt.py {
 
         let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
-            // if the symbol comes from a .ts file that matches one of the .py files we're compiling - skip these
             if (tsShadowFilesSet.hasOwnProperty(sym.fileName)) {
                 continue
             }
@@ -287,11 +299,11 @@ namespace pxt.py {
             externalApis[sym2.qName!] = sym2
         }
 
-        // TODO(dz):
         // TODO this is for testing mostly; we can do this lazily
-        for (let sym of U.values(externalApis)) {
-            fillTypes(sym)
-        }
+        // for (let sym of U.values(externalApis)) {
+        //     if (sym)
+        //         getOrSetSymbolType(sym)
+        // }
 
         tpBuffer = mapTsType("Buffer")
     }
@@ -311,7 +323,7 @@ namespace pxt.py {
     }
 
     function instanceType(sym: SymbolInfo): Type {
-        symbolType(sym)
+        getOrSetSymbolType(sym)
         if (!sym.pyInstanceType)
             error(null, 9527, U.lf("Instance type symbol '{0}' is missing pyInstanceType", sym))
         return sym.pyInstanceType!
@@ -651,53 +663,55 @@ namespace pxt.py {
         return null
     }
 
+    function getTypesForFieldLookup(recvType: Type): SymbolInfo[] {
+        let t = find(recvType)
+        return [
+            t.classType,
+            ...resolvePrimTypes(t.primType),
+            t.moduleType
+        ].filter(isTruthy)
+    }
+
     function getTypeField(recv: Expr, n: string, checkOnly = false) {
-        let t = find(typeOf(recv))
+        const recvType = typeOf(recv)
+        const constructorTypes = getTypesForFieldLookup(recvType)
 
-        let ct = t.classType
-
-        if (!ct) {
-            ct = resolvePrimType(t.primType);
-        }
-
-        if (ct) {
+        for (let ct of constructorTypes) {
             let f = getClassField(ct, n, checkOnly)
-
             if (f) {
-                if (!f.isInstance)
-                    error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
-                if (isSuper(recv)) {
-                    f.isProtected = true
-                }
-                else if (isThis(recv)) {
-                    if (!ctx.currClass)
-                        error(null, 9529, U.lf("no class context found for {0}", f.pyQName))
-                    if (f.namespace != ctx.currClass!.symInfo.qName)
+                let isModule = !!ct.moduleTypeMarker
+                if (isModule) {
+                    if (f.isInstance)
+                        error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
+                } else {
+                    if (!f.isInstance)
+                        error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.pyQName))
+                    if (isSuper(recv))
                         f.isProtected = true
+                    else if (isThis(recv)) {
+                        if (!ctx.currClass)
+                            error(null, 9529, U.lf("no class context found for {0}", f.pyQName))
+                        if (f.namespace != ctx.currClass!.symInfo.qName) {
+                            f.isProtected = true
+                        }
+                    }
                 }
+                return f
             }
-
-            return f
         }
-
-        ct = t.moduleType
-        if (ct) {
-            let f = getClassField(ct, n, checkOnly)
-            if (f && f.isInstance)
-                error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.pyQName))
-            return f
-        }
-
         return null
     }
 
-    function resolvePrimType(primType: string | undefined) {
+    function resolvePrimTypes(primType: string | undefined): SymbolInfo[] {
+        let res: SymbolInfo[] = []
         if (primType == "@array") {
-            return lookupApi("_py.Array")
+            res = [lookupApi("_py.Array"), lookupApi("Array")]
         } else if (primType == "string") {
-            return lookupApi("_py.String")
+            // we need to check both the special "_py" namespace and the typescript "String"
+            // class because for example ".length" is only defined in the latter
+            res = [lookupApi("_py.String"), lookupApi("String")]
         }
-        return undefined
+        return res.filter(a => !!a)
     }
 
     function lookupVar(n: string) {
@@ -822,7 +836,7 @@ namespace pxt.py {
         if (tpName) {
             let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
             if (sym) {
-                symbolType(sym)
+                getOrSetSymbolType(sym)
                 if (sym.kind == SK.Enum)
                     return tpNumber
 
@@ -877,7 +891,7 @@ namespace pxt.py {
             let v = defvar(p.name, { isParam: true })
             if (!p.pyType)
                 error(n, 9530, U.lf("parameter '{0}' missing pyType", p.name))
-            unify(n, symbolType(v), p.pyType!)
+            unify(n, getOrSetSymbolType(v), p.pyType!)
             let res = [quote(p.name), typeAnnot(p.pyType!)]
             if (p.default) {
                 res.push(B.mkText(" = " + p.default))
@@ -1093,7 +1107,7 @@ namespace pxt.py {
                 n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
 
             // make sure type is initialized
-            symbolType(sym)
+            getOrSetSymbolType(sym)
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
@@ -1806,6 +1820,7 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
+            // TODO(dz): move body out; needs seperate PR that doesn't touch content
             n.func.inCalledPosition = true
 
             let nm = getName(n.func)
@@ -1879,8 +1894,9 @@ namespace pxt.py {
                 return B.mkInfix(B.mkText(`""`), "+", expr(n.args[0]))
             }
 
-            if (!fun)
-                error(n, 9508, U.lf("can't find called function"))
+            if (!fun) {
+                error(n, 9508, U.lf(`can't find called function "${nm}"`))
+            }
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
@@ -2052,7 +2068,7 @@ namespace pxt.py {
                 if (sym) {
                     n.symbolInfo = sym
                     addCaller(n, sym)
-                    unifyTypeOf(n, symbolType(sym))
+                    unifyTypeOf(n, getOrSetSymbolType(sym))
                     nm = sym.name
                 } else
                     error(n, 9514, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.pyQName, n.attr))
@@ -2127,7 +2143,7 @@ namespace pxt.py {
             n.symbolInfo = v
             if (!n.tsType)
                 error(n, 9562, lf("missing tsType"));
-            unify(n, n.tsType!, symbolType(v))
+            unify(n, n.tsType!, getOrSetSymbolType(v))
             if (v.isImport)
                 return v
             addCaller(n, v)
@@ -2208,7 +2224,7 @@ namespace pxt.py {
 
     function declareVariable(s: SymbolInfo) {
         const name = quote(s.name);
-        const type = t2s(symbolType(s));
+        const type = t2s(getOrSetSymbolType(s));
 
         return B.mkStmt(B.mkGroup([B.mkText("let "), name, B.mkText(": " + type + ";")]));
     }
@@ -2428,7 +2444,8 @@ namespace pxt.py {
                         }
                     }
                 } else if (tp.classType || tp.primType) {
-                    const ct = tp.classType || resolvePrimType(tp.primType);
+                    const ct = tp.classType
+                        || resolvePrimTypes(tp.primType).reduce((p, n) => p || n, null);
 
                     if (ct) {
                         if (!ct.extendsTypes || !ct.qName)

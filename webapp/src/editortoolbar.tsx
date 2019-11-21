@@ -166,6 +166,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename && !debugging;
         const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
+        const showGithub = !!pxt.appTarget.cloud && !!pxt.appTarget.cloud.githubPackages;
 
         const trace = !!targetTheme.enableTrace;
         const tracing = this.props.parent.state.tracing;
@@ -195,12 +196,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             <div className="column mobile only">
                 {collapsed ?
                     <div className="ui grid">
-                        {!targetTheme.bigRunButton && <div className="left aligned column six wide">
+                        {!targetTheme.bigRunButton && <div className="left aligned column four wide">
                             <div className="ui icon small buttons">
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
                             </div>
                         </div>}
-                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
+                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'twelve'} wide`}>
                             {!readOnly &&
                                 <div className="ui icon small buttons">
                                     {this.getSaveInput(mobile, showSave)}
@@ -249,6 +250,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                         {showSave && <div className="column four wide">
                             <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtntablet`} className={"small"} />}
                         </div>}
                         <div className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
                             {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(tablet)}</div>}

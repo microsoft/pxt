@@ -278,7 +278,7 @@ namespace pxt.blocks {
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
         if (helpCallback) {
             groupLabel.setAttribute('web-help-button', 'true');
-            groupLabel.setAttribute('callbackkey', helpCallback);
+            groupLabel.setAttribute('callbackKey', helpCallback);
         }
         return groupLabel;
     }
@@ -302,10 +302,10 @@ namespace pxt.blocks {
         return headingLabel;
     }
 
-    export function createFlyoutButton(callbackkey: string, label: string) {
+    export function createFlyoutButton(callbackKey: string, label: string) {
         let button = Blockly.utils.xml.createElement('button') as Element;
         button.setAttribute('text', label);
-        button.setAttribute('callbackkey', callbackkey);
+        button.setAttribute('callbackKey', callbackKey);
         return button;
     }
 
@@ -1988,7 +1988,7 @@ namespace pxt.blocks {
 
             let button = document.createElement('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable..."));
-            button.setAttribute('callbackkey', 'CREATE_VARIABLE');
+            button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
@@ -2338,7 +2338,7 @@ namespace pxt.blocks {
             // Add the "Make a function" button
             let button = Blockly.utils.xml.createElement('button');
             button.setAttribute('text', newFunction);
-            button.setAttribute('callbackkey', 'CREATE_FUNCTION');
+            button.setAttribute('callbackKey', 'CREATE_FUNCTION');
 
             let createFunction = (name: string) => {
                 /**

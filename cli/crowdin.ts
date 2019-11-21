@@ -10,29 +10,28 @@ interface CrowdinCredentials { prj: string; key: string; branch: string; }
 
 function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
+    const branch = pxt.appTarget.appTheme.crowdinBranch;
     if (!prj) {
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
         return Promise.resolve(undefined);
     }
 
-    return Promise.resolve()
-        .then(() => {
-            // Env var overrides credentials manager
-            const envKey = process.env[pxt.crowdin.KEY_VARIABLE];
-            return Promise.resolve(envKey);
-        })
-        .then(key => {
-            if (!key) {
-                pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
-                return undefined;
-            }
-            const branch = pxt.appTarget.appTheme.crowdinBranch;
-            return { prj, key, branch };
-        });
+    let key: string;
+    if (pxt.crowdin.testMode)
+        key = pxt.crowdin.TEST_KEY;
+    else
+        key = process.env[pxt.crowdin.KEY_VARIABLE];
+    if (!key) {
+        pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
+        return undefined;
+    }
+    return Promise.resolve({ prj, key, branch });
 }
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
+    if (parsed && !!parsed.flags["test"])
+        pxt.crowdin.setTestMode();
     return internalUploadTargetTranslationsAsync(uploadDocs);
 }
 

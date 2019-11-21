@@ -36,7 +36,7 @@ namespace pxtblockly {
         protected lightMode: boolean;
         protected undoRedoState: any;
 
-        protected state: pxtsprite.Bitmap[];
+        protected state: pxt.sprite.Bitmap[];
         protected interval: number;
         protected frames: string[] = [];
         protected preview: svg.Image;
@@ -50,7 +50,7 @@ namespace pxtblockly {
             this.blocksInfo = params.blocksInfo;
 
             if (!this.state) {
-                this.state = [new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight)];
+                this.state = [new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight)];
             }
         }
 
@@ -66,7 +66,7 @@ namespace pxtblockly {
             }
 
             if (!this.state) {
-                this.state = [new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight)];
+                this.state = [new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight)];
             }
 
             this.redrawPreview();
@@ -132,7 +132,7 @@ namespace pxtblockly {
         getValue() {
             if (!this.state) return "[]";
             return "[" + this.state.map(frame =>
-                pxtsprite.bitmapToImageLiteral(frame, pxt.editor.FileType.TypeScript)
+                pxt.sprite.bitmapToImageLiteral(frame, pxt.editor.FileType.TypeScript)
             ).join(",") + "]"
         }
 
@@ -268,7 +268,7 @@ namespace pxtblockly {
 
     function parseImageArrayString(str: string) {
         str = str.replace(/[\[\]]/mg, "");
-        return str.split(",").map(s => pxtsprite.imageLiteralToBitmap(s));
+        return str.split(",").map(s => pxt.sprite.imageLiteralToBitmap(s));
     }
 
     function isNumberType(type: string) {

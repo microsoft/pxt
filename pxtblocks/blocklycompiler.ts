@@ -903,6 +903,7 @@ namespace pxt.blocks {
         idToScope: pxt.Map<Scope>;
         blocksInfo: pxtc.BlocksInfo;
         allVariables: VarInfo[];
+        generatedVarDeclarations: pxt.Map<VarDeclaration>;
     }
 
     export interface RenameMap {
@@ -930,7 +931,8 @@ namespace pxt.blocks {
             kinds: [],
             idToScope: {},
             allVariables: [],
-            blocksInfo: null
+            blocksInfo: null,
+            generatedVarDeclarations: {}
         }
     };
 
@@ -1570,7 +1572,7 @@ namespace pxt.blocks {
             return -hash;
     }
 
-    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
+    function compileWorkspace(e: Environment, w: Blockly.Workspace): [JsNode[], BlockDiagnostic[], pxt.Map<VarDeclaration>] {
         try {
             // all compiled top level blocks are events
             const topblocks = w.getTopBlocks(true).sort((a, b) => {
@@ -1672,7 +1674,7 @@ namespace pxt.blocks {
                 }
             });
 
-            const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
+            const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, e));
 
             const diags: BlockDiagnostic[] = [];
 
@@ -1688,7 +1690,7 @@ namespace pxt.blocks {
                 });
             });
 
-            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags];
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags, e.generatedVarDeclarations];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1702,7 +1704,7 @@ namespace pxt.blocks {
             removeAllPlaceholders();
         }
 
-        return [null, null] // unreachable
+        return [null, null, null] // unreachable
     }
 
     export function callKey(e: Environment, b: Blockly.Block): string {
@@ -1769,6 +1771,7 @@ namespace pxt.blocks {
         sourceMap: SourceInterval[];
         stats: pxt.Map<number>;
         diagnostics: BlockDiagnostic[];
+        generatedVarDeclarations?: pxt.Map<VarDeclaration>;
     }
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
@@ -1790,12 +1793,12 @@ namespace pxt.blocks {
 
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
-        const [nodes, diags] = compileWorkspace(e, b, blockInfo);
-        const result = tdASTtoTS(e, nodes, diags);
+        const [nodes, diags, decl] = compileWorkspace(e, b);
+        const result = tdASTtoTS(e, nodes, diags, decl);
         return result;
     }
 
-    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[], varDecls?: pxt.Map<VarDeclaration>): Promise<BlockCompilationResult> {
         let res = flattenNode(app)
 
         // Note: the result of format is not used!
@@ -1805,10 +1808,10 @@ namespace pxt.blocks {
                 source: res.output,
                 sourceMap: res.sourceMap,
                 stats: env.stats,
-                diagnostics: diags || []
+                diagnostics: diags || [],
+                generatedVarDeclarations: varDecls
             };
         })
-
     }
 
     function maybeAddComment(b: Blockly.Block, comments: string[]) {
@@ -1867,7 +1870,7 @@ namespace pxt.blocks {
         }
     }
 
-    function mkVariableDeclaration(v: VarInfo, blockInfo: pxtc.BlocksInfo) {
+    function mkVariableDeclaration(v: VarInfo, e: Environment) {
         const t = getConcreteType(v.type);
         let defl: JsNode;
 
@@ -1878,22 +1881,31 @@ namespace pxt.blocks {
             defl = defaultValueForType(t);
         }
 
-        let tp = ""
+        let emitTp = false;
+        let tpname: string | undefined;
         if (defl.op == "null" || defl.op == "[]") {
-            let tpname = t.type
+            tpname = t.type
             // If the type is "Array" or null[] it means that we failed to narrow the type of array.
             // Best we can do is just default to number[]
             if (tpname === "Array" || tpname === "null[]") {
                 tpname = "number[]";
             }
-            let tpinfo = blockInfo.apis.byQName[tpname]
-            if (tpinfo && tpinfo.attributes.autoCreate)
+            const tpinfo = e.blocksInfo.apis.byQName[tpname]
+            if (tpinfo && tpinfo.attributes.autoCreate) {
                 defl = mkText(tpinfo.attributes.autoCreate + "()")
-            else
-                tp = ": " + tpname
+            }
+            else {
+                emitTp = true;
+            }
+        }
+        e.generatedVarDeclarations[v.escapedName] = {
+            value: flattenNode([defl]).output
+        };
+        if (emitTp) {
+            e.generatedVarDeclarations[v.escapedName].type = tpname;
         }
         v.alreadyDeclared = BlockDeclarationType.Implicit;
-        return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
+        return mkStmt(mkText("let " + v.escapedName + (emitTp ? `: ${tpname}` : "") + " = "), defl)
     }
 
     function countOptionals(b: Blockly.Block) {
