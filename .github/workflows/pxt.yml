@@ -23,7 +23,7 @@ jobs:
           npm install
       - name: npm test
         run: |
-          xvfb-run npm test
+          npm test
         env:
           CHROME_BIN: chromium-browser
           DISPLAY: :99.0
