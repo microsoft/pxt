@@ -199,7 +199,7 @@ Instructions for step 1 of activity 2 here...
 
 ### Steps
 
-A step is where the user views and interacts with the instructions and hints for a tutorial action. The runner builds interactions from each _step_ section. 
+A step is where the user views and interacts with the instructions and hints for a tutorial action. The runner builds interactions from each _step_ section.
 
 #### Default Syntax
 
@@ -443,3 +443,7 @@ Click ``|Download|`` to transfer your code in your @boardname@!
 ## Translations
 
 Tutorials are translated via [Crowdin](/translate) like any other documentation page.
+
+## Dependencies
+
+If your tutorial requires the use of an extension, you can add them using the [package macro](https://makecode.com/writing-docs/macros#dependencies).
