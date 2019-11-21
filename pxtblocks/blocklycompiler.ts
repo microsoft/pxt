@@ -1898,13 +1898,16 @@ namespace pxt.blocks {
                 emitTp = true;
             }
         }
+
         e.generatedVarDeclarations[v.escapedName] = {
             value: flattenNode([defl]).output
         };
         if (emitTp) {
             e.generatedVarDeclarations[v.escapedName].type = tpname;
         }
+
         v.alreadyDeclared = BlockDeclarationType.Implicit;
+
         return mkStmt(mkText("let " + v.escapedName + (emitTp ? `: ${tpname}` : "") + " = "), defl)
     }
 
