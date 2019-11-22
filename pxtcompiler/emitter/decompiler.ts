@@ -2508,7 +2508,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = attributes.imageLiteralColumns || attributes.imageLiteral * 5;
+                const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern");
                 }
