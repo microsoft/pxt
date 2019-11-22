@@ -1495,7 +1495,15 @@ function ciBuildInfo(): CiBuildInfo {
 
     if (isTravis) return travisInfo();
     else if (isGithubAction) return githubActionInfo();
-    else throw new Error("unknown continuous integration environment");
+    else {
+        // local build
+        return {
+            branch: undefined,
+            tag: undefined,
+            commit: undefined,
+            commitUrl: undefined
+        }
+    }
 
     function travisInfo(): CiBuildInfo {
         const commit = process.env.TRAVIS_COMMIT;
