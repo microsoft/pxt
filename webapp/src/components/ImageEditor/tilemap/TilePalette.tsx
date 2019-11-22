@@ -320,7 +320,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 this.props.dispatchCreateNewTile(
                     tile.bitmap,
                     isRightClick ? selected : newIndex,
-                    isRightClick ? newIndex: backgroundColor,
+                    isRightClick ? newIndex : backgroundColor,
                     qname
                 );
             }
