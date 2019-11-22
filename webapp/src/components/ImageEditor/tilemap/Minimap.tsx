@@ -30,18 +30,24 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
 
     redrawCanvas() {
         const { tilemap } = this.props;
+        let { bitmap, floatingLayer, layerOffsetX, layerOffsetY } = tilemap;
 
         const context = this.canvas.getContext("2d");
-        const bitmap = pxt.sprite.Tilemap.fromData(tilemap.bitmap);
+        const image = pxt.sprite.Tilemap.fromData(bitmap);
+        const floatingImage = floatingLayer ? pxt.sprite.Tilemap.fromData(floatingLayer) : null;
 
-        this.canvas.width = bitmap.width;
-        this.canvas.height = bitmap.height;
+        this.canvas.width = image.width;
+        this.canvas.height = image.height;
         this.tileColors = [];
 
-        for (let x = 0; x < bitmap.width; x++) {
-            for (let y = 0; y < bitmap.height; y++) {
-                const index = bitmap.get(x, y);
-                if (index) {
+        for (let x = 0; x < image.width; x++) {
+            for (let y = 0; y < image.height; y++) {
+                const float = floatingImage ? floatingImage.get(x - layerOffsetX, y - layerOffsetY) : null;
+                const index = image.get(x, y);
+                if (float) {
+                    context.fillStyle = this.getColor(float);
+                    context.fillRect(x, y, 1, 1);
+                } else if (index) {
                     context.fillStyle = this.getColor(index);
                     context.fillRect(x, y, 1, 1);
                 }
