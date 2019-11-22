@@ -1,8 +1,6 @@
-const ChromiumRevision = require('puppeteer/package.json').puppeteer.chromium_revision
-const Downloader = require('puppeteer/utils/ChromiumDownloader')
-const revisionInfo = Downloader.revisionInfo(Downloader.currentPlatform(), ChromiumRevision)
-
-process.env.CHROME_BIN = revisionInfo.executablePath
+const puppeteer = require('puppeteer');
+process.env.CHROME_BIN = puppeteer.executablePath()
+console.log(`chromium: `, process.env.CHROME_BIN)
 
 // Karma configuration
 module.exports = function(config) {
