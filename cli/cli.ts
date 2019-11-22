@@ -4176,6 +4176,9 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     const disableAppCache = !!parsed.flags["no-appcache"];
     const locs = !!parsed.flags["locs"];
     if (parsed.flags["cloud"]) forceCloudBuild = true;
+    if (minify && process.env["PXT_ENV"] === undefined) {
+        process.env["PXT_ENV"] = "production";
+    }
 
     pxt.log(`packaging editor to ${builtPackaged}`)
 
