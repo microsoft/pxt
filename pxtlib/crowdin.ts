@@ -2,9 +2,11 @@ namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
     export let testMode = false;
     export const TEST_KEY = "!!!testmode!!!";
+    let testPostHandler: (f: string, data: any) => void;
 
-    export function setTestMode() {
+    export function setTestMode(postHandler?: (f: string, data: any) => void) {
         pxt.crowdin.testMode = true;
+        testPostHandler = postHandler;
         pxt.log(`CROWDIN TEST MODE - files will NOT be uploaded`);
     }
 
@@ -13,7 +15,12 @@ namespace pxt.crowdin {
             const resp = {
                 success: true
             }
-            return Promise.resolve({ statusCode: 200, headers: {}, text: JSON.stringify(resp), json: resp })
+            return new Promise(resolve => {
+                    if (filename && filecontents && testPostHandler)
+                        testPostHandler(filename, filecontents)
+                    resolve();
+                })
+                .then(() => ({ statusCode: 200, headers: {}, text: JSON.stringify(resp), json: resp }));
         }
         return Util.multipartPostAsync(uri, data, filename, filecontents);
     }

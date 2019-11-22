@@ -6,7 +6,21 @@ import Map = pxt.Map;
 
 import * as commandParser from './commandparser';
 
-interface CrowdinCredentials { prj: string; key: string; branch: string; }
+interface CrowdinCredentials {
+    prj: string;
+    key: string;
+    branch: string;
+}
+
+interface TestResult {
+    [file: string]: { size: number, hash: string }
+}
+
+interface TestState {
+    resultStore: TestResult;
+    baseline: string;
+}
+let testState: TestState;
 
 function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
     const prj = pxt.appTarget.appTheme.crowdinProject;
@@ -30,8 +44,30 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
 
 export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
-    if (parsed && !!parsed.flags["test"])
-        pxt.crowdin.setTestMode();
+    if (parsed && !!parsed.flags["test"]) {
+        testState = {
+            resultStore: {},
+            baseline: parsed.flags["baseline"] as string
+        };
+
+        pxt.crowdin.setTestMode((f, data) => {
+            if (/.json$/i.test(f)) {
+                // pretty print the json
+                data = JSON.stringify(JSON.parse(data), null, 4);
+            }
+
+            testState.resultStore[f] = {
+                size: data.length,
+                hash: pxt.Util.sha256(data)
+            };
+
+            nodeutil.writeFileSync(
+                path.join("temp", "crowdin", f),
+                data,
+                { encoding: "utf8" }
+            );
+        });
+    }
     return internalUploadTargetTranslationsAsync(uploadDocs);
 }
 
@@ -56,24 +92,59 @@ export function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                     .then(() => fs.existsSync("built/sim-strings.json") ? execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir) : Promise.resolve())
                     .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
                     .then(() => {
-                        if (uploadDocs) {
+                        if (uploadDocs || pxt.crowdin.testMode) {
                             pxt.log("uploading docs...");
-                            return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-                                // scan for docs in bundled packages
-                                .then(() => Promise.all(pxt.appTarget.bundleddirs
-                                    // there must be a folder under .../docs
-                                    .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
-                                    // upload to crowdin
-                                    .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                                    )).then(() => {
-                                        pxt.log("docs uploaded");
-                                    }))
+                            return Promise.all(
+                                    nodeutil.getBundledPackagesDocs()
+                                        .map(docsDir => uploadDocsTranslationsAsync(docsDir, crowdinDir, cred.branch, cred.prj, cred.key))
+                                )
+                                .then(() => uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key))
+                                .then(() => pxt.log("docs uploaded"));
                         }
                         pxt.log("skipping docs upload (not a release)");
                         return Promise.resolve();
+                    }).then(() => {
+                        if (pxt.crowdin.testMode && testState) {
+                            const resultPath = path.join("temp", "crowdin", "test-result.json");
+                            pxt.log(`--- test finished: writing output log to ${resultPath} ---s`);
+                            nodeutil.writeFileSync(
+                                resultPath,
+                                JSON.stringify(testState.resultStore, null, 4),
+                                { encoding: "utf8" }
+                            );
+
+                            if (testState.baseline) {
+                                const baselineResult = nodeutil.readJson(testState.baseline);
+                                compareTestResults(baselineResult, testState.resultStore);
+                            }
+                        }
                     });
             }
         });
+}
+
+function compareTestResults(prev: TestResult, curr: TestResult) {
+    pxt.log("--- Comparing result against baseline ---")
+    const prevKeys = Object.keys(prev);
+    const currKeys = Object.keys(curr);
+
+    for (const key of prevKeys) {
+        const prevRes = prev[key];
+        const currRes = curr[key];
+
+        if (!currRes) {
+            pxt.log(`Missing: ${key}`);
+        } else if (prev[key].hash != curr[key].hash) {
+            pxt.log(`Different hash: ${key} - previously ${prevRes.size} chars, now ${currRes.size} chars`);
+        }
+    }
+
+    for (const key of currKeys) {
+        const prevRes = prev[key];
+        if (!prevRes) {
+            pxt.log(`New file: ${key}`);
+        }
+    }
 }
 
 function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
@@ -118,7 +189,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
         const locdir = path.join(dir, "_locales");
         if (fs.existsSync(locdir))
             fs.readdirSync(locdir)
-                .filter(f => /strings\.json$/i.test(f))
+                .filter(f => /-strings\.json$/i.test(f))
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
 
@@ -147,10 +218,14 @@ export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCom
                 .then(() => downloadFilesAsync(cred, ["target-strings.json"], "target"))
                 .then(() => {
                     const files: string[] = [];
-                    pxt.appTarget.bundleddirs
-                        .filter(dir => !name || dir == "libs/" + name)
-                        .forEach(dir => {
-                            const locdir = path.join(dir, "_locales");
+                    nodeutil.getBundledPackagesDocs()
+                        .filter(dir => {
+                            if (!name) return true;
+                            const pkgName = /^(?:.*\/)?libs\/([^\/]+)/.exec(dir);
+                            return !!pkgName && pkgName[1] == name;
+                        })
+                        .forEach(docsDir => {
+                            const locdir = path.join(docsDir, "..", "_locales");
                             if (fs.existsSync(locdir))
                                 fs.readdirSync(locdir)
                                     .filter(f => /\.json$/i.test(f))

@@ -5904,7 +5904,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "upload translations for target",
         flags: {
             docs: { description: "upload markdown docs folder as well" },
-            test: { description: "test run, do not upload files to crowdin"}
+            test: { description: "test run, do not upload files to crowdin"},
+            baseline: {
+                description: "baseline to compare test result against",
+                argument: "route",
+                type: "string"
+            },
         },
         advanced: true
     }, crowdin.uploadTargetTranslationsAsync);
