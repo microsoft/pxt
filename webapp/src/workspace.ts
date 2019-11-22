@@ -732,6 +732,8 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         return text
     }
 
+    // we need to keep the old cfg to maintain the github id -> local workspace id
+    const oldCfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME])
     const cfgText = await downloadAsync(pxt.CONFIG_NAME)
     let cfg = pxt.Package.parseAndValidConfig(cfgText);
     // invalid cfg or no TypeScript files
@@ -741,6 +743,23 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         pxt.log(`github: reconstructing pxt.json`)
         cfg = pxt.github.reconstructConfig(files, commit, pxt.appTarget.blocksprj || pxt.appTarget.tsprj);
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
+    }
+    // patch the github references back to local workspaces
+    {
+        let ghupdated = 0;
+        Object.keys(cfg.dependencies)
+            // find github references that are also in the original version
+            .filter(k => /^github:/.test(cfg.dependencies[k]) && oldCfg.dependencies[k])
+            .forEach(k => {
+                const gid = pxt.github.parseRepoId(cfg.dependencies[k]);
+                if (gid) {
+                    const wks = oldCfg.dependencies[k];
+                    cfg.dependencies[k] = wks;
+                    ghupdated++;
+                }
+            })
+        if (ghupdated)
+            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
 
     for (const fn of pxt.allPkgFiles(cfg).slice(1))

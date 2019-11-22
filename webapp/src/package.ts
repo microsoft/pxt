@@ -633,7 +633,7 @@ data.mountVirtualApi("open-meta", {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
             numErrors: f.numDiagnosticsOverride,
-            isGitModified: hasGit && f.baseGitContent != f.content
+            isGitModified: hasGit && f.baseGitContent != f.publishedContent()
         }
 
         if (fs.numErrors == null) {
