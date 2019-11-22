@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor } from '../actions/dispatch';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor, dispatchDeleteTile } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
@@ -29,6 +29,7 @@ export interface TilePaletteProps {
     dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
     dispatchOpenTileEditor: (editIndex?: number) => void;
+    dispatchDeleteTile: (index: number) => void;
 }
 
 /**
@@ -56,7 +57,7 @@ const options: DropdownOption[] = [
 const tabs: PivotOption[] = [
     {
         id: "custom",
-        text: "Tiles"
+        text: "My Tiles"
     }, {
         id: "gallery",
         text: "Gallery"
@@ -95,8 +96,13 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const wall = emptyTile.data();
         this.updateGalleryTiles();
 
-        const totalPages = Math.max(Math.ceil(this.categoryTiles.length / 16), 1);
+        let totalPages = Math.ceil(this.categoryTiles.length / 16);
+
+        // Add an empty page for the tile create button if the last page is full
+        if (!galleryOpen && this.categoryTiles.length % 16 === 0) totalPages++;
+
         const showCreateTile = !galleryOpen && (totalPages === 1 || page === totalPages - 1);
+        const controlsDisabled = galleryOpen || !this.renderedTiles.some(t => !isGalleryTile(t) && t.index === selected);
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
@@ -127,19 +133,22 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                             onClick={this.tileEditHandler}
                             iconClass={"ms-Icon ms-Icon--SingleColumnEdit"}
                             title={lf("Edit the selected tile")}
-                            toggle={true}
+                            disabled={controlsDisabled}
+                            toggle={!controlsDisabled}
                         />
                         <IconButton
                             onClick={this.tileDuplicateHandler}
                             iconClass={"ms-Icon ms-Icon--Copy"}
                             title={lf("Duplicate the selected tile")}
-                            toggle={true}
+                            disabled={controlsDisabled}
+                            toggle={!controlsDisabled}
                         />
                         <IconButton
                             onClick={this.tileDeleteHandler}
                             iconClass={"ms-Icon ms-Icon--Delete"}
                             title={lf("Delete the selected tile")}
-                            toggle={true}
+                            disabled={controlsDisabled}
+                            toggle={!controlsDisabled}
                         />
                     </div>
                 }
@@ -167,7 +176,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected updateGalleryTiles() {
-        const { tileset, gallery, category, galleryOpen } = this.props;
+        const { tileset, page, gallery, category, galleryOpen } = this.props;
 
         if (galleryOpen) {
             this.categoryTiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
@@ -178,6 +187,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 .filter(([t]) => !t.qualifiedName && t.data)
                 .map(([t, i]) => ({ index: i, bitmap: t.data }));
         }
+
+        const startIndex = page * 16;
+        this.renderedTiles = this.categoryTiles.slice(startIndex, startIndex + 16);
     }
 
     protected redrawCanvas() {
@@ -185,22 +197,30 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const rows = 4;
         const margin = 1;
 
-        const { tileset, page } = this.props;
+        const { tileset, page, selected } = this.props;
 
         const startIndex = page * columns * rows;
-        this.renderedTiles = this.categoryTiles.slice(startIndex, startIndex + rows * columns);
 
         const width = tileset.tileWidth + margin;
 
-        this.canvas.width = (width * columns - margin) * SCALE;
-        this.canvas.height = (width * rows - margin) * SCALE;
+        this.canvas.width = (width * columns + margin) * SCALE;
+        this.canvas.height = (width * rows + margin) * SCALE;
+
+        const context = this.canvas.getContext("2d");
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < columns; c++) {
                 const tile = this.categoryTiles[startIndex + r * columns + c];
 
-                if (tile)
-                    this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), c * width, r * width)
+                if (tile) {
+                    if (!isGalleryTile(tile) && tile.index === selected) {
+                        context.fillStyle = "#ff0000";
+                        context.fillRect(c * width, r * width, width + 1, width + 1);
+                    }
+
+                    this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), 1 + c * width, 1 + r * width)
+                }
+
             }
         }
 
@@ -260,7 +280,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected tileDeleteHandler = () => {
-        // TODO
+        const { tileset, selected, dispatchDeleteTile } = this.props;
+
+        if (!tileset.tiles[selected] || tileset.tiles[selected].qualifiedName || selected === 0) return;
+
+        dispatchDeleteTile(selected);
     }
 
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
@@ -400,7 +424,8 @@ const mapDispatchToProps = {
     dispatchChangeDrawingMode,
     dispatchCreateNewTile,
     dispatchSetGalleryOpen,
-    dispatchOpenTileEditor
+    dispatchOpenTileEditor,
+    dispatchDeleteTile
 };
 
 

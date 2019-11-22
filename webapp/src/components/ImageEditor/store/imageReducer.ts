@@ -447,7 +447,13 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return { ...state, selectedColor: action.foreground, backgroundColor: action.background };
         case actions.SET_GALLERY_OPEN:
             tickEvent(`set-gallery-open-${action.open}`);
-            return { ...state, tileGalleryOpen: action.open }
+            return { ...state, tileGalleryOpen: action.open, tilemapPalette: { ...state.tilemapPalette, page: 0 } };
+        case actions.DELETE_TILE:
+            return {
+                ...state,
+                selectedColor: action.index === state.selectedColor ? 0 : state.selectedColor,
+                backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor
+            };
         case actions.OPEN_TILE_EDITOR:
             const editType = action.index ? "edit" : "new";
             tickEvent(`open-tile-editor-${editType}`);
@@ -513,6 +519,22 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                     }
                 }
             }
+        case actions.DELETE_TILE:
+            tickEvent("delete-tile");
+            const newTiles = state.tileset.tiles.slice();
+            newTiles.splice(action.index, 1);
+
+            return {
+                ...state,
+                tilemap: {
+                    ...state.tilemap,
+                    bitmap: deleteTile(action.index, pxt.sprite.Tilemap.fromData(state.tilemap.bitmap)).data()
+                },
+                tileset: {
+                    ...state.tileset,
+                    tiles: newTiles
+                }
+            }
         case actions.IMAGE_EDIT:
             tickEvent(`image-edit`);
             return {
@@ -559,6 +581,23 @@ function restoreSprites(tileset: pxt.sprite.TileSet, gallery: GalleryTile[]) {
     }
 
     return tileset;
+}
+
+function deleteTile(index: number, tilemap: pxt.sprite.Tilemap) {
+    const result = tilemap.copy();
+    for (let x = 0; x < result.width; x++) {
+        for (let y = 0; y < result.height; y++) {
+            const value = result.get(x, y);
+            if (value === index) {
+                result.set(x, y, 0)
+            }
+            else if (value > index) {
+                result.set(x, y, value - 1);
+            }
+        }
+    }
+
+    return result;
 }
 
 export function setTelemetryFunction(cb: (event: string) => void) {
