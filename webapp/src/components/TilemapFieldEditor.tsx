@@ -4,8 +4,6 @@ import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { setTelemetryFunction, GalleryTile } from './ImageEditor/store/imageReducer';
 
-import { getBitmap, getGalleryItems, GalleryItem, filterItems } from './gallery';
-
 export interface TilemapFieldEditorProps {
 }
 
@@ -93,8 +91,8 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         if (options) {
             this.blocksInfo = options.blocksInfo;
 
-            gallery = filterItems(getGalleryItems(this.blocksInfo, "Image"), ["tile"])
-                .map((g, index) => ({ bitmap: getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
+            gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
+                .map((g, index) => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
 
         this.ref.initTilemap(tilemap, tileset, gallery, [layers]);

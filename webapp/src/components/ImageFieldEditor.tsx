@@ -4,8 +4,6 @@ import { FieldEditorComponent } from '../blocklyFieldView';
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { setTelemetryFunction } from './ImageEditor/store/imageReducer';
 
-import { getBitmap, getGalleryItems, GalleryItem, filterItems } from './gallery';
-
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
 }
@@ -45,7 +43,7 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
             <div className="image-editor-gallery-content">
                 <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
-                    items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")}
+                    items={this.blocksInfo && pxt.sprite.getGalleryItems(this.blocksInfo, "Image")}
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
@@ -144,9 +142,9 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         });
     }
 
-    protected onGalleryItemSelect = (item: GalleryItem) => {
+    protected onGalleryItemSelect = (item: pxt.sprite.GalleryItem) => {
         if (this.ref) {
-            this.ref.setCurrentFrame(getBitmap(this.blocksInfo, item.qName));
+            this.ref.setCurrentFrame(pxt.sprite.getBitmap(this.blocksInfo, item.qName));
         }
 
         tickImageEditorEvent("gallery-selection");
@@ -162,9 +160,9 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
 }
 
 interface ImageEditorGalleryProps {
-    items?: GalleryItem[];
+    items?: pxt.sprite.GalleryItem[];
     hidden: boolean;
-    onItemSelected: (item: GalleryItem) => void;
+    onItemSelected: (item: pxt.sprite.GalleryItem) => void;
     filterString?: string;
 }
 
@@ -175,7 +173,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
         let { items, hidden, filterString } = this.props;
 
         if (filterString) {
-            items = filterItems(items, filterString.split(" "));
+            items = pxt.sprite.filterItems(items, filterString.split(" "));
         }
 
         return <div className={`image-editor-gallery ${items && !hidden ? "visible" : ""}`}>
@@ -200,7 +198,7 @@ class ImageEditorGallery extends React.Component<ImageEditorGalleryProps, {}> {
                 let { items, onItemSelected, filterString, hidden } = this.props;
 
                 if (filterString) {
-                    items = filterItems(items, filterString.split(" "));
+                    items = pxt.sprite.filterItems(items, filterString.split(" "));
                 }
 
                 if (!hidden && items && items[index]) {

@@ -132,7 +132,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                const data = bitmapToImageURI(this.state.tilemap, PREVIEW_WIDTH, this.lightMode);
+                const data = tilemapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
                 const img = new svg.Image()
                     .src(data)
                     .at(PADDING + BG_PADDING, PADDING + BG_PADDING)
