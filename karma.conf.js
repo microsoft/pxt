@@ -1,5 +1,10 @@
-// Karma configuration
+const ChromiumRevision = require('puppeteer/package.json').puppeteer.chromium_revision
+const Downloader = require('puppeteer/utils/ChromiumDownloader')
+const revisionInfo = Downloader.revisionInfo(Downloader.currentPlatform(), ChromiumRevision)
 
+process.env.CHROME_BIN = revisionInfo.executablePath
+
+// Karma configuration
 module.exports = function(config) {
   config.set({
 
@@ -67,7 +72,7 @@ module.exports = function(config) {
 
     // We don't use the watcher but for some reason this must be set to true for tests to run
     autoWatch: true,
-    browsers: [process.env.TRAVIS ? 'chromium_travis' : 'Chrome'],
+    browsers: [process.env.TRAVIS ? 'chromium_travis' : 'ChromeHeadless'],
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
