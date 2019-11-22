@@ -1293,7 +1293,7 @@ namespace pxt.blocks {
         args = args === undefined ? [] : args;
         let state = "\n";
         rows =  rows || 5;
-        columns = columns || frames * 5;
+        columns = (columns || 5) * frames;
         let leds = b.getFieldValue("LEDS");
         leds = leds.replace(/[ `\n]+/g, '');
         for (let i = 0; i < rows; ++i) {
