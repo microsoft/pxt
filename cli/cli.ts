@@ -342,12 +342,9 @@ function semverCmp(a: string, b: string) {
 
 let readJson = nodeutil.readJson;
 
-function travisAsync() {
-    return ciBuildAsync(ciBuildInfo())
-}
-
-function ciBuildAsync(buildInfo: CiBuildInfo) {
+function ciAsync() {
     forceCloudBuild = true;
+    const buildInfo = ciBuildInfo();
 
     if (!buildInfo.tag)
         buildInfo.tag = "";
@@ -5834,7 +5831,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 
     advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.args[0], pc.args[1]), "<path> [data]");
     advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));
-    advancedCommand("travis", "upload release and npm package", travisAsync);
+    p.defineCommand({
+        name: "ci",
+        help: "run automated build in a continuous integration environment",
+        aliases: ["travis", "githubactions", "buildci"]
+    }, ciAsync);
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
