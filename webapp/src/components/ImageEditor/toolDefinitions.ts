@@ -7,7 +7,7 @@ export enum ToolCursor {
     Crosshair = "crosshair",
     Grab = "grab",
     Grabbing = "grabbing",
-    EyeDropper = ""
+    EyeDropper = "var(--eyedropper)"
 }
 
 export interface ToolInfo {
@@ -52,14 +52,12 @@ export const tools: ToolInfo[] = [
     },
     {
         tool: ImageEditorTool.Circle,
-        hiddenTool: true,
         iconClass: "ms-Icon ms-Icon--CircleRing",
         title: lf("Circle Tool"),
         hoverCursor: ToolCursor.Crosshair,
     },
     {
         tool: ImageEditorTool.Line,
-        hiddenTool: true,
         iconClass: "ms-Icon ms-Icon--Line",
         title: lf("Line Tool"),
         hoverCursor: ToolCursor.Crosshair,
@@ -78,6 +76,13 @@ export const tools: ToolInfo[] = [
         title: lf("Canvas Pan Tool"),
         hoverCursor: ToolCursor.Grab,
         downCursor: ToolCursor.Grabbing
+    },
+    {
+        tool: ImageEditorTool.ColorSelect,
+        hiddenTool: true,
+        iconClass: "ms-Icon ms-Icon--Edit",
+        title: lf("Color Select Tool"),
+        hoverCursor: ToolCursor.EyeDropper
     }
 ];
 

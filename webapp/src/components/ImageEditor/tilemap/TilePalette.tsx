@@ -310,6 +310,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             if (index >= 0) {
                 if (isRightClick) this.props.dispatchChangeBackgroundColor(index);
                 else this.props.dispatchChangeSelectedColor(index);
+                // automatically switch into tile drawing mode
+                this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
             }
             else {
                 const { selected, backgroundColor, tileset } = this.props;
