@@ -180,7 +180,11 @@ export function initAsync() {
     allScripts = []
 
     return syncAsync()
-        .then(state => cleanupBackupsAsync().then(() => state));
+        .then(state => cleanupBackupsAsync().then(() => state))
+        .then(_ => {
+            pxt.perf.recordMilestone("workspace init finished")
+            return _
+        })
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
