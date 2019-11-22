@@ -345,7 +345,7 @@ let readJson = nodeutil.readJson;
 function ciAsync() {
     forceCloudBuild = true;
     const buildInfo = ciBuildInfo();
-
+    pxt.log(`ci build using ${buildInfo.ci}`);
     if (!buildInfo.tag)
         buildInfo.tag = "";
     if (!buildInfo.branch)
@@ -357,7 +357,7 @@ function ciAsync() {
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
-        console.log(`Setting up ${npmrc}`)
+        pxt.log(`setting up ${npmrc}`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
         fs.writeFileSync(npmrc, cfg)
     }
@@ -368,11 +368,11 @@ function ciAsync() {
         && !pullRequest
         && !!pxt.appTarget.uploadDocs;
 
-    console.log("tag:", tag);
-    console.log("branch:", branch);
-    console.log("pull request:", pullRequest);
-    console.log("upload locs:", uploadLocs);
-    console.log("latest:", latest);
+    pxt.log(`tag: ${tag}`);
+    pxt.log(`branch: ${branch}`);
+    pxt.log(`pull request: ${pullRequest}`);
+    pxt.log(`upload locs: ${uploadLocs}`);
+    pxt.log(`latest: ${latest}`);
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
@@ -1479,6 +1479,7 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 let dirsToWatch: string[] = []
 
 interface CiBuildInfo {
+    ci: "travis" | "githubactions" | "local"
     branch: string;
     tag: string;
     commit: string;
@@ -1495,6 +1496,7 @@ function ciBuildInfo(): CiBuildInfo {
     else {
         // local build
         return {
+            ci: "local",
             branch: undefined,
             tag: undefined,
             commit: undefined,
@@ -1507,6 +1509,7 @@ function ciBuildInfo(): CiBuildInfo {
         const pr = process.env.TRAVIS_PULL_REQUEST;
         const repoSlug = process.env.TRAVIS_REPO_SLUG;
         return {
+            ci: "travis",
             branch: process.env.TRAVIS_BRANCH,
             tag: process.env.TRAVIS_TAG,
             commit,
@@ -1526,6 +1529,7 @@ function ciBuildInfo(): CiBuildInfo {
         const eventName = process.env.GITHUB_EVENT_NAME;
 
         return {
+            ci: "githubactions",
             branch,
             tag,
             commit,
