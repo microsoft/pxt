@@ -314,7 +314,6 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                         h.blobCurrent = false
                         h.saveId = null
                         data.invalidate("text:" + h.id)
-                        data.invalidate("pubconfig:" + h.id)
                     }
                     data.invalidate("header:" + h.id)
                     data.invalidate("header:*")
@@ -607,7 +606,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
         if (path == pxt.CONFIG_NAME)
-            data.content = await prepareConfigForPublishedAsync(data.content, !!options.createTag);
+            data.content = prepareConfigForGithub(data.content, !!options.createTag);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
             data.encoding = "base64";
@@ -807,7 +806,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     h.githubCurrent = false
 
-    let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
+    const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
 
     h.githubId = gitjson.repo
 
@@ -831,7 +830,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
             needsBlobs = true
         let content = files[k];
         if (k == pxt.CONFIG_NAME)
-            content = await prepareConfigForPublishedAsync(content);
+            content = prepareConfigForGithub(content);
         if (content && treeEnt.sha != gitsha(content)) {
             isCurrent = false
             continue
@@ -860,7 +859,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
 // replace all file|worspace references with github sha
 // createTag: determine if tags need to be enforced
-async function prepareConfigForPublishedAsync(content: string, createTag?: boolean) {
+export function prepareConfigForGithub(content: string, createTag?: boolean): string {
     // replace workspace: references with resolve github sha/tags.
     const cfg = pxt.Package.parseAndValidConfig(content);
     if (!cfg) return content;
@@ -869,30 +868,29 @@ async function prepareConfigForPublishedAsync(content: string, createTag?: boole
     delete (<any>cfg).installedVersion // cleanup old pxt.json files
     delete cfg.additionalFilePath
     delete cfg.additionalFilePaths
-    if (!cfg.targetVersions)
-        cfg.targetVersions = pxt.appTarget.versions;
+    delete cfg.targetVersions;
 
     // patch dependencies
     const localDependencies = Object.keys(cfg.dependencies)
         .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
     for (const d of localDependencies)
-        await resolveDependencyAsync(d);
+        resolveDependencyAsync(d);
 
     return pxt.Package.stringifyConfig(cfg);
 
-    async function resolveDependencyAsync(d: string) {
+    function resolveDependencyAsync(d: string) {
         const v = cfg.dependencies[d];
         const hid = v.substring(v.indexOf(':') + 1);
-        const hfiles = await getTextAsync(hid);
-        const gitjson = hfiles && pxt.Util.jsonTryParse(hfiles[GIT_JSON]) as pxt.github.GitJson;
-        if (gitjson && gitjson.commit) {
-            let branch = gitjson.commit.tag;
-            if (!branch && createTag)
+        const header = getHeader(hid);
+        if (!header.githubId) {
+            if (createTag)
+                U.userError(lf("Dependency{0} is a local project.", d))
+            // 
+        } else {
+            const gid = pxt.github.parseRepoId(header.githubId);
+            if (createTag && !/^v\d+/.test(gid.tag))
                 U.userError(lf("You need to create a release for {0}.", d))
-            // bind to master if not branch is specified
-            if (!branch)
-                branch = "master";
-            cfg.dependencies[d] = `${gitjson.repo.substring(0, gitjson.repo.indexOf('#'))}#${branch}`;
+            cfg.dependencies[d] = `github:${gid.fullName}#${gid.tag}`;
         }
     }
 }
@@ -1091,7 +1089,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             }
             data.invalidate("header:")
             data.invalidate("text:")
-            data.invalidate("pubconfig:")
             cloudsync.syncAsync().done() // sync in background
         })
         .then(() => impl.getSyncState ? impl.getSyncState() : null)
@@ -1192,18 +1189,3 @@ data.mountVirtualApi("text", {
             })
     },
 })
-
-/*
-    Publisheable configuration file.
-
-    In order to diff pxt.json, we must patch local workspace references to github sha/tags
-
-    pubconfig:<guid> - one file
-*/
-data.mountVirtualApi("pubconfig", {
-    getAsync: p => {
-        p = data.stripProtocol(p)
-        return getTextAsync(p)
-            .then(files => prepareConfigForPublishedAsync(files[pxt.CONFIG_NAME]))
-    }
-});

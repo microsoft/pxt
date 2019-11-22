@@ -773,13 +773,19 @@ ${content}
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const files = pkg.mainEditorPkg().sortedFiles();
         const diffFiles = files
-            .filter(p => p.name != pxt.CONFIG_NAME && p.baseGitContent != p.content)
-            .map<DiffFile>(p => { return { file: p, name: p.name, gitFile: p.baseGitContent, editorFile: p.content } });
-        // compute pxt.json
-        const { header } = this.props.parent.state;
-        const pxtJson = this.getData(`pubconfig:${header.id}`);
-        files.filter(p => pxtJson && p.name == pxt.CONFIG_NAME && p.baseGitContent != pxtJson)
-            .forEach(p => diffFiles.push({ file: p, name: p.name, gitFile: p.baseGitContent, editorFile: p.content }))
+            .map<DiffFile>(p => {
+                const c = p.publishedContent();
+                if (p.baseGitContent == c)
+                    return undefined;
+                else
+                    return {
+                        file: p,
+                        name: p.name,
+                        gitFile: p.baseGitContent,
+                        editorFile: c
+                    }
+            })
+            .filter(df => !!df);
         const needsCommit = diffFiles.length > 0;
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 

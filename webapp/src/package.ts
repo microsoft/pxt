@@ -120,6 +120,16 @@ export class File implements pxt.editor.IFile {
     setForceChangeCallback(callback: (from: string, to: string) => void) {
         this.forceChangeCallback = callback;
     }
+
+    /**
+     * Content prepared for github publishing
+     */
+    publishedContent(): string {
+        let c = this.content;
+        if (this.name == pxt.CONFIG_NAME)
+            c = workspace.prepareConfigForGithub(c);
+        return c;
+    }
 }
 
 export class EditorPackage {
@@ -638,7 +648,6 @@ data.mountVirtualApi("open-meta", {
 export interface PackageMeta {
     numErrors: number;
     diagnostics?: pxtc.KsDiagnostic[];
-    numFilesGitModified?: number;
 }
 
 /*
@@ -647,7 +656,7 @@ export interface PackageMeta {
 data.mountVirtualApi("open-pkg-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
+        const f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
         if (!f || f.getPkgId() == "built")
             return {}
 
@@ -665,9 +674,28 @@ data.mountVirtualApi("open-pkg-meta", {
             r.diagnostics = [];
             files.filter(f => !!f.diagnostics).forEach(f => r.diagnostics.concat(f.diagnostics));
         }
-        const hasGit = f.getPkgId() == "this" && !!(f.header && f.header.githubId)
-        if (hasGit)
-            r.numFilesGitModified = files.filter(f => f.baseGitContent != f.content).length;
+        return r;
+    }
+})
+
+export interface PackagetGitStatus {
+    modified?: boolean;
+}
+
+/*
+    git-status
+*/
+data.mountVirtualApi("pkg-git-status", {
+    getSync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
+        const r: PackagetGitStatus = {};
+        if (f) {
+            const files = f.sortedFiles();
+            const hasGit = f.getPkgId() == "this" && !!(f.header && f.header.githubId);
+            if (hasGit)
+                r.modified = !!files.find(f => f.baseGitContent != f.publishedContent());
+        }
         return r;
     }
 })
@@ -676,7 +704,7 @@ data.mountVirtualApi("open-pkg-meta", {
 data.mountVirtualApi("pkg-status", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
+        const ep = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
         if (ep)
             return ep.savingNow ? "saving" : ""
         return ""
