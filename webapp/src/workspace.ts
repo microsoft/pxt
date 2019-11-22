@@ -297,7 +297,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
     // check if we have dynamic boards, store board info for home page rendering
     if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
-        const pxtjson = ts.pxtc.Util.jsonTryParse(text["pxt.json"]) as pxt.PackageConfig;
+        const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME);
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
@@ -314,6 +314,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                         h.blobCurrent = false
                         h.saveId = null
                         data.invalidate("text:" + h.id)
+                        data.invalidate("pubconfig:" + h.id)
                     }
                     data.invalidate("header:" + h.id)
                     data.invalidate("header:*")
@@ -1090,6 +1091,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             }
             data.invalidate("header:")
             data.invalidate("text:")
+            data.invalidate("pubconfig:")
             cloudsync.syncAsync().done() // sync in background
         })
         .then(() => impl.getSyncState ? impl.getSyncState() : null)
@@ -1194,7 +1196,7 @@ data.mountVirtualApi("text", {
 /*
     Publisheable configuration file
 
-    diff:<guid>/<filename> - one file
+    pubconfig:<guid> - one file
 */
 data.mountVirtualApi("pubconfig", {
     getAsync: p => {
