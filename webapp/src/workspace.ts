@@ -606,7 +606,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
             encoding: "utf-8"
         } as pxt.github.CreateBlobReq;
         if (path == pxt.CONFIG_NAME)
-            data.content = await prepareConfigForPublished(data.content, !!options.createTag);
+            data.content = await prepareConfigForPublishedAsync(data.content, !!options.createTag);
         const m = /^data:([^;]+);base64,/.exec(content);
         if (m) {
             data.encoding = "base64";
@@ -830,7 +830,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
             needsBlobs = true
         let content = files[k];
         if (k == pxt.CONFIG_NAME)
-            content = await prepareConfigForPublished(content);
+            content = await prepareConfigForPublishedAsync(content);
         if (content && treeEnt.sha != gitsha(content)) {
             isCurrent = false
             continue
@@ -859,7 +859,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
 // replace all file|worspace references with github sha
 // createTag: determine if tags need to be enforced
-async function prepareConfigForPublished(content: string, createTag?: boolean) {
+async function prepareConfigForPublishedAsync(content: string, createTag?: boolean) {
     // replace workspace: references with resolve github sha/tags.
     const cfg = pxt.Package.parseAndValidConfig(content);
     if (!cfg) return content;
@@ -873,7 +873,7 @@ async function prepareConfigForPublished(content: string, createTag?: boolean) {
 
     // patch dependencies
     const localDependencies = Object.keys(cfg.dependencies)
-    .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
+        .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
     for (const d of localDependencies)
         await resolveDependencyAsync(d);
 
@@ -1190,3 +1190,15 @@ data.mountVirtualApi("text", {
             })
     },
 })
+
+/*
+    Publisheable configuration file
+
+    diff:<guid>/<filename> - one file
+*/
+data.mountVirtualApi("pubconfig", {
+    getAsync: p => {
+        return getTextAsync(p)
+            .then(files => prepareConfigForPublishedAsync(files[pxt.CONFIG_NAME]))
+    }
+});

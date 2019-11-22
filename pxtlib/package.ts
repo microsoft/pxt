@@ -115,6 +115,11 @@ namespace pxt {
             return this.host().readFile(this, fn)
         }
 
+        readGitJson(): pxt.github.GitJson {
+            const gitJsonText = this.readFile(pxt.github.GIT_JSON);
+            return pxt.Util.jsonTryParse(gitJsonText) as pxt.github.GitJson;
+        }
+
         resolveDep(id: string) {
             if (this.parent.deps.hasOwnProperty(id))
                 return this.parent.deps[id];
@@ -924,9 +929,9 @@ namespace pxt {
                 if (!v || /^(file|workspace):/.test(v)) {
                     v = "*"
                     try {
-                        let d = this.resolveDep(k)
-                        let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
-                        if (gitjson.repo) {
+                        const d = this.resolveDep(k)
+                        const gitjson = d.readGitJson();
+                        if (gitjson && gitjson.repo) {
                             let parsed = pxt.github.parseRepoId(gitjson.repo)
                             parsed.tag = gitjson.commit.tag || gitjson.commit.sha
                             v = pxt.github.stringifyRepo(parsed)
