@@ -919,12 +919,12 @@ namespace pxt {
                 })
         }
 
-        private prepareConfigToBePublish(): pxt.PackageConfig {
+        private prepareConfigToBePublished(): pxt.PackageConfig {
             const cfg = U.clone(this.config)
             delete (<any>cfg).installedVersion // cleanup old pxt.json files
             delete cfg.additionalFilePath
             delete cfg.additionalFilePaths
-            if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
+            if (!cfg.targetVersions) cfg.targetVersions = Util.clone(pxt.appTarget.versions);
             U.iterMap(cfg.dependencies, (k, v) => {
                 if (!v || /^(file|workspace):/.test(v)) {
                     v = "*"
@@ -949,7 +949,7 @@ namespace pxt {
                 .then(() => {
                     if (!allowPrivate && !this.config.public)
                         U.userError('Only packages with "public":true can be published')
-                    const cfg = this.prepareConfigToBePublish();
+                    const cfg = this.prepareConfigToBePublished();
                     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
                         // already stored
