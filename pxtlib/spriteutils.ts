@@ -268,8 +268,8 @@ namespace pxt.sprite {
     }
 
     function decodeTileset(tileset: string) {
-        tileset = tileset.replace(/[\[\]\s]/g, "");
-        return tileset ? tileset.split(",").map(t => decodeTile(t)) : [];
+        tileset = tileset.replace(/[\[\]]/g, "");
+        return tileset ? tileset.split(",").filter(t => !!t.trim()).map(t => decodeTile(t)) : [];
     }
 
     function encodeTile(tile: TileInfo, fileType: "typescript" | "python") {

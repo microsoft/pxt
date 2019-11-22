@@ -35,4 +35,5 @@ export const dispatchChangeTilePalettePage = (page: number) => ({ type: actions.
 export const dispatchChangeDrawingMode = (drawingMode: TileDrawingMode) => ({ type: actions.CHANGE_DRAWING_MODE, drawingMode });
 export const dispatchCreateNewTile = (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => ({ type: actions.CREATE_NEW_TILE, bitmap, foreground, background, qualifiedName });
 export const dispatchSetGalleryOpen = (open: boolean) => ({ type: actions.SET_GALLERY_OPEN, open })
-export const dispatchSetTileEditorOpen = (open: boolean) => ({ type: actions.SET_TILE_EDITOR_OPEN, open })
+export const dispatchOpenTileEditor = (editIndex?: number) => ({ type: actions.OPEN_TILE_EDITOR, index: editIndex })
+export const dispatchCloseTileEditor = (result?: pxt.sprite.BitmapData, index?: number) => ({ type: actions.CLOSE_TILE_EDITOR, result, index })

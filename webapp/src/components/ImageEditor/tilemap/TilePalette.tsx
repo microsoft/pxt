@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchSetTileEditorOpen } from '../actions/dispatch';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
@@ -28,7 +28,7 @@ export interface TilePaletteProps {
     dispatchChangeDrawingMode: (drawingMode: TileDrawingMode) => void;
     dispatchCreateNewTile: (bitmap: pxt.sprite.BitmapData, foreground: number, background: number, qualifiedName?: string) => void;
     dispatchSetGalleryOpen: (open: boolean) => void;
-    dispatchSetTileEditorOpen: (open: boolean) => void;
+    dispatchOpenTileEditor: (editIndex?: number) => void;
 }
 
 /**
@@ -175,7 +175,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         else {
             this.categoryTiles = tileset.tiles
                 .map((t, i) => ([t, i] as [pxt.sprite.TileInfo, number]))
-                .filter(([t]) => !t.qualifiedName)
+                .filter(([t]) => !t.qualifiedName && t.data)
                 .map(([t, i]) => ({ index: i, bitmap: t.data }));
         }
     }
@@ -240,19 +240,27 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected tileCreateHandler = () => {
-        this.props.dispatchSetTileEditorOpen(true);
+        this.props.dispatchOpenTileEditor();
     }
 
     protected tileEditHandler = () => {
+        const { tileset, selected, dispatchOpenTileEditor } = this.props;
 
+        if (!tileset.tiles[selected] || tileset.tiles[selected].qualifiedName || selected === 0) return;
+
+        dispatchOpenTileEditor(selected);
     }
 
     protected tileDuplicateHandler = () => {
+        const { tileset, selected, backgroundColor, dispatchCreateNewTile } = this.props;
 
+        if (!tileset.tiles[selected] || tileset.tiles[selected].qualifiedName || selected === 0) return;
+
+        dispatchCreateNewTile(tileset.tiles[selected].data, tileset.tiles.length, backgroundColor);
     }
 
     protected tileDeleteHandler = () => {
-
+        // TODO
     }
 
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
@@ -392,7 +400,7 @@ const mapDispatchToProps = {
     dispatchChangeDrawingMode,
     dispatchCreateNewTile,
     dispatchSetGalleryOpen,
-    dispatchSetTileEditorOpen
+    dispatchOpenTileEditor
 };
 
 

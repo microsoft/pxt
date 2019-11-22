@@ -43,18 +43,12 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
                 </div>
             </div>
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} />
+                <ImageEditor ref="image-editor" singleFrame={this.props.singleFrame} onDoneClicked={this.onDoneClick} />
                 <ImageEditorGallery
                     items={this.blocksInfo && getGalleryItems(this.blocksInfo, "Image")}
                     hidden={!this.state.galleryVisible}
                     filterString={this.state.galleryFilter}
                     onItemSelected={this.onGalleryItemSelect} />
-                {!this.state.galleryVisible && <button
-                    className={`image-editor-confirm ui small button ${this.props.singleFrame ? "" : "animation"}`}
-                    title={lf("Done")}
-                    onClick={this.onDoneClick}>
-                        {lf("Done")}
-                </button>}
             </div>
         </div>
     }

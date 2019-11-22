@@ -31,13 +31,7 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
     render() {
         return <div className="image-editor-wrapper">
             <div className="image-editor-gallery-content">
-                <ImageEditor ref="image-editor" singleFrame={true} />
-                {!this.state.galleryVisible && <button
-                    className={`image-editor-confirm ui small button`}
-                    title={lf("Done")}
-                    onClick={this.onDoneClick}>
-                        {lf("Done")}
-                </button>}
+                <ImageEditor ref="image-editor" singleFrame={true} onDoneClicked={this.onDoneClick} />
             </div>
         </div>
     }

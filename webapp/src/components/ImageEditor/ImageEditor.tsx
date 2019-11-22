@@ -10,8 +10,8 @@ import { ImageCanvas } from './ImageCanvas';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap } from './actions/dispatch';
-import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCreateNewTile, dispatchOpenTileEditor, dispatchCloseTileEditor } from './actions/dispatch';
+import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore, TileEditContext } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap } from './util';
 import { Unsubscribe } from 'redux';
 
@@ -25,10 +25,12 @@ export interface ImageEditorProps {
     onChange?: (value: string) => void;
     initialValue?: string;
     store?: Store<ImageEditorStore>;
+    onDoneClicked?: (value: string) => void;
 }
 
 export interface ImageEditorState {
     editingTile: boolean;
+    editTileValue?: string;
 }
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> {
@@ -37,7 +39,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     constructor(props: ImageEditorProps) {
         super(props);
 
-        this.state = { editingTile: false};
+        this.state = { editingTile: false };
     }
 
     componentDidMount() {
@@ -64,6 +66,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         const { singleFrame } = this.props;
         const instanceStore = this.getStore()
 
+        const { editTileValue, editingTile } = this.state;
+
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
                 <div className="image-editor">
@@ -76,7 +80,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     <BottomBar singleFrame={singleFrame} />
                 </div>
             </Provider>
-            { this.state.editingTile && <ImageEditor store={tileEditorStore} /> }
+            { editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} /> }
+            { !editingTile && this.props.onDoneClicked && <button
+                className={`image-editor-confirm ui small button`}
+                title={lf("Done")}
+                onClick={this.onDoneClick}>
+                    {lf("Done")}
+                </button>
+            }
         </div>
     }
 
@@ -148,8 +159,56 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             this.props.onChange(this.props.singleFrame ? this.getCurrentFrame() : this.getAllFrames())
         }
 
-        if (!!(this.getStore().getState().editingTile) != this.state.editingTile) {
-            this.setState({ editingTile: !this.state.editingTile });
+        const state = this.getStore().getState()
+
+        if (!!state.editor.editingTile != !!this.state.editingTile) {
+            if (state.editor.editingTile) {
+                const index = state.editor.editingTile.tilesetIndex;
+
+                if (index) {
+                    const tile = (state.store.present as TilemapState).tileset.tiles[index];
+                    this.setState({
+                        editingTile: true,
+                        editTileValue: pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(tile.data), "typescript")
+                    });
+                }
+                else {
+                    this.setState({
+                        editingTile: true
+                    });
+                }
+            }
+            else {
+                this.setState({
+                    editingTile: false
+                });
+            }
         }
+    }
+
+    protected onDoneClick = () => {
+        if (this.props.onDoneClicked) {
+            let value: string;
+
+            if (this.getStore().getState().editor.isTilemap) {
+                value = this.getTilemap();
+            }
+            else if (this.props.singleFrame) {
+                value = this.getCurrentFrame();
+            }
+            else {
+                value = this.getAllFrames();
+            }
+
+            this.props.onDoneClicked(value);
+        }
+    }
+
+    protected onTileEditorFinished = (tile: string) => {
+        const parsed = pxt.sprite.imageLiteralToBitmap(tile);
+        const store = this.getStore();
+        const tileEditState = store.getState().editor.editingTile;
+
+        store.dispatch(dispatchCloseTileEditor(parsed.data(), tileEditState.tilesetIndex));
     }
 }

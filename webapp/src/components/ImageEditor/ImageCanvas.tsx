@@ -467,6 +467,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         let index: number;
         let tileImage: HTMLCanvasElement;
 
+        this.tileCache = [];
+
         context.imageSmoothingEnabled = false;
         for (let x = 0; x < tilemap.width; x++) {
             for (let y = 0; y < tilemap.height; y++) {

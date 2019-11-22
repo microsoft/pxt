@@ -72,6 +72,7 @@ export interface EditorState {
     drawingMode?: TileDrawingMode;
     tileGallery?: GalleryTile[];
     tileGalleryOpen?: boolean;
+    editingTile?: TileEditContext;
 }
 
 export interface GalleryTile {
@@ -90,8 +91,11 @@ export interface ImageEditorStore {
     store: EditorStore;
 
     editor: EditorState;
+}
 
-    editingTile?: boolean;
+export interface TileEditContext {
+    type: "new" | "edit";
+    tilesetIndex: number;
 }
 
 export interface EditorStore {
@@ -156,8 +160,7 @@ const initialStore: ImageEditorStore = {
 
 const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageEditorStore => {
     switch (action.type) {
-        case actions.SET_TILE_EDITOR_OPEN:
-            return { ...state, editingTile: action.open };
+        case actions.OPEN_TILE_EDITOR:
         case actions.CHANGE_PREVIEW_ANIMATING:
         case actions.CHANGE_CANVAS_ZOOM:
         case actions.CHANGE_IMAGE_TOOL:
@@ -445,6 +448,21 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
         case actions.SET_GALLERY_OPEN:
             tickEvent(`set-gallery-open-${action.open}`);
             return { ...state, tileGalleryOpen: action.open }
+        case actions.OPEN_TILE_EDITOR:
+            const editType = action.index ? "edit" : "new";
+            tickEvent(`open-tile-editor-${editType}`);
+            return {
+                ...state,
+                editingTile: {
+                    type: editType,
+                    tilesetIndex: action.index
+                }
+            };
+        case actions.CLOSE_TILE_EDITOR:
+            return {
+                ...state,
+                editingTile: undefined
+            };
     }
     return state;
 }
@@ -471,6 +489,28 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                 tileset: {
                     ...state.tileset,
                     tiles: [...state.tileset.tiles, { data: action.bitmap, qualifiedName: action.qualifiedName }]
+                }
+            }
+        case actions.CLOSE_TILE_EDITOR:
+            tickEvent("close-tile-editor");
+            if (!action.result) return state;
+            else if (action.index) {
+                return {
+                    ...state,
+                    tileset: {
+                        ...state.tileset,
+                        tiles: state.tileset.tiles
+                            .map((value, index) => index === action.index ? { data: action.result } : value)
+                    }
+                }
+            }
+            else {
+                return {
+                    ...state,
+                    tileset: {
+                        ...state.tileset,
+                        tiles: [...state.tileset.tiles, { data: action.result }]
+                    }
                 }
             }
         case actions.IMAGE_EDIT:
