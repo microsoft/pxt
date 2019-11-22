@@ -1336,7 +1336,7 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = attributes.imageLiteralColumns || attributes.imageLiteral * 5;
+            const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
             const nr = attributes.imageLiteralRows || 5;
             if (nc * nr != leds.length) {
                 error(node, Util.lf("Invalid image pattern"));
