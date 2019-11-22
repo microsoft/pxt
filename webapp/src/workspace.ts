@@ -314,6 +314,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                         h.blobCurrent = false
                         h.saveId = null
                         data.invalidate("text:" + h.id)
+                        data.invalidate("pkg-git-status:" + h.id)
                     }
                     data.invalidate("header:" + h.id)
                     data.invalidate("header:*")
@@ -823,7 +824,6 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 
 // to be called after loading header in a editor
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
-    data.invalidate("pkg-git-status:" + h.id);
     h.githubCurrent = false
 
     const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -1109,6 +1109,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             }
             data.invalidate("header:")
             data.invalidate("text:")
+            data.invalidate("pkg-git-status:")
             cloudsync.syncAsync().done() // sync in background
         })
         .then(() => impl.getSyncState ? impl.getSyncState() : null)
