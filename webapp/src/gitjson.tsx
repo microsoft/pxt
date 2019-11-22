@@ -462,7 +462,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             cache = { file: f } as any
             this.diffCache[f.name] = cache
         }
-        if (cache.file.gitFile == f.gitFile && cache.file.editorFile == f.editorFile)
+        if (cache.diff && cache.file.gitFile == f.gitFile && cache.file.editorFile == f.editorFile)
             return cache.diff
 
         const isBlocks = /\.blocks$/.test(f.name)
@@ -776,7 +776,8 @@ ${content}
             .filter(p => p.name != pxt.CONFIG_NAME && p.baseGitContent != p.content)
             .map<DiffFile>(p => { return { file: p, name: p.name, gitFile: p.baseGitContent, editorFile: p.content } });
         // compute pxt.json
-        const pxtJson = this.getData(`pubconfig:${pkg.mainEditorPkg().id}`);
+        const { header } = this.props.parent.state;
+        const pxtJson = this.getData(`pubconfig:${header.id}`);
         files.filter(p => pxtJson && p.name == pxt.CONFIG_NAME && p.baseGitContent != pxtJson)
             .forEach(p => diffFiles.push({ file: p, name: p.name, gitFile: p.baseGitContent, editorFile: p.content }))
         const needsCommit = diffFiles.length > 0;

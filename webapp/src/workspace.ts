@@ -297,7 +297,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
     // check if we have dynamic boards, store board info for home page rendering
     if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
-        const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME);
+        const pxtjson = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
                 .filter(p => !!pxt.bundledSvg(p))[0];
@@ -1183,7 +1183,7 @@ data.mountVirtualApi("headers", {
 */
 data.mountVirtualApi("text", {
     getAsync: p => {
-        let m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
+        const m = /^[\w\-]+:([^\/]+)(\/(.*))?/.exec(p)
         return getTextAsync(m[1])
             .then(files => {
                 if (m[3])
@@ -1194,12 +1194,15 @@ data.mountVirtualApi("text", {
 })
 
 /*
-    Publisheable configuration file
+    Publisheable configuration file.
+
+    In order to diff pxt.json, we must patch local workspace references to github sha/tags
 
     pubconfig:<guid> - one file
 */
 data.mountVirtualApi("pubconfig", {
     getAsync: p => {
+        p = data.stripProtocol(p)
         return getTextAsync(p)
             .then(files => prepareConfigForPublishedAsync(files[pxt.CONFIG_NAME]))
     }
