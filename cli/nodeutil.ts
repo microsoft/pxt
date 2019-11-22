@@ -595,4 +595,11 @@ export function lazyRequire(name: string, install = false): any {
     /* tslint:enable:non-literal-require */
 }
 
+export function stringify(content: any) {
+    if (process.env["PXT_ENV"] === "production") {
+        return JSON.stringify(content);
+    }
+    return JSON.stringify(content, null, 4);
+}
+
 init();

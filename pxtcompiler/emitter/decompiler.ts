@@ -303,6 +303,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
+        generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>; // check variable declarations against those generated during block compilation
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
     }
@@ -1158,7 +1159,7 @@ ${output}</xml>`;
                         break;
                     case SK.VariableDeclaration:
                         const decl = node as ts.VariableDeclaration;
-                        if (isAutoDeclaration(decl)) {
+                        if (isAutoDeclaration(decl, env)) {
                             // Don't emit null or automatic initializers;
                             // They are implicit within the blocks. But do track them in case they
                             // never get used in the blocks (and thus won't be emitted again)
@@ -1167,7 +1168,7 @@ ${output}</xml>`;
                             getComments(parent || node);
                             return getNext();
                         }
-                        stmt = getVariableDeclarationStatement(node as ts.VariableDeclaration);
+                        stmt = getVariableDeclarationStatement(decl);
                         break;
                     case SK.WhileStatement:
                         stmt = getWhileStatement(node as ts.WhileStatement);
@@ -2149,7 +2150,7 @@ ${output}</xml>`;
             let text = ""
             let currentLine = ""
 
-            const isTopLevel = isTopLevelComment(node);
+            const isTopLevel = isTopLevelNode(node);
 
             for (const commentRange of commentRanges) {
                 let commentText = fileText.substr(commentRange.pos, commentRange.end - commentRange.pos)
@@ -2185,16 +2186,6 @@ ${output}</xml>`;
             text += currentLine
 
             return text.trim()
-
-            function isTopLevelComment(n: Node): boolean {
-                const [parent,] = getParent(n);
-                if (!parent || parent.kind == SK.SourceFile) return true;
-                // Expression statement
-                if (parent.kind == SK.ExpressionStatement) return isTopLevelComment(parent);
-                // Variable statement
-                if (parent.kind == SK.VariableDeclarationList) return isTopLevelComment(parent.parent);
-                return false;
-            }
 
             function appendMatch(line: string, lineno: number, lineslen: number, regex: RegExp) {
                 const match = regex.exec(line)
@@ -2411,20 +2402,20 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkVariableDeclaration(n: ts.VariableDeclaration, env: DecompilerEnv) {
-            let check: string;
-
+        function checkVariableDeclaration(n: ts.VariableDeclaration, env: DecompilerEnv): string | undefined {
             if (n.name.kind !== SK.Identifier) {
-                check = Util.lf("Variable declarations may not use binding patterns");
+                return Util.lf("Variable declarations may not use binding patterns");
             }
-            else if (!n.initializer) {
-                check = Util.lf("Variable declarations must have an initializer");
+            if (!n.initializer) {
+                return Util.lf("Variable declarations must have an initializer");
             }
-            else if (!isAutoDeclaration(n)) {
-                check = checkExpression(n.initializer, env);
+            if (isAutoDeclaration(n, env)) {
+                return undefined;
             }
-
-            return check;
+            if (n.type && isAdvancedType(n.type)) {
+                return Util.lf("Variable type is not supported by Blockly");
+            }
+            return checkExpression(n.initializer, env);
         }
 
         function checkVariableStatement(n: ts.VariableStatement, env: DecompilerEnv) {
@@ -2892,21 +2883,29 @@ ${output}</xml>`;
         return false;
     }
 
-    function isAutoDeclaration(decl: VariableDeclaration) {
+    function isAutoDeclaration(decl: VariableDeclaration, env: DecompilerEnv) {
         if (decl.initializer) {
-            if (decl.initializer.kind === SyntaxKind.NullKeyword || decl.initializer.kind === SyntaxKind.FalseKeyword || isDefaultArray(decl.initializer)) {
-                return true
+            if (isTopLevelNode(decl) && env.opts.generatedVarDeclarations) {
+                const varInfo = env.opts.generatedVarDeclarations[decl.name.getText()];
+                if (varInfo && varInfo.type === (decl.type === undefined ? undefined : decl.type.getText()) && varInfo.value === decl.initializer.getText()) {
+                    return true;
+                }
             }
-            else if (isStringOrNumericLiteral(decl.initializer)) {
-                const text = decl.initializer.getText();
-                return text === "0" || isEmptyString(text);
-            }
-            else {
-                const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
-                if (callInfo && callInfo.isAutoCreate)
-                    return true
+            const callInfo: pxtc.CallInfo = pxtc.pxtInfo(decl.initializer).callInfo
+            if (callInfo && callInfo.isAutoCreate) {
+                return true;
             }
         }
+        return false;
+    }
+
+    function isTopLevelNode(n: Node): boolean {
+        const [parent,] = getParent(n);
+        if (!parent || parent.kind == SK.SourceFile) return true;
+        // Expression statement
+        if (parent.kind == SK.ExpressionStatement) return isTopLevelNode(parent);
+        // Variable statement
+        if (parent.kind == SK.VariableDeclarationList) return isTopLevelNode(parent.parent);
         return false;
     }
 
@@ -2960,6 +2959,18 @@ ${output}</xml>`;
                 return false;
             }
             return true;
+        }
+    }
+
+    function isAdvancedType(n: TypeNode): boolean {
+        switch (n.kind) {
+            case SK.TupleType:
+            case SK.UnionType:
+            case SK.IntersectionType:
+            case SK.ParenthesizedType:
+                return true;
+            default:
+                return false;
         }
     }
 
