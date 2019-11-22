@@ -679,22 +679,24 @@ data.mountVirtualApi("open-pkg-meta", {
 })
 
 export interface PackagetGitStatus {
+    id?: string;
     modified?: boolean;
 }
 
 /*
-    git-status
+    pkg-git-status:<guid>
 */
 data.mountVirtualApi("pkg-git-status", {
     getSync: p => {
         p = data.stripProtocol(p)
-        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
         const r: PackagetGitStatus = {};
         if (f) {
-            const files = f.sortedFiles();
-            const hasGit = f.getPkgId() == "this" && !!(f.header && f.header.githubId);
-            if (hasGit)
+            r.id = f.getPkgId() == "this" && f.header && f.header.githubId;
+            if (r.id) {
+                const files = f.sortedFiles();
                 r.modified = !!files.find(f => f.baseGitContent != f.publishedContent());
+            }
         }
         return r;
     }

@@ -804,6 +804,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
 
 // to be called after loading header in a editor
 export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
+    data.invalidate("pkg-git-status:" + h.id);
     h.githubCurrent = false
 
     const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")

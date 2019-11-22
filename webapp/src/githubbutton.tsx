@@ -59,9 +59,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
                 onClick={this.createRepository} />
 
         // existing repo
-        //const targetTheme = pxt.appTarget.appTheme;
-        const mainPkg = pkg.mainEditorPkg()
-        const meta: pkg.PackagetGitStatus = this.getData("pkg-git-status:" + mainPkg.getPkgId());
+        const meta: pkg.PackagetGitStatus = this.getData("pkg-git-status:" + header.id);
         const modified = meta && !!meta.modified;
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
         const title = lf("Review and commit changes for {0}", repoName);
