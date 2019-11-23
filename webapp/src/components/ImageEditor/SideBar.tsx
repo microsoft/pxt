@@ -28,7 +28,7 @@ export class SideBarImpl extends React.Component<SideBarProps,{}> {
                     </div>
                 }
                 <div className="image-editor-tool-buttons">
-                    {tools.map(td =>
+                    {tools.filter(td => !td.hiddenTool).map(td =>
                         <IconButton
                             key={td.tool}
                             iconClass={td.iconClass}

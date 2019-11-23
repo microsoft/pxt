@@ -2,7 +2,8 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { ImageEditorStore, ImageEditorTool, AnimationState, TilemapState, TileDrawingMode } from './store/imageReducer';
-import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation } from "./actions/dispatch";
+import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation,
+    dispatchChangeImageTool, dispatchChangeSelectedColor, dispatchChangeBackgroundColor } from "./actions/dispatch";
 import { GestureTarget, ClientCoordinates, bindGestureEvents } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
@@ -12,6 +13,9 @@ export interface ImageCanvasProps {
     dispatchImageEdit: (state: pxt.sprite.ImageState) => void;
     dispatchChangeZoom: (zoom: number) => void;
     dispatchChangeCursorLocation: (loc: [number, number]) => void;
+    dispatchChangeImageTool: (tool: ImageEditorTool) => void;
+    dispatchChangeSelectedColor: (index: number) => void;
+    dispatchChangeBackgroundColor: (index: number) => void;
     selectedColor: number;
     backgroundColor: number;
     tool: ImageEditorTool;
@@ -67,6 +71,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected lastPanX: number;
     protected lastPanY: number;
+    protected lastTool: ImageEditorTool;
 
     protected tileCache: HTMLCanvasElement[] = [];
 
@@ -111,6 +116,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             if (!this.edit) this.updateCursorLocation(null);
         });
 
+        document.addEventListener("keydown", this.onKeyDown);
+        document.addEventListener("keyup", this.onKeyUp);
+
         const imageState = this.getImageState();
         this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
 
@@ -148,10 +156,17 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     componentWillUnmount() {
         this.tileCache = [];
+        document.removeEventListener("keydown", this.onKeyDown);
+        document.removeEventListener("keyup", this.onKeyUp);
     }
 
     onClick(coord: ClientCoordinates, isRightClick?: boolean): void {
         if (this.isPanning()) return;
+
+        if (this.isColorSelect()) {
+            this.selectCanvasColor(coord, isRightClick);
+            return;
+        }
 
         this.updateCursorLocation(coord);
 
@@ -167,6 +182,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.lastPanX = coord.clientX;
             this.lastPanY = coord.clientY;
             this.updateCursor(true, false);
+        } else if (this.isColorSelect()) {
+            this.selectCanvasColor(coord, isRightClick);
         }
         else {
             this.updateCursorLocation(coord);
@@ -204,6 +221,35 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 this.updateEdit(this.cursorLocation[0], this.cursorLocation[1]);
 
             this.commitEdit();
+        }
+    }
+
+    protected onKeyDown = (ev: KeyboardEvent): void => {
+        if (!ev.repeat) {
+            // hotkeys for switching temporarily between tools
+            this.lastTool = this.props.tool;
+            switch (ev.keyCode) {
+                // alt key to select color
+                case 18:
+                    this.props.dispatchChangeImageTool(ImageEditorTool.ColorSelect);
+                    ev.preventDefault();
+                    break;
+                // spacebar to pan
+                case 32:
+                    this.props.dispatchChangeImageTool(ImageEditorTool.Pan);
+                    break;
+                default:
+                    this.lastTool = null;
+            }
+            this.updateCursor(false, false);
+        }
+    }
+
+    protected onKeyUp = (ev: KeyboardEvent): void => {
+        if (this.lastTool != null) {
+            this.props.dispatchChangeImageTool(this.lastTool);
+            this.lastTool = null;
+            this.updateCursor(false, false);
         }
     }
 
@@ -353,7 +399,6 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 this.redrawFloatingLayer(this.editState);
 
                 if (this.cursorLocation && this.shouldDrawCursor()) {
-                    // TODO switch cursor for wall mode
                     this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, activeColor );
                 }
             }
@@ -596,6 +641,18 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected selectCanvasColor(coord: ClientCoordinates, isRightClick?: boolean) {
+        const outer = this.refs["canvas-bounds"] as HTMLDivElement;
+        const bounds = outer.getBoundingClientRect();
+        const { canvasX, canvasY } = this.clientToCanvas(coord.clientX, coord.clientY, bounds);
+        const color = this.editState.image.get(Math.floor(canvasX), Math.floor(canvasY));
+        if (isRightClick) {
+            this.props.dispatchChangeBackgroundColor(color);
+        } else {
+            this.props.dispatchChangeSelectedColor(color);
+        }
+    }
+
     protected cloneCanvasStyle(base: HTMLCanvasElement, target: HTMLCanvasElement) {
         target.style.position = base.style.position;
         target.style.width = base.style.width;
@@ -637,6 +694,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected isPanning() {
         return this.props.tool === ImageEditorTool.Pan;
+    }
+
+    protected isColorSelect() {
+        return this.props.tool === ImageEditorTool.ColorSelect;
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
@@ -698,7 +759,10 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
 const mapDispatchToProps = {
     dispatchImageEdit,
     dispatchChangeCursorLocation,
-    dispatchChangeZoom
+    dispatchChangeZoom,
+    dispatchChangeImageTool,
+    dispatchChangeSelectedColor,
+    dispatchChangeBackgroundColor
 };
 
 export const ImageCanvas = connect(mapStateToProps, mapDispatchToProps)(ImageCanvasImpl);

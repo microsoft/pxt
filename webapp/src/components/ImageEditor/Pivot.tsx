@@ -37,6 +37,7 @@ export class Pivot extends React.Component<PivotProps, PivotState> {
         return <div className="image-editor-pivot-outer">
             { options.map((option, index) =>
                 <div
+                    role="tab"
                     key={option.id}
                     className={`image-editor-pivot-option ${option === selectedOption ? "selected" : ""}`}
                     onClick={this.clickHandler(index)}>

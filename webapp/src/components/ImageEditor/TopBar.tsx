@@ -62,7 +62,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                     </div>
                 }
                 { isTilemap &&
-                    <Toggle initialValue={true} label={lf("Walls")} onChange={dispatchChangeOverlayEnabled} />
+                    <Toggle initialValue={true} label={lf("Show walls")} onChange={dispatchChangeOverlayEnabled} />
                 }
             </div>
         );
