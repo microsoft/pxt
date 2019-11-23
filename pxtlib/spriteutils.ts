@@ -17,10 +17,13 @@ namespace pxt.sprite {
 
     export interface ImageState {
         bitmap: BitmapData;
-        floatingLayer?: BitmapData;
+        overlayLayers?: BitmapData[];
+        floating?: {
+            bitmap: BitmapData;
+            overlayLayers: BitmapData[]
+        };
         layerOffsetX?: number;
         layerOffsetY?: number;
-        overlayLayers?: pxt.sprite.BitmapData[];
     }
 
     /**

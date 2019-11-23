@@ -30,11 +30,11 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
 
     redrawCanvas() {
         const { tilemap } = this.props;
-        let { bitmap, floatingLayer, layerOffsetX, layerOffsetY } = tilemap;
+        let { bitmap, floating, layerOffsetX, layerOffsetY } = tilemap;
 
         const context = this.canvas.getContext("2d");
         const image = pxt.sprite.Tilemap.fromData(bitmap);
-        const floatingImage = floatingLayer ? pxt.sprite.Tilemap.fromData(floatingLayer) : null;
+        const floatingImage = floating && floating.bitmap ? pxt.sprite.Tilemap.fromData(floating.bitmap) : null;
 
         this.canvas.width = image.width;
         this.canvas.height = image.height;

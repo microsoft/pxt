@@ -289,8 +289,8 @@ export interface Color { r: number, g: number, b: number, a?: number }
 
 export function imageStateToBitmap(state: pxt.sprite.ImageState) {
     const base = pxt.sprite.Bitmap.fromData(state.bitmap);
-    if (state.floatingLayer) {
-        const floating = pxt.sprite.Bitmap.fromData(state.floatingLayer)
+    if (state.floating && state.floating.bitmap) {
+        const floating = pxt.sprite.Bitmap.fromData(state.floating.bitmap);
         floating.x0 = state.layerOffsetX || 0;
         floating.y0 = state.layerOffsetY || 0;
 
@@ -302,8 +302,8 @@ export function imageStateToBitmap(state: pxt.sprite.ImageState) {
 
 export function imageStateToTilemap(state: pxt.sprite.ImageState) {
     const base = pxt.sprite.Tilemap.fromData(state.bitmap);
-    if (state.floatingLayer) {
-        const floating = pxt.sprite.Tilemap.fromData(state.floatingLayer)
+    if (state.floating && state.floating.bitmap) {
+        const floating = pxt.sprite.Tilemap.fromData(state.floating.bitmap);
         floating.x0 = state.layerOffsetX || 0;
         floating.y0 = state.layerOffsetY || 0;
 
