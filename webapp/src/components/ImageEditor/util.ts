@@ -312,3 +312,13 @@ export function imageStateToTilemap(state: pxt.sprite.ImageState) {
 
     return base;
 }
+
+export function applyBitmapData(bitmap: pxt.sprite.BitmapData, data: pxt.sprite.BitmapData, x0: number = 0, y0: number = 0): pxt.sprite.BitmapData {
+    if (!bitmap || !data) return bitmap;
+    const base = pxt.sprite.Bitmap.fromData(bitmap);
+    const layer = pxt.sprite.Bitmap.fromData(data);
+    layer.x0 = x0;
+    layer.y0 = y0;
+    base.apply(layer, true);
+    return base.data();
+}
