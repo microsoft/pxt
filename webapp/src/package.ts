@@ -690,7 +690,7 @@ data.mountVirtualApi("pkg-git-status", {
     getSync: p => {
         p = data.stripProtocol(p)
         const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
-        const r: PackagetGitStatus = {};
+        const r: PackageGitStatus = {};
         if (f) {
             r.id = f.getPkgId() == "this" && f.header && f.header.githubId;
             if (r.id) {
