@@ -678,7 +678,7 @@ data.mountVirtualApi("open-pkg-meta", {
     }
 })
 
-export interface PackagetGitStatus {
+export interface PackageGitStatus {
     id?: string;
     modified?: boolean;
 }
@@ -712,4 +712,3 @@ data.mountVirtualApi("pkg-status", {
         return ""
     },
 })
-
