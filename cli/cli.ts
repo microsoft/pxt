@@ -96,7 +96,15 @@ interface TargetPackageInfo {
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
-const targetJsPrefix = "var pxtTargetBundle = "
+const __targetJsPrefix = "var pxtTargetBundle = JSON.parse('"
+const __targetJsSuffix = "');\n"
+function targetConfigToJs(config: pxt.TargetBundle) {
+    return __targetJsPrefix + JSON.stringify(config) + __targetJsSuffix;
+}
+function jsToTargetConfigText(js: string) {
+    const json = js.substring(__targetJsPrefix.length, -__targetJsSuffix.length);
+    return json;
+}
 
 function reportDiagnostics(diagnostics: pxtc.KsDiagnostic[]): void {
     for (const diagnostic of diagnostics) {
@@ -1043,7 +1051,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                     }
                 } else if (fileName == "target.json" || fileName == "target.js") {
                     let isJs = fileName == "target.js"
-                    if (isJs) content = content.slice(targetJsPrefix.length)
+                    if (isJs) content = jsToTargetConfigText(content)
                     let trg: pxt.TargetBundle = JSON.parse(content)
                     if (opts.localDir) {
                         for (let e of trg.appTheme.docMenu)
@@ -1059,7 +1067,7 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (/^\//.test(config.icon)) config.icon = opts.localDir + "docs" + config.icon;
                             res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
                         })
-                        data = Buffer.from((isJs ? targetJsPrefix : '') + nodeutil.stringify(trg), "utf8")
+                        data = Buffer.from(isJs ? targetConfigToJs(trg) : nodeutil.stringify(trg), "utf8")
                     } else {
                         if (trg.simulator
                             && trg.simulator.boardDefinition
@@ -1078,9 +1086,10 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (config.icon) config.icon = uploadArtFile(config.icon);
                             res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
                         })
-                        content = nodeutil.stringify(trg);
                         if (isJs)
-                            content = targetJsPrefix + content
+                            content = targetConfigToJs(trg);
+                        else
+                            content = nodeutil.stringify(trg);
                     }
                 }
             } else {
@@ -2115,7 +2124,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             const webmanifest = buildWebManifest(cfg)
             const targetjson = nodeutil.stringify(cfg)
             nodeutil.writeFileSync("built/target.json", targetjson)
-            nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
+            nodeutil.writeFileSync("built/target.js", targetConfigToJs(cfg))
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs;
