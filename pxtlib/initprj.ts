@@ -53,7 +53,7 @@ ${lf("To edit this repository in MakeCode.")}
 
 ${lf("This section shows the blocks code from the last commit in master.")}
 
-![${lf("A rendered view of the blocks")}](https://raw.github.com/@REPO@/blob/master/.makecode/blocks.png)
+![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.makecode/blocks.png)
 
 ## ${lf("Supported targets")}
 
