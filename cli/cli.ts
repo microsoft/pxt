@@ -96,11 +96,12 @@ interface TargetPackageInfo {
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
-const __targetJsPrefix = "var pxtTargetBundle = JSON.parse('"
-const __targetJsSuffix = "');\n"
+const __targetJsPrefix = "var pxtTargetBundle = JSON.parse("
+const __targetJsSuffix = ");\n"
 function targetConfigToJs(config: pxt.TargetBundle) {
-    return __targetJsPrefix + JSON.stringify(config) + __targetJsSuffix;
+    return __targetJsPrefix + JSON.stringify(JSON.stringify(config)) + __targetJsSuffix;
 }
+
 function jsToTargetConfigText(js: string) {
     const json = js.substring(__targetJsPrefix.length, -__targetJsSuffix.length);
     return json;
