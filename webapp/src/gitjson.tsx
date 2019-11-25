@@ -228,6 +228,14 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     async bumpAsync() {
+        // check all dependencies are ok
+        try {
+            workspace.prepareConfigForGithub(pkg.mainPkg.readFile(pxt.CONFIG_NAME), true);
+        } catch (e) {
+            core.warningNotification(e.message);
+            return;
+        }
+
         const v = pxt.semver.parse(pkg.mainPkg.config.version || "0.0.0")
         const vmajor = pxt.semver.parse(pxt.semver.stringify(v)); vmajor.major++; vmajor.minor = 0; vmajor.patch = 0;
         const vminor = pxt.semver.parse(pxt.semver.stringify(v)); vminor.minor++; vminor.patch = 0;

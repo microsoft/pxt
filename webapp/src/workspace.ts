@@ -832,7 +832,8 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
     const gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
 
-    h.githubId = gitjson.repo
+    h.githubId = gitjson && gitjson.repo
+    h.githubTag = gitjson && gitjson.commit && gitjson.commit.tag
 
     if (!h.githubId)
         return
@@ -908,13 +909,14 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
         const header = getHeader(hid);
         if (!header.githubId) {
             if (createTag)
-                U.userError(lf("Dependency{0} is a local project.", d))
+                U.userError(lf("Dependency {0} is a local project.", d))
             // 
         } else {
             const gid = pxt.github.parseRepoId(header.githubId);
-            if (createTag && !/^v\d+/.test(gid.tag))
-                U.userError(lf("You need to create a release for {0}.", d))
-            cfg.dependencies[d] = `github:${gid.fullName}#${gid.tag}`;
+            if (createTag && !/^v\d+/.test(header.githubTag))
+                U.userError(lf("You need to create a release for dependency {0}.", d))
+            const tag = header.githubTag || gid.tag;
+            cfg.dependencies[d] = `github:${gid.fullName}#${tag}`;
         }
     }
 }
