@@ -1339,8 +1339,9 @@ ${output}</xml>`;
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
             const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
             const nr = attributes.imageLiteralRows || 5;
-            if (nc * nr != leds.length) {
-                error(node, Util.lf("Invalid image pattern"));
+            const nleds = nc * nr;
+            if (nleds != leds.length) {
+                error(node, Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length));
                 return undefined;
             }
             let ledString = '';
@@ -2500,8 +2501,9 @@ ${output}</xml>`;
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
                 const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+                const nleds = nc * nr;
                 if (nc * nr != leds.length) {
-                    return Util.lf("Invalid image pattern");
+                    return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
                 }
                 return undefined;
             }
