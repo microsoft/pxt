@@ -90,9 +90,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (!branchName)
             return
 
-        this.showLoading(lf("creating branch..."));
+        this.showLoading("github.branch", true, lf("creating branch..."));
         try {
-            await cloudsync.ensureGitHubTokenAsync();
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
             await this.switchToBranchAsync(branchName)
@@ -178,6 +177,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
+            hideCancel: true,
+            hasCloseIcon: true,
+            helpUrl: "/github/forks",
             body: pref +
                 lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
                     parsed.fullName),
@@ -187,8 +189,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (!res)
             return
 
-        pxt.tickEvent("github.fork")
-        this.showLoading(lf("forking repository (this may take a minute or two)..."))
+        this.showLoading("github.fork", true, lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
@@ -285,7 +286,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         else if (bumpType == "minor")
             newv = vminor;
         const newVer = pxt.semver.stringify(newv)
-        this.showLoading(lf("creating release..."));
+        this.showLoading("github.release.new", true, lf("creating release..."));
         try {
             const { header } = this.props.parent.state;
             await workspace.bumpAsync(header, newVer)
@@ -300,7 +301,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async showLoading(msg: string) {
+    private async showLoading(tick: string, ensureToken: boolean, msg: string) {
+        if (ensureToken)
+            await cloudsync.ensureGitHubTokenAsync();
+        pxt.tickEvent(tick);
         await this.setStateAsync({ loadingMessage: msg });
         core.showLoading("githubjson", msg);
     }
@@ -336,7 +340,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async pullAsync() {
-        this.showLoading(lf("pulling changes from GitHub..."));
+        this.showLoading("github.pull", false, lf("pulling changes from GitHub..."));
         try {
             this.setState({ needsPull: undefined });
             const status = await workspace.pullAsync(this.props.parent.state.header)
@@ -418,7 +422,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async commitAsync() {
         this.setState({ needsCommitMessage: false });
-        this.showLoading(lf("commit and push changes to GitHub..."));
+        this.showLoading("github.commit", true, lf("commit & push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
