@@ -13,7 +13,9 @@ export interface ImageFieldEditorState {
     galleryFilter?: string;
 }
 
-export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent {
+export type ImageType = pxt.sprite.Bitmap | pxt.sprite.ImageState;
+
+export class ImageFieldEditor<U extends ImageType> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
@@ -60,13 +62,13 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         tickImageEditorEvent("image-editor-hidden");
     }
 
-    init(value: string, close: () => void, options?: any) {
+    init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
         if (this.props.singleFrame) {
-            this.initSingleFrame(value, options);
+            this.initSingleFrame(value as pxt.sprite.Bitmap, options);
         }
         else {
-            this.initAnimation(value, options);
+            this.initAnimation(value as any, options);
         }
 
         if (options) {
@@ -82,9 +84,9 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
 
     getValue() {
         if (this.ref) {
-            return this.props.singleFrame ? this.ref.getCurrentFrame() : (this.ref.getAllFrames() + this.ref.getInterval());
+            return (this.props.singleFrame ? this.ref.getCurrentFrame() : this.ref.getAnimation()) as U;
         }
-        return "";
+        return null;
     }
 
     getPersistentData() {
@@ -107,27 +109,21 @@ export class ImageFieldEditor extends React.Component<ImageFieldEditorProps, Ima
         }
     }
 
-    protected initSingleFrame(value: string, options?: any) {
-        let bitmap = pxt.sprite.imageLiteralToBitmap(value);
+    protected initSingleFrame(value: pxt.sprite.Bitmap, options?: any) {
 
-        if (bitmap.width === 0 || bitmap.height === 0) {
-            bitmap = new pxt.sprite.Bitmap(options.initWidth || 16, options.initHeight || 16)
-        }
 
-        this.ref.initSingleFrame(bitmap);
+        this.ref.initSingleFrame(value);
     }
 
-    protected initAnimation(value: string, options?: any) {
-        const frameString = value.substring(0, value.lastIndexOf("]") + 1);
-        const intervalString = value.substring(frameString.length);
-
-        let frames = parseImageArrayString(frameString);
-
-        if (!frames || !frames.length || frames[0].width === 0 && frames[0].height === 0) {
-            frames = [new pxt.sprite.Bitmap(options.initWidth || 16, options.initHeight || 16)];
+    protected initAnimation(value: pxt.sprite.AnimationData, options?: any) {
+        if (!value) {
+            value = {
+                frames: [new pxt.sprite.Bitmap(16, 16).data()],
+                interval: 100
+            };
         }
 
-        this.ref.initAnimation(frames, Number(intervalString));
+        this.ref.initAnimation(value.frames.map(b => pxt.sprite.Bitmap.fromData(b)), value.interval);
     }
 
     protected toggleGallery = () => {

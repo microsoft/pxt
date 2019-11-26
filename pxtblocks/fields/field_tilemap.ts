@@ -70,7 +70,7 @@ namespace pxtblockly {
 
         showEditor_() {
             (this.params as any).blocksInfo = this.blocksInfo;
-            const fv = pxt.react.getFieldEditorView("tilemap-editor", this.getValue(), this.params);
+            const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
             if (this.undoRedoState) {
                 fv.restorePersistentData(this.undoRedoState);
@@ -82,7 +82,18 @@ namespace pxtblockly {
                 if (result) {
                     const old = this.getValue();
 
-                    this.state = pxt.sprite.decodeTilemap(result, "typescript");
+                    this.state = result;
+
+                    // Save the tileset to the workspace
+                    this.updateWorkspaceTiles(this.state.tileset);
+
+                    // Delete the image literals froms the tileset (they will be emitted elsewhere)
+                    for (const tile of this.state.tileset.tiles) {
+                        if (tile.projectId && tile.data) {
+                            delete tile.data;
+                        }
+                    }
+
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();
@@ -159,6 +170,69 @@ namespace pxtblockly {
                 );
             }
         }
+
+        protected updateWorkspaceTiles(tileset: pxt.sprite.TileSet) {
+            const ws = this.sourceBlock_.workspace;
+            const existing = getAllTilesetTiles(ws);
+            const newtiles = tileset.tiles;
+
+            const deleted: pxt.sprite.TileInfo[] = [];
+
+            existing.filter(e => !!e.projectId).forEach(old => {
+                if (!newtiles.some(e => e.projectId === old.projectId)) {
+                    deleted.push(old)
+                }
+            });
+
+            Blockly.Events.setGroup(true);
+
+            if (deleted.length) {
+                const allRefs = getAllBlocksWithTilemaps(ws);
+
+                for (const old of deleted) {
+                    deleteTilesetTileIfExists(ws, old);
+
+                    for (const ref of allRefs) {
+                        if (!ref.parsed) {
+                            const existing = ref.block.getFieldValue(ref.field);
+                            ref.parsed = pxt.sprite.decodeTilemap(existing, "typescript");
+                        }
+
+                        const index = ref.parsed.tileset.tiles.findIndex(t => t.projectId === old.projectId);
+
+                        if (index != -1) {
+                            ref.parsed.tileset.tiles.splice(index, 1);
+                            deleteTile(index, ref.parsed.tilemap);
+                        }
+                    }
+                }
+
+                for (const ref of allRefs) {
+                    if (ref.parsed) {
+                        ref.block.setFieldValue(pxt.sprite.encodeTilemap(ref.parsed, "typescript"), ref.field);
+                    }
+                }
+            }
+
+            newtiles.filter(t => t.projectId !== undefined)
+                .forEach(tile => saveTilesetTile(ws, tile));
+
+            Blockly.Events.setGroup(false);
+        }
+
+        protected restoreTilesFromWorkspace(tileset: pxt.sprite.TileSet) {
+            const all = getAllTilesetTiles(this.sourceBlock_.workspace);
+
+            for (const t of tileset.tiles) {
+                if (t.projectId) {
+                    const projectTile = all.find(pt => pt.projectId === t.projectId);
+
+                    if (projectTile) {
+                        t.data = projectTile.data;
+                    }
+                }
+            }
+        }
     }
 
     function parseFieldOptions(opts: FieldTilemapOptions) {
@@ -186,6 +260,53 @@ namespace pxtblockly {
                 return def;
             }
             return res;
+        }
+    }
+
+    interface TilemapReference {
+        block: Blockly.Block;
+        field: string;
+        parsed?: pxt.sprite.TilemapData;
+    }
+
+    function getAllBlocksWithTilemaps(ws: Blockly.Workspace): TilemapReference[] {
+        const result: TilemapReference[] = [];
+
+        const top = ws.getTopBlocks(false);
+        top.forEach(block => getTilemapsRecursive(block));
+
+        return result;
+
+        function getTilemapsRecursive(block: Blockly.Block) {
+            for (const input of block.inputList) {
+                for (const field of input.fieldRow) {
+                    if (field instanceof FieldTilemap) {
+                        result.push({ block, field: field.name });
+                    }
+                }
+
+                if (input.connection && input.connection.targetBlock()) {
+                    getTilemapsRecursive(input.connection.targetBlock());
+                }
+            }
+
+            if (block.nextConnection && block.nextConnection.targetBlock()) {
+                getTilemapsRecursive(block.nextConnection.targetBlock());
+            }
+        }
+    }
+
+    function deleteTile(localIndex: number, tilemap: pxt.sprite.Tilemap) {
+        for (let x = 0; x < tilemap.width; x++) {
+            for (let y = 0; y < tilemap.height; y++) {
+                const value = tilemap.get(x, y);
+                if (value === localIndex) {
+                    tilemap.set(x, y, 0)
+                }
+                else if (value > localIndex) {
+                    tilemap.set(x, y, value - 1);
+                }
+            }
         }
     }
 }

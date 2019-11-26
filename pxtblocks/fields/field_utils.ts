@@ -130,4 +130,50 @@ namespace pxtblockly {
 
         return canvas.toDataURL();
     }
+
+    const BLOCKLY_TILESET_TYPE = "BLOCKLY_TILESET_TYPE"
+
+    export function saveTilesetTile(ws: Blockly.Workspace, tile: pxt.sprite.TileInfo) {
+        deleteTilesetTileIfExists(ws, tile);
+
+        ws.createVariable(tileToVariable(tile), BLOCKLY_TILESET_TYPE);
+    }
+
+    export function deleteTilesetTileIfExists(ws: Blockly.Workspace, tile: pxt.sprite.TileInfo) {
+        const existing = ws.getVariablesOfType(BLOCKLY_TILESET_TYPE);
+
+        for (const model of existing) {
+            if (parseInt(model.name.substr(0, model.name.indexOf(";"))) === tile.projectId) {
+                ws.deleteVariableById(model.getId());
+                break;
+            }
+        }
+    }
+
+    export function getAllTilesetTiles(ws: Blockly.Workspace): pxt.sprite.TileInfo[] {
+        return ws.getVariablesOfType(BLOCKLY_TILESET_TYPE).map(model => variableToTile(model.name));
+    }
+
+    function tileToVariable(info: pxt.sprite.TileInfo): string {
+        return `${info.projectId};${info.data.width};${info.data.height};${pxtc.Util.toHex(info.data.data)}`
+    }
+
+    function variableToTile(name: string): pxt.sprite.TileInfo {
+        const parts = name.split(";");
+
+        if (parts.length !== 4) {
+            return null;
+        }
+
+        return {
+            projectId: parseInt(parts[0]),
+            data: {
+                width: parseInt(parts[1]),
+                height: parseInt(parts[2]),
+                data: new Uint8ClampedArray(pxtc.Util.fromHex(parts[3])),
+                x0: 0,
+                y0: 0
+            }
+        }
+    }
 }

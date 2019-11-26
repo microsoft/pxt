@@ -15,6 +15,11 @@ namespace pxt.sprite {
         data: Uint8ClampedArray;
     }
 
+    export interface AnimationData {
+        interval: number;
+        frames: BitmapData[];
+    }
+
     export interface ImageState {
         bitmap: BitmapData;
         floatingLayer?: BitmapData;
@@ -172,6 +177,7 @@ namespace pxt.sprite {
     export interface TileInfo {
         data: BitmapData;
         qualifiedName?: string;
+        projectId?: number;
     }
 
     export class TilemapData {
@@ -420,6 +426,9 @@ namespace pxt.sprite {
     function encodeTile(tile: TileInfo, fileType: "typescript" | "python") {
         if (tile.qualifiedName) {
             return `${tile.qualifiedName}`;
+        }
+        else if (tile.projectId) {
+            return `myTiles.tile${tile.projectId}`;
         }
         else {
             return bitmapToImageLiteral(Bitmap.fromData(tile.data), fileType);

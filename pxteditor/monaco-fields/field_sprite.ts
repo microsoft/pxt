@@ -4,13 +4,13 @@
 namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
-    export class MonacoSpriteEditor extends MonacoReactFieldEditor {
+    export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.sprite.Bitmap> {
         protected textToValue(text: string): any {
             return text;
         }
 
-        protected resultToText(result: string): string {
-            return result;
+        protected resultToText(result: pxt.sprite.Bitmap): string {
+            return pxt.sprite.bitmapToImageLiteral(result, "typescript");
         }
 
         protected getFieldEditorId() {

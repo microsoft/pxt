@@ -13,9 +13,9 @@ export interface EditorBounds {
     height: number;
 }
 
-export interface FieldEditorComponent extends React.Component {
-    init(value: string, close: () => void, options?: any): void;
-    getValue(): string;
+export interface FieldEditorComponent<U> extends React.Component {
+    init(value: U, close: () => void, options?: any): void;
+    getValue(): U;
 
     getPersistentData(): any;
     restorePersistentData(value: any): void;
@@ -23,14 +23,14 @@ export interface FieldEditorComponent extends React.Component {
 }
 
 let cachedBounds: EditorBounds;
-let current: FieldEditorView;
+let current: FieldEditorView<any>;
 
-export class FieldEditorView implements pxt.react.FieldEditorView {
+export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
     protected resizeFrameRef: number;
     protected visible: boolean;
     protected editorBounds: EditorBounds;
     protected contentBounds: EditorBounds;
-    protected componentRef: FieldEditorComponent;
+    protected componentRef: FieldEditorComponent<U>;
     protected overlayDiv: HTMLDivElement;
     protected persistentData: any;
 
@@ -43,7 +43,7 @@ export class FieldEditorView implements pxt.react.FieldEditorView {
         ReactDOM.render(element, this.contentDiv);
     }
 
-    setRef(ref: FieldEditorComponent) {
+    setRef(ref: FieldEditorComponent<U>) {
         this.componentRef = ref;
 
         if (ref && this.persistentData) {
@@ -176,10 +176,10 @@ export function setEditorBounds(editorBounds: EditorBounds) {
 }
 
 export function init() {
-    pxt.react.getFieldEditorView = (fieldEditorId: string, value: string, options: any) => {
+    pxt.react.getFieldEditorView = function<U>(fieldEditorId: string, value: U, options: any) {
         if (current) current.dispose();
 
-        const refHandler = (e: FieldEditorComponent) => {
+        const refHandler = (e: FieldEditorComponent<any>) => {
             if (!e) return;
 
             if (current) {

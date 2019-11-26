@@ -10,8 +10,8 @@ import { ImageCanvas } from './ImageCanvas';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCreateNewTile, dispatchOpenTileEditor, dispatchCloseTileEditor } from './actions/dispatch';
-import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore, TileEditContext } from './store/imageReducer';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCloseTileEditor } from './actions/dispatch';
+import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap } from './util';
 import { Unsubscribe } from 'redux';
 
@@ -107,29 +107,27 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         this.getStore().dispatch(dispatchChangeZoom(0));
     }
 
-    getCurrentFrame() {
+    getCurrentFrame(): pxt.sprite.Bitmap {
         const state = this.getStore().getState();
         const animationState = state.store.present as AnimationState;
         const currentFrame = animationState.frames[animationState.currentFrame];
 
-        return pxt.sprite.bitmapToImageLiteral(imageStateToBitmap(currentFrame), "typescript");
+        return imageStateToBitmap(currentFrame);
     }
 
-    getAllFrames() {
+    getAnimation(): pxt.sprite.AnimationData {
         const state = this.getStore().getState();
         const animationState = state.store.present as AnimationState;
-        return "[" + animationState.frames.map(frame => pxt.sprite.bitmapToImageLiteral(imageStateToBitmap(frame), "typescript")).join(",") + "]";
-    }
-
-    getInterval() {
-        const animationState = this.getStore().getState().store.present as AnimationState;
-        return animationState.interval;
+        return {
+            interval: animationState.interval,
+            frames: animationState.frames.map(frame => imageStateToBitmap(frame).data())
+        }
     }
 
     getTilemap() {
         const state = this.getStore().getState();
         const tilemapState = state.store.present as TilemapState;
-        return pxt.sprite.encodeTilemap(new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, tilemapState.tilemap.overlayLayers[0]), "typescript");
+        return new pxt.sprite.TilemapData(imageStateToTilemap(tilemapState.tilemap), tilemapState.tileset, tilemapState.tilemap.overlayLayers[0]);
     }
 
     getPersistentData(): ImageEditorSaveState {
@@ -156,7 +154,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     protected onStoreChange = () => {
         if (this.props.onChange) {
-            this.props.onChange(this.props.singleFrame ? this.getCurrentFrame() : this.getAllFrames())
+            this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
         }
 
         const state = this.getStore().getState()
@@ -191,13 +189,13 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             let value: string;
 
             if (this.getStore().getState().editor.isTilemap) {
-                value = this.getTilemap();
+                value = pxt.sprite.encodeTilemap(this.getTilemap(), "typescript");
             }
             else if (this.props.singleFrame) {
-                value = this.getCurrentFrame();
+                value = pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript");
             }
             else {
-                value = this.getAllFrames();
+                value = this.getAnimation() + "";
             }
 
             this.props.onDoneClicked(value);
