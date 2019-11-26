@@ -92,6 +92,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
         this.showLoading(lf("creating branch..."));
         try {
+            await cloudsync.ensureGitHubTokenAsync();
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
             await this.switchToBranchAsync(branchName)

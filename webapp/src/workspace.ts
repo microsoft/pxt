@@ -534,7 +534,7 @@ export interface CommitOptions {
 const BLOCKS_PREVIEW_PATH = ".makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".makecode/blocksdiff.png";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
-    await ensureGitHubTokenAsync();
+    await cloudsync.ensureGitHubTokenAsync();
 
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -659,14 +659,6 @@ function mergeConflictMarkerError() {
     const e = new Error("Merge conflict marker error");
     (e as any).isMergeConflictMarkerError = true
     return e
-}
-
-// requests token to user if needed
-async function ensureGitHubTokenAsync() {
-    // check that we have a token first
-    await cloudsync.githubProvider().loginAsync();
-    if (!pxt.github.token)
-        U.userError(lf("Please sign in to GitHub to perform this operation."))
 }
 
 async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
@@ -922,7 +914,7 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
 }
 
 export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
-    await ensureGitHubTokenAsync();
+    await cloudsync.ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
@@ -1022,7 +1014,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
             // this means repo is completely empty; 
             // put all default files in there
             pxt.log(`github: detected import empty project`)
-            await ensureGitHubTokenAsync();
+            await cloudsync.ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true;
             forceTemplateFiles = true;
