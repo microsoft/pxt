@@ -198,7 +198,7 @@ Once this ``iframe`` loads, it sends the ``renderready`` message to the register
 
 This HTML document example contains three ``pre`` elements with code snippets. Only two are sent to the renderer since they're filtered on their class as ``blocks``. Each element sent is given an identifier to match up with the rendered block that is returned. JQuery is used in this example but another framework or standard DOM methods could be used too.
 
-```
+```html
 <html lang="en">
 <head>
     <title>Blocks Embedding Test Page</title>
@@ -325,22 +325,22 @@ $(function () {
 
 ## Rendering shared projects
 
-Leave the ``code`` attribute empty and pass the shared project id to
-the ``options.packageId`` data field.
+Rendering a shared project is accomplished in almost the same manner as the embedded blocks method. In this case though,
+leave the ``code`` attribute empty and pass the shared project id in a ``options.packageId`` data field.
 
-In html, you can use a ``data`` attribute to store the shared project id.
+In the HTML, you can store the shared project id in a ``pre`` element as a data attribute.
 
 ```
 <pre data-packageid="_HjWJo9eHjXwP"></pre>
 ```
 
-Then, read the data-attribute and pass it in the ``renderblocks`` call.
+Then, read the ``data-packageid`` attribute and pass it along as the ``packageId`` field in the ``options`` of the ``renderblocks`` message.
 
 ```
 f.contentWindow.postMessage({
     type: "renderblocks",
     id: pre.id,
-    code: pre.innerText,
+    code: "",
     options: {
     	packageId: pre.getAttribute("data-packageid")
     }
@@ -349,6 +349,6 @@ f.contentWindow.postMessage({
 
 * [HTML only](https://jsfiddle.net/L8msdjpu/3/)
 
-## Laziness
+## Lazy loading
 
-You can detect whether you have any snippet on your page before loading the rendering iFrame.
+You can detect whether you have any snippet on your page before loading the rendering ``iframe``.
