@@ -21,7 +21,7 @@ The MakeCode approach to solving this issue is to render the **JavaScript** code
 Here is an integration sample:
 
 * [React component](https://github.com/microsoft/pxt-react-extension-template/blob/master/src/components/snippet.tsx)
-* [HTML only](https://jsfiddle.net/ndyz1d57/80/)
+* [HTML only](https://jsfiddle.net/L8msdjpu/2/)
 * [MkDocs plugin](https://microsoft.github.io/pxt-mkdocs-sample/)
 
 ## Custom rendering
@@ -30,7 +30,7 @@ To render blocks in your own HTML documents or to make plugins for a document pl
 
 ### ~ hint
 
-Try this [fiddle](https://jsfiddle.net/ndyz1d57/80/) to see an embedded blocks rendering example.
+Try this [fiddle](https://jsfiddle.net/L8msdjpu/2/) to see an embedded blocks rendering example.
 
 ### ~
 
@@ -64,6 +64,7 @@ export interface RenderBlocksRequestMessage extends SimulatorMessage {
     code: string;
     options?: {
         package?: string;
+        packageId?: string;
         snippetMode?: boolean;
     }
 }
@@ -71,6 +72,7 @@ export interface RenderBlocksRequestMessage extends SimulatorMessage {
 
 * ``id``: The identifer of the snippet element. This is used to match the document element of the snippet with the rendered blocks returned later.
 * ``code``: The text of the code snippet to send, compile, and render.
+* ``packageId``: the identifier of a project shared in the editor (without the ``https://makecode.com/`` prefix)
 
 #### Render Blocks Response message
 
@@ -320,6 +322,32 @@ $(function () {
 </body>
 </html>
 ```
+
+## Rendering shared projects
+
+Leave the ``code`` attribute empty and pass the shared project id to
+the ``options.packageId`` data field.
+
+In html, you can use a ``data`` attribute to store the shared project id.
+
+```
+<pre data-packageid="_HjWJo9eHjXwP"></pre>
+```
+
+Then, read the data-attribute and pass it in the ``renderblocks`` call.
+
+```
+f.contentWindow.postMessage({
+    type: "renderblocks",
+    id: pre.id,
+    code: pre.innerText,
+    options: {
+    	packageId: pre.getAttribute("data-packageid")
+    }
+}, "@homeurl@");
+```
+
+* [HTML only](https://jsfiddle.net/L8msdjpu/3/)
 
 ## Laziness
 
