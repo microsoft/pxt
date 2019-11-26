@@ -315,6 +315,15 @@ export function githubProvider(): githubprovider.GithubProvider {
     return identityProviders().filter(p => p.name == githubprovider.PROVIDER_NAME)[0] as githubprovider.GithubProvider;
 }
 
+
+// requests token to user if needed
+export async function ensureGitHubTokenAsync() {
+    // check that we have a token first
+    await githubProvider().loginAsync();
+    if (!pxt.github.token)
+        U.userError(lf("Please sign in to GitHub to perform this operation."))
+}
+
 // this is generally called by the provier's loginCheck() function
 export function setProvider(impl: IdentityProvider) {
     if (impl !== currentProvider) {

@@ -90,7 +90,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (!branchName)
             return
 
-        this.showLoading(lf("creating branch..."));
+        this.showLoading("github.branch", true, lf("creating branch..."));
         try {
             const gs = this.getGitJson()
             await pxt.github.createNewBranchAsync(gid.fullName, branchName, gs.commit.sha)
@@ -177,6 +177,9 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const pref = fromError ? lf("You don't seem to have write permission to {0}.\n", parsed.fullName) : ""
         const res = await core.confirmAsync({
             header: lf("Do you want to fork {0}?", parsed.fullName),
+            hideCancel: true,
+            hasCloseIcon: true,
+            helpUrl: "/github/fork",
             body: pref +
                 lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
                     parsed.fullName),
@@ -186,8 +189,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         if (!res)
             return
 
-        pxt.tickEvent("github.fork")
-        this.showLoading(lf("forking repository (this may take a minute or two)..."))
+        this.showLoading("github.fork", true, lf("forking repository (this may take a minute or two)..."))
         try {
             const gs = this.getGitJson();
             const newGithubId = await pxt.github.forkRepoAsync(parsed.fullName, gs.commit.sha)
@@ -206,10 +208,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const statusCode = parseInt(e.statusCode);
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
-        else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
-        else if (statusCode == 404)
-            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (e.needsWritePermission) {
             if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
@@ -221,7 +219,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
             core.warningNotification(lf("Please merge all conflicts before commiting changes."))
-        } else {
+        } else if (statusCode == 401)
+            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        else if (statusCode == 404)
+            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
+        else {
             pxt.reportException(e);
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
         }
@@ -284,7 +286,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         else if (bumpType == "minor")
             newv = vminor;
         const newVer = pxt.semver.stringify(newv)
-        this.showLoading(lf("creating release..."));
+        this.showLoading("github.release.new", true, lf("creating release..."));
         try {
             const { header } = this.props.parent.state;
             await workspace.bumpAsync(header, newVer)
@@ -299,7 +301,10 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async showLoading(msg: string) {
+    private async showLoading(tick: string, ensureToken: boolean, msg: string) {
+        if (ensureToken)
+            await cloudsync.ensureGitHubTokenAsync();
+        pxt.tickEvent(tick);
         await this.setStateAsync({ loadingMessage: msg });
         core.showLoading("githubjson", msg);
     }
@@ -335,7 +340,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async pullAsync() {
-        this.showLoading(lf("pulling changes from GitHub..."));
+        this.showLoading("github.pull", false, lf("pulling changes from GitHub..."));
         try {
             this.setState({ needsPull: undefined });
             const status = await workspace.pullAsync(this.props.parent.state.header)
@@ -417,7 +422,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     async commitAsync() {
         this.setState({ needsCommitMessage: false });
-        this.showLoading(lf("commit and push changes to GitHub..."));
+        this.showLoading("github.commit", true, lf("commit & push changes to GitHub..."));
         try {
             await this.commitCoreAsync()
             await this.maybeReloadAsync()
@@ -817,7 +822,7 @@ ${content}
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button icon={`${needsPull === true ? "long arrow alternate down" : needsPull === false ? "check" : "sync"}`}
+                        <sui.Button icon={`${needsPull === true ? "long arrow alternate down" : needsPull === false ? "check" : ""}`}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken && !isBlocksMode ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
