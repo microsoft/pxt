@@ -179,7 +179,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             header: lf("Do you want to fork {0}?", parsed.fullName),
             hideCancel: true,
             hasCloseIcon: true,
-            helpUrl: "/github/forks",
+            helpUrl: "/github/fork",
             body: pref +
                 lf("Forking creates a copy of {0} under your account. You can include your changes via a pull request.",
                     parsed.fullName),
