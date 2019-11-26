@@ -28,7 +28,7 @@ test:
 \tpxt test
 `,
 
-            "README.md": `# @NAME@
+            "README.md": `# @NAME@ ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
 
 @DESCRIPTION@
 
