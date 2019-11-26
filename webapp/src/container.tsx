@@ -254,6 +254,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         if (githubProvider) {
             githubProvider.logout();
             this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub..."))
         }
     }
 
