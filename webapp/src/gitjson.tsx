@@ -207,10 +207,6 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const statusCode = parseInt(e.statusCode);
         if (e.isOffline || statusCode === 0)
             core.warningNotification(lf("Please connect to internet and try again."));
-        else if (statusCode == 401)
-            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
-        else if (statusCode == 404)
-            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
         else if (e.needsWritePermission) {
             if (this.state.triedFork) {
                 core.warningNotification(lf("You don't have write permission."));
@@ -222,7 +218,11 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         else if (e.isMergeConflictMarkerError) {
             pxt.tickEvent("github.commitwithconflicts");
             core.warningNotification(lf("Please merge all conflicts before commiting changes."))
-        } else {
+        } else if (statusCode == 401)
+            core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
+        else if (statusCode == 404)
+            core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
+        else {
             pxt.reportException(e);
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
         }
