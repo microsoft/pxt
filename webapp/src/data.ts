@@ -122,7 +122,7 @@ function unsubscribe(component: AnyComponent) {
 
 function expired(ce: CacheEntry) {
     if (!ce.api.expirationTime)
-        return ce.data != null;
+        return !ce.lastRefresh; // needs to be refreshed at least once
     return ce.data == null || (Date.now() - ce.lastRefresh) > ce.api.expirationTime(ce.path)
 }
 
@@ -187,7 +187,7 @@ function queue(ce: CacheEntry) {
 
     let final = (res: any) => {
         ce.data = res
-        ce.lastRefresh = Date.now()
+        ce.lastRefresh = pxt.Util.now()
         ce.queued = false
         notify(ce)
     }
@@ -221,6 +221,7 @@ function getCached(component: AnyComponent, path: string): DataFetchResult<any> 
             status: FetchStatus.Complete
         }
 
+    // cache async values
     let fetchRes: DataFetchResult<any> = {
         data: r.data,
         status: FetchStatus.Complete

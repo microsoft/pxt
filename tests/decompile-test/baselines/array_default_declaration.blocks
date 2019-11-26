@@ -2,6 +2,15 @@
 <block type="pxt-on-start">
 <statement name="HANDLER">
 <block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="lists_create_with">
+<mutation items="0" />
+</block>
+</value>
+<next>
+<block type="variables_set">
 <field name="VAR">y</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
@@ -33,6 +42,8 @@
 </value>
 </block>
 </value>
+</block>
+</next>
 </block>
 </next>
 </block>

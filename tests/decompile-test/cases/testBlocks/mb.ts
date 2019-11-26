@@ -124,6 +124,30 @@ namespace images {
     export function createBigImage(leds: string): Image {
         return undefined;
     }
+
+    /**
+     * Creates an image that fits on the LED screen.
+     */
+    //% weight=75 help=images/create-image
+    //% blockId=device_build_image block="create image"
+    //% parts="ledmatrix" imageLiteral=1 shim=images::createTallImage
+    //% imageLiteralColumns=3
+    //% imageLiteralRows=4
+    export function createTallImage(leds: string): Image {
+        return undefined;
+    }
+
+    /**
+     * Creates an image that fits on the LED screen.
+     */
+    //% weight=75 help=images/create-image
+    //% blockId=device_build_image block="create image"
+    //% parts="ledmatrix" imageLiteral=2 shim=images::createTallBigImage
+    //% imageLiteralColumns=3
+    //% imageLiteralRows=4
+    export function createTallBigImage(leds: string): Image {
+        return undefined;
+    }
 }
 
 //% color=#0078D7 weight=100

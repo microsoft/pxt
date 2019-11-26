@@ -589,6 +589,7 @@ export class ProjectView
     }
 
     private maybeShowPackageErrors(force = false) {
+        pxt.perf.measureStart("maybeShowPackageErrors")
         // Only show in blocks or main.ts
         if (this.state.currFile) {
             const fn = this.state.currFile;
@@ -620,9 +621,11 @@ export class ProjectView
                             this.openHome();
                         }
                     });
+                pxt.perf.measureEnd("maybeShowPackageErrors")
                 return true;
             }
         }
+        pxt.perf.measureEnd("maybeShowPackageErrors")
         return false;
     }
 
@@ -759,6 +762,8 @@ export class ProjectView
                         this.setState({ simState: pxt.editor.SimState.Running });
                         break;
                 }
+            },
+            onSimulatorReady: () => {
             },
             setState: (k, v) => {
                 pkg.mainEditorPkg().setSimState(k, v)
@@ -1258,6 +1263,8 @@ export class ProjectView
         if (!header || !header.tutorial || !header.tutorial.tutorialMd)
             return Promise.resolve();
 
+        pxt.perf.measureStart("loadTutorial loadBlockly")
+
         const t = header.tutorial;
         return this.loadBlocklyAsync()
             .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode))
@@ -1285,6 +1292,9 @@ export class ProjectView
                 core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
                 // Reset state (delete the current project and exit the tutorial)
                 this.exitTutorial(true);
+            })
+            .finally(() => {
+                pxt.perf.measureEnd("loadTutorial loadBlockly")
             });
     }
 
@@ -1932,6 +1942,7 @@ export class ProjectView
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
+        pxt.perf.measureStart("createProjectAsync")
         this.setSideDoc(undefined);
         if (!options.prj) options.prj = pxt.appTarget.blocksprj;
         let cfg = pxt.U.clone(options.prj.config);
@@ -1986,7 +1997,8 @@ export class ProjectView
             tutorial: options.tutorial,
             extensionUnderTest: options.extensionUnderTest
         }, files)
-            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
+            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }))
+            .then(() => pxt.perf.measureEnd("createProjectAsync"))
     }
 
     // in multiboard targets, allow use to pick a different board
@@ -2192,6 +2204,9 @@ export class ProjectView
                     this.checkWebUSBVariant = false
                     this.checkForHwVariant()
                 }, pairAsync)
+                .then(() => {
+                    pxt.perf.recordMilestone("HID bridge init finished")
+                })
             return true
         }
         this.showChooseHwDialog()
@@ -2370,7 +2385,7 @@ export class ProjectView
             default:
                 this.maybeShowPackageErrors(true);
                 this.startSimulator(opts);
-                if (opts.clickTrigger) simulator.driver.focus();
+                if (opts && opts.clickTrigger) simulator.driver.focus();
                 break;
         }
     }
@@ -2563,6 +2578,7 @@ export class ProjectView
     }
 
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
+        pxt.perf.measureStart("stopSimulator")
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`sim: stop (autorun ${this.state.autoRun})`)
@@ -2573,6 +2589,7 @@ export class ProjectView
         simulator.stop(unload);
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
         this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun });
+        pxt.perf.measureEnd("stopSimulator")
     }
 
     suspendSimulator() {
@@ -3409,7 +3426,6 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = !!targetTheme.debugger || inDebugMode;
         const flyoutOnly = this.state.editorState && this.state.editorState.hasCategories === false;
 
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
@@ -3420,7 +3436,7 @@ export class ProjectView
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
 
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
-        const showCollapseButton = !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
+        const showCollapseButton = showEditorToolbar && !inHome && !inTutorial && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode);
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
@@ -3809,7 +3825,8 @@ async function importGithubProject(repoid: string) {
         let hd = workspace.getHeaders().find(h => h.githubId == repoid);
         if (!hd)
             hd = await workspace.importGithubAsync(repoid)
-        await theEditor.loadHeaderAsync(hd, null)
+        if (hd)
+            await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
         core.handleNetworkError(e)
     } finally {
@@ -3917,6 +3934,7 @@ function initExtensionsAsync(): Promise<void> {
 
 pxt.winrt.captureInitialActivation();
 document.addEventListener("DOMContentLoaded", () => {
+    pxt.perf.recordMilestone(`DOM loaded`)
     pxt.setupWebConfig((window as any).pxtConfig);
     const config = pxt.webConfig
     pxt.options.debug = /dbg=1/i.test(window.location.href);
