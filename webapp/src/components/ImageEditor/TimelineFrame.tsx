@@ -92,8 +92,8 @@ export class TimelineFrame extends React.Component<TimelineFrameProps, TimelineF
         const bitmap = pxt.sprite.Bitmap.fromData(imageState.bitmap);
         this.drawBitmap(bitmap);
 
-        if (imageState.floatingLayer) {
-            const floating = pxt.sprite.Bitmap.fromData(imageState.floatingLayer);
+        if (imageState.floating && imageState.floating.bitmap) {
+            const floating = pxt.sprite.Bitmap.fromData(imageState.floating.bitmap);
             this.drawBitmap(floating, imageState.layerOffsetX, imageState.layerOffsetY, true);
         }
     }

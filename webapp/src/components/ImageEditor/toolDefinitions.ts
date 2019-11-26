@@ -114,11 +114,19 @@ export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean, d
     const res =  new EditState(isTilemap
         ? pxt.sprite.Tilemap.fromData(state.bitmap).copy()
         : pxt.sprite.Bitmap.fromData(state.bitmap).copy());
+    if (state.overlayLayers) res.overlayLayers = state.overlayLayers.map(layer => pxt.sprite.Bitmap.fromData(layer).copy());
     res.layerOffsetX = state.layerOffsetX;
     res.layerOffsetY = state.layerOffsetY;
 
-    if (state.floatingLayer) res.floatingLayer = isTilemap ? pxt.sprite.Tilemap.fromData(state.floatingLayer).copy() : pxt.sprite.Bitmap.fromData(state.floatingLayer).copy();
-    if (state.overlayLayers) res.overlayLayers = state.overlayLayers.map(layer => pxt.sprite.Bitmap.fromData(layer).copy());
+    let floating, image, overlayLayers;
+    if (state.floating) {
+        if (state.floating.bitmap)
+            image = isTilemap ? pxt.sprite.Tilemap.fromData(state.floating.bitmap).copy() : pxt.sprite.Bitmap.fromData(state.floating.bitmap).copy();
+        if (state.floating.overlayLayers)
+            overlayLayers = state.floating.overlayLayers.map(el => pxt.sprite.Bitmap.fromData(el).copy());
+        floating = { image, overlayLayers };
+    }
+    res.floating = floating;
 
     res.setActiveLayer(drawingMode);
 
@@ -127,8 +135,11 @@ export function getEditState(state: pxt.sprite.ImageState, isTilemap: boolean, d
 
 export class EditState {
     image: pxt.sprite.Bitmap;
-    floatingLayer: pxt.sprite.Bitmap;
-    overlayLayers: pxt.sprite.Bitmap[];
+    overlayLayers?: pxt.sprite.Bitmap[];
+    floating: {
+        image: pxt.sprite.Bitmap;
+        overlayLayers?: pxt.sprite.Bitmap[];
+    }
     layerOffsetX: number;
     layerOffsetY: number;
 
@@ -170,36 +181,50 @@ export class EditState {
     copy() {
         const res = new EditState();
         res.image = this.image.copy();
+        res.overlayLayers = this.overlayLayers && this.overlayLayers.map(layer => layer.copy());
 
-        if (this.floatingLayer) {
-            res.floatingLayer = this.floatingLayer.copy();
+        if (this.floating) {
+            let image, overlayLayers;
+            if (this.floating.image) image = this.floating.image.copy();
+            if (this.floating.overlayLayers) overlayLayers = this.floating.overlayLayers.map(el => el.copy());
+            res.floating = { image: image, overlayLayers: overlayLayers };
             // res.floatingLayer.x0 = this.layerOffsetX;
             // res.floatingLayer.y0 = this.layerOffsetY;
         }
         res.layerOffsetX = this.layerOffsetX;
         res.layerOffsetY = this.layerOffsetY;
-        res.overlayLayers = this.overlayLayers && this.overlayLayers.map(layer => layer.copy()); // todo copy each
 
         return res;
     }
 
     equals(other: EditState) {
         // todo add overlay layers
-        if (!this.image.equals(other.image) || (this.floatingLayer && !other.floatingLayer) || (!this.floatingLayer && other.floatingLayer)) return false;
+        if (!this.image.equals(other.image) || (this.floating && !other.floating) || (!this.floating && other.floating)) return false;
 
-        if (this.floatingLayer) return this.floatingLayer.equals(other.floatingLayer) && this.layerOffsetX === other.layerOffsetX && this.layerOffsetY === other.layerOffsetY;
+        if (this.floating && this.floating.image) return this.floating.image.equals(other.floating.image) && this.layerOffsetX === other.layerOffsetX && this.layerOffsetY === other.layerOffsetY;
 
         return true;
     }
 
     mergeFloatingLayer() {
-        if (!this.floatingLayer) return;
+        if (!this.floating || (!this.floating.image && !this.floating.overlayLayers)) return;
 
-        this.floatingLayer.x0 = this.layerOffsetX;
-        this.floatingLayer.y0 = this.layerOffsetY;
+        if (this.floating.image) {
+            this.floating.image.x0 = this.layerOffsetX;
+            this.floating.image.y0 = this.layerOffsetY;
 
-        this.activeLayer.apply(this.floatingLayer, true);
-        this.floatingLayer = undefined;
+            this.image.apply(this.floating.image, true);
+            this.floating.image = undefined;
+        }
+
+        if (this.floating.overlayLayers) {
+            this.floating.overlayLayers.forEach((el, i) => {
+                el.x0 = this.layerOffsetX;
+                el.y0 = this.layerOffsetY;
+                this.overlayLayers[i].apply(el, true);
+            })
+            this.floating.overlayLayers = undefined;
+        }
     }
 
     copyToLayer(left: number, top: number, width: number, height: number, cut = false) {
@@ -215,29 +240,37 @@ export class EditState {
             height = -height;
         }
 
-        this.floatingLayer = this.activeLayer.copy(left, top, width, height);
-        this.layerOffsetX = this.floatingLayer.x0;
-        this.layerOffsetY = this.floatingLayer.y0;
+        let image = this.image.copy(left, top, width, height);
+        this.layerOffsetX = image.x0;
+        this.layerOffsetY = image.y0;
 
-        this.floatingLayer.x0 = undefined;
-        this.floatingLayer.y0 = undefined;
+        image.x0 = undefined;
+        image.y0 = undefined;
+
+        let overlayLayers;
+        if (this.overlayLayers) {
+            overlayLayers = this.overlayLayers.map(el => el.copy(left, top, width, height));
+        }
 
         if (cut) {
             for (let c = 0; c < width; c++) {
                 for (let r = 0; r < height; r++) {
-                    this.activeLayer.set(left + c, top + r, 0);
+                    this.image.set(left + c, top + r, 0);
+                    this.overlayLayers.forEach(el => el.set(left + c, top + r, 0));
                 }
             }
         }
+
+        this.floating = { image: image, overlayLayers: overlayLayers }
     }
 
     inFloatingLayer(col: number, row: number) {
-        if (!this.floatingLayer) return false;
+        if (!this.floating || !this.floating.image) return false;
 
         col = col - this.layerOffsetX;
         row = row - this.layerOffsetY;
 
-        return col >= 0 && col < this.floatingLayer.width && row >= 0 && row < this.floatingLayer.height;
+        return col >= 0 && col < this.floating.image.width && row >= 0 && row < this.floating.image.height;
     }
 }
 
@@ -636,7 +669,7 @@ export class MarqueeEdit extends SelectionEdit {
         this.isStarted = true;
         this.startCol = cursorCol;
         this.startRow = cursorRow;
-        if (state.floatingLayer) {
+        if (state.floating && state.floating.image) {
             if (state.inFloatingLayer(cursorCol, cursorRow)) {
                 this.isMove = true;
                 this.startOffsetX = state.layerOffsetX;
