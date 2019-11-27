@@ -1546,6 +1546,7 @@ function ciBuildInfo(): CiBuildInfo {
 
 function setCiBuildInfo(tag: string, branch: string, commit: string, repoSlug: string) {
     // travis
+    process.env["TRAVIS"] = "1";
     process.env["TRAVIS_TAG"] = tag;
     process.env['TRAVIS_BRANCH'] = branch;
     process.env['TRAVIS_COMMIT'] = commit;
