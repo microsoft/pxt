@@ -1524,8 +1524,10 @@ function ciBuildInfo(): CiBuildInfo {
         const repoSlug = process.env.GITHUB_REPOSITORY;
         const commit = process.env.GITHUB_SHA;
         const ref = process.env.GITHUB_REF;
-        const branch = ref.replace(/^refs\/heads\//, '');
-        const tag = branch;
+        // branch build refs/heads/...
+        // tag build res/tags/...
+        const branch = ref.replace(/^refs\/(heads|tags)\//, '');
+        const tag = /^refs\/tags\//.test(ref) ? branch : undefined;
         const eventName = process.env.GITHUB_EVENT_NAME;
 
         return {
