@@ -1539,7 +1539,7 @@ function ciBuildInfo(): CiBuildInfo {
             tag,
             commit,
             commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit,
-            pullRequest: branch !== "master" || !/^v\d+.\.d+\.d+$/.test(tag)
+            pullRequest: !(branch == "master" || /^v\d+\.\d+\.\d+$/.test(tag))
         }
     }
 }
