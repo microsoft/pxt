@@ -116,10 +116,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: $\{{ matrix.node-version }}
-      - name: npm install, build, and test
+      - name: npm install
         run: |
           npm install -g pxt
           pxt target @TARGET@
+      - name: build
+        run: |
           pxt install
           pxt build --cloud
         env:

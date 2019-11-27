@@ -71,6 +71,8 @@ function runKarma(that, flags) {
     }
     else {
         command = "./karma start ../../karma.conf.js " + flags;
+        if (process.env.GITHUB_ACTIONS)
+            command = "xvfb-run --auto-servernum " + command;
     }
     cmdIn(that, "node_modules/.bin", command);
 }
