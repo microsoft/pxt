@@ -845,6 +845,7 @@ ${content}
                         <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
                         : <div className="ui segment">
                             {lf("No local changes found.")}
+                            {" "}
                             {lf("Your project is saved in GitHub.")}
                         </div>}
                     {displayDiffFiles.length ? <div className="ui">
