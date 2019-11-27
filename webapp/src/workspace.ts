@@ -684,7 +684,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         const oldEnt = pxt.github.lookupFile(gitjson.commit, path)
         const hasChanges = files[path] != null && (!oldEnt || oldEnt.blobContent != files[path])
         if (!treeEnt) {
-            // file in pxt.json but not in git: 
+            // file in pxt.json but not in git:
             // changes were merged from the cloud but not pushed yet
             if (options.tryDiff3 && hasChanges)
                 return files[path];
@@ -742,7 +742,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
         files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     }
     // patch the github references back to local workspaces
-    {
+    if (oldCfg) {
         let ghupdated = 0;
         Object.keys(cfg.dependencies)
             // find github references that are also in the original version
@@ -813,7 +813,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
     })
     await saveAsync(hd, files);
     await initializeGithubRepoAsync(hd, repoid, false);
-    // race condition, don't pull right away 
+    // race condition, don't pull right away
     // await pullAsync(hd);
 }
 
@@ -902,7 +902,6 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
         if (!header.githubId) {
             if (createTag)
                 U.userError(lf("Dependency {0} is a local project.", d))
-            // 
         } else {
             const gid = pxt.github.parseRepoId(header.githubId);
             if (createTag && !/^v\d+/.test(header.githubTag))
@@ -992,7 +991,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
     let forceTemplateFiles = false;
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-        // if the repo does not have a pxt.json file, treat as empty 
+        // if the repo does not have a pxt.json file, treat as empty
         // (must be done before)
         const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
         if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
@@ -1011,7 +1010,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         }
     } catch (e) {
         if (e.statusCode == 409) {
-            // this means repo is completely empty; 
+            // this means repo is completely empty;
             // put all default files in there
             pxt.log(`github: detected import empty project`)
             await cloudsync.ensureGitHubTokenAsync();
