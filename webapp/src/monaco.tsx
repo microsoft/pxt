@@ -236,12 +236,14 @@ const pythonLanguageConfiguration: monaco.languages.LanguageConfiguration = {
         { "open": "B'", "close": "'", "notIn": ["string", "comment"] },
         { "open": "`", "close": "`", "notIn": ["string"] }
     ],
-    "indentationRules": {
-        "increaseIndentPattern": /^.*:\s*$/,
-        "decreaseIndentPattern": /^.*magic.*$/,
-        // "indentNextLinePattern": /^.*:\s*$/,
-        // "unIndentedLinePattern"
-    }
+    onEnterRules: [
+        {
+            beforeText: /^\s*(?:def|class|for|if|elif|else|while|try|with|finally|except|async).*?:\s*$/,
+            action: {
+                indentAction: 1/*IndentAction.Indent*/
+            }
+        }
+    ]
 }
 
 class FormattingProvider implements monaco.languages.DocumentRangeFormattingEditProvider {
