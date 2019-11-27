@@ -25,6 +25,7 @@ jobs:
         run: |
           npm test
         env:
+          CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
           CHROME_BIN: chromium-browser
           DISPLAY: :99.0
           CI: true
