@@ -1532,13 +1532,14 @@ function ciBuildInfo(): CiBuildInfo {
 
         pxt.log(`event name: ${eventName}`);
 
+        // PR: not on master or not a release number
         return {
             ci: "githubactions",
             branch,
             tag,
             commit,
             commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit,
-            pullRequest: eventName == "pull_request"
+            pullRequest: branch !== "master" || !/^v\d+.\.d+\.d+$/.test(tag)
         }
     }
 }
