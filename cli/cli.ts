@@ -5403,25 +5403,31 @@ interface BlockTestCase {
 }
 
 function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
-    const karma = karmaPath();
-    if (!karma) {
+    let cmd = karmaPath();
+    if (!cmd) {
         console.error("Karma not found, did you run npm install?");
         return Promise.reject(new Error("Karma not found"));
     }
 
-    let extraArgs: string[] = []
+    const args = ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")];
 
     if (parsed && parsed.flags["debug"]) {
-        extraArgs.push("--no-single-run");
+        args.push("--no-single-run");
+    }
+
+    if (process.env.GITHUB_ACTIONS) {
+        args.unshift(cmd);
+        args.unshift("--auto-servernum");
+        cmd = "xvfb-run"
     }
 
     return writeBlockTestJSONAsync()
         .then(() => nodeutil.spawnAsync({
-            cmd: karma,
+            cmd,
             envOverrides: {
                 "KARMA_TARGET_DIRECTORY": process.cwd()
             },
-            args: ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")].concat(extraArgs)
+            args
         }), (e: Error) => console.log("Skipping blocks tests: " + e.message))
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
