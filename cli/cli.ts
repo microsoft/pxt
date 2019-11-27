@@ -3738,7 +3738,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boole
                         opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
                         let ts2Res = pxt.py.py2ts(opts)
 
-                        let ts2 = ts2Res.generated["main.ts"];
+                        let ts2 = ts2Res.outfiles["main.ts"];
 
                         if (!ts2) {
                             console.log("py2ts error!")
