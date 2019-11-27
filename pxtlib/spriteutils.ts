@@ -181,6 +181,7 @@ namespace pxt.sprite {
     }
 
     export class TilemapData {
+        nextId = 0;
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
     }
 

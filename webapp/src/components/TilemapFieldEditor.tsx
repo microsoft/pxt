@@ -75,13 +75,13 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
         }
     }
 
-    protected initTilemap({ tilemap, layers, tileset }: pxt.sprite.TilemapData, options?: any) {
-        if (tilemap.width === 0 || tilemap.height === 0) {
-            tilemap = new pxt.sprite.Tilemap(options.initWidth || 16, options.initHeight || 16)
+    protected initTilemap(data: pxt.sprite.TilemapData, options?: any) {
+        if (data.tilemap.width === 0 || data.tilemap.height === 0) {
+            data.tilemap = new pxt.sprite.Tilemap(options.initWidth || 16, options.initHeight || 16)
         }
 
-        if (!layers) {
-            layers = new pxt.sprite.Bitmap(tilemap.width, tilemap.height).data();
+        if (!data.layers) {
+            data.layers = new pxt.sprite.Bitmap(data.tilemap.width, data.tilemap.height).data();
         }
 
         let gallery: GalleryTile[];
@@ -90,10 +90,10 @@ export class TilemapFieldEditor extends React.Component<TilemapFieldEditorProps,
             this.blocksInfo = options.blocksInfo;
 
             gallery = pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), ["tile"])
-                .map((g, index) => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
+                .map(g => ({ bitmap: pxt.sprite.getBitmap(this.blocksInfo, g.qName).data(), tags: g.tags, qualifiedName: g.qName, tileWidth: 16 }))
         }
 
-        this.ref.initTilemap(tilemap, tileset, gallery, [layers]);
+        this.ref.initTilemap(data, gallery,);
     }
 
     protected onDoneClick = () => {

@@ -99,8 +99,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         this.getStore().dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
-    initTilemap(tilemap: pxt.sprite.Tilemap, tileset: pxt.sprite.TileSet, gallery: GalleryTile[], layers?: pxt.sprite.BitmapData[]) {
-        this.getStore().dispatch(dispatchSetInitialTilemap(tilemap.data(), tileset, gallery, layers));
+    initTilemap(data: pxt.sprite.TilemapData, gallery: GalleryTile[]) {
+        this.getStore().dispatch(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId));
     }
 
     onResize() {

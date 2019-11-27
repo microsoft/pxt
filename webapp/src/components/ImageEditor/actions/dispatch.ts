@@ -29,7 +29,7 @@ export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FORE
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })
 export const dispatchSetInitialFrames = (frames: pxt.sprite.ImageState[], interval: number) => ({ type: actions.SET_INITIAL_FRAMES, frames, interval });
 export const dispatchSetInitialState = (state: EditorState, past: AnimationState[]) => ({ type: actions.SET_INITIAL_STATE, state, past });
-export const dispatchSetInitialTilemap = (tilemap: pxt.sprite.BitmapData, tileset: pxt.sprite.TileSet, gallery: GalleryTile[], layers: pxt.sprite.BitmapData[]) => ({ type: actions.SET_INITIAL_TILEMAP, tilemap, tileset, layers, gallery });
+export const dispatchSetInitialTilemap = (tilemap: pxt.sprite.BitmapData, tileset: pxt.sprite.TileSet, gallery: GalleryTile[], layers: pxt.sprite.BitmapData[], nextId: number) => ({ type: actions.SET_INITIAL_TILEMAP, tilemap, tileset, layers, gallery, nextId });
 export const dispatchChangeTilePaletteCategory = (category: TileCategory) => ({ type: actions.CHANGE_TILE_PALETTE_CATEGORY, category });
 export const dispatchChangeTilePalettePage = (page: number) => ({ type: actions.CHANGE_TILE_PALETTE_PAGE, page });
 export const dispatchChangeDrawingMode = (drawingMode: TileDrawingMode) => ({ type: actions.CHANGE_DRAWING_MODE, drawingMode });

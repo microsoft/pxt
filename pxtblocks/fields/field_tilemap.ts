@@ -70,6 +70,8 @@ namespace pxtblockly {
 
         showEditor_() {
             (this.params as any).blocksInfo = this.blocksInfo;
+
+            this.restoreTilesFromWorkspace(this.state);
             const fv = pxt.react.getFieldEditorView("tilemap-editor", this.state, this.params);
 
             if (this.undoRedoState) {
@@ -143,6 +145,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
+                this.restoreTilesFromWorkspace(this.state);
                 const data = tilemapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
                 const img = new svg.Image()
                     .src(data)
@@ -220,10 +223,10 @@ namespace pxtblockly {
             Blockly.Events.setGroup(false);
         }
 
-        protected restoreTilesFromWorkspace(tileset: pxt.sprite.TileSet) {
+        protected restoreTilesFromWorkspace(tilemap: pxt.sprite.TilemapData) {
             const all = getAllTilesetTiles(this.sourceBlock_.workspace);
 
-            for (const t of tileset.tiles) {
+            for (const t of tilemap.tileset.tiles) {
                 if (t.projectId) {
                     const projectTile = all.find(pt => pt.projectId === t.projectId);
 
@@ -232,6 +235,17 @@ namespace pxtblockly {
                     }
                 }
             }
+
+            let id = 0;
+            for (const t of all) {
+                id = t.projectId ? Math.max(t.projectId, id) : id;
+
+                if (!tilemap.tileset.tiles.find(pt => pt.projectId === t.projectId)) {
+                    tilemap.tileset.tiles.push(t);
+                }
+            }
+
+            tilemap.nextId = id + 1;
         }
     }
 

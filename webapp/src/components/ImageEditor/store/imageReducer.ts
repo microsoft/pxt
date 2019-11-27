@@ -52,6 +52,7 @@ export interface TilemapState {
     aspectRatioLocked: boolean;
     tilemap: pxt.sprite.ImageState;
     colors: string[];
+    nextId: number;
 }
 
 // State that is not on the undo/redo stack
@@ -296,7 +297,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                             bitmap: action.tilemap,
                             overlayLayers: action.layers
                         },
-                        tileset: restoreSprites(action.tileset, action.gallery)
+                        tileset: restoreSprites(action.tileset, action.gallery),
+                        nextId: action.nextId
                     },
                     future: []
                 }
@@ -489,13 +491,21 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                 }
             };
         case actions.CREATE_NEW_TILE:
-            tickEvent(action.qualifiedName ? `used-tile-${action.qualifiedName}` : `new-tile`);
+            const isCustomTile = !action.qualifiedName;
+            tickEvent(!isCustomTile ? `used-tile-${action.qualifiedName}` : `new-tile`);
+
             return {
                 ...state,
                 tileset: {
                     ...state.tileset,
-                    tiles: [...state.tileset.tiles, { data: action.bitmap, qualifiedName: action.qualifiedName }]
-                }
+                    tiles: [...state.tileset.tiles,
+                        {
+                            data: action.bitmap,
+                            qualifiedName: action.qualifiedName,
+                            projectId: isCustomTile ? state.nextId : undefined
+                        }]
+                },
+                nextId: isCustomTile ? state.nextId + 1 : state.nextId
             }
         case actions.CLOSE_TILE_EDITOR:
             tickEvent("close-tile-editor");
@@ -506,7 +516,7 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                     tileset: {
                         ...state.tileset,
                         tiles: state.tileset.tiles
-                            .map((value, index) => index === action.index ? { data: action.result } : value)
+                            .map((value, index) => index === action.index ? { data: action.result, projectId: value.projectId } : value)
                     }
                 }
             }
@@ -515,8 +525,9 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                     ...state,
                     tileset: {
                         ...state.tileset,
-                        tiles: [...state.tileset.tiles, { data: action.result }]
-                    }
+                        tiles: [...state.tileset.tiles, { data: action.result, projectId: state.nextId }]
+                    },
+                    nextId: state.nextId + 1
                 }
             }
         case actions.DELETE_TILE:
