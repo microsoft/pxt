@@ -69,7 +69,7 @@ module.exports = function(config) {
 
     // We don't use the watcher but for some reason this must be set to true for tests to run
     autoWatch: true,
-    browsers: [process.env.TRAVIS ? 'chromium_travis' : 'Chrome'],
+    browsers: [process.env.TRAVIS ? 'chromium_travis' : 'ChromeHeadless'],
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
