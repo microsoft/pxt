@@ -5,7 +5,6 @@ namespace pxsim {
 
     export function check(cond: boolean, msg: string = "sim: check failed") {
         if (!cond) {
-            debugger
             throw new Error(msg)
         }
     }

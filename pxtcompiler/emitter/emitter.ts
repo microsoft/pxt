@@ -1113,7 +1113,7 @@ namespace ts.pxtc {
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
             // if we hit this, and are in debugger, we probably want to look at the node
-            debugger
+            // debugger
 
             // If we have info then we may as well present that instead
             if (info) {

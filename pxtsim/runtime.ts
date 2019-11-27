@@ -68,7 +68,6 @@ namespace pxsim {
 
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
-                debugger
                 throw new Error(msg)
             }
         }
