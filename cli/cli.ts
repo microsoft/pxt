@@ -1489,7 +1489,7 @@ interface CiBuildInfo {
 
 function ciBuildInfo(): CiBuildInfo {
     const isTravis = (process.env.TRAVIS === "true");
-    const isGithubAction = (!!process.env.GITHUB_ACTION);
+    const isGithubAction = (!!process.env.GITHUB_ACTIONS);
 
     if (isTravis) return travisInfo();
     else if (isGithubAction) return githubActionInfo();
@@ -1530,13 +1530,15 @@ function ciBuildInfo(): CiBuildInfo {
         const tag = /^refs\/tags\//.test(ref) ? branch : undefined;
         const eventName = process.env.GITHUB_EVENT_NAME;
 
+        pxt.log(`event name: ${eventName}`);
+
         return {
             ci: "githubactions",
             branch,
             tag,
             commit,
             commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit,
-            pullRequest: eventName == "pull"
+            pullRequest: eventName == "pull_request"
         }
     }
 }
