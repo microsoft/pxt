@@ -1,8 +1,8 @@
 // Karma configuration
+const process = require("process");
 const puppeteer = require('puppeteer');
 process.env.CHROME_BIN = puppeteer.executablePath()
 console.log(`chromium: `, process.env.CHROME_BIN)
-var process = require("process");
 
 module.exports = function(config) {
   config.set({
