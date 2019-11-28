@@ -703,7 +703,7 @@ ${baseLabel}_nochk:
 
                 for (let i = 0; i < numargs; ++i) {
                     if (i == numargs - 1)
-                        // we keep the actual lambda value on the stack, so it gets decremented
+                        // we keep the actual lambda value on the stack, so it won't be collected
                         this.write(`movs r1, r0`)
                     else
                         this.write(`ldr r1, [sp, #4*${i + 1}]`)

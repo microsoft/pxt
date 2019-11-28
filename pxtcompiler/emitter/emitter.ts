@@ -2203,8 +2203,9 @@ ${lbl}: .short 0xffff
         ): ir.Expr {
             if (!decl)
                 decl = getDecl(funcExpr) as EmittableAsCall;
-            let isMethod = false
+            let hasRecv = false
             let isProperty = false
+            let hasArgs = node !== funcExpr
 
             if (decl) {
                 switch (decl.kind) {
@@ -2214,13 +2215,13 @@ ${lbl}: .short 0xffff
                     case SK.PropertyAssignment:
                     case SK.PropertyDeclaration:
                         if (!isStatic(decl)) {
-                            isMethod = true
+                            hasRecv = true
                             isProperty = true
                         }
                         break;
                     case SK.Parameter:
                         if (isCtorField(decl)) {
-                            isMethod = true
+                            hasRecv = true
                             isProperty = true
                         }
                         break
@@ -2228,27 +2229,31 @@ ${lbl}: .short 0xffff
                     // these are the real methods
                     case SK.GetAccessor:
                     case SK.SetAccessor:
-                        isMethod = true
+                        hasRecv = true
                         if (target.switches.slowMethods)
                             isProperty = true
                         break
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
-                        isMethod = true
+                        if (!isStatic(decl))
+                            hasRecv = true
                         break;
                     case SK.ModuleDeclaration:
                     case SK.FunctionDeclaration:
                         // has special handling
                         break;
                     default:
+                        if (!decl && funcExpr.kind == SK.PropertyAccessExpression)
+                            hasRecv = true // any-access
                         decl = null; // no special handling
                         break;
                 }
             }
+
             let attrs = parseComments(decl)
             let args = callArgs.slice(0)
 
-            if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
+            if (hasRecv && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
                 recv = (<PropertyAccessExpression>funcExpr).expression
 
             if (res.usedArguments && attrs.trackArgs) {
@@ -2303,11 +2308,16 @@ ${lbl}: .short 0xffff
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, ctorArgs)
             }
-            if (isMethod) {
+            if (hasRecv) {
                 let isSuper = false
-                if (isStatic(decl)) {
-                    // no additional arguments
-                } else if (recv) {
+                if (!decl) {
+                    dynamic
+                    // if has args - call it, otherwise just fetch value
+                    // flag on mkMethodCall
+                    // TODO in VT accessor/field/method -> different
+                }
+                U.assert(!isStatic(decl))
+                if (recv) {
                     if (recv.kind == SK.SuperKeyword) {
                         isSuper = true
                     }
