@@ -1,0 +1,9 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="stop_animations">
+<field name="type">animation.AnimationTypes.All</field>
+</block>
+</statement>
+</block>
+</xml>

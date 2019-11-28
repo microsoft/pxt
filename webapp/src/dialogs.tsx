@@ -1,138 +1,13 @@
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+// tslint:disable: react-a11y-anchors
 
+import * as React from "react";
 import * as sui from "./sui";
-import * as data from "./data";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
-import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
-
-
-interface PlainCheckboxProps {
-    label: string;
-    onChange: (v: boolean) => void;
-}
-
-interface PlainCheckboxState {
-    isChecked: boolean;
-}
-
-class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
-    constructor(props: PlainCheckboxProps) {
-        super(props);
-        this.state = {
-            isChecked: false
-        }
-        this.setCheckedBit = this.setCheckedBit.bind(this);
-    }
-
-    setCheckedBit() {
-        let val = !this.state.isChecked
-        this.props.onChange(val)
-        this.setState({ isChecked: val })
-    }
-
-    renderCore() {
-        return <sui.Checkbox
-            inputLabel={this.props.label}
-            checked={this.state.isChecked}
-            onChange={this.setCheckedBit} />
-    }
-}
-
-export function showGithubLoginAsync() {
-    let input: HTMLInputElement;
-    return core.confirmAsync({
-        header: lf("Log in to GitHub"),
-        onLoaded: (el) => {
-            input = el.querySelectorAll('input')[0] as HTMLInputElement;
-        },
-        jsx: <div className="ui form">
-            <p>{lf("You will need a GitHub token:")}</p>
-            <ol>
-                <li>
-                    {lf("Navigate to: ")}
-                    <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
-                        {lf("GitHub token generation page")}
-                    </a>
-                </li>
-                <li>
-                    {lf("Put something like 'MakeCode {0}' in description", pxt.appTarget.name)}
-                </li>
-                <li>
-                    {lf("Select either '{0}' or '{1}' scope, depending which repos you want to edit from here", "repo", "public_repo")}
-                </li>
-                <li>
-                    {lf("Click generate token, copy it, and paste it below.")}
-                </li>
-            </ol>
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
-            </div>
-        </div>,
-    }).then(res => {
-        if (res) {
-            pxt.tickEvent("app.github.token");
-            const url = input.value.trim()
-            if (url.length != 40 || !/^[a-f0-9]+$/.test(url)) {
-                core.errorNotification(lf("Invalid token format"))
-            } else {
-                core.infoNotification(lf("Token stored. Check out Import on home screen now!"))
-                pxt.storage.setLocal("githubtoken", url)
-                pxt.github.token = url
-            }
-        }
-    })
-}
-
-export function githubFooter(msg: string, close: () => void) {
-    function githubLogin() {
-        close()
-        showGithubLoginAsync()
-    }
-
-    function githubLogout() {
-        close()
-        pxt.storage.removeLocal("githubtoken")
-        pxt.github.token = ""
-        core.infoNotification(lf("Logged out from GitHub"))
-    }
-
-    if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.githubPackages)
-        return <div />
-
-    /* tslint:disable:react-a11y-anchors */
-    if (pxt.github.token) {
-        return (
-            <p>
-                <br />
-                <br />
-                <a href="#github" role="button" onClick={githubLogout}>
-                    {lf("Logout from GitHub")}
-                </a>
-                <br />
-                <br />
-            </p>)
-    } else {
-        return (
-            <p>
-                <br />
-                <br />
-                {msg}
-                {" "}
-                <a href="#github" role="button" onClick={githubLogin}>
-                    {lf("Login to GitHub")}
-                </a>
-                <br />
-                <br />
-            </p>)
-    }
-}
 
 export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
@@ -168,7 +43,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                         (!pxt.Cloud.isOnline() || !electronManifest)
                             ? <p>{lf("Please connect to internet to check for updates")}</p>
                             : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
-                                ? <a href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
+                                ? <a target="_blank" rel="noopener noreferrer" href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
                     {githubUrl && versions ?
@@ -472,10 +347,10 @@ export function showCommitDialogAsync(repo: string) {
         jsx: <div className="ui form">
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Describe your changes.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
             </div>
             <div className="ui field">
-                <PlainCheckbox
+                <sui.PlainCheckbox
                     label={lf("Publish to users (bump)")}
                     onChange={setBump} />
             </div>
@@ -519,7 +394,7 @@ export function showImportUrlDialogAsync() {
         },
         jsx: <div className="ui form">
             <div className="ui icon violet message">
-                <i className="user icon"></i>
+                <i className="user icon" aria-hidden={true}></i>
                 <div className="content">
                     <h3 className="header">
                         {lf("User-provided content")}
@@ -533,7 +408,7 @@ export function showImportUrlDialogAsync() {
             </div>
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -541,8 +416,8 @@ export function showImportUrlDialogAsync() {
             pxt.tickEvent("app.open.url");
             const url = input.value;
             let projectId: string;
-            if (/^(github:|https:\/\/github.com\/)/.test(url)) {
-                projectId = pxt.github.noramlizeRepoId(url)
+            if (/^(github:|https:\/\/github\.com\/)/.test(url)) {
+                projectId = pxt.github.normalizeRepoId(url)
             } else {
                 projectId = pxt.Cloud.parseScriptId(url);
             }
@@ -559,41 +434,112 @@ export function showImportUrlDialogAsync() {
     })
 }
 
+export function showGithubTokenError(err: any) {
+    if (err.statusCode == 401) {
+        core.errorNotification(lf("GitHub didn't accept token"))
+        return true
+    } else if (err.statusCode == 404) {
+        core.errorNotification(lf("Token has neither '{0}' nor '{1}' scope", "repo", "public_repo"))
+        return true
+    } else {
+        return false
+    }
+}
 
-export function showCreateGithubRepoDialogAsync() {
-    let inputName: HTMLInputElement;
-    let inputDesc: HTMLInputElement;
+export function showCreateGithubRepoDialogAsync(name?: string) {
+    pxt.tickEvent("github.create.dialog");
+    if (name) {
+        name = name.toLocaleLowerCase().replace(/\s+/g, '-');
+        name = name.replace(/[^\w\-]/g, '');
+        if (!/^pxt-/.test(name)) name = 'pxt-' + name;
+    }
+
+    let repoName: string = name || "";
+    let repoDescription: string = "";
+    let repoPublic: boolean = true;
+
+    function repoNameError(): string {
+        if (repoName == "pxt-" + lf("Untitled").toLocaleLowerCase()
+            || repoName == "pxt-untitled")
+            return lf("Please pick a different name.")
+        const repoNameRx = /^[\w\-]{1,64}$/;
+        if (!repoNameRx.test(repoName))
+            return lf("Repository names must be less than 64 characters and cannot include spaces or special characters.");
+        return undefined;
+    }
+
+    function onNameChanged(v: string) {
+        v = v.trim();
+        if (repoName != v) {
+            repoName = v;
+            coretsx.forceUpdate();
+        }
+    }
+
+    function onDescriptionChanged(v: string) {
+        if (repoDescription != v) {
+            repoDescription = v;
+            coretsx.forceUpdate();
+        }
+    }
+
+    function onPublicChanged(e: React.ChangeEvent<HTMLSelectElement>) {
+        const v = e.currentTarget.selectedIndex == 0;
+        if (repoPublic != v) {
+            repoPublic = v;
+            coretsx.forceUpdate();
+        }
+    }
+
     return core.confirmAsync({
-        header: lf("Create GitHub repo"),
-        onLoaded: (el) => {
-            inputName = el.querySelectorAll('input')[0] as HTMLInputElement;
-            inputDesc = el.querySelectorAll('input')[1] as HTMLInputElement;
+        hideCancel: true,
+        hasCloseIcon: true,
+        header: lf("Create GitHub repository"),
+        jsxd: () => {
+            const nameErr = repoNameError();
+            return <div className="ui form">
+                <p>
+                    {lf("Host your code on GitHub and work together with friends.")}
+                    {sui.helpIconLink("/github", lf("Learn more about GitHub"))}
+                </p>
+                <div className="ui field">
+                    <sui.Input type="url" value={repoName} onChange={onNameChanged} label={lf("Repository name")} placeholder={`pxt-my-gadget...`} class="fluid" error={nameErr} />
+                </div>
+                <div className="ui field">
+                    <sui.Input type="text" value={repoDescription} onChange={onDescriptionChanged} label={lf("Repository description")} placeholder={lf("MakeCode extension for my gadget")} class="fluid" />
+                </div>
+                <div className="ui field">
+                    <select className="ui dropdown" onChange={onPublicChanged}>
+                        <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
+                        <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
+                    </select>
+                </div>
+            </div>
         },
-        jsx: <div className="ui form">
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Repo name.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
-            </div>
-            <div className="ui field">
-                <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
-            </div>
-        </div>,
     }).then(res => {
-        if (res) {
-            pxt.tickEvent("app.github.create");
-            const name = inputName.value.trim()
-            const desc = inputDesc.value.trim()
-
-            if (/^[\w\-]+$/.test(inputName.value)) {
-                core.showLoading("creategithub", lf("Creating GitHub repo..."))
-                return pxt.github.createRepoAsync(name, desc)
+        if (!res)
+            pxt.tickEvent("github.create.cancel");
+        else {
+            if (!repoNameError()) {
+                core.showLoading("creategithub", lf("creating {0} repository...", repoName))
+                return pxt.github.createRepoAsync(repoName, repoDescription.trim(), !repoPublic)
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
-                        return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                        pxt.tickEvent("github.create.ok");
+                        return pxt.github.normalizeRepoId("https://github.com/" + r.fullName);
+                    }, err => {
+                        if (!showGithubTokenError(err)) {
+                            if (err.statusCode == 422)
+                                core.errorNotification(lf("Repository '{0}' already exists.", repoName))
+                            else
+                                core.errorNotification(err.message)
+                            pxt.tickEvent("github.create.error", { statusCode: err.statusCode });
+                        }
+                        return "";
                     })
             } else {
-                core.errorNotification(lf("Invalid repo name."))
+                core.errorNotification(lf("Invalid repository name."))
+                pxt.tickEvent("github.create.invalidname");
             }
         }
         return "";
@@ -617,7 +563,7 @@ export function showImportGithubDialogAsync() {
                     description: r.description,
                     updatedAt: r.updatedAt,
                     onClick: () => {
-                        res = pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                        res = pxt.github.normalizeRepoId("https://github.com/" + r.fullName)
                         core.hideDialog()
                     },
                 }))
@@ -627,7 +573,7 @@ export function showImportGithubDialogAsync() {
             hideAgree: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
-                <div className="ui relaxed divided list">
+                <div className="ui relaxed divided list" role="menu">
 
                     <div key={"create new"} className="item">
                         <i className="large plus circle middle aligned icon"></i>
@@ -688,7 +634,7 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
         jsx: <div className="ui form">
             <div className="ui field">
                 <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", exts.join(lf(" or ")))}</label>
-                <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
+                <input type="file" tabIndex={0} autoFocus aria-labelledby="selectFileToOpenLabel" className="ui blue fluid"></input>
             </div>
             <div className="ui secondary segment">
                 {lf("You can import files by dragging and dropping them anywhere in the editor!")}
@@ -704,7 +650,7 @@ export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions
 
 export function showReportAbuseAsync(pubId?: string) {
     // send users to github directly for unwanted repoes
-    const ghid = /^https:\/\/github.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
+    const ghid = /^https:\/\/github\.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
     if (ghid) {
         pxt.tickEvent("reportabuse.github");
         window.open("https://github.com/contact/report-content", "_blank");
@@ -726,12 +672,12 @@ export function showReportAbuseAsync(pubId?: string) {
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">
             <div className="ui field">
-                <label>{lf("What is the URL of the offensive project?")}</label>
-                <input type="url" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
+                <label id="abuseUrlLabel">{lf("What is the URL of the offensive project?")}</label>
+                <input type="url" aria-labelledby="abuseUrlLabel" tabIndex={0} autoFocus placeholder="Enter project URL here..."></input>
             </div>
             <div className="ui field">
-                <label>{lf("Why do you find it offensive?")}</label>
-                <textarea></textarea>
+                <label id="abuseDescriptionLabel">{lf("Why do you find it offensive?")}</label>
+                <textarea aria-labelledby="abuseDescriptionLabel"></textarea>
             </div>
         </div>,
     }).done(res => {
@@ -770,26 +716,20 @@ export function showResetDialogAsync() {
     })
 }
 
-export function showCloudSignInDialog() {
-    const providers = cloudsync.providers();
-    if (providers.length == 0)
-        return;
-    if (providers.length == 1)
-        providers[0].login()
-    else {
-        core.dialogAsync({
-            header: lf("Sign in"),
-            body: lf("Please choose your cloud storage provider."),
-            hideCancel: true,
-            buttons:
-                providers.map(p => ({
-                    label: p.friendlyName,
-                    className: "positive small",
-                    icon: "user circle",
-                    onclick: () => {
-                        p.login()
-                    }
-                }))
-        })
-    }
+export function promptTranslateBlock(blockid: string, blockTranslationIds: string[]) {
+    core.confirmAsync({
+        header: lf("Translate this block"),
+        hideCancel: true,
+        hideAgree: true,
+        hasCloseIcon: true,
+        helpUrl: "/translate",
+        jsx: <div>
+            <div>
+                {lf("Update the block translation below.")}
+                {lf("Do not translate variable names (%name, $name).")}
+                {lf("Once validated in Crowdin, translations may take 24h to be active.")}
+            </div>
+            {blockTranslationIds.map(trid => <div key={`ictr${trid}`} className="ui basic segment">{trid}</div>)}
+        </div>
+    }).done();
 }

@@ -10,6 +10,8 @@ import { ProjectsCodeCard } from "./projects";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+export type ScriptSource = 'cloud' | 'local';
+
 export interface ScriptManagerDialogProps extends ISettingsProps {
     onClose?: () => void;
 }
@@ -156,7 +158,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             agreeClass: "green approve positive",
             agreeIcon: "clone",
             initialValue: workspace.createDuplicateName(header),
-            placeholder: lf("Enter your project name here")
+            placeholder: lf("Enter your project name here"),
+            size: "tiny"
         };
         return core.promptAsync(opts).then(res => {
             if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
@@ -168,12 +171,18 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     return workspace.duplicateAsync(header, text, false);
                 })
                 .then((clonedHeader) => {
+                    // If we're cloud synced, update the cloudSync flag
+                    if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
+
                     // Update the name of the new header
                     clonedHeader.name = res;
+                    delete clonedHeader.blobId
+                    delete clonedHeader.blobVersion
+                    delete clonedHeader.blobCurrent
                     // Set the name in the pxt.json (config)
                     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
                     cfg.name = clonedHeader.name
-                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     return clonedHeader;
                 })
                 .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))
@@ -344,14 +353,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     </h2>
                 </div> : undefined}
                 {hasHeaders && view == 'grid' ?
-                    <div role="grid" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
+                    <div role="button" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <div className="sort-by">
-                            <div className="ui compact buttons">
+                            <div role="menu" className="ui menu compact buttons">
                                 <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
                                     <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
                                     <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
                                 </sui.DropdownMenu>
-                                <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
+                                <sui.Button role="menuitem" icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
                             </div>
                         </div>
                         <div className={"ui cards"}>
@@ -366,6 +375,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     `right corner label large selected-label`;
                                 const label = showMarkedNew ? lf("New") : undefined;
 
+                                // TODO name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
                                 return <ProjectsCodeCard
                                     key={'local' + scr.id + scr.recentUse}
                                     cardType="file"

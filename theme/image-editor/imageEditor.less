@@ -1,0 +1,200 @@
+@import 'bottomBar';
+@import 'button';
+@import 'cursorSizes';
+@import 'fabric-icons-inline';
+@import 'imageCanvas';
+@import 'sideBar';
+@import 'timeline';
+@import 'topBar';
+
+:root {
+    --editor-bg-color: #1e1e1e;
+
+    --sidebar-bg-color: #252526;
+    --sidebar-header-bg-color: #3c3c3c;
+    --sidebar-header-text-color: #cccccc;
+
+    --editing-tools-bg-color: #333333;
+    --sidebar-icon-inactive-color: #adadad;
+    --sidebar-icon-active-color: #ffffff;
+    --sidebar-label-color: #adadad;
+
+    --navigator-viewport-color: #ff0000;
+
+    --map-button-bg-color: #3c3c3c;
+    --map-button-icon-color: #cccccc;
+  }
+
+.image-editor {
+    // position: absolute;
+    width: 100%;
+    height: 100%;
+    // top: 200px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    background-color: var(--editor-bg-color);
+}
+
+.image-editor-content {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.image-editor-label {
+    color: var(--sidebar-label-color);
+    font-family: "Roboto Mono", monospace;
+}
+
+.image-editor-wrapper {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.gallery-editor-header {
+    height: 3rem;
+    background-color: #4B7BEC;
+    border: 2px solid #4067b3;
+    border-bottom: none;
+}
+
+.image-editor-gallery-content {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+.gallery-editor-toggle {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+
+    height: 2.25rem;
+    line-height: 2.25rem;
+
+    background-color: #4572cf;
+    border: 2px solid #4067b3;
+    border-radius: 5px;
+    width: 13rem;
+    margin-top: 0.25rem;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+.gallery-editor-toggle.right {
+    .gallery-editor-toggle-handle {
+        transform: translateX(6.25rem);
+    }
+    .gallery-editor-toggle-right {
+        color: #4B7BEC;
+    }
+}
+
+.gallery-editor-toggle.left {
+    .gallery-editor-toggle-left {
+        color: #4B7BEC;
+    }
+}
+
+// Microsoft Edge has a bug related to relative z-indices that prevents the handle
+// from appearing below the text, so instead we make the handle transparent and have the text
+// show through
+.gallery-editor-toggle.edge {
+    .gallery-editor-toggle-label, .gallery-editor-toggle-label-right, .gallery-editor-toggle-label-left {
+        color: #ffffff;
+        z-index: auto;
+    }
+    .gallery-editor-toggle-handle {
+        opacity: 0.3;
+    }
+}
+
+.gallery-editor-toggle-label {
+    flex-grow: 1;
+    text-align: center;
+    color: #ffffff;
+    z-index: 1;
+    transition: color 0.3s;
+    user-select: none;
+}
+
+.gallery-editor-toggle-handle {
+    width: 6.5rem;
+    height: 2rem;
+    background-color: white;
+    border-radius: 5px;
+    position: absolute;
+    left: 0;
+
+    transform: translateX(0);
+    transition: transform 0.3s;
+}
+
+.image-editor-gallery {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+
+    top: 0;
+
+    margin-top: -100%;
+    transition: margin 0.3s, visibility 0.3s;
+
+    background-color: var(--editor-bg-color);
+    overflow-y: scroll;
+
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+
+    visibility: hidden;
+}
+
+.image-editor-gallery.visible {
+    margin-top: 0;
+    visibility: visible;
+}
+
+.image-editor-gallery .sprite-gallery-button {
+    margin: 1px;
+    border-radius: 0px;
+    width: ~"calc(20% - 2px)";
+}
+
+.ui.button.image-editor-confirm {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 2.5rem;
+    background-color: #4b7bec;
+    color: #ffffff;
+}
+
+.ui.button.image-editor-confirm.animation {
+    right: 7.5rem;
+}
+
+.ui.button.image-editor-confirm:hover {
+    background-color: darken(#4b7bec, 5%);
+}
+
+.ui.button.image-editor-confirm:active {
+    background-color: darken(#4b7bec, 10%);
+}
+
+:root {
+    --editor-height: 31rem;
+}

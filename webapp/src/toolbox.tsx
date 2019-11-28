@@ -716,15 +716,17 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             </style>
             iconContent = undefined;
         }
+        const rowTitle = name ? name : Util.capitalize(subns || nameid);
 
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
+            aria-label={lf("Toggle category {0}", rowTitle)} aria-expanded={selected}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
             onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
-            <span className="blocklyTreeLabel">{name ? name : `${Util.capitalize(subns || nameid)}`}</span>
+            <span className="blocklyTreeLabel">{rowTitle}</span>
         </div>
     }
 }
@@ -857,6 +859,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
                 <input ref="searchInput" type="text" placeholder={lf("Search...")}
                     onFocus={this.searchImmediate} onKeyDown={this.handleKeyDown} onChange={this.handleChange}
                     id="blocklySearchInputField" className="blocklySearchInputField"
+                    aria-label={lf("Search")}
                     autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
                 <i className="search icon" role="presentation" aria-hidden="true"></i>
                 <div className="accessible-hidden" id="blocklySearchLabel" aria-live="polite"> {searchAccessibilityLabel} </div>
@@ -865,10 +868,29 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
     }
 }
 
-export class ToolboxTrashIcon extends data.Component<{}, {}> {
+interface ToolboxTrashIconProps {
+    flyoutOnly?: boolean;
+}
+
+export class ToolboxTrashIcon extends data.Component<ToolboxTrashIconProps, {}> {
+    constructor(props: ToolboxTrashIconProps) {
+        super(props);
+    }
+
+    getStyle() {
+        let style: any = { opacity: 0, display: 'none' };
+        if (this.props.flyoutOnly) {
+            let flyout = document.querySelector('.blocklyFlyout');
+            if (flyout ) {
+                style["left"] = (flyout.clientWidth / 2);
+                style["transform"] = "translateX(-45%)";
+            }
+        }
+        return style;
+    }
 
     renderCore() {
-        return <div id="blocklyTrashIcon" style={{ opacity: 0, display: 'none' }}>
+        return <div id="blocklyTrashIcon" style={this.getStyle()}>
             <i className="trash icon" aria-hidden="true"></i>
         </div>
     }

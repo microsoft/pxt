@@ -2,6 +2,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+    export let promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
 
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
@@ -143,34 +144,29 @@ namespace pxt.blocks {
         shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
-        // if an array of booleans, numbers, or strings
-        if (isArray && typeInfo && !shadowId) {
-            const mut = document.createElement('mutation');
-            mut.setAttribute("items", "3");
-            shadow.appendChild(mut);
-            for (let i = 0; i < 3; i++) {
-                const innerValue = document.createElement("value");
-                innerValue.setAttribute("name", "ADD" + i);
-                const innerShadow = document.createElement("shadow");
-                innerShadow.setAttribute("type", typeInfo.block);
-                const field = document.createElement("field");
-                field.setAttribute("name", typeInfo.field);
+        if (isArray) {
+            // if an array of booleans, numbers, or strings
+            if (typeInfo && !shadowId) {
+                let fieldValues: string[];
+
                 switch (isArray) {
                     case "number":
-                        field.appendChild(document.createTextNode("" + (i + 1)));
+                        fieldValues = ["1", "2", "3"];
                         break;
                     case "string":
-                        field.appendChild(document.createTextNode(String.fromCharCode('a'.charCodeAt(0) + i)));
+                        fieldValues = ["a", "b", "c"];
                         break;
                     case "boolean":
-                        field.appendChild(document.createTextNode("FALSE"));
+                        fieldValues = ["FALSE", "FALSE", "FALSE"];
                         break;
                 }
-                innerShadow.appendChild(field);
-                innerValue.appendChild(innerShadow);
-                shadow.appendChild(innerValue);
+                buildArrayShadow(shadow, typeInfo.block, typeInfo.field, fieldValues);
+                return value;
             }
-            return value;
+            else if (shadowId && defaultValue) {
+                buildArrayShadow(shadow, defaultValue);
+                return value;
+            }
         }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
@@ -245,6 +241,30 @@ namespace pxt.blocks {
         return value;
     }
 
+    function buildArrayShadow(shadow: Element, blockType: string, fieldName?: string, fieldValues?: string[]) {
+        const itemCount = fieldValues ? fieldValues.length : 2;
+        const mut = document.createElement('mutation');
+        mut.setAttribute("items", "" + itemCount);
+        shadow.appendChild(mut);
+
+        for (let i = 0; i < itemCount; i++) {
+            const innerValue = document.createElement("value");
+            innerValue.setAttribute("name", "ADD" + i);
+            const innerShadow = document.createElement("shadow");
+            innerShadow.setAttribute("type", blockType);
+            if (fieldName) {
+                const field = document.createElement("field");
+                field.setAttribute("name", fieldName);
+                if (fieldValues) {
+                    field.appendChild(document.createTextNode(fieldValues[i]));
+                }
+                innerShadow.appendChild(field);
+            }
+            innerValue.appendChild(innerShadow);
+            shadow.appendChild(innerValue);
+        }
+    }
+
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
         const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
@@ -258,14 +278,14 @@ namespace pxt.blocks {
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
         if (helpCallback) {
             groupLabel.setAttribute('web-help-button', 'true');
-            groupLabel.setAttribute('callbackkey', helpCallback);
+            groupLabel.setAttribute('callbackKey', helpCallback);
         }
         return groupLabel;
     }
 
     function createFlyoutLabel(name: string, color?: string, icon?: string, iconClass?: string): HTMLElement {
         // Add the Heading label
-        let headingLabel = goog.dom.createDom('label') as HTMLElement;
+        let headingLabel = Blockly.utils.xml.createElement('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
             headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
@@ -282,10 +302,10 @@ namespace pxt.blocks {
         return headingLabel;
     }
 
-    export function createFlyoutButton(callbackkey: string, label: string) {
-        let button = goog.dom.createDom('button') as Element;
+    export function createFlyoutButton(callbackKey: string, label: string) {
+        let button = Blockly.utils.xml.createElement('button') as Element;
         button.setAttribute('text', label);
-        button.setAttribute('callbackkey', callbackkey);
+        button.setAttribute('callbackKey', callbackKey);
         return button;
     }
 
@@ -410,6 +430,21 @@ namespace pxt.blocks {
             block: {
                 codeCard: mkCard(fn, blockXml),
                 init: function () { initBlock(this, info, fn, comp) }
+            }
+        }
+
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
+            cachedBlock.block.customContextMenu = (options: any[]) => {
+                if (fn.attributes.translationId) {
+                    options.push({
+                        enabled: true,
+                        text: lf("Translate this block"),
+                        callback: function () {
+                            pxt.blocks.promptTranslateBlock(id, [fn.attributes.translationId]);
+                        }
+                    })
+                }
             }
         }
 
@@ -565,8 +600,10 @@ namespace pxt.blocks {
             }
         });
         if (fn.attributes.imageLiteral) {
+            const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
+            const rows = fn.attributes.imageLiteralRows || 5;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns: fn.attributes.imageLiteral * 5 }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {
@@ -593,7 +630,7 @@ namespace pxt.blocks {
         block.setPreviousStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
         block.setNextStatement(!(hasHandlers && !fn.attributes.handlerStatement) && fn.retType == "void");
 
-        block.setTooltip( /^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
+        block.setTooltip(/^__/.test(fn.namespace) ? "" : fn.attributes.jsDoc);
         function buildBlockFromDef(def: pxtc.ParsedBlockDef, expanded = false) {
             let anonIndex = 0;
             let firstParam = !expanded && !!comp.thisParameter;
@@ -642,7 +679,7 @@ namespace pxt.blocks {
 
                         firstParam = false;
                         if (!pr) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
+                            console.error("block " + fn.attributes.blockId + ": unknown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
 
@@ -749,27 +786,13 @@ namespace pxt.blocks {
                             inputName = defName;
                             if (instance && part.name === "this") {
                                 inputCheck = pr.type;
-                            } else if (pr.type == "number") {
-                                if (pr.shadowBlockId && pr.shadowBlockId == "value") {
-                                    inputName = undefined;
-                                    fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
-                                }
-                                else {
-                                    inputCheck = "Number"
-                                }
-                            } else if (pr.type == "boolean") {
-                                inputCheck = "Boolean"
-                            } else if (pr.type == "string") {
-                                if (pr.shadowOptions && pr.shadowOptions.toString) {
-                                    inputCheck = undefined;
-                                }
-                                else {
-                                    inputCheck = "String"
-                                }
-                            } else if (pr.type == "any") {
+                            } else if (pr.type == "number" && pr.shadowBlockId && pr.shadowBlockId == "value") {
+                                inputName = undefined;
+                                fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
+                            } else if (pr.type == "string" && pr.shadowOptions && pr.shadowOptions.toString) {
                                 inputCheck = null;
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
+                                inputCheck = getBlocklyCheckForType(pr.type, info);
                             }
                         }
                     }
@@ -879,14 +902,14 @@ namespace pxt.blocks {
         initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
-            if (this.disabled != disabled) {
+        (Blockly.Block as any).prototype.setEnabled = function (enabled: any) {
+            if (this.disabled == enabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
-                    this, 'disabled', null, this.disabled, disabled));
+                    this, 'disabled', null, this.disabled, !enabled));
                 (Blockly as any).Events.recordUndo = oldRecordUndo;
-                this.disabled = disabled;
+                this.disabled = !enabled;
             }
         };
     }
@@ -899,36 +922,54 @@ namespace pxt.blocks {
      *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
      */
     function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
-        switch (type) {
-            // Blockly capitalizes primitive types for its builtin math/string/logic blocks
-            case "number": return ["Number"];
-            case "string": return ["String"];
-            case "boolean": return ["Boolean"];
-            case "any": return null;
-            case "void": return undefined
-            default:
-                if (type !== "T") {
+        const types = type.split(/\s*\|\s*/);
+        const output = [];
+        for (const subtype of types) {
+            switch (subtype) {
+                // Blockly capitalizes primitive types for its builtin math/string/logic blocks
+                case "number":
+                    output.push("Number");
+                    break;
+                case "string":
+                    output.push("String");
+                    break;
+                case "boolean":
+                    output.push("Boolean");
+                    break;
+                case "T":
+                // The type is generic, so accept any checks. This is mostly used with functions that
+                // get values from arrays. This could be improved if we ever add proper type
+                // inference for generic types
+                case "any":
+                    return null;
+                case "void":
+                    return undefined;
+                default:
                     // We add "Array" to the front for array types so that they can be connected
                     // to the blocks that accept any array (e.g. length, push, pop, etc)
-                    const opt_check = isArrayType(type) ? ["Array"] : [];
+                    if (isArrayType(subtype)) {
+                        if (types.length > 1) {
+                            // type inference will potentially break non-trivial arrays in intersections
+                            // until we have better type handling in blocks,
+                            // so escape and allow any block to be dropped in.
+                            return null;
+                        } else {
+                            output.push("Array");
+                        }
+                    }
 
                     // Blockly has no concept of inheritance, so we need to add all
                     // super classes to the check array
-                    const si_r = info.apis.byQName[type];
+                    const si_r = info.apis.byQName[subtype];
                     if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
-                        opt_check.push(...si_r.extendsTypes);
+                        output.push(...si_r.extendsTypes);
                     } else {
-                        opt_check.push(type);
+                        output.push(subtype);
                     }
-
-                    return opt_check;
-                } else {
-                    // The type is generic, so accept any checks. This is mostly used with functions that
-                    // get values from arrays. This could be improved if we ever add proper type
-                    // inference for generic types
-                    return null;
-                }
+            }
         }
+
+        return output;
     }
 
     function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
@@ -965,6 +1006,21 @@ namespace pxt.blocks {
             blocksXml: xml ? (`<xml xmlns="http://www.w3.org/1999/xhtml">` + (cleanOuterHTML(xml) || `<block type="${id}"></block>`) + "</xml>") : undefined,
             url: url
         };
+        if (pxt.Util.isTranslationMode()
+            && pxt.blocks.promptTranslateBlock) {
+            block.customContextMenu = (options: any[]) => {
+                const blockd = pxt.blocks.getBlockDefinition(block.type);
+                if (blockd && blockd.translationIds) {
+                    options.push({
+                        enabled: true,
+                        text: lf("Translate this block"),
+                        callback: function () {
+                            pxt.blocks.promptTranslateBlock(id, blockd.translationIds);
+                        }
+                    })
+                }
+            };
+        }
     }
 
     export function installHelpResources(id: string, name: string, tooltip: any, url: string, colour: string, colourSecondary?: string, colourTertiary?: string) {
@@ -1119,6 +1175,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1206,6 +1263,7 @@ namespace pxt.blocks {
                 if (Blockly.Names.equals(oldName, varField.getText())) {
 
                     varField.setText(newName);
+                    varField.setValue(newName);
                 }
             },
             /**
@@ -1227,6 +1285,83 @@ namespace pxt.blocks {
                 }
             }
         };
+
+        // break statement
+        const breakBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_BREAK_TYPE);
+        Blockly.Blocks[pxtc.TS_BREAK_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": breakBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_BREAK_TYPE,
+                    breakBlockDef.name,
+                    breakBlockDef.tooltip,
+                    breakBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        // continue statement
+        const continueBlockDef = pxt.blocks.getBlockDefinition(ts.pxtc.TS_CONTINUE_TYPE);
+        Blockly.Blocks[pxtc.TS_CONTINUE_TYPE] = {
+            init: function () {
+                const color = pxt.toolbox.getNamespaceColor('loops');
+
+                this.jsonInit({
+                    "message0": continueBlockDef.block["message0"],
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": color
+                });
+
+                setHelpResources(this,
+                    ts.pxtc.TS_CONTINUE_TYPE,
+                    continueBlockDef.name,
+                    continueBlockDef.tooltip,
+                    continueBlockDef.url,
+                    color,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
+
+        const collapsedColor = "#cccccc";
+        Blockly.Blocks[pxtc.COLLAPSED_BLOCK] = {
+            init: function () {
+                this.jsonInit({
+                    "message0": "...",
+                    "inputsInline": true,
+                    "previousStatement": null,
+                    "nextStatement": null,
+                    "colour": collapsedColor
+                })
+                setHelpResources(this,
+                    ts.pxtc.COLLAPSED_BLOCK,
+                    "...",
+                    lf("a few blocks"),
+                    undefined,
+                    collapsedColor,
+                    undefined/*colourSecondary*/,
+                    undefined/*colourTertiary*/,
+                    false/*undeletable*/
+                );
+            }
+        }
     }
 
     export let onShowContextMenu: (workspace: Blockly.Workspace,
@@ -1252,7 +1387,8 @@ namespace pxt.blocks {
         const blockDrag = (<any>Blockly).BlockDragger.prototype.dragBlock;
         (<any>Blockly).BlockDragger.prototype.dragBlock = function (e: any, currentDragDeltaXY: any) {
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
-            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
+            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
+                || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (blocklyTreeRoot && trashIcon) {
                 const distance = calculateDistance(blocklyTreeRoot.getBoundingClientRect(), e.clientX);
@@ -1260,14 +1396,16 @@ namespace pxt.blocks {
                     const opacity = distance / 200;
                     trashIcon.style.opacity = `${1 - opacity}`;
                     trashIcon.style.display = 'block';
-                    blocklyTreeRoot.style.opacity = `${opacity}`;
-                    if (distance < 50) {
-                        pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
+                    if (blocklyToolboxDiv) {
+                        blocklyTreeRoot.style.opacity = `${opacity}`;
+                        if (distance < 50) {
+                            pxt.BrowserUtils.addClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
+                        }
                     }
                 } else {
                     trashIcon.style.display = 'none';
                     blocklyTreeRoot.style.opacity = '1';
-                    pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
+                    if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
                 }
             }
             return blockDrag.call(this, e, currentDragDeltaXY);
@@ -1283,12 +1421,13 @@ namespace pxt.blocks {
         (<any>Blockly).BlockDragger.prototype.endBlockDrag = function (e: any, currentDragDeltaXY: any) {
             blockEndDrag.call(this, e, currentDragDeltaXY);
             const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLElement;
-            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement;
+            const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
+                || document.getElementsByClassName('blocklyFlyout')[0] as HTMLElement;
             const trashIcon = document.getElementById("blocklyTrashIcon");
             if (trashIcon && blocklyTreeRoot) {
                 trashIcon.style.display = 'none';
                 blocklyTreeRoot.style.opacity = '1';
-                pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
+                if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
             }
         }
     }
@@ -1849,9 +1988,9 @@ namespace pxt.blocks {
                 xmlList.push(headingLabel);
             }
 
-            let button = goog.dom.createDom('button') as HTMLElement;
+            let button = document.createElement('button') as HTMLElement;
             button.setAttribute('text', lf("Make a Variable..."));
-            button.setAttribute('callbackkey', 'CREATE_VARIABLE');
+            button.setAttribute('callbackKey', 'CREATE_VARIABLE');
 
             workspace.registerButtonCallback('CREATE_VARIABLE', function (button) {
                 Blockly.Variables.createVariable(button.getTargetWorkspace());
@@ -2111,15 +2250,15 @@ namespace pxt.blocks {
                          *   </block>
                          * </xml>
                          */
-                        let xml = goog.dom.createDom('xml');
-                        let block = goog.dom.createDom('block');
+                        let xml = Blockly.utils.xml.createElement('xml');
+                        let block = Blockly.utils.xml.createElement('block');
                         block.setAttribute('type', this.defType_);
                         let xy = this.getRelativeToSurfaceXY();
                         let x = xy.x + (Blockly as any).SNAP_RADIUS * (this.RTL ? -1 : 1);
                         let y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                         block.setAttribute('x', x);
                         block.setAttribute('y', y);
-                        let field = goog.dom.createDom('field');
+                        let field = Blockly.utils.xml.createElement('field');
                         field.setAttribute('name', 'NAME');
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
@@ -2199,9 +2338,9 @@ namespace pxt.blocks {
             const newFunctionTitle = lf("New function name:");
 
             // Add the "Make a function" button
-            let button = goog.dom.createDom('button');
+            let button = Blockly.utils.xml.createElement('button');
             button.setAttribute('text', newFunction);
-            button.setAttribute('callbackkey', 'CREATE_FUNCTION');
+            button.setAttribute('callbackKey', 'CREATE_FUNCTION');
 
             let createFunction = (name: string) => {
                 /**
@@ -2219,12 +2358,12 @@ namespace pxt.blocks {
                     x = xy.x + (Blockly as any).SNAP_RADIUS * (topBlock.RTL ? -1 : 1);
                     y = xy.y + (Blockly as any).SNAP_RADIUS * 2;
                 }
-                let xml = goog.dom.createDom('xml');
-                let block = goog.dom.createDom('block');
+                let xml = Blockly.utils.xml.createElement('xml');
+                let block = Blockly.utils.xml.createElement('block');
                 block.setAttribute('type', 'procedures_defnoreturn');
                 block.setAttribute('x', String(x));
                 block.setAttribute('y', String(y));
-                let field = goog.dom.createDom('field');
+                let field = Blockly.utils.xml.createElement('field');
                 field.setAttribute('name', 'NAME');
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
@@ -2283,7 +2422,7 @@ namespace pxt.blocks {
                     // <block type="procedures_callnoreturn" gap="16">
                     //   <field name="NAME">name</field>
                     // </block>
-                    let block = goog.dom.createDom('block');
+                    let block = Blockly.utils.xml.createElement('block');
                     block.setAttribute('type', templateName);
                     block.setAttribute('gap', '16');
                     block.setAttribute('colour', pxt.toolbox.getNamespaceColor('functions'));
@@ -2337,7 +2476,7 @@ namespace pxt.blocks {
             // The logic for setting the output check relies on the internals of PXT
             // too much to be refactored into pxt-blockly, so we need to monkey patch
             // it here
-            Blockly.Blocks["argument_reporter_custom"].domToMutation = function(xmlElement: Element) {
+            Blockly.Blocks["argument_reporter_custom"].domToMutation = function (xmlElement: Element) {
                 const typeName = xmlElement.getAttribute('typename');
                 this.typeName_ = typeName;
 
@@ -2539,7 +2678,7 @@ namespace pxt.blocks {
                 render();
             } else {
                 let tip = renderTip(Blockly.Tooltip.element_);
-                tip = Blockly.utils.wrap(tip, Blockly.Tooltip.LIMIT);
+                tip = Blockly.utils._string.wrap(tip, Blockly.Tooltip.LIMIT);
                 // Create new text, line by line.
                 let lines = tip.split('\n');
                 for (let i = 0; i < lines.length; i++) {
@@ -2599,7 +2738,7 @@ namespace pxt.blocks {
             pxt.log(`missing jres icon ${id}`)
             return undefined;
         }
-        return new Blockly.FieldImage(url, 40, 40, Util.isUserLanguageRtl(), '');
+        return new Blockly.FieldImage(url, 40, 40, '', null, Util.isUserLanguageRtl());
     }
 
     function initJresIcons(blockInfo: pxtc.BlocksInfo) {
@@ -2714,6 +2853,7 @@ namespace pxt.blocks {
             (varField as any).initModel();
             const model = (varField as any).getVariable();
             model.name = newName;
+            varField.setText(newName);
             varField.setValue(model.getId());
         }
     }

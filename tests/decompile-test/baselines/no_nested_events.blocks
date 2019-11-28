@@ -2,7 +2,7 @@
 <block type="device_forever">
 <statement name="HANDLER">
 <block type="typescript_statement">
-<mutation numlines="3" line0="basic.forever&#40;&#40;&#41; &#61;&#62; &#123;" line1="        i &#43;&#43;&#59;" line2="    &#125;&#41;&#59;" />
+<mutation numlines="3" error="Events must be top level" line0="basic.forever&#40;&#40;&#41; &#61;&#62; &#123;" line1="        i &#43;&#43;&#59;" line2="    &#125;&#41;&#59;" />
 <next>
 <block type="variables_change">
 <field name="VAR">i</field>
@@ -18,8 +18,14 @@
 </block>
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="typescript_statement">
-<mutation declaredvars="i" numlines="1" line0="let i &#61; 0" />
+<block type="variables_set">
+<field name="VAR">i</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;mb.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

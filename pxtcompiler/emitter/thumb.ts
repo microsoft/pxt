@@ -288,7 +288,11 @@ namespace ts.pxtc.thumb {
                         }
                     }
                     let reg = line.words[1]
-                    let v = line.words[3]
+                    // make sure the key in values[] below doesn't look like integer
+                    // we rely on Object.keys() returning stuff in insertion order, and integers mess with it
+                    // see https://www.ecma-international.org/ecma-262/6.0/#sec-ordinary-object-internal-methods-and-internal-slots-ownpropertykeys
+                    // or possibly https://www.stefanjudis.com/today-i-learned/property-order-is-predictable-in-javascript-objects-since-es2015/
+                    let v = "#" + line.words[3]
                     let lbl = U.lookup(values, v)
                     if (!lbl) {
                         lbl = "_ldlit_" + ++seq
@@ -305,7 +309,7 @@ namespace ts.pxtc.thumb {
                     txtLines.push(".balign 4")
                     for (let v of Object.keys(values)) {
                         let lbl = values[v]
-                        txtLines.push(lbl + ": .word " + v)
+                        txtLines.push(lbl + ": .word " + v.slice(1))
                     }
                     if (needsJumpOver)
                         txtLines.push(jmplbl + ":")
@@ -417,15 +421,6 @@ namespace ts.pxtc.thumb {
             } else if (lnop == "push" && lnNext.getOpExt() == "ldr $r5, [sp, $i1]" &&
                 singleReg(ln) == lnNext.numArgs[0] && lnNext.numArgs[1] == 0) {
                 // RULE: push {rX}; ldr rX, [sp, #0] -> push {rX}
-                lnNext.update("")
-            } else if (lnop == "bl" && lnNext.getOp() == "push" &&
-                /^_pxt_(incr|decr)$/.test(ln.words[1]) && singleReg(lnNext) == 0) {
-                ln.update("bl " + ln.words[1] + "_pushR0")
-                lnNext.update("@dummystack 1")
-            } else if (lnop == "ldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
-                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 32
-                && lnNext2 && lnNext2.getOp() != "push") {
-                ln.update("bl " + lnNext.words[1] + "_" + ln.numArgs[1])
                 lnNext.update("")
             } else if (lnNext2 && lnop == "push" && singleReg(ln) >= 0 && preservesReg(lnNext, singleReg(ln)) &&
                 lnNext2.getOp() == "pop" && singleReg(ln) == singleReg(lnNext2)) {

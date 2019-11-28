@@ -1,6 +1,12 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [Translations in Context](/blog/translations-in-context)
+    * [GitHub Extensions Authoring - Episode 2](/blog/github-extensions-episode-2)
+    * [CS Ed Week 2019](/blog/csed-week/csed-week-2019)
+    * [Arcade Game Jam](/blog/arcade/game-jam)
+    * [LEGO MINDSTORMS update](/blog/lego/09-06-2019)
+    * [MakeCode Assignments in Teams](/blog/teams/teams-assignments)
     * [MakeCode for the micro:bit – 2019 Release](/blog/microbit/2019-release)
     * [Project Alava: Programming Webs of Microcontrollers](/blog/alava/alava)
     * [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)

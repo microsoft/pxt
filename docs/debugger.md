@@ -3,7 +3,7 @@
 PXT supports debugging the generated TypeScript code. This is done via
 a USB HID interface implemented in software and doesn't require an interface 
 (debugging) chip. The USB HID interface uses 
-[HF2 protocol](https://github.com/Microsoft/uf2/blob/master/hf2.md).
+[HF2 protocol](https://github.com/microsoft/uf2/blob/master/hf2.md).
 Messages from the host (computer connected to the device being debugged)
 are handled in the USB interrupt of the device.
 
@@ -37,7 +37,7 @@ referred to as `globals[0]`, while in assembly it's `[r6, #0]` (`r6` holds `glob
 while TypeScript code is executing).
 
 The C++ side of the code sits in `hf2.cpp` file in `core` library (in `pxt-common-packages`).
-Current link: https://github.com/Microsoft/pxt-common-packages/blob/dbg/libs/core/hf2.cpp#L182
+Current link: https://github.com/microsoft/pxt-common-packages/blob/dbg/libs/core/hf2.cpp#L182
 
 There are currently 4 possible values of `globals[0]`
 * a valid heap address, somewhere in the middle - normal execution

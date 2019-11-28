@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as githubbutton from "./githubbutton";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -56,11 +57,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     zoomIn(view?: string) {
         pxt.tickEvent("editortools.zoomIn", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomIn();
+        this.props.parent.forceUpdate();
     }
 
     zoomOut(view?: string) {
         pxt.tickEvent("editortools.zoomOut", { view: view, collapsed: this.getCollapsedState() }, { interactiveConsent: true });
         this.props.parent.editor.zoomOut();
+        this.props.parent.forceUpdate();
     }
 
     startStopSimulator(view?: string) {
@@ -93,13 +96,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     private getUndoRedo(view: View): JSX.Element[] {
         const hasUndo = this.props.parent.editor.hasUndo();
         const hasRedo = this.props.parent.editor.hasRedo();
-        return [<EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
-                <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn} ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />]
+        return [<EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} title={lf("Undo")} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} onButtonClick={this.undo} view={this.getViewString(view)} key="undo" />,
+        <EditorToolbarButton icon='xicon redo' className={`editortools-btn redo-editortools-btn ${!hasRedo ? 'disabled' : ''}`} title={lf("Redo")} ariaLabel={lf("{0}, {1}", lf("Redo"), !hasRedo ? lf("Disabled") : "")} onButtonClick={this.redo} view={this.getViewString(view)} key="redo" />]
     }
 
     private getZoomControl(view: View): JSX.Element[] {
         return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
-                <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
+        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
     }
 
     private getSaveInput(view: View, showSave: boolean, id?: string, projectName?: string): JSX.Element[] {
@@ -112,17 +115,22 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         let saveInput = [];
         if (view != View.Mobile) {
-            saveInput.push(<label htmlFor={id} id={id} className="accessible-hidden" key="label">{lf("Type a name for your project")}</label>);
+            saveInput.push(<label htmlFor={id} className="accessible-hidden" key="label">{lf("Type a name for your project")}</label>);
             saveInput.push(<EditorToolbarSaveInput id={id} view={this.getViewString(view)} key="input"
-                            type="text"
-                            aria-labelledby={id}
-                            placeholder={lf("Pick a name...")}
-                            value={projectName || ''}
-                            onChangeValue={this.saveProjectName} />)
+                type="text"
+                aria-labelledby={id}
+                placeholder={lf("Pick a name...")}
+                value={projectName || ''}
+                onChangeValue={this.saveProjectName} />)
         }
 
         if (showSave) {
-            saveInput.push(<EditorToolbarButton icon='save' className={`${view == View.Computer ? 'small' : 'large'} right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(view)} key="save" />)
+            const sizeClass = view == View.Computer ? 'small' : 'large';
+            saveInput.push(<EditorToolbarButton icon='save' className={`${sizeClass} right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(view)} key={`save${view}`} />)
+        }
+
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.githubPackages) {
+            saveInput.push(<githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${view}`} />)
         }
 
         return saveInput;
@@ -134,10 +142,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (home) return <div />; // Don't render if we're in the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
-        const sandbox = pxt.shell.isSandboxMode();
         const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
+        const hideIteration = tutorialOptions && tutorialOptions.metadata && tutorialOptions.metadata.hideIteration;
         const simOpts = pxt.appTarget.simulator;
         const headless = simOpts.headless;
         const collapsed = (hideEditorFloats || collapseEditorTools) && (!tutorial || headless);
@@ -156,8 +164,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasUndo = this.props.parent.editor.hasUndo();
 
         const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename && !debugging;
-        const showUndoRedo = !tutorial && !readOnly && !debugging;
+        const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
+        const showGithub = !!pxt.appTarget.cloud && !!pxt.appTarget.cloud.githubPackages;
 
         const trace = !!targetTheme.enableTrace;
         const tracing = this.props.parent.state.tracing;
@@ -187,12 +196,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             <div className="column mobile only">
                 {collapsed ?
                     <div className="ui grid">
-                        {!targetTheme.bigRunButton && <div className="left aligned column six wide">
+                        {!targetTheme.bigRunButton && <div className="left aligned column four wide">
                             <div className="ui icon small buttons">
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
                             </div>
                         </div>}
-                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
+                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'twelve'} wide`}>
                             {!readOnly &&
                                 <div className="ui icon small buttons">
                                     {this.getSaveInput(mobile, showSave)}
@@ -241,6 +250,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                         {showSave && <div className="column four wide">
                             <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                            {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtntablet`} className={"small"} />}
                         </div>}
                         <div className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
                             {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(tablet)}</div>}
@@ -278,7 +288,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         <div className="column">
                                             {showUndoRedo && <div className="ui icon large buttons">{this.getUndoRedo(tablet)}</div>}
                                             {showZoomControls && <div className="ui icon large buttons">{this.getZoomControl(tablet)}</div>}
-                                            {targetTheme.bigRunButton &&
+                                            {targetTheme.bigRunButton && !hideIteration &&
                                                 <div className="big-play-button-wrapper">
                                                     <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' disabled={starting} icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='tablet' />
                                                 </div>}
@@ -286,7 +296,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     </div>}
                                 <div className="row" style={showUndoRedo || showZoomControls ? { paddingTop: 0 } : {}}>
                                     <div className="column">
-                                        {trace && <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='tablet' /> }
+                                        {trace && <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='tablet' />}
                                         {debug && <EditorToolbarButton key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="icon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='tablet' />}
                                     </div>
                                 </div>

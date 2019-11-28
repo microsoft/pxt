@@ -2,6 +2,11 @@
 /// <reference path='../built/pxtcompiler.d.ts' />
 
 namespace pxt.py {
+    export enum VarModifier {
+        NonLocal,
+        Global
+    }
+
     export interface ParameterDesc extends pxtc.ParameterDesc {
         pyType?: Type;
     }
@@ -38,12 +43,18 @@ namespace pxt.py {
         isLocal?: boolean;
         isParam?: boolean;
         isImport?: SymbolInfo;
+        modifier?: VarModifier;
+
+        /* usage information */
+        firstRefPos?: number;
+        firstAssignPos?: number;
+        firstAssignDepth?: number;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
-        startPos?: number;
-        endPos?: number;
+        startPos: number;
+        endPos: number;
         kind: string;
     }
     export interface Stmt extends AST {
@@ -150,8 +161,9 @@ namespace pxt.py {
     }
 
     export interface ScopeDef extends Stmt {
-        vars?: Map<SymbolInfo>;
+        vars: Map<SymbolInfo>;
         parent?: ScopeDef;
+        blockDepth?: number;
     }
 
     export interface FunctionDef extends Symbol, ScopeDef {
@@ -325,7 +337,7 @@ namespace pxt.py {
     }
     export interface Dict extends Expr {
         kind: "Dict";
-        keys: Expr[];
+        keys: (Expr | undefined)[];
         values: Expr[];
     }
     export interface Set extends Expr {
@@ -403,7 +415,7 @@ namespace pxt.py {
     }
     export interface NameConstant extends Expr {
         kind: "NameConstant";
-        value: boolean; // null=None, True, False
+        value: boolean | undefined; // undefined=None, True, False
     }
     export interface Ellipsis extends Expr {
         kind: "Ellipsis";

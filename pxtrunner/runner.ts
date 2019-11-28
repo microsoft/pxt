@@ -119,7 +119,7 @@ namespace pxt.runner {
                             dependencies.forEach((d: string) => {
                                 addPackageToConfig(cfg, d);
                             });
-                            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                            files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                         }
                         return Promise.resolve()
                     } else if (proto == "docs") {
@@ -134,7 +134,7 @@ namespace pxt.runner {
 
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
-                        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                         epkg.setFiles(files);
                         return Promise.resolve();
                     } else if (proto == "invalid") {
@@ -176,7 +176,7 @@ namespace pxt.runner {
     function emptyPrjFiles() {
         let p = appTarget.tsprj
         let files = U.clone(p.files)
-        files[pxt.CONFIG_NAME] = JSON.stringify(p.config, null, 4) + "\n"
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(p.config);
         files["main.blocks"] = "";
         return files
     }
@@ -191,11 +191,21 @@ namespace pxt.runner {
         pxt.setAppTarget((window as any).pxtTargetBundle)
         Util.assert(!!pxt.appTarget);
 
-        const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
-        const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
-        const lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-        const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
-        const force = !!mlang && !!mlang[2];
+        const href = window.location.href;
+        let live = false;
+        let force = false;
+        let lang: string = undefined;
+        if (/[&?]translate=1/.test(href) && !pxt.BrowserUtils.isIE()) {
+            lang = ts.pxtc.Util.TRANSLATION_LOCALE;
+            live = true;
+            force = true;
+        } else {
+            const cookieValue = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
+            const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(href);
+            lang = mlang ? mlang[3] : (cookieValue && cookieValue[1] || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+            force = !!mlang && !!mlang[2];
+        }
         const versions = pxt.appTarget.versions;
 
         patchSemantic();
@@ -267,7 +277,7 @@ namespace pxt.runner {
                         //set the custom doc name from the URL.
                         let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
-                        epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        epkg.files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
                         //Propgate the change to main package
                         mainPkg.config.name = cfg.name;
@@ -499,7 +509,7 @@ namespace pxt.runner {
             backButton.addEventListener("click", () => {
                 goBack();
             });
-            pxsim.U.addClass(backButton, "disabled");
+            setElementDisabled(backButton, true);
         }
 
         function render(doctype: string, src: string) {
@@ -563,7 +573,7 @@ namespace pxt.runner {
             }
 
             if (history.length > 1) {
-                pxsim.U.removeClass(backButton, "disabled");
+                setElementDisabled(backButton, false);
             }
         }
 
@@ -576,7 +586,17 @@ namespace pxt.runner {
             }
 
             if (history.length <= 1) {
-                pxsim.U.addClass(backButton, "disabled");
+                setElementDisabled(backButton, true);
+            }
+        }
+
+        function setElementDisabled(el: HTMLElement, disabled: boolean) {
+            if (disabled) {
+                pxsim.U.addClass(el, "disabled");
+                el.setAttribute("aria-disabled", "true");
+            } else {
+                pxsim.U.removeClass(el, "disabled");
+                el.setAttribute("aria-disabled", "false");
             }
         }
 
@@ -772,6 +792,15 @@ ${linkString}
     </div>
 </aside>
 
+<aside id=tutorialhint class=box>
+    <div class="ui icon orange message" data-inferred>
+        <div class="content">
+            <div class="header">Tutorial Hint</div>
+            @BODY@
+        </div>
+    </div>
+</aside>
+
 <!-- wrapped around ordinary content -->
 <aside id=main-container class=box>
     <div class="ui text">
@@ -816,6 +845,7 @@ ${linkString}
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
             blocksXmlClass: 'lang-blocksxml',
+            diffBlocksXmlClass: 'lang-diffblocksxml',
             staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',

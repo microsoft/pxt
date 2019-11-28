@@ -1,0 +1,31 @@
+{
+    "editor": "blocksprj",
+    "title": "Explicit Hints",
+    "steps": [
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Some tutorials can have explicit hints.",
+            "headerContentMd": "Some tutorials can have explicit hints."
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Initial step instruction goes here.\n\n#### ~ tutorialhint \n\nEverything below the tag is included in the hint, which terminates automatically\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
+            "headerContentMd": "Initial step instruction goes here.\n\n",
+            "hintContentMd": " \n\nEverything below the tag is included in the hint, which terminates automatically\n\n```blocks\nbasic.showString(\"Micro!\")\n```",
+            "hasHint": true
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "The text and code are all displayed in the card.\n\n```blocks\nlet x = 1;\nlet y = x + 2;\n```",
+            "headerContentMd": "The text and code are all displayed in the card.\n\n```blocks\nlet x = 1;\nlet y = x + 2;\n```"
+        }
+    ],
+    "activities": null,
+    "code": "\n { \n basic.showString(\"Micro!\")\n } \n\n { \n let x = 1;\nlet y = x + 2;\n } \n\n { \n basic.showIcon(IconNames.Square)\n } \n"
+}

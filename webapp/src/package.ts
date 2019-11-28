@@ -27,6 +27,7 @@ export class File implements pxt.editor.IFile {
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
     virtual: boolean;
+    baseGitContent: string;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
@@ -85,6 +86,13 @@ export class File implements pxt.editor.IFile {
         data.invalidate("open-meta:" + this.getName())
     }
 
+    setBaseGitContent(newContent: string) {
+        if (newContent != this.baseGitContent) {
+            this.baseGitContent = newContent
+            this.updateStatus()
+        }
+    }
+
     setContentAsync(newContent: string, force?: boolean) {
         Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
@@ -100,6 +108,8 @@ export class File implements pxt.editor.IFile {
                         this.updateStatus();
                     }
                     if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
+                    if (this.name == pxt.github.GIT_JSON)
+                        this.epkg.updateGitJsonCache()
                 })
         } else {
             this.updateStatus();
@@ -110,6 +120,16 @@ export class File implements pxt.editor.IFile {
     setForceChangeCallback(callback: (from: string, to: string) => void) {
         this.forceChangeCallback = callback;
     }
+
+    /**
+     * Content prepared for github publishing
+     */
+    publishedContent(): string {
+        let c = this.content;
+        if (this.name == pxt.CONFIG_NAME)
+            c = workspace.prepareConfigForGithub(c);
+        return c;
+    }
 }
 
 export class EditorPackage {
@@ -118,6 +138,8 @@ export class EditorPackage {
     onupdate = () => { };
     saveScheduled = false;
     savingNow = 0;
+    private simState: pxt.Map<any>;
+    private simStateSaveScheduled = false;
 
     id: string;
     outputPkg: EditorPackage;
@@ -126,6 +148,42 @@ export class EditorPackage {
     constructor(private ksPkg: pxt.Package, private topPkg: EditorPackage) {
         if (ksPkg && ksPkg.verProtocol() == "workspace")
             this.header = workspace.getHeader(ksPkg.verArgument())
+    }
+
+    getSimState() {
+        if (!this.simState) {
+            if (!this.files[pxt.SIMSTATE_JSON])
+                this.setFile(pxt.SIMSTATE_JSON, "{}")
+            const f = this.files[pxt.SIMSTATE_JSON]
+            try {
+                this.simState = JSON.parse(f.content)
+            } catch {
+                this.simState = {}
+            }
+        }
+        return this.simState
+    }
+
+    setSimState(k: string, v: any) {
+        const state = this.getSimState()
+        if (state[k] == v)
+            return
+        if (v == null)
+            delete state[k]
+        else
+            state[k] = v
+        if (!this.simStateSaveScheduled) {
+            this.simStateSaveScheduled = true
+            setTimeout(() => {
+                this.simStateSaveScheduled = false
+                if (!this.simState)
+                    return
+                const f = this.files[pxt.SIMSTATE_JSON]
+                if (!f)
+                    return
+                f.setContentAsync(JSON.stringify(this.simState)).done()
+            }, 2000)
+        }
     }
 
     getTopHeader() {
@@ -203,7 +261,7 @@ export class EditorPackage {
             try {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
-                return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
+                return cfgFile.setContentAsync(pxt.Package.stringifyConfig(cfg))
                     .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }
@@ -256,7 +314,11 @@ export class EditorPackage {
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
-        return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
+        return this.updateConfigAsync(cfg => {
+            cfg.files = cfg.files.filter(f => f != n)
+            if (cfg.testFiles)
+                cfg.testFiles = cfg.testFiles.filter(f => f != n)
+        })
     }
 
     setContentAsync(n: string, v: string): Promise<void> {
@@ -270,9 +332,24 @@ export class EditorPackage {
         return p.then(() => f.setContentAsync(v));
     }
 
+    updateGitJsonCache() {
+        const gj = this.files[pxt.github.GIT_JSON]
+        if (gj) {
+            const gjc: pxt.github.GitJson = JSON.parse(gj.content)
+            if (gjc.commit) {
+                for (let treeEnt of gjc.commit.tree.tree) {
+                    const f = this.files[treeEnt.path]
+                    if (f && treeEnt.blobContent != null)
+                        f.setBaseGitContent(treeEnt.blobContent)
+                }
+            }
+        }
+    }
+
     setFiles(files: pxt.Map<string>) {
         this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
+        this.updateGitJsonCache()
     }
 
     private updateStatus() {
@@ -301,7 +378,7 @@ export class EditorPackage {
         }, 5000)
     }
 
-    getAllFiles() {
+    getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         delete r[pxt.SERIAL_EDITOR_FILE]
         return r
@@ -322,10 +399,10 @@ export class EditorPackage {
             .then(() => immediate ? this.savePkgAsync() : this.scheduleSave())
     }
 
-    sortedFiles() {
+    sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
-            lst = lst.filter(f => f.name != pxt.github.GIT_JSON)
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
@@ -413,11 +490,19 @@ class Host
         let fromWorkspaceAsync = (arg: string) =>
             workspace.getTextAsync(arg)
                 .then(scr => {
-                    epkg.setFiles(scr)
+                    if (!epkg.isTopLevel() && !scr) {
+                        pkg.configureAsInvalidPackage(`cannot find '${arg}' in the workspace.`);
+                        return Promise.resolve();
+                    }
+                    if (!scr) // this should not happen;
+                        return Promise.reject(new Error(`Cannot find text for package '${arg}' in the workspace.`));
                     if (epkg.isTopLevel() && epkg.header)
                         return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
-                    else
+                            .then(() => epkg.setFiles(scr))
+                    else {
+                        epkg.setFiles(scr)
                         return Promise.resolve()
+                    }
                 })
 
         if (proto == "pub") {
@@ -431,7 +516,9 @@ class Host
             return fromWorkspaceAsync(pkg.verArgument())
         } else if (proto == "file") {
             let arg = pkg.verArgument()
-            if (arg[0] == ".") arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            if (arg[0] == ".") {
+                arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
+            }
             return fromWorkspaceAsync(arg)
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
@@ -527,6 +614,8 @@ export interface FileMeta {
     isReadonly: boolean;
     isSaved: boolean;
     numErrors: number;
+    isGitModified: boolean;
+    diagnostics?: pxtc.KsDiagnostic[];
 }
 
 /*
@@ -535,17 +624,22 @@ export interface FileMeta {
 data.mountVirtualApi("open-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = getEditorPkg(mainPkg).lookupFile(p)
+        const pk = mainEditorPkg()
+        const f = pk.lookupFile(p)
         if (!f) return {}
+        const hasGit = !!(pk.header && pk.header.githubId && f.epkg == pk)
 
-        let fs: FileMeta = {
+        const fs: FileMeta = {
             isReadonly: f.isReadonly(),
             isSaved: f.inSyncWithEditor && f.inSyncWithDisk,
-            numErrors: f.numDiagnosticsOverride
+            numErrors: f.numDiagnosticsOverride,
+            isGitModified: hasGit && f.baseGitContent != f.publishedContent()
         }
 
-        if (fs.numErrors == null)
+        if (fs.numErrors == null) {
             fs.numErrors = f.diagnostics ? f.diagnostics.length : 0
+            fs.diagnostics = f.diagnostics;
+        }
 
         return fs
     },
@@ -553,6 +647,7 @@ data.mountVirtualApi("open-meta", {
 
 export interface PackageMeta {
     numErrors: number;
+    diagnostics?: pxtc.KsDiagnostic[];
 }
 
 /*
@@ -561,7 +656,7 @@ export interface PackageMeta {
 data.mountVirtualApi("open-pkg-meta", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
+        const f = allEditorPkgs().filter(pkg => pkg.getPkgId() == p)[0];
         if (!f || f.getPkgId() == "built")
             return {}
 
@@ -572,9 +667,38 @@ data.mountVirtualApi("open-pkg-meta", {
         const ks = f.getKsPkg();
         if (ks && ks.invalid())
             numErrors++;
-        return <PackageMeta>{
+        const r = <PackageMeta>{
             numErrors
         }
+        if (numErrors) {
+            r.diagnostics = [];
+            files.filter(f => !!f.diagnostics).forEach(f => r.diagnostics.concat(f.diagnostics));
+        }
+        return r;
+    }
+})
+
+export interface PackageGitStatus {
+    id?: string;
+    modified?: boolean;
+}
+
+/*
+    pkg-git-status:<guid>
+*/
+data.mountVirtualApi("pkg-git-status", {
+    getSync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const r: PackageGitStatus = {};
+        if (f) {
+            r.id = f.getPkgId() == "this" && f.header && f.header.githubId;
+            if (r.id) {
+                const files = f.sortedFiles();
+                r.modified = !!files.find(f => f.baseGitContent != f.publishedContent());
+            }
+        }
+        return r;
     }
 })
 
@@ -582,10 +706,9 @@ data.mountVirtualApi("open-pkg-meta", {
 data.mountVirtualApi("pkg-status", {
     getSync: p => {
         p = data.stripProtocol(p)
-        let ep = allEditorPkgs().filter(pkg => pkg.header && pkg.header.id == p)[0]
+        const ep = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p)
         if (ep)
             return ep.savingNow ? "saving" : ""
         return ""
     },
 })
-

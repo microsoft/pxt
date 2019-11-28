@@ -9,12 +9,12 @@ namespace pxsim {
         onTraceMessage?: (msg: TraceMessage) => void;
         onDebuggerResume?: () => void;
         onStateChanged?: (state: SimulatorState) => void;
+        onSimulatorReady?: () => void;
         onSimulatorCommand?: (msg: pxsim.SimulatorCommandMessage) => void;
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
-        autoRun?: boolean;
     }
 
     export enum SimulatorState {
@@ -51,6 +51,8 @@ namespace pxsim {
         version?: string;
         clickTrigger?: boolean;
         breakOnStart?: boolean;
+        storedState?: Map<any>;
+        autoRun?: boolean;
     }
 
     export interface HwDebugger {
@@ -66,7 +68,7 @@ namespace pxsim {
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
         private breakpointsSet = false;
-        public runOptions: SimulatorRunOptions = {};
+        private _runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
@@ -78,7 +80,11 @@ namespace pxsim {
         }
 
         isDebug() {
-            return this.runOptions && !!this.runOptions.debug;
+            return this._runOptions && !!this._runOptions.debug;
+        }
+
+        hasParts(): boolean {
+            return this._runOptions && this._runOptions.parts && !!this._runOptions.parts.length;
         }
 
         setDirty() {
@@ -92,6 +98,11 @@ namespace pxsim {
 
         setPending() {
             this.setState(SimulatorState.Pending);
+        }
+
+        focus() {
+            const frame = this.simFrames()[0];
+            if (frame) frame.focus();
         }
 
         private setStarting() {
@@ -151,9 +162,10 @@ namespace pxsim {
                     break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    pxsim.U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.autoRun)
-                        ? this.stoppedClass : this.invalidatedClass);
-                    if (!this.options.autoRun) {
+                    pxsim.U.addClass(frame,
+                        (this.state == SimulatorState.Stopped || (this._runOptions && this._runOptions.autoRun))
+                            ? this.stoppedClass : this.invalidatedClass);
+                    if (!this._runOptions || !this._runOptions.autoRun) {
                         icon.style.display = '';
                         icon.className = 'videoplay xicon icon';
                     } else
@@ -273,6 +285,7 @@ namespace pxsim {
                     else
                         this.start();
                 }
+                frame.focus()
                 return false;
             }
             wrapper.appendChild(i);
@@ -282,7 +295,7 @@ namespace pxsim {
             i.style.display = "none";
             wrapper.appendChild(l);
 
-            if (this.runOptions)
+            if (this._runOptions)
                 this.applyAspectRatioToFrame(frame);
 
             return wrapper;
@@ -313,7 +326,7 @@ namespace pxsim {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
-            this.runOptions = undefined; // forget about program
+            this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;
             this.runId = undefined;
         }
@@ -375,13 +388,13 @@ namespace pxsim {
         }
 
         private applyAspectRatio(ratio?: number) {
-            if (!ratio && !this.runOptions) return;
+            if (!ratio && !this._runOptions) return;
             const frames = this.simFrames();
             frames.forEach(frame => this.applyAspectRatioToFrame(frame, ratio));
         }
 
         private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
-            const r = ratio || this.runOptions.aspectRatio;
+            const r = ratio || this._runOptions.aspectRatio;
             frame.parentElement.style.paddingBottom =
                 (100 / r) + "%";
         }
@@ -423,7 +436,7 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
-            this.runOptions = opts;
+            this._runOptions = opts;
             this.runId = this.nextId();
             // store information
             this._currentRuntime = {
@@ -441,7 +454,8 @@ namespace pxsim {
                 refCountingDebug: opts.refCountingDebug,
                 version: opts.version,
                 clickTrigger: opts.clickTrigger,
-                breakOnStart: opts.breakOnStart
+                breakOnStart: opts.breakOnStart,
+                storedState: opts.storedState
             }
             this.start();
         }
@@ -468,7 +482,7 @@ namespace pxsim {
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this.runOptions && this.runOptions.light);
+                let wrapper = this.createFrame(this._runOptions && this._runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
@@ -507,6 +521,8 @@ namespace pxsim {
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
                     }
+                    if (this.options.onSimulatorReady)
+                        this.options.onSimulatorReady();
                     break;
                 }
                 case 'status': {

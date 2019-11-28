@@ -238,32 +238,18 @@
     -ms-interpolation-mode: nearest-neighbor;
 }
 /** Sprite Editor React component styling*/
-.ui.popup.sprite-editor-snippet-popup {
-    background: none;
-    transform: translate(-141px, 0px);
-    top: auto;
-    right: auto;
-    max-width: none;
-    display: block;
-    padding: 0;
-    border: none;
-    position: fixed;
-    margin-top: 5px;
-}
-.ui.popup.sprite-editor-snippet-popup:before {
-    content: none;
+.sprite-editor-snippet-container {
+    height: 503px;
+    width: 492px;
+    overflow: hidden;
 }
 
-.sprite-editor-snippet-popup {
-    .blocklyDropDownArrow.arrowTop {
-        background: #4B7BEC;
-        z-index: 0;
-        position: fixed;
-        top: auto;
-        left: auto;
-        border: none;
-    }
-    .blocklyDropDownArrow.arrowBottom {
-        background: rgb(44, 62, 80);
-    }
+.snippet-sprite-editor {
+    height: 503px;
+    width: 492px;
+    max-height: 503px;
+    min-height: 503px;
+    max-width: 492px;
+    min-width: 492px;
+    overflow: hidden;
 }

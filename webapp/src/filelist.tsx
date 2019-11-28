@@ -24,12 +24,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.handleCustomBlocksClick = this.handleCustomBlocksClick.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
-        this.handleSyncClick = this.handleSyncClick.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
         this.togglePkg = this.togglePkg.bind(this);
+        this.navigateToError = this.navigateToError.bind(this);
     }
 
     componentWillReceiveProps(nextProps: ISettingsProps) {
@@ -76,23 +76,35 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             .done()
     }
 
+    private navigateToError(meta: pkg.FileMeta) {
+        const diag = meta && meta.diagnostics && meta.diagnostics[0];
+        if (diag)
+            this.props.parent.navigateToError(diag);
+    }
+
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
-            let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
+            // we keep this disabled, until implemented for cloud syncing
+            // makse no sense for local saves - the star just blinks for half second after every change
+            const showStar = false // !meta.isSaved
             return (
-                <FileTreeItem key={file.getName()} file={file}
+                <FileTreeItem key={file.getName()}
+                    file={file}
+                    meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
+                    onErrorClick={this.navigateToError}
                     isActive={currentFile == file}
-                    hasDelete={deleteFiles && /\.blocks$/i.test(file.getName())}
+                    hasDelete={deleteFiles && !/^(main\.ts|pxt\.json)$/.test(file.name)}
                     className={(currentFile == file ? "active " : "") + (pkg.isTopLevel() ? "" : "nested ") + "item"}
                 >
-                    {file.name} {meta.isSaved ? "" : "*"}
-                    {/\.ts$/.test(file.name) ? <sui.Icon icon="align left" /> : /\.blocks$/.test(file.name) ? <sui.Icon icon="puzzle" /> : undefined}
+                    {file.name}
+                    {showStar ? "*" : ""}
+                    {meta.isGitModified ? " ↑" : ""}
                     {meta.isReadonly ? <sui.Icon icon="lock" /> : null}
-                    {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
                 </FileTreeItem>);
         })
     }
@@ -138,11 +150,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
-    private handleSyncClick(e: React.MouseEvent<any>) {
-        this.props.parent.pushPullAsync();
-        e.stopPropagation();
-    }
-
     private handleCustomBlocksClick(e: React.MouseEvent<any>) {
         this.addCustomBlocksFile();
         e.stopPropagation();
@@ -153,9 +160,19 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addTypeScriptFile() {
+        const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
-            body: lf("Please provide a name for your new file. Don't use spaces or special characters.")
+            hasCloseIcon: true,
+            onInputValidation: (v) => {
+                if (!v)
+                    return lf("filename is empty.");
+                v = v.trim();
+                if (!validRx.test(v))
+                    return lf("Don't use spaces or special characters.");
+                return undefined;
+            },
+            body: lf("Please provide a name for your new file.")
         }).then(str => {
             str = str || ""
             str = str.trim()
@@ -175,7 +192,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             }
             if (!str)
                 return Promise.resolve()
-            if (!/^[\w\-]+$/.test(str)) {
+            if (!validRx.test(str)) {
                 core.warningNotification(lf("Invalid file name"))
                 return Promise.resolve()
             }
@@ -241,29 +258,29 @@ namespace custom {
     }
 
     renderCore() {
-        const show = !!this.props.parent.state.showFiles;
+        const showFiles = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
         const mainPkg = pkg.mainEditorPkg()
-        const plus = show && !mainPkg.files[customFile]
-        const sync = show && pxt.github.token && !!mainPkg.header.githubId
+        const plus = showFiles && !mainPkg.files[customFile]
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
-            <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+            <div role="treeitem" aria-selected={showFiles} aria-expanded={showFiles} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
-                <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
-                {sync ? <sui.Button className="primary label" icon="github" title={lf("Sync with github")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+                <sui.Icon icon={`chevron ${showFiles ? "down" : "right"} icon`} />
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
-            {show ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
+            {showFiles ? pxt.Util.concat(pkg.allEditorPkgs().map(p => this.filesWithHeader(p))) : undefined}
         </div>;
     }
 }
 
 interface FileTreeItemProps extends React.DetailedHTMLProps<React.AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement> {
     file: pkg.File;
+    meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
 }
@@ -278,7 +295,14 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     handleClick(e: React.MouseEvent<HTMLElement>) {
-        this.props.onItemClick(this.props.file);
+        if (this.props.onErrorClick
+            && this.props.meta
+            && this.props.meta.numErrors
+            && this.props.meta.diagnostics
+            && this.props.meta.diagnostics[0])
+            this.props.onErrorClick(this.props.meta);
+        else
+            this.props.onItemClick(this.props.file);
         e.stopPropagation();
     }
 
@@ -292,7 +316,8 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { onClick, onItemClick, onItemRemove, isActive, hasDelete, file, ...rest } = this.props;
+        const { onClick, onItemClick, onItemRemove, onErrorClick, // keep these to avoid warnings with ...rest
+            isActive, hasDelete, file, meta, ...rest } = this.props;
 
         return <a
             onClick={this.handleClick}
@@ -308,6 +333,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                 title={lf("Delete file {0}", file.name)}
                 onClick={this.handleRemove}
                 onKeyDown={this.handleButtonKeydown} /> : ''}
+            {meta && meta.numErrors ? <span className='ui label red button' role="button" title={lf("Go to error")}>{meta.numErrors}</span> : undefined}
         </a>
     }
 }
@@ -352,7 +378,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { onItemClick, onItemRemove, onItemRefresh, version,
+        const { onItemClick, onItemRemove, onItemRefresh, version, // keep these to avoid warnings with ...rest
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"

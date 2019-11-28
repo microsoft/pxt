@@ -9,6 +9,8 @@ declare namespace pxt {
 
     interface TargetVersions {
         target: string;
+        targetId?: string;
+        targetWebsite?: string;
         pxt?: string;
         pxtCrowdinBranch?: string;
         targetCrowdinBranch?: string;
@@ -28,7 +30,7 @@ declare namespace pxt {
     interface PackageConfig {
         name: string;
         version?: string;
-        installedVersion?: string;
+        // installedVersion?: string; moved to Package class
         // url to icon -- support for built-in packages only
         icon?: string;
         // semver description for support target version
@@ -70,6 +72,7 @@ declare namespace pxt {
         skipLocalization?: boolean;
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
+        requiredCategories?: string[]; // ensure that those block categories are visible
     }
 
     interface PackageExtension {
@@ -123,6 +126,7 @@ declare namespace pxt {
         imageUrl?: string;
         largeImageUrl?: string;
         youTubeId?: string;
+        buttonLabel?: string;
         time?: number;
         url?: string;
         learnMoreUrl?: string;
@@ -163,22 +167,25 @@ declare namespace pxt {
         mimeType: string;
     }
 
+    type SnippetOutputType = 'blocks'
+    type SnippetOutputBehavior = /*assumed default*/'merge' | 'replace'
     interface SnippetConfig {
         name: string;
         namespace: string;
         group?: string;
         label: string;
-        outputType: string;
+        outputType: SnippetOutputType;
+        outputBehavior?: SnippetOutputBehavior;
         initialOutput?: string;
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+    type SnippetAnswerTypes = 'number' | 'text' | 'variableName' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
         question?: number;
         validate?: SnippetValidate;
-        parameters?: SnippetParameters;
+        parameters?: SnippetParameters[]; // Answer token with corresponding question
     }
 
     interface SnippetOutputOptions {
@@ -187,19 +194,43 @@ declare namespace pxt {
     }
 
     interface SnippetParameters {
-        output?: SnippetOutputOptions;
-        goto?: SnippetGoToOptions;
+        token?: string;
+        answer?: string;
+        question: number;
     }
 
-    interface SnippetQuestionInput {
+    interface SnippetInputAnswerSingular {
         answerToken: string;
         defaultAnswer: SnippetAnswerTypes;
-        type?: string;
-        label?: string;
+    }
+
+    interface SnippetInputAnswerPlural {
+        answerTokens: string[];
+        defaultAnswers: SnippetAnswerTypes[];
+    }
+
+    interface SnippetInputOtherType {
+        type: string;
+    }
+
+    interface SnippetInputNumberType {
+        type: 'number' | 'positionPicker';
         max?: number;
         min?: number;
-        options?: pxt.Map<string>;
     }
+
+    interface SnippetInputDropdownType {
+        type: "dropdown";
+        options: pxt.Map<string>;
+    }
+
+    interface SnippetInputYesNoType {
+        type: "yesno";
+    }
+
+    type SnippetQuestionInput = { label?: string; }
+        & (SnippetInputAnswerSingular | SnippetInputAnswerPlural)
+        & (SnippetInputOtherType | SnippetInputNumberType | SnippetInputDropdownType | SnippetInputYesNoType)
 
     interface SnippetValidateRegex {
         token: string;
@@ -215,6 +246,7 @@ declare namespace pxt {
     interface SnippetQuestions {
         title: string;
         output?: string;
+        outputConditionalOnAnswer?: string;
         errorMessage?: string;
         goto?: SnippetGoToOptions;
         inputs: SnippetQuestionInput[];

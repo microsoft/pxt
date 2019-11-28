@@ -6,7 +6,8 @@
 *******************************/
 
 @primaryColor: @pink;
-@secondaryColor: @grey;
+@secondaryColor: rgba(0, 0, 0, 0.55);
+@docsHue: 257;
 
 @red:#A80000;
 @orange:#D83B01;
@@ -14,7 +15,6 @@
 @green:#107C10;
 @teal:#008272;
 @blue:#0078D7;
-@violet:#B4009E;
 @purple:#5C2D91;
 @pink:#E2008C;
 @brown:#00BCF2;
@@ -23,7 +23,7 @@
 
 @greenTextColor: darken(@green, 5);
 
-@lightTextColor              : rgba(0, 0, 0, 0.68);
+@lightTextColor              : darken(@secondaryColor, 15%);
 @invertedUnselectedTextColor : rgba(255, 255, 255, 0.8);
 
 @pageBackground: #ffffff;
@@ -45,7 +45,7 @@
    Links
 --------------------*/
 
-@linkColor           : #4183c4;
+@linkColor           : #3977b4;
 @linkHoverUnderline  : underline;
 
 /*-------------------
@@ -117,6 +117,9 @@ default semantic
 
 @githubFileLogoUrl: "../docs/static/githubfilelogo.svg";
 @githubFileLogo: data-uri(@githubFileLogoUrl);
+
+@testFileLogoUrl: "../docs/static/testfilelogo.svg";
+@testFileLogo: data-uri(@testFileLogoUrl);
 
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
@@ -216,6 +219,32 @@ default semantic
 @editorCloseColorHover: darken(@editorCloseColor, 25%);
 @serialConsoleFont: @blocklyFont;
 @serialConsoleBackground: @simulatorBackground;
+
+/*-------------------
+   Github Diff editor
+--------------------*/
+@githubBackgroundColor: @serialBackgroundColor;
+@githubTextColor: @darkTextColor;
+@githubInvertedTextColor: white;
+@diffSegmentBackgroundColor: @pageBackground;
+@diffRemovedBackground:#ffeef0;
+@diffAddedBackground: #e6ffed;
+@diffMarkerBackground: #f1f8ff;
+@diffMarkerColor: rgba(27,31,35,.7);
+@diffInvertedRemovedBackground:#ff5050;
+@diffInvertedAddedBackground: #10a010;
+@diffInvertedMarkerBackground: #666;
+@diffInvertedMarkerColor: #ccc;
+@diffLineNumberColor: rgba(27, 31, 35, .3);
+@diffInvertedLineNumberColor: #ddd;
+@diffTokenDarkenRatio: 10%;
+@diffRemovedTokenBackground:darken(@diffRemovedBackground, @diffTokenDarkenRatio);
+@diffAddedTokenBackground: darken(@diffAddedBackground, @diffTokenDarkenRatio);
+@diffInvertedRemovedTokenBackground:darken(@diffInvertedRemovedBackground, @diffTokenDarkenRatio);
+@diffInvertedAddedTokenBackground: darken(@diffInvertedAddedBackground, @diffTokenDarkenRatio);
+@conflictBorderColor: orange;
+@conflictHeaderBackgroundColor: lighten(@conflictBorderColor, 30);
+@conflictHeaderColor: black;
 
 /*-------------------
    Blockly

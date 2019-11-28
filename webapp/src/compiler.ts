@@ -23,8 +23,10 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
-    if (output) // helpful for debugging
-        pxt.debug(output);
+    // people often ask about where to look for errors, and many will look in the console
+    // the output.txt has usability issues
+    if (output)
+        pxt.log(output);
 
     if (!output)
         output = U.lf("Everything seems fine!\n")
@@ -45,7 +47,7 @@ function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
         errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
         const errorCounts = JSON.stringify(errors);
         if (errorCounts !== lastErrorCounts) {
-            pxt.tickEvent("dianostics", counts);
+            pxt.tickEvent("diagnostics", counts);
             lastErrorCounts = errorCounts;
         }
     } else {
@@ -78,14 +80,16 @@ export interface CompileOptions {
 }
 
 export let emptyProgram =
-    `'use strict';
-__this.setupPerfCounters([]);
-entryPoint = function (s) {
+    `(function (ectx) {
+'use strict';
+ectx.runtime.setupPerfCounters([]);
+ectx.setupDebugger(1)
+return function (s) {
     // START
-    __this.kill()
-    return leave(s, s.r0)
+    ectx.runtime.kill()
+    return ectx.leave(s, s.r0)
 }
-setupDebugger(1)
+})
 `
 
 export function emptyCompileResult(): pxtc.CompileResult {
@@ -197,14 +201,14 @@ export function syntaxInfoAsync(infoType: pxtc.InfoType, fileName: string, posit
     });
 }
 
-export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
+export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string, generatedVarDecls?: pxt.Map<pxt.blocks.VarDeclaration>): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             opts.ast = true;
             opts.testMode = true;
             opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
-            return decompileCoreAsync(opts, fileName)
+            return decompileCoreAsync(opts, fileName, generatedVarDecls)
         })
         .then(resp => {
             // try to patch event locations
@@ -240,8 +244,8 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
         })
 }
 
-function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
+function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string, generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>): Promise<pxtc.CompileResult> {
+    return workerOpAsync("decompile", { options: opts, fileName: fileName, generatedVarDeclarations: generatedVarDeclarations });
 }
 
 export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
@@ -332,8 +336,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
             return workerOpAsync("apiSearch", {
                 search: searchFor,
-                blocks: blocksOptions(),
-                runtime: pxt.appTarget.runtime
+                blocks: blocksOptions()
             });
         });
 }
@@ -356,11 +359,11 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
-export function snippetAsync(qName: string, python?: boolean) {
+export function snippetAsync(qName: string, python?: boolean): Promise<string> {
     return workerOpAsync("snippet", {
         snippet: { qName, python },
         runtime: pxt.appTarget.runtime
-    });
+    }).then(res => res as string)
 }
 
 export function typecheckAsync() {
@@ -383,12 +386,156 @@ export function getApisInfoAsync() {
 }
 
 export function getBlocksAsync(): Promise<pxtc.BlocksInfo> {
-    return cachedBlocks
-        ? Promise.resolve(cachedBlocks)
-        : getApisInfoAsync().then(info => {
-            cachedBlocks = pxtc.getBlocksInfo(info);
-            return cachedBlocks;
-        });
+    if (!cachedBlocks) {
+        // Used packaged info
+        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+        return getCachedApiInfoAsync(pkg.mainEditorPkg(), pxt.getBundledApiInfo())
+            .then(apis => {
+                if (apis) {
+                    return ts.pxtc.localizeApisAsync(apis, pkg.mainPkg)
+                        .then(apis => {
+                            return cachedBlocks = pxtc.getBlocksInfo(apis, bannedCategories)
+                        });
+                }
+                else {
+                    return getApisInfoAsync().then(info => {
+                        const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+                        cachedBlocks = pxtc.getBlocksInfo(info, bannedCategories);
+
+                        return cacheApiInfoAsync(pkg.mainEditorPkg(), info);
+                    }).then(() => cachedBlocks)
+                }
+            })
+    }
+
+    return Promise.resolve(cachedBlocks);
+}
+
+interface BundledPackage {
+    dirname: string;
+    config: pxt.PackageConfig;
+    files: pxt.Map<string>;
+}
+
+async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Map<pxt.PackageApiInfo>): Promise<pxtc.ApisInfo> {
+    if (!bundled) return null;
+
+    const corePkg = bundled["libs/" + pxt.appTarget.corepkg];
+    if (!corePkg) return null;
+
+    // If the project has a TypeScript file beside main.ts, it could export blocks so we can't use the cache
+    const files = project.getAllFiles();
+    if (Object.keys(files).some(filename => filename != "main.ts" && filename.indexOf("/") === -1 && pxt.Util.endsWith(filename, ".ts"))) {
+        return null;
+    }
+
+    const bundledPackages: BundledPackage[] = pxt.appTarget.bundleddirs.map(dirname => {
+        const pack = pxt.appTarget.bundledpkgs[dirname.substr(dirname.lastIndexOf("/") + 1)];
+
+        if (!pack) return null;
+
+        return {
+            dirname,
+            files: pack,
+            config: JSON.parse(pack[pxt.CONFIG_NAME]) as pxt.PackageConfig
+        }
+    }).filter(p => p && p.config);
+
+    const usedPackages = project.pkgAndDeps();
+    const externalPackages: pkg.EditorPackage[] = [];
+    const usedInfo: pxt.PackageApiInfo[] = [corePkg];
+
+    for (const dep of usedPackages) {
+        if (dep.id === "built" || dep.isTopLevel()) continue;
+
+        let foundIt = false;
+        for (const bundle of bundledPackages) {
+            if (bundle.config.name === dep.getKsPkg().config.name) {
+                usedInfo.push(bundled[bundle.dirname]);
+                foundIt = true;
+                break;
+            }
+        }
+
+        if (!foundIt) externalPackages.push(dep);
+    }
+
+    if (externalPackages.length) {
+        const db = await ApiInfoIndexedDb.createAsync();
+
+        for (const dep of externalPackages) {
+            const entry = await db.getAsync(dep);
+
+            if (!entry) {
+                pxt.debug(`Could not find cached API info for ${dep.getKsPkg().config.name}, waiting for full compile`);
+                return null;
+            }
+            else {
+                pxt.debug(`Fetched cached API info for ${dep.getKsPkg().config.name}`);
+                usedInfo.push(entry);
+            }
+        }
+    }
+
+    const result: pxtc.ApisInfo = {
+        byQName: {},
+        jres: {}
+    };
+
+    for (const used of usedInfo) {
+        if (!used) continue;
+        pxt.Util.jsonCopyFrom(result.byQName, used.apis.byQName);
+
+        if (used.apis.jres) pxt.Util.jsonCopyFrom(result.jres, used.apis.jres);
+    }
+
+    const jres = pkg.mainPkg.getJRes();
+
+    for (const qName of Object.keys(result.byQName)) {
+        let si = result.byQName[qName]
+
+        let jrname = si.attributes.jres
+        if (jrname) {
+            if (jrname == "true") jrname = qName
+            let jr = U.lookup(jres || {}, jrname)
+            if (jr && jr.icon && !si.attributes.iconURL) {
+                si.attributes.iconURL = jr.icon
+            }
+            if (jr && jr.data && !si.attributes.jresURL) {
+                si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
+            }
+        }
+    }
+
+    return result;
+}
+
+async function cacheApiInfoAsync(project: pkg.EditorPackage, info: pxtc.ApisInfo) {
+    const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+    const externalPackages = project.pkgAndDeps().filter(p => p.id !== "built" && !p.isTopLevel() && corePkgs.indexOf(p.getKsPkg().config.name) === -1);
+
+    if (externalPackages.length) {
+        const apiList = Object.keys(info.byQName);
+        const db = await ApiInfoIndexedDb.createAsync();
+
+        for (const dep of externalPackages) {
+            const entry: pxt.PackageApiInfo = {
+                sha: null,
+                apis: { byQName: {} }
+            }
+
+            const name = dep.getKsPkg().config.name;
+
+            for (const api of apiList) {
+                if (info.byQName[api].pkg === name) {
+                    entry.apis.byQName[api] = info.byQName[api];
+                }
+            }
+
+            await db.setAsync(dep, entry);
+            pxt.debug(`Stored API info for ${dep}`);
+        }
+    }
 }
 
 export interface UpgradeResult {
@@ -616,10 +763,14 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 
 
 export function newProjectAsync() {
+    clearCaches();
+    return workerOpAsync("reset", {});
+}
+
+export function clearCaches() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
-    return workerOpAsync("reset", {});
 }
 
 export function getPackagesWithErrors(): pkg.EditorPackage[] {
@@ -640,8 +791,87 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {
-    if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
-        return { bannedCategories: pxt.appTarget.runtime.bannedCategories };
-    }
+    const bannedCategories = pkg.mainPkg.resolveBannedCategories();
+    if (bannedCategories)
+        return { bannedCategories };
     return undefined;
+}
+
+function getPackageHash(pack: pkg.EditorPackage) {
+    const input = JSON.stringify(pack.getAllFiles()) + pxt.appTarget.versions.pxt + "_" + pxt.appTarget.versions.target;
+    return pxtc.U.sha256(input);
+}
+
+function getPackageKey(pack: pkg.EditorPackage) {
+    return pack.getKsPkg().config.name;
+}
+
+interface ApiInfoIndexedDbEntry {
+    id: string;
+    hash: string;
+    apis: pxt.PackageApiInfo;
+}
+
+class ApiInfoIndexedDb {
+    static TABLE = "files";
+    static KEYPATH = "id";
+
+    static dbName() {
+        return `__pxt_apis_${pxt.appTarget.id || ""}`;
+    }
+
+    static createAsync(): Promise<ApiInfoIndexedDb> {
+        function openAsync() {
+            const idbWrapper = new pxt.BrowserUtils.IDBWrapper(ApiInfoIndexedDb.dbName(), 2, (ev, r) => {
+                const db = r.result as IDBDatabase;
+                db.createObjectStore(ApiInfoIndexedDb.TABLE, { keyPath: ApiInfoIndexedDb.KEYPATH });
+            }, () => {
+                // quota exceeeded, nuke db
+                pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+            });
+            return idbWrapper.openAsync()
+                .then(() => new ApiInfoIndexedDb(idbWrapper));
+        }
+        return openAsync()
+            .catch(e => {
+                console.log(`db: failed to open api database, try delete entire store...`)
+                return pxt.BrowserUtils.IDBWrapper.deleteDatabaseAsync(ApiInfoIndexedDb.dbName())
+                    .then(() => openAsync());
+            })
+    }
+
+    private constructor(protected readonly db: pxt.BrowserUtils.IDBWrapper) {
+    }
+
+    getAsync(pack: pkg.EditorPackage): Promise<pxt.PackageApiInfo> {
+        const key = getPackageKey(pack);
+        const hash = getPackageHash(pack);
+
+        return this.db.getAsync(ApiInfoIndexedDb.TABLE, key)
+            .then((value: ApiInfoIndexedDbEntry) => {
+                /* tslint:disable:possible-timing-attack (this is not a security-sensitive codepath) */
+                if (value && value.hash === hash) {
+                    return value.apis
+                }
+                /* tslint:enable:possible-timing-attack */
+                return undefined;
+            });
+    }
+
+    setAsync(pack: pkg.EditorPackage, apis: pxt.PackageApiInfo): Promise<void> {
+        pxt.perf.measureStart("compiler db setAsync")
+        const key = getPackageKey(pack);
+        const hash = getPackageHash(pack);
+
+        const entry: ApiInfoIndexedDbEntry = {
+            id: key,
+            hash,
+            apis
+        };
+
+        return this.db.setAsync(ApiInfoIndexedDb.TABLE, entry)
+            .then(() => {
+                pxt.perf.measureEnd("compiler db setAsync")
+            })
+    }
 }

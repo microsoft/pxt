@@ -441,7 +441,7 @@ namespace pxt.cpp {
             // special handling of C++ namespace that ends with Methods (e.g. FooMethods)
             // such a namespace will be converted into a TypeScript interface
             // this enables simple objects with methods to be defined. See, for example:
-            // https://github.com/Microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
+            // https://github.com/microsoft/pxt-microbit/blob/master/libs/core/buffer.cpp
             // within that namespace, the first parameter of each function should have
             // the type Foo
             function interfaceName() {
@@ -883,9 +883,16 @@ namespace pxt.cpp {
                 } else {
                     U.assert(!seenMain)
                 }
-                let ext = ".cpp"
-                for (let fn of pkg.getFiles()) {
-                    let isHeader = U.endsWith(fn, ".h")
+                // Generally, headers need to be processed before sources, as they contain definitions
+                // (in particular of enums, which are needed to decide if we're doing conversions for 
+                // function arguments). This can still fail if one header uses another and they are 
+                // listed in invalid order...
+                const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
+                const ext = ".cpp"
+                const files = pkg.getFiles().filter(isHeaderFn)
+                    .concat(pkg.getFiles().filter(s => !isHeaderFn(s)))
+                for (let fn of files) {
+                    const isHeader = isHeaderFn(fn)
                     if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
                         if ((pkg.config.name == "base" || /^core($|---)/.test(pkg.config.name)) && isHeader)
@@ -928,6 +935,18 @@ namespace pxt.cpp {
                 delete optSettings[k];
             }
         })
+        // fix keys - ==> _
+        Object.keys(optSettings)
+            .filter(k => /-/.test(k)).forEach(k => {
+                const v = optSettings[k];
+                delete optSettings[k];
+                optSettings[k.replace(/-/g, '_')] = v;
+            })
+        if (!isYotta && compileService.yottaConfigCompatibility) { // yotta automatically adds YOTTA_CFG_
+            Object.keys(optSettings)
+                .forEach(k => optSettings["YOTTA_CFG_" + k] = optSettings[k]);
+        }
+
         const configJson = U.jsonUnFlatten(optSettings)
         if (isDockerMake) {
             let packageJson = {
@@ -1028,8 +1047,9 @@ int main() {
             inc += "PXT_OBJS := $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
             res.generatedFiles["/Makefile"] = makefile
             res.generatedFiles["/Makefile.inc"] = inc
-
         }
+
+        res.generatedFiles["/functions.json"] = JSON.stringify(res.functions, null, 1)
 
         let tmp = res.extensionFiles
         U.jsonCopyFrom(tmp, res.generatedFiles)

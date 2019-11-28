@@ -123,10 +123,11 @@ pre {
 }
 
 .hideEditorToolbar #blocksArea,
-    .hideEditorToolbar #monacoEditor,
-    .hideEditorToolbar #pxtJsonEditor,
-    .hideEditorToolbar #serialEditor,
-    .hideEditorToolbar #filelist {
+.hideEditorToolbar #monacoEditor,
+.hideEditorToolbar #pxtJsonEditor,
+.hideEditorToolbar #serialEditor,
+.hideEditorToolbar #githubEditor,
+.hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
 
@@ -291,15 +292,41 @@ div.simframe > iframe {
     box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
-.active.item.javascript-menuitem ~ .toggle {
+.active.item.javascript-menuitem ~ .toggle,
+.active.item.python-menuitem ~ .toggle {
     margin-left: 140px !important;
     box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
-.active.item.python-menuitem ~ .toggle {
-    margin-left: 280px !important;
-    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-    background: @editorToggleColor !important;
+
+#editortoggle .active.item.javascript-menuitem ~ .toggle.hasdropdown,
+#editortoggle .active.item.python-menuitem ~ .toggle.hasdropdown  {
+    border-top-right-radius: 0px!important;
+    border-bottom-right-radius: 0px!important;
+}
+#editortoggle > .link {
+    justify-content: center;
+}
+
+#editordropdown {
+    width: auto;
+    border-top-left-radius: 0px!important;
+    border-bottom-left-radius: 0px!important;
+}
+#editordropdown.active, #mainmenu #editordropdown.active:focus {
+    background-color: @editorToggleColor!important;
+}
+#editordropdown .menu > .item {
+    width: 184px;
+    opacity: 1;
+}
+#editordropdown .menu > .item.selected {
+    background: none;
+    color: @mainMenuInvertedBackground !important;
+}
+#editordropdown .menu > .item.selected:after {
+    content: '✔';
+    float: right;
 }
 
 /* Help card */
@@ -378,6 +405,10 @@ div.simframe > iframe {
     overflow-y: hidden;
 }
 
+.ui.card .extra.content a.learnmore {
+    color: @lightTextColor;
+}
+
 /* Popup message */
 #msg {
     position: absolute;
@@ -399,6 +430,14 @@ div.simframe > iframe {
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
+
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
+}
+
+.ui.button.big-play-button {
+    /* Fixes an error in some webkit browsers where icons get repositioned on hover */
+    position: relative;
 }
 
 /* Icon and text */
@@ -415,7 +454,9 @@ div.simframe > iframe {
 }
 
 /* Collapse/expand button for simulator, sidedocs */
-#togglesim, #sidedocstoggle {
+#computertogglesim,
+#mobiletogglesim,
+#sidedocstoggle {
     position: absolute;
     border-top-left-radius: 100px;
     border-bottom-left-radius: 100px;
@@ -436,13 +477,15 @@ div.simframe > iframe {
 }
 
 // Factor in 4rem height of top bar
-#togglesim {
+#mobiletogglesim,
+#computertogglesim {
     left: -21px;
     top: calc(~'40% - 2.4rem');
     height: calc(~'20% + 0.8rem');
 }
 
-.collapsedEditorTools #togglesim {
+.collapsedEditorTools #computertogglesim,
+.collapsedEditorTools #mobiletogglesim {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-top-right-radius: 100px;
@@ -747,6 +790,10 @@ p.ui.font.small {
     .collapse-button.ui.computer.only {
         display:none !important; // hide desktop simulator toggle
     }
+
+    .hideEditorToolbar #filelist {
+        display:none !important;
+    }
 }
 
 /* Mobile only */
@@ -910,6 +957,8 @@ p.ui.font.small {
 #root.headless.transparentEditorTools {
     #editortools {
         left: auto;
+        height: 5.7rem;
+        margin-right: 1rem;
     }
 
     #editortools #downloadArea,
@@ -954,6 +1003,11 @@ p.ui.font.small {
         bottom: 3px;
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
+    }
+    #root.headless.transparentEditorTools {
+        #editortools {
+            margin-bottom: 1.5rem;
+        }
     }
 }
 
@@ -1113,10 +1167,10 @@ p.ui.font.small {
     .hideEditorFloats #editortools {
         height: @editorToolsCollapsedHeight;
     }
-    .hideEditorFloats #editortools > div > div > .ui.grid {
+    .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
         margin: auto;
     }
-    .hideEditorFloats #editorToolbarArea {
+    .hideEditorFloats.transparentEditorTools #editorToolbarArea {
         padding-top: 0;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
@@ -1140,7 +1194,8 @@ p.ui.font.small {
         display: flex !important;
     }
     /* Simulator Toggle Button */
-    #togglesim, .collapsedEditorTools #togglesim {
+    #mobiletogglesim,
+    .collapsedEditorTools #mobiletogglesim {
         border-top-right-radius: 100px;
         border-top-left-radius: 100px;
         border-bottom-right-radius: 0;
@@ -1151,7 +1206,7 @@ p.ui.font.small {
         height: auto;
         bottom: 10rem;
     }
-    .collapsedEditorTools #togglesim {
+    .collapsedEditorTools #mobiletogglesim {
         bottom: 4.7rem;
     }
     /* Hide floating editors */
@@ -1238,7 +1293,7 @@ p.ui.font.small {
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
     }
-    .collapsedEditorTools #togglesim {
+    .collapsedEditorTools #mobiletogglesim {
         bottom: 3.4rem;
     }
 }
@@ -1254,11 +1309,11 @@ p.ui.font.small {
         padding: 0.5rem 1.5rem;
     }
     #editortools {
-        height: @editorToolsThinHeight; 
+        height: @editorToolsThinHeight;
     }
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
         bottom: @editorToolsThinHeight;
-    }    
+    }
     #editortools .ui.button {
         padding: .5em;
     }
@@ -1443,4 +1498,45 @@ img.pixelart {
     image-rendering: auto;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
+}
+
+
+/** language modal **/
+#langmodal {
+    #availablelocales .langoption .header {
+        color: #4c4ca6;
+    }
+
+    #langmodalfooter {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 2em;
+    }
+}
+
+#blocks-editor-field-div {
+    position: absolute;
+    z-index: @blocklyDropdownDivZIndex;
+}
+
+.blocks-editor-field-overlay {
+    position: absolute;
+    z-index: @blocklyWidgetDivZIndex;
+    background-color: rgba(0, 0, 0, 0.4)
+}
+
+a.ui.link {
+    cursor: pointer;
+}
+
+p > a.ui.link {
+    margin-left: 0.5rem;
+}
+
+p.ui.tiny {
+    font-size: 80%;
+}
+p.ui.small {
+    font-size: 90%;
 }

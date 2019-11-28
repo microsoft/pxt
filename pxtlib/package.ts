@@ -5,6 +5,21 @@
 
 namespace pxt {
     export class Package {
+        static stringifyConfig(config: pxt.PackageConfig): string {
+            // github adds a newline when web editing
+            return JSON.stringify(config, null, 4) + "\n"
+        }
+
+        static parseAndValidConfig(configStr: string): pxt.PackageConfig {
+            const json = Util.jsonTryParse(configStr) as pxt.PackageConfig;
+            return json
+                && json.name !== undefined && typeof json.name === "string"
+                // && json.version && typeof json.version === "string", default to 0.0.0
+                && json.files && Array.isArray(json.files) && json.files.every(f => typeof f === "string")
+                && json.dependencies && Object.keys(json.dependencies).every(k => typeof json.dependencies[k] === "string")
+                && json;
+        }
+
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
                 if (pxt.github.isGithubId(fullVers)) {
@@ -35,6 +50,7 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
+        public installedVersion: string; // resolve version
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -99,6 +115,11 @@ namespace pxt {
             return this.host().readFile(this, fn)
         }
 
+        readGitJson(): pxt.github.GitJson {
+            const gitJsonText = this.readFile(pxt.github.GIT_JSON);
+            return pxt.Util.jsonTryParse(gitJsonText) as pxt.github.GitJson;
+        }
+
         resolveDep(id: string) {
             if (this.parent.deps.hasOwnProperty(id))
                 return this.parent.deps[id];
@@ -108,7 +129,7 @@ namespace pxt {
         saveConfig() {
             const cfg = U.clone(this.config)
             delete cfg.additionalFilePaths
-            const text = JSON.stringify(cfg, null, 4)
+            const text = pxt.Package.stringifyConfig(cfg);
             this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
@@ -133,7 +154,7 @@ namespace pxt {
 
                 // 2. if main.blocks is empty and main.ts is non-empty
                 //    open typescript
-                // https://github.com/Microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
+                // https://github.com/microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
                 const mainBlocks = this.readFile("main.blocks");
                 const mainTs = this.readFile("main.ts");
                 if (!mainBlocks && mainTs)
@@ -201,8 +222,7 @@ namespace pxt {
                         pxt.debug(`skip download of invalid package ${this.id}`);
                         return undefined;
                     }
-                    if (!/^embed:/.test(verNo) &&
-                        this.config && this.config.installedVersion == verNo)
+                    if (!/^embed:/.test(verNo) && this.installedVersion == verNo)
                         return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
@@ -215,12 +235,15 @@ namespace pxt {
         }
 
         loadConfig() {
+            if (this.level != 0 && this.invalid())
+                return; // don't try load invalid dependency
+
             const confStr = this.readFile(pxt.CONFIG_NAME)
             if (!confStr)
                 U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
             this.parseConfig(confStr);
             if (this.level != 0)
-                this.config.installedVersion = this.version()
+                this.installedVersion = this.version()
             this.saveConfig()
         }
 
@@ -563,8 +586,7 @@ namespace pxt {
 
                         const missingPackages = this.getMissingPackages(this.config, mainTs);
                         let didAddPackages = false;
-                        let addPackagesPromise = Promise.resolve();
-                        Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
+                        return Object.keys(missingPackages).reduce((addPackagesPromise, missing) => {
                             return addPackagesPromise
                                 .then(() => this.findConflictsAsync(missing, missingPackages[missing]))
                                 .then((conflicts) => {
@@ -635,9 +657,8 @@ namespace pxt {
             // live loc of bundled packages
             if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
-                const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
-                    fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
+                    fn => pxt.Util.downloadLiveTranslationsAsync(lang, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)
                         .then(tr => {
                             if (tr && Object.keys(tr).length) {
                                 Util.jsonMergeFrom(r, tr);
@@ -663,12 +684,16 @@ namespace pxt {
 
         bundledStringsForFile(lang: string, filename: string): Map<string> {
             let r: Map<string> = {};
+
+            let [initialLang, baseLang] = pxt.Util.normalizeLanguageCode(lang);
             const files = this.config.files;
-            let fn = `_locales/${lang.toLowerCase()}/${filename}-strings.json`;
-            if (files.indexOf(fn) > -1)
+
+            let fn = `_locales/${initialLang}/${filename}-strings.json`;
+            if (files.indexOf(fn) > -1) {
                 r = JSON.parse(this.readFile(fn)) as Map<string>;
-            if (lang.length > 2) {
-                fn = `_locales/${lang.substring(0, 2).toLowerCase()}/${filename}-strings.json`;
+            }
+            else if (baseLang) {
+                fn = `_locales/${baseLang}/${filename}-strings.json`;
                 if (files.indexOf(fn) > -1)
                     r = JSON.parse(this.readFile(fn)) as Map<string>;
             }
@@ -766,6 +791,39 @@ namespace pxt {
             return this._jres
         }
 
+        // undefined == uncached
+        // null == cached but no hit
+        // array == means something go found...
+        private _resolvedBannedCategories: string[];
+        resolveBannedCategories(): string[] {
+            if (this._resolvedBannedCategories !== undefined)
+                return this._resolvedBannedCategories; // cache hit
+
+            let bannedCategories: string[] = [];
+            if (pxt.appTarget && pxt.appTarget.runtime
+                && pxt.appTarget.runtime.bannedCategories
+                && pxt.appTarget.runtime.bannedCategories.length) {
+                bannedCategories = pxt.appTarget.runtime.bannedCategories.slice();
+                // scan for unbanned categories
+                Object.keys(this.deps)
+                    .map(dep => this.deps[dep])
+                    .filter(dep => !!dep)
+                    .map(pk => pxt.Util.jsonTryParse(pk.readFile(pxt.CONFIG_NAME)) as pxt.PackageConfig)
+                    .filter(config => config && config.requiredCategories)
+                    .forEach(config => config.requiredCategories.forEach(rc => {
+                        const i = bannedCategories.indexOf(rc);
+                        if (i > -1)
+                            bannedCategories.splice(i, 1);
+                    }));
+                this._resolvedBannedCategories = bannedCategories;
+            }
+
+            this._resolvedBannedCategories = bannedCategories;
+            if (!this._resolvedBannedCategories.length)
+                this._resolvedBannedCategories = null;
+            return this._resolvedBannedCategories;
+        }
+
         getCompileOptionsAsync(target: pxtc.CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
@@ -787,6 +845,7 @@ namespace pxt {
 
             return this.loadAsync()
                 .then(() => {
+                    opts.bannedCategories = this.resolveBannedCategories();
                     opts.target.preferredEditor = this.getPreferredEditor()
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
@@ -816,7 +875,7 @@ namespace pxt {
                             name: this.config.name,
                             comment: this.config.description,
                             status: "unpublished",
-                            scriptId: this.config.installedVersion,
+                            scriptId: this.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
                             editor: this.getPreferredEditor(),
                             targetVersions: pxt.appTarget.versions
@@ -860,34 +919,38 @@ namespace pxt {
                 })
         }
 
-        filesToBePublishedAsync(allowPrivate = false) {
-            let files: Map<string> = {};
+        private prepareConfigToBePublished(): pxt.PackageConfig {
+            const cfg = U.clone(this.config)
+            delete (<any>cfg).installedVersion // cleanup old pxt.json files
+            delete cfg.additionalFilePath
+            delete cfg.additionalFilePaths
+            if (!cfg.targetVersions) cfg.targetVersions = Util.clone(pxt.appTarget.versions);
+            U.iterMap(cfg.dependencies, (k, v) => {
+                if (!v || /^(file|workspace):/.test(v)) {
+                    v = "*"
+                    try {
+                        const d = this.resolveDep(k)
+                        const gitjson = d.readGitJson();
+                        if (gitjson && gitjson.repo) {
+                            let parsed = pxt.github.parseRepoId(gitjson.repo)
+                            parsed.tag = gitjson.commit.tag || gitjson.commit.sha
+                            v = pxt.github.stringifyRepo(parsed)
+                        }
+                    } catch (e) { }
+                    cfg.dependencies[k] = v
+                }
+            })
+            return cfg;
+        }
 
+        filesToBePublishedAsync(allowPrivate = false) {
+            const files: Map<string> = {};
             return this.loadAsync()
                 .then(() => {
                     if (!allowPrivate && !this.config.public)
                         U.userError('Only packages with "public":true can be published')
-                    let cfg = U.clone(this.config)
-                    delete cfg.installedVersion
-                    delete cfg.additionalFilePath
-                    delete cfg.additionalFilePaths
-                    if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
-                    U.iterMap(cfg.dependencies, (k, v) => {
-                        if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
-                            v = "*"
-                            try {
-                                let d = this.resolveDep(k)
-                                let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
-                                if (gitjson.repo) {
-                                    let parsed = pxt.github.parseRepoId(gitjson.repo)
-                                    parsed.tag = gitjson.commit.tag || gitjson.commit.sha
-                                    v = pxt.github.stringifyRepo(parsed)
-                                }
-                            } catch (e) { }
-                            cfg.dependencies[k] = v
-                        }
-                    })
-                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+                    const cfg = this.prepareConfigToBePublished();
+                    files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
                     for (let f of this.getFiles()) {
                         // already stored
                         if (f == pxt.CONFIG_NAME) continue;
@@ -896,7 +959,6 @@ namespace pxt {
                             U.userError("referenced file missing: " + f)
                         files[f] = str
                     }
-
                     return U.sortObjectFields(files)
                 })
         }

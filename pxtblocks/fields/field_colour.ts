@@ -45,27 +45,27 @@ namespace pxtblockly {
          * @return {string} Current colour in '#rrggbb' format.
          */
         getValue(opt_asHex?: boolean) {
-            if (opt_asHex) return this.colour_;
+            if (opt_asHex) return this.value_;
             switch (this.valueMode_) {
                 case "hex":
-                    return `"${this.colour_}"`;
+                    return `"${this.value_}"`;
                 case "rgb":
-                    if (this.colour_.indexOf('#') > -1) {
-                        return `0x${this.colour_.replace(/^#/, '')}`;
+                    if (this.value_.indexOf('#') > -1) {
+                        return `0x${this.value_.replace(/^#/, '')}`;
                     }
                     else {
-                        return this.colour_;
+                        return this.value_;
                     }
                 case "index":
-                    if (!this.colour_) return "-1";
+                    if (!this.value_) return "-1";
                     const allColours = this.getColours_();
                     for (let i = 0; i < allColours.length; i++) {
-                        if (this.colour_.toUpperCase() === allColours[i].toUpperCase()) {
+                        if (this.value_.toUpperCase() === allColours[i].toUpperCase()) {
                             return i + "";
                         }
                     }
             }
-            return this.colour_;
+            return this.value_;
         }
 
         /**
@@ -78,12 +78,12 @@ namespace pxtblockly {
             if (!colour) return;
 
             if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
-                this.colour_ != colour) {
+                this.value_ != colour) {
                 Blockly.Events.fire(new (Blockly as any).Events.BlockChange(
-                    this.sourceBlock_, 'field', this.name, this.colour_, colour));
+                    this.sourceBlock_, 'field', this.name, this.value_, colour));
             }
 
-            this.colour_ = colour;
+            this.value_ = colour;
             if (this.sourceBlock_) {
                 this.sourceBlock_.setColour(colour, colour, colour);
             }
@@ -92,7 +92,7 @@ namespace pxtblockly {
         showEditor_() {
             super.showEditor_();
             if (this.className_ && this.colorPicker_)
-                pxt.BrowserUtils.addClass(this.colorPicker_.getElement() as SVGElement, this.className_);
+                pxt.BrowserUtils.addClass(this.colorPicker_ as HTMLElement, this.className_);
         }
 
         getColours_(): string[] {

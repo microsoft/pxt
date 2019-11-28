@@ -11,8 +11,13 @@ namespace ts.pxtc {
     export const HANDLER_COMMENT = "code goes here"; // TODO: Localize? (adding lf doesn't work because this is run before translations are downloaded)
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_DEBUGGER_TYPE = "debugger_keyword";
+    export const TS_BREAK_TYPE = "break_keyword";
+    export const TS_CONTINUE_TYPE = "continue_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
+    export const COLLAPSED_BLOCK = "pxt_collapsed_block"
+    export const FUNCTION_DEFINITION_TYPE = "function_definition";
+
     export const BINARY_JS = "binary.js";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
@@ -70,8 +75,8 @@ namespace ts.pxtc {
         length: number;
 
         //derived
-        line: number;
-        column: number;
+        line?: number;
+        column?: number;
         endLine?: number;
         endColumn?: number;
     }
@@ -104,6 +109,7 @@ namespace ts.pxtc {
         blocksInfo?: BlocksInfo;
         usedSymbols?: pxt.Map<SymbolInfo>; // q-names of symbols used
         usedArguments?: pxt.Map<string[]>;
+        needsFullRecompile?: boolean;
         // client options
         saveOnly?: boolean;
         userContextWindow?: Window;
@@ -438,13 +444,8 @@ namespace ts.pxtc {
             }
         }
 
-        if (pxt.appTarget && pxt.appTarget.runtime && Array.isArray(pxt.appTarget.runtime.bannedCategories)) {
-            filterCategories(pxt.appTarget.runtime.bannedCategories)
-        }
-
-        if (categoryFilters) {
+        if (categoryFilters)
             filterCategories(categoryFilters);
-        }
 
         return {
             apis: info,
@@ -471,18 +472,22 @@ namespace ts.pxtc {
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
 
         const errors: pxt.Map<number> = {};
+        const langLower = lang.toLowerCase();
+        const attrJsLocsKey = langLower + "|jsdoc";
+        const attrBlockLocsKey = langLower + "|block";
         return mainPkg.localizationStringsAsync(lang)
-            .then(loc => Util.values(apis.byQName).forEach(fn => {
+            .then(loc => Promise.all(Util.values(apis.byQName).map(fn => {
                 if (apiLocalizationStrings)
                     Util.jsonMergeFrom(loc, apiLocalizationStrings);
-                const jsDoc = loc[fn.qName]
-                if (jsDoc) {
-                    fn.attributes.jsDoc = jsDoc;
+                const attrLocs = fn.attributes.locs || {};
+                const locJsDoc = loc[fn.qName] || attrLocs[attrJsLocsKey];
+                if (locJsDoc) {
+                    fn.attributes.jsDoc = locJsDoc;
                     if (fn.parameters)
-                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
+                        fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || attrLocs[`${langLower}|param|${pi.name}`] || pi.description);
                 }
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                let locBlock = loc[`${fn.qName}|block`];
+                let locBlock = loc[`${fn.qName}|block`] || attrLocs[attrBlockLocsKey];
 
                 if (!locBlock && fn.attributes.useLoc) {
                     const otherFn = apis.byQName[fn.attributes.useLoc];
@@ -497,29 +502,39 @@ namespace ts.pxtc {
                     }
                 }
 
-                if (nsDoc) {
-                    // Check for "friendly namespace"
-                    if (fn.attributes.block) {
-                        fn.attributes.block = locBlock || fn.attributes.block;
-                    } else {
-                        fn.attributes.block = nsDoc;
-                    }
+                let p = Promise.resolve();
+                if (locBlock && pxt.Util.isTranslationMode()) {
+                    // in translation mode, crowdin sends translation identifiers which break the block parsing
+                    // push identifier in DOM so that crowdin sends back the actual translation
+                    fn.attributes.translationId = locBlock;
+                    p = p.then(() => pxt.crowdin.inContextLoadAsync(locBlock))
+                        .then(r => { locBlock = r; });
                 }
-                else if (fn.attributes.block && locBlock) {
-                    const ps = pxt.blocks.compileInfo(fn);
-                    const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
-                    fn.attributes._untranslatedBlock = oldBlock;
-                    if (oldBlock != fn.attributes.block) {
-                        const locps = pxt.blocks.compileInfo(fn);
-                        if (JSON.stringify(ps) != JSON.stringify(locps)) {
-                            pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
-                            fn.attributes.block = oldBlock;
+                return p.then(() => {
+                    if (nsDoc) {
+                        // Check for "friendly namespace"
+                        if (fn.attributes.block) {
+                            fn.attributes.block = locBlock || fn.attributes.block;
+                        } else {
+                            fn.attributes.block = nsDoc;
                         }
                     }
-                }
-                updateBlockDef(fn.attributes);
-            }))
+                    else if (fn.attributes.block && locBlock) {
+                        const ps = pxt.blocks.compileInfo(fn);
+                        const oldBlock = fn.attributes.block;
+                        fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn.attributes.blockId}.${lang}`] = 1);
+                        fn.attributes._untranslatedBlock = oldBlock;
+                        if (oldBlock != fn.attributes.block) {
+                            const locps = pxt.blocks.compileInfo(fn);
+                            if (JSON.stringify(ps) != JSON.stringify(locps)) {
+                                pxt.log(`block has non matching arguments: ${oldBlock} vs ${fn.attributes.block}`)
+                                fn.attributes.block = oldBlock;
+                            }
+                        }
+                    }
+                    updateBlockDef(fn.attributes);
+                })
+            })))
             .then(() => apis)
             .finally(() => {
                 if (Object.keys(errors).length)
@@ -562,7 +577,8 @@ namespace ts.pxtc {
         "decompileIndirectFixedInstances",
         "topblock",
         "callInDebugger",
-        "duplicateShadowOnDrag"
+        "duplicateShadowOnDrag",
+        "argsNullable"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -579,7 +595,18 @@ namespace ts.pxtc {
                     v0: string, v1: string, v2: string) => {
                     let v = v0 ? JSON.parse(v0) : (d0 ? (v0 || v1 || v2) : "true");
                     if (!v) v = "";
-                    if (U.endsWith(n, ".defl")) {
+                    if (U.startsWith(n, "block.loc.")) {
+                        if (!res.locs) res.locs = {};
+                        res.locs[n.slice("block.loc.".length).toLowerCase() + "|block"] = v;
+                    } else if (U.startsWith(n, "jsdoc.loc.")) {
+                        if (!res.locs) res.locs = {};
+                        res.locs[n.slice("jsdoc.loc.".length).toLowerCase() + "|jsdoc"] = v;
+                    } else if (U.contains(n, ".loc.")) {
+                        if (!res.locs) res.locs = {};
+                        const p = n.slice(0, n.indexOf('.loc.'));
+                        const l = n.slice(n.indexOf('.loc.') + '.loc.'.length);
+                        res.locs[l + "|param|" + p] = v;
+                    } else if (U.endsWith(n, ".defl")) {
                         if (v.indexOf(" ") > -1) {
                             res.paramDefl[n.slice(0, n.length - 5)] = `"${v}"`
                         } else {
@@ -1363,6 +1390,7 @@ namespace ts.pxtc.service {
         projectSearch?: ProjectSearchOptions;
         snippet?: SnippetOptions;
         runtime?: pxt.RuntimeOptions;
+        generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>;
     }
 
     export interface SnippetOptions {

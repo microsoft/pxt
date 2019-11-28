@@ -138,6 +138,7 @@ namespace pxtblockly {
     //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
+        public SERIALIZABLE = true;
         //  value of the field
         private note_: string;
 
@@ -330,10 +331,12 @@ namespace pxtblockly {
         }
 
         /**
-         * Set the note.
+         * Called by setValue if the text input is valid. Updates the value of the
+         * field, and updates the text of the field if it is not currently being
+         * edited (i.e. handled by the htmlInput_).
          * @param {string} note The new note in string format.
          */
-        setValue(note: string) {
+        doValueUpdate_(note: string) {
             // accommodate note strings like "Note.GSharp5" as well as numbers
             let match: Array<string> = regex.exec(note);
             let noteName: any = (match && match.length > 1) ? match[1] : null;
@@ -347,6 +350,7 @@ namespace pxtblockly {
             }
             this.note_ = this.callValidator(note);
             this.setText(this.getNoteName_());
+            this.value_ = this.note_;
         }
 
         /**
@@ -638,7 +642,7 @@ namespace pxtblockly {
                 }
                 currentSelectedKey = this;
                 script.style.backgroundColor = selectedKeyColor;
-                Blockly.FieldTextInput.htmlInput_.value = thisField.getText();
+                (thisField as any).htmlInput_.value = thisField.getText();
                 pxt.AudioContextManager.tone(freq);
                 setTimeout(function () {
                     // compare current sound counter with listener sound counter (avoid async problems)

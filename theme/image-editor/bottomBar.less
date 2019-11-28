@@ -1,0 +1,77 @@
+.image-editor-bottombar {
+    display: flex;
+    flex-direction: row;
+    height: 2rem;
+    background-color: var(--sidebar-bg-color);
+    flex-shrink: 0;
+}
+
+.image-editor-resize {
+    height: 100%;
+    margin-left: 0.25rem;
+    display: flex;
+    flex-direction: row;
+}
+
+.image-editor-resize .image-editor-button {
+    width: 1rem;
+}
+
+.image-editor-coordinate-preview {
+    flex-grow: 1;
+    height: 100%;
+    line-height: 2rem;
+    color: var(--sidebar-label-color);
+}
+
+.image-editor-undo-redo {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.image-editor-input {
+    background: none;
+    color: var(--sidebar-label-color);
+    border: none;
+    border-bottom: solid 1px var(--sidebar-icon-inactive-color);
+
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    padding-top: 0;
+    padding-bottom: 0;
+
+    margin: 0.25rem;
+    margin-top: 0;
+
+    max-width: 2.25rem;
+    text-align: center;
+    height: 1.5rem;
+
+    transition: border-bottom 0.2s;
+}
+
+.image-editor-input:hover, .image-editor-input:focus {
+    border-bottom: solid 1px var(--sidebar-icon-active-color);
+}
+
+.image-editor-bottombar > div:not(.image-editor-seperator) {
+    height: 100%;
+}
+
+.image-editor-bottombar > div .image-editor-button {
+    margin-top: 0;
+}
+
+.image-editor-seperator {
+    border-left: solid 1px var(--sidebar-icon-inactive-color);
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    height: 1rem;
+    margin-top: 0.5rem;
+}
+
+.image-editor-zoom-controls {
+    display: flex;
+    flex-direction: row;
+}

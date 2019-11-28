@@ -6,6 +6,26 @@
 /// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>
 
+namespace pxt.perf {
+    // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare function report(): void;
+    export declare function recordMilestone(msg: string, time?: number): void;
+    export declare function measureStart(name: string): void;
+    export declare function measureEnd(name: string): void;
+}
+(function () {
+    // Sometimes these aren't initialized, for example in tests. We only care about them
+    // doing anything in the browser.
+    if (!pxt.perf.report)
+        pxt.perf.report = () => { }
+    if (!pxt.perf.recordMilestone)
+        pxt.perf.recordMilestone = () => { }
+    if (!pxt.perf.measureStart)
+        pxt.perf.measureStart = () => { }
+    if (!pxt.perf.measureEnd)
+        pxt.perf.measureEnd = () => { }
+})()
+
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
@@ -31,6 +51,53 @@ namespace pxt {
         appTarget = trg || <TargetBundle>{};
         patchAppTarget();
         savedAppTarget = U.clone(appTarget)
+    }
+
+    let apiInfo: Map<PackageApiInfo>;
+    export function setBundledApiInfo(inf: Map<PackageApiInfo>) {
+        for (const pkgName of Object.keys(inf)) {
+            const byQName = inf[pkgName].apis.byQName
+            for (const apiName of Object.keys(byQName)) {
+                const sym = byQName[apiName]
+                const lastDot = apiName.lastIndexOf(".")
+                // re-create the object - this will hint the JIT that these are objects of the same type
+                // and the same hidden class should be used
+                const newsym = byQName[apiName] = {
+                    kind: Math.abs(sym.kind || 7),
+                    qName: apiName,
+                    namespace: apiName.slice(0, lastDot < 0 ? 0 : lastDot),
+                    name: apiName.slice(lastDot + 1),
+                    fileName: "",
+                    attributes: sym.attributes || ({} as any),
+                    retType: sym.retType || "void",
+                    parameters: sym.parameters ? sym.parameters.map(p => ({
+                        name: p.name,
+                        description: p.description || "",
+                        type: p.type || "number",
+                        initializer: p.initializer,
+                        default: p.default,
+                        options: p.options || {},
+                        isEnum: !!p.isEnum,
+                        handlerParameters: p.handlerParameters
+                    })) : null,
+                    extendsTypes: sym.extendsTypes,
+                    snippet: sym.kind && sym.kind < 0 ? null as any : undefined,
+                    isInstance: !!sym.isInstance,
+                    isReadOnly: !!sym.isReadOnly,
+                }
+                const attr = newsym.attributes
+                if (!attr.paramDefl) attr.paramDefl = {}
+                if (!attr.callingConvention) attr.callingConvention = 0
+                if (!attr.paramHelp) attr.paramHelp = {}
+                if (!attr.jsDoc) attr.jsDoc = ""
+                attr._name = newsym.name.replace(/@.*/, "")
+            }
+        }
+        apiInfo = inf;
+    }
+
+    export function getBundledApiInfo() {
+        return apiInfo;
     }
 
     export function savedAppTheme(): AppTheme {
@@ -142,7 +209,7 @@ namespace pxt {
             // path config before storing
             const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
             if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+            res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
         })
 
         // patch any pre-configured query url appTheme overrides
@@ -163,6 +230,7 @@ namespace pxt {
     }
 
     export function reloadAppTargetVariant() {
+        pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = JSON.stringify(appTarget);
         appTarget = U.clone(savedAppTarget)
         if (appTargetVariant) {
@@ -176,6 +244,7 @@ namespace pxt {
         // check if apptarget changed
         if (onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
+        pxt.perf.measureEnd("reloadAppTargetVariant")
     }
 
     // this is set by compileServiceVariant in pxt.json
@@ -386,6 +455,7 @@ namespace pxt {
     }
 
     export const CONFIG_NAME = "pxt.json"
+    export const SIMSTATE_JSON = ".simstate.json"
     export const SERIAL_EDITOR_FILE = "serial.txt"
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";

@@ -7,7 +7,8 @@
 
 @import (reference) "semantic.less";
 @carouselArrowSize: 60px;
-@carouselArrowSizeMobile: 40px;
+@carouselArrowSizeTablet: 40px;
+@carouselArrowSizeMobile: 20px;
 
 @homeCarouselArrowZIndex: @homeScreenZIndex+1; /* Show the carousel above the home screen */
 @homeDetailViewZIndex: @homeCarouselArrowZIndex+1; /* Show the detail view above the carousel arrows */
@@ -163,7 +164,7 @@
         }            
     }
 
-    .detailview.visible {
+    .detailview {
         margin-top: -2rem;
         transition: height 0.5s;
         z-index: @homeDetailViewZIndex;
@@ -185,8 +186,13 @@
             top: 0; right: 0;
             left: 30%; bottom: 0;
             padding: 0;
+            overflow:hidden;
             .image {
                 height: 400px;
+                background-size: cover;
+            }
+            .video {
+                width: 100%;
                 background-size: cover;
             }
         }
@@ -210,14 +216,14 @@
             position: absolute;
             bottom: 0;
         }
-        > .close {
+        > .closeIcon {
             margin: 1.5rem;
             position: absolute;
             top: 0;
             right: 0;
             z-index: 1;
         }
-        >.close .remove.icon {
+        >.closeIcon .remove.icon {
             font-size: 2.15rem;
             line-height: 2.15rem;
             cursor: pointer;
@@ -229,7 +235,7 @@
             border-radius: 50%;
             background-color: @homeDetailCloseBackground;
         }
-        > .close .remove.icon:hover, > .close .remove.icon:focus {
+        > .closeIcon .remove.icon:hover, > .closeIcon .remove.icon:focus {
             opacity: 1;
             transform: scale(1.1, 1.1);
             box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
@@ -324,11 +330,6 @@
     right: 0rem;
 }
 
-.carouselarrow.arrowdisabled {
-    opacity: 0;
-}
-
-
 /* <= Tablet (Mobile + Tablet) */
 
 @media only screen and (max-width: @largestTabletScreen) {
@@ -337,7 +338,7 @@
         .getting-started-segment {
             height: 250px;
             .getting-started {
-                padding: @carouselArrowSizeMobile;
+                padding: @carouselArrowSizeTablet;
                 margin-top: 40px;
             }
             .getting-started-header {
@@ -352,26 +353,21 @@
                 padding: 0 !important;
             }
             .column.right.aligned {
-                padding-right: @carouselArrowSizeMobile !important;
+                padding-right: @carouselArrowSizeTablet !important;
             }
             .ui.header {
-                padding-left: @carouselArrowSizeMobile;
+                padding-left: @carouselArrowSizeTablet;
             }
         }
     }
     .carouselcontainer {
-        padding: 2rem @carouselArrowSizeMobile !important;
+        padding: 2rem @carouselArrowSizeTablet !important;
     }
     .carouselarrow {
-        width: @carouselArrowSizeMobile;
-        font-size: @carouselArrowSizeMobile / 1.18 !important;
+        width: @carouselArrowSizeTablet;
+        font-size: @carouselArrowSizeTablet / 1.18 !important;
     }
-}
 
-
-/* <= Tablet (Mobile + Tablet) */
-
-@media only screen and (max-width: @largestTabletScreen) {
     .projectsdialog {
         .ui.card, .ui.cards>.card {
             width: 200px;
@@ -391,6 +387,33 @@
 /* Mobile only */
 
 @media only screen and (max-width: @largestMobileScreen) {
+    /* Carousel */
+    .projectsdialog {
+        .getting-started-segment {
+            .getting-started {
+                padding: @carouselArrowSizeMobile;
+            }
+        }
+        .ui.segment.tabsegment {
+            padding-top: calc(@mobileMenuHeight + 2rem) !important;
+        }
+        .gallerysegment {
+            .column.right.aligned {
+                padding-right: @carouselArrowSizeMobile !important;
+            }
+            .ui.header {
+                padding-left: @carouselArrowSizeMobile;
+            }
+        }
+    }
+    .carouselcontainer {
+        padding: 2rem @carouselArrowSizeMobile !important;
+    }
+    .carouselarrow {
+        width: @carouselArrowSizeMobile;
+        font-size: @carouselArrowSizeMobile / 1.18 !important;
+    }
+
     .projectsdialog {
         .ui.card, .ui.cards>.card {
             width: 9rem;

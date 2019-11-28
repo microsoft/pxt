@@ -39,25 +39,37 @@ function getAsync(h: Header) {
         })
 }
 
-const delText = {}
-
 function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText): Promise<pxt.workspace.Version> {
     let pkg: pxt.FsPkg = {
         files: [],
         config: null,
         header: h,
         path: h.path,
-        isDeleted: text === delText
+        isDeleted: h.isDeleted
     }
-    if (!prevVersion) prevVersion = {}
-    for (let fn of Object.keys(text || {})) {
-        if (text[fn] !== prevVersion[fn])
-            pkg.files.push({
-                name: fn,
-                mtime: null,
-                content: text[fn],
-                prevContent: prevVersion[fn]
-            })
+
+    if (text) {
+        if (!prevVersion) prevVersion = {}
+        for (let fn of Object.keys(text)) {
+            if (text[fn] !== prevVersion[fn])
+                pkg.files.push({
+                    name: fn,
+                    mtime: null,
+                    content: text[fn],
+                    prevContent: prevVersion[fn]
+                })
+        }
+
+        // delete files that are missing now
+        for (let fn of Object.keys(prevVersion)) {
+            if (text[fn] === undefined)
+                pkg.files.push({
+                    name: fn,
+                    mtime: null,
+                    content: null,
+                    prevContent: prevVersion[fn]
+                })
+        }
     }
 
     let savedText = U.flatClone(text || {})
@@ -70,7 +82,8 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
 }
 
 function deleteAsync(h: Header, prevVer: any) {
-    return setAsync(h, prevVer, delText)
+    h.isDeleted = true;
+    return setAsync(h, prevVer, {});
 }
 
 async function listAsync(): Promise<Header[]> {

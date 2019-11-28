@@ -408,12 +408,7 @@ namespace ts.pxtc {
                 vt ^= 1
                 if (vt & 3) oops("Unaligned vt: " + vt)
 
-                if (target.gc) {
-                    pxt.HF2.write32(headerBytes, 0, vt)
-                } else {
-                    pxt.HF2.write16(headerBytes, 0, parseInt(pxt.REFCNT_FLASH))
-                    pxt.HF2.write16(headerBytes, 2, vt >> target.vtableShift)
-                }
+                pxt.HF2.write32(headerBytes, 0, vt)
 
                 let len = 0
                 if (isString)
@@ -688,7 +683,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         // 4 words header
         // 4 or 2 mem mgmt methods
         // 1 toString
-        return 4 + (target.gc ? 4 : 2) + 1
+        return 4 + 4 + 1
     }
 
     const primes = [
@@ -788,10 +783,8 @@ ${info.id}_VT:
 
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
-        if (target.gc) {
-            addPtr("pxt::RefRecord_scan")
-            addPtr("pxt::RefRecord_gcsize")
-        }
+        addPtr("pxt::RefRecord_scan")
+        addPtr("pxt::RefRecord_gcsize")
         let toStr = info.toStringMethod
         addPtr(toStr ? toStr.vtLabel() : "0")
 
@@ -861,8 +854,8 @@ ${hex.hexPrelude()}
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
     .word _pxt_perf_counters
-    .word 0 ; reserved
-    .word 0 ; reserved
+    .word _pxt_restore_exception_state@fn
+    .word ${bin.emitString(bin.getTitle())} ; name
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
@@ -1155,7 +1148,13 @@ __flash_checksums:
     export let validateShim = hex.validateShim;
 
     export function f4EncodeImg(w: number, h: number, bpp: number, getPix: (x: number, y: number) => number) {
-        let r = hex2(0xe0 | bpp) + hex2(w) + hex2(h) + "00"
+        const header = [
+            0x87, bpp,
+            w & 0xff, w >> 8,
+            h & 0xff, h >> 8,
+            0, 0
+        ]
+        let r = header.map(hex2).join("")
         let ptr = 4
         let curr = 0
         let shift = 0
@@ -1188,6 +1187,5 @@ __flash_checksums:
         function hex2(n: number) {
             return ("0" + n.toString(16)).slice(-2)
         }
-
     }
 }

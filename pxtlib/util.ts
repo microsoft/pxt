@@ -235,9 +235,14 @@ namespace ts.pxtc.Util {
         return Object.keys(m || {}).map(k => m[k])
     }
 
-    export function pushRange<T>(trg: T[], src: T[]): void {
+    export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
         for (let i = 0; i < src.length; ++i)
             trg.push(src[i])
+    }
+
+    // TS gets lost in type inference when this is passed an array
+    export function concatArrayLike<T>(arrays: ArrayLike<ArrayLike<T>>): T[] {
+        return concat(arrays as any)
     }
 
     export function concat<T>(arrays: T[][]): T[] {
@@ -798,6 +803,20 @@ namespace ts.pxtc.Util {
         return Math.round(now() / 1000)
     }
 
+    // node.js overrides this to use process.cpuUsage()
+    export let cpuUs = (): number => {
+        // current time in microseconds
+        const perf = typeof performance != "undefined" ?
+            performance.now.bind(performance) ||
+            (performance as any).moznow.bind(performance) ||
+            (performance as any).msNow.bind(performance) ||
+            (performance as any).webkitNow.bind(performance) ||
+            (performance as any).oNow.bind(performance) :
+            Date.now;
+        cpuUs = () => perf() * 1000;
+        return cpuUs();
+    }
+
     export function getMime(filename: string) {
         let m = /\.([a-zA-Z0-9]+)$/.exec(filename)
         if (m)
@@ -918,6 +937,7 @@ namespace ts.pxtc.Util {
         "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
         "nl": { englishName: "Dutch", localizedName: "Nederlands" },
         "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "nb": { englishName: "Norwegian Bokmal", localizedName: "Norsk bokmål" },
         "pl": { englishName: "Polish", localizedName: "Polski" },
         "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
         "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },

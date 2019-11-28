@@ -10,6 +10,7 @@ namespace pxt.runner {
         signatureClass?: string;
         blocksClass?: string;
         blocksXmlClass?: string;
+        diffBlocksXmlClass?: string;
         staticPythonClass?: string; // typescript to be converted to static python
         projectClass?: string;
         blocksAspectRatio?: number;
@@ -40,10 +41,6 @@ namespace pxt.runner {
         hex?: string;
     }
 
-    function appendBlocks($parent: JQuery, $svg: JQuery) {
-        $parent.append($('<div class="ui content blocks"/>').append($svg));
-    }
-
     function highlight($js: JQuery) {
         if (typeof hljs !== "undefined") {
             if ($js.hasClass("highlight"))
@@ -54,13 +51,17 @@ namespace pxt.runner {
         }
     }
 
+    function appendBlocks($parent: JQuery, $svg: JQuery) {
+        $parent.append($(`<div class="ui content blocks"/>`).append($svg));
+    }
+
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
+        $parent.append($(`<div class="ui content js"><div class="subheading"><i class="ui icon xicon js"/>JavaScript</div></div>`).append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/>Python</div></div>').append($py));
+        $parent.append($(`<div class="ui content py"><div class="subheading"><i class="ui icon xicon python"/>Python</div></div>`).append($py));
         highlight($py);
     }
 
@@ -70,7 +71,19 @@ namespace pxt.runner {
         $btn.attr("title", label);
         $btn.find('i').attr("class", icon);
         $btn.find('span').text(label);
+
+        addFireClickOnEnter($btn);
         return $btn;
+    }
+
+    function addFireClickOnEnter(el: JQuery<HTMLElement>) {
+        el.keypress(e => {
+            const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
+            if (charCode === 13 /* enter */ || charCode === 32 /* space */) {
+                e.preventDefault();
+                e.currentTarget.click();
+            }
+        });
     }
 
     function fillWithWidget(
@@ -141,12 +154,14 @@ namespace pxt.runner {
             $menu.append($hexBtn);
         }
 
-        let r = [$c];
+        let r = $(`<div class=codesnippet></div>`);
         // don't add menu if empty
-        if ($menu.children().length) r.push($h);
+        if ($menu.children().length)
+            r.append($h);
+        r.append($c);
 
         // inject container
-        $container.replaceWith(r as any);
+        $container.replaceWith(r);
 
         function appendBlocksButton() {
             if (!$svg) return;
@@ -206,24 +221,41 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        const job = renderQueue.shift();
-        if (!job) return Promise.resolve(); // done
-
-        const { el, options, render } = job;
-        return pxt.runner.decompileToBlocksAsync(el.text(), options)
-            .then((r) => {
-                const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
-                if (errors && errors.length)
-                    errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
-                render(el, r);
-                el.removeClass("lang-shadow");
-                return consumeRenderQueueAsync();
-            }).catch(e => {
-                pxt.reportException(e);
-                el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                el.removeClass("lang-shadow");
-                return consumeRenderQueueAsync();
+        const existingFilters: Map<boolean> = {};
+        return consumeNext()
+            .then(() => {
+                Blockly.Workspace.getAll().forEach(el => el.dispose())
             });
+
+        function consumeNext(): Promise<void> {
+            const job = renderQueue.shift();
+            if (!job) return Promise.resolve(); // done
+
+            const { el, options, render } = job;
+            return pxt.runner.decompileToBlocksAsync(el.text(), options)
+                .then(r => {
+                    const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
+                    if (errors && errors.length) {
+                        errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
+                    }
+
+                    // filter out any blockly definitions from the svg that would be duplicates on the page
+                    r.blocksSvg.querySelectorAll("defs *").forEach(el => {
+                        if (existingFilters[el.id]) {
+                            el.remove();
+                        } else {
+                            existingFilters[el.id] = true;
+                        }
+                    });
+                    render(el, r);
+                }, e => {
+                    pxt.reportException(e);
+                    el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                }).finally(() => {
+                    el.removeClass("lang-shadow");
+                    return consumeNext();
+                });
+        }
     }
 
     function renderNextSnippetAsync(cls: string,
@@ -237,9 +269,6 @@ namespace pxt.runner {
         if (!options.emPixels) options.emPixels = 18;
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
-
-        // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-        $el.text(pxt.tutorial.patchArcadeSnippets($el.text()));
 
         renderQueue.push({ el: $el, source: $el.text(), options, render });
         $el.addClass("lang-shadow");
@@ -288,7 +317,7 @@ namespace pxt.runner {
             return null;
 
         let call = estmt.expression as ts.CallExpression;
-        let info = (<any>call).callInfo as pxtc.CallInfo;
+        let info = pxtc.pxtInfo(call).callInfo;
 
         return info;
     }
@@ -312,6 +341,16 @@ namespace pxt.runner {
             // TODO python
             const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
+            // add an html widge that allows to translate the block
+            if (pxt.Util.isTranslationMode()) {
+                const trs = $('<div class="ui segment" />');
+                trs.append($(`<div class="ui header"><i class="ui xicon globe" /></div>`));
+                if (symbolInfo.attributes.translationId)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.translationId));
+                if (symbolInfo.attributes.jsDoc)
+                    trs.append($('<div class="ui message">').text(symbolInfo.attributes.jsDoc));
+                trs.insertAfter(c);
+            }
             fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
@@ -333,8 +372,10 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.staticPythonClass, (c, r) => {
             const s = r.compilePython;
             if (s && s.success) {
-                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
-                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python').text(s.outfiles["main.py"]);
+                const $js = c.clone().removeClass('lang-shadow').addClass('highlight');
+                const $py = $js.clone().addClass('lang-python').text(s.outfiles["main.py"]);
+                $js.addClass('lang-typescript');
+                highlight($py);
                 fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
             }
         }, { package: options.package, snippetMode: true });
@@ -360,6 +401,49 @@ namespace pxt.runner {
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
                     $el.removeClass(cls);
+                    return Promise.delay(1, renderNextXmlAsync(cls, render, options));
+                })
+        }
+
+        return renderNextXmlAsync(cls, (c, r) => {
+            const s = r.blocksSvg;
+            if (opts.snippetReplaceParent) c = c.parent();
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
+            c.replaceWith(segment);
+        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+    }
+
+    function renderDiffBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
+        if (!opts.diffBlocksXmlClass) return Promise.resolve();
+        const cls = opts.diffBlocksXmlClass;
+        function renderNextXmlAsync(cls: string,
+            render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
+            options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
+            let $el = $("." + cls).first();
+            if (!$el[0]) return Promise.resolve();
+
+            if (!options.emPixels) options.emPixels = 18;
+            options.splitSvg = true;
+
+            const xml = $el.text().split(/-{10,}/);
+            const oldXml = xml[0];
+            const newXml = xml[1];
+
+            return pxt.runner.compileBlocksAsync("", options) // force loading blocks
+                .then(r => {
+                    $el.removeClass(cls);
+                    try {
+                        const diff = pxt.blocks.diffXml(oldXml, newXml);
+                        if (!diff)
+                            $el.text("no changes");
+                        else {
+                            r.blocksSvg = diff.svg;
+                            render($el, r);
+                        }
+                    } catch (e) {
+                        pxt.reportException(e)
+                        $el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                    }
                     return Promise.delay(1, renderNextXmlAsync(cls, render, options));
                 })
         }
@@ -589,6 +673,22 @@ namespace pxt.runner {
                                 blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_for_of"></block></xml>'
                             });
                             break;
+                        case ts.SyntaxKind.BreakStatement:
+                            addItem({
+                                name: ns ? "Loops" : "break",
+                                url: "blocks/loops" + (ns ? "" : "/break"),
+                                description: ns ? lf("Loops and repetition") : lf("Break out of the current loop."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="break_keyword"></block></xml>'
+                            });
+                            break;
+                        case ts.SyntaxKind.ContinueStatement:
+                            addItem({
+                                name: ns ? "Loops" : "continue",
+                                url: "blocks/loops" + (ns ? "" : "/continue"),
+                                description: ns ? lf("Loops and repetition") : lf("Skip iteration and continue the current loop."),
+                                blocksXml: '<xml xmlns="http://www.w3.org/1999/xhtml"><block type="continue_keyboard"></block></xml>'
+                            });
+                            break;
                         case ts.SyntaxKind.ForStatement:
                             let fs = stmt as ts.ForStatement;
                             // look for the 'repeat' loop style signature in the condition expression, explicitly: (let i = 0; i < X; i++)
@@ -739,8 +839,7 @@ namespace pxt.runner {
 
         function render(e: Node, ignored: boolean) {
             if (typeof hljs !== "undefined") {
-                // FIXME: Remove this patchArcadeSnippets once arcade documentation has been updated from enums to namespace for spritekind
-                $(e).text(pxt.tutorial.patchArcadeSnippets($(e).text().replace(/^\s*\r?\n/, '')))
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
             }
             const opts = pxt.U.clone(woptions);
@@ -795,7 +894,7 @@ namespace pxt.runner {
             let $c = $(c);
             let padding = '81.97%';
             if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-            let $sim = $(`<div class="ui centered card"><div class="ui content">
+            let $sim = $(`<div class="ui card"><div class="ui content">
                     <div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;">
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
                     </div>
@@ -832,6 +931,7 @@ namespace pxt.runner {
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
+            .then(() => renderDiffBlocksXmlAsync(options))
             .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))
             .then(() => consumeRenderQueueAsync())

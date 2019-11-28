@@ -1,0 +1,24 @@
+{
+    "editor": "blocksprj",
+    "title": "Ghost blocks",
+    "steps": [
+        {
+            "fullscreen": true,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Ghost blocks do not show up in the tutorial, but display in the workspace.",
+            "headerContentMd": "Ghost blocks do not show up in the tutorial, but display in the workspace."
+        },
+        {
+            "fullscreen": false,
+            "unplugged": false,
+            "tutorialCompleted": false,
+            "contentMd": "Multiple ghost sections can be included in one tutorial\n\n```blocks\nbasic.showString(\"Hello\")\n```",
+            "headerContentMd": "Multiple ghost sections can be included in one tutorial",
+            "hintContentMd": "```blocks\nbasic.showString(\"Hello\")\n```",
+            "hasHint": true
+        }
+    ],
+    "activities": null,
+    "code": "\n { \n basic.forever(() => {\n    basic.showIcon(IconNames.Yes);\n});\n } \n\n { \n basic.showString(\"Hello\")\n } \n\n { \n basic.forever(function() {\n    basic.showLeds(`\n        . # . # .\n        # # # # #\n        # # # # #\n        . # # # .\n        . . # . .`);\n})\n } \n\n { \n input.onButtonPressed(Button.A, () => {\n    radio.sendNumber(0)\n})\n } \n"
+}

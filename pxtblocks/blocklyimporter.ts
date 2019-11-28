@@ -47,9 +47,9 @@ namespace pxt.blocks {
         }
     }
 
-    export function saveWorkspaceXml(ws: Blockly.Workspace): string {
-        let xml = Blockly.Xml.workspaceToDom(ws, true);
-        let text = Blockly.Xml.domToPrettyText(xml);
+    export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): string {
+        const xml = Blockly.Xml.workspaceToDom(ws, !keepIds);
+        const text = Blockly.Xml.domToText(xml);
         return text;
     }
 
@@ -80,7 +80,7 @@ namespace pxt.blocks {
     /**
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
-    export function loadWorkspaceXml(xml: string, skipReport = false) {
+    export function loadWorkspaceXml(xml: string, skipReport = false): Blockly.Workspace {
         const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);

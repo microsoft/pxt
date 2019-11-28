@@ -71,13 +71,16 @@ function runKarma(that, flags) {
     }
     else {
         command = "./karma start ../../karma.conf.js " + flags;
+        if (process.env.GITHUB_ACTIONS)
+            command = "xvfb-run --auto-servernum " + command;
     }
     cmdIn(that, "node_modules/.bin", command);
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js', 'uglify'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
+task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testpy', 'testlang', 'testtutorials', 'karma'])
+task('testpy', ['testpycomp', 'testpytraces']) // TODO: turn on 'testpydecomp'
 
 task('clean', function () {
     ["built", "temp"].forEach(d => {
@@ -96,9 +99,10 @@ setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
 setupTest('testlang', 'compile-test', 'compilerunner.js')
 setupTest('testerr', 'errors-test', 'errorrunner.js')
 setupTest('testfmt', 'format-test', 'formatrunner.js')
-setupTest('testpydecompiler', 'pydecompile-test', 'pydecompilerunner.js')
-setupTest('testtraces', 'runtime-trace-tests', 'tracerunner.js')
-
+setupTest('testpydecomp', 'pydecompile-test', 'pydecompilerunner.js')
+setupTest('testpycomp', 'pyconverter-test', 'pyconvertrunner.js')
+setupTest('testpytraces', 'runtime-trace-tests', 'tracerunner.js')
+setupTest('testtutorials', 'tutorial-test', 'tutorialrunner.js')
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
     cmdIn(this, "tests/pkgconflicts", 'node ../../built/pxt.js testpkgconflicts')
@@ -131,7 +135,7 @@ file('built/typescriptServices.d.ts', ['node_modules/typescript/lib/typescriptSe
     jake.cpR('node_modules/typescript/lib/typescriptServices.d.ts', "built/")
 })
 
-file('built/pxt-common.json', expand(['libs/pxt-common'], ".ts"), function () {
+file('built/pxt-common.json', expand(['libs/pxt-common', 'libs/pxt-python'], ".ts"), function () {
     console.log(`[${this.name}]`)
     let std = {}
     for (let f of this.prereqs) {
@@ -145,11 +149,28 @@ if (!fs.existsSync("webapp/public/blockly/msg")) fs.mkdirSync("webapp/public/blo
 if (!fs.existsSync("webapp/public/blockly/msg/js")) fs.mkdirSync("webapp/public/blockly/msg/js");
 if (!fs.existsSync("webapp/public/blockly/msg/json")) fs.mkdirSync("webapp/public/blockly/msg/json");
 
-jake.cpR('node_modules/pxt-blockly/blocks_compressed.js', 'webapp/public/blockly/');
-jake.cpR('node_modules/pxt-blockly/blockly_compressed.js', 'webapp/public/blockly/');
-jake.cpR('node_modules/pxt-blockly/msg/js/en.js', 'webapp/public/blockly/msg/js/');
-jake.cpR('node_modules/pxt-blockly/msg/json/en.json', 'webapp/public/blockly/msg/json/');
-jake.cpR('node_modules/pxt-blockly/media', 'webapp/public/blockly/');
+// avoid unnecessary copy to avoid rebuilding everything later
+let numCopy = 0
+function maybeCopy(src, dst) {
+    const srcBuf = fs.readFileSync(src)
+    dst = path.join(dst, path.basename(src))
+    try {
+        const dstBuf = fs.readFileSync(dst)
+        if (dstBuf.equals(srcBuf))
+            return
+    } catch (e) { }
+    numCopy++
+    console.log("cp " + src + " " + dst)
+    fs.writeFileSync(dst, srcBuf)
+}
+
+maybeCopy('node_modules/pxt-blockly/blocks_compressed.js', 'webapp/public/blockly/');
+maybeCopy('node_modules/pxt-blockly/blockly_compressed.js', 'webapp/public/blockly/');
+maybeCopy('node_modules/pxt-blockly/msg/js/en.js', 'webapp/public/blockly/msg/js/');
+maybeCopy('node_modules/pxt-blockly/msg/json/en.json', 'webapp/public/blockly/msg/json/');
+// assume the media files only change if the other files change
+if (numCopy > 0)
+    jake.cpR('node_modules/pxt-blockly/media', 'webapp/public/blockly/');
 
 compileDir("pxtlib", "built/typescriptServices.d.ts")
 compileDir("pxtcompiler", ["built/pxtlib.js"])
@@ -581,4 +602,29 @@ ju.catFiles("built/web/semantic.js",
 file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js', 'built/web/semantic.css'], function () {
     jake.cpR("libs/pxt-common/pxt-core.d.ts", "docs/static/playground/pxt-common/pxt-core.d.js");
     jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
+})
+
+task("uglify", ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], () => {
+    if (process.env.PXT_ENV == 'production') {
+        console.log("Minifying built/web...")
+
+        const uglify = require("uglify-js");
+
+        expand("built/web", ".js").forEach(fn => {
+            console.log("Minifying " + fn)
+
+            const content = fs.readFileSync(fn, "utf-8")
+            const res = uglify.minify(content);
+
+            if (!res.error) {
+                fs.writeFileSync(fn, res.code, { encoding: "utf8" })
+            }
+            else {
+                console.log("Could not minify " + fn);
+            }
+        });
+    }
+    else {
+        console.log("Skipping minification for non-production build")
+    }
 })
