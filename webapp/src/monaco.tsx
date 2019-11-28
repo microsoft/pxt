@@ -200,6 +200,52 @@ class HoverProvider implements monaco.languages.HoverProvider {
     }
 }
 
+// reference: https://github.com/microsoft/vscode/blob/master/extensions/python/language-configuration.json
+// documentation: https://code.visualstudio.com/api/language-extensions/language-configuration-guide
+const pythonLanguageConfiguration: monaco.languages.LanguageConfiguration = {
+    "comments": {
+        "lineComment": "#",
+        "blockComment": ["\"\"\"", "\"\"\""]
+    },
+    "brackets": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        { "open": "{", "close": "}" },
+        { "open": "[", "close": "]" },
+        { "open": "(", "close": ")" },
+        { "open": "\"", "close": "\"", "notIn": ["string"] },
+        { "open": "r\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "R\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "u\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "U\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "f\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "F\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "b\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "B\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "r'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "R'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "u'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "U'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "f'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "F'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "b'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "B'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "`", "close": "`", "notIn": ["string"] }
+    ],
+    onEnterRules: [
+        {
+            beforeText: /^\s*(?:def|class|for|if|elif|else|while|try|with|finally|except|async).*?:\s*$/,
+            action: {
+                indentAction: 1/*IndentAction.Indent*/
+            }
+        }
+    ]
+}
+
 class FormattingProvider implements monaco.languages.DocumentRangeFormattingEditProvider {
     protected isPython: boolean = false;
 
@@ -726,6 +772,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
+            monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
 
             this.editorViewZones = [];
 
