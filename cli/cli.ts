@@ -342,32 +342,37 @@ function semverCmp(a: string, b: string) {
 
 let readJson = nodeutil.readJson;
 
-function travisAsync() {
-    forceCloudBuild = true
+function ciAsync() {
+    forceCloudBuild = true;
+    const buildInfo = ciBuildInfo();
+    pxt.log(`ci build using ${buildInfo.ci}`);
+    if (!buildInfo.tag)
+        buildInfo.tag = "";
+    if (!buildInfo.branch)
+        buildInfo.branch = "local"
 
-    const rel = process.env.TRAVIS_TAG || ""
+    const { tag, branch, pullRequest } = buildInfo
     const atok = process.env.NPM_ACCESS_TOKEN
-    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(rel) && atok;
+    const npmPublish = /^v\d+\.\d+\.\d+$/.exec(tag) && atok;
 
     if (npmPublish) {
         let npmrc = path.join(process.env.HOME, ".npmrc")
-        console.log(`Setting up ${npmrc}`)
+        pxt.log(`setting up ${npmrc}`)
         let cfg = "//registry.npmjs.org/:_authToken=" + atok + "\n"
         fs.writeFileSync(npmrc, cfg)
     }
 
-    const branch = process.env.TRAVIS_BRANCH || "local"
     const latest = branch == "master" ? "latest" : "git-" + branch
     // upload locs on build on master
-    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(process.env.TRAVIS_BRANCH)
-        && /^false$/.test(process.env.TRAVIS_PULL_REQUEST)
+    const uploadLocs = /^(master|v\d+\.\d+\.\d+)$/.test(branch)
+        && !pullRequest
         && !!pxt.appTarget.uploadDocs;
 
-    console.log("TRAVIS_TAG:", rel);
-    console.log("TRAVIS_BRANCH:", process.env.TRAVIS_BRANCH);
-    console.log("TRAVIS_PULL_REQUEST:", process.env.TRAVIS_PULL_REQUEST);
-    console.log("uploadLocs:", uploadLocs);
-    console.log("latest:", latest);
+    pxt.log(`tag: ${tag}`);
+    pxt.log(`branch: ${branch}`);
+    pxt.log(`pull request: ${pullRequest}`);
+    pxt.log(`upload locs: ${uploadLocs}`);
+    pxt.log(`latest: ${latest}`);
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
@@ -383,7 +388,7 @@ function travisAsync() {
                 .then(() => crowdin.execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
                 .then(() => crowdin.execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => crowdin.internalUploadTargetTranslationsAsync(!!rel));
+                .then(() => crowdin.internalUploadTargetTranslationsAsync(!!tag));
         return p;
     } else {
         pxt.log("target build");
@@ -398,7 +403,7 @@ function travisAsync() {
                     return Promise.resolve();
                 }
                 const trg = readLocalPxTarget();
-                const label = `${trg.id}/${rel || latest}`;
+                const label = `${trg.id}/${tag || latest}`;
                 pxt.log(`uploading target with label ${label}...`);
                 return uploadTargetAsync(label);
             })
@@ -406,7 +411,7 @@ function travisAsync() {
                 pxt.log("target uploaded");
                 if (uploadLocs) {
                     pxt.log("uploading translations...");
-                    return crowdin.internalUploadTargetTranslationsAsync(!!rel)
+                    return crowdin.internalUploadTargetTranslationsAsync(!!tag)
                         .then(() => pxt.log("translations uploaded"));
                 }
                 pxt.log("skipping translations upload");
@@ -580,11 +585,8 @@ function uploadTaggedTargetAsync() {
                         .then(() => internalCheckDocsAsync(true))
                         .then(() => info))
                 .then(info => {
-                    process.env["TRAVIS_TAG"] = info[0]
-                    process.env['TRAVIS_BRANCH'] = info[1]
-                    process.env['TRAVIS_COMMIT'] = info[2]
-                    let repoSlug = "microsoft/pxt-" + pxt.appTarget.id
-                    process.env['TRAVIS_REPO_SLUG'] = repoSlug
+                    const repoSlug = "microsoft/pxt-" + pxt.appTarget.id
+                    setCiBuildInfo(info[0], info[1], info[2], repoSlug)
                     process.env['PXT_RELEASE_REPO'] = "https://git:" + token + "@github.com/" + repoSlug + "-built"
                     let v = pkgVersion()
                     pxt.log("uploading " + v)
@@ -601,7 +603,7 @@ function uploadTaggedTargetAsync() {
 
 function pkgVersion() {
     let ver = readJson("package.json")["version"]
-    let info = travisInfo()
+    const info = ciBuildInfo()
     if (!info.tag)
         ver += "-" + (info.commit ? info.commit.slice(0, 6) : "local")
     return ver
@@ -733,7 +735,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
                 let e = lookup(roottree, fn)
                 e.hash = uplReqs[fn].hash
             }
-            let info = travisInfo()
+            const info = ciBuildInfo()
             let data: CommitInfo = {
                 message: "Upload from " + info.commitUrl,
                 parents: [],
@@ -806,7 +808,7 @@ function uploadToGitRepoAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         cwd: trgPath,
         args: cred.concat(args)
     })
-    let info = travisInfo()
+    const info = ciBuildInfo()
     return Promise.resolve()
         .then(() => {
             if (fs.existsSync(trgPath)) {
@@ -1476,14 +1478,79 @@ function buildPxtAsync(includeSourceMaps = false): Promise<string[]> {
 
 let dirsToWatch: string[] = []
 
-function travisInfo() {
-    return {
-        branch: process.env['TRAVIS_BRANCH'],
-        tag: process.env['TRAVIS_TAG'],
-        commit: process.env['TRAVIS_COMMIT'],
-        commitUrl: !process.env['TRAVIS_COMMIT'] ? undefined :
-            "https://github.com/" + process.env['TRAVIS_REPO_SLUG'] + "/commits/" + process.env['TRAVIS_COMMIT'],
+interface CiBuildInfo {
+    ci: "travis" | "githubactions" | "local"
+    branch: string;
+    tag: string;
+    commit: string;
+    commitUrl: string;
+    pullRequest?: boolean;
+}
+
+function ciBuildInfo(): CiBuildInfo {
+    const isTravis = (process.env.TRAVIS === "true");
+    const isGithubAction = (!!process.env.GITHUB_ACTIONS);
+
+    if (isTravis) return travisInfo();
+    else if (isGithubAction) return githubActionInfo();
+    else {
+        // local build
+        return {
+            ci: "local",
+            branch: undefined,
+            tag: undefined,
+            commit: undefined,
+            commitUrl: undefined
+        }
     }
+
+    function travisInfo(): CiBuildInfo {
+        const commit = process.env.TRAVIS_COMMIT;
+        const pr = process.env.TRAVIS_PULL_REQUEST;
+        const repoSlug = process.env.TRAVIS_REPO_SLUG;
+        return {
+            ci: "travis",
+            branch: process.env.TRAVIS_BRANCH,
+            tag: process.env.TRAVIS_TAG,
+            commit,
+            commitUrl: !commit ? undefined :
+                "https://github.com/" + repoSlug + "/commits/" + commit,
+            pullRequest: pr !== "false"
+        }
+    }
+
+    function githubActionInfo(): CiBuildInfo {
+        // https://help.github.com/en/actions/automating-your-workflow-with-github-actions/using-environment-variables#default-environment-variables
+        const repoSlug = process.env.GITHUB_REPOSITORY;
+        const commit = process.env.GITHUB_SHA;
+        const ref = process.env.GITHUB_REF;
+        // branch build refs/heads/...
+        // tag build res/tags/...
+        const branch = ref.replace(/^refs\/(heads|tags)\//, '');
+        const tag = /^refs\/tags\//.test(ref) ? branch : undefined;
+        const eventName = process.env.GITHUB_EVENT_NAME;
+
+        pxt.log(`event name: ${eventName}`);
+
+        // PR: not on master or not a release number
+        return {
+            ci: "githubactions",
+            branch,
+            tag,
+            commit,
+            commitUrl: "https://github.com/" + repoSlug + "/commits/" + commit,
+            pullRequest: !(branch == "master" || /^v\d+\.\d+\.\d+$/.test(tag))
+        }
+    }
+}
+
+function setCiBuildInfo(tag: string, branch: string, commit: string, repoSlug: string) {
+    // travis
+    process.env["TRAVIS"] = "1";
+    process.env["TRAVIS_TAG"] = tag;
+    process.env['TRAVIS_BRANCH'] = branch;
+    process.env['TRAVIS_COMMIT'] = commit;
+    process.env['TRAVIS_REPO_SLUG'] = repoSlug;
 }
 
 function buildWebManifest(cfg: pxt.TargetBundle) {
@@ -2100,7 +2167,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             nodeutil.writeFileSync(apiInfoCompressedPath, nodeutil.stringify(compressedBuiltInfo));
             cfg.apiInfo = compressedBuiltInfo;
 
-            let info = travisInfo()
+            const info = ciBuildInfo()
             cfg.versions = {
                 branch: info.branch,
                 tag: info.tag,
@@ -5336,25 +5403,31 @@ interface BlockTestCase {
 }
 
 function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
-    const karma = karmaPath();
-    if (!karma) {
+    let cmd = karmaPath();
+    if (!cmd) {
         console.error("Karma not found, did you run npm install?");
         return Promise.reject(new Error("Karma not found"));
     }
 
-    let extraArgs: string[] = []
+    const args = ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")];
 
     if (parsed && parsed.flags["debug"]) {
-        extraArgs.push("--no-single-run");
+        args.push("--no-single-run");
+    }
+
+    if (process.env.GITHUB_ACTIONS) {
+        args.unshift(cmd);
+        args.unshift("--auto-servernum");
+        cmd = "xvfb-run"
     }
 
     return writeBlockTestJSONAsync()
         .then(() => nodeutil.spawnAsync({
-            cmd: karma,
+            cmd,
             envOverrides: {
                 "KARMA_TARGET_DIRECTORY": process.cwd()
             },
-            args: ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")].concat(extraArgs)
+            args
         }), (e: Error) => console.log("Skipping blocks tests: " + e.message))
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
@@ -5777,7 +5850,11 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 
     advancedCommand("api", "do authenticated API call", pc => apiAsync(pc.args[0], pc.args[1]), "<path> [data]");
     advancedCommand("pokecloud", "same as 'api pokecloud {}'", () => apiAsync("pokecloud", "{}"));
-    advancedCommand("travis", "upload release and npm package", travisAsync);
+    p.defineCommand({
+        name: "ci",
+        help: "run automated build in a continuous integration environment",
+        aliases: ["travis", "githubactions", "buildci"]
+    }, ciAsync);
     advancedCommand("uploadfile", "upload file under <CDN>/files/PATH", uploadFileAsync, "<path>");
     advancedCommand("service", "simulate a query to web worker", serviceAsync, "<operation>");
     advancedCommand("time", "measure performance of the compiler on the current package", timeAsync);
@@ -5904,7 +5981,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
         help: "upload translations for target",
         flags: {
             docs: { description: "upload markdown docs folder as well" },
-            test: { description: "test run, do not upload files to crowdin"}
+            test: { description: "test run, do not upload files to crowdin" }
         },
         advanced: true
     }, crowdin.uploadTargetTranslationsAsync);
