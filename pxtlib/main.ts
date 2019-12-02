@@ -305,6 +305,10 @@ namespace pxt {
         ? (msg) => {
             console.log(msg);
         } : () => { };
+    export let warn: (msg: any) => void = typeof console !== "undefined" && !!console.log
+        ? (msg) => {
+            console.warn(msg);
+        } : () => { };
 
     export let reportException: (err: any, data?: Map<string | number>) => void = function (e, d) {
         if (console) {

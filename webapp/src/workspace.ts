@@ -165,7 +165,7 @@ export function isSessionOutdated() {
 }
 function checkSession() {
     if (isSessionOutdated()) {
-        pxt.Util.assert(false, "trying to access outdated session")
+        pxt.warn("trying to access outdated session")
     }
 }
 
