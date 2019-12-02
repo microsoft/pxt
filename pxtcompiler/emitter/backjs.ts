@@ -617,7 +617,7 @@ function ${id}(s) {
                     write(`  s.retval = ${accessor}(${args.join(", ")});`)
                 else {
                     U.assert(!procid.isSet)
-                    write(`  setupLambda(${frameRef}, ${accessor}(${args.slice(0, 2).join(", ")}));`)
+                    write(`  setupLambda(${frameRef}, ${accessor}(${args.slice(0, 2).join(", ")}), ${topExpr.args.length});`)
                     write(`  ${callIt}`)
                 }
                 write(`} else {`)
@@ -630,7 +630,7 @@ function ${id}(s) {
                 } else if (procid.noArgs) {
                     write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; } else`)
                 } else {
-                    write(`  if (${frameRef}.fn == null) { setupLambda(${frameRef}, ${fld}); ${callIt} }`)
+                    write(`  if (${frameRef}.fn == null) { setupLambda(${frameRef}, ${fld}, ${topExpr.args.length}); ${callIt} }`)
                 }
                 write(`  { ${callIt} }`)
                 write(`}`)

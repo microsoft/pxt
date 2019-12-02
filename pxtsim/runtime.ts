@@ -1309,7 +1309,12 @@ namespace pxsim {
                 currResume = buildResume(s, retPC)
             }
 
-            function setupLambda(s: StackFrame, a: RefAction | LabelFn) {
+            function setupLambda(s: StackFrame, a: RefAction | LabelFn, numShift?: number) {
+                if (numShift) {
+                    const sa = s as any
+                    for (let i = 1; i < numShift; ++i)
+                        sa["arg" + (i - 1)] = sa["arg" + i]
+                }
                 if (a instanceof RefAction) {
                     s.fn = a.func
                     s.caps = a.fields
