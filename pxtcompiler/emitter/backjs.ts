@@ -626,11 +626,13 @@ function ${id}(s) {
                 let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
                 if (procid.isSet) {
                     write(`  if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
-                    write(`  else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
+                    write(`  else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) } else `)
                 } else if (procid.noArgs) {
-                    write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
+                    write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; } else`)
+                } else {
+                    write(`  if (${frameRef}.fn == null) { setupLambda(${frameRef}, ${fld}); ${callIt} }`)
                 }
-                write(`  else { ${callIt} }`)
+                write(`  { ${callIt} }`)
                 write(`}`)
                 callIt = ""
             } else if (procid.virtualIndex == -1) {
