@@ -161,7 +161,7 @@ namespace pxtblockly {
         protected static readonly selectedKeyColor = "yellowgreen";
 
         protected currentPage: number;
-        protected piano: goog.ui.CustomButton[];
+        protected piano: HTMLDivElement[];
         /**
          * Absolute error for note frequency identification (Hz)
          */
@@ -334,7 +334,7 @@ namespace pxtblockly {
             const thisField = this;
             //  Record windowSize and scrollOffset before adding the piano.
             const editorWidth = goog.dom.getViewportSize().editorWidth;
-            const piano: Array<HTMLDivElement> = [];
+            this.piano = [];
 
             //  initializate
             let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
@@ -376,7 +376,7 @@ namespace pxtblockly {
                 );
                 key.setAttribute("id", this.noteName_[i]);
                 key.setAttribute("tag", this.noteFreq_[i].toString());
-                piano.push(key);
+                this.piano.push(key);
                 pianoDiv.appendChild(key);
 
                 //  highlight current selected key
@@ -413,8 +413,7 @@ namespace pxtblockly {
                     key,
                     goog.events.EventType.MOUSEOVER,
                     function () {
-                        const script = showNoteLabel.getContent() as HTMLElement;
-                        script.textContent = this.getAttribute("id");
+                        noteLabel.textContent = this.getAttribute("id");
                     },
                     false,
                     key
@@ -427,31 +426,29 @@ namespace pxtblockly {
                 if (pagination && i > 11)
                     key.style.display = "none";
             }
+
             //  render note label
-            const showNoteLabel = new goog.ui.CustomButton();
-            const showNoteStyle = this.getShowNoteStyle(pianoWidth);
-            showNoteLabel.setContent(showNoteStyle);
-            showNoteLabel.render(pianoDiv);
-            const scriptLabel = showNoteLabel.getContent() as HTMLElement;
-            scriptLabel.textContent = "-";
+            const noteLabel = this.getShowNoteStyle(pianoWidth);
+            pianoDiv.appendChild(noteLabel);
+            noteLabel.textContent = "-";
 
             if (pagination) {
                 const prevButton = this.getNextPrevButton(pianoWidth, true, pianoDiv);
                 const nextButton = this.getNextPrevButton(pianoWidth, false, pianoDiv);
 
-                scriptLabel.textContent = "Octave #1";
+                noteLabel.textContent = "Octave #1";
 
                 goog.events.listen(
-                    prevButton.getElement(),
+                    prevButton,
                     goog.events.EventType.MOUSEDOWN,
-                    () => this.changePage(/** next **/ false, scriptLabel, piano),
+                    () => this.changePage(/** next **/ false, noteLabel, this.piano),
                     false,
                     prevButton
                 );
                 goog.events.listen(
-                    nextButton.getElement(),
+                    nextButton,
                     goog.events.EventType.MOUSEDOWN,
-                    () => this.changePage(/** next **/ true, scriptLabel, piano),
+                    () => this.changePage(/** next **/ true, noteLabel, this.piano),
                     false,
                     nextButton
                 );
@@ -630,16 +627,13 @@ namespace pxtblockly {
         }
 
         protected getNextPrevButton(pianoWidth: number, isPrev: boolean, container: HTMLDivElement) {
-            const output = new goog.ui.CustomButton();
-            const style = this.getNextPrevStyle(
+            const output = this.getNextPrevStyle(
                 pianoWidth,
                 isPrev
             );
 
-            output.setContent(style);
-            output.render(container);
-            const leftArrow = output.getContent() as HTMLElement;
-            leftArrow.textContent = isPrev ? "<" : ">";
+            container.appendChild(output);
+            output.textContent = isPrev ? "<" : ">";
             return output;
         }
 
