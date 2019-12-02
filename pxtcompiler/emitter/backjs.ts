@@ -606,30 +606,32 @@ function ${id}(s) {
 
             if (procid.ifaceIndex != null) {
                 U.assert(callproc == null)
-                let isSet = false
                 const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
-                U.assert(!!ifaceFieldName)
-                if (procid.mapMethod) {
-                    write(`if (!${frameRef}.arg0.vtable.iface) {`)
-                    let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
-                    args.splice(1, 0, JSON.stringify(ifaceFieldName))
-                    write(`  s.retval = ${shimToJs(procid.mapMethod)}ByString(${args.join(", ")});`)
-                    write(`} else {`)
-                    if (/Set/.test(procid.mapMethod))
-                        isSet = true
+                U.assert(!!ifaceFieldName, `no name for ${procid.ifaceIndex}`)
+
+                write(`if (!${frameRef}.arg0.vtable.iface) {`)
+                let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
+                args.splice(1, 0, JSON.stringify(ifaceFieldName))
+                const accessor = `pxsim_pxtrt_map${procid.isSet ? "Set" : "Get"}ByString`
+                if (procid.noArgs)
+                    write(`  s.retval = ${accessor}(${args.join(", ")});`)
+                else {
+                    U.assert(!procid.isSet)
+                    write(`  setupLambda(${frameRef}, ${accessor}(${args.slice(0, 2).join(", ")}));`)
+                    write(`  ${callIt}`)
                 }
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`)
+                write(`} else {`)
+
+                write(`  ${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${procid.isSet ? "set/" : ""}${ifaceFieldName}"];`)
                 let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
-                if (isSet) {
-                    write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
-                    write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
-                } else {
-                    write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
+                if (procid.isSet) {
+                    write(`  if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
+                    write(`  else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
+                } else if (procid.noArgs) {
+                    write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
                 }
-                write(`else { ${callIt} }`)
-                if (procid.mapMethod) {
-                    write(`}`)
-                }
+                write(`  else { ${callIt} }`)
+                write(`}`)
                 callIt = ""
             } else if (procid.virtualIndex == -1) {
                 // lambda call

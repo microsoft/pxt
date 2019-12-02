@@ -608,11 +608,10 @@ _start_${name}:
                 write(`callind ${nargs}`)
             } else if (calledProcId.ifaceIndex != null) {
                 let idx = calledProcId.ifaceIndex + " ; ." + bin.ifaceMembers[calledProcId.ifaceIndex]
-                if (/Set/.test(calledProcId.mapMethod)) {
+                if (calledProcId.isSet) {
                     write(`callset ${idx}`)
                     U.assert(nargs == 2)
-                }
-                else if (/Get/.test(calledProcId.mapMethod)) {
+                } else if (calledProcId.noArgs) {
                     write(`callget ${idx}`)
                     U.assert(nargs == 1)
                 } else

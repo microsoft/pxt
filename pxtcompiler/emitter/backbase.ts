@@ -1403,13 +1403,13 @@ ${baseLabel}_nochk:
                 let custom = this.t.method_call(procid, topExpr)
                 if (custom) {
                     this.write(custom)
-                } else if (procid.mapMethod) {
-                    let isSet = /Set/.test(procid.mapMethod)
-                    assert(isSet == (topExpr.args.length == 2))
-                    assert(!isSet == (topExpr.args.length == 1))
-                    this.emitIfaceCall(procid, topExpr.args.length, isSet ? "set" : "get")
-                } else if (procid.ifaceIndex != null) {
-                    this.emitIfaceCall(procid, topExpr.args.length)
+                 } else if (procid.ifaceIndex != null) {
+                    if (procid.isSet) {
+                        assert(topExpr.args.length == 2)
+                        this.emitIfaceCall(procid, topExpr.args.length, "set")
+                    } else {
+                        this.emitIfaceCall(procid, topExpr.args.length, procid.noArgs ? "get" : "")
+                    }
                 } else {
                     this.emitClassCall(procid)
                 }

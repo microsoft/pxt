@@ -391,7 +391,7 @@ namespace ts.pxtc {
     }
 
     export function isStatic(node: Declaration) {
-        return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
+        return node && node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
     export function isReadOnly(node: Declaration) {
@@ -2204,56 +2204,52 @@ ${lbl}: .short 0xffff
             if (!decl)
                 decl = getDecl(funcExpr) as EmittableAsCall;
             let hasRecv = false
-            let isProperty = false
-            let hasArgs = node !== funcExpr
+            let forceMethod = false
+            const noArgs = node === funcExpr
 
             if (decl) {
                 switch (decl.kind) {
-                    // we treat properties via calls
-                    // so we say they are "methods"
+                    // these can be implemented by fields
                     case SK.PropertySignature:
                     case SK.PropertyAssignment:
                     case SK.PropertyDeclaration:
-                        if (!isStatic(decl)) {
-                            hasRecv = true
-                            isProperty = true
-                        }
-                        break;
-                    case SK.Parameter:
-                        if (isCtorField(decl)) {
-                            hasRecv = true
-                            isProperty = true
-                        }
+                    case SK.MethodSignature:
+                        hasRecv = true
                         break
-                    // TOTO case: case SK.ShorthandPropertyAssignment
-                    // these are the real methods
+                    case SK.Parameter:
+                        if (isCtorField(decl))
+                            hasRecv = true
+                        break
+                    // these are all class members, so cannot be implemented by fields
                     case SK.GetAccessor:
                     case SK.SetAccessor:
-                        hasRecv = true
-                        if (target.switches.slowMethods)
-                            isProperty = true
-                        break
                     case SK.MethodDeclaration:
-                    case SK.MethodSignature:
-                        if (!isStatic(decl))
-                            hasRecv = true
-                        break;
+                        hasRecv = true
+                        forceMethod = true
+                        break
                     case SK.ModuleDeclaration:
                     case SK.FunctionDeclaration:
                         // has special handling
                         break;
                     default:
-                        if (!decl && funcExpr.kind == SK.PropertyAccessExpression)
-                            hasRecv = true // any-access
                         decl = null; // no special handling
                         break;
                 }
+            } else {
+                if (funcExpr.kind == SK.PropertyAccessExpression)
+                    hasRecv = true // any-access
             }
 
-            let attrs = parseComments(decl)
+            if (target.switches.slowMethods)
+                forceMethod = false
+
+            const attrs = parseComments(decl)
             let args = callArgs.slice(0)
 
-            if (hasRecv && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
+            if (hasRecv && isStatic(decl))
+                hasRecv = false
+
+            if (hasRecv && !recv && funcExpr.kind == SK.PropertyAccessExpression)
                 recv = (<PropertyAccessExpression>funcExpr).expression
 
             if (res.usedArguments && attrs.trackArgs) {
@@ -2308,40 +2304,53 @@ ${lbl}: .short 0xffff
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, ctorArgs)
             }
+
             if (hasRecv) {
-                let isSuper = false
-                if (!decl) {
-                    dynamic
-                    // if has args - call it, otherwise just fetch value
-                    // flag on mkMethodCall
-                    // TODO in VT accessor/field/method -> different
-                }
                 U.assert(!isStatic(decl))
                 if (recv) {
-                    if (recv.kind == SK.SuperKeyword) {
-                        isSuper = true
-                    }
                     args.unshift(recv)
-                } else
+                } else {
                     unhandled(node, lf("strange method call"), 9241)
+                }
+                if (!decl) {
+                    // TODO in VT accessor/field/method -> different
+                    U.assert(funcExpr.kind == SK.PropertyAccessExpression);
+                    const fieldName = (funcExpr as PropertyAccessExpression).name.text
+                    // completely dynamic dispatch
+                    return mkMethodCall(args.map((x) => emitExpr(x)), {
+                        ifaceIndex: getIfaceMemberId(fieldName, true),
+                        noArgs
+                    })
+                }
                 let info = getFunctionInfo(decl)
                 if (info.parentClassInfo)
                     markVTableUsed(info.parentClassInfo)
                 markFunctionUsed(decl)
 
-                const needsVCall = info.virtualParent && !isSuper
+                if (recv.kind == SK.SuperKeyword)
+                    return emitPlain()
+           
+                const needsVCall = !!info.virtualParent
                 const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
 
                 if (needsVCall && !forceIfaceCall) {
+                    if (decl.kind == SK.MethodDeclaration) {
+                        U.assert(!noArgs)
+                    } else if (decl.kind == SK.GetAccessor || decl.kind == SK.SetAccessor) {
+                        U.assert(noArgs)
+                    } else {
+                        U.assert(false)
+                    }
+
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
-                    let r = mkMethodCall(args.map((x) => emitExpr(x)), {
+                    return mkMethodCall(args.map((x) => emitExpr(x)), {
                         classInfo: info.parentClassInfo,
-                        virtualIndex: info.virtualIndex
+                        virtualIndex: info.virtualIndex,
+                        noArgs,
+                        isThis: args[0].kind == SK.ThisKeyword
                     })
-                    if (args[0].kind == SK.ThisKeyword)
-                        (r.data as ir.ProcId).isThis = true
-                    return r
                 }
+
                 if (attrs.shim && !hasShimDummy(decl)) {
                     return emitShim(decl, node, args);
                 } else if (attrs.helper) {
@@ -2365,29 +2374,16 @@ ${lbl}: .short 0xffff
                     if (helperStmt.kind != SK.FunctionDeclaration)
                         userError(9216, lf("helpers.{0} isn't a function", attrs.helper))
                     decl = <FunctionDeclaration>helperStmt;
-                    let sig = checker.getSignatureFromDeclaration(decl)
-                    let tp = sig.getTypeParameters() || []
                     markFunctionUsed(decl)
                     return emitPlain();
-                } else if (isProperty) {
-                    if (node == funcExpr) {
-                        // in this special base case, we have property access recv.foo
-                        // where recv is a map obejct
-                        return mkMethodCall(args.map((x) => emitExpr(x)), {
-                            ifaceIndex: getIfaceMemberId(getName(decl), true),
-                            mapMethod: args.length == 2 ? "pxtrt::mapSet" : "pxtrt::mapGet"
-                        })
-                    } else {
-                        // in this case, recv.foo represents a function/lambda
-                        // so the receiver is not needed, as we have already done
-                        // the property lookup to get the lambda
-                        args.shift()
-                    }
-                } else if (needsVCall || decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
+                } else if (needsVCall || target.switches.slowMethods || !forceMethod) {
                     return mkMethodCall(args.map((x) => emitExpr(x)), {
-                        ifaceIndex: getIfaceMemberId(getName(decl), true)
+                        ifaceIndex: getIfaceMemberId(getName(decl), true),
+                        isSet: noArgs && args.length == 2,
+                        noArgs
                     })
                 } else {
+                    U.assert(decl.kind != SK.MethodSignature)
                     return emitPlain();
                 }
             }
@@ -2402,7 +2398,8 @@ ${lbl}: .short 0xffff
             // here's where we will recurse to generate funcExpr
             args.unshift(funcExpr)
 
-            return mkMethodCall(args.map(x => emitExpr(x)), { ifaceIndex: -1 })
+            U.assert(!noArgs)
+            return mkMethodCall(args.map(x => emitExpr(x)), { virtualIndex: -1, noArgs })
         }
 
         function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
@@ -4427,7 +4424,7 @@ ${lbl}: .short 0xffff
             } else {
                 res = mkMethodCall([objRef], {
                     ifaceIndex: getIfaceMemberId(fieldName, true),
-                    mapMethod: "pxtrt::mapGet"
+                    noArgs: true
                 })
             }
             return [res, myType]

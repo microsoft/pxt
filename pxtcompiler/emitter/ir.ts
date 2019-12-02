@@ -413,9 +413,10 @@ namespace ts.pxtc.ir {
         proc?: Procedure;
         virtualIndex?: number;
         ifaceIndex?: number;
-        mapMethod?: string;
         classInfo?: ClassInfo;
-        isThis?: boolean;
+        isSet?: boolean;
+        isThis?: boolean; // it's a call of the form this.foo(...) - no need to check subtyping
+        noArgs?: boolean; // this property access, with no arguments, except for 'this', passed
     }
 
     // estimated cost in bytes of Thumb code to execute given expression
