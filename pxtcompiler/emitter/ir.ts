@@ -410,9 +410,9 @@ namespace ts.pxtc.ir {
     }
 
     export interface ProcId {
-        proc: Procedure;
-        virtualIndex: number;
-        ifaceIndex: number;
+        proc?: Procedure;
+        virtualIndex?: number;
+        ifaceIndex?: number;
         mapMethod?: string;
         classInfo?: ClassInfo;
         isThis?: boolean;

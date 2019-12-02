@@ -2334,7 +2334,10 @@ ${lbl}: .short 0xffff
 
                 if (needsVCall && !forceIfaceCall) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
-                    let r = mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
+                    let r = mkMethodCall(args.map((x) => emitExpr(x)), {
+                        classInfo: info.parentClassInfo,
+                        virtualIndex: info.virtualIndex
+                    })
                     if (args[0].kind == SK.ThisKeyword)
                         (r.data as ir.ProcId).isThis = true
                     return r
@@ -2370,15 +2373,10 @@ ${lbl}: .short 0xffff
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
                         // where recv is a map obejct
-                        let name = getName(decl)
-                        let res = mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
-                        let pid = res.data as ir.ProcId
-                        if (args.length == 2) {
-                            pid.mapMethod = "pxtrt::mapSet"
-                        } else {
-                            pid.mapMethod = "pxtrt::mapGet"
-                        }
-                        return res
+                        return mkMethodCall(args.map((x) => emitExpr(x)), {
+                            ifaceIndex: getIfaceMemberId(getName(decl), true),
+                            mapMethod: args.length == 2 ? "pxtrt::mapSet" : "pxtrt::mapGet"
+                        })
                     } else {
                         // in this case, recv.foo represents a function/lambda
                         // so the receiver is not needed, as we have already done
@@ -2386,8 +2384,9 @@ ${lbl}: .short 0xffff
                         args.shift()
                     }
                 } else if (needsVCall || decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
-                    let name = getName(decl)
-                    return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
+                    return mkMethodCall(args.map((x) => emitExpr(x)), {
+                        ifaceIndex: getIfaceMemberId(getName(decl), true)
+                    })
                 } else {
                     return emitPlain();
                 }
@@ -2403,7 +2402,7 @@ ${lbl}: .short 0xffff
             // here's where we will recurse to generate funcExpr
             args.unshift(funcExpr)
 
-            return mkMethodCall(null, -1, null, args.map(x => emitExpr(x)))
+            return mkMethodCall(args.map(x => emitExpr(x)), { ifaceIndex: -1 })
         }
 
         function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
@@ -2416,14 +2415,8 @@ ${lbl}: .short 0xffff
             return ir.op(EK.ProcCall, args, data)
         }
 
-        function mkMethodCall(ci: ClassInfo, vidx: number, ifaceIdx: number, args: ir.Expr[]) {
-            let data: ir.ProcId = {
-                proc: null,
-                virtualIndex: vidx,
-                ifaceIndex: ifaceIdx,
-                classInfo: ci
-            }
-            return ir.op(EK.ProcCall, args, data)
+        function mkMethodCall(args: ir.Expr[], info: ir.ProcId) {
+            return ir.op(EK.ProcCall, args, info)
         }
 
         function lookupProc(decl: ts.Declaration) {
@@ -4432,8 +4425,10 @@ ${lbl}: .short 0xffff
                 const info = getClassInfo(objType)
                 res = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
             } else {
-                res = mkMethodCall(null, null, getIfaceMemberId(fieldName, true), [objRef]);
-                (res.data as ir.ProcId).mapMethod = "pxtrt::mapGet"
+                res = mkMethodCall([objRef], {
+                    ifaceIndex: getIfaceMemberId(fieldName, true),
+                    mapMethod: "pxtrt::mapGet"
+                })
             }
             return [res, myType]
         }
