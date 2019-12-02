@@ -717,7 +717,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
 
-        if (/\.mp4$/.test(image) && pxt.BrowserUtils.isElectron()) {
+        if (/\.mp4$/.test(image)
+            // no MPEG codec in electron         Safari requires range support on CDN
+            && (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isSafari())) {
             // we don't support mp4 in electron, so try out luck as gif
             image = image.replace(/\.mp4$/, ".gif");
         }
