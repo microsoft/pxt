@@ -432,6 +432,8 @@ namespace pxtblockly {
             noteLabel.textContent = "-";
 
             if (pagination) {
+                // TODO jwunderl: show the octave that contains the selected key, not always 0
+                this.currentPage = 0;
                 const prevButton = this.getNextPrevDiv(pianoWidth, true, pianoDiv);
                 const nextButton = this.getNextPrevDiv(pianoWidth, false, pianoDiv);
 
