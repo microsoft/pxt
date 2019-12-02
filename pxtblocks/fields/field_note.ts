@@ -594,7 +594,6 @@ namespace pxtblockly {
                 height: ${height}px;
                 left: ${leftPosition}px;
                 z-index: ${z_index};
-                box-shadow: ${white ? "inset -3px -3px 5px -4px" : "0px 0px 2px"};
                 border-color: ${this.colour_};`
             );
         }
