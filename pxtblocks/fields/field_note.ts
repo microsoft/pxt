@@ -368,7 +368,7 @@ namespace pxtblockly {
                 //  modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
-                const key = this.getKeyStyle(
+                const key = this.getKeyDiv(
                     this.isWhite(i),
                     this.getKeyWidth(i),
                     this.getKeyHeight(i),
@@ -427,13 +427,13 @@ namespace pxtblockly {
             }
 
             //  render note label
-            const noteLabel = this.getShowNoteStyle(pianoWidth);
+            const noteLabel = this.getNoteLabelDiv(pianoWidth);
             pianoDiv.appendChild(noteLabel);
             noteLabel.textContent = "-";
 
             if (pagination) {
-                const prevButton = this.getNextPrevButton(pianoWidth, true, pianoDiv);
-                const nextButton = this.getNextPrevButton(pianoWidth, false, pianoDiv);
+                const prevButton = this.getNextPrevDiv(pianoWidth, true, pianoDiv);
+                const nextButton = this.getNextPrevDiv(pianoWidth, false, pianoDiv);
 
                 noteLabel.textContent = "Octave #1";
 
@@ -500,7 +500,7 @@ namespace pxtblockly {
 
             pxt.AudioContextManager.tone(+freq);
             setTimeout(() => {
-                // If the same sound is playing, clear it.
+                // Clear the sound if it is still playing after 300ms
                 if (this.keyPressCount == cnt) pxt.AudioContextManager.stop();
             }, 300);
         }
@@ -517,8 +517,8 @@ namespace pxtblockly {
          * Close the note picker if this input is being deleted.
          */
         dispose() {
-            (Blockly.DropDownDiv as any).hideIfOwner(this);
-            (Blockly.FieldTextInput as any).superClass_.dispose.call(this);
+            Blockly.DropDownDiv.hideIfOwner(this);
+            super.dispose()
         }
 
         private updateColor() {
@@ -575,7 +575,7 @@ namespace pxtblockly {
          * @param z_index z-index of the key
          * @return DOM with the new css style.
          */
-        protected getKeyStyle(white: boolean, width: number, height: number, leftPosition: number, z_index: number) {
+        protected getKeyDiv(white: boolean, width: number, height: number, leftPosition: number, z_index: number) {
             return createStyledDiv(
                 "blocklyNote",
                 `background-color: ${white ? "white" : "black"};
@@ -593,7 +593,7 @@ namespace pxtblockly {
          * @return DOM with the new css style.
          * @private
          */
-        protected getShowNoteStyle(pianoWidth: number) {
+        protected getNoteLabelDiv(pianoWidth: number) {
             return createStyledDiv(
                 "blocklyNoteLabel",
                 `top: ${FieldNote.keyHeight}px;
@@ -607,14 +607,13 @@ namespace pxtblockly {
          * create a DOM to assign a style to the previous and next buttons
          * @param pianoWidth the width of the containing piano
          * @param isPrev true if is previous button, false otherwise
-         * @return DOM with the new css style.
-         * @private
+         * @return DOM with the new css style.s
          */
-        protected getNextPrevStyle(pianoWidth: number, isPrev: boolean) {
+        protected getNextPrevDiv(pianoWidth: number, isPrev: boolean, container: HTMLDivElement) {
             const xPosition = isPrev ? 0 : (pianoWidth / 2);
             const yPosition = FieldNote.keyHeight + FieldNote.labelHeight;
 
-            return createStyledDiv(
+            const output = createStyledDiv(
                 "blocklyNotePrevNext",
                 `top: ${yPosition}px;
                 left: ${xPosition}px;
@@ -622,13 +621,6 @@ namespace pxtblockly {
                 background-color: ${this.colour_};
                 ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
                 border-bottom-color: ${this.colour_};`
-            );
-        }
-
-        protected getNextPrevButton(pianoWidth: number, isPrev: boolean, container: HTMLDivElement) {
-            const output = this.getNextPrevStyle(
-                pianoWidth,
-                isPrev
             );
 
             container.appendChild(output);
