@@ -622,7 +622,7 @@ function ${id}(s) {
                 write(`if (!${frameRef}.arg0.vtable.iface) {`)
                 let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
                 args.splice(1, 0, JSON.stringify(ifaceFieldName))
-                const accessor = `pxsim_pxtrt_map${procid.isSet ? "Set" : "Get"}ByString`
+                const accessor = `pxsim_pxtrt.map${procid.isSet ? "Set" : "Get"}ByString`
                 if (procid.noArgs)
                     write(`  s.retval = ${accessor}(${args.join(", ")});`)
                 else {

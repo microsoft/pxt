@@ -2205,6 +2205,7 @@ ${lbl}: .short 0xffff
                 decl = getDecl(funcExpr) as EmittableAsCall;
             let hasRecv = false
             let forceMethod = false
+            let isStaticLike = false
             const noArgs = node === funcExpr
 
             if (decl) {
@@ -2226,9 +2227,12 @@ ${lbl}: .short 0xffff
                     case SK.MethodDeclaration:
                         hasRecv = true
                         forceMethod = true
+                        isStaticLike = isStatic(decl)
+                        break
+                    case SK.FunctionDeclaration:
+                        isStaticLike = true
                         break
                     case SK.ModuleDeclaration:
-                    case SK.FunctionDeclaration:
                         // has special handling
                         break;
                     default:
@@ -2284,7 +2288,7 @@ ${lbl}: .short 0xffff
             // first we handle a set of direct cases, note that
             // we are not recursing on funcExpr here, but looking
             // at the associated decl
-            if (decl && decl.kind == SK.FunctionDeclaration) {
+            if (isStaticLike) {
                 let info = getFunctionInfo(<FunctionDeclaration>decl)
 
                 if (!info.location) {
@@ -2329,7 +2333,7 @@ ${lbl}: .short 0xffff
 
                 if (recv.kind == SK.SuperKeyword)
                     return emitPlain()
-           
+
                 const needsVCall = !!info.virtualParent
                 const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
 
