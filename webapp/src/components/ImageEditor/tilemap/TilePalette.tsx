@@ -106,21 +106,22 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         return <div className="tile-palette">
             <div className="tile-palette-fg-bg">
-                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
+                <div className={`tile-palette-swatch fg ${drawingMode == TileDrawingMode.Default ? 'selected' : ''}`} onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: fg }]}
                         colors={colors} />
                 </div>
-                <div className="tile-palette-swatch" onClick={this.foregroundBackgroundClickHandler} role="button">
+                <div className="tile-palette-swatch bg" onClick={this.foregroundBackgroundClickHandler} role="button">
                     <TimelineFrame
                         frames={[{ bitmap: bg }]}
                         colors={colors} />
+                    <IconButton
+                        iconClass={"ms-Icon ms-Icon--ReturnKey"}
+                        title={lf("Swap the background and foreground colors.")}
+                        toggle={true} />
                 </div>
-                <div className="tile-palette-spacer"></div>
-                <div className={`tile-palette-swatch ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler} role="button">
-                    <TimelineFrame
-                        frames={[{ bitmap: wall }]}
-                        colors={colors} />
+                <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler} role="button">
+                    <span className="xicon wall" />
                 </div>
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
