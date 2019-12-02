@@ -334,18 +334,13 @@ namespace pxtblockly {
             const thisField = this;
             //  Record windowSize and scrollOffset before adding the piano.
             const editorWidth = goog.dom.getViewportSize().editorWidth;
-            const piano: Array<goog.ui.CustomButton> = [];
+            const piano: Array<HTMLDivElement> = [];
 
             //  initializate
             let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
             let pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight;
 
             const pagination = mobile || editorWidth < pianoWidth;
-
-            //  Create the piano using Closure (CustomButton).
-            for (let i = 0; i < this.nKeys_; i++) {
-                piano.push(new goog.ui.CustomButton());
-            }
 
             if (pagination) {
                 pianoWidth = 7 * FieldNote.keyWidth;
@@ -362,41 +357,39 @@ namespace pxtblockly {
 
             //  render piano keys
             let octaveCounter = 0;
-            let currentSelectedKey: goog.ui.CustomButton = null;
+            let currentSelectedKey: HTMLDivElement = null;
             let previousColor: string;
             for (let i = 0; i < this.nKeys_; i++) {
                 if (i > 0 && i % 12 == 0)
                     octaveCounter++;
-                const key = piano[i];
                 let position = this.getPosition(i, whiteKeyCounter);
 
                 //  modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
-                const style = this.getKeyStyle(
+                const key = this.getKeyStyle(
                     this.isWhite(i),
                     this.getKeyWidth(i),
                     this.getKeyHeight(i),
                     position,
                     this.isWhite(i) ? 1000 : 1001
                 );
-                key.setContent(style);
-                key.setId(this.noteName_[i]);
-                key.render(pianoDiv);
-                const script = key.getContent() as HTMLElement;
-                script.setAttribute("tag", this.noteFreq_[i].toString());
+                key.setAttribute("id", this.noteName_[i]);
+                key.setAttribute("tag", this.noteFreq_[i].toString());
+                piano.push(key);
+                pianoDiv.appendChild(key);
 
                 //  highlight current selected key
                 if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
-                    previousColor = script.style.backgroundColor;
-                    script.style.backgroundColor = FieldNote.selectedKeyColor;
+                    previousColor = key.style.backgroundColor;
+                    key.style.backgroundColor = FieldNote.selectedKeyColor;
                     currentSelectedKey = key;
                 }
 
                 //  Listener when a new key is selected
                 if (!mobile) {
                     goog.events.listen(
-                        key.getElement(),
+                        key,
                         goog.events.EventType.MOUSEDOWN,
                         soundKey,
                         false,
@@ -408,7 +401,7 @@ namespace pxtblockly {
                      *   to avoid preventDefault() call that blocks listener
                      */
                     goog.events.listen(
-                        key.getElement(),
+                        key,
                         goog.events.EventType.TOUCHSTART,
                         soundKey,
                         false,
@@ -417,11 +410,11 @@ namespace pxtblockly {
                 }
                 //  Listener when the mouse is over a key
                 goog.events.listen(
-                    key.getElement(),
+                    key,
                     goog.events.EventType.MOUSEOVER,
                     function () {
                         const script = showNoteLabel.getContent() as HTMLElement;
-                        script.textContent = this.getId();
+                        script.textContent = this.getAttribute("id");
                     },
                     false,
                     key
@@ -432,7 +425,7 @@ namespace pxtblockly {
                     whiteKeyCounter++;
                 // set octaves different from first octave invisible
                 if (pagination && i > 11)
-                    key.setVisible(false);
+                    key.style.display = "none";
             }
             //  render note label
             const showNoteLabel = new goog.ui.CustomButton();
@@ -467,12 +460,12 @@ namespace pxtblockly {
             // create the key sound
             function soundKey() {
                 const cnt = ++soundingKeys;
-                const freq = this.getContent().getAttribute("tag");
+                const thisKeyEl = this as HTMLElement;
+                const freq = thisKeyEl.getAttribute("tag");
                 if (currentSelectedKey != null) {
-                    const currKeyEl = currentSelectedKey.getContent() as HTMLElement;
+                    const currKeyEl = currentSelectedKey;
                     currKeyEl.style.backgroundColor = previousColor;
                 }
-                const thisKeyEl = this.getContent() as HTMLElement;
                 if (currentSelectedKey !== this) { // save color and change values only if is clicking different key
                     previousColor = thisKeyEl.style.backgroundColor;
                     thisField.setValue(freq);
@@ -480,7 +473,7 @@ namespace pxtblockly {
                 currentSelectedKey = this;
                 thisKeyEl.style.backgroundColor = FieldNote.selectedKeyColor;
                 (thisField as any).htmlInput_.value = thisField.getText();
-                pxt.AudioContextManager.tone(freq);
+                pxt.AudioContextManager.tone(+freq);
                 setTimeout(function () {
                     // compare current sound counter with listener sound counter (avoid async problems)
                     if (soundingKeys == cnt)
@@ -558,7 +551,7 @@ namespace pxtblockly {
             this.forceRerender();
         }
 
-        protected changePage(next: boolean, scriptLabel: HTMLElement, piano: goog.ui.CustomButton[]) {
+        protected changePage(next: boolean, scriptLabel: HTMLElement, piano: HTMLDivElement[]) {
             const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
             if (this.currentPage == (next ? pageCount - 1 : 0)) {
                 scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
@@ -569,10 +562,10 @@ namespace pxtblockly {
             const newFirstKey = nextPage * FieldNote.notesPerOctave;
             //  hide current octave
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
-                piano[i + curFirstKey].setVisible(false);
+                piano[i + curFirstKey].style.display = "none";
             //  show new octave
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
-                piano[i + newFirstKey].setVisible(true);
+                piano[i + newFirstKey].style.display = "block";
             this.currentPage = nextPage;
             scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
         };
