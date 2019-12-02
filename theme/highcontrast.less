@@ -61,6 +61,19 @@
         }
     }
 
+    p {
+        color: @HCtextColor !important;
+    }
+
+    #tutorialcard .prevbutton,
+    #tutorialcard .nextbutton {
+        &:hover, &:focus {
+            > i, > span, > i.orange {
+                color: @HCtextColor !important;
+            }
+        }
+    }
+
     @media all and (pointer:coarse) { /* If touch screen */
         *[tabindex='0'],
         *[tabindex*='d1'],

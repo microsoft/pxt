@@ -1,12 +1,13 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
 <block type="pxt-on-start">
 <statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="x" numlines="1" error="Variable type is not supported by Blockly" line0="let x&#58; testNamespace.TestClass &#61; null&#59;" />
+<next>
 <block type="variables_set">
 <field name="VAR">x</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_create_class">
 <value name="x">
 <shadow type="math_number">
@@ -44,6 +45,9 @@
 </shadow>
 </value>
 <next>
+<block type="typescript_statement">
+<mutation declaredvars="z" numlines="1" error="Variable type is not supported by Blockly" line0="let z&#58; testNamespace.TestClass &#61; null&#59;" />
+<next>
 <block type="variables_set">
 <field name="VAR">a</field>
 <value name="VALUE">
@@ -63,9 +67,7 @@
 <block type="variables_set">
 <field name="VAR">z</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
+<shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="test_create_class">
 <value name="x">
 <shadow type="math_number">
@@ -100,6 +102,11 @@
 </next>
 </block>
 </next>
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

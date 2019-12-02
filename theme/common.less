@@ -123,10 +123,11 @@ pre {
 }
 
 .hideEditorToolbar #blocksArea,
-    .hideEditorToolbar #monacoEditor,
-    .hideEditorToolbar #pxtJsonEditor,
-    .hideEditorToolbar #serialEditor,
-    .hideEditorToolbar #filelist {
+.hideEditorToolbar #monacoEditor,
+.hideEditorToolbar #pxtJsonEditor,
+.hideEditorToolbar #serialEditor,
+.hideEditorToolbar #githubEditor,
+.hideEditorToolbar #filelist {
     bottom: 0rem !important;
 }
 
@@ -789,6 +790,10 @@ p.ui.font.small {
     .collapse-button.ui.computer.only {
         display:none !important; // hide desktop simulator toggle
     }
+
+    .hideEditorToolbar #filelist {
+        display:none !important;
+    }
 }
 
 /* Mobile only */
@@ -1165,7 +1170,7 @@ p.ui.font.small {
     .hideEditorFloats.transparentEditorTools #editortools > div > div > .ui.grid {
         margin: auto;
     }
-    .hideEditorFloats #editorToolbarArea {
+    .hideEditorFloats.transparentEditorTools #editorToolbarArea {
         padding-top: 0;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor, .hideEditorFloats #msg {
@@ -1498,7 +1503,7 @@ img.pixelart {
 
 /** language modal **/
 #langmodal {
-    #availablelocales .langoption .header{
+    #availablelocales .langoption .header {
         color: #4c4ca6;
     }
 
@@ -1519,4 +1524,19 @@ img.pixelart {
     position: absolute;
     z-index: @blocklyWidgetDivZIndex;
     background-color: rgba(0, 0, 0, 0.4)
+}
+
+a.ui.link {
+    cursor: pointer;
+}
+
+p > a.ui.link {
+    margin-left: 0.5rem;
+}
+
+p.ui.tiny {
+    font-size: 80%;
+}
+p.ui.small {
+    font-size: 90%;
 }
