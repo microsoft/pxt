@@ -2073,7 +2073,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building ${dirname}`);
+            pxt.log(`building bundled ${dirname}`);
             let isPrj = /prj$/.test(dirname);
             const isHw = /hw---/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
@@ -2152,9 +2152,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             if (coreInfo) {
                 // Don't bother with dependencies of the core package
                 if (coreDependencies) {
-                    for (const dep of coreDependencies) {
-                        builtInfo["libs/" + dep].apis.byQName = {};
-                    }
+                    coreDependencies
+                        .map(dep => builtInfo["libs/" + dep])
+                        .filter(bi => !!bi)
+                        .forEach(bi => bi.apis.byQName = {});
                 }
 
                 Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
@@ -4077,6 +4078,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     pxt.log(`building ${process.cwd()}`)
+    const config = nodeutil.readPkgConfig(process.cwd());
     return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
@@ -4104,8 +4106,10 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }
             });
 
-            reportDiagnostics(res.diagnostics);
-            if (!res.success && buildOpts.mode != BuildOption.GenDocs) {
+            const shouldExit = !res.success && buildOpts.mode != BuildOption.GenDocs
+            if (shouldExit || !config.partial)
+                reportDiagnostics(res.diagnostics);
+            if (shouldExit) {
                 process.exit(1)
             }
 

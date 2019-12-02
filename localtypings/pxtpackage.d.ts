@@ -47,6 +47,7 @@ declare namespace pxt {
         testDependencies?: pxt.Map<string>;
         cppDependencies?: pxt.Map<string>;
         public?: boolean;
+        partial?: boolean; // true if project is not compileable on its own (eg base)
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
