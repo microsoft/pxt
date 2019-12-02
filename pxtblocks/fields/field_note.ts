@@ -503,9 +503,6 @@ namespace pxtblockly {
                 // If the same sound is playing, clear it.
                 if (this.keyPressCount == cnt) pxt.AudioContextManager.stop();
             }, 300);
-
-            // TODO jwunderl: what is this here for?
-            (FieldNote as any).superClass_.dispose.call(key);
         }
 
         /**
