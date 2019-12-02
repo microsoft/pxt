@@ -131,7 +131,7 @@ namespace pxtblockly {
             super.doValueUpdate_(newValue);
         }
 
-        private redrawPreview() {
+        redrawPreview(wsTiles?: pxt.sprite.TileInfo[]) {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
 
@@ -145,7 +145,7 @@ namespace pxtblockly {
             this.fieldGroup_.appendChild(bg.el);
 
             if (this.state) {
-                this.restoreTilesFromWorkspace(this.state);
+                this.restoreTilesFromWorkspace(this.state, wsTiles);
                 const data = tilemapToImageURI(this.state, PREVIEW_WIDTH, this.lightMode, this.blocksInfo);
                 const img = new svg.Image()
                     .src(data)
@@ -220,11 +220,16 @@ namespace pxtblockly {
             newtiles.filter(t => t.projectId !== undefined)
                 .forEach(tile => saveTilesetTile(ws, tile));
 
+
+            // Redraw previews on all of the tilemaps in case a tile changed
+            const allTiles = getAllTilesetTiles(ws);
+            getAllBlocksWithTilemaps(ws).forEach(({ ref }) => ref.redrawPreview(allTiles));
+
             Blockly.Events.setGroup(false);
         }
 
-        protected restoreTilesFromWorkspace(tilemap: pxt.sprite.TilemapData) {
-            const all = getAllTilesetTiles(this.sourceBlock_.workspace);
+        protected restoreTilesFromWorkspace(tilemap: pxt.sprite.TilemapData, wsTiles?: pxt.sprite.TileInfo[]) {
+            const all = wsTiles || getAllTilesetTiles(this.sourceBlock_.workspace);
 
             for (const t of tilemap.tileset.tiles) {
                 if (t.projectId) {
@@ -240,7 +245,7 @@ namespace pxtblockly {
             for (const t of all) {
                 id = t.projectId ? Math.max(t.projectId, id) : id;
 
-                if (!tilemap.tileset.tiles.find(pt => pt.projectId === t.projectId)) {
+                if (!tilemap.tileset.tiles.some(pt => pt.projectId === t.projectId)) {
                     tilemap.tileset.tiles.push(t);
                 }
             }
@@ -280,6 +285,7 @@ namespace pxtblockly {
     interface TilemapReference {
         block: Blockly.Block;
         field: string;
+        ref: FieldTilemap;
         parsed?: pxt.sprite.TilemapData;
     }
 
@@ -295,7 +301,7 @@ namespace pxtblockly {
             for (const input of block.inputList) {
                 for (const field of input.fieldRow) {
                     if (field instanceof FieldTilemap) {
-                        result.push({ block, field: field.name });
+                        result.push({ block, field: field.name, ref: field });
                     }
                 }
 

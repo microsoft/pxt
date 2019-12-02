@@ -444,6 +444,12 @@ namespace pxt.sprite {
                 data: bitmap.data()
             }
         }
+        else if (literal.indexOf("myTiles.tile") === 0) {
+            return {
+                data: null,
+                projectId: Number(literal.substr("myTiles.tile".length))
+            };
+        }
 
         return {
             data: null,

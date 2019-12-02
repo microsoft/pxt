@@ -85,6 +85,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     componentDidUpdate() {
+        this.updateGalleryTiles();
         this.redrawCanvas();
     }
 
@@ -218,9 +219,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                         context.fillRect(c * width, r * width, width + 1, width + 1);
                     }
 
+                    context.fillStyle = "#333333";
+                    context.fillRect(c * width + 1, r * width + 1, width - 1, width - 1);
+
                     this.drawBitmap(pxt.sprite.Bitmap.fromData(tile.bitmap), 1 + c * width, 1 + r * width)
                 }
-
             }
         }
 
@@ -331,14 +334,12 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const button = this.refs["create-tile-ref"] as HTMLDivElement;
 
         if (button) {
-            const bounds = this.canvas.parentElement.getBoundingClientRect();
-
             const column = this.categoryTiles.length % 4;
             const row = Math.floor(this.categoryTiles.length / 4);
 
             button.style.position = "absolute";
-            button.style.left = (column * bounds.width / 4) + "px";
-            button.style.top = (row * bounds.height / 4) + "px";
+            button.style.left = (column * 25) + "%";
+            button.style.top = (row * 25) + "%";
         }
     }
 
