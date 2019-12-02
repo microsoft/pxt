@@ -4106,9 +4106,10 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }
             });
 
-            if (!config.partial)
+            const shouldExit = !res.success && buildOpts.mode != BuildOption.GenDocs
+            if (shouldExit || !config.partial)
                 reportDiagnostics(res.diagnostics);
-            if (!res.success && buildOpts.mode != BuildOption.GenDocs) {
+            if (shouldExit) {
                 process.exit(1)
             }
 
