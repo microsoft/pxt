@@ -133,7 +133,9 @@ namespace ts.pxtc {
         "checkSubtype",
         "failedCast",
         "buildResume",
-        "mkVTable"
+        "mkVTable",
+        "bind",
+        "leaveAccessor"
     ]
 
     export function jsEmit(bin: Binary) {
@@ -287,17 +289,25 @@ switch (step) {
         if (proc.perfCounterNo) {
             writeRaw(`__this.stopPerfCounter(${proc.perfCounterNo});\n`)
         }
-        write(`return leave(s, r0)`)
+
+        const isGetter = proc.action && proc.action.kind == SK.GetAccessor
+        if (isGetter)
+            write(`return leaveAccessor(s, r0)`)
+        else
+            write(`return leave(s, r0)`)
 
         writeRaw(`  default: oops()`)
         writeRaw(`} } }`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
         info.argumentNames = proc.args && proc.args.map(a => a.getName());
-
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
+        if (isGetter)
+            writeRaw(`${proc.label()}.isGetter = true;`)
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
+
+        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
 
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
         writeRaw(hexlits)
@@ -626,13 +636,18 @@ function ${id}(s) {
                 let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
                 if (procid.isSet) {
                     write(`  if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
-                    write(`  else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) } else `)
+                    write(`  else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) } `)
                 } else if (procid.noArgs) {
-                    write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; } else`)
+                    write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
+                    write(`  else if (!${frameRef}.fn.isGetter) { s.retval = bind(${frameRef}); }`)
                 } else {
                     write(`  if (${frameRef}.fn == null) { setupLambda(${frameRef}, ${fld}, ${topExpr.args.length}); ${callIt} }`)
+                    // this is tricky - we need to do two calls, first to the accessor
+                    // and then on the returned lambda - this is handled by leaveAccessor() runtime
+                    // function
+                    write(`  else if (${frameRef}.fn.isGetter) { ${frameRef}.stage2Call = true; ${callIt}; }`)
                 }
-                write(`  { ${callIt} }`)
+                write(` else { ${callIt} }`)
                 write(`}`)
                 callIt = ""
             } else if (procid.virtualIndex == -1) {
