@@ -2073,7 +2073,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building ${dirname}`);
+            pxt.log(`building bundled ${dirname}`);
             let isPrj = /prj$/.test(dirname);
             const isHw = /hw---/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
@@ -2091,7 +2091,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         pxt.appTarget.simulator.dynamicBoardDefinition)
                         isPrj = true
                 })
-                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
+                .then(() => options.quick || config.partial ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore), builtInfo[dirname] && builtInfo[dirname].sha))
                 .then(res => {
                     if (!res)
                         return;
@@ -4077,6 +4077,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     pxt.log(`building ${process.cwd()}`)
+    const config = nodeutil.readPkgConfig(process.cwd());
     return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
@@ -4104,7 +4105,8 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }
             });
 
-            reportDiagnostics(res.diagnostics);
+            if (!config.partial)
+                reportDiagnostics(res.diagnostics);
             if (!res.success && buildOpts.mode != BuildOption.GenDocs) {
                 process.exit(1)
             }
