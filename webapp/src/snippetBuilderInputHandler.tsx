@@ -27,7 +27,8 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
     }
 
     // Strip all non alphanumeric characters other than _
-    textOnChange = (v: string) => this.props.onChange(v.replace(/[^a-zA-Z0-9_]/g, '_'));
+    textOnChange = (v: string) => this.props.onChange(v);
+    variableNameOnChange = (v: string) => this.props.onChange(ts.pxtc.escapeIdentifier(v));
 
     renderInput() {
         const { value, input, onChange } = this.props;
@@ -79,13 +80,14 @@ export class InputHandler extends data.Component<InputHandlerProps, InputHandler
                     )
                 }
             case 'text':
+            case 'variableName':
             default:
                 if (Snippet.isSnippetInputAnswerTypeOther(input)) {
                     return (
                         <sui.Input
                             label={input.label && input.label}
                             value={value || ''}
-                            onChange={this.textOnChange}
+                            onChange={input.type == 'variableName' ? this.variableNameOnChange : this.textOnChange}
                             autoFocus={true}
                             selectOnMount={true}
                         />

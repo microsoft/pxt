@@ -6,6 +6,26 @@
 /// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>
 
+namespace pxt.perf {
+    // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare function report(): void;
+    export declare function recordMilestone(msg: string, time?: number): void;
+    export declare function measureStart(name: string): void;
+    export declare function measureEnd(name: string): void;
+}
+(function () {
+    // Sometimes these aren't initialized, for example in tests. We only care about them
+    // doing anything in the browser.
+    if (!pxt.perf.report)
+        pxt.perf.report = () => { }
+    if (!pxt.perf.recordMilestone)
+        pxt.perf.recordMilestone = () => { }
+    if (!pxt.perf.measureStart)
+        pxt.perf.measureStart = () => { }
+    if (!pxt.perf.measureEnd)
+        pxt.perf.measureEnd = () => { }
+})()
+
 namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
@@ -43,9 +63,9 @@ namespace pxt {
                 // re-create the object - this will hint the JIT that these are objects of the same type
                 // and the same hidden class should be used
                 const newsym = byQName[apiName] = {
-                    kind: sym.kind || 7,
+                    kind: Math.abs(sym.kind || 7),
                     qName: apiName,
-                    namespace: apiName.slice(0, lastDot),
+                    namespace: apiName.slice(0, lastDot < 0 ? 0 : lastDot),
                     name: apiName.slice(lastDot + 1),
                     fileName: "",
                     attributes: sym.attributes || ({} as any),
@@ -57,8 +77,11 @@ namespace pxt {
                         initializer: p.initializer,
                         default: p.default,
                         options: p.options || {},
-                        isEnum: !!p.isEnum
+                        isEnum: !!p.isEnum,
+                        handlerParameters: p.handlerParameters
                     })) : null,
+                    extendsTypes: sym.extendsTypes,
+                    snippet: sym.kind && sym.kind < 0 ? null as any : undefined,
                     isInstance: !!sym.isInstance,
                     isReadOnly: !!sym.isReadOnly,
                 }
@@ -207,6 +230,7 @@ namespace pxt {
     }
 
     export function reloadAppTargetVariant() {
+        pxt.perf.measureStart("reloadAppTargetVariant")
         const curr = JSON.stringify(appTarget);
         appTarget = U.clone(savedAppTarget)
         if (appTargetVariant) {
@@ -220,6 +244,7 @@ namespace pxt {
         // check if apptarget changed
         if (onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
+        pxt.perf.measureEnd("reloadAppTargetVariant")
     }
 
     // this is set by compileServiceVariant in pxt.json

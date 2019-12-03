@@ -28,7 +28,7 @@ test:
 \tpxt test
 `,
 
-            "README.md": `# @NAME@
+            "README.md": `# @NAME@ ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
 
 @DESCRIPTION@
 
@@ -51,7 +51,9 @@ ${lf("To edit this repository in MakeCode.")}
 
 ## ${lf("Blocks preview")}
 
-![${lf("A rendered view of the blocks")}](https://raw.github.com/@REPO@/blob/master/.makecode/blocks.png)
+${lf("This section shows the blocks code from the last commit in master.")}
+
+![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.makecode/blocks.png)
 
 ## ${lf("Supported targets")}
 
@@ -95,7 +97,7 @@ pxt_modules
         "**/pxt_modules": true
     }
 }`,
-            ".github/workflows/makecode.yml": `name: MakeCode CI
+            ".github/workflows/makecode.yml": `name: MakeCode
 
 on: [push]
 
@@ -114,29 +116,18 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: $\{{ matrix.node-version }}
-      - name: npm install, build, and test
+      - name: npm install
         run: |
           npm install -g pxt
           pxt target @TARGET@
+      - name: build
+        run: |
           pxt install
           pxt build --cloud
         env:
           CI: true
 `,
-            ".travis.yml": `language: node_js
-node_js:
-    - "8.9.4"
-script:
-    - "npm install -g pxt"
-    - "pxt target @TARGET@"
-    - "pxt install"
-    - "pxt build"
-sudo: false
-cache:
-    directories:
-    - npm_modules
-    - pxt_modules`,
-            ".vscode/tasks.json":
+        ".vscode/tasks.json":
                 `
 // A task runner that calls the MakeCode (PXT) compiler
 {

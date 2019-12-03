@@ -9,6 +9,9 @@ namespace pxt.github {
         }
     }
 
+    /**
+     * Commit user info
+     */
     export interface UserInfo {
         date: string; // "2014-11-07T22:01:45Z",
         name: string; // "Scott Chacon",
@@ -233,13 +236,7 @@ namespace pxt.github {
     // overriden by client
     export let db: IGithubDb = new MemoryGithubDb();
 
-    export interface GitUser {
-        login: string,
-        avatar_url: string,
-        name: string
-    }
-
-    export function authenticatedUserAsync(): Promise<GitUser> {
+    export function authenticatedUserAsync(): Promise<User> {
         return ghGetJsonAsync("https://api.github.com/user");
     }
 
@@ -497,6 +494,8 @@ namespace pxt.github {
         gravatar_id: string; // "",
         html_url: string; // "https://github.com/microsoft",
         type: string; // "Organization"
+        name: string;
+        company: string;
     }
 
     interface Repo {
@@ -1309,16 +1308,33 @@ namespace pxt.github {
         return commit.tree.tree.find(e => e.path == path)
     }
 
-    export function reconstructConfig(commit: pxt.github.Commit) {
-        const files = commit.tree.tree.map(f => f.path)
+    export function reconstructConfig(files: pxt.Map<string>, commit: pxt.github.Commit, tp: pxt.ProjectTemplate) {
+        let dependencies: pxt.Map<string> = {};
+        // grab files from commit
+        let commitFiles = commit.tree.tree.map(f => f.path)
             .filter(f => /\.(ts|blocks|md|jres|asm|json)$/.test(f))
-            .filter(f => f != pxt.CONFIG_NAME)
+            .filter(f => f != pxt.CONFIG_NAME);
+        // if no available files, include the files from the template
+        if (!commitFiles.find(f => /\.ts$/.test(f))) {
+            tp.config.files.filter(f => commitFiles.indexOf(f) < 0)
+                .forEach(f => {
+                    commitFiles.push(f);
+                    files[f] = tp.files[f];
+                })
+            pxt.Util.jsonCopyFrom(dependencies, tp.config.dependencies);
+        }
+
+        // include corepkg if no dependencies
+        if (!Object.keys(dependencies).length)
+            dependencies[pxt.appTarget.corepkg] = "*";
+
+        // yay, we have a new cfg
         const cfg: pxt.PackageConfig = {
             name: "",
-            files,
-            dependencies: {}
+            files: commitFiles,
+            dependencies,
+            preferredEditor: commitFiles.find(f => /.blocks$/.test(f)) ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
         };
-        cfg.dependencies[pxt.appTarget.corepkg] = "*";
         return cfg;
     }
 }

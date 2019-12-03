@@ -47,6 +47,7 @@ declare namespace pxt {
         testDependencies?: pxt.Map<string>;
         cppDependencies?: pxt.Map<string>;
         public?: boolean;
+        partial?: boolean; // true if project is not compileable on its own (eg base)
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
@@ -180,7 +181,7 @@ declare namespace pxt {
         questions: SnippetQuestions[];
     }
 
-    type SnippetAnswerTypes = 'number' | 'text' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
+    type SnippetAnswerTypes = 'number' | 'text' | 'variableName' | 'dropdown' | 'spriteEditor' | 'yesno' | string; // TODO(jb) Should include custom answer types for number, enums, string, image
 
     interface SnippetGoToOptions {
         question?: number;
