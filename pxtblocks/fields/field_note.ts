@@ -383,30 +383,22 @@ namespace pxtblockly {
                     this.currentSelectedKey = key;
                 }
 
-                // Listener when a new key is selected
-                if (!mobile) {
-                    Blockly.bindEventWithChecks_(
-                        key,
-                        'mousedown',
-                        this,
-                        () => this.playKey(key),
-                        /** noCaptureIdentifier **/ true,
-                        /** noPreventDefault **/ true
-                    );
-                } else {
-                    /**  Listener when a new key is selected in MOBILE
-                     *   It is necessary to use TOUCHSTART event to allow passive event listeners
-                     *   to avoid preventDefault() call that blocks listener
-                     */
-                    Blockly.bindEventWithChecks_(
-                        key,
-                        'touchstart',
-                        this,
-                        () => this.playKey(key),
-                        /** noCaptureIdentifier **/ true,
-                        /** noPreventDefault **/ true
-                    );
-                }
+                // increment white key counter
+                if (isWhiteKey)
+                    whiteKeyCounter++;
+
+                // set octaves different from first octave invisible
+                if (pagination && i > 11)
+                    key.style.display = "none";
+
+                Blockly.bindEventWithChecks_(
+                    key,
+                    mobile ? 'touchstart' : 'mousedown',
+                    this,
+                    () => this.playKey(key),
+                    /** noCaptureIdentifier **/ true,
+                    /** noPreventDefault **/ true
+                );
 
                 Blockly.bindEventWithChecks_(
                     key,
@@ -416,13 +408,6 @@ namespace pxtblockly {
                     /** noCaptureIdentifier **/ true,
                     /** noPreventDefault **/ true
                 );
-
-                // increment white key counter
-                if (isWhiteKey)
-                    whiteKeyCounter++;
-                // set octaves different from first octave invisible
-                if (pagination && i > 11)
-                    key.style.display = "none";
             }
 
             // render note label
@@ -447,7 +432,7 @@ namespace pxtblockly {
                     prevButton,
                     'mousedown',
                     this,
-                    () => this.changePage(/** next **/ false, noteLabel, this.piano),
+                    () => this.changePage(/** next **/ false, noteLabel),
                     /** noCaptureIdentifier **/ true,
                     /** noPreventDefault **/ true
                 );
@@ -455,7 +440,7 @@ namespace pxtblockly {
                     nextButton,
                     'mousedown',
                     this,
-                    () => this.changePage(/** next **/ true, noteLabel, this.piano),
+                    () => this.changePage(/** next **/ true, noteLabel),
                     /** noCaptureIdentifier **/ true,
                     /** noPreventDefault **/ true
                 );
@@ -530,7 +515,7 @@ namespace pxtblockly {
             this.forceRerender();
         }
 
-        protected changePage(next: boolean, scriptLabel: HTMLElement, piano: HTMLDivElement[]) {
+        protected changePage(next: boolean, scriptLabel: HTMLElement) {
             const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
             if (this.currentPage == (next ? pageCount - 1 : 0)) {
                 scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
@@ -541,10 +526,10 @@ namespace pxtblockly {
             const newFirstKey = nextPage * FieldNote.notesPerOctave;
             // hide current octave
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
-                piano[i + curFirstKey].style.display = "none";
+                this.piano[i + curFirstKey].style.display = "none";
             // show new octave
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
-                piano[i + newFirstKey].style.display = "block";
+                this.piano[i + newFirstKey].style.display = "block";
             this.currentPage = nextPage;
             scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
         };
