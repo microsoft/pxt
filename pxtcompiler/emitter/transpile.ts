@@ -103,7 +103,9 @@ namespace ts.pxtc.transpile {
         let doRealTranspile = () => {
             return (pxt as any).py.py2ts(options) as TranspileResult
         }
+
         let fromTxt = options.fileSystem[filename]
+        U.assert(!!fromTxt, `Missing file "${filename}" when converting from py->ts`)
 
         return transpileInternal("py", fromTxt, "ts", doRealTranspile, options.apisInfo)
     }
@@ -113,6 +115,7 @@ namespace ts.pxtc.transpile {
             return (pxt as any).py.decompileToPython(program, filename) as TranspileResult
         }
         let tsSrc = program.getSourceFile(filename)
+        U.assert(!!tsSrc, `Missing file "${filename}" when converting from ts->py`)
         let fromTxt = tsSrc.getText()
 
         let apisInfo = pxtc.getApiInfo(program)
