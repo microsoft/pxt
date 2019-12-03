@@ -271,10 +271,16 @@ namespace pxtblockly {
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
-            if (this.sourceBlock_ && Blockly.Events.isEnabled() &&
-                this.note_ != note) {
-                Blockly.Events.fire(new Blockly.Events.Change(
-                    this.sourceBlock_, "field", this.name, String(this.note_), String(note)));
+            if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.note_ != note) {
+                Blockly.Events.fire(
+                    new Blockly.Events.Change(
+                        this.sourceBlock_,
+                        "field",
+                        this.name,
+                        this.note_,
+                        note
+                    )
+                );
             }
             this.note_ = note;
             this.value_ = this.note_;
@@ -320,14 +326,10 @@ namespace pxtblockly {
 
             const contentDiv = Blockly.DropDownDiv.getContentDiv();
 
-            const mobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
-            // invoke FieldTextInputs showeditor, so we can set quiet / readonly
-            (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ mobile, /** readonly **/ mobile);
-
+            const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
+            // invoke FieldTextInputs showeditor, so we can set quiet / readonly TODO jwunderl: just directly inivoke FieldTextInput.showEditor_.call?
+            (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ isMobile, /** readonly **/ isMobile);
             this.refreshText();
-
-            // Record windowSize and scrollOffset before adding the piano.
-            const editorWidth = goog.dom.getViewportSize().editorWidth;
 
             this.piano = [];
             this.currentSelectedKey = undefined;
@@ -335,7 +337,7 @@ namespace pxtblockly {
             let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
             let pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight;
 
-            const pagination = mobile || editorWidth < pianoWidth;
+            const pagination = window.innerWidth < pianoWidth;
 
             if (pagination) {
                 pianoWidth = 7 * FieldNote.keyWidth;
@@ -392,7 +394,7 @@ namespace pxtblockly {
 
                 Blockly.bindEventWithChecks_(
                     key,
-                    mobile ? 'touchstart' : 'mousedown',
+                    isMobile ? 'touchstart' : 'mousedown',
                     this,
                     () => this.playKey(key),
                     /** noCaptureIdentifier **/ true,
