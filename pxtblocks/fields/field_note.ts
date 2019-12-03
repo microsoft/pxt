@@ -425,26 +425,10 @@ namespace pxtblockly {
             if (pagination) {
                 // TODO jwunderl: show the octave that contains the selected key, not always 0
                 this.currentPage = 0;
-                const prevButton = this.getNextPrevDiv(pianoWidth, true, pianoDiv);
-                const nextButton = this.getNextPrevDiv(pianoWidth, false, pianoDiv);
-
                 noteLabel.textContent = "Octave #1";
-                Blockly.bindEventWithChecks_(
-                    prevButton,
-                    'mousedown',
-                    this,
-                    () => this.changePage(/** next **/ false, noteLabel),
-                    /** noCaptureIdentifier **/ true,
-                    /** noPreventDefault **/ true
-                );
-                Blockly.bindEventWithChecks_(
-                    nextButton,
-                    'mousedown',
-                    this,
-                    () => this.changePage(/** next **/ true, noteLabel),
-                    /** noCaptureIdentifier **/ true,
-                    /** noPreventDefault **/ true
-                );
+
+                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ true, noteLabel));
+                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false, noteLabel));
             }
 
             Blockly.DropDownDiv.setColour(this.colour_, this.colourBorder_);
@@ -518,10 +502,11 @@ namespace pxtblockly {
             this.forceRerender();
         }
 
-        protected changePage(next: boolean, scriptLabel: HTMLElement) {
+        // TODO jwunderl: change this to `showPage` with an ind that sets .currentPage, rather than `next` bool
+        protected changePage(next: boolean, label: HTMLElement) {
             const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
             if (this.currentPage == (next ? pageCount - 1 : 0)) {
-                scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
+                label.textContent = `Octave #${this.currentPage + 1}`;
                 return;
             }
             const nextPage = this.currentPage + (next ? 1 : -1);
@@ -534,7 +519,7 @@ namespace pxtblockly {
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
                 this.piano[i + newFirstKey].style.display = "block";
             this.currentPage = nextPage;
-            scriptLabel.textContent = "Octave #" + (this.currentPage + 1);
+            label.textContent = `Octave #${this.currentPage + 1}`;
         };
 
         /**
@@ -543,7 +528,7 @@ namespace pxtblockly {
          * @param isPrev true if is previous button, false otherwise
          * @return DOM with the new css style.s
          */
-        protected getNextPrevDiv(pianoWidth: number, isPrev: boolean, container: HTMLDivElement) {
+        protected getNextPrevDiv(pianoWidth: number, isPrev: boolean, label: HTMLDivElement) {
             const xPosition = isPrev ? 0 : (pianoWidth / 2);
             const yPosition = FieldNote.keyHeight + FieldNote.labelHeight;
 
@@ -557,7 +542,15 @@ namespace pxtblockly {
                 border-bottom-color: ${this.colour_};`
             );
 
-            container.appendChild(output);
+            Blockly.bindEventWithChecks_(
+                output,
+                'mousedown',
+                this,
+                () => this.changePage(/** next **/ !isPrev, label),
+                /** noCaptureIdentifier **/ true,
+                /** noPreventDefault **/ true
+            );
+
             output.textContent = isPrev ? "<" : ">";
             return output;
         }
