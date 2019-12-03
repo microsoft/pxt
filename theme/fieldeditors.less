@@ -9,6 +9,7 @@
 
 @blocklyLightTextColor: #fff;
 @blocklyDarkTextColor: #575E75;
+@fieldNoteSelectedColor: yellowgreen;
 
 ////// Note Editor Field ////////
 .blocklyDropDownContent {
@@ -24,7 +25,6 @@
         top: 0px;
         border-bottom-left-radius: 3px;
         border-bottom-right-radius: 3px;
-        border-color: var(--note-primary-color);
     }
 
     .blocklyNote:hover {
@@ -32,7 +32,7 @@
     }
 
     .blocklyNote.selected {
-        background-color: var(--note-selected-color) !important;
+        background-color: @fieldNoteSelectedColor !important;
     }
 
     .blocklyNoteLabel {
@@ -44,8 +44,6 @@
         text-align: center;
         font-family: @blocklyFont;
         font-size: 12pt;
-        background-color: var(--note-primary-color);
-        border-color: var(--note-primary-color);
     }
 
     .blocklyNotePrevNext {
@@ -58,8 +56,6 @@
         line-height: normal;
         position: absolute;
         text-align: center;
-        background-color: var(--note-primary-color);
-        border-bottom-color: var(--note-primary-color);
     }
 
     .blocklyDropdownTextLabel {

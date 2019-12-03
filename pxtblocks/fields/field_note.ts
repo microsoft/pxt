@@ -344,10 +344,7 @@ namespace pxtblockly {
                 pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight + FieldNote.prevNextHeight;
             }
 
-            const pianoDiv = createStyledDiv("blocklyPianoDiv", `
-                --note-selected-color: ${FieldNote.selectedKeyColor};
-                --note-primary-color: ${this.colour_};
-            `);
+            const pianoDiv = createStyledDiv("blocklyPianoDiv");
             contentDiv.appendChild(pianoDiv);
 
             // save all changes in the same group of events
@@ -370,7 +367,8 @@ namespace pxtblockly {
                     width: ${this.getKeyWidth(i)}px;
                     height: ${this.getKeyHeight(i)}px;
                     left: ${position}px;
-                    z-index: ${isWhiteKey ? 1000 : 1001};`
+                    z-index: ${isWhiteKey ? 1000 : 1001};
+                    border-color: ${this.colour_};`
                 );
 
                 key.setAttribute("id", this.noteName_[i]);
@@ -430,7 +428,9 @@ namespace pxtblockly {
             const noteLabel = createStyledDiv(
                 "blocklyNoteLabel",
                 `top: ${FieldNote.keyHeight}px;
-                width: ${pianoWidth}px;`
+                width: ${pianoWidth}px;
+                background-color: ${this.colour_};
+                border-color: ${this.colour_};`
             );
             pianoDiv.appendChild(noteLabel);
             noteLabel.textContent = "-";
@@ -586,7 +586,9 @@ namespace pxtblockly {
                 `top: ${yPosition}px;
                 left: ${xPosition}px;
                 width: ${Math.ceil(pianoWidth / 2)}px;
-                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};`
+                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
+                background-color: ${this.colour_};
+                border-bottom-color: ${this.colour_};`
             );
 
             container.appendChild(output);
@@ -649,10 +651,11 @@ namespace pxtblockly {
         return block.inputList.length === 1 && block.inputList[0].fieldRow.length === 1;
     }
 
-    function createStyledDiv(className: string, style: string) {
+    function createStyledDiv(className: string, style?: string) {
         const output = document.createElement("div");
         output.className = className;
-        output.setAttribute("style", style.replace(/\s+/g, " "));
+        if (style)
+            output.setAttribute("style", style.replace(/\s+/g, " "));
         return output;
     }
 }
