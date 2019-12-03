@@ -357,6 +357,7 @@ namespace pxtblockly {
             // render piano keys
             let octaveCounter = 0;
             let whiteKeyCounter = 0;
+            let startingPage = 0;
             for (let i = 0; i < this.nKeys_; i++) {
                 if (i > 0 && i % 12 == 0)
                     octaveCounter++;
@@ -382,15 +383,12 @@ namespace pxtblockly {
                 if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
                     pxt.BrowserUtils.addClass(key, "selected");
                     this.currentSelectedKey = key;
+                    startingPage = Math.floor(i / FieldNote.notesPerOctave);
                 }
 
                 // increment white key counter
                 if (isWhiteKey)
                     whiteKeyCounter++;
-
-                // set octaves different from first octave invisible
-                if (pagination && i > 11)
-                    key.style.display = "none";
 
                 Blockly.bindEventWithChecks_(
                     key,
@@ -423,9 +421,7 @@ namespace pxtblockly {
             noteLabel.textContent = "-";
 
             if (pagination) {
-                // TODO jwunderl: show the octave that contains the selected key, not always 0
-                this.currentPage = 0;
-                noteLabel.textContent = "Octave #1";
+                this.setPage(startingPage, noteLabel);
 
                 pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ true, noteLabel));
                 pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false, noteLabel));
@@ -502,24 +498,20 @@ namespace pxtblockly {
             this.forceRerender();
         }
 
-        // TODO jwunderl: change this to `showPage` with an ind that sets .currentPage, rather than `next` bool
-        protected changePage(next: boolean, label: HTMLElement) {
+        protected setPage(page: number, label: HTMLElement) {
             const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
-            if (this.currentPage == (next ? pageCount - 1 : 0)) {
-                label.textContent = `Octave #${this.currentPage + 1}`;
-                return;
+
+            page = Math.max(Math.min(page, pageCount - 1), 0);
+            label.textContent = `Octave #${page + 1}`;
+
+            const firstKeyInOctave = page * FieldNote.notesPerOctave;
+
+            for (let i = 0; i < this.piano.length; ++i) {
+                const isInOctave = i >= firstKeyInOctave && i < firstKeyInOctave + FieldNote.notesPerOctave;
+                this.piano[i].style.display = isInOctave ? "block" : "none";
             }
-            const nextPage = this.currentPage + (next ? 1 : -1);
-            const curFirstKey = this.currentPage * FieldNote.notesPerOctave;
-            const newFirstKey = nextPage * FieldNote.notesPerOctave;
-            // hide current octave
-            for (let i = 0; i < FieldNote.notesPerOctave; i++)
-                this.piano[i + curFirstKey].style.display = "none";
-            // show new octave
-            for (let i = 0; i < FieldNote.notesPerOctave; i++)
-                this.piano[i + newFirstKey].style.display = "block";
-            this.currentPage = nextPage;
-            label.textContent = `Octave #${this.currentPage + 1}`;
+
+            this.currentPage = page;
         };
 
         /**
@@ -546,7 +538,7 @@ namespace pxtblockly {
                 output,
                 'mousedown',
                 this,
-                () => this.changePage(/** next **/ !isPrev, label),
+                () => this.setPage(isPrev ? this.currentPage - 1 : this.currentPage + 1 , label),
                 /** noCaptureIdentifier **/ true,
                 /** noPreventDefault **/ true
             );
