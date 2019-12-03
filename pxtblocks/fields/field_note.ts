@@ -362,12 +362,10 @@ namespace pxtblockly {
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
                 const isWhiteKey = this.isWhite(i);
                 const key = createStyledDiv(
-                    "blocklyNote",
-                    `background-color: ${isWhiteKey ? "white" : "black"};
-                    width: ${this.getKeyWidth(i)}px;
+                    `blocklyNote ${isWhiteKey ? "" : "black"}`,
+                    `width: ${this.getKeyWidth(i)}px;
                     height: ${this.getKeyHeight(i)}px;
                     left: ${position}px;
-                    z-index: ${isWhiteKey ? 1000 : 1001};
                     border-color: ${this.colour_};`
                 );
 
@@ -653,7 +651,7 @@ namespace pxtblockly {
 
     function createStyledDiv(className: string, style?: string) {
         const output = document.createElement("div");
-        output.className = className;
+        pxt.BrowserUtils.addClass(output, className);
         if (style)
             output.setAttribute("style", style.replace(/\s+/g, " "));
         return output;

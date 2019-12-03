@@ -6,9 +6,7 @@ namespace pxsim {
     export namespace U {
         // Keep these helpers unified with pxtlib/browserutils.ts
         export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-            return classes
-                .split(/\s+/)
-                .every(cls => containsSingleClass(el, cls));
+            return splitClasses(classes).every(cls => containsSingleClass(el, cls));
 
             function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -21,9 +19,7 @@ namespace pxsim {
         }
 
         export function addClass(el: SVGElement | HTMLElement, classes: string) {
-            classes
-                .split(/\s+/)
-                .forEach(cls => addSingleClass(el, cls));
+            splitClasses(classes).forEach(cls => addSingleClass(el, cls));
 
             function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -38,9 +34,7 @@ namespace pxsim {
         }
 
         export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-            classes
-                .split(/\s+/)
-                .forEach(cls => removeSingleClass(el, cls));
+            splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
 
             function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
                 if (el.classList) {
@@ -52,6 +46,10 @@ namespace pxsim {
                         .join(" ");
                 }
             }
+        }
+
+        function splitClasses(classes: string) {
+            return classes.split(/\s+/).filter(s => !!s);
         }
 
         export function remove(element: Element) {
