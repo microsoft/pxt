@@ -42,16 +42,12 @@
 .tile-palette-fg-bg {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-around;
     align-content: center;
     align-items: center;
 
     padding: 0.25rem;
     margin-bottom: 0.25rem;
-}
-
-.tile-palette-swatch {
-    background-color: #3d3d3d;
 }
 
 .tile-palette-swatch.selected {
@@ -62,14 +58,44 @@
     margin: 2px;
 }
 
-.tile-palette-fg-bg .timeline-frame-outer {
-    width: 2.5rem;
-    height: 2.5rem;
+.tile-palette-swatch .timeline-frame-outer,
+.tile-palette-swatch.wall {
+    background-color: #3d3d3d;
 }
 
-.tile-palette-spacer {
-    height: 2.5rem;
-    border-right: solid 1px var(--sidebar-icon-inactive-color);
+.tile-palette-swatch.fg .timeline-frame-outer {
+    width: 3rem;
+    height: 3rem;
+}
+
+.tile-palette-swatch.bg .timeline-frame-outer {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.5rem;
+}
+
+.tile-palette-swatch.wall {
+    box-sizing: content-box;
+    padding: .375rem .5rem;
+    font-size: 2rem;
+    line-height: 2.3rem;
+    color: var(--sidebar-icon-inactive-color);
+}
+
+.tile-palette-swatch.wall.selected {
+    background-color: var(--wall-color);
+    color: var(--sidebar-icon-active-color);
+}
+
+.tile-palette-swatch.wall > .xicon {
+    position: relative;
+    top: 0.35rem;
+}
+
+.tile-palette-swatch .image-editor-button {
+    margin: 0;
+    line-height: 1.5rem;
+    height: 1rem;
 }
 
 .tile-canvas-controls {

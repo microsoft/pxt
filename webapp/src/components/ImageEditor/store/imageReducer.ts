@@ -564,10 +564,17 @@ function emptyFrame(width: number, height: number): pxt.sprite.ImageState {
 }
 
 function cloneImage(state: pxt.sprite.ImageState): pxt.sprite.ImageState {
+    let floating, bitmap, overlayLayers;
+    if (state.floating) {
+        if (state.floating.bitmap) bitmap = pxt.sprite.Bitmap.fromData(state.floating.bitmap).copy().data();
+        if (state.floating.overlayLayers) overlayLayers = state.floating.overlayLayers.map(el => pxt.sprite.Bitmap.fromData(el).copy().data());
+        floating = { bitmap, overlayLayers };
+    }
     return {
         ...state,
         bitmap: pxt.sprite.Bitmap.fromData(state.bitmap).copy().data(),
-        floatingLayer: state.floatingLayer && pxt.sprite.Bitmap.fromData(state.floatingLayer).copy().data()
+        overlayLayers: state.overlayLayers && state.overlayLayers.map(el => pxt.sprite.Bitmap.fromData(el).copy().data()),
+        floating
     };
 }
 

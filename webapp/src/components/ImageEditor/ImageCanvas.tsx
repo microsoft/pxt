@@ -348,8 +348,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 bitmap: this.editState.image.data(),
                 layerOffsetX: this.editState.layerOffsetX,
                 layerOffsetY: this.editState.layerOffsetY,
-                floatingLayer: this.editState.floatingLayer && this.editState.floatingLayer.data(),
-                overlayLayers: this.editState.overlayLayers && this.editState.overlayLayers.map(el => el.data())
+                floating: this.editState.floating && {
+                    bitmap: this.editState.floating.image ? this.editState.floating.image.data() : undefined,
+                    overlayLayers: this.editState.floating.overlayLayers ? this.editState.floating.overlayLayers.map(el => el.data()) : undefined
+                },
+                overlayLayers: this.editState.overlayLayers ? this.editState.overlayLayers.map(el => el.data()) : undefined
             });
         }
     }
@@ -378,8 +381,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 context.globalAlpha = 0.5;
 
                 this.drawImage(next.image);
-                if (next.floatingLayer) {
-                    this.drawImage(next.floatingLayer, next.layerOffsetX, next.layerOffsetY, true);
+                if (next.floating && next.floating.image) {
+                    this.drawImage(next.floating.image, next.layerOffsetX, next.layerOffsetY, true);
                 }
 
                 context.globalAlpha = 1;
@@ -436,15 +439,18 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected redrawFloatingLayer(state: EditState, skipImage = false) {
         const floatingRect = this.refs["floating-layer-border"] as HTMLDivElement;
-        if (state.floatingLayer) {
-            if (!skipImage) this.drawImage(state.floatingLayer, state.layerOffsetX, state.layerOffsetY, true);
+        if (state.floating && state.floating.image) {
+            if (!skipImage) {
+                this.drawImage(state.floating.image, state.layerOffsetX, state.layerOffsetY, true);
+                if (state.floating.overlayLayers) this.drawOverlayLayers(state.floating.overlayLayers, state.layerOffsetX, state.layerOffsetY);
+            }
 
             const rect = this.canvas.getBoundingClientRect();
 
             const left = Math.max(state.layerOffsetX, 0)
             const top = Math.max(state.layerOffsetY, 0)
-            const right = Math.min(state.layerOffsetX + state.floatingLayer.width, state.width);
-            const bottom = Math.min(state.layerOffsetY + state.floatingLayer.height, state.height);
+            const right = Math.min(state.layerOffsetX + state.floating.image.width, state.width);
+            const bottom = Math.min(state.layerOffsetY + state.floating.image.height, state.height);
 
             const xScale = rect.width / state.width;
             const yScale = rect.height / state.height;
@@ -468,10 +474,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
-    protected drawOverlayLayers(layers: pxt.sprite.Bitmap[]) {
+    protected drawOverlayLayers(layers: pxt.sprite.Bitmap[], x0 = 0, y0 = 0, transparent = true) {
         if (layers) {
             layers.forEach((layer, index) => {
-                this.drawBitmap(layer, 0, 0, true, this.cellWidth, this.canvasLayers[index]);
+                this.drawBitmap(layer, x0, y0, transparent, this.cellWidth, this.canvasLayers[index]);
             })
         }
     }
