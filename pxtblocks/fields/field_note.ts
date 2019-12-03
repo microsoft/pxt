@@ -461,8 +461,10 @@ namespace pxtblockly {
             }
 
             this.currentSelectedKey = key;
-            // TODO jwunderl: see if better way to handle this; override text box while editting, to show the current state properly
-            // after each button press; feels like setText / getText should work w/o this?
+            /**
+             * force a rerender of the preview; other attempts at changing the value
+             * do not show up on the block itself until after the fieldeditor is closed.
+             **/
             (this as any).htmlInput_.value = this.getText();
 
             pxt.AudioContextManager.tone(+freq);
