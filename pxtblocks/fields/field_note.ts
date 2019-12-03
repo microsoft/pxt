@@ -327,7 +327,6 @@ namespace pxtblockly {
 
             this.refreshText();
 
-            let whiteKeyCounter = 0;
             // Record windowSize and scrollOffset before adding the piano.
             const editorWidth = goog.dom.getViewportSize().editorWidth;
 
@@ -344,7 +343,11 @@ namespace pxtblockly {
                 pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight + FieldNote.prevNextHeight;
             }
 
-            const pianoDiv = createStyledDiv("blocklyPianoDiv");
+            const pianoDiv = createStyledDiv(
+                "blocklyPianoDiv",
+                `width: ${pianoWidth}px;
+                height: ${pianoHeight}px;`
+            );
             contentDiv.appendChild(pianoDiv);
 
             // save all changes in the same group of events
@@ -352,6 +355,7 @@ namespace pxtblockly {
 
             // render piano keys
             let octaveCounter = 0;
+            let whiteKeyCounter = 0;
             for (let i = 0; i < this.nKeys_; i++) {
                 if (i > 0 && i % 12 == 0)
                     octaveCounter++;
@@ -369,8 +373,7 @@ namespace pxtblockly {
                     border-color: ${this.colour_};`
                 );
 
-                key.setAttribute("id", this.noteName_[i]);
-                key.setAttribute("tag", this.noteFreq_[i].toString());
+                key.setAttribute("frequency", this.noteFreq_[i].toString());
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
@@ -458,9 +461,6 @@ namespace pxtblockly {
                 );
             }
 
-            pianoDiv.style.width = pianoWidth + "px";
-            pianoDiv.style.height = (pianoHeight + 1) + "px";
-
             Blockly.DropDownDiv.setColour(this.colour_, this.colourBorder_);
 
             // Calculate positioning based on the field position.
@@ -487,7 +487,7 @@ namespace pxtblockly {
 
         protected playKey(key: HTMLDivElement) {
             const cnt = ++this.keyPressCount;
-            const freq = key.getAttribute("tag");
+            const freq = key.getAttribute("frequency");
 
             if (this.currentSelectedKey !== key) {
                 if (this.currentSelectedKey)
