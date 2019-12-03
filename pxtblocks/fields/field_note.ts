@@ -365,38 +365,29 @@ namespace pxtblockly {
             pianoDiv.appendChild(this.noteLabel);
             this.noteLabel.textContent = "-";
 
-            // render piano keys
-            let octaveCounter = 0;
-            let whiteKeyCounter = 0;
             let startingPage = 0;
             for (let i = 0; i < this.nKeys_; i++) {
-                if (i > 0 && i % 12 == 0)
-                    octaveCounter++;
-                let position = this.getPosition(i, whiteKeyCounter);
-
-                // increment white key counter
-                if (this.isWhite(i))
-                    whiteKeyCounter++;
+                const currentOctave = Math.floor(i / FieldNote.notesPerOctave);
+                let position = this.getPosition(i);
 
                 // modify original position in pagination
                 if (pagination && i >= FieldNote.notesPerOctave)
-                    position -= 7 * octaveCounter * FieldNote.keyWidth;
+                    position -= 7 * currentOctave * FieldNote.keyWidth;
 
                 const key = this.getKey(i, position, isMobile);
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
-                // highlight current selected key
+                // if the current value is within eps of this note, select it.
                 if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
                     pxt.BrowserUtils.addClass(key, "selected");
                     this.currentSelectedKey = key;
-                    startingPage = Math.floor(i / FieldNote.notesPerOctave);
+                    startingPage = currentOctave;
                 }
             }
 
             if (pagination) {
                 this.setPage(startingPage);
-
                 pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ true));
                 pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false));
             }
@@ -594,11 +585,11 @@ namespace pxtblockly {
         /**
          * get the position of the key in the piano
          * @param idx index of the key
-         * @param whiteKeyCounter the curent count of white keys
          * @return position of the key
          */
-        protected getPosition(idx: number, whiteKeyCounter: number): number {
-            const pos = whiteKeyCounter * FieldNote.keyWidth;
+        protected getPosition(idx: number): number {
+            const whiteKeyCount = idx - Math.floor((idx + 1) / 12 * 5);
+            const pos = whiteKeyCount * FieldNote.keyWidth;
             if (this.isWhite(idx))
                 return pos;
             return pos - (FieldNote.keyWidth / 4);
