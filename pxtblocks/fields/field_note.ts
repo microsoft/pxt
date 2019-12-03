@@ -177,8 +177,7 @@ namespace pxtblockly {
         private noteName_: Array<string> = [];
 
         protected keyPressCount: number;
-        protected previousKeyColor: string;
-        protected currentSelectedKey: HTMLDivElement; // TODO jwunderl: derive state from this maybe?
+        protected currentSelectedKey: HTMLDivElement;
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text);
@@ -331,21 +330,23 @@ namespace pxtblockly {
             let whiteKeyCounter = 0;
             // Record windowSize and scrollOffset before adding the piano.
             const editorWidth = goog.dom.getViewportSize().editorWidth;
+
             this.piano = [];
+            this.currentSelectedKey = undefined;
 
             let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
             let pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight;
 
-            const pagination = editorWidth < pianoWidth;
+            const pagination = mobile || editorWidth < pianoWidth;
 
             if (pagination) {
                 pianoWidth = 7 * FieldNote.keyWidth;
                 pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight + FieldNote.prevNextHeight;
             }
 
-            // create piano div
-            const pianoDiv = document.createElement("div");
-            pianoDiv.className = "blocklyPianoDiv";
+            const pianoDiv = createStyledDiv("blocklyPianoDiv", `
+                --note-selected-color: ${FieldNote.selectedKeyColor}
+            `);
             contentDiv.appendChild(pianoDiv);
 
             // save all changes in the same group of events
@@ -375,8 +376,7 @@ namespace pxtblockly {
 
                 // highlight current selected key
                 if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
-                    this.previousKeyColor = key.style.backgroundColor;
-                    key.style.backgroundColor = FieldNote.selectedKeyColor;
+                    pxt.BrowserUtils.addClass(key, "selected");
                     this.currentSelectedKey = key;
                 }
 
@@ -482,17 +482,15 @@ namespace pxtblockly {
         protected playKey(key: HTMLDivElement) {
             const cnt = ++this.keyPressCount;
             const freq = key.getAttribute("tag");
-            if (this.currentSelectedKey != null) {
-                const currKeyEl = this.currentSelectedKey;
-                // TODO jwunderl: this is a gross way to handle color management; change to just add a 'selected' class that overrides color to yellowgreen
-                currKeyEl.style.backgroundColor = this.previousKeyColor;
-            }
-            if (this.currentSelectedKey !== key) { // save color and change values only if is clicking different key
-                this.previousKeyColor = key.style.backgroundColor;
+
+            if (this.currentSelectedKey !== key) {
+                if (this.currentSelectedKey)
+                    pxt.BrowserUtils.removeClass(this.currentSelectedKey, "selected");
+                pxt.BrowserUtils.addClass(key, "selected");
                 this.setValue(freq);
             }
+
             this.currentSelectedKey = key;
-            key.style.backgroundColor = FieldNote.selectedKeyColor;
             // TODO jwunderl: see if better way to handle this; override text box while editting, to show the current state properly
             // after each button press; feels like setText / getText should work w/o this?
             (this as any).htmlInput_.value = this.getText();
