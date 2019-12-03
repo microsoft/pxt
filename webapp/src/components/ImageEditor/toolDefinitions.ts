@@ -256,7 +256,8 @@ export class EditState {
             for (let c = 0; c < width; c++) {
                 for (let r = 0; r < height; r++) {
                     this.image.set(left + c, top + r, 0);
-                    this.overlayLayers.forEach(el => el.set(left + c, top + r, 0));
+                    if (this.overlayLayers)
+                        this.overlayLayers.forEach(el => el.set(left + c, top + r, 0));
                 }
             }
         }
