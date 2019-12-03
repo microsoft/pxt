@@ -600,6 +600,44 @@ ${baseLabel}_nochk:
             })
         }
 
+        private emitBind(numargs: number) {
+            this.write(`
+                .bind:
+                    push {r0, r2}
+                    mov r4, lr
+                    movs r0, #2
+                    ldlit r1, .bindLit
+                    ${this.t.callCPP("pxt::mkAction")}
+                    pop {r1, r2}
+                    ldr r1, [r0, #12]
+                    ldr r2, [r0, #16]
+                    bx r4
+
+                .bindLit:
+                    ${this.t.obj_header("pxt::RefAction_vtable")}
+                    .short 0, 0 ; no captured vars
+                    .word .bindCode@fn
+                .bindCode:
+                    ldr r4, [r0, #12]
+                    ldr r2, [r0, #16]
+            `)
+            // inject recv argument
+            this.write("add sp, #4")
+            for (let i = 0; i < numargs; ++i) {
+                this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                this.write(`str r1, [sp, #4*${i}]`)
+            }
+            this.write(`
+                    push {r4} ; this-ptr
+                    mov r1, lr
+                    str r1, [sp, #4*${numargs}]
+                    blx r2
+                    ldr r1, [sp, #4*${numargs}]
+                    sub sp, #8
+                    bx r1
+            `)
+        }
+
         private ifaceCallCore(numargs: number, getset: string, noObjlit = false) {
             this.write(`
                 ldr r2, [r3, #12] ; load mult
@@ -661,12 +699,8 @@ ${baseLabel}_nochk:
                     this.write(`
                         bne .bind
                         ${callIt}
-                    .bind:
-                        mov r4, lr
-                        movs r1, #${numargs}
-                        bl pxt::bindMethod
-                        bx r4
                     `)
+                    this.emitBind(numargs)
                 } else {
                     this.write(`
                         beq .doublecall
@@ -1234,9 +1268,10 @@ ${baseLabel}_nochk:
                 bl pxt::pushThreadContext
                 mov r6, r0          ; save ctx or globals
                 mov r5, r7          ; save lambda for closure
-                ldr r0, [r5, #8]    ; ld fnptr
+                mov r0, r5          ; also save lambda pointer in r0 - needed by pxt::bindMethod
+                ldr r1, [r5, #8]    ; ld fnptr
                 movs r4, #3         ; 3 args
-                blx r0              ; execute the actual lambda
+                blx r1              ; execute the actual lambda
                 mov r7, r0          ; save result
                 @dummystack 4
                 add sp, #4*4        ; remove arguments and lambda
@@ -1484,15 +1519,16 @@ ${baseLabel}_nochk:
                 this.write(`str r1, [sp, #4*${i}]`)
             }
 
+            // save lr and r5 (outer lambda ctx) in the newly free spots
             this.write(`
                 str r5, [sp, #4*${numargs}]
                 mov r1, lr
                 str r1, [sp, #4*${numargs + 1}]
                 mov r5, r0
                 ldr r7, [r5, #8]
-                blx r7
-                ldr r4, [sp, #4*${numargs + 1}]
-                ldr r5, [sp, #4*${numargs}]
+                blx r7 ; exec actual lambda
+                ldr r4, [sp, #4*${numargs + 1}] ; restore what was in LR
+                ldr r5, [sp, #4*${numargs}] ; restore lambda ctx
             `)
 
             // move arguments back where they were
