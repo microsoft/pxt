@@ -168,12 +168,12 @@ namespace pxtblockly {
         /**
          * array of notes frequency
          */
-        private noteFreq_: Array<number> = [];
+        private noteFreq_: number[] = [];
 
         /**
          * array of notes names
          */
-        private noteName_: Array<string> = [];
+        private noteName_: string[] = [];
 
         protected keyPressCount: number;
         protected currentSelectedKey: HTMLDivElement;
@@ -266,7 +266,7 @@ namespace pxtblockly {
          */
         doValueUpdate_(note: string) {
             // accommodate note strings like "Note.GSharp5" as well as numbers
-            const match: Array<string> = /^Note\.(.+)$/.exec(note);
+            const match = /^Note\.(.+)$/.exec(note);
             const noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
             if (isNaN(Number(note)) || Number(note) < 0)
@@ -330,6 +330,8 @@ namespace pxtblockly {
             // invoke FieldTextInputs showeditor, so we can set quiet / readonly TODO jwunderl: just directly inivoke FieldTextInput.showEditor_.call?
             (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ isMobile, /** readonly **/ isMobile);
             this.refreshText();
+            // save all changes in the same group of events
+            Blockly.Events.setGroup(true);
 
             this.piano = [];
             this.currentSelectedKey = undefined;
@@ -351,64 +353,6 @@ namespace pxtblockly {
             );
             contentDiv.appendChild(pianoDiv);
 
-            // save all changes in the same group of events
-            Blockly.Events.setGroup(true);
-
-            // render piano keys
-            let octaveCounter = 0;
-            let whiteKeyCounter = 0;
-            let startingPage = 0;
-            for (let i = 0; i < this.nKeys_; i++) {
-                if (i > 0 && i % 12 == 0)
-                    octaveCounter++;
-                let position = this.getPosition(i, whiteKeyCounter);
-
-                // modify original position in pagination
-                if (pagination && i >= 12)
-                    position -= 7 * octaveCounter * FieldNote.keyWidth;
-                const isWhiteKey = this.isWhite(i);
-                const key = createStyledDiv(
-                    `blocklyNote ${isWhiteKey ? "" : "black"}`,
-                    `width: ${this.getKeyWidth(i)}px;
-                    height: ${this.getKeyHeight(i)}px;
-                    left: ${position}px;
-                    border-color: ${this.colour_};`
-                );
-
-                key.setAttribute("frequency", this.noteFreq_[i].toString());
-                this.piano.push(key);
-                pianoDiv.appendChild(key);
-
-                // highlight current selected key
-                if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
-                    pxt.BrowserUtils.addClass(key, "selected");
-                    this.currentSelectedKey = key;
-                    startingPage = Math.floor(i / FieldNote.notesPerOctave);
-                }
-
-                // increment white key counter
-                if (isWhiteKey)
-                    whiteKeyCounter++;
-
-                Blockly.bindEventWithChecks_(
-                    key,
-                    isMobile ? 'touchstart' : 'mousedown',
-                    this,
-                    () => this.playKey(key),
-                    /** noCaptureIdentifier **/ true,
-                    /** noPreventDefault **/ true
-                );
-
-                Blockly.bindEventWithChecks_(
-                    key,
-                    'mouseover',
-                    this,
-                    () => noteLabel.textContent = this.noteName_[i],
-                    /** noCaptureIdentifier **/ true,
-                    /** noPreventDefault **/ true
-                );
-            }
-
             // render note label
             const noteLabel = createStyledDiv(
                 "blocklyNoteLabel",
@@ -419,6 +363,35 @@ namespace pxtblockly {
             );
             pianoDiv.appendChild(noteLabel);
             noteLabel.textContent = "-";
+
+            // render piano keys
+            let octaveCounter = 0;
+            let whiteKeyCounter = 0;
+            let startingPage = 0;
+            for (let i = 0; i < this.nKeys_; i++) {
+                if (i > 0 && i % 12 == 0)
+                    octaveCounter++;
+                let position = this.getPosition(i, whiteKeyCounter);
+
+                // increment white key counter
+                if (this.isWhite(i))
+                    whiteKeyCounter++;
+
+                // modify original position in pagination
+                if (pagination && i >= 12)
+                    position -= 7 * octaveCounter * FieldNote.keyWidth;
+
+                const key = this.getKey(i, position, noteLabel, isMobile);
+                this.piano.push(key);
+                pianoDiv.appendChild(key);
+
+                // highlight current selected key
+                if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
+                    pxt.BrowserUtils.addClass(key, "selected");
+                    this.currentSelectedKey = key;
+                    startingPage = Math.floor(i / FieldNote.notesPerOctave);
+                }
+            }
 
             if (pagination) {
                 this.setPage(startingPage, noteLabel);
@@ -544,6 +517,38 @@ namespace pxtblockly {
             );
 
             output.textContent = isPrev ? "<" : ">";
+            return output;
+        }
+
+        protected getKey(keyInd: number, leftPosition: number, label: HTMLDivElement, isMobile: boolean) {
+            const output = createStyledDiv(
+                `blocklyNote ${this.isWhite(keyInd) ? "" : "black"}`,
+                `width: ${this.getKeyWidth(keyInd)}px;
+                height: ${this.getKeyHeight(keyInd)}px;
+                left: ${leftPosition}px;
+                border-color: ${this.colour_};`
+            );
+
+            output.setAttribute("frequency", this.noteFreq_[keyInd] + "");
+
+            Blockly.bindEventWithChecks_(
+                output,
+                isMobile ? 'touchstart' : 'mousedown',
+                this,
+                () => this.playKey(output),
+                /** noCaptureIdentifier **/ true,
+                /** noPreventDefault **/ true
+            );
+
+            Blockly.bindEventWithChecks_(
+                output,
+                'mouseover',
+                this,
+                () => label.textContent = this.noteName_[keyInd],
+                /** noCaptureIdentifier **/ true,
+                /** noPreventDefault **/ true
+            );
+
             return output;
         }
 
