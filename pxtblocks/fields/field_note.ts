@@ -133,16 +133,15 @@ namespace pxtblockly {
         maxNote?: string;
     }
 
-    //  Class for a note input field.
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         public SERIALIZABLE = true;
-        //  value of the field
+        // value of the field
         private note_: string;
 
-        //  colour of the dropdown
+        // colour of the dropdown
         private colour_: string;
-        //  colour of the dropdown border
+        // colour of the dropdown border
         private colourBorder_: string;
         protected isExpanded: Boolean;
 
@@ -323,27 +322,21 @@ namespace pxtblockly {
 
             const contentDiv = Blockly.DropDownDiv.getContentDiv();
 
-            const mobile = goog.userAgent.MOBILE || goog.userAgent.ANDROID || goog.userAgent.IPHONE;
+            const mobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
             // invoke FieldTextInputs showeditor, so we can set quiet / readonly
-            (FieldNote as any).superClass_.showEditor_.call(
-                this,
-                e,
-                /** quiet **/ mobile || goog.userAgent.IPAD,
-                /** readonly **/ mobile || goog.userAgent.IPAD
-            );
+            (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ mobile, /** readonly **/ mobile);
 
             this.refreshText();
 
             let whiteKeyCounter = 0;
-            //  Record windowSize and scrollOffset before adding the piano.
+            // Record windowSize and scrollOffset before adding the piano.
             const editorWidth = goog.dom.getViewportSize().editorWidth;
             this.piano = [];
 
-            //  initializate
             let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
             let pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight;
 
-            const pagination = mobile || editorWidth < pianoWidth;
+            const pagination = editorWidth < pianoWidth;
 
             if (pagination) {
                 pianoWidth = 7 * FieldNote.keyWidth;
@@ -355,17 +348,17 @@ namespace pxtblockly {
             pianoDiv.className = "blocklyPianoDiv";
             contentDiv.appendChild(pianoDiv);
 
-            //  save all changes in the same group of events
+            // save all changes in the same group of events
             Blockly.Events.setGroup(true);
 
-            //  render piano keys
+            // render piano keys
             let octaveCounter = 0;
             for (let i = 0; i < this.nKeys_; i++) {
                 if (i > 0 && i % 12 == 0)
                     octaveCounter++;
                 let position = this.getPosition(i, whiteKeyCounter);
 
-                //  modify original position in pagination
+                // modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
                 const key = this.getKeyDiv(
@@ -380,14 +373,14 @@ namespace pxtblockly {
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
-                //  highlight current selected key
+                // highlight current selected key
                 if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
                     this.previousKeyColor = key.style.backgroundColor;
                     key.style.backgroundColor = FieldNote.selectedKeyColor;
                     this.currentSelectedKey = key;
                 }
 
-                //  Listener when a new key is selected
+                // Listener when a new key is selected
                 if (!mobile) {
                     Blockly.bindEventWithChecks_(
                         key,
@@ -421,7 +414,7 @@ namespace pxtblockly {
                     /** noPreventDefault **/ true
                 );
 
-                //  increment white key counter
+                // increment white key counter
                 if (this.isWhite(i))
                     whiteKeyCounter++;
                 // set octaves different from first octave invisible
@@ -429,7 +422,7 @@ namespace pxtblockly {
                     key.style.display = "none";
             }
 
-            //  render note label
+            // render note label
             const noteLabel = this.getNoteLabelDiv(pianoWidth);
             pianoDiv.appendChild(noteLabel);
             noteLabel.textContent = "-";
@@ -562,10 +555,10 @@ namespace pxtblockly {
             const nextPage = this.currentPage + (next ? 1 : -1);
             const curFirstKey = this.currentPage * FieldNote.notesPerOctave;
             const newFirstKey = nextPage * FieldNote.notesPerOctave;
-            //  hide current octave
+            // hide current octave
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
                 piano[i + curFirstKey].style.display = "none";
-            //  show new octave
+            // show new octave
             for (let i = 0; i < FieldNote.notesPerOctave; i++)
                 piano[i + newFirstKey].style.display = "block";
             this.currentPage = nextPage;
