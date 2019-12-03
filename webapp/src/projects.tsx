@@ -519,6 +519,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             url={selectedElement.url}
                             imageUrl={selectedElement.imageUrl}
                             largeImageUrl={selectedElement.largeImageUrl}
+                            videoUrl={selectedElement.videoUrl}
                             youTubeId={selectedElement.youTubeId}
                             buttonLabel={selectedElement.buttonLabel}
                             scr={selectedElement}
@@ -627,6 +628,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     description?: string;
     imageUrl?: string;
     largeImageUrl?: string;
+    videoUrl?: string;
     youTubeId?: string;
     buttonLabel?: string;
     url?: string;
@@ -711,18 +713,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, videoUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
 
-        let image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
-
-        if (/\.mp4$/.test(image)
-            // no MPEG codec in electron         Safari requires range support on CDN
-            && (pxt.BrowserUtils.isElectron() || pxt.BrowserUtils.isSafari())) {
-            // we don't support mp4 in electron, so try out luck as gif
-            image = image.replace(/\.mp4$/, ".gif");
-        }
+        const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
+        const video = !pxt.BrowserUtils.isElectron() && !pxt.BrowserUtils.isSafari() && videoUrl;
 
         let clickLabel = lf("Show Instructions");
         if (buttonLabel)
@@ -756,8 +752,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             />
 
         return <div className="ui grid stackable padded">
-            {image && <div className="imagewrapper">
-                {/\.mp4$/.test(image) ? <video className="video" src={image} autoPlay={true} controls={false} loop={true} playsInline={true} />
+            {(video || image) && <div className="imagewrapper">
+                {video ? <video className="video" src={video} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
             <div className="column twelve wide">

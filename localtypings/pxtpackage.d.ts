@@ -126,6 +126,7 @@ declare namespace pxt {
         typeScript?: string;
         imageUrl?: string;
         largeImageUrl?: string;
+        videoUrl?: string;
         youTubeId?: string;
         buttonLabel?: string;
         time?: number;
