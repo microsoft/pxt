@@ -1,6 +1,6 @@
 # GitHub Token
 
-You can use a **GitHub developer token** to sign in with GitHub if you do not want to use the **Microsoft MakeCode with GitHub** app. The token is valid for access to repositories in organizations.
+You can use a **GitHub developer token** to sign in with GitHub if you do not want to use the **Microsoft MakeCode with GitHub** app. The token is valid for access to repositories in all organizations.
 
 ## What is a token?
 
