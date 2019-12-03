@@ -290,8 +290,7 @@ switch (step) {
             writeRaw(`__this.stopPerfCounter(${proc.perfCounterNo});\n`)
         }
 
-        const isGetter = proc.action && proc.action.kind == SK.GetAccessor
-        if (isGetter)
+        if (proc.isGetter())
             write(`return leaveAccessor(s, r0)`)
         else
             write(`return leave(s, r0)`)
@@ -302,7 +301,7 @@ switch (step) {
         info.functionName = proc.getName()
         info.argumentNames = proc.args && proc.args.map(a => a.getName());
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
-        if (isGetter)
+        if (proc.isGetter())
             writeRaw(`${proc.label()}.isGetter = true;`)
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)

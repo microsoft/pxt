@@ -531,6 +531,10 @@ namespace ts.pxtc.ir {
             this.args = []
         }
 
+        isGetter() {
+            return this.action && this.action.kind == ts.SyntaxKind.GetAccessor
+        }
+
         vtLabel() {
             return this.label() + (isStackMachine() ? "" : "_args")
         }

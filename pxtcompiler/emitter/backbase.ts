@@ -142,10 +142,6 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
 ${hexLiteralAsm(data)}
 `
         }
-
-        method_call(procid: ir.ProcId, topExpr: ir.Expr) {
-            return ""
-        }
     }
 
     export function hexLiteralAsm(data: string, suff = "") {
@@ -642,6 +638,10 @@ ${baseLabel}_nochk:
                 beq .field
             `)
 
+            // here, it's a method entry in iface table
+
+            const callIt = this.t.emit_int(numargs, "r4") + "\n     bx r2"
+
             if (getset == "set") {
                 this.write(`
                     ; check for next descriptor
@@ -649,11 +649,39 @@ ${baseLabel}_nochk:
                     cmp r7, r1
                     bne .fail2 ; no setter!
                     ldr r2, [r3, #12]
+                    ${callIt}
                 `)
+            } else {
+                this.write(`
+                    ; check if it's getter
+                    ldrh r7, [r3, #2]
+                    cmp r7, #1
+                `)
+                if (getset == "get") {
+                    this.write(`
+                        bne .bind
+                        ${callIt}
+                    .bind:
+                        mov r4, lr
+                        movs r1, #${numargs}
+                        bl pxt::bindMethod
+                        bx r4
+                    `)
+                } else {
+                    this.write(`
+                        beq .doublecall
+                        ${callIt}
+                    .doublecall:
+                        ; call getter
+                        movs r4, #1
+                        push {r0, lr}
+                        blx r2
+                        pop {r1, r2}
+                        mov lr, r2
+                        b .moveArgs
+                    `)
+                }
             }
-
-            this.write(this.t.emit_int(numargs, "r4"))
-            this.write("bx r2")
 
             if (!noObjlit) {
                 this.write(`
@@ -1388,7 +1416,6 @@ ${baseLabel}_nochk:
             }
 
             let lbl = this.mkLbl("_proccall")
-            let argsToClear = topExpr.args.slice()
 
             let procIdx = -1
             if (isLambda) {
@@ -1400,10 +1427,7 @@ ${baseLabel}_nochk:
                     this.write(this.t.callCPP("pxt::failedCast"))
                 })
             } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
-                let custom = this.t.method_call(procid, topExpr)
-                if (custom) {
-                    this.write(custom)
-                 } else if (procid.ifaceIndex != null) {
+                if (procid.ifaceIndex != null) {
                     if (procid.isSet) {
                         assert(topExpr.args.length == 2)
                         this.emitIfaceCall(procid, topExpr.args.length, "set")
