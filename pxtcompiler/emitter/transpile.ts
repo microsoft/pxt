@@ -17,7 +17,7 @@ namespace ts.pxtc.transpile {
 
     export type Lang = "py" | "blocks" | "ts"
     export interface LangEquivSet {
-        comparable: { [key in Lang]: number },
+        comparable: { [key in Lang]: string },
         code: { [key in Lang]: string },
     }
     // a circular buffer of size MAX_CODE_EQUIVS that stores
@@ -26,10 +26,12 @@ namespace ts.pxtc.transpile {
     let codeEquivalences: LangEquivSet[] = []
     const MAX_CODE_EQUIVS = 10
 
-    function toComparable(code: string, depsKey: string): number {
+    function toComparable(code: string, depsKey: string): string {
         // Ignore whitespace
         code = code.replace(/\s/g, "")
-        return U.codalHash16(code + "," + depsKey)
+
+        let key = code + "," + depsKey
+        return key
     }
     function tryGetLanguageEquivalence(lang: Lang, txt: string, depsKey: string): LangEquivSet | undefined {
         let txtComp = toComparable(txt, depsKey)
