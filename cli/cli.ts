@@ -1707,7 +1707,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                         if (card.largeImageUrl && !gcard.largeImageUrl)
                             gcard.largeImageUrl = card.largeImageUrl;
                         if (card.videoUrl && !gcard.videoUrl)
-                            gcard.videoUrl = card.videoUrl; 
+                            gcard.videoUrl = card.videoUrl;
                         const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
                         tocmd += `  * [${card.name || card.title}](${url})
 `;
