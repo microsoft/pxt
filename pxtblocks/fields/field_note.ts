@@ -462,27 +462,7 @@ namespace pxtblockly {
             }
 
             Blockly.DropDownDiv.setColour(this.colour_, this.colourBorder_);
-
-            // Calculate positioning based on the field position.
-            const scale = (this.sourceBlock_.workspace as any).scale;
-            const position = this.fieldGroup_.getBoundingClientRect();
-
-            const primaryX = position.left + (this.size_.width * scale) / 2;
-            const primaryY = position.top + this.size_.height;
-            const secondaryX = primaryX;
-            const secondaryY = position.top;
-            // Set bounds to workspace; show the drop-down.
-            Blockly.DropDownDiv.setBoundsElement(
-                (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg().parentNode as Element
-            );
-            Blockly.DropDownDiv.show(
-                this,
-                primaryX,
-                primaryY,
-                secondaryX,
-                secondaryY,
-                () => this.onHide()
-            );
+            Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => this.onHide());
         }
 
         protected playKey(key: HTMLDivElement) {
