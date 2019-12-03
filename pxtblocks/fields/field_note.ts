@@ -139,10 +139,8 @@ namespace pxtblockly {
         // value of the field
         private note_: string;
 
-        // colour of the dropdown
-        private colour_: string;
-        // colour of the dropdown border
-        private colourBorder_: string;
+        protected primaryColour: string;
+        protected borderColour: string;
         protected isExpanded: Boolean;
 
         /**
@@ -162,23 +160,16 @@ namespace pxtblockly {
         protected currentPage: number;
         protected piano: HTMLDivElement[];
         protected noteLabel: HTMLDivElement;
+        protected currentSelectedKey: HTMLDivElement;
+        protected totalPlayCount: number;
+
         /**
          * Absolute error for note frequency identification (Hz)
          */
         eps: number = 2;
 
-        /**
-         * array of notes frequency
-         */
         private noteFreq_: number[] = [];
-
-        /**
-         * array of notes names
-         */
         private noteName_: string[] = [];
-
-        protected totalPlayCount: number;
-        protected currentSelectedKey: HTMLDivElement;
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text, 0, null, null, validator);
@@ -189,8 +180,8 @@ namespace pxtblockly {
             this.totalPlayCount = 0;
 
             if (params.editorColour) {
-                this.colour_ = pxtblockly.parseColour(params.editorColour);
-                this.colourBorder_ = Blockly.utils.colour.darken(this.colour_, 0.2);
+                this.primaryColour = pxtblockly.parseColour(params.editorColour);
+                this.borderColour = Blockly.utils.colour.darken(this.primaryColour, 0.2);
             }
 
             const minNote = parseInt(params.minNote) || this.minNote_;
@@ -360,8 +351,8 @@ namespace pxtblockly {
                 "blocklyNoteLabel",
                 `top: ${FieldNote.keyHeight}px;
                 width: ${pianoWidth}px;
-                background-color: ${this.colour_};
-                border-color: ${this.colour_};`
+                background-color: ${this.primaryColour};
+                border-color: ${this.primaryColour};`
             );
             pianoDiv.appendChild(this.noteLabel);
             this.noteLabel.textContent = "-";
@@ -393,7 +384,7 @@ namespace pxtblockly {
                 pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false));
             }
 
-            Blockly.DropDownDiv.setColour(this.colour_, this.colourBorder_);
+            Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => this.onHide());
         }
 
@@ -441,12 +432,12 @@ namespace pxtblockly {
 
         private updateColor() {
             if (this.sourceBlock_.parentBlock_ && (this.sourceBlock_.isShadow() || hasOnlyOneField(this.sourceBlock_))) {
-                this.colour_ = this.sourceBlock_.parentBlock_.getColour();
-                this.colourBorder_ = this.sourceBlock_.parentBlock_.getColourTertiary();
+                this.primaryColour = this.sourceBlock_.parentBlock_.getColour();
+                this.borderColour = this.sourceBlock_.parentBlock_.getColourTertiary();
             }
             else {
-                this.colour_ = this.sourceBlock_.getColourTertiary();
-                this.colourBorder_ = this.sourceBlock_.getColourTertiary();
+                this.primaryColour = this.sourceBlock_.getColourTertiary();
+                this.borderColour = this.sourceBlock_.getColourTertiary();
             }
         }
 
@@ -496,9 +487,9 @@ namespace pxtblockly {
                 `top: ${yPosition}px;
                 left: ${xPosition}px;
                 width: ${Math.ceil(pianoWidth / 2)}px;
-                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
-                background-color: ${this.colour_};
-                border-bottom-color: ${this.colour_};`
+                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.primaryColour};
+                background-color: ${this.primaryColour};
+                border-bottom-color: ${this.primaryColour};`
             );
 
             Blockly.bindEventWithChecks_(
@@ -520,7 +511,7 @@ namespace pxtblockly {
                 `width: ${this.getKeyWidth(keyInd)}px;
                 height: ${this.getKeyHeight(keyInd)}px;
                 left: ${leftPosition}px;
-                border-color: ${this.colour_};`
+                border-color: ${this.primaryColour};`
             );
 
             output.setAttribute("frequency", this.noteFreq_[keyInd] + "");
