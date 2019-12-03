@@ -160,6 +160,7 @@ namespace pxtblockly {
 
         protected currentPage: number;
         protected piano: HTMLDivElement[];
+        protected noteLabel: HTMLDivElement;
         /**
          * Absolute error for note frequency identification (Hz)
          */
@@ -175,7 +176,7 @@ namespace pxtblockly {
          */
         private noteName_: string[] = [];
 
-        protected keyPressCount: number;
+        protected totalPlayCount: number;
         protected currentSelectedKey: HTMLDivElement;
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
@@ -185,7 +186,7 @@ namespace pxtblockly {
             this.note_ = text;
             this.isExpanded = false;
             this.currentPage = 0;
-            this.keyPressCount = 0;
+            this.totalPlayCount = 0;
 
             if (params.editorColour) {
                 this.colour_ = pxtblockly.parseColour(params.editorColour);
@@ -354,15 +355,15 @@ namespace pxtblockly {
             contentDiv.appendChild(pianoDiv);
 
             // render note label
-            const noteLabel = createStyledDiv(
+            this.noteLabel = createStyledDiv(
                 "blocklyNoteLabel",
                 `top: ${FieldNote.keyHeight}px;
                 width: ${pianoWidth}px;
                 background-color: ${this.colour_};
                 border-color: ${this.colour_};`
             );
-            pianoDiv.appendChild(noteLabel);
-            noteLabel.textContent = "-";
+            pianoDiv.appendChild(this.noteLabel);
+            this.noteLabel.textContent = "-";
 
             // render piano keys
             let octaveCounter = 0;
@@ -378,10 +379,10 @@ namespace pxtblockly {
                     whiteKeyCounter++;
 
                 // modify original position in pagination
-                if (pagination && i >= 12)
+                if (pagination && i >= FieldNote.notesPerOctave)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
 
-                const key = this.getKey(i, position, noteLabel, isMobile);
+                const key = this.getKey(i, position, isMobile);
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
@@ -394,10 +395,10 @@ namespace pxtblockly {
             }
 
             if (pagination) {
-                this.setPage(startingPage, noteLabel);
+                this.setPage(startingPage);
 
-                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ true, noteLabel));
-                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false, noteLabel));
+                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ true));
+                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false));
             }
 
             Blockly.DropDownDiv.setColour(this.colour_, this.colourBorder_);
@@ -405,7 +406,7 @@ namespace pxtblockly {
         }
 
         protected playKey(key: HTMLDivElement) {
-            const cnt = ++this.keyPressCount;
+            const notePlayID = ++this.totalPlayCount;
             const freq = key.getAttribute("frequency");
 
             if (this.currentSelectedKey !== key) {
@@ -418,14 +419,15 @@ namespace pxtblockly {
             this.currentSelectedKey = key;
             /**
              * force a rerender of the preview; other attempts at changing the value
-             * do not show up on the block itself until after the fieldeditor is closed.
+             * do not show up on the block itself until after the fieldeditor is closed,
+             * as it is currently in an editable state.
              **/
             (this as any).htmlInput_.value = this.getText();
 
             pxt.AudioContextManager.tone(+freq);
             setTimeout(() => {
                 // Clear the sound if it is still playing after 300ms
-                if (this.keyPressCount == cnt) pxt.AudioContextManager.stop();
+                if (this.totalPlayCount == notePlayID) pxt.AudioContextManager.stop();
             }, 300);
         }
 
@@ -471,11 +473,11 @@ namespace pxtblockly {
             this.forceRerender();
         }
 
-        protected setPage(page: number, label: HTMLElement) {
+        protected setPage(page: number) {
             const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
 
             page = Math.max(Math.min(page, pageCount - 1), 0);
-            label.textContent = `Octave #${page + 1}`;
+            this.noteLabel.textContent = `Octave #${page + 1}`;
 
             const firstKeyInOctave = page * FieldNote.notesPerOctave;
 
@@ -493,7 +495,7 @@ namespace pxtblockly {
          * @param isPrev true if is previous button, false otherwise
          * @return DOM with the new css style.s
          */
-        protected getNextPrevDiv(pianoWidth: number, isPrev: boolean, label: HTMLDivElement) {
+        protected getNextPrevDiv(pianoWidth: number, isPrev: boolean) {
             const xPosition = isPrev ? 0 : (pianoWidth / 2);
             const yPosition = FieldNote.keyHeight + FieldNote.labelHeight;
 
@@ -511,7 +513,7 @@ namespace pxtblockly {
                 output,
                 'mousedown',
                 this,
-                () => this.setPage(isPrev ? this.currentPage - 1 : this.currentPage + 1 , label),
+                () => this.setPage(isPrev ? this.currentPage - 1 : this.currentPage + 1),
                 /** noCaptureIdentifier **/ true,
                 /** noPreventDefault **/ true
             );
@@ -520,7 +522,7 @@ namespace pxtblockly {
             return output;
         }
 
-        protected getKey(keyInd: number, leftPosition: number, label: HTMLDivElement, isMobile: boolean) {
+        protected getKey(keyInd: number, leftPosition: number, isMobile: boolean) {
             const output = createStyledDiv(
                 `blocklyNote ${this.isWhite(keyInd) ? "" : "black"}`,
                 `width: ${this.getKeyWidth(keyInd)}px;
@@ -544,7 +546,7 @@ namespace pxtblockly {
                 output,
                 'mouseover',
                 this,
-                () => label.textContent = this.noteName_[keyInd],
+                () => this.noteLabel.textContent = this.noteName_[keyInd],
                 /** noCaptureIdentifier **/ true,
                 /** noPreventDefault **/ true
             );
