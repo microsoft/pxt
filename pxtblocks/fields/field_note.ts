@@ -345,7 +345,8 @@ namespace pxtblockly {
             }
 
             const pianoDiv = createStyledDiv("blocklyPianoDiv", `
-                --note-selected-color: ${FieldNote.selectedKeyColor}
+                --note-selected-color: ${FieldNote.selectedKeyColor};
+                --note-primary-color: ${this.colour_};
             `);
             contentDiv.appendChild(pianoDiv);
 
@@ -362,13 +363,16 @@ namespace pxtblockly {
                 // modify original position in pagination
                 if (pagination && i >= 12)
                     position -= 7 * octaveCounter * FieldNote.keyWidth;
-                const key = this.getKeyDiv(
-                    this.isWhite(i),
-                    this.getKeyWidth(i),
-                    this.getKeyHeight(i),
-                    position,
-                    this.isWhite(i) ? 1000 : 1001
+                const isWhiteKey = this.isWhite(i);
+                const key = createStyledDiv(
+                    "blocklyNote",
+                    `background-color: ${isWhiteKey ? "white" : "black"};
+                    width: ${this.getKeyWidth(i)}px;
+                    height: ${this.getKeyHeight(i)}px;
+                    left: ${position}px;
+                    z-index: ${isWhiteKey ? 1000 : 1001};`
                 );
+
                 key.setAttribute("id", this.noteName_[i]);
                 key.setAttribute("tag", this.noteFreq_[i].toString());
                 this.piano.push(key);
@@ -415,7 +419,7 @@ namespace pxtblockly {
                 );
 
                 // increment white key counter
-                if (this.isWhite(i))
+                if (isWhiteKey)
                     whiteKeyCounter++;
                 // set octaves different from first octave invisible
                 if (pagination && i > 11)
@@ -423,7 +427,11 @@ namespace pxtblockly {
             }
 
             // render note label
-            const noteLabel = this.getNoteLabelDiv(pianoWidth);
+            const noteLabel = createStyledDiv(
+                "blocklyNoteLabel",
+                `top: ${FieldNote.keyHeight}px;
+                width: ${pianoWidth}px;`
+            );
             pianoDiv.appendChild(noteLabel);
             noteLabel.textContent = "-";
 
@@ -564,43 +572,6 @@ namespace pxtblockly {
         };
 
         /**
-         * create a DOM to assign a style to the button (piano Key)
-         * @param bgColor color of the key background
-         * @param width width of the key
-         * @param height heigth of the key
-         * @param leftPosition horizontal position of the key
-         * @param z_index z-index of the key
-         * @return DOM with the new css style.
-         */
-        protected getKeyDiv(white: boolean, width: number, height: number, leftPosition: number, z_index: number) {
-            return createStyledDiv(
-                "blocklyNote",
-                `background-color: ${white ? "white" : "black"};
-                width: ${width}px;
-                height: ${height}px;
-                left: ${leftPosition}px;
-                z-index: ${z_index};
-                border-color: ${this.colour_};`
-            );
-        }
-
-        /**
-         * create a DOM to assign a style to the note label
-         * @param pianoWidth the width of the containing piano
-         * @return DOM with the new css style.
-         * @private
-         */
-        protected getNoteLabelDiv(pianoWidth: number) {
-            return createStyledDiv(
-                "blocklyNoteLabel",
-                `top: ${FieldNote.keyHeight}px;
-                background-color: ${this.colour_};
-                width: ${pianoWidth}px;
-                border-color: ${this.colour_};`
-            );
-        }
-
-        /**
          * create a DOM to assign a style to the previous and next buttons
          * @param pianoWidth the width of the containing piano
          * @param isPrev true if is previous button, false otherwise
@@ -615,9 +586,7 @@ namespace pxtblockly {
                 `top: ${yPosition}px;
                 left: ${xPosition}px;
                 width: ${Math.ceil(pianoWidth / 2)}px;
-                background-color: ${this.colour_};
-                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};
-                border-bottom-color: ${this.colour_};`
+                ${isPrev ? "border-left-color" : "border-right-color"}: ${this.colour_};`
             );
 
             container.appendChild(output);
