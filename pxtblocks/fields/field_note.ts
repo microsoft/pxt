@@ -202,15 +202,14 @@ namespace pxtblockly {
             if (text === null) {
                 return null;
             }
-            text = String(text);
 
-            let n = parseFloat(text || "0");
+            const n = parseFloat(text || "0");
             if (isNaN(n) || n < 0) {
                 // Invalid number.
                 return null;
             }
+
             const showDecimal = Math.floor(n) != n;
-            // Get the value in range.
             return "" + n.toFixed(showDecimal ? 2 : 0);
         }
 
@@ -261,8 +260,10 @@ namespace pxtblockly {
             const match = /^Note\.(.+)$/.exec(note);
             const noteName: any = (match && match.length > 1) ? match[1] : null;
             note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
+
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
+
             if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.note_ != note) {
                 Blockly.Events.fire(
                     new Blockly.Events.Change(
@@ -274,8 +275,9 @@ namespace pxtblockly {
                     )
                 );
             }
+
             this.note_ = note;
-            this.value_ = this.note_;
+            this.value_ = note;
             this.refreshText();
         }
 
