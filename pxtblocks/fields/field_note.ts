@@ -157,6 +157,7 @@ namespace pxtblockly {
         protected static readonly labelHeight = 24;
         protected static readonly prevNextHeight = 20;
         protected static readonly notesPerOctave = 12;
+        protected static readonly blackKeysPerOctave = 5;
 
         protected currentPage: number;
         protected piano: HTMLDivElement[];
@@ -325,22 +326,25 @@ namespace pxtblockly {
             Blockly.DropDownDiv.clearContent();
 
             const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
-            // invoke FieldTextInputs showeditor, so we can set quiet / readonly TODO jwunderl: just directly invoke FieldTextInput.showEditor_.call?
+            // invoke FieldTextInputs showeditor, so we can set quiet explicitly.
             (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ isMobile, /** readonly **/ isMobile);
             this.refreshText();
+
             // save all changes in the same group of events
             Blockly.Events.setGroup(true);
 
             this.piano = [];
             this.currentSelectedKey = undefined;
 
-            let pianoWidth = FieldNote.keyWidth * (this.nKeys_ - (this.nKeys_ / 12 * 5));
+            const totalWhiteKeys = this.nKeys_ - (this.nKeys_ / FieldNote.notesPerOctave * FieldNote.blackKeysPerOctave);
+            const whiteKeysPerOctave = FieldNote.notesPerOctave - FieldNote.blackKeysPerOctave;
+            let pianoWidth = FieldNote.keyWidth * totalWhiteKeys;
             let pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight;
 
             const pagination = window.innerWidth < pianoWidth;
 
             if (pagination) {
-                pianoWidth = 7 * FieldNote.keyWidth;
+                pianoWidth = whiteKeysPerOctave * FieldNote.keyWidth;
                 pianoHeight = FieldNote.keyHeight + FieldNote.labelHeight + FieldNote.prevNextHeight;
             }
 
@@ -369,7 +373,7 @@ namespace pxtblockly {
 
                 // modify original position in pagination
                 if (pagination && i >= FieldNote.notesPerOctave)
-                    position -= 7 * currentOctave * FieldNote.keyWidth;
+                    position -= whiteKeysPerOctave * currentOctave * FieldNote.keyWidth;
 
                 const key = this.getKey(i, position, isMobile);
                 this.piano.push(key);
@@ -585,7 +589,7 @@ namespace pxtblockly {
          * @return position of the key
          */
         protected getPosition(idx: number): number {
-            const whiteKeyCount = idx - Math.floor((idx + 1) / 12 * 5);
+            const whiteKeyCount = idx - Math.floor((idx + 1) / FieldNote.notesPerOctave * FieldNote.blackKeysPerOctave);
             const pos = whiteKeyCount * FieldNote.keyWidth;
             if (this.isWhite(idx))
                 return pos;
