@@ -180,9 +180,8 @@ namespace pxtblockly {
         protected currentSelectedKey: HTMLDivElement;
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
-            super(text);
+            super(text, 0, null, null, validator);
 
-            (FieldNote as any).superClass_.constructor.call(this, text, validator);
             this.note_ = text;
             this.isExpanded = false;
             this.currentPage = 0;
@@ -227,7 +226,7 @@ namespace pxtblockly {
          * Install this field on a block.
          */
         init() {
-            (FieldNote as any).superClass_.init.call(this);
+            super.init();
             this.noteFreq_.length = 0;
             this.noteName_.length = 0;
 
@@ -325,10 +324,8 @@ namespace pxtblockly {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.DropDownDiv.clearContent();
 
-            const contentDiv = Blockly.DropDownDiv.getContentDiv();
-
             const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
-            // invoke FieldTextInputs showeditor, so we can set quiet / readonly TODO jwunderl: just directly inivoke FieldTextInput.showEditor_.call?
+            // invoke FieldTextInputs showeditor, so we can set quiet / readonly TODO jwunderl: just directly invoke FieldTextInput.showEditor_.call?
             (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ isMobile, /** readonly **/ isMobile);
             this.refreshText();
             // save all changes in the same group of events
@@ -352,7 +349,7 @@ namespace pxtblockly {
                 `width: ${pianoWidth}px;
                 height: ${pianoHeight}px;`
             );
-            contentDiv.appendChild(pianoDiv);
+            Blockly.DropDownDiv.getContentDiv().appendChild(pianoDiv);
 
             // render note label
             this.noteLabel = createStyledDiv(
