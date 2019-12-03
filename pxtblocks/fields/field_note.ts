@@ -157,7 +157,6 @@ namespace pxtblockly {
         protected static readonly labelHeight = 24;
         protected static readonly prevNextHeight = 20;
         protected static readonly notesPerOctave = 12;
-        protected static readonly selectedKeyColor = "yellowgreen";
 
         protected currentPage: number;
         protected piano: HTMLDivElement[];
