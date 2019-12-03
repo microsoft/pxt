@@ -601,19 +601,20 @@ ${baseLabel}_nochk:
         }
 
         private emitBind(numargs: number) {
+            const bindLit = this.mkLbl("_bindLit")
             this.write(`
                 .bind:
                     push {r0, r2}
                     mov r4, lr
                     movs r0, #2
-                    ldlit r1, .bindLit
+                    ldlit r1, ${bindLit}
                     ${this.t.callCPP("pxt::mkAction")}
                     pop {r1, r2}
                     ldr r1, [r0, #12]
                     ldr r2, [r0, #16]
                     bx r4
 
-                .bindLit:
+                ${bindLit}:
                     ${this.t.obj_header("pxt::RefAction_vtable")}
                     .short 0, 0 ; no captured vars
                     .word .bindCode@fn
@@ -622,7 +623,7 @@ ${baseLabel}_nochk:
                     ldr r2, [r0, #16]
             `)
             // inject recv argument
-            this.write("add sp, #4")
+            this.write("sub sp, #4")
             for (let i = 0; i < numargs; ++i) {
                 this.write(`ldr r1, [sp, #4*${i + 1}]`)
                 this.write(`str r1, [sp, #4*${i}]`)
@@ -633,7 +634,7 @@ ${baseLabel}_nochk:
                     str r1, [sp, #4*${numargs}]
                     blx r2
                     ldr r1, [sp, #4*${numargs}]
-                    sub sp, #8
+                    add sp, #8
                     bx r1
             `)
         }
