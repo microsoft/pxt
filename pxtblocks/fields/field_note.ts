@@ -389,33 +389,36 @@ namespace pxtblockly {
 
                 //  Listener when a new key is selected
                 if (!mobile) {
-                    goog.events.listen(
+                    Blockly.bindEventWithChecks_(
                         key,
-                        goog.events.EventType.MOUSEDOWN,
+                        'mousedown',
+                        this,
                         () => this.playKey(key),
-                        false,
-                        key
+                        /** noCaptureIdentifier **/ true,
+                        /** noPreventDefault **/ true
                     );
                 } else {
                     /**  Listener when a new key is selected in MOBILE
                      *   It is necessary to use TOUCHSTART event to allow passive event listeners
                      *   to avoid preventDefault() call that blocks listener
                      */
-                    goog.events.listen(
+                    Blockly.bindEventWithChecks_(
                         key,
-                        goog.events.EventType.TOUCHSTART,
+                        'touchstart',
+                        this,
                         () => this.playKey(key),
-                        false,
-                        key
+                        /** noCaptureIdentifier **/ true,
+                        /** noPreventDefault **/ true
                     );
                 }
-                //  Listener when the mouse is over a key
-                goog.events.listen(
+
+                Blockly.bindEventWithChecks_(
                     key,
-                    goog.events.EventType.MOUSEOVER,
+                    'mouseover',
+                    this,
                     () => noteLabel.textContent = this.noteName_[i],
-                    false,
-                    key
+                    /** noCaptureIdentifier **/ true,
+                    /** noPreventDefault **/ true
                 );
 
                 //  increment white key counter
@@ -438,20 +441,21 @@ namespace pxtblockly {
                 const nextButton = this.getNextPrevDiv(pianoWidth, false, pianoDiv);
 
                 noteLabel.textContent = "Octave #1";
-
-                goog.events.listen(
+                Blockly.bindEventWithChecks_(
                     prevButton,
-                    goog.events.EventType.MOUSEDOWN,
+                    'mousedown',
+                    this,
                     () => this.changePage(/** next **/ false, noteLabel, this.piano),
-                    false,
-                    prevButton
+                    /** noCaptureIdentifier **/ true,
+                    /** noPreventDefault **/ true
                 );
-                goog.events.listen(
+                Blockly.bindEventWithChecks_(
                     nextButton,
-                    goog.events.EventType.MOUSEDOWN,
+                    'mousedown',
+                    this,
                     () => this.changePage(/** next **/ true, noteLabel, this.piano),
-                    false,
-                    nextButton
+                    /** noCaptureIdentifier **/ true,
+                    /** noPreventDefault **/ true
                 );
             }
 
