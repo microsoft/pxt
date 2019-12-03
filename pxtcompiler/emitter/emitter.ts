@@ -1876,6 +1876,7 @@ ${lbl}: .short 0xffff
                     return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
                 }
             } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
+                // TODO this is now supported in runtime; can be probably relaxed (by using GetAccessor code path above)
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
