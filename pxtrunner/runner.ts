@@ -881,7 +881,7 @@ ${linkString}
         compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        compilePython?: pxtc.CompileResult;
+        compilePython?: pxtc.transpile.TranspileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
@@ -911,9 +911,10 @@ ${linkString}
                 }
                 programCache = program;
 
-                let compilePython: pxtc.CompileResult = undefined;
-                if (pxt.appTarget.appTheme.python)
-                    compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
+                let compilePython: pxtc.transpile.TranspileResult = undefined;
+                if (pxt.appTarget.appTheme.python) {
+                    compilePython = ts.pxtc.transpile.tsToPy(program, "main.ts");
+                }
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(program, opts.jres);
