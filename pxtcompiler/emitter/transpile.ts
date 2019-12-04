@@ -92,7 +92,7 @@ namespace ts.pxtc.transpile {
 
         if (res.success) {
             // store the result
-            let toTxt = res.outfiles[mainName(to)]
+            let toTxt = res.outfiles[mainName(to)] || ""
             cacheTranspile(from, fromTxt, to, toTxt)
         }
         return res
@@ -104,7 +104,7 @@ namespace ts.pxtc.transpile {
         }
 
         let fromTxt = options.fileSystem[filename]
-        U.assert(!!fromTxt, `Missing file "${filename}" when converting from py->ts`)
+        U.assert(fromTxt !== undefined && fromTxt !== null, `Missing file "${filename}" when converting from py->ts`)
 
         return transpileInternal("py", fromTxt, "ts", doRealTranspile)
     }
@@ -114,7 +114,7 @@ namespace ts.pxtc.transpile {
             return (pxt as any).py.decompileToPython(program, filename) as TranspileResult
         }
         let tsSrc = program.getSourceFile(filename)
-        U.assert(!!tsSrc, `Missing file "${filename}" when converting from ts->py`)
+        U.assert(tsSrc !== undefined && tsSrc !== null, `Missing file "${filename}" when converting from ts->py`)
         let fromTxt = tsSrc.getText()
 
         return transpileInternal("ts", fromTxt, "py", doRealTranspile)
