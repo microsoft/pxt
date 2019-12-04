@@ -136,8 +136,6 @@ namespace pxtblockly {
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         public SERIALIZABLE = true;
-        // value of the field
-        private note_: string;
 
         protected primaryColour: string;
         protected borderColour: string;
@@ -168,13 +166,14 @@ namespace pxtblockly {
          */
         eps: number = 2;
 
-        private noteFreq_: number[] = [];
-        private noteName_: string[] = [];
+        private noteFreq_: number[];
+        private noteName_: string[];
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text, 0, null, null, validator);
 
-            this.note_ = text;
+            // explicitly set the text; this will be re-evaluated in `init`
+            // when the note names and frequencies have been evaluated.
             this.isExpanded = false;
             this.currentPage = 0;
             this.totalPlayCount = 0;
@@ -191,6 +190,25 @@ namespace pxtblockly {
                 this.maxNote_ = maxNote;
                 this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
+
+            this.noteFreq_ = [];
+            this.noteName_ = [];
+            // Create arrays of name/frequency of the notes
+            for (let i = this.minNote_; i <= this.maxNote_; i++) {
+                let name = Notes[i].prefixedName;
+                // special case: one octave
+                if (this.nKeys_ < 13) {
+                    name = Notes[i].name;
+                }
+                // special case: centered
+                else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
+                    name = Notes[i].altPrefixedName || name;
+                }
+                this.noteName_.push(name);
+                this.noteFreq_.push(Notes[i].freq);
+            }
+
+            this.doValueUpdate_(text);
         }
 
         /**
@@ -214,39 +232,11 @@ namespace pxtblockly {
         }
 
         /**
-         * Install this field on a block.
-         */
-        init() {
-            super.init();
-            this.noteFreq_.length = 0;
-            this.noteName_.length = 0;
-
-            // Create arrays of name/frequency of the notes
-            for (let i = this.minNote_; i <= this.maxNote_; i++) {
-                let name = Notes[i].prefixedName;
-                // special case: one octave
-                if (this.nKeys_ < 13) {
-                    name = Notes[i].name;
-                }
-                // special case: centered
-                else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
-                    name = Notes[i].altPrefixedName || name;
-                }
-                this.noteName_.push(name);
-                this.noteFreq_.push(Notes[i].freq);
-            }
-
-            // explicitly update the value with the newly defined notes;
-            // a call to setValue here gets dropped
-            this.doValueUpdate_(this.getValue());
-        }
-
-        /**
          * Return the current note frequency.
          * @return {string} Current note in string format.
          */
         getValue(): string {
-            return this.note_;
+            return this.value_;
         }
 
         /**
@@ -264,19 +254,18 @@ namespace pxtblockly {
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
 
-            if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.note_ != note) {
+            if (this.sourceBlock_ && Blockly.Events.isEnabled() && this.value_ != note) {
                 Blockly.Events.fire(
                     new Blockly.Events.Change(
                         this.sourceBlock_,
                         "field",
                         this.name,
-                        this.note_,
+                        this.value_,
                         note
                     )
                 );
             }
 
-            this.note_ = note;
             this.value_ = note;
             this.refreshText();
         }
@@ -286,10 +275,14 @@ namespace pxtblockly {
          * @return {string} Current text.
          */
         getText(): string {
+            return this.convertToText(this.value_);
+        }
+
+        protected convertToText(value: any) {
             if (this.isExpanded) {
-                return "" + this.note_;
+                return "" + value;
             } else {
-                const note = +this.note_;
+                const note = +value;
                 for (let i = 0; i < this.nKeys_; i++) {
                     if (Math.abs(this.noteFreq_[i] - note) < this.eps) {
                         return this.noteName_[i];
@@ -407,7 +400,7 @@ namespace pxtblockly {
              * do not show up on the block itself until after the fieldeditor is closed,
              * as it is currently in an editable state.
              **/
-            (this as any).htmlInput_.value = this.getText();
+            (this as any).htmlInput_.value = this.convertToText(freq);
 
             pxt.AudioContextManager.tone(+freq);
             setTimeout(() => {
