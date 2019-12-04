@@ -879,12 +879,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             onClick={this.cloneGithub}
                         /> : undefined}
                 </div>
-                {pxt.github.token || true ? undefined :
-                    <p>
-                        <br /><br />
-                        <a className="small" href="#github" role="button" onClick={cloudsync.githubLogin}
-                            aria-label={lf("GitHub login")}>{lf("GitHub login")}</a>
-                    </p>}
             </sui.Modal>
         )
     }

@@ -699,19 +699,6 @@ export function loginCheck() {
         impl.loginCheck();
 }
 
-export function githubLogin() {
-    core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
-    const self = window.location.href.replace(/#.*/, "")
-    const state = ts.pxtc.Util.guidGen();
-    pxt.storage.setLocal(OAUTH_STATE, state)
-    pxt.storage.setLocal(OAUTH_TYPE, "github")
-    const login = pxt.Cloud.getServiceUrl() +
-        "/oauth/login?state=" + state +
-        "&response_type=token&client_id=gh-token&redirect_uri=" +
-        encodeURIComponent(self)
-    window.location.href = login
-}
-
 export function saveToCloudAsync(h: Header) {
     if (!currentProvider || !currentProvider.hasSync())
         return Promise.resolve();
