@@ -188,9 +188,12 @@ namespace pxtblockly {
                 this.maxNote_ = maxNote;
                 this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
+        }
 
-            // Explicitly apply value update to render initial state appropriately.
-            this.doValueUpdate_(text);
+        init() {
+            super.init();
+            // refresh text on init to get note names
+            this.refreshText();
         }
 
         /**
@@ -199,6 +202,11 @@ namespace pxtblockly {
          * @return A string representing a valid positive number, or null if invalid.
          */
         doClassValidation_(text: string) {
+            // accommodate note strings like "Note.GSharp5" as well as numbers
+            const match = /^Note\.(.+)$/.exec(text);
+            const noteName: any = (match && match.length > 1) ? match[1] : null;
+            text = Note[noteName] ? Note[noteName] : String(parseFloat(text || "0"));
+
             if (text === null) {
                 return null;
             }
@@ -227,11 +235,6 @@ namespace pxtblockly {
          * @param {string} note The new note in string format.
          */
         doValueUpdate_(note: string) {
-            // accommodate note strings like "Note.GSharp5" as well as numbers
-            const match = /^Note\.(.+)$/.exec(note);
-            const noteName: any = (match && match.length > 1) ? match[1] : null;
-            note = Note[noteName] ? Note[noteName] : String(parseFloat(note || "0"));
-
             if (isNaN(Number(note)) || Number(note) < 0)
                 return;
 
