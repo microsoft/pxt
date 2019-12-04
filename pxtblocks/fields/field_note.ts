@@ -166,14 +166,9 @@ namespace pxtblockly {
          */
         eps: number = 2;
 
-        private noteFreq_: number[];
-        private noteName_: string[];
-
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text, 0, null, null, validator);
 
-            // explicitly set the text; this will be re-evaluated in `init`
-            // when the note names and frequencies have been evaluated.
             this.isExpanded = false;
             this.currentPage = 0;
             this.totalPlayCount = 0;
@@ -191,23 +186,7 @@ namespace pxtblockly {
                 this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
 
-            this.noteFreq_ = [];
-            this.noteName_ = [];
-            // Create arrays of name/frequency of the notes
-            for (let i = this.minNote_; i <= this.maxNote_; i++) {
-                let name = Notes[i].prefixedName;
-                // special case: one octave
-                if (this.nKeys_ < 13) {
-                    name = Notes[i].name;
-                }
-                // special case: centered
-                else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
-                    name = Notes[i].altPrefixedName || name;
-                }
-                this.noteName_.push(name);
-                this.noteFreq_.push(Notes[i].freq);
-            }
-
+            // Explicitly apply value update to render initial state appropriately.
             this.doValueUpdate_(text);
         }
 
@@ -236,7 +215,7 @@ namespace pxtblockly {
          * @return {string} Current note in string format.
          */
         getValue(): string {
-            return this.value_;
+            return this.value_ + "";
         }
 
         /**
@@ -284,8 +263,8 @@ namespace pxtblockly {
             } else {
                 const note = +value;
                 for (let i = 0; i < this.nKeys_; i++) {
-                    if (Math.abs(this.noteFreq_[i] - note) < this.eps) {
-                        return this.noteName_[i];
+                    if (Math.abs(this.getKeyFreq(i) - note) < this.eps) {
+                        return this.getKeyName(i);
                     }
                 }
                 let text = note.toString();
@@ -366,7 +345,7 @@ namespace pxtblockly {
                 pianoDiv.appendChild(key);
 
                 // if the current value is within eps of this note, select it.
-                if (Math.abs(this.noteFreq_[i] - Number(this.getValue())) < this.eps) {
+                if (Math.abs(this.getKeyFreq(i) - Number(this.getValue())) < this.eps) {
                     pxt.BrowserUtils.addClass(key, "selected");
                     this.currentSelectedKey = key;
                     startingPage = currentOctave;
@@ -381,6 +360,27 @@ namespace pxtblockly {
 
             Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => this.onHide());
+        }
+
+        protected getKeyFreq(keyIndex: number) {
+            return this.getKeyNote(keyIndex).freq;
+        }
+
+        protected getKeyName(keyIndex: number) {
+            const note = this.getKeyNote(keyIndex);
+            let name = note.prefixedName;
+            if (this.nKeys_ < 13) {
+                // special case: one octave
+                name = note.name;
+            } else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
+                // special case: centered
+                name = note.altPrefixedName || name;
+            }
+            return name;
+        }
+
+        private getKeyNote(keyIndex: number) {
+            return Notes[keyIndex + this.minNote_];
         }
 
         protected playKey(key: HTMLDivElement) {
@@ -509,7 +509,7 @@ namespace pxtblockly {
                 border-color: ${this.primaryColour};`
             );
 
-            output.setAttribute("frequency", this.noteFreq_[keyInd] + "");
+            output.setAttribute("frequency", this.getKeyFreq(keyInd) + "");
 
             Blockly.bindEventWithChecks_(
                 output,
@@ -524,7 +524,7 @@ namespace pxtblockly {
                 output,
                 'mouseover',
                 this,
-                () => this.noteLabel.textContent = this.noteName_[keyInd],
+                () => this.noteLabel.textContent = this.getKeyName(keyInd),
                 /** noCaptureIdentifier **/ true,
                 /** noPreventDefault **/ true
             );
