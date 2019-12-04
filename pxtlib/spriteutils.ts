@@ -431,7 +431,7 @@ namespace pxt.sprite {
         if (tile.qualifiedName) {
             return `${tile.qualifiedName}`;
         }
-        else if (tile.projectId) {
+        else if (tile.projectId != undefined) {
             return `myTiles.tile${tile.projectId}`;
         }
         else {

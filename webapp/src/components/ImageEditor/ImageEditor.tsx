@@ -173,8 +173,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     });
                 }
                 else {
+                    const tileWidth = (state.store.present as TilemapState).tileset.tileWidth;
                     this.setState({
-                        editingTile: true
+                        editingTile: true,
+                        editTileValue: pxt.sprite.bitmapToImageLiteral(new pxt.sprite.Bitmap(tileWidth, tileWidth), "typescript")
                     });
                 }
             }

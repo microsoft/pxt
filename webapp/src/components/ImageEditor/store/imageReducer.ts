@@ -57,23 +57,25 @@ export interface TilemapState {
 
 // State that is not on the undo/redo stack
 export interface EditorState {
-    previewAnimating: boolean;
-    isTilemap: boolean;
-
     selectedColor: number;
     backgroundColor: number;
 
+    tilemapPalette?: TilemapPaletteState;
+    tileGalleryOpen?: boolean;
+
+    isTilemap: boolean;
+
+    // The state below this comment is not persisted between editor reloads
+    previewAnimating: boolean;
     tool: ImageEditorTool;
-    cursorSize: CursorSize;
     cursorLocation?: [number, number];
     zoomDelta?: number;
     onionSkinEnabled: boolean;
-    overlayEnabled?: boolean;
-    tilemapPalette?: TilemapPaletteState;
     drawingMode?: TileDrawingMode;
     tileGallery?: GalleryTile[];
-    tileGalleryOpen?: boolean;
     editingTile?: TileEditContext;
+    cursorSize: CursorSize;
+    overlayEnabled?: boolean;
 }
 
 export interface GalleryTile {
@@ -181,9 +183,18 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 editor: editorReducer(state.editor, action)
             };
         case actions.SET_INITIAL_STATE:
+            const restored: EditorState = action.state;
             return {
                 ...state,
-                editor: action.state,
+                editor: {
+                    ...initialStore.editor,
+                    selectedColor: restored.selectedColor,
+                    backgroundColor: restored.backgroundColor,
+                    tilemapPalette: restored.tilemapPalette,
+                    tileGalleryOpen: restored.tileGalleryOpen,
+                    tileGallery: restored.tileGallery,
+                    isTilemap: restored.isTilemap
+                },
                 store: {
                     ...state.store,
                     past: action.past || state.store.past,
@@ -228,24 +239,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     past: [],
                     present: {
                         visible: true,
-                        colors: [
-                            "#000000",
-                            "#ffffff",
-                            "#ff2121",
-                            "#ff93c4",
-                            "#ff8135",
-                            "#fff609",
-                            "#249ca3",
-                            "#78dc52",
-                            "#003fad",
-                            "#87f2ff",
-                            "#8e2ec4",
-                            "#a4839f",
-                            "#5c406c",
-                            "#e5cdc4",
-                            "#91463d",
-                            "#000000"
-                        ],
+                        colors: pxt.appTarget.runtime.palette.slice(),
 
                         aspectRatioLocked: false,
 
@@ -274,24 +268,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     ...state.store,
                     past: [],
                     present: {
-                        colors: [
-                            "#000000",
-                            "#ffffff",
-                            "#ff2121",
-                            "#ff93c4",
-                            "#ff8135",
-                            "#fff609",
-                            "#249ca3",
-                            "#78dc52",
-                            "#003fad",
-                            "#87f2ff",
-                            "#8e2ec4",
-                            "#a4839f",
-                            "#5c406c",
-                            "#e5cdc4",
-                            "#91463d",
-                            "#000000"
-                        ],
+                        colors: pxt.appTarget.runtime.palette.slice(),
                         aspectRatioLocked: false,
                         tilemap: {
                             bitmap: action.tilemap,
@@ -496,15 +473,7 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
 
             return {
                 ...state,
-                tileset: {
-                    ...state.tileset,
-                    tiles: [...state.tileset.tiles,
-                        {
-                            data: action.bitmap,
-                            qualifiedName: action.qualifiedName,
-                            projectId: isCustomTile ? state.nextId : undefined
-                        }]
-                },
+                tileset: addNewTile(state.tileset, action.bitmap, isCustomTile ? state.nextId : undefined, action.qualifiedName),
                 nextId: isCustomTile ? state.nextId + 1 : state.nextId
             }
         case actions.CLOSE_TILE_EDITOR:
@@ -513,20 +482,13 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
             else if (action.index) {
                 return {
                     ...state,
-                    tileset: {
-                        ...state.tileset,
-                        tiles: state.tileset.tiles
-                            .map((value, index) => index === action.index ? { data: action.result, projectId: value.projectId } : value)
-                    }
+                    tileset: editTile(state.tileset, action.index, action.result)
                 }
             }
             else {
                 return {
                     ...state,
-                    tileset: {
-                        ...state.tileset,
-                        tiles: [...state.tileset.tiles, { data: action.result, projectId: state.nextId }]
-                    },
+                    tileset: addNewTile(state.tileset, action.result, state.nextId),
                     nextId: state.nextId + 1
                 }
             }
@@ -554,6 +516,37 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
             };
         default:
             return state;
+    }
+}
+
+function addNewTile(t: pxt.sprite.TileSet, data: pxt.sprite.BitmapData, id?: number, qname?: string): pxt.sprite.TileSet {
+    const tiles = t.tiles.slice();
+
+    if (tiles.length === 0) {
+        // Transparency is always index 0
+        tiles.push({ data: new pxt.sprite.Bitmap(t.tileWidth, t.tileWidth).data(), projectId: 0 })
+    }
+
+    if (id) {
+        tiles.push({ data, projectId: id });
+    }
+    else if (qname) {
+        tiles.push({ data, qualifiedName: qname });
+    }
+    else {
+        tiles.push({ data });
+    }
+
+    return {
+        ...t,
+        tiles
+    };
+}
+
+function editTile(t: pxt.sprite.TileSet, index: number, newImage: pxt.sprite.BitmapData): pxt.sprite.TileSet {
+    return {
+        ...t,
+        tiles: t.tiles.map((tile, i) => i === index ? { ...tile, data: newImage } : tile)
     }
 }
 

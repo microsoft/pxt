@@ -181,7 +181,7 @@ namespace pxtblockly {
 
             const deleted: pxt.sprite.TileInfo[] = [];
 
-            existing.filter(e => !!e.projectId).forEach(old => {
+            existing.filter(e => e.projectId != undefined).forEach(old => {
                 if (!newtiles.some(e => e.projectId === old.projectId)) {
                     deleted.push(old)
                 }
@@ -232,7 +232,7 @@ namespace pxtblockly {
             const all = wsTiles || getAllTilesetTiles(this.sourceBlock_.workspace);
 
             for (const t of tilemap.tileset.tiles) {
-                if (t.projectId) {
+                if (t.projectId != undefined) {
                     const projectTile = all.find(pt => pt.projectId === t.projectId);
 
                     if (projectTile) {
