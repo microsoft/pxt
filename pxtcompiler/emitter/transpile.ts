@@ -33,7 +33,7 @@ namespace ts.pxtc.transpile {
         let key = code + "," + depsKey
         return key
     }
-    function tryGetLanguageEquivalence(lang: Lang, txt: string, depsKey: string): LangEquivSet | undefined {
+    function tryGetCachedTranspile(lang: Lang, txt: string, depsKey: string): LangEquivSet | undefined {
         let txtComp = toComparable(txt, depsKey)
         for (let eq of codeEquivalences) {
             if (eq.comparable[lang] === txtComp) {
@@ -42,7 +42,7 @@ namespace ts.pxtc.transpile {
         }
         return undefined
     }
-    function setLanguageEquivalence(lang1: Lang, lang1Txt: string, lang1Deps: string, lang2: Lang, lang2Txt: string, lang2Deps: string) {
+    function cacheTranspile(lang1: Lang, lang1Txt: string, lang1Deps: string, lang2: Lang, lang2Txt: string, lang2Deps: string) {
         let equiv: LangEquivSet = {
             comparable: {
                 "ts": undefined,
@@ -82,7 +82,7 @@ namespace ts.pxtc.transpile {
 
     function transpileInternal(from: Lang, fromTxt: string, to: Lang, doRealTranspile: () => TranspileResult, apisInfo?: ApisInfo): TranspileResult {
         let depsKey = getDependenciesKey(apisInfo)
-        let equiv = tryGetLanguageEquivalence(from, fromTxt, depsKey)
+        let equiv = tryGetCachedTranspile(from, fromTxt, depsKey)
         if (equiv && equiv.code[to]) {
             // return from cache
             let toTxt = equiv.code[to]
@@ -96,7 +96,7 @@ namespace ts.pxtc.transpile {
         if (res.success) {
             // store the result
             let toTxt = res.outfiles[mainName(to)]
-            setLanguageEquivalence(from, fromTxt, depsKey, to, toTxt, depsKey)
+            cacheTranspile(from, fromTxt, depsKey, to, toTxt, depsKey)
         }
         return res
     }
