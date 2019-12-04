@@ -356,7 +356,7 @@ namespace pxtblockly {
                 if (pagination && i >= FieldNote.notesPerOctave)
                     position -= whiteKeysPerOctave * currentOctave * FieldNote.keyWidth;
 
-                const key = this.getKeyDiv(i, position, isMobile);
+                const key = this.getKeyDiv(i, position);
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
@@ -370,8 +370,8 @@ namespace pxtblockly {
 
             if (pagination) {
                 this.setPage(startingPage);
-                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ true));
-                pianoDiv.appendChild(this.getNextPrevDiv(pianoWidth, /** prev **/ false));
+                pianoDiv.appendChild(this.getNextPrevDiv(/** prev **/ true, pianoWidth));
+                pianoDiv.appendChild(this.getNextPrevDiv(/** prev **/ false, pianoWidth));
             }
 
             Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
@@ -452,7 +452,7 @@ namespace pxtblockly {
          * @param isPrev true if is previous button, false otherwise
          * @return DOM with the new css style.s
          */
-        protected getNextPrevDiv(pianoWidth: number, isPrev: boolean) {
+        protected getNextPrevDiv(isPrev: boolean, pianoWidth: number) {
             const xPosition = isPrev ? 0 : (pianoWidth / 2);
             const yPosition = FieldNote.keyHeight + FieldNote.labelHeight;
 
@@ -466,19 +466,21 @@ namespace pxtblockly {
                 border-bottom-color: ${this.primaryColour};`
             );
 
-            Blockly.bindEventWithChecks_(
-                output,
-                'mousedown',
-                this,
-                () => this.setPage(isPrev ? this.currentPage - 1 : this.currentPage + 1),
-                /** noCaptureIdentifier **/ true
-            );
+            pxt.BrowserUtils.pointerEvents.down.forEach(ev => {
+                Blockly.bindEventWithChecks_(
+                    output,
+                    ev,
+                    this,
+                    () => this.setPage(isPrev ? this.currentPage - 1 : this.currentPage + 1),
+                    /** noCaptureIdentifier **/ true
+                );
+            });
 
             output.textContent = isPrev ? "<" : ">";
             return output;
         }
 
-        protected getKeyDiv(keyInd: number, leftPosition: number, isMobile: boolean) {
+        protected getKeyDiv(keyInd: number, leftPosition: number) {
             const output = createStyledDiv(
                 `blocklyNote ${this.isWhite(keyInd) ? "" : "black"}`,
                 `width: ${this.getKeyWidth(keyInd)}px;
@@ -487,13 +489,15 @@ namespace pxtblockly {
                 border-color: ${this.primaryColour};`
             );
 
-            Blockly.bindEventWithChecks_(
-                output,
-                isMobile ? 'touchstart' : 'mousedown',
-                this,
-                () => this.playKey(output, this.getKeyFreq(keyInd)),
-                /** noCaptureIdentifier **/ true
-            );
+            pxt.BrowserUtils.pointerEvents.down.forEach(ev => {
+                Blockly.bindEventWithChecks_(
+                    output,
+                    ev,
+                    this,
+                    () => this.playKey(output, this.getKeyFreq(keyInd)),
+                    /** noCaptureIdentifier **/ true
+                );
+            });
 
             Blockly.bindEventWithChecks_(
                 output,
