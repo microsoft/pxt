@@ -584,11 +584,10 @@ namespace pxtblockly {
         return block.inputList.length === 1 && block.inputList[0].fieldRow.length === 1;
     }
 
-    function createStyledDiv(className: string, style?: string) {
+    function createStyledDiv(className: string, style: string) {
         const output = document.createElement("div");
         pxt.BrowserUtils.addClass(output, className);
-        if (style)
-            output.setAttribute("style", style.replace(/\s+/g, " "));
+        output.setAttribute("style", style.replace(/\s+/g, " "));
         return output;
     }
 }
