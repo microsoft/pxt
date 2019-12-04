@@ -1,6 +1,6 @@
 # GitHub
 
-[GitHub](https://github.com) is a popular web site used by developers to host and work together on code. Using the GitHub integration in MakeCode, you can seamlessly and **freely** host your programs and collaborate with friends on them.
+[GitHub](https://github.com) is a popular web site used by developers to host and work together on code. Using the GitHub integration in MakeCode, you can easily and **freely** host your programs and collaborate on them with friends.
 
 To use GitHub, you need an [account](https://github.com/join) and internet access.
 To start using GitHub, you don't need to know anything special beyond what you've already learned in MakeCode.
@@ -21,20 +21,22 @@ A **repository** is used to organize a single project. Repositories will contain
 
 #### Sign in
 
-If you haven't signed in yet with GitHub, you will be redirected to the GitHub sign page. On your first use of MakeCode, you will also be asked to authorize the **Microsoft MakeCode with GitHub** app.
+If you haven't signed in yet with GitHub, you will be redirected to the GitHub sign page. On your first use of MakeCode, you will also be asked to authorize the **Microsoft MakeCode with GitHub** app. This integrates MakeCode
 
-You can also use a [developer token](/github/token) for more advanced users.
+Advanced users can use a [developer token](/github/token) so that they can work directly with GitHub without having to sign in with the app.
 
 ### ~
 
 ### Step 2 - Make and commit changes
 
 Make any change in the code editor and you will notice that an up arrow is displayed
-on the GitHub button. The arrow means that there are changes stored on your computer and they need to get saved to GitHub. Click on that button to open the **GitHub view**.
+on the **GitHub** button. The arrow means that there are changes stored on your computer and they need to get saved to GitHub. Click on that button to open the **GitHub view**.
 
 You will see a **commit & push changes** button and a list of **diffs** under it. A **commit** is a bundled set of changes that can be uploaded to GitHub (read more about [commits](/github/commit)). A **diff** is common jargon used by developers to describe a formatted display of differences between two pieces of text (read about using [diffs](/github/diff)). Look at the diff carefully, it tells you which lines you added, deleted or modified.
 
 ### ~ hint
+
+#### Review your code
 
 It's always a good idea to review the changes you've made to your code before committing them!
 
