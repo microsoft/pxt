@@ -295,6 +295,11 @@ namespace pxtblockly {
             this.refreshText();
         }
 
+        protected onHide() {
+            this.isExpanded = false;
+            this.refreshText()
+        };
+
         /**
          * Create a piano under the note field.
          */
@@ -404,14 +409,6 @@ namespace pxtblockly {
         }
 
         /**
-         * Callback for when the drop-down is hidden.
-         */
-        protected onHide() {
-            this.isExpanded = false;
-            this.refreshText()
-        };
-
-        /**
          * Close the note picker if this input is being deleted.
          */
         dispose() {
@@ -513,7 +510,6 @@ namespace pxtblockly {
         /**
          * @param idx index of the key
          * @return true if idx is white
-         * @private
          */
         protected isWhite(idx: number): boolean {
             switch (idx % 12) {
@@ -548,11 +544,11 @@ namespace pxtblockly {
         }
 
         protected getKeyFreq(keyIndex: number) {
-            return this.getKeyNote(keyIndex).freq;
+            return this.getKeyNoteData(keyIndex).freq;
         }
 
         protected getKeyName(keyIndex: number) {
-            const note = this.getKeyNote(keyIndex);
+            const note = this.getKeyNoteData(keyIndex);
             let name = note.prefixedName;
             if (this.nKeys_ < 13) {
                 // special case: one octave
@@ -564,7 +560,7 @@ namespace pxtblockly {
             return name;
         }
 
-        private getKeyNote(keyIndex: number) {
+        private getKeyNoteData(keyIndex: number) {
             return Notes[keyIndex + this.minNote_];
         }
 
