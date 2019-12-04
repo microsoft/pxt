@@ -471,8 +471,7 @@ namespace pxtblockly {
                 'mousedown',
                 this,
                 () => this.setPage(isPrev ? this.currentPage - 1 : this.currentPage + 1),
-                /** noCaptureIdentifier **/ true,
-                /** noPreventDefault **/ true
+                /** noCaptureIdentifier **/ true
             );
 
             output.textContent = isPrev ? "<" : ">";
@@ -493,8 +492,7 @@ namespace pxtblockly {
                 isMobile ? 'touchstart' : 'mousedown',
                 this,
                 () => this.playKey(output, this.getKeyFreq(keyInd)),
-                /** noCaptureIdentifier **/ true,
-                /** noPreventDefault **/ true
+                /** noCaptureIdentifier **/ true
             );
 
             Blockly.bindEventWithChecks_(
@@ -502,8 +500,7 @@ namespace pxtblockly {
                 'mouseover',
                 this,
                 () => this.noteLabel.textContent = this.getKeyName(keyInd),
-                /** noCaptureIdentifier **/ true,
-                /** noPreventDefault **/ true
+                /** noCaptureIdentifier **/ true
             );
 
             return output;
