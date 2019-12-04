@@ -131,6 +131,7 @@ namespace pxtblockly {
         editorColour?: string;
         minNote?: string;
         maxNote?: string;
+        eps?: string;
     }
 
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
@@ -147,9 +148,11 @@ namespace pxtblockly {
         /**
          * default number of piano keys
          */
-        protected nKeys_: number = 36;
-        protected minNote_: number = 28;
-        protected maxNote_: number = 63;
+        protected nKeys_ = 36;
+        protected minNote_ = 28;
+        protected maxNote_ = 63;
+        /** Absolute error for note frequency identification (Hz) **/
+        protected eps = 2;
 
         protected primaryColour: string;
         protected borderColour: string;
@@ -161,10 +164,6 @@ namespace pxtblockly {
         protected noteLabel: HTMLDivElement;
         protected currentSelectedKey: HTMLDivElement;
 
-        /**
-         * Absolute error for note frequency identification (Hz)
-         */
-        eps: number = 2;
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text, 0, null, null, validator);
@@ -176,6 +175,11 @@ namespace pxtblockly {
             if (params.editorColour) {
                 this.primaryColour = pxtblockly.parseColour(params.editorColour);
                 this.borderColour = Blockly.utils.colour.darken(this.primaryColour, 0.2);
+            }
+
+            const eps = parseInt(params.eps);
+            if (!Number.isNaN(eps) && eps >= 0) {
+                this.eps = eps;
             }
 
             const minNote = parseInt(params.minNote) || this.minNote_;
@@ -372,27 +376,6 @@ namespace pxtblockly {
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => this.onHide());
         }
 
-        protected getKeyFreq(keyIndex: number) {
-            return this.getKeyNote(keyIndex).freq;
-        }
-
-        protected getKeyName(keyIndex: number) {
-            const note = this.getKeyNote(keyIndex);
-            let name = note.prefixedName;
-            if (this.nKeys_ < 13) {
-                // special case: one octave
-                name = note.name;
-            } else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
-                // special case: centered
-                name = note.altPrefixedName || name;
-            }
-            return name;
-        }
-
-        private getKeyNote(keyIndex: number) {
-            return Notes[keyIndex + this.minNote_];
-        }
-
         protected playKey(key: HTMLDivElement, frequency: number) {
             const notePlayID = ++this.totalPlayCount;
 
@@ -559,6 +542,27 @@ namespace pxtblockly {
             if (this.isWhite(idx))
                 return FieldNote.keyHeight;
             return FieldNote.keyHeight / 2;
+        }
+
+        protected getKeyFreq(keyIndex: number) {
+            return this.getKeyNote(keyIndex).freq;
+        }
+
+        protected getKeyName(keyIndex: number) {
+            const note = this.getKeyNote(keyIndex);
+            let name = note.prefixedName;
+            if (this.nKeys_ < 13) {
+                // special case: one octave
+                name = note.name;
+            } else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
+                // special case: centered
+                name = note.altPrefixedName || name;
+            }
+            return name;
+        }
+
+        private getKeyNote(keyIndex: number) {
+            return Notes[keyIndex + this.minNote_];
         }
 
         /**
