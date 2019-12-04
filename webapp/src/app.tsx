@@ -3788,7 +3788,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
-        case "github": { // follows a github OAuth rountrip
+        case "github": { // follows a github OAuth roundtrip
             const [hid, ghCmd] = hash.arg.split(':', 2);
             const hd = workspace.getHeader(hid);
             if (hd) {
