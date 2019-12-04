@@ -3827,6 +3827,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
+        case "github":
             return true;
         default:
             return false;
