@@ -29,20 +29,30 @@ namespace pxt.Cloud {
         })
     }
 
-    export function apiRequestWithCdnAsync(options: Util.HttpRequestOptions) {
-        if (!pxt.webConfig || pxt.webConfig.isStatic || BrowserUtils.isLocalHost() || !pxt.webConfig.cdnUrl)
-            return privateRequestAsync(options)
+    export function useCdnApi() {
+        return pxt.webConfig && !pxt.webConfig.isStatic
+            && !BrowserUtils.isLocalHost() && !!pxt.webConfig.cdnUrl
+    }
+
+    export function cdnApiUrl(url: string) {
+        if (!useCdnApi())
+            return apiRoot + url
 
         const d = new Date()
         const timestamp = d.getUTCFullYear() + ("0" + (d.getUTCMonth() + 1)).slice(-2) + ("0" + d.getUTCDate()).slice(-2)
-        let url = options.url
         if (url.indexOf("?") < 0)
             url += "?"
         else
             url += "&"
         url += "cdn=" + timestamp
         url = url.replace("?", "$")
-        options.url = pxt.webConfig.cdnUrl + "/api/" + url
+        return pxt.webConfig.cdnUrl + "/api/" + url
+    }
+
+    export function apiRequestWithCdnAsync(options: Util.HttpRequestOptions) {
+        if (!useCdnApi())
+            return privateRequestAsync(options)
+        options.url = cdnApiUrl(options.url)
         return Util.requestAsync(options)
             .catch(e => handleNetworkError(options, e))
     }
