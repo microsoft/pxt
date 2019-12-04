@@ -3788,6 +3788,21 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
+        case "github": { // follows a github OAuth rountrip
+            const [hid, ghCmd] = hash.arg.split(':', 2);
+            const hd = workspace.getHeader(hid);
+            if (hd) {
+                switch (ghCmd) {
+                    case "create-repository":
+                        pxt.BrowserUtils.changeHash("");
+                        theEditor.loadHeaderAsync(hd)
+                            .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
+                            .done(r => r && theEditor.reloadHeaderAsync())
+                        return true;
+                }
+            }
+            break;
+        }
     }
 
     return false;
@@ -4072,10 +4087,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
-            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
-            let hd = workspace.getHeaders()[0];
-            if (ent) hd = workspace.getHeader(ent.id);
-
             if (theEditor.shouldShowHomeScreen() && !hasWinRTProject) {
                 return Promise.resolve();
             } else {
@@ -4090,6 +4101,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // default handlers
+            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
+            let hd = workspace.getHeaders()[0];
+            if (ent) hd = workspace.getHeader(ent.id);
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
             else theEditor.newProject();
             return Promise.resolve();
