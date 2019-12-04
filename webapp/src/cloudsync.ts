@@ -208,7 +208,7 @@ export class ProviderBase {
 
     protected loginInner() {
         const ns = this.name
-        core.showLoading(ns + "login", lf("Logging you in to {0}...", this.friendlyName))
+        core.showLoading(ns + "login", lf("Signing you in to {0}...", this.friendlyName))
         const state = setOauth(ns);
 
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
