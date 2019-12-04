@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
+
+December 2nd, 2019 by [Jaqster](https://github.com/jaqster)
+
+If you’ve ever thought about using Minecraft for teaching and learning, but haven’t taken
+the plunge yet, this is a great time to try it out!
+**[Continue reading this blog post](/blog/minecraft/hour-of-code-2019)**
+
 ## [Translations in Context](/blog/translations-in-context)
 
 October 17th, 2019 by [pelikhan](https://github.com/pelikhan)
