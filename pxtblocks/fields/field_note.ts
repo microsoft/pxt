@@ -137,17 +137,6 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
         public SERIALIZABLE = true;
 
-        protected primaryColour: string;
-        protected borderColour: string;
-        protected isExpanded: Boolean;
-
-        /**
-         * default number of piano keys
-         */
-        private nKeys_: number = 36;
-        private minNote_: number = 28;
-        private maxNote_: number = 63;
-
         protected static readonly keyWidth = 22;
         protected static readonly keyHeight = 90;
         protected static readonly labelHeight = 24;
@@ -155,11 +144,22 @@ namespace pxtblockly {
         protected static readonly notesPerOctave = 12;
         protected static readonly blackKeysPerOctave = 5;
 
+        /**
+         * default number of piano keys
+         */
+        protected nKeys_: number = 36;
+        protected minNote_: number = 28;
+        protected maxNote_: number = 63;
+
+        protected primaryColour: string;
+        protected borderColour: string;
+        protected isExpanded: Boolean;
+        protected totalPlayCount: number;
+
         protected currentPage: number;
         protected piano: HTMLDivElement[];
         protected noteLabel: HTMLDivElement;
         protected currentSelectedKey: HTMLDivElement;
-        protected totalPlayCount: number;
 
         /**
          * Absolute error for note frequency identification (Hz)
@@ -202,7 +202,6 @@ namespace pxtblockly {
 
             const n = parseFloat(text || "0");
             if (isNaN(n) || n < 0) {
-                // Invalid number.
                 return null;
             }
 
@@ -254,14 +253,10 @@ namespace pxtblockly {
          * @return {string} Current text.
          */
         getText(): string {
-            return this.convertToText(this.value_);
-        }
-
-        protected convertToText(value: any) {
             if (this.isExpanded) {
-                return "" + value;
+                return "" + this.value_;
             } else {
-                const note = +value;
+                const note = +this.value_;
                 for (let i = 0; i < this.nKeys_; i++) {
                     if (Math.abs(this.getKeyFreq(i) - note) < this.eps) {
                         return this.getKeyName(i);
@@ -274,9 +269,24 @@ namespace pxtblockly {
             }
         }
 
+        /**
+         * This block shows up differently when it's being edited;
+         * on any transition between `editing <--> not-editing`
+         * or other change in state,
+         * refresh the text to get back into a valid state.
+         **/
+        protected refreshText() {
+            this.setText(this.getText());
+            this.forceRerender();
+        }
+
         onHtmlInputChange_(e: any) {
             super.onHtmlInputChange_(e);
             Blockly.DropDownDiv.hideWithoutAnimation();
+        }
+
+        onFinishEditing_(text: string) {
+            this.refreshText();
         }
 
         /**
@@ -340,7 +350,7 @@ namespace pxtblockly {
                 if (pagination && i >= FieldNote.notesPerOctave)
                     position -= whiteKeysPerOctave * currentOctave * FieldNote.keyWidth;
 
-                const key = this.getKey(i, position, isMobile);
+                const key = this.getKeyDiv(i, position, isMobile);
                 this.piano.push(key);
                 pianoDiv.appendChild(key);
 
@@ -435,21 +445,6 @@ namespace pxtblockly {
             }
         }
 
-        onFinishEditing_(text: string) {
-            this.refreshText();
-        }
-
-        /**
-         * This block shows up differently when it's being edited;
-         * on any transition between `editing <--> not-editing`
-         * or other change in state,
-         * refresh the text to get back into a valid state.
-         **/
-        protected refreshText() {
-            this.setText(this.getText());
-            this.forceRerender();
-        }
-
         protected setPage(page: number) {
             const pageCount = this.nKeys_ / FieldNote.notesPerOctave;
 
@@ -499,7 +494,7 @@ namespace pxtblockly {
             return output;
         }
 
-        protected getKey(keyInd: number, leftPosition: number, isMobile: boolean) {
+        protected getKeyDiv(keyInd: number, leftPosition: number, isMobile: boolean) {
             const output = createStyledDiv(
                 `blocklyNote ${this.isWhite(keyInd) ? "" : "black"}`,
                 `width: ${this.getKeyWidth(keyInd)}px;
