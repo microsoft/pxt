@@ -15,10 +15,6 @@ let currentProvider: IdentityProvider
 let status = ""
 
 const HEADER_JSON = ".cloudheader.json"
-export const OAUTH_TYPE = "oauthType";
-export const OAUTH_REDIRECT = "oauthRedirect";
-export const OAUTH_STATE = "oauthState";
-export const OAUTH_HASH = "oauthHash";
 
 export interface FileInfo {
     id: string;
@@ -73,6 +69,27 @@ function mkSyncError(msg: string) {
     e.isUserError = true;
     e.isSyncError = true;
     return e
+}
+
+export const OAUTH_TYPE = "oauthType";
+export const OAUTH_STATE = "oauthState";
+export const OAUTH_REDIRECT = "oauthRedirect";
+export const OAUTH_HASH = "oauthHash";
+
+export function setOauth(type: string, redirect?: string, hash?: string) {
+    const state = ts.pxtc.Util.guidGen();
+    pxt.storage.setLocal(OAUTH_TYPE, type);
+    pxt.storage.setLocal(OAUTH_STATE, state);
+    pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.href)
+    pxt.storage.setLocal(OAUTH_HASH, hash)
+    return state;
+}
+
+function clearOauth() {
+    pxt.storage.removeLocal(OAUTH_TYPE)
+    pxt.storage.removeLocal(OAUTH_STATE)
+    pxt.storage.removeLocal(OAUTH_REDIRECT)
+    pxt.storage.removeLocal(OAUTH_HASH)
 }
 
 export class ProviderBase {
@@ -192,10 +209,8 @@ export class ProviderBase {
     protected loginInner() {
         const ns = this.name
         core.showLoading(ns + "login", lf("Logging you in to {0}...", this.friendlyName))
-        pxt.storage.setLocal(OAUTH_TYPE, ns)
-        pxt.storage.setLocal(OAUTH_REDIRECT, window.location.href)
-        const state = ts.pxtc.Util.guidGen();
-        pxt.storage.setLocal(OAUTH_STATE, state)
+        const state = setOauth(ns);
+
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
@@ -386,10 +401,7 @@ export function resetAsync() {
     currentProvider = null
 
     pxt.storage.removeLocal("cloudId")
-    pxt.storage.removeLocal(OAUTH_TYPE)
-    pxt.storage.removeLocal(OAUTH_STATE)
-    pxt.storage.removeLocal(OAUTH_HASH)
-    pxt.storage.removeLocal(OAUTH_REDIRECT)
+    clearOauth();
     invalidateData();
 
     return Promise.resolve()
