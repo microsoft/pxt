@@ -183,7 +183,7 @@ namespace pxtblockly {
 
             const minNote = parseInt(params.minNote) || this.minNote_;
             const maxNote = parseInt(params.maxNote) || this.maxNote_;
-            if (minNote >= 28 && maxNote <= 76 && maxNote > minNote) {
+            if (minNote >= 28 && maxNote < 75 && maxNote > minNote) {
                 this.minNote_ = minNote;
                 this.maxNote_ = maxNote;
                 this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
