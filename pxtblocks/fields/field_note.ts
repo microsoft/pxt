@@ -164,7 +164,6 @@ namespace pxtblockly {
         protected noteLabel: HTMLDivElement;
         protected currentSelectedKey: HTMLDivElement;
 
-
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
             super(text, 0, null, null, validator);
 
@@ -197,7 +196,7 @@ namespace pxtblockly {
         /**
          * Ensure that only a non negative number may be entered.
          * @param {string} text The user's text.
-         * @return {?string} A string representing a valid positive number, or null if invalid.
+         * @return A string representing a valid positive number, or null if invalid.
          */
         doClassValidation_(text: string) {
             if (text === null) {
@@ -215,7 +214,7 @@ namespace pxtblockly {
 
         /**
          * Return the current note frequency.
-         * @return {string} Current note in string format.
+         * @return Current note in string format.
          */
         getValue(): string {
             return this.value_ + "";
@@ -254,7 +253,7 @@ namespace pxtblockly {
 
         /**
          * Get the text from this field
-         * @return {string} Current text.
+         * @return Current text.
          */
         getText(): string {
             if (this.isExpanded) {
@@ -305,7 +304,7 @@ namespace pxtblockly {
             Blockly.DropDownDiv.clearContent();
 
             const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
-            // invoke FieldTextInputs showeditor, so we can set quiet explicitly.
+            // invoke FieldTextInputs showeditor, so we can set quiet explicitly / not have a pop up dialogue
             (FieldNote as any).superClass_.showEditor_.call(this, e, /** quiet **/ isMobile, /** readonly **/ isMobile);
             this.refreshText();
 
