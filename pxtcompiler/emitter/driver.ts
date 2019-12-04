@@ -205,6 +205,8 @@ namespace ts.pxtc {
         if (!compilerHooks) {
             // run the extension at most once
             compilerHooks = {}
+
+            // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
             if (opts.target.compilerExtension)
                 // tslint:disable-next-line
                 eval(opts.target.compilerExtension)
