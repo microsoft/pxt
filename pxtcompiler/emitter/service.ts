@@ -839,6 +839,7 @@ namespace ts.pxtc.service {
             service.cleanupSemanticCache();
             lastApiInfo = null
             host.reset()
+            transpile.resetCache()
         },
 
         setOptions: v => {

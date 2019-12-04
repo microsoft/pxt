@@ -26,15 +26,17 @@ namespace ts.pxtc.transpile {
     let codeEquivalences: LangEquivSet[] = []
     const MAX_CODE_EQUIVS = 10
 
-    function toComparable(code: string, depsKey: string): string {
+    function toComparable(code: string): string {
         // Ignore whitespace
         code = code.replace(/\s/g, "")
 
-        let key = code + "," + depsKey
-        return key
+        return code
     }
-    function tryGetCachedTranspile(lang: Lang, txt: string, depsKey: string): LangEquivSet | undefined {
-        let txtComp = toComparable(txt, depsKey)
+    export function resetCache() {
+        codeEquivalences = []
+    }
+    function tryGetCachedTranspile(lang: Lang, txt: string): LangEquivSet | undefined {
+        let txtComp = toComparable(txt)
         for (let eq of codeEquivalences) {
             if (eq.comparable[lang] === txtComp) {
                 return eq
@@ -42,7 +44,7 @@ namespace ts.pxtc.transpile {
         }
         return undefined
     }
-    function cacheTranspile(lang1: Lang, lang1Txt: string, lang1Deps: string, lang2: Lang, lang2Txt: string, lang2Deps: string) {
+    function cacheTranspile(lang1: Lang, lang1Txt: string, lang2: Lang, lang2Txt: string) {
         let equiv: LangEquivSet = {
             comparable: {
                 "ts": undefined,
@@ -56,9 +58,9 @@ namespace ts.pxtc.transpile {
             }
         }
         equiv.code[lang1] = lang1Txt
-        equiv.comparable[lang1] = toComparable(lang1Txt, lang1Deps)
+        equiv.comparable[lang1] = toComparable(lang1Txt)
         equiv.code[lang2] = lang2Txt
-        equiv.comparable[lang2] = toComparable(lang2Txt, lang2Deps)
+        equiv.comparable[lang2] = toComparable(lang2Txt)
 
         codeEquivalences.unshift(equiv)
 
@@ -76,13 +78,8 @@ namespace ts.pxtc.transpile {
         }
     }
 
-    function getDependenciesKey(apisInfo?: ApisInfo): string {
-        return apisInfo ? Object.keys(apisInfo.byQName).join(",") : ","
-    }
-
-    function transpileInternal(from: Lang, fromTxt: string, to: Lang, doRealTranspile: () => TranspileResult, apisInfo?: ApisInfo): TranspileResult {
-        let depsKey = getDependenciesKey(apisInfo)
-        let equiv = tryGetCachedTranspile(from, fromTxt, depsKey)
+    function transpileInternal(from: Lang, fromTxt: string, to: Lang, doRealTranspile: () => TranspileResult): TranspileResult {
+        let equiv = tryGetCachedTranspile(from, fromTxt)
         if (equiv && equiv.code[to]) {
             // return from cache
             let toTxt = equiv.code[to]
@@ -96,7 +93,7 @@ namespace ts.pxtc.transpile {
         if (res.success) {
             // store the result
             let toTxt = res.outfiles[mainName(to)]
-            cacheTranspile(from, fromTxt, depsKey, to, toTxt, depsKey)
+            cacheTranspile(from, fromTxt, to, toTxt)
         }
         return res
     }
@@ -109,7 +106,7 @@ namespace ts.pxtc.transpile {
         let fromTxt = options.fileSystem[filename]
         U.assert(!!fromTxt, `Missing file "${filename}" when converting from py->ts`)
 
-        return transpileInternal("py", fromTxt, "ts", doRealTranspile, options.apisInfo)
+        return transpileInternal("py", fromTxt, "ts", doRealTranspile)
     }
 
     export function tsToPy(program: ts.Program, filename: string = mainName("ts")): TranspileResult {
@@ -120,8 +117,6 @@ namespace ts.pxtc.transpile {
         U.assert(!!tsSrc, `Missing file "${filename}" when converting from ts->py`)
         let fromTxt = tsSrc.getText()
 
-        let apisInfo = pxtc.getApiInfo(program)
-
-        return transpileInternal("ts", fromTxt, "py", doRealTranspile, apisInfo)
+        return transpileInternal("ts", fromTxt, "py", doRealTranspile)
     }
 }
