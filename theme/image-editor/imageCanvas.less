@@ -59,7 +59,18 @@
     position: fixed;
     height: 0px;
     width: 0px;
-    border: 2px dotted #000000;
+    border: 3px solid #dddddd;
+}
+
+.image-editor-floating-layer:before {
+    content: "";
+    border: 3px dashed #000000;
+    display: block;
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    bottom: -3px;
+    right: -3px;
 }
 
 .paint-container {
