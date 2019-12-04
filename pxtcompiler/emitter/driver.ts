@@ -194,7 +194,27 @@ namespace ts.pxtc {
         return U.startsWith(filename, "pxt_modules/")
     }
 
+    export interface CompilerHooks {
+        init?(opts: CompileOptions, service?: LanguageService): void;
+        preBinary?(program: Program, opts: CompileOptions, res: CompileResult): void;
+        postBinary?(program: Program, opts: CompileOptions, res: CompileResult): void;
+    }
+    export let compilerHooks: CompilerHooks
+
     export function compile(opts: CompileOptions, service?: LanguageService) {
+        if (!compilerHooks) {
+            // run the extension at most once
+            compilerHooks = {}
+
+            // The extension JavaScript code comes from target.json. It is generated from compiler/*.ts in target by 'pxt buildtarget'
+            if (opts.target.compilerExtension)
+                // tslint:disable-next-line
+                eval(opts.target.compilerExtension)
+        }
+
+        if (compilerHooks.init)
+            compilerHooks.init(opts, service)
+
         let startTime = U.cpuUs()
         let res = mkCompileResult()
 

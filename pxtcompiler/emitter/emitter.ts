@@ -933,6 +933,10 @@ namespace ts.pxtc {
         opts: CompileOptions,
         res: CompileResult,
         entryPoint: string): EmitResult {
+
+        if (compilerHooks.preBinary)
+            compilerHooks.preBinary(program, opts, res)
+
         target = opts.target
         compileOptions = opts
         target.debugMode = !!opts.breakpoints
@@ -1087,6 +1091,9 @@ namespace ts.pxtc {
 
         if (resDiags.length == 0)
             resDiags = diagnostics.getDiagnostics()
+
+        if (compilerHooks.postBinary)
+            compilerHooks.postBinary(program, opts, res)
 
         return {
             diagnostics: resDiags,
