@@ -72,15 +72,15 @@ function mkSyncError(msg: string) {
 }
 
 export const OAUTH_TYPE = "oauthType";
-export const OAUTH_STATE = "oauthState";
-export const OAUTH_REDIRECT = "oauthRedirect";
-export const OAUTH_HASH = "oauthHash";
+export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
+export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
+export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
 
 export function setOauth(type: string, redirect?: string, hash?: string) {
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal(OAUTH_TYPE, type);
     pxt.storage.setLocal(OAUTH_STATE, state);
-    pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.href)
+    pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.hash)
     pxt.storage.setLocal(OAUTH_HASH, hash)
     return state;
 }
@@ -666,6 +666,8 @@ export function loginCheck() {
                 pxt.storage.removeLocal(OAUTH_HASH);
                 impl.loginCallback(qs)
             }
+            // cleanup
+            clearOauth();
         }
     }
 
@@ -681,10 +683,14 @@ export function loginCheck() {
                 pxt.storage.removeLocal(OAUTH_STATE)
                 pxt.storage.removeLocal(OAUTH_TYPE);
                 const impl = provs.filter(p => p.name == tp)[0];
-                if (impl)
+                if (impl) {
                     impl.loginCallback(qs);
+                    const hash = pxt.storage.getLocal(OAUTH_REDIRECT) || "";
+                    location.hash = hash;
+                }
             }
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
+            // cleanup
+            clearOauth();
         }
     }
 
