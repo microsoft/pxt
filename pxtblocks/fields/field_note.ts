@@ -383,15 +383,14 @@ namespace pxtblockly {
             return Notes[keyIndex + this.minNote_];
         }
 
-        protected playKey(key: HTMLDivElement) {
+        protected playKey(key: HTMLDivElement, frequency: number) {
             const notePlayID = ++this.totalPlayCount;
-            const freq = key.getAttribute("frequency");
 
             if (this.currentSelectedKey !== key) {
                 if (this.currentSelectedKey)
                     pxt.BrowserUtils.removeClass(this.currentSelectedKey, "selected");
                 pxt.BrowserUtils.addClass(key, "selected");
-                this.setValue(freq);
+                this.setValue(frequency);
             }
 
             this.currentSelectedKey = key;
@@ -400,9 +399,9 @@ namespace pxtblockly {
              * do not show up on the block itself until after the fieldeditor is closed,
              * as it is currently in an editable state.
              **/
-            (this as any).htmlInput_.value = this.convertToText(freq);
+            (this as any).htmlInput_.value = this.getText();
 
-            pxt.AudioContextManager.tone(+freq);
+            pxt.AudioContextManager.tone(frequency);
             setTimeout(() => {
                 // Clear the sound if it is still playing after 300ms
                 if (this.totalPlayCount == notePlayID) pxt.AudioContextManager.stop();
@@ -509,13 +508,11 @@ namespace pxtblockly {
                 border-color: ${this.primaryColour};`
             );
 
-            output.setAttribute("frequency", this.getKeyFreq(keyInd) + "");
-
             Blockly.bindEventWithChecks_(
                 output,
                 isMobile ? 'touchstart' : 'mousedown',
                 this,
-                () => this.playKey(output),
+                () => this.playKey(output, this.getKeyFreq(keyInd)),
                 /** noCaptureIdentifier **/ true,
                 /** noPreventDefault **/ true
             );
