@@ -15,6 +15,10 @@ let currentProvider: IdentityProvider
 let status = ""
 
 const HEADER_JSON = ".cloudheader.json"
+export const OAUTH_TYPE = "oauthType";
+export const OAUTH_REDIRECT = "oauthRedirect";
+export const OAUTH_STATE = "oauthState";
+export const OAUTH_HASH = "oauthHash";
 
 export interface FileInfo {
     id: string;
@@ -188,10 +192,10 @@ export class ProviderBase {
     protected loginInner() {
         const ns = this.name
         core.showLoading(ns + "login", lf("Logging you in to {0}...", this.friendlyName))
-        pxt.storage.setLocal("oauthType", ns)
-        pxt.storage.setLocal("oauthRedirect", window.location.href)
+        pxt.storage.setLocal(OAUTH_TYPE, ns)
+        pxt.storage.setLocal(OAUTH_REDIRECT, window.location.href)
         const state = ts.pxtc.Util.guidGen();
-        pxt.storage.setLocal("oauthState", state)
+        pxt.storage.setLocal(OAUTH_STATE, state)
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
@@ -382,10 +386,10 @@ export function resetAsync() {
     currentProvider = null
 
     pxt.storage.removeLocal("cloudId")
-    pxt.storage.removeLocal("oauthType")
-    pxt.storage.removeLocal("oauthState")
-    pxt.storage.removeLocal("oauthHash")
-    pxt.storage.removeLocal("oauthRedirect")
+    pxt.storage.removeLocal(OAUTH_TYPE)
+    pxt.storage.removeLocal(OAUTH_STATE)
+    pxt.storage.removeLocal(OAUTH_HASH)
+    pxt.storage.removeLocal(OAUTH_REDIRECT)
     invalidateData();
 
     return Promise.resolve()
@@ -642,12 +646,12 @@ export function loginCheck() {
 
     // implicit OAuth flow, via query argument
     {
-        const qs = core.parseQueryString(pxt.storage.getLocal("oauthHash") || "")
+        const qs = core.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
         if (qs["access_token"]) {
-            const tp = pxt.storage.getLocal("oauthType")
+            const tp = pxt.storage.getLocal(OAUTH_TYPE)
             const impl = provs.filter(p => p.name == tp)[0];
             if (impl) {
-                pxt.storage.removeLocal("oauthHash");
+                pxt.storage.removeLocal(OAUTH_HASH);
                 impl.loginCallback(qs)
             }
         }
@@ -659,11 +663,11 @@ export function loginCheck() {
             .slice(1)
             .replace(/%23access_token/, "access_token"));
         if (qs["access_token"]) {
-            const ex = pxt.storage.getLocal("oauthState");
-            const tp = pxt.storage.getLocal("oauthType");
+            const ex = pxt.storage.getLocal(OAUTH_STATE);
+            const tp = pxt.storage.getLocal(OAUTH_TYPE);
             if (ex && ex == qs["state"]) {
-                pxt.storage.removeLocal("oauthState")
-                pxt.storage.removeLocal("oauthType");
+                pxt.storage.removeLocal(OAUTH_STATE)
+                pxt.storage.removeLocal(OAUTH_TYPE);
                 const impl = provs.filter(p => p.name == tp)[0];
                 if (impl)
                     impl.loginCallback(qs);
@@ -675,6 +679,19 @@ export function loginCheck() {
     // notify cloud providers
     for (const impl of provs)
         impl.loginCheck();
+}
+
+export function githubLogin() {
+    core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
+    const self = window.location.href.replace(/#.*/, "")
+    const state = ts.pxtc.Util.guidGen();
+    pxt.storage.setLocal(OAUTH_STATE, state)
+    pxt.storage.setLocal(OAUTH_TYPE, "github")
+    const login = pxt.Cloud.getServiceUrl() +
+        "/oauth/login?state=" + state +
+        "&response_type=token&client_id=gh-token&redirect_uri=" +
+        encodeURIComponent(self)
+    window.location.href = login
 }
 
 export function saveToCloudAsync(h: Header) {
