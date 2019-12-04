@@ -157,6 +157,7 @@ const initialStore: ImageEditorStore = {
         backgroundColor: 1,
         previewAnimating: false,
         onionSkinEnabled: false,
+        overlayEnabled: true,
         isTilemap: false
     }
 }
@@ -231,7 +232,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             return {
                 ...state,
                 editor: {
-                    ...state.editor,
+                    ...initialStore.editor,
                     isTilemap: false,
                 },
                 store: {

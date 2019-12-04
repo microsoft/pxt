@@ -186,7 +186,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         else {
             this.categoryTiles = tileset.tiles
                 .map((t, i) => ([t, i] as [pxt.sprite.TileInfo, number]))
-                .filter(([t]) => !t.qualifiedName && t.data)
+                .filter(([t]) => t.projectId != undefined && t.data)
+                .sort(([a], [b]) => a.projectId - b.projectId)
                 .map(([t, i]) => ({ index: i, bitmap: t.data }));
         }
 
