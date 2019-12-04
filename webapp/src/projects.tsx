@@ -718,7 +718,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
         const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
-        const video = !pxt.BrowserUtils.isElectron() && !pxt.BrowserUtils.isSafari() && videoUrl;
+        const video = !pxt.BrowserUtils.isElectron() && videoUrl;
 
         let clickLabel = lf("Show Instructions");
         if (buttonLabel)
