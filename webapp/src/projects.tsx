@@ -269,8 +269,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
-        if (githubProvider)
+        if (githubProvider) {
             githubProvider.logout();
+            this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub"))
+        }
     }
 
     renderCore() {
