@@ -541,7 +541,7 @@ export class ProjectView
                     if (pyAsTsSrc == tsSrc) {
                         // decompiled python is same current typescript, go back to python without ts->py conversion
                         pxt.debug(`ts -> py shortcut`)
-                        this.setFile(pkg.mainEditorPkg().files["main.py"]);
+                        this.setFile(pySrcFile);
                         return Promise.resolve();
                     }
                     else return this.convertTypeScriptToPythonAsync();
