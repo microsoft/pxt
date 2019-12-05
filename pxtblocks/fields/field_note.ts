@@ -550,7 +550,7 @@ namespace pxtblockly {
         protected getKeyName(keyIndex: number) {
             const note = this.getKeyNoteData(keyIndex);
             let name = note.prefixedName;
-            if (this.nKeys_ < 13) {
+            if (this.nKeys_ <= FieldNote.notesPerOctave) {
                 // special case: one octave
                 name = note.name;
             } else if (this.minNote_ >= 28 && this.maxNote_ <= 63) {
