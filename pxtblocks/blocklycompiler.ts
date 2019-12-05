@@ -1695,6 +1695,16 @@ namespace pxt.blocks {
                 }
             });
 
+            const tiles = pxtblockly.getAllTilesetTiles(w);
+            if (tiles.length) {
+                stmtsEnums.push(mkGroup([
+                    mkText(`namespace myTiles`),
+                    mkBlock(tiles.map(
+                        t => mkStmt(mkText(`export const tile${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`)
+                    )))
+                ]));
+            }
+
             const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, e));
 
             const diags: BlockDiagnostic[] = [];

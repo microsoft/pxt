@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connect } from "react-redux";
 
-import { ImageEditorStore } from "./store/imageReducer";
+import { ImageEditorStore, AnimationState } from "./store/imageReducer";
 import { dispatchChangeCurrentFrame, dispatchNewFrame, dispatchDuplicateFrame, dispatchDeleteFrame, dispatchMoveFrame } from "./actions/dispatch";
 
 import { TimelineFrame } from "./TimelineFrame";
@@ -220,8 +220,8 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
         const bitmap = pxt.sprite.Bitmap.fromData(imageState.bitmap);
         this.drawBitmap(bitmap);
 
-        if (imageState.floatingLayer) {
-            const floating = pxt.sprite.Bitmap.fromData(imageState.floatingLayer);
+        if (imageState.floating && imageState.floating.bitmap) {
+            const floating = pxt.sprite.Bitmap.fromData(imageState.floating.bitmap);
             this.drawBitmap(floating, imageState.layerOffsetX, imageState.layerOffsetY, true);
         }
     }
@@ -268,7 +268,8 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
     }
 }
 
-function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
+    let state = present as AnimationState;
     if (!state) return {};
     return {
         frames: state.frames,
