@@ -360,7 +360,7 @@ The blocks are specified the same as in any other markdown document. During the 
 ````
 ## Step 3 - Show the temperature
 
-Get a ``||input:temperature|| block and place it in the value slot of ``||basic:show number||``.
+Get a ``||input:temperature||`` block and place it in the value slot of ``||basic:show number||``.
 
 ```blocks
 forever(function() {
