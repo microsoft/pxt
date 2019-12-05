@@ -137,6 +137,7 @@ namespace pxtblockly {
     export class FieldNote extends Blockly.FieldNumber implements Blockly.FieldCustom {
         public isFieldCustom_ = true;
         public SERIALIZABLE = true;
+        public isTextValid_ = true;
 
         protected static readonly keyWidth = 22;
         protected static readonly keyHeight = 90;
