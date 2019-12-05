@@ -173,7 +173,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics: pxtc.KsDiagnostic[] }> {
+export function py2tsAsync(): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
@@ -248,7 +248,7 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string, generat
     return workerOpAsync("decompile", { options: opts, fileName: fileName, generatedVarDeclarations: generatedVarDeclarations });
 }
 
-export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
+export function pyDecompileAsync(fileName: string): Promise<pxtc.transpile.TranspileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
@@ -286,7 +286,7 @@ export function decompilePythonSnippetAsync(code: string): Promise<string> {
         })
 }
 
-function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.transpile.TranspileResult> {
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 

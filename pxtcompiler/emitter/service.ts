@@ -1,3 +1,8 @@
+// TODO: enable reference so we don't need to use: (pxt as any).py
+//      the issue is that this creates a circular dependency. This
+//      is easily handled if we used proper TS modules.
+//// <reference path="../../built/pxtpy.d.ts"/>
+
 namespace ts.pxtc {
 
     export const placeholderChar = "◊";
@@ -834,6 +839,7 @@ namespace ts.pxtc.service {
             service.cleanupSemanticCache();
             lastApiInfo = null
             host.reset()
+            transpile.resetCache()
         },
 
         setOptions: v => {
@@ -852,6 +858,10 @@ namespace ts.pxtc.service {
                 position: v.position,
                 type: v.infoType
             };
+            // TODO: we likely already have the syntax info from a previous compile,
+            // we should do better about cache the latest results and serving those
+            // here. Also, we shouldn't mutate "opts" (the input) and instead make
+            // the syntaxInfo part of the output.
             (pxt as any).py.py2ts(opts)
             return opts.syntaxInfo
         },
@@ -903,6 +913,10 @@ namespace ts.pxtc.service {
                 position: complPosition,
                 type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
             };
+            // TODO: we likely already have the syntax info from a previous compile,
+            // we should do better about cache the latest results and serving those
+            // here. Also, we shouldn't mutate "opts" (the input) and instead make
+            // the syntaxInfo part of the output.
             (pxt as any).py.py2ts(opts)
             let symbols = opts.syntaxInfo.symbols || []
 
@@ -943,7 +957,8 @@ namespace ts.pxtc.service {
         },
         pydecompile: v => {
             host.setOpts(v.options)
-            return (pxt as any).py.decompileToPython(service.getProgram(), v.fileName);
+            return transpile.tsToPy(service.getProgram(), v.fileName);
+
         },
         assemble: v => {
             return {
@@ -953,7 +968,7 @@ namespace ts.pxtc.service {
 
         py2ts: v => {
             addApiInfo(v.options)
-            return (pxt as any).py.py2ts(v.options)
+            return transpile.pyToTs(v.options)
         },
 
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
@@ -961,6 +976,10 @@ namespace ts.pxtc.service {
         allDiags: () => {
             // not comapatible with incremental compilation
             // host.opts.noEmit = true
+            // TODO: "allDiags" sounds like it's just reading state
+            // but it's actually kicking off a full compile. We should
+            // do better about caching and returning cached results from
+            // previous compiles.
             let res = runConversionsAndCompileUsingService();
             timesToMs(res);
             if (host.opts.target.switches.time)

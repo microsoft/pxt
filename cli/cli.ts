@@ -1319,6 +1319,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
+        .then(() => buildFolderAsync('compiler', true, 'compiler'))
+        .then(() => fillInCompilerExtension(pxt.appTarget))
         .then(() => options.rebundle ? buildTargetCoreAsync({ quick: true }) : buildTargetCoreAsync(options))
         .then(() => buildSimAsync())
         .then(() => buildFolderAsync('cmds', true))
@@ -1706,6 +1708,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                             gcard.imageUrl = card.imageUrl;
                         if (card.largeImageUrl && !gcard.largeImageUrl)
                             gcard.largeImageUrl = card.largeImageUrl;
+                        if (card.videoUrl && !gcard.videoUrl)
+                            gcard.videoUrl = card.videoUrl;
                         const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
                         tocmd += `  * [${card.name || card.title}](${url})
 `;
@@ -2073,7 +2077,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     return buildWebStringsAsync()
         .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
-            pxt.log(`building ${dirname}`);
+            pxt.log(`building bundled ${dirname}`);
             let isPrj = /prj$/.test(dirname);
             const isHw = /hw---/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
@@ -2152,9 +2156,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             if (coreInfo) {
                 // Don't bother with dependencies of the core package
                 if (coreDependencies) {
-                    for (const dep of coreDependencies) {
-                        builtInfo["libs/" + dep].apis.byQName = {};
-                    }
+                    coreDependencies
+                        .map(dep => builtInfo["libs/" + dep])
+                        .filter(bi => !!bi)
+                        .forEach(bi => bi.apis.byQName = {});
                 }
 
                 Object.keys(builtInfo).filter(k => k !== corepkg).map(k => builtInfo[k]).forEach(info => {
@@ -2178,6 +2183,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                 targetCrowdinBranch: targetCrowdinBranch()
             }
             saveThemeJson(cfg, options.localDir, options.packaged)
+            fillInCompilerExtension(cfg);
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = nodeutil.stringify(cfg)
@@ -2189,6 +2195,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             delete targetlight.bundledpkgs;
             delete targetlight.appTheme;
             delete targetlight.apiInfo;
+            if (targetlight.compile)
+                delete targetlight.compile.compilerExtension;
             const targetlightjson = nodeutil.stringify(targetlight);
             nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
             nodeutil.writeFileSync("built/sim.webmanifest", nodeutil.stringify(webmanifest))
@@ -2196,6 +2204,15 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => {
             console.log("target.json built.")
         })
+}
+
+function fillInCompilerExtension(cfg: pxt.TargetBundle) {
+    const compPath = path.join(nodeutil.targetDir, "built/compiler.js")
+    if (fs.existsSync(compPath)) {
+        const src = fs.readFileSync(compPath, "utf8");
+        // remove top-level namespace declarations, so it evals() correctly
+        cfg.compile.compilerExtension = src.replace(/^var \w+;$/gm, "");
+    }
 }
 
 function deleteRedundantSymbols(core: pxt.Map<pxtc.SymbolInfo | pxt.JRes>, trg: pxt.Map<pxtc.SymbolInfo | pxt.JRes>) {
@@ -3821,7 +3838,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boole
                         opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
                         let ts2Res = pxt.py.py2ts(opts)
 
-                        let ts2 = ts2Res.generated["main.ts"];
+                        let ts2 = ts2Res.outfiles["main.ts"];
 
                         if (!ts2) {
                             console.log("py2ts error!")
@@ -4077,6 +4094,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     pxt.log(`building ${process.cwd()}`)
+    const config = nodeutil.readPkgConfig(process.cwd());
     return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
@@ -4104,8 +4122,10 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }
             });
 
-            reportDiagnostics(res.diagnostics);
-            if (!res.success && buildOpts.mode != BuildOption.GenDocs) {
+            const shouldExit = !res.success && buildOpts.mode != BuildOption.GenDocs
+            if (shouldExit || !config.partial)
+                reportDiagnostics(res.diagnostics);
+            if (shouldExit) {
                 process.exit(1)
             }
 
@@ -6136,6 +6156,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     nodeutil.setTargetDir(targetDir);
 
     let trg = nodeutil.getPxtTarget()
+    fillInCompilerExtension(trg)
     pxt.setAppTarget(trg)
 
     pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
