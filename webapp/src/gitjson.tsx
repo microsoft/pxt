@@ -72,6 +72,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
     }
 
     private async newBranchAsync() {
+        await cloudsync.ensureGitHubTokenAsync();
         const gid = this.parsedRepoId()
         const initialBranchName = await pxt.github.getNewBranchNameAsync(gid.fullName, "patch-")
         const branchName = await core.promptAsync({

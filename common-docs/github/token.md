@@ -1,12 +1,20 @@
 # GitHub Token
 
-You can use a **GitHub developer token** to sign in with GitHub; if you do not want to use the app. The token is valid for all organizations.
+You can use a **GitHub developer token** to sign in with GitHub if you do not want to use the **Microsoft MakeCode with GitHub** app. The token is valid for access to repositories in all organizations.
 
-## ~ hint
+## What is a token?
+
+A token is a special number assigned to you to authorize your access to GitHub.
+
+### ~ hint
+
+#### Tokens are secret
 
 Treat tokens like passwords!
 
-## ~
+### ~
+
+You can read a more [detailed](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) description about GitHub access tokens.
 
 ## How to get a GitHub developer token
 
@@ -16,6 +24,8 @@ Treat tokens like passwords!
 4. Click **generate token**, copy it, and paste it in the MakeCode dialog.
 
 ### ~ hint
+
+#### Public scope
 
 For **public only repositories**, select the ``public_repo`` scope.
 

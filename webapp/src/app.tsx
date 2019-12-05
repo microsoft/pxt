@@ -532,18 +532,23 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        // convert python to typescript, if same as current source, skip decompilation
-        const tssrc = pkg.mainEditorPkg().files["main.ts"].content;
-        return this.textEditor.convertPythonToTypeScriptAsync()
-            .then(pysrc => {
-                if (pysrc == tssrc) {
-                    // decompiled python is same current typescript, go back to python without ts->py conversion
-                    pxt.debug(`ts -> py shortcut`)
-                    this.setFile(pkg.mainEditorPkg().files["main.py"]);
-                    return Promise.resolve();
-                }
-                else return this.convertTypeScriptToPythonAsync();
-            });
+        const pySrcFile = pkg.mainEditorPkg().files["main.py"];
+        if (pySrcFile) { // do we have any python yet?
+            // convert python to typescript, if same as current source, skip decompilation
+            const tsSrc = pkg.mainEditorPkg().files["main.ts"].content;
+            return this.textEditor.convertPythonToTypeScriptAsync()
+                .then(pyAsTsSrc => {
+                    if (pyAsTsSrc == tsSrc) {
+                        // decompiled python is same current typescript, go back to python without ts->py conversion
+                        pxt.debug(`ts -> py shortcut`)
+                        this.setFile(pySrcFile);
+                        return Promise.resolve();
+                    }
+                    else return this.convertTypeScriptToPythonAsync();
+                });
+        } else {
+            return this.convertTypeScriptToPythonAsync();
+        }
     }
 
     private convertTypeScriptToPythonAsync() {
@@ -3788,6 +3793,21 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
+        case "github": { // follows a github OAuth roundtrip
+            const [hid, ghCmd] = hash.arg.split(':', 2);
+            const hd = workspace.getHeader(hid);
+            if (hd) {
+                switch (ghCmd) {
+                    case "create-repository":
+                        pxt.BrowserUtils.changeHash("");
+                        theEditor.loadHeaderAsync(hd)
+                            .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
+                            .done(r => r && theEditor.reloadHeaderAsync())
+                        return true;
+                }
+            }
+            break;
+        }
     }
 
     return false;
@@ -3812,6 +3832,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
         case "edit":
         case "sandboxproject":
         case "project":
+        case "github":
             return true;
         default:
             return false;
@@ -4072,10 +4093,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.winrt.hasActivationProjectAsync())
         .then((hasWinRTProject) => {
-            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
-            let hd = workspace.getHeaders()[0];
-            if (ent) hd = workspace.getHeader(ent.id);
-
             if (theEditor.shouldShowHomeScreen() && !hasWinRTProject) {
                 return Promise.resolve();
             } else {
@@ -4090,6 +4107,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // default handlers
+            const ent = theEditor.settings.fileHistory.filter(e => !!workspace.getHeader(e.id))[0];
+            let hd = workspace.getHeaders()[0];
+            if (ent) hd = workspace.getHeader(ent.id);
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
             else theEditor.newProject();
             return Promise.resolve();

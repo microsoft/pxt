@@ -81,7 +81,7 @@ namespace pxtblockly {
 
         showEditor_() {
             (this.params as any).blocksInfo = this.blocksInfo;
-            const fv = pxt.react.getFieldEditorView("image-editor", this.getValue(), this.params);
+            const fv = pxt.react.getFieldEditorView("image-editor", this.state, this.params);
 
             if (this.undoRedoState) {
                 fv.restorePersistentData(this.undoRedoState);
@@ -93,7 +93,7 @@ namespace pxtblockly {
                 if (result) {
                     const old = this.getValue();
 
-                    this.state = pxt.sprite.imageLiteralToBitmap(result);
+                    this.state = result;
                     this.redrawPreview();
 
                     this.undoRedoState = fv.getPersistentData();

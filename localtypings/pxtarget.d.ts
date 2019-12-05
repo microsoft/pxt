@@ -183,7 +183,7 @@ declare namespace pxt {
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
         yottaConfigCompatibility?: boolean; // enforce emitting backward compatible yotta config entries (YOTTA_CFG_)
-        
+
         platformioIni?: string[];
 
         codalTarget?: string | {
@@ -358,6 +358,7 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
+        pythonToolbox?: boolean; // Code toolbox for Python
     }
 
     interface SocialOptions {
@@ -479,6 +480,7 @@ declare namespace ts.pxtc {
         imageRefTag?: number;
         keepCppFiles?: boolean;
         debugMode?: boolean; // set dynamically, not in config
+        compilerExtension?: string; // JavaScript code to load in compiler
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
