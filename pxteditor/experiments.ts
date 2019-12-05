@@ -85,6 +85,12 @@ namespace pxt.editor.experiments {
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/5390"
             },
             {
+                id: "pythonToolbox",
+                name: lf("Toolbox for Static Python"),
+                description: lf("Use the code toolbox in Static Python"),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6291"
+            },
+            {
                 id: "simGif",
                 name: lf("Simulator Gifs"),
                 description: lf("Download gifs of the simulator"),
