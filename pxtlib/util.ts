@@ -867,7 +867,7 @@ namespace ts.pxtc.Util {
             let url = `${host}translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
-            if (etag) headers["If-None-Match"] = etag;
+            if (etag && !pxt.Cloud.useCdnApi()) headers["If-None-Match"] = etag;
             return (host ? requestAsync : pxt.Cloud.apiRequestWithCdnAsync)({ url, headers }).then(resp => {
                 // if 304, translation not changed, skip
                 if (resp.statusCode == 304 || resp.statusCode == 200) {

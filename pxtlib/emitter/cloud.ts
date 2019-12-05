@@ -166,7 +166,7 @@ namespace pxt.Cloud {
                 else return { md: resp.text, etag: undefined };
             });
         else {
-            const headers: pxt.Map<string> = etag ? { "If-None-Match": etag } : undefined;
+            const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
             return apiRequestWithCdnAsync({ url, method: "GET", headers })
                 .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
         }
