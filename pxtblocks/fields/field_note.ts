@@ -165,7 +165,9 @@ namespace pxtblockly {
         protected currentSelectedKey: HTMLDivElement;
 
         constructor(text: string, params: FieldNoteOptions, validator?: Function) {
-            super(text, 0, null, null, validator);
+            // passing null as we need more state before we properly set value.
+            super(null, 0, null, null, validator);
+            this.setSpellcheck(false);
 
             this.isExpanded = false;
             this.currentPage = 0;
@@ -188,12 +190,7 @@ namespace pxtblockly {
                 this.maxNote_ = maxNote;
                 this.nKeys_ = this.maxNote_ - this.minNote_ + 1;
             }
-        }
-
-        init() {
-            super.init();
-            // refresh text on init to get note names
-            this.refreshText();
+            this.setValue(text);
         }
 
         /**
