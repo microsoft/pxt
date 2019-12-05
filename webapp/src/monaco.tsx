@@ -570,8 +570,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // any errors?
                 if (res.diagnostics && res.diagnostics.length)
                     return undefined;
-                if (res.generated[tsName])
-                    return res.generated[tsName]
+                if (res.outfiles[tsName]) {
+                    return res.outfiles[tsName]
+                }
                 return ""
             })
     }

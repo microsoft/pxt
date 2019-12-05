@@ -88,7 +88,7 @@ export function ts2pyAsync(f: string): Promise<string> {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
             // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = (pxt as any).py.decompileToPython(program, "main.ts");
+            const decompiled = pxt.py.decompileToPython(program, "main.ts");
 
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];
@@ -112,7 +112,7 @@ export function py2tsAsync(f: string, dependency = "bare", allowErrors = false):
 
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
 
-            let { generated, diagnostics } = pxt.py.py2ts(opts)
+            let { outfiles, diagnostics } = pxt.py.py2ts(opts)
 
             let success = diagnostics.length == 0
 
@@ -124,7 +124,7 @@ export function py2tsAsync(f: string, dependency = "bare", allowErrors = false):
                 };
             }
             else {
-                let partialOutput = generated["main.ts"]
+                let partialOutput = outfiles["main.ts"]
                 let errorStr = diagnostics.map(pxtc.getDiagnosticString).join()
                 return Promise.reject(new Error(`Could not convert py to ts ${f}\n${errorStr}\n${partialOutput}`))
             }

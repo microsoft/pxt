@@ -479,6 +479,7 @@ declare namespace ts.pxtc {
         imageRefTag?: number;
         keepCppFiles?: boolean;
         debugMode?: boolean; // set dynamically, not in config
+        compilerExtension?: string; // JavaScript code to load in compiler
     }
 
     type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
