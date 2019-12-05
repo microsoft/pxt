@@ -45,7 +45,7 @@ namespace pxt.Cloud {
         else
             url += "&"
         url += "cdn=" + timestamp
-        url = url.replace("?", "$")
+        // url = url.replace("?", "$")
         return pxt.webConfig.cdnUrl + "/api/" + url
     }
 
