@@ -8,6 +8,7 @@
 
 namespace pxt.perf {
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare let perfReportLogged: boolean;
     export declare function report(): void;
     export declare function recordMilestone(msg: string, time?: number): void;
     export declare function measureStart(name: string): void;
