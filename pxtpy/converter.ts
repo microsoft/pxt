@@ -2314,8 +2314,7 @@ namespace pxt.py {
         const outfiles: Map<string> = {}
         diagnostics = []
 
-        if (!opts.sourceFiles)
-            throw Error("missing sourceFiles! Cannot convert py to ts")
+        U.assert(!!opts.sourceFiles, "missing sourceFiles! Cannot convert py to ts")
 
         // find .ts files that are copies of / shadowed by the .py files
         let pyFiles = opts.sourceFiles!.filter(fn => U.endsWith(fn, ".py"))
@@ -2328,8 +2327,7 @@ namespace pxt.py {
         let tsShadowFiles = tsFiles
             .filter(fn => removeEnd(fn, ".ts") in pyFilesSet)
 
-        if (!opts.apisInfo)
-            throw Error("missing apisInfo! Cannot convert py to ts")
+        U.assert(!!opts.apisInfo, "missing apisInfo! Cannot convert py to ts")
 
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
         initApis(opts.apisInfo!, tsShadowFiles)

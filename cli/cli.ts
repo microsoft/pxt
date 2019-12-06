@@ -3720,7 +3720,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boolean): Promise<void> {
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxCheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
@@ -3887,7 +3887,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boole
                                 .filter(l => l)
                                 .join("")
 
-                        if (pycheck) {
+                        if (pyStrictSyntaxCheck) {
                             let cmp1 = getComparisonString(ts1)
                             let cmp2 = getComparisonString(ts2)
                             let mismatch = cmp1 != cmp2
