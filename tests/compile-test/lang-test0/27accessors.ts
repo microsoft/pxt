@@ -186,7 +186,7 @@ namespace WithArgs {
     function testBind(off: number, f: Foo) {
         const abc = f.abc
         const abc2 = (f as any).abc
-        // const xyz = f.xyz
+        // const xyz = f.xyz // currently we error at compilation on this one; need to reconsider
         const xyz2 = (f as any).xyz
         assert(abc(2, 1) == off, "bn1")
         assert(abc2(2, 1) == off, "bn2")
@@ -204,7 +204,7 @@ namespace WithArgs {
     qux(41)
     qux(51)
     bar(61, new Qux())
-    console.log("WithArgs OK")
+    msg("WithArgs OK")
 }
 
 namespace DontCall {
@@ -227,6 +227,6 @@ namespace DontCall {
         assert((x as Foo).getter == 1, "late4")
     }
     test(new Bar())
-    console.log("DontCall OK")
+    msg("DontCall OK")
 }
 

@@ -183,6 +183,7 @@ ${hexLiteralAsm(data)}
             this.emitLambdaTrampoline()
             this.emitArrayMethods()
             this.emitFieldMethods()
+            this.emitBindHelper()
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
@@ -600,43 +601,64 @@ ${baseLabel}_nochk:
             })
         }
 
-        private emitBind(numargs: number) {
-            const bindLit = this.mkLbl("_bindLit")
+        private emitBindHelper() {
+            const maxArgs = 12
             this.write(`
-                .bind:
+                .section code
+                _pxt_bind_helper:
                     push {r0, r2}
-                    mov r4, lr
                     movs r0, #2
-                    ldlit r1, ${bindLit}
+                    ldlit r1, _pxt_bind_lit
                     ${this.t.callCPP("pxt::mkAction")}
                     pop {r1, r2}
-                    ldr r1, [r0, #12]
-                    ldr r2, [r0, #16]
-                    bx r4
+                    str r1, [r0, #12]
+                    str r2, [r0, #16]
+                    bx r4 ; return
 
-                ${bindLit}:
+                _pxt_bind_lit:
                     ${this.t.obj_header("pxt::RefAction_vtable")}
                     .short 0, 0 ; no captured vars
                     .word .bindCode@fn
                 .bindCode:
-                    ldr r4, [r0, #12]
+                    ; r0-bind object, r4-#args                
+                    cmp r4, #${maxArgs}
+                    bge .fail
+                    lsls r3, r4, #2
+                    ldlit r2, _pxt_copy_list
+                    ldr r1, [r2, r3]
+
+                    ldr r3, [r0, #12]
                     ldr r2, [r0, #16]
+                    adds r4, r4, #1
+                    bx r1
+                .fail:
+                    ${this.t.callCPP("pxt::failedCast")}
+
+                _pxt_copy_list:
             `)
-            // inject recv argument
-            this.write("sub sp, #4")
-            for (let i = 0; i < numargs; ++i) {
-                this.write(`ldr r1, [sp, #4*${i + 1}]`)
-                this.write(`str r1, [sp, #4*${i}]`)
-            }
-            this.write(`
-                    push {r4} ; this-ptr
+
+            this.write(U.range(maxArgs).map(k => `.word _pxt_bind_${k}@fn`).join("\n"))
+
+            for (let numargs = 0; numargs < maxArgs; numargs++) {
+                this.write(`
+                _pxt_bind_${numargs}:
+                    sub sp, #4
+                `)
+                // inject recv argument
+                for (let i = 0; i < numargs; ++i) {
+                    this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                    this.write(`str r1, [sp, #4*${i}]`)
+                }
+                this.write(`                    
+                    push {r3} ; this-ptr
                     mov r1, lr
-                    str r1, [sp, #4*${numargs}]
+                    str r1, [sp, #4*${numargs + 1}] ; store LR
                     blx r2
-                    ldr r1, [sp, #4*${numargs}]
+                    ldr r1, [sp, #4*${numargs + 1}]
                     add sp, #8
                     bx r1
-            `)
+                `)
+            }
         }
 
         private ifaceCallCore(numargs: number, getset: string, noObjlit = false) {
@@ -700,8 +722,10 @@ ${baseLabel}_nochk:
                     this.write(`
                         bne .bind
                         ${callIt}
+                    .bind:
+                        mov r4, lr
+                        bl _pxt_bind_helper
                     `)
-                    this.emitBind(numargs)
                 } else {
                     this.write(`
                         beq .doublecall
