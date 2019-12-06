@@ -36,7 +36,6 @@ namespace pxtblockly {
         private undoRedoState: any;
 
         isGreyBlock: boolean;
-        private greyBlockTextRendered: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -387,12 +386,6 @@ namespace pxtblockly {
 
             return false;
         }
-
-        return true;
-    }
-
-    function checkTileset(tileset: pxt.sprite.TileSet, galleryItems: pxt.sprite.GalleryItem[]) {
-
 
         return true;
     }

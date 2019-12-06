@@ -2857,7 +2857,7 @@ ${output}</xml>`;
             const tilesetCheck = checkTilesetNamespace(n);
             if (!tilesetCheck) return undefined;
 
-            return kindCheck || tilesetCheck;
+            return kindCheck;
         }
     }
 
