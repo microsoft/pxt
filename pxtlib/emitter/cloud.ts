@@ -29,6 +29,46 @@ namespace pxt.Cloud {
         })
     }
 
+    export function useCdnApi() {
+        return pxt.webConfig && !pxt.webConfig.isStatic
+            && !BrowserUtils.isLocalHost() && !!pxt.webConfig.cdnUrl
+    }
+
+    export function cdnApiUrl(url: string) {
+        if (!useCdnApi())
+            return apiRoot + url
+
+        const d = new Date()
+        const timestamp = d.getUTCFullYear() + ("0" + (d.getUTCMonth() + 1)).slice(-2) + ("0" + d.getUTCDate()).slice(-2)
+        if (url.indexOf("?") < 0)
+            url += "?"
+        else
+            url += "&"
+        url += "cdn=" + timestamp
+        // url = url.replace("?", "$")
+        return pxt.webConfig.cdnUrl + "/api/" + url
+    }
+
+    export function apiRequestWithCdnAsync(options: Util.HttpRequestOptions) {
+        if (!useCdnApi())
+            return privateRequestAsync(options)
+        options.url = cdnApiUrl(options.url)
+        return Util.requestAsync(options)
+            .catch(e => handleNetworkError(options, e))
+    }
+
+    function handleNetworkError(options: Util.HttpRequestOptions, e: any) {
+        if (e.statusCode == 0) {
+            if (_isOnline) {
+                _isOnline = false;
+                onOffline();
+            }
+            return offlineError(options.url)
+        } else {
+            return Promise.reject(e)
+        }
+    }
+
     export function privateRequestAsync(options: Util.HttpRequestOptions) {
         options.url = pxt.webConfig && pxt.webConfig.isStatic && !options.forceLiveEndpoint ? pxt.webConfig.relprefix + options.url : apiRoot + options.url;
         options.allowGzipPost = true
@@ -43,17 +83,7 @@ namespace pxt.Cloud {
             options.headers["x-td-access-token"] = accessToken
         }
         return Util.requestAsync(options)
-            .catch(e => {
-                if (e.statusCode == 0) {
-                    if (_isOnline) {
-                        _isOnline = false;
-                        onOffline();
-                    }
-                    return offlineError(options.url)
-                } else {
-                    return Promise.reject(e)
-                }
-            })
+            .catch(e => handleNetworkError(options, e))
     }
 
     export function privateGetTextAsync(path: string, headers?: pxt.Map<string>): Promise<string> {
@@ -73,7 +103,7 @@ namespace pxt.Cloud {
         if (pxt.BrowserUtils.isLocalHost())
             return localRequestAsync(url).then(r => r ? r.json : undefined)
         else
-            return Cloud.privateGetAsync(url);
+            return apiRequestWithCdnAsync({ url }).then(r => r.json)
     }
 
     export function downloadScriptFilesAsync(id: string) {
@@ -136,8 +166,8 @@ namespace pxt.Cloud {
                 else return { md: resp.text, etag: undefined };
             });
         else {
-            const headers: pxt.Map<string> = etag ? { "If-None-Match": etag } : undefined;
-            return privateRequestAsync({ url, method: "GET", headers })
+            const headers: pxt.Map<string> = etag && !useCdnApi() ? { "If-None-Match": etag } : undefined;
+            return apiRequestWithCdnAsync({ url, method: "GET", headers })
                 .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
         }
     }
