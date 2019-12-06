@@ -3,9 +3,7 @@
 function testRefLocals(): void {
     msg("start test ref locals");
     let s = "";
-    // For 4 or more it runs out of memory
-    for (let i = 1; i <= 3; i++) {
-        msg(i + "");
+    for (let i of [3, 2, 1]) {
         let copy = i;
         control.runInBackground(() => {
             pause(10 * i);
