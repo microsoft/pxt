@@ -570,8 +570,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // any errors?
                 if (res.diagnostics && res.diagnostics.length)
                     return undefined;
-                if (res.generated[tsName])
-                    return res.generated[tsName]
+                if (res.outfiles[tsName]) {
+                    return res.outfiles[tsName]
+                }
                 return ""
             })
     }
@@ -1016,7 +1017,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
             && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
-                || (this.fileType == "python" && this.currFile.name == "main.py"));
+                || (pxt.appTarget.appTheme.pythonToolbox && this.fileType == "python" && this.currFile.name == "main.py"));
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {

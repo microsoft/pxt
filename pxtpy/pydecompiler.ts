@@ -388,11 +388,12 @@ namespace pxt.py {
                 return null
 
             let result_toExcl = toNum
-            if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken) {
-                if (isNormalInteger(toNum))
-                    result_toExcl = "" + (Number(toNum) + 1)
-                else
-                    result_toExcl += " + 1"
+            if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken
+                && isNormalInteger(toNum)) {
+                // Note that we have to be careful here because 
+                // <= 3.5 is not the same as < 4.5
+                // so we only want to handle <= when the toNum is very well behaved
+                result_toExcl = "" + (Number(toNum) + 1)
             }
             else if (s.condition.operatorToken.kind !== ts.SyntaxKind.LessThanToken)
                 return null

@@ -71,6 +71,27 @@ function mkSyncError(msg: string) {
     return e
 }
 
+export const OAUTH_TYPE = "oauthType";
+export const OAUTH_STATE = "oauthState"; // state used in OAuth flow
+export const OAUTH_REDIRECT = "oauthRedirect"; // hash to be reloaded up loging
+export const OAUTH_HASH = "oauthHash"; // hash used in implicit oauth signing
+
+export function setOauth(type: string, redirect?: string, hash?: string) {
+    const state = ts.pxtc.Util.guidGen();
+    pxt.storage.setLocal(OAUTH_TYPE, type);
+    pxt.storage.setLocal(OAUTH_STATE, state);
+    pxt.storage.setLocal(OAUTH_REDIRECT, redirect || window.location.hash)
+    pxt.storage.setLocal(OAUTH_HASH, hash)
+    return state;
+}
+
+function clearOauth() {
+    pxt.storage.removeLocal(OAUTH_TYPE)
+    pxt.storage.removeLocal(OAUTH_STATE)
+    pxt.storage.removeLocal(OAUTH_REDIRECT)
+    pxt.storage.removeLocal(OAUTH_HASH)
+}
+
 export class ProviderBase {
     constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
     }
@@ -187,11 +208,9 @@ export class ProviderBase {
 
     protected loginInner() {
         const ns = this.name
-        core.showLoading(ns + "login", lf("Logging you in to {0}...", this.friendlyName))
-        pxt.storage.setLocal("oauthType", ns)
-        pxt.storage.setLocal("oauthRedirect", window.location.href)
-        const state = ts.pxtc.Util.guidGen();
-        pxt.storage.setLocal("oauthState", state)
+        core.showLoading(ns + "login", lf("Signing you in to {0}...", this.friendlyName))
+        const state = setOauth(ns);
+
         const providerDef = pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders && pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
@@ -382,10 +401,7 @@ export function resetAsync() {
     currentProvider = null
 
     pxt.storage.removeLocal("cloudId")
-    pxt.storage.removeLocal("oauthType")
-    pxt.storage.removeLocal("oauthState")
-    pxt.storage.removeLocal("oauthHash")
-    pxt.storage.removeLocal("oauthRedirect")
+    clearOauth();
     invalidateData();
 
     return Promise.resolve()
@@ -642,14 +658,16 @@ export function loginCheck() {
 
     // implicit OAuth flow, via query argument
     {
-        const qs = core.parseQueryString(pxt.storage.getLocal("oauthHash") || "")
+        const qs = core.parseQueryString(pxt.storage.getLocal(OAUTH_HASH) || "")
         if (qs["access_token"]) {
-            const tp = pxt.storage.getLocal("oauthType")
+            const tp = pxt.storage.getLocal(OAUTH_TYPE)
             const impl = provs.filter(p => p.name == tp)[0];
             if (impl) {
-                pxt.storage.removeLocal("oauthHash");
+                pxt.storage.removeLocal(OAUTH_HASH);
                 impl.loginCallback(qs)
             }
+            // cleanup
+            clearOauth();
         }
     }
 
@@ -659,16 +677,20 @@ export function loginCheck() {
             .slice(1)
             .replace(/%23access_token/, "access_token"));
         if (qs["access_token"]) {
-            const ex = pxt.storage.getLocal("oauthState");
-            const tp = pxt.storage.getLocal("oauthType");
+            const ex = pxt.storage.getLocal(OAUTH_STATE);
+            const tp = pxt.storage.getLocal(OAUTH_TYPE);
             if (ex && ex == qs["state"]) {
-                pxt.storage.removeLocal("oauthState")
-                pxt.storage.removeLocal("oauthType");
+                pxt.storage.removeLocal(OAUTH_STATE)
+                pxt.storage.removeLocal(OAUTH_TYPE);
                 const impl = provs.filter(p => p.name == tp)[0];
-                if (impl)
+                if (impl) {
                     impl.loginCallback(qs);
+                    const hash = pxt.storage.getLocal(OAUTH_REDIRECT) || "";
+                    location.hash = hash;
+                }
             }
-            location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
+            // cleanup
+            clearOauth();
         }
     }
 

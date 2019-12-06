@@ -247,7 +247,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9280
+    // next free error 9281
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -933,6 +933,10 @@ namespace ts.pxtc {
         opts: CompileOptions,
         res: CompileResult,
         entryPoint: string): EmitResult {
+
+        if (compilerHooks.preBinary)
+            compilerHooks.preBinary(program, opts, res)
+
         target = opts.target
         compileOptions = opts
         target.debugMode = !!opts.breakpoints
@@ -1087,6 +1091,9 @@ namespace ts.pxtc {
 
         if (resDiags.length == 0)
             resDiags = diagnostics.getDiagnostics()
+
+        if (compilerHooks.postBinary)
+            compilerHooks.postBinary(program, opts, res)
 
         return {
             diagnostics: resDiags,
@@ -2304,7 +2311,10 @@ ${lbl}: .short 0xffff
             // special case call to super
             if (funcExpr.kind == SK.SuperKeyword) {
                 let baseCtor = proc.classInfo.baseClassInfo.ctor
-                assert(!bin.finalPass || !!baseCtor, "!bin.finalPass || !!baseCtor")
+                for (let p = proc.classInfo.baseClassInfo; p && !baseCtor; p = p.baseClassInfo)
+                    baseCtor = p.ctor
+                if (!baseCtor && bin.finalPass)
+                    throw userError(9280, lf("super() call requires an explicit constructor in base class"))
                 let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, ctorArgs)

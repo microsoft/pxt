@@ -2305,21 +2305,21 @@ namespace pxt.py {
     }
 
     export interface Py2TsRes {
-        generated: Map<string>,
-        diagnostics: pxtc.KsDiagnostic[]
+        diagnostics: pxtc.KsDiagnostic[],
+        success: boolean,
+        outfiles: { [key: string]: string }
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
-        const generated: Map<string> = {}
+        const outfiles: Map<string> = {}
         diagnostics = []
 
-        if (!opts.sourceFiles)
-            error(null, 9566, lf("missing sourceFiles"));
+        U.assert(!!opts.sourceFiles, "missing sourceFiles! Cannot convert py to ts")
 
         // find .ts files that are copies of / shadowed by the .py files
         let pyFiles = opts.sourceFiles!.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
-            return { generated, diagnostics }
+            return { outfiles, diagnostics, success: diagnostics.length === 0 }
         let removeEnd = (file: string, ext: string) => file.substr(0, file.length - ext.length)
         let pyFilesSet = U.toDictionary(pyFiles, p => removeEnd(p, ".py"))
         let tsFiles = opts.sourceFiles!
@@ -2327,8 +2327,7 @@ namespace pxt.py {
         let tsShadowFiles = tsFiles
             .filter(fn => removeEnd(fn, ".ts") in pyFilesSet)
 
-        if (!opts.apisInfo)
-            error(null, 9567, lf("missing apisInfo"));
+        U.assert(!!opts.apisInfo, "missing apisInfo! Cannot convert py to ts")
 
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
         initApis(opts.apisInfo!, tsShadowFiles)
@@ -2394,7 +2393,7 @@ namespace pxt.py {
                 opts.sourceFiles!.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
                 opts.fileSystem[m.tsFilename] = res.output
-                generated[m.tsFilename] = res.output
+                outfiles[m.tsFilename] = res.output
             } catch (e) {
                 console.log("Conv error", e);
             }
@@ -2480,9 +2479,11 @@ namespace pxt.py {
             syntaxInfo.symbols = syntaxInfo.symbols.map(cleanSymbol)
         }
 
+        let outDiag = patchedDiags()
         return {
-            generated,
-            diagnostics: patchedDiags()
+            outfiles: outfiles,
+            success: outDiag.length === 0,
+            diagnostics: outDiag
         }
 
         function patchedDiags() {
@@ -2492,16 +2493,6 @@ namespace pxt.py {
             return diagnostics
         }
     }
-
-    export function convert(opts: pxtc.CompileOptions) {
-        if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            const r = py2ts(opts)
-            return r.diagnostics
-        }
-        return []
-    }
-
-    pxt.conversionPasses.push(convert)
 
     /**
      * Override example syntax:
