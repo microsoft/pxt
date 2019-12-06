@@ -6,6 +6,8 @@ namespace pxt.sprite {
     export const TILE_PREFIX = "tile";
     export const TILE_NAMESPACE = "myTiles";
 
+    const tileReferenceRegex = new RegExp(`^\\s*${TILE_NAMESPACE}\\s*\\.\\s*${TILE_PREFIX}(\\d+)\\s*$`);
+
     export interface Coord {
         x: number,
         y: number
@@ -453,10 +455,13 @@ namespace pxt.sprite {
                 data: bitmap.data()
             }
         }
-        else if (literal.indexOf(`${TILE_NAMESPACE}.${TILE_PREFIX}`) === 0) {
+
+        const match = tileReferenceRegex.exec(literal);
+
+        if (match) {
             return {
                 data: null,
-                projectId: Number(literal.substr(TILE_NAMESPACE.length + TILE_PREFIX.length + 1))
+                projectId: Number(match[1])
             };
         }
 
