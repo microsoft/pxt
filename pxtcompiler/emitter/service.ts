@@ -847,22 +847,26 @@ namespace ts.pxtc.service {
         },
 
         syntaxInfo: v => {
+            // TODO: Currently this is only used for Python's language service. Ideally we should
+            // use this for Typescript too but that might require some emitter or other work.
             let src: string = v.fileContent
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
             let opts = U.flatClone(host.opts)
             opts.fileSystem[v.fileName] = src
-            addApiInfo(opts);
             opts.syntaxInfo = {
                 position: v.position,
                 type: v.infoType
             };
-            // TODO: we likely already have the syntax info from a previous compile,
-            // we should do better about cache the latest results and serving those
-            // here. Also, we shouldn't mutate "opts" (the input) and instead make
-            // the syntaxInfo part of the output.
-            (pxt as any).py.py2ts(opts)
+            if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+                addApiInfo(opts);
+                // TODO: we likely already have the syntax info from a previous compile,
+                // we should do better about cache the latest results and serving those
+                // here. Also, we shouldn't mutate "opts" (the input) and instead make
+                // the syntaxInfo part of the output.
+                (pxt as any).py.py2ts(opts)
+            }
             return opts.syntaxInfo
         },
 
