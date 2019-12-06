@@ -620,7 +620,7 @@ ${baseLabel}_nochk:
                     .short 0, 0 ; no captured vars
                     .word .bindCode@fn
                 .bindCode:
-                    ; r0-bind object, r4-#args                
+                    ; r0-bind object, r4-#args
                     cmp r4, #${maxArgs}
                     bge .fail
                     lsls r3, r4, #2
@@ -649,7 +649,7 @@ ${baseLabel}_nochk:
                     this.write(`ldr r1, [sp, #4*${i + 1}]`)
                     this.write(`str r1, [sp, #4*${i}]`)
                 }
-                this.write(`                    
+                this.write(`
                     push {r3} ; this-ptr
                     mov r1, lr
                     str r1, [sp, #4*${numargs + 1}] ; store LR
