@@ -458,6 +458,7 @@ ${baseLabel}_nochk:
             if (!fast) {
                 let toClear = this.exprStack.filter(e => e.currUses == e.totalUses && e.irCurrUses != -1)
                 if (toClear.length > 0) {
+                    // use r7 as temp; r0-r3 might be used as arguments to functions
                     this.write(this.t.reg_gets_imm("r7", 0))
                     for (let a of toClear) {
                         a.irCurrUses = -1
