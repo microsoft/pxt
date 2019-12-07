@@ -806,7 +806,8 @@ ${info.id}_IfaceVT:
         let offsets: pxt.Map<number> = {}
         for (let e of info.itable) {
             offsets[e.idx + ""] = offset
-            descs += `  .short ${e.idx}, ${e.info} ; ${e.name}\n`
+            const desc = !e.proc ? 0 : e.proc.isGetter() ? 1 : 2
+            descs += `  .short ${e.idx}, ${desc} ; ${e.name}\n`
             descs += `  .word ${e.proc ? e.proc.vtLabel() + "@fn" : e.info}\n`
             offset += descSize
             if (e.setProc) {
