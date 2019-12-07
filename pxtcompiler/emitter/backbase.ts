@@ -458,10 +458,10 @@ ${baseLabel}_nochk:
             if (!fast) {
                 let toClear = this.exprStack.filter(e => e.currUses == e.totalUses && e.irCurrUses != -1)
                 if (toClear.length > 0) {
-                    this.write(this.t.reg_gets_imm("r1", 0))
+                    this.write(this.t.reg_gets_imm("r7", 0))
                     for (let a of toClear) {
                         a.irCurrUses = -1
-                        this.write(this.loadFromExprStack("r1", a, 0, true))
+                        this.write(this.loadFromExprStack("r7", a, 0, true))
                     }
                 }
             }
