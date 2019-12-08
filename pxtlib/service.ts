@@ -472,13 +472,7 @@ namespace ts.pxtc {
         if (pxtc.Util.userLanguage() == "en") {
             // remove crowdin annotations from blocks
             return Promise.all(
-                Util.values(apis.byQName).map(fn => {
-                    const attrs = fn.attributes;
-                    if (attrs.block) {
-                        attrs.block = removeCrowdinAnnotations(attrs.block);
-                        updateBlockDef(attrs);
-                    }
-                })
+                Util.values(apis.byQName).map(fn => removeCrowdinAnnotations(fn.attributes))
             ).then(() => apis);
         }
 
@@ -543,10 +537,7 @@ namespace ts.pxtc {
                             }
                         }
                     }
-                    if (fn.attributes.block) {
-                        // remove any remaining annotations from untranslated blocks
-                        fn.attributes.block = removeCrowdinAnnotations(fn.attributes.block);
-                    }
+                    removeCrowdinAnnotations(fn.attributes);
                     updateBlockDef(fn.attributes);
                 })
             })))
@@ -556,8 +547,10 @@ namespace ts.pxtc {
                     pxt.reportError(`loc.errors`, `invalid translation`, errors);
             })
 
-        function removeCrowdinAnnotations(blockText: string) {
-            return blockText.replace(/{.+:.+}/, "");
+        function removeCrowdinAnnotations(attrs: CommentAttrs) {
+            if (attrs.block) {
+                attrs.block = attrs.block.replace(/{.+:.+}/, "");
+            }
         }
     }
 
