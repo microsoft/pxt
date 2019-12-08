@@ -469,7 +469,18 @@ namespace ts.pxtc {
 
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
-        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
+        if (pxtc.Util.userLanguage() == "en") {
+            // remove crowdin annotations from blocks
+            return Promise.all(
+                Util.values(apis.byQName).map(fn => {
+                    const attrs = fn.attributes;
+                    if (attrs.block) {
+                        attrs.block = removeCrowdinAnnotations(attrs.block);
+                        updateBlockDef(attrs);
+                    }
+                })
+            ).then(() => apis);
+        }
 
         const errors: pxt.Map<number> = {};
         const langLower = lang.toLowerCase();
@@ -532,6 +543,10 @@ namespace ts.pxtc {
                             }
                         }
                     }
+                    if (fn.attributes.block) {
+                        // remove any remaining annotations from untranslated blocks
+                        fn.attributes.block = removeCrowdinAnnotations(fn.attributes.block);
+                    }
                     updateBlockDef(fn.attributes);
                 })
             })))
@@ -540,6 +555,10 @@ namespace ts.pxtc {
                 if (Object.keys(errors).length)
                     pxt.reportError(`loc.errors`, `invalid translation`, errors);
             })
+
+        function removeCrowdinAnnotations(blockText: string) {
+            return blockText.replace(/{.+:.+}/, "");
+        }
     }
 
     export function emptyExtInfo(): ExtensionInfo {
