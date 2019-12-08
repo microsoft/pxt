@@ -826,7 +826,7 @@ ${content}
                         <sui.Button icon={`${needsPull === true ? "long arrow alternate down" : needsPull === false ? "check" : ""}`}
                             className={needsPull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
-                        {!needsToken && !isBlocksMode ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                        {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
