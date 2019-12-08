@@ -549,7 +549,7 @@ namespace ts.pxtc {
 
         function removeCrowdinAnnotations(attrs: CommentAttrs) {
             if (attrs.block) {
-                attrs.block = attrs.block.replace(/{.+:.+}/, "");
+                attrs.block = attrs.block.replace(/{[^}]+:[^}]+}/, "");
             }
         }
     }
