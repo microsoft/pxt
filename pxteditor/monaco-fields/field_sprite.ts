@@ -5,8 +5,8 @@ namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
     export class MonacoSpriteEditor extends MonacoReactFieldEditor<pxt.sprite.Bitmap> {
-        protected textToValue(text: string): any {
-            return text;
+        protected textToValue(text: string): pxt.sprite.Bitmap {
+            return pxt.sprite.imageLiteralToBitmap(text);
         }
 
         protected resultToText(result: pxt.sprite.Bitmap): string {
