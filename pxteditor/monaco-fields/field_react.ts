@@ -52,8 +52,8 @@ namespace pxt.editor {
             this.onClosed();
         }
 
-        protected textToValue(text: string): any {
-            return text
+        protected textToValue(text: string): U {
+            return null
         }
 
         protected resultToText(result: U): string {
