@@ -31,7 +31,7 @@ Using the collaborator button, the student invites the teacher account as a coll
 
 ### Step 3: Student creates a branch
 
-From the GitHub view, click on **#master** and select **create repository** option. You can keep the default name of the branch.
+From the GitHub view, click on **#master** and select **create branch** option. You can keep the default name of the branch.
 
 ### Step 4: Student change, commit, push cycle
 
