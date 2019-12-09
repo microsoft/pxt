@@ -35,12 +35,17 @@ namespace pxtblockly {
         private lightMode: boolean;
         private undoRedoState: any;
 
+        isGreyBlock: boolean;
+
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
 
             this.lightMode = params.lightMode;
             this.params = parseFieldOptions(params);
             this.blocksInfo = params.blocksInfo;
+
+            // Update now that we have blocksinfo
+            if (text && !this.state) this.doValueUpdate_(text);
 
             this.initState();
         }
@@ -69,6 +74,8 @@ namespace pxtblockly {
         }
 
         showEditor_() {
+            if (this.isGreyBlock) return;
+
             (this.params as any).blocksInfo = this.blocksInfo;
 
             this.restoreTilesFromWorkspace(this.state);
@@ -112,11 +119,16 @@ namespace pxtblockly {
 
         render_() {
             super.render_();
-            this.size_.height = TOTAL_WIDTH
-            this.size_.width = TOTAL_WIDTH;
+
+            if (!this.isGreyBlock) {
+                this.size_.height = TOTAL_WIDTH
+                this.size_.width = TOTAL_WIDTH;
+            }
         }
 
         getValue() {
+            if (this.isGreyBlock) return pxt.Util.htmlUnescape(this.text_);
+
             return pxt.sprite.encodeTilemap(this.state, "typescript");
         }
 
@@ -134,6 +146,12 @@ namespace pxtblockly {
         redrawPreview(wsTiles?: pxt.sprite.TileInfo[]) {
             if (!this.fieldGroup_) return;
             pxsim.U.clear(this.fieldGroup_);
+
+            if (this.isGreyBlock) {
+                this.createTextElement_();
+                this.updateEditable();
+                return;
+            }
 
             const bg = new svg.Rect()
                 .at(PADDING, PADDING)
@@ -156,11 +174,18 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
+            if (!this.blocksInfo) return;
+
             const tilemap = pxt.sprite.decodeTilemap(newText, "typescript");
 
             // Ignore invalid bitmaps
-            if (tilemap && tilemap.tilemap.width && tilemap.tilemap.height) {
+            if (checkTilemap(tilemap, pxt.sprite.filterItems(pxt.sprite.getGalleryItems(this.blocksInfo, "Image"), this.params.filter.split(" ")))) {
                 this.state = tilemap;
+                this.isGreyBlock = false;
+            }
+            else if (newText.trim()) {
+                this.isGreyBlock = true;
+                this.text_ = newText;
             }
         }
 
@@ -168,8 +193,8 @@ namespace pxtblockly {
             if (!this.state) {
                 this.state = new pxt.sprite.TilemapData(
                     new pxt.sprite.Tilemap(this.params.initWidth, this.params.initHeight),
-                    { tiles: [], tileWidth: 8 },
-                    new pxt.sprite.Bitmap(this.params.initHeight, this.params.initWidth).data()
+                    { tiles: [], tileWidth: 16 },
+                    new pxt.sprite.Bitmap(this.params.initWidth, this.params.initHeight).data()
                 );
             }
         }
@@ -252,6 +277,23 @@ namespace pxtblockly {
 
             tilemap.nextId = id + 1;
         }
+
+        getDisplayText_() {
+            const text = pxt.Util.htmlUnescape(this.text_);
+            return text.substr(0, text.indexOf("(")) + "(...)";;
+        }
+
+        updateEditable() {
+            if (this.isGreyBlock && this.fieldGroup_) {
+                const group = this.fieldGroup_;
+                Blockly.utils.dom.removeClass(group, 'blocklyNonEditableText');
+                Blockly.utils.dom.removeClass(group, 'blocklyEditableText');
+                group.style.cursor = '';
+            }
+            else {
+                super.updateEditable();
+            }
+        }
     }
 
     function parseFieldOptions(opts: FieldTilemapOptions) {
@@ -300,7 +342,7 @@ namespace pxtblockly {
         function getTilemapsRecursive(block: Blockly.Block) {
             for (const input of block.inputList) {
                 for (const field of input.fieldRow) {
-                    if (field instanceof FieldTilemap) {
+                    if (field instanceof FieldTilemap && !field.isGreyBlock) {
                         result.push({ block, field: field.name, ref: field });
                     }
                 }
@@ -328,5 +370,23 @@ namespace pxtblockly {
                 }
             }
         }
+    }
+
+    function checkTilemap(tilemap: pxt.sprite.TilemapData, galleryItems: pxt.sprite.GalleryItem[]) {
+        if (!tilemap || !tilemap.tilemap || !tilemap.tilemap.width || !tilemap.tilemap.height) return false;
+
+        if (!tilemap.layers || tilemap.layers.width !== tilemap.tilemap.width || tilemap.layers.height !== tilemap.tilemap.height) return false;
+
+        if (!tilemap.tileset) return false;
+
+        for (const tile of tilemap.tileset.tiles) {
+            if (tile && (tile.projectId >= 0 || (tile.qualifiedName && galleryItems.some(g => g.qName === tile.qualifiedName)))) {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 }

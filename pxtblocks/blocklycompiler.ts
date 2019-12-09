@@ -1698,9 +1698,9 @@ namespace pxt.blocks {
             const tiles = pxtblockly.getAllTilesetTiles(w);
             if (tiles.length) {
                 stmtsEnums.push(mkGroup([
-                    mkText(`namespace myTiles`),
+                    mkText(`namespace ${pxt.sprite.TILE_NAMESPACE}`),
                     mkBlock(tiles.map(
-                        t => mkStmt(mkText(`export const tile${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`)
+                        t => mkStmt(mkText(`export const ${pxt.sprite.TILE_PREFIX}${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`)
                     )))
                 ]));
             }

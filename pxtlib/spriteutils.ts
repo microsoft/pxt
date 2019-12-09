@@ -2,6 +2,12 @@ namespace pxt.sprite {
     // These are the characters used to output literals (but we support aliases for some of these)
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
 
+    export const BLOCKLY_TILESET_TYPE = "BLOCKLY_TILESET_TYPE";
+    export const TILE_PREFIX = "tile";
+    export const TILE_NAMESPACE = "myTiles";
+
+    const tileReferenceRegex = new RegExp(`^\\s*${TILE_NAMESPACE}\\s*\\.\\s*${TILE_PREFIX}(\\d+)\\s*$`);
+
     export interface Coord {
         x: number,
         y: number
@@ -222,6 +228,8 @@ namespace pxt.sprite {
     }
 
     export function decodeTilemap(literal: string, fileType: "typescript" | "python"): TilemapData {
+        literal = Util.htmlUnescape(literal).trim();
+
         if (!literal.trim()) {
             return new TilemapData(new Tilemap(16, 16), {tileWidth: 16, tiles: []}, new Bitmap(16, 16).data());
         }
@@ -432,7 +440,7 @@ namespace pxt.sprite {
             return `${tile.qualifiedName}`;
         }
         else if (tile.projectId != undefined) {
-            return `myTiles.tile${tile.projectId}`;
+            return `${TILE_NAMESPACE}.${TILE_PREFIX}${tile.projectId}`;
         }
         else {
             return bitmapToImageLiteral(Bitmap.fromData(tile.data), fileType);
@@ -447,10 +455,13 @@ namespace pxt.sprite {
                 data: bitmap.data()
             }
         }
-        else if (literal.indexOf("myTiles.tile") === 0) {
+
+        const match = tileReferenceRegex.exec(literal);
+
+        if (match) {
             return {
                 data: null,
-                projectId: Number(literal.substr("myTiles.tile".length))
+                projectId: Number(match[1])
             };
         }
 
@@ -652,5 +663,29 @@ namespace pxt.sprite {
         for (let i = 0; i < bytes.length; ++i)
             r += ("0" + bytes[i].toString(16)).slice(-2)
         return r
+    }
+
+
+    export function tileToBlocklyVariable(info: pxt.sprite.TileInfo): string {
+        return `${info.projectId};${info.data.width};${info.data.height};${pxtc.Util.toHex(info.data.data)}`
+    }
+
+    export function blocklyVariableToTile(name: string): pxt.sprite.TileInfo {
+        const parts = name.split(";");
+
+        if (parts.length !== 4) {
+            return null;
+        }
+
+        return {
+            projectId: parseInt(parts[0]),
+            data: {
+                width: parseInt(parts[1]),
+                height: parseInt(parts[2]),
+                data: new Uint8ClampedArray(pxtc.Util.fromHex(parts[3])),
+                x0: 0,
+                y0: 0
+            }
+        }
     }
 }
