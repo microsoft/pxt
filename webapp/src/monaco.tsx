@@ -75,7 +75,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
                     let completionSnippet: string;
-                    if (insertSnippet && this.python) {
+                    let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
+                    if (this.python && insertSnippet && isMultiLine) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
