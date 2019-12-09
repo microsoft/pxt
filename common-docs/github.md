@@ -27,7 +27,7 @@ Advanced users can use a [developer token](/github/token) so that they can work 
 
 ### ~
 
-### Step 2 - Make and commit changes
+### Step 2 - Commit & push changes
 
 Make any change in the code editor and you will notice that an up arrow is displayed
 on the **GitHub** button. The arrow means that there are changes stored on your computer and they need to get saved to GitHub. Click on that button to open the **GitHub view**.
@@ -52,9 +52,14 @@ You will notice a **Revert** button next to the modified file. It allows you to 
 
 Click on **Revert** to see how it works.
 
+## Classroom usage
+
+GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom).
+
 ## Help pages
 
-* [Token](/github/token)
+* [Classroom](/github/classroom)
 * [Commits](/github/commit)
 * [Releases](/github/release)
 * [Diff](/github/diff)
+* [Token](/github/token)

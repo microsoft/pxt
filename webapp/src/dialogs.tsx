@@ -510,8 +510,8 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
                 </div>
                 <div className="ui field">
                     <select className="ui dropdown" onChange={onPublicChanged}>
-                        <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                         <option aria-selected={!repoPublic} value="false">{lf("Private repository, your code is only visible to you.")}</option>
+                        <option aria-selected={repoPublic} value="true">{lf("Public repository, anyone can look at your code.")}</option>
                     </select>
                 </div>
             </div>
