@@ -74,6 +74,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
+                    let qName = this.python ? si.pyQName : si.qName;
+                    let name = this.python ? si.pyName : si.name;
                     let completionSnippet: string;
                     let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
                     if (this.python && insertSnippet && isMultiLine) {
@@ -98,14 +100,19 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                             createLineReplacementPyAmendment(insertSnippet))
                     } else {
                         completionSnippet = insertSnippet
+                        // if we're past the first ".", i.e. we're doing member completion, be sure to
+                        // remove what precedes the "." in the full snippet.
+                        // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
+                        if (completions.isMemberCompletion
+                            && completionSnippet.startsWith(qName)) {
+                            completionSnippet = completionSnippet.replace(qName, name)
+                        }
                     }
-                    const label = this.python
-                        ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
-                        : (completions.isMemberCompletion ? si.name : si.qName);
+                    const label = completions.isMemberCompletion ? name : qName
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
-                    return {
-                        label,
+                    let res: monaco.languages.CompletionItem = {
+                        label: label,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation,
                         detail: insertSnippet,
@@ -113,7 +120,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
                         insertText: completionSnippet,
-                    } as monaco.languages.CompletionItem;
+                    };
+                    return res
                 })
                 return items;
             });
