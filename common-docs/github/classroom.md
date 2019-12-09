@@ -10,6 +10,8 @@ This sectino describes a methodology to manage assignment via GitHub.
 In this approach, each assigment is a **private repository** under the student account; where the teacher has been given administrative access.
 The student does his work in a **branch** and returns his work by creating a pull request with the teacher as reviewer.
 
+The methodology is very to the way professional developers use GitHub and is a great way to get started with collaborative software development.
+
 Let's illustrate the process for a **homework** asignment.
 
 ### Step 1: Students create a new repository 
