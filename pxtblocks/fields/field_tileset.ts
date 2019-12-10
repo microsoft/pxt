@@ -129,13 +129,5 @@ namespace pxtblockly {
 
             return options;
         }
-
-        doValueUpdate_(newValue: string) {
-            super.doValueUpdate_(newValue);
-
-            if (!this.imageJson_) {
-
-            }
-        }
     }
 }
