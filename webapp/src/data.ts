@@ -280,6 +280,11 @@ export function invalidate(prefix: string) {
     })
 }
 
+export function invalidateHeader(prefix: string, hd: pxt.workspace.Header) {
+    if (hd)
+        invalidate(prefix + ':' + hd.id);
+}
+
 export function getAsync(path: string) {
     let ce = lookup(path)
 

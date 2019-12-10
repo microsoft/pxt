@@ -703,8 +703,7 @@ data.mountVirtualApi("pkg-git-status", {
 })
 
 export function invalidatePullStatus(hd: pxt.workspace.Header) {
-    if (hd)
-        data.invalidate("pkg-git-pull-status:" + hd.id)
+    data.invalidateHeader("pkg-git-pull-status:", hd)
 }
 
 data.mountVirtualApi("pkg-git-pull-status", {
