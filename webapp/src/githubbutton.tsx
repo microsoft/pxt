@@ -2,6 +2,7 @@ import * as React from "react";
 import * as sui from "./sui";
 import * as pkg from "./package";
 import * as cloudsync from "./cloudsync";
+import * as workspace from "./workspace";
 
 interface GithubButtonProps extends pxt.editor.ISettingsProps {
     className?: string;
@@ -60,6 +61,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
 
         // existing repo
         const meta: pkg.PackageGitStatus = this.getData("pkg-git-status:" + header.id);
+        const haspull = meta && this.getData("pkg-git-pull-status:" + header.id) == workspace.PullStatus.GotChanges;
         const modified = meta && !!meta.modified;
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
         const title = lf("Review and commit changes for {0}", repoName);
@@ -67,7 +69,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         return <div key="githubeditorbtn" role="button" className={`${defaultCls} ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            <i className={`ui long ${modified ? "arrow alternate up" : "check"} icon mobile hide`} />
+            <i className={`ui long ${haspull ? "arrow alternate down" : modified ? "arrow alternate up" : "check"} icon mobile hide`} />
         </div>;
     }
 }
