@@ -35,8 +35,9 @@ namespace pxt.Cloud {
     }
 
     export function cdnApiUrl(url: string) {
+        url = url.replace(/^\//, '');
         if (!useCdnApi())
-            return apiRoot + url
+            return apiRoot + url;
 
         const d = new Date()
         const timestamp = d.getUTCFullYear() + ("0" + (d.getUTCMonth() + 1)).slice(-2) + ("0" + d.getUTCDate()).slice(-2)
@@ -114,7 +115,9 @@ namespace pxt.Cloud {
 
     // 1h check on markdown content if not on development server
     const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 1 : 1 * 60 * 60 * 1000;
-    export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
+    export function markdownAsync(docid: string, locale?: string): Promise<string> {
+        locale = locale || pxt.Util.userLanguage();
+        const live = pxt.Util.localizeLive;
         const branch = "";
         return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(locale, docid, "")

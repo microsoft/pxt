@@ -47,6 +47,7 @@ namespace pxsim {
     export interface SimulatorFileLoadedMessage extends SimulatorMessage {
         type: "fileloaded";
         name: string;
+        // localeInfo NOT userLanguage
         locale: string;
         content?: string;
     }
@@ -274,10 +275,10 @@ namespace pxsim {
                     let simData = data as SimulatorCommandMessage;
                     switch (simData.command) {
                         case "focus":
-                            tickEvent("simulator.focus", {timestamp: simData.timestamp});
+                            tickEvent("simulator.focus", { timestamp: simData.timestamp });
                             break;
                         case "blur":
-                            tickEvent("simulator.blur", {timestamp: simData.timestamp});
+                            tickEvent("simulator.blur", { timestamp: simData.timestamp });
                             break;
                     }
                 default: queue(data); break;

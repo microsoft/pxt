@@ -3091,7 +3091,7 @@ export class ProjectView
 
         if (/^\//.test(tutorialId)) {
             filename = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+            p = pxt.Cloud.markdownAsync(tutorialId)
                 .then(md => {
                     if (md) {
                         dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
