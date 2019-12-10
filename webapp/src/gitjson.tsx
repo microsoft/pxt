@@ -331,7 +331,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pkg.mainEditorPkg().setFiles(files);
         // check if we need to reload header
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
-        _package.invalidatePullStatus(header);        
+        _package.invalidatePullStatus(header);
         if (newKey != this.state.previousCfgKey) {
             await this.setStateAsync({ previousCfgKey: newKey });
             await this.props.parent.reloadHeaderAsync();
@@ -747,9 +747,9 @@ ${content}
     setVisible(b: boolean) {
         if (b === this.state.isVisible) return;
 
-        const { header} = this.props.parent.state        
+        const { header } = this.props.parent.state
         if (b) {
-            _package.invalidatePullStatus(header);        
+            _package.invalidatePullStatus(header);
             this.setState({
                 previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
             });
