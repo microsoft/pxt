@@ -10,6 +10,7 @@ import * as data from "./data";
 import * as markedui from "./marked";
 import * as compiler from "./compiler";
 import * as cloudsync from "./cloudsync";
+import * as _package from "./package";
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -35,7 +36,6 @@ interface GithubState {
     isVisible?: boolean;
     description?: string;
     needsCommitMessage?: boolean;
-    needsPull?: boolean;
     triedFork?: boolean;
     previousCfgKey?: string;
     loadingMessage?: string;
@@ -331,29 +331,25 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pkg.mainEditorPkg().setFiles(files);
         // check if we need to reload header
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
-        if (newKey == this.state.previousCfgKey) {
-            // refresh pull status
-            await this.refreshPullAsync();
-        } else {
-            await this.setStateAsync({ needsPull: undefined, previousCfgKey: newKey });
+        _package.invalidatePullStatus(header);
+        if (newKey != this.state.previousCfgKey) {
+            await this.setStateAsync({ previousCfgKey: newKey });
             await this.props.parent.reloadHeaderAsync();
         }
     }
 
     private async pullAsync() {
         this.showLoading("github.pull", false, lf("pulling changes from GitHub..."));
+        const { header } = this.props.parent.state;
         try {
-            this.setState({ needsPull: undefined });
             const status = await workspace.pullAsync(this.props.parent.state.header)
                 .catch(this.handleGithubError)
             switch (status) {
                 case workspace.PullStatus.NoSourceControl:
                 case workspace.PullStatus.UpToDate:
-                    this.setState({ needsPull: false });
                     break
                 case workspace.PullStatus.NeedsCommit:
                     this.setState({ needsCommitMessage: true });
-                    await this.refreshPullAsync();
                     break
                 case workspace.PullStatus.GotChanges:
                     await this.maybeReloadAsync();
@@ -362,6 +358,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         } catch (e) {
             this.handleGithubError(e);
         } finally {
+            _package.invalidatePullStatus(header);
             this.hideLoading();
         }
     }
@@ -747,34 +744,19 @@ ${content}
         }
     }
 
-    private refreshPullAsync() {
-        return this.setStateAsync({ needsPull: undefined })
-            .then(() => workspace.hasPullAsync(this.props.parent.state.header))
-            .then(v => this.setStateAsync({ needsPull: v }))
-            .catch(e => {
-                const statusCode = parseInt(e.statusCode);
-                if (e.isOffline || statusCode === 0) {
-                    // don't report offline on this one
-                    this.setState({ needsPull: undefined });
-                    return;
-                }
-                this.handleGithubError(e);
-            });
-    }
-
     setVisible(b: boolean) {
         if (b === this.state.isVisible) return;
 
+        const { header } = this.props.parent.state
         if (b) {
+            _package.invalidatePullStatus(header);
             this.setState({
                 previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
             });
-            this.refreshPullAsync().done();
         } else {
             this.clearCache();
             this.setState({
                 needsCommitMessage: false,
-                needsPull: undefined
             });
         }
     }
@@ -803,7 +785,8 @@ ${content}
         const needsCommit = diffFiles.length > 0;
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
-        const { needsPull } = this.state;
+        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + this.props.parent.state.header.id);
+        const needsPull = pullStatus === workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const user = this.getData("github:user");

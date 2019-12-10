@@ -702,6 +702,22 @@ data.mountVirtualApi("pkg-git-status", {
     }
 })
 
+export function invalidatePullStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pull-status", hd)
+}
+
+data.mountVirtualApi("pkg-git-pull-status", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const ghid = f.getPkgId() == "this" && f.header && f.header.githubId;
+        if (!ghid) return Promise.resolve(workspace.PullStatus.NoSourceControl)
+        return workspace.pullAsync(f.header, true)
+            .catch(e => workspace.PullStatus.NoSourceControl);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
     getSync: p => {
