@@ -132,6 +132,10 @@ namespace pxtblockly {
             return pxt.sprite.encodeTilemap(this.state, "typescript");
         }
 
+        getTileset() {
+            return this.state.tileset;
+        }
+
         doValueUpdate_(newValue: string) {
             if (newValue == null) {
                 return;
@@ -245,6 +249,7 @@ namespace pxtblockly {
             newtiles.filter(t => t.projectId !== undefined)
                 .forEach(tile => saveTilesetTile(ws, tile));
 
+            FieldTileset.rebuildTileCache(this.sourceBlock_.workspace, this.blocksInfo);
 
             // Redraw previews on all of the tilemaps in case a tile changed
             const allTiles = getAllTilesetTiles(ws);
@@ -276,6 +281,14 @@ namespace pxtblockly {
             }
 
             tilemap.nextId = id + 1;
+
+            const prefix = `${pxt.sprite.TILE_NAMESPACE}.${pxt.sprite.TILE_PREFIX}`;
+
+            const tilesetRefs = getAllBlocksWithTilesets(this.sourceBlock_.workspace);
+            tilemap.projectReferences = tilesetRefs
+                .map(({ ref }) => ref.getValue())
+                .filter(qname => pxt.U.startsWith(qname, prefix))
+                .map(qname => Number(qname.substr(prefix.length)));
         }
 
         getDisplayText_() {
@@ -321,40 +334,6 @@ namespace pxtblockly {
                 return def;
             }
             return res;
-        }
-    }
-
-    interface TilemapReference {
-        block: Blockly.Block;
-        field: string;
-        ref: FieldTilemap;
-        parsed?: pxt.sprite.TilemapData;
-    }
-
-    function getAllBlocksWithTilemaps(ws: Blockly.Workspace): TilemapReference[] {
-        const result: TilemapReference[] = [];
-
-        const top = ws.getTopBlocks(false);
-        top.forEach(block => getTilemapsRecursive(block));
-
-        return result;
-
-        function getTilemapsRecursive(block: Blockly.Block) {
-            for (const input of block.inputList) {
-                for (const field of input.fieldRow) {
-                    if (field instanceof FieldTilemap && !field.isGreyBlock) {
-                        result.push({ block, field: field.name, ref: field });
-                    }
-                }
-
-                if (input.connection && input.connection.targetBlock()) {
-                    getTilemapsRecursive(input.connection.targetBlock());
-                }
-            }
-
-            if (block.nextConnection && block.nextConnection.targetBlock()) {
-                getTilemapsRecursive(block.nextConnection.targetBlock());
-            }
         }
     }
 

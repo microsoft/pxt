@@ -100,7 +100,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     initTilemap(data: pxt.sprite.TilemapData, gallery: GalleryTile[]) {
-        this.getStore().dispatch(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId));
+        this.getStore().dispatch(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId, data.projectReferences));
     }
 
     onResize() {

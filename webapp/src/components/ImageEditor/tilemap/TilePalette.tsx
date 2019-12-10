@@ -13,6 +13,8 @@ export interface TilePaletteProps {
     selected: number;
     backgroundColor: number;
 
+    referencedTiles: number[];
+
     category: TileCategory;
     page: number;
 
@@ -285,9 +287,15 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected tileDeleteHandler = () => {
-        const { tileset, selected, dispatchDeleteTile } = this.props;
+        const { tileset, selected, dispatchDeleteTile, referencedTiles } = this.props;
 
-        if (!tileset.tiles[selected] || tileset.tiles[selected].qualifiedName || selected === 0) return;
+        const info = tileset.tiles[selected];
+
+        if (!selected || !info || info.qualifiedName) return;
+
+        if (referencedTiles && referencedTiles.indexOf(info.projectId) !== -1) {
+            return;
+        }
 
         dispatchDeleteTile(selected);
     }
@@ -412,7 +420,8 @@ function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownPr
         colors: state.colors,
         drawingMode: editor.drawingMode,
         gallery: editor.tileGallery,
-        galleryOpen: editor.tileGalleryOpen
+        galleryOpen: editor.tileGalleryOpen,
+        referencedTiles: editor.referencedTiles
     };
 }
 
