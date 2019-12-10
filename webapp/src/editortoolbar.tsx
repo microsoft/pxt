@@ -136,6 +136,47 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         return saveInput;
     }
 
+    private getCompileButton(view: View): JSX.Element[] {
+        const targetTheme = pxt.appTarget.appTheme;
+        const { compiling, isSaving } = this.props.parent.state;
+        const compileLoading = !!compiling;
+        const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
+        const downloadIcon = targetTheme.downloadIcon || "download";
+        const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
+        const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
+
+        let downloadButtonClasses = "";
+        if (isSaving) {
+            downloadButtonClasses = "disabled";
+        } else if (compileLoading) {
+            downloadButtonClasses = "loading disabled";
+        }
+
+        let el = [];
+        el.push(<EditorToolbarButton icon={downloadIcon} className={`primary huge fluid left attached download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+
+        const sizeClass = view == View.Mobile ? 'small' : 'large';
+        let deviceName = pxt.hwName || lf("device");
+        let tooltip = pxt.hwName || lf("Click to select hardware")
+
+        const onHwItemClick = () => {
+            this.props.parent.showChooseHwDialog(true);
+        }
+        const onDownloadItemClick = () => {
+            this.compile(this.getViewString(view));
+        }
+
+        if (boards) {
+            el.push(
+                <sui.DropdownMenu role="menuitem" icon={'caret down large'} title={lf("Download options")} className={`${sizeClass} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true}>
+                    <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={onHwItemClick} />
+                    <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={onDownloadItemClick} />
+                </sui.DropdownMenu>
+            )
+        }
+        return el;
+    }
+
     renderCore() {
         const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging } = this.props.parent.state;
 
@@ -313,7 +354,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div> :
                         <div className="ui item">
-                            {compileBtn && <EditorToolbarButton icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' />}
+                            {compileBtn && this.getCompileButton(computer)}
                         </div>
                     }
                     </div>
