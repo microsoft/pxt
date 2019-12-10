@@ -177,6 +177,10 @@ pre {
     background-color: @simulatorBackground;
 }
 
+#downloadArea .download-button {
+    text-align: center;
+}
+
 .transparentEditorTools #downloadArea {
     background-color: transparent !important;
 }
@@ -1046,6 +1050,10 @@ p.ui.font.small {
 
     .collapsedEditorTools.headless #maineditor {
         left: 0;
+    }
+
+    #editortools {
+        z-index: @simulatorZIndex + 1;
     }
 }
 
