@@ -85,6 +85,10 @@ namespace pxtblockly {
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
             this.blocksInfo = options.blocksInfo;
+
+            if (!text) {
+                this.setValue(this.getOptions()[0][1]);
+            }
         }
 
         menuGenerator_ = () => {
