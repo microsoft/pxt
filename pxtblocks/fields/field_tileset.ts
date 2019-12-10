@@ -46,6 +46,19 @@ namespace pxtblockly {
                     }
                 }
             }
+
+            const tsRefs = getAllBlocksWithTilesets(ws)
+                .map(({ ref }) => ref.getValue() as string)
+                .filter(qname => qname !== "null" && !pxt.Util.startsWith(qname, pxt.sprite.TILE_NAMESPACE));
+
+            for (const galleryRef of tsRefs) {
+                if (!FieldTileset.tileCache[galleryRef]) {
+                    FieldTileset.tileCache[galleryRef] = bitmapToImageURI(pxt.sprite.getBitmap(blocksInfo, galleryRef), 16, false);
+                }
+                if (!FieldTileset.galleryTiles.some(([, qname]) => qname === galleryRef)) {
+                    FieldTileset.galleryTiles.push([FieldTileset.getTileImageJSON({ qualifiedName: galleryRef, data: null }, ws, blocksInfo), galleryRef]);
+                }
+            }
         }
 
         public static getTileKey(t: pxt.sprite.TileInfo) {
@@ -56,7 +69,7 @@ namespace pxtblockly {
         }
 
         public static getTileImage(t: pxt.sprite.TileInfo, ws: Blockly.Workspace, blocksInfo: pxtc.BlocksInfo) {
-            if (!FieldTileset.tileCache) {
+            if (!FieldTileset.tileCache || !FieldTileset.tileCache[FieldTileset.getTileKey(t)]) {
                 FieldTileset.rebuildTileCache(ws, blocksInfo);
             }
 
@@ -104,10 +117,25 @@ namespace pxtblockly {
                 // projectId 0 is reserved for transparency, which is always included
                 const projectTiles = getAllTilesetTiles(this.sourceBlock_.workspace).filter(t => t.projectId !== 0);
                 options.push(...projectTiles.map(info => [FieldTileset.getTileImageJSON(info, this.sourceBlock_.workspace, this.blocksInfo), FieldTileset.getTileKey(info)]).filter(([, b]) => !!b));
+
+                const galleryTiles = FieldTileset.getGalleryTiles();
+
+                if (this.value_ && !(options.concat(galleryTiles)).some(([, id]) => id === this.value_)) {
+                    FieldTileset.rebuildTileCache(this.sourceBlock_.workspace, this.blocksInfo);
+                }
+
                 options.push(...FieldTileset.getGalleryTiles());
             }
 
             return options;
+        }
+
+        doValueUpdate_(newValue: string) {
+            super.doValueUpdate_(newValue);
+
+            if (!this.imageJson_) {
+
+            }
         }
     }
 }
