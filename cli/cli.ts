@@ -4295,6 +4295,7 @@ interface SpriteInfo {
     ySpacing?: number;
     tags?: string;
     frames?: string[];
+    blockIdentity?: string;
 }
 
 
@@ -4493,7 +4494,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                     jresources[key] = data as any
                 }
 
-                ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
+                ts += `    //% fixedInstance jres blockIdentity=${info.blockIdentity || metaInfo.blockIdentity}\n`
                 if (info.tags || metaInfo.tags) {
                     const tags = `${metaInfo.tags || ""} ${info.tags || ""}`;
                     ts += `    //% tags="${tags.trim()}"\n`;
