@@ -331,7 +331,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         pkg.mainEditorPkg().setFiles(files);
         // check if we need to reload header
         const newKey = this.pkgConfigKey(files[pxt.CONFIG_NAME])
-        _package.invalidatePullStatus();        
+        _package.invalidatePullStatus(header);        
         if (newKey != this.state.previousCfgKey) {
             await this.setStateAsync({ previousCfgKey: newKey });
             await this.props.parent.reloadHeaderAsync();
@@ -340,6 +340,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
 
     private async pullAsync() {
         this.showLoading("github.pull", false, lf("pulling changes from GitHub..."));
+        const { header } = this.props.parent.state;
         try {
             const status = await workspace.pullAsync(this.props.parent.state.header)
                 .catch(this.handleGithubError)
@@ -357,7 +358,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         } catch (e) {
             this.handleGithubError(e);
         } finally {
-            _package.invalidatePullStatus();
+            _package.invalidatePullStatus(header);
             this.hideLoading();
         }
     }
@@ -743,15 +744,12 @@ ${content}
         }
     }
 
-    private refreshPull() {
-        data.invalidate("pkg-git-pull-status:" + this.props.parent.state.header.id)
-    }
-
     setVisible(b: boolean) {
         if (b === this.state.isVisible) return;
 
-        _package.invalidatePullStatus();        
+        const { header} = this.props.parent.state        
         if (b) {
+            _package.invalidatePullStatus(header);        
             this.setState({
                 previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
             });
