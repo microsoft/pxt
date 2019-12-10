@@ -151,4 +151,46 @@ namespace pxtblockly {
     export function getAllTilesetTiles(ws: Blockly.Workspace): pxt.sprite.TileInfo[] {
         return ws.getVariablesOfType(pxt.sprite.BLOCKLY_TILESET_TYPE).map(model => pxt.sprite.blocklyVariableToTile(model.name));
     }
+
+    export interface FieldEditorReference<U extends Blockly.Field> {
+        block: Blockly.Block;
+        field: string;
+        ref: U;
+        parsed?: pxt.sprite.TilemapData;
+    }
+
+    export function getAllBlocksWithTilemaps(ws: Blockly.Workspace): FieldEditorReference<FieldTilemap>[] {
+        return getAllFieldsCore(ws, f => f instanceof FieldTilemap && !f.isGreyBlock);
+    }
+
+    export function getAllBlocksWithTilesets(ws: Blockly.Workspace): FieldEditorReference<FieldTileset>[] {
+        return getAllFieldsCore(ws, f => f instanceof FieldTileset);
+    }
+
+    function getAllFieldsCore<U extends Blockly.Field>(ws: Blockly.Workspace, predicate: (field: Blockly.Field) => boolean): FieldEditorReference<U>[] {
+        const result: FieldEditorReference<U>[] = [];
+
+        const top = ws.getTopBlocks(false);
+        top.forEach(block => getAllFieldsRecursive(block));
+
+        return result;
+
+        function getAllFieldsRecursive(block: Blockly.Block) {
+            for (const input of block.inputList) {
+                for (const field of input.fieldRow) {
+                    if (predicate(field)) {
+                        result.push({ block, field: field.name, ref: (field as U) });
+                    }
+                }
+
+                if (input.connection && input.connection.targetBlock()) {
+                    getAllFieldsRecursive(input.connection.targetBlock());
+                }
+            }
+
+            if (block.nextConnection && block.nextConnection.targetBlock()) {
+                getAllFieldsRecursive(block.nextConnection.targetBlock());
+            }
+        }
+    }
 }

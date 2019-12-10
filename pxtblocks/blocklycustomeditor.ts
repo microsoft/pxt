@@ -43,6 +43,7 @@ namespace pxt.blocks {
         registerFieldEditor('sprite', pxtblockly.FieldSpriteEditor);
         registerFieldEditor('animation', pxtblockly.FieldAnimationEditor);
         registerFieldEditor('tilemap', pxtblockly.FieldTilemap);
+        registerFieldEditor('tileset', pxtblockly.FieldTileset);
         registerFieldEditor('speed', pxtblockly.FieldSpeed);
         registerFieldEditor('turnratio', pxtblockly.FieldTurnRatio);
         registerFieldEditor('protractor', pxtblockly.FieldProtractor);

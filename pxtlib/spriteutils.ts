@@ -191,6 +191,10 @@ namespace pxt.sprite {
 
     export class TilemapData {
         nextId = 0;
+
+        // Used to make sure the user doesn't delete a tile used elsewhere in their project
+        projectReferences: number[];
+
         constructor(public tilemap: Tilemap, public tileset: TileSet, public layers: BitmapData) {}
     }
 

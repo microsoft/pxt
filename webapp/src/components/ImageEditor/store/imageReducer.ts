@@ -64,6 +64,7 @@ export interface EditorState {
     tileGalleryOpen?: boolean;
 
     isTilemap: boolean;
+    referencedTiles?: number[];
 
     // The state below this comment is not persisted between editor reloads
     previewAnimating: boolean;
@@ -194,7 +195,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     tilemapPalette: restored.tilemapPalette,
                     tileGalleryOpen: restored.tileGalleryOpen,
                     tileGallery: restored.tileGallery,
-                    isTilemap: restored.isTilemap
+                    isTilemap: restored.isTilemap,
+                    referencedTiles: state.editor.referencedTiles
                 },
                 store: {
                     ...state.store,
@@ -263,7 +265,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     },
                     drawingMode: TileDrawingMode.Default,
                     overlayEnabled: true,
-                    tileGallery: action.gallery
+                    tileGallery: action.gallery,
+                    referencedTiles: action.referencedTiles
                 },
                 store: {
                     ...state.store,
