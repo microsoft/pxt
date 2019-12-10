@@ -648,6 +648,10 @@ export class ProjectView
                 pxt.debug(`sim: skip blocks auto, field editor is open`);
                 return;
             }
+            if (this.editor === this.serialEditor) {
+                pxt.debug(`sim: don't restart when entering console view`)
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
