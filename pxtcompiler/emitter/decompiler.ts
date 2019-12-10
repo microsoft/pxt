@@ -2928,14 +2928,29 @@ ${output}</xml>`;
         }
 
         const fail = Util.lf("The myTiles namespace can only export tile variables with image literal initializers and no duplicate ids");
+        const commentFail = Util.lf("Tileset members must have a blockIdentity comment and no other annotations");
 
         const nameRegex = new RegExp(`${pxt.sprite.TILE_PREFIX}(\\d+)`);
         const foundIds: string[] = [];
 
+        const commentRegex = /^\s*\/\/%\s*blockIdentity=[^\s]+\s*$/;
+
         // Each statement must be of the form "export const tile{ID} = img``;"
         for (const statement of (n.body as ts.ModuleBlock).statements) {
-            // There isn't really a way to persist comments, so to be safe just bail out
-            if (isCommented(statement)) return fail;
+            // Tile members have a single annotation of the form "//% blockIdentity=..."
+            // Bail out on any other comment because we can't persist it
+            const commentRanges = ts.getLeadingCommentRangesOfNode(statement, statement.getSourceFile());
+
+            if (commentRanges && commentRanges.length) {
+                const comments = commentRanges.map(cr => statement.getSourceFile().text.substr(cr.pos, cr.end - cr.pos)).filter(c => !!c);
+
+                if (comments.length !== 1 || !commentRegex.test(comments[0])) {
+                    return commentFail;
+                }
+            }
+            else {
+                return commentFail;
+            }
 
             if (isVariableStatement(statement) && statement.declarationList.declarations) {
                 const isSingleDeclaration = statement.declarationList.declarations.length === 1;

@@ -1697,11 +1697,18 @@ namespace pxt.blocks {
 
             const tiles = pxtblockly.getAllTilesetTiles(w);
             if (tiles.length) {
+                const tilesetFieldEditorIdentity = pxt.appTarget.runtime && pxt.appTarget.runtime.tilesetFieldEditorIdentity;
+
                 stmtsEnums.push(mkGroup([
                     mkText(`namespace ${pxt.sprite.TILE_NAMESPACE}`),
                     mkBlock(tiles.map(
-                        t => mkStmt(mkText(`export const ${pxt.sprite.TILE_PREFIX}${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`)
-                    )))
+                        t => mkGroup(
+                            [
+                                mkStmt(mkText(tilesetFieldEditorIdentity ? `//% blockIdentity=${tilesetFieldEditorIdentity}` : "")),
+                                mkStmt(mkText(`export const ${pxt.sprite.TILE_PREFIX}${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`))
+                            ]
+                        )
+                    ))
                 ]));
             }
 
