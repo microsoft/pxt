@@ -1,5 +1,4 @@
 namespace myTiles {
-    //% blockIdentity=tiles._tileGetter
     export const tile0: Image = img`
         . . . . . . . . . . . . . . . .
         . . . . . . . . . . . . . . . .

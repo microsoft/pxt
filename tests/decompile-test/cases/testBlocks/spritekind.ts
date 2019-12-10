@@ -49,4 +49,10 @@ namespace tiles {
     //% group="Animate" duplicateShadowOnDrag
     export function setTilemap(tilemap: TileMapData) {
     }
+
+    //% blockId=til_getter block="tile %tile"
+    //% tile.fieldEditor="tileset" shim=TD_ID
+    export function _tileGetter(tile: Image) {
+        return tile;
+    }
 }
