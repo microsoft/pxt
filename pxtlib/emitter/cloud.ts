@@ -35,8 +35,9 @@ namespace pxt.Cloud {
     }
 
     export function cdnApiUrl(url: string) {
+        url = url.replace(/^\//, '');
         if (!useCdnApi())
-            return apiRoot + url
+            return apiRoot + url;
 
         const d = new Date()
         const timestamp = d.getUTCFullYear() + ("0" + (d.getUTCMonth() + 1)).slice(-2) + ("0" + d.getUTCDate()).slice(-2)
