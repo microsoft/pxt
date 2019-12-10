@@ -6,13 +6,13 @@ This section assumes that all students were able to register an account in https
 
 ## Assignments as repositories
 
-This sectino describes a methodology to manage assignment via GitHub. 
-In this approach, each assigment is a **private repository** under the student account; where the teacher has been given administrative access.
-The student does his work in a **branch** and returns his work by creating a pull request with the teacher as reviewer.
+This section describes a methodology to manage assignment via GitHub. 
+Each assigment is a **private repository** under the student account; where the teacher has been given **collaborator** access.
+The student does his work in a **branch** and returns his work by creating a **pull request** with the teacher as **reviewer**.
 
-The methodology is very to the way professional developers use GitHub and is a great way to get started with collaborative software development.
+This methodology is very close to the way professional developers use GitHub.
 
-Let's illustrate the process for a **homework** asignment.
+Let's illustrate it for a **homework** asignment.
 
 ### Step 1: Students create a new repository 
 
