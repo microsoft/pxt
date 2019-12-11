@@ -8,6 +8,7 @@ export interface MinimapProps {
     tilemap: pxt.sprite.ImageState;
 }
 
+const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
 class MinimapImpl extends React.Component<MinimapProps, {}> {
     protected tileColors: string[] = [];
@@ -36,8 +37,8 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
         const image = pxt.sprite.Tilemap.fromData(bitmap);
         const floatingImage = floating && floating.bitmap ? pxt.sprite.Tilemap.fromData(floating.bitmap) : null;
 
-        this.canvas.width = image.width;
-        this.canvas.height = image.height;
+        this.canvas.width = image.width * SCALE;
+        this.canvas.height = image.height * SCALE;
         this.tileColors = [];
 
         for (let x = 0; x < image.width; x++) {
@@ -46,13 +47,13 @@ class MinimapImpl extends React.Component<MinimapProps, {}> {
                 const index = image.get(x, y);
                 if (float) {
                     context.fillStyle = this.getColor(float);
-                    context.fillRect(x, y, 1, 1);
+                    context.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 } else if (index) {
                     context.fillStyle = this.getColor(index);
-                    context.fillRect(x, y, 1, 1);
+                    context.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 }
                 else {
-                    context.clearRect(x, y, 1, 1);
+                    context.clearRect(x * SCALE, y * SCALE, SCALE, SCALE);
                 }
             }
         }

@@ -34,11 +34,10 @@ export interface ImageCanvasProps {
 
 /**
  * This is a scaling factor for all of the pixels in the canvas. Scaling is not needed for browsers
- * that support "image-rendering: pixelated," so only scale for Microsoft Edge and Chrome on MacOS.
- *
- * Chrome on MacOS should be fixed in the next release: https://bugs.chromium.org/p/chromium/issues/detail?id=134040
+ * that support "image-rendering: pixelated," so only scale for Microsoft Edge.
  */
 const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
+const TILE_SCALE = pxt.BrowserUtils.isEdge() ? 2 : 1;
 
 /**
  * Color for the walls
@@ -92,7 +91,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     componentDidMount() {
-        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth : SCALE;
+        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
         this.canvas = this.refs["paint-surface"] as HTMLCanvasElement;
         this.background = this.refs["paint-surface-bg"] as HTMLCanvasElement;
         this.floatingLayer = this.refs["floating-layer-border"] as HTMLDivElement;
@@ -132,7 +131,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.editState = getEditState(imageState, this.props.isTilemap, this.props.drawingMode);
         }
 
-        this.cellWidth = this.props.isTilemap ? SCALE * this.props.tilemapState.tileset.tileWidth : SCALE;
+        this.cellWidth = this.props.isTilemap ? this.props.tilemapState.tileset.tileWidth * TILE_SCALE : SCALE;
 
         if (this.props.zoomDelta || this.props.zoomDelta === 0) {
             // This is a total hack. Ideally, the zoom should be part of the global state but because
@@ -504,9 +503,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
     protected generateTile(index: number, tileset: pxt.sprite.TileSet) {
         const tileImage = document.createElement("canvas");
-        tileImage.width = tileset.tileWidth;
-        tileImage.height = tileset.tileWidth;
-        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].data), 0, 0, true, 1, tileImage);
+        tileImage.width = tileset.tileWidth * TILE_SCALE;
+        tileImage.height = tileset.tileWidth * TILE_SCALE;
+        this.drawBitmap(pxt.sprite.Bitmap.fromData(tileset.tiles[index].data), 0, 0, true, TILE_SCALE, tileImage);
         this.tileCache[index] = tileImage;
         return tileImage;
     }
