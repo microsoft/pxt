@@ -1071,7 +1071,11 @@ namespace pxt.blocks {
     }
 
     function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
-        let binding = lookup(e, b, b.getField("VAR").getText());
+        const name = b.getField("VAR").getText();
+        let binding = lookup(e, b, name);
+        if (!binding) // trying to compile a disabled block with a bogus variable
+            return mkText(name);
+
         if (!binding.firstReference) binding.firstReference = b;
 
         assert(binding != null && binding.type != null);
@@ -1599,15 +1603,15 @@ namespace pxt.blocks {
             let allBlocks = w.getAllBlocks();
             // the top blocks are storted by blockly
             let topblocks = w.getTopBlocks(true);
+            // reorder remaining events by names (top blocks still contains disabled blocks)
+            topblocks = topblocks.sort((a, b) => {
+                return eventWeight(a, e) - eventWeight(b, e)
+            });
             // update disable blocks
             updateDisabledBlocks(e, allBlocks, topblocks);
             // drop disabled blocks
             allBlocks = allBlocks.filter(b => !b.disabled);
             topblocks = topblocks.filter(b => !b.disabled);
-            // reorder remaining events by names
-            topblocks = topblocks.sort((a, b) => {
-                return eventWeight(a, e) - eventWeight(b, e)
-            });
             trackAllVariables(topblocks, e);
             infer(allBlocks, e, w);
 
@@ -2332,10 +2336,10 @@ namespace pxt.blocks {
     }
 
     function getVarInfo(name: string, scope: Scope): VarInfo {
-        if (scope.declaredVars[name]) {
+        if (scope && scope.declaredVars[name]) {
             return scope.declaredVars[name];
         }
-        else if (scope.parent) {
+        else if (scope && scope.parent) {
             return getVarInfo(name, scope.parent);
         }
         else {
