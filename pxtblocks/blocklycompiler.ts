@@ -1602,6 +1602,7 @@ namespace pxt.blocks {
             // update disable blocks
             updateDisabledBlocks(e, allBlocks, topblocks);
             // drop disabled blocks
+            allBlocks = allBlocks.filter(b => !b.disabled);
             topblocks = topblocks.filter(b => !b.disabled);
             // reorder remaining events by names
             topblocks = topblocks.sort((a, b) => {
