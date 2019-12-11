@@ -1729,7 +1729,7 @@ declare namespace mobs {
 /**
  * Give commands, communicate, and respond to events that happen in the game
  */
-//% color=#0078D7 weight=100 icon="\uf007"
+//% color=#B09EFF weight=100 icon="\uf007"
 namespace player {
     export class ChatCommandArguments {
         public number: number;
