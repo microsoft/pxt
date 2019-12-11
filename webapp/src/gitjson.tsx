@@ -786,7 +786,8 @@ ${content}
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + this.props.parent.state.header.id);
-        const needsPull = pullStatus === workspace.PullStatus.GotChanges;
+        const hasissue = pullStatus == workspace.PullStatus.BranchDeleted;
+        const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
         const user = this.getData("github:user");
@@ -806,8 +807,8 @@ ${content}
                         </div>
                     </div>
                     <div className="rightHeader">
-                        <sui.Button icon={`${needsPull === true ? "long arrow alternate down" : needsPull === false ? "check" : ""}`}
-                            className={needsPull === true ? "positive" : ""}
+                        <sui.Button icon={`${hasissue ? "exclamation circle" : haspull ? "long arrow alternate down" : "check"}`}
+                            className={haspull === true ? "positive" : ""}
                             text={lf("Pull changes")} textClass={"landscape only"} title={lf("Pull changes from GitHub to get your code up-to-date.")} onClick={this.handlePullClick} onKeyDown={sui.fireClickOnEnter} />
                         {!needsToken ? <sui.Link className="ui button" icon="user plus" href={`https://github.com/${githubId.fullName}/settings/collaboration`} target="_blank" title={lf("Invite collaborators.")} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
@@ -864,7 +865,8 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const { pullStatus } = this.props;
 
         if (pullStatus == workspace.PullStatus.BranchDeleted)
-            return <div className="ui error message">
+            return <div className="ui icon warning message">
+                <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This branch was deleted from GitHub, please switch to a different branch.")}
                 </div>
