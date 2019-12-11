@@ -544,8 +544,8 @@ namespace ts.pxtc {
 
     function cleanLocalizations(apis: ApisInfo) {
         Util.values(apis.byQName)
-        .filter(fb => fb.attributes.block && /^{id:[^}]+}/.test(fb.attributes.block))
-        .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{id:[^}]+}/, ''); });
+        .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
+        .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
         return apis;
     }
 
