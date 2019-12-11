@@ -37,6 +37,8 @@ Using the collaborator button, the student invites the teacher account as a coll
 
 If you try the invitation link and it gives you a **404** error, it most likely means that you are not signed in with GitHub. GitHub shows 404 pages when you try to access private repositories or invitation links.
 
+![GitHub 404 page](/static/github/classroom/404.png)
+
 #### ~
 
 ### Step 3: Student creates a branch
