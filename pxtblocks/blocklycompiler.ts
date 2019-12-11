@@ -327,8 +327,8 @@ namespace pxt.blocks {
         }
     }
 
-    function infer(e: Environment, w: Blockly.Workspace) {
-        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.Block) => {
+    function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Workspace) {
+        if (allBlocks) allBlocks.filter(b => !b.disabled).forEach((b: Blockly.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -1071,7 +1071,11 @@ namespace pxt.blocks {
     }
 
     function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
-        let binding = lookup(e, b, b.getField("VAR").getText());
+        const name = b.getField("VAR").getText();
+        let binding = lookup(e, b, name);
+        if (!binding) // trying to compile a disabled block with a bogus variable
+            return mkText(name);
+
         if (!binding.firstReference) binding.firstReference = b;
 
         assert(binding != null && binding.type != null);
@@ -1574,7 +1578,7 @@ namespace pxt.blocks {
     export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
-        infer(e, w);
+        infer(w && w.getAllBlocks(), e, w);
         const compiled = compileStatementBlock(e, b)
         removeAllPlaceholders();
         return tdASTtoTS(e, compiled);
@@ -1596,15 +1600,20 @@ namespace pxt.blocks {
     function compileWorkspace(e: Environment, w: Blockly.Workspace): [JsNode[], BlockDiagnostic[], pxt.Map<VarDeclaration>] {
         try {
             // all compiled top level blocks are events
-            const topblocks = w.getTopBlocks(true).sort((a, b) => {
+            let allBlocks = w.getAllBlocks();
+            // the top blocks are storted by blockly
+            let topblocks = w.getTopBlocks(true);
+            // reorder remaining events by names (top blocks still contains disabled blocks)
+            topblocks = topblocks.sort((a, b) => {
                 return eventWeight(a, e) - eventWeight(b, e)
             });
-
-            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
-
+            // update disable blocks
+            updateDisabledBlocks(e, allBlocks, topblocks);
+            // drop disabled blocks
+            allBlocks = allBlocks.filter(b => !b.disabled);
+            topblocks = topblocks.filter(b => !b.disabled);
             trackAllVariables(topblocks, e);
-
-            infer(e, w);
+            infer(allBlocks, e, w);
 
             const stmtsMain: JsNode[] = [];
 
@@ -1615,7 +1624,7 @@ namespace pxt.blocks {
 
             commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
 
-            topblocks.filter(b => !b.disabled).forEach(b => {
+            topblocks.forEach(b => {
                 if (commentMap.idToComments[b.id]) {
                     commentMap.idToComments[b.id].forEach(comment => {
                         append(stmtsMain, compileWorkspaceComment(comment).children);
@@ -2167,8 +2176,6 @@ namespace pxt.blocks {
     }
 
     function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
-        topBlocks = topBlocks.filter(b => !b.disabled);
-
         let id = 1;
         let topScope: Scope;
 
@@ -2329,10 +2336,10 @@ namespace pxt.blocks {
     }
 
     function getVarInfo(name: string, scope: Scope): VarInfo {
-        if (scope.declaredVars[name]) {
+        if (scope && scope.declaredVars[name]) {
             return scope.declaredVars[name];
         }
-        else if (scope.parent) {
+        else if (scope && scope.parent) {
             return getVarInfo(name, scope.parent);
         }
         else {
