@@ -70,7 +70,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
-                <div className="image-editor">
+                <div className={`image-editor ${editingTile ? "editing-tile" : ""}`}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar />
