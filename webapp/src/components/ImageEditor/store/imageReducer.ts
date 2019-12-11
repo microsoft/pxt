@@ -1,4 +1,5 @@
 import * as actions from '../actions/types'
+import { AlertInfo } from '../Alert';
 
 export enum ImageEditorTool {
     Paint,
@@ -77,6 +78,7 @@ export interface EditorState {
     editingTile?: TileEditContext;
     cursorSize: CursorSize;
     overlayEnabled?: boolean;
+    alert?: AlertInfo;
 }
 
 export interface GalleryTile {
@@ -180,6 +182,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.CHANGE_TILE_PALETTE_CATEGORY:
         case actions.CHANGE_DRAWING_MODE:
         case actions.SET_GALLERY_OPEN:
+        case actions.SHOW_ALERT:
+        case actions.HIDE_ALERT:
             return {
                 ...state,
                 editor: editorReducer(state.editor, action)
@@ -452,6 +456,22 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
                 ...state,
                 editingTile: undefined
             };
+        case actions.SHOW_ALERT:
+            tickEvent("show-alert");
+            return {
+                ...state,
+                alert: {
+                    title: action.title,
+                    text: action.text,
+                    options: action.options
+                }
+            }
+        case actions.HIDE_ALERT:
+            tickEvent("hide-alert");
+            return {
+                ...state,
+                alert: null
+            }
     }
     return state;
 }

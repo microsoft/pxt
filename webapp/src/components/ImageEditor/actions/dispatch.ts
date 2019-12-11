@@ -1,5 +1,6 @@
 import * as actions from './types'
 import { ImageEditorTool, CursorSize, EditorState, AnimationState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
+import { AlertOption } from '../Alert';
 
 export const dispatchChangeImageTool = (tool: ImageEditorTool) => ({ type: actions.CHANGE_IMAGE_TOOL, tool });
 export const dispatchChangeCursorSize = (cursorSize: CursorSize) => ({ type: actions.CHANGE_CURSOR_SIZE, cursorSize });
@@ -24,6 +25,8 @@ export const dispatchChangePreviewAnimating = (animating: boolean) => ({ type: a
 export const dispatchToggleOnionSkinEnabled = () => ({ type: actions.TOGGLE_ONION_SKIN_ENABLED })
 export const dispatchChangeOverlayEnabled = (enabled: boolean) => ({ type: actions.CHANGE_OVERLAY_ENABLED, enabled })
 export const dispatchChangeZoom = (zoom: number) => ({ type: actions.CHANGE_CANVAS_ZOOM, zoom });
+export const dispatchShowAlert = (title: string, text: string, options?: AlertOption[]) => ({ type: actions.SHOW_ALERT, title, text, options });
+export const dispatchHideAlert = () => ({ type: actions.HIDE_ALERT });
 
 export const dispatchSwapBackgroundForeground = () => ({ type: actions.SWAP_FOREGROUND_BACKGROUND });
 export const dispatchChangeBackgroundColor = (backgroundColor: number) => ({ type: actions.CHANGE_BACKGROUND_COLOR, backgroundColor })

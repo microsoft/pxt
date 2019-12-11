@@ -1,11 +1,15 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground, dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode, dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor, dispatchDeleteTile } from '../actions/dispatch';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground,
+    dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode,
+    dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor, dispatchDeleteTile,
+    dispatchShowAlert, dispatchHideAlert } from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
 import { IconButton } from '../Button';
+import { AlertOption } from '../Alert';
 
 export interface TilePaletteProps {
     colors: string[];
@@ -32,6 +36,8 @@ export interface TilePaletteProps {
     dispatchSetGalleryOpen: (open: boolean) => void;
     dispatchOpenTileEditor: (editIndex?: number) => void;
     dispatchDeleteTile: (index: number) => void;
+    dispatchShowAlert: (title: string, text: string, options?: AlertOption[]) => void;
+    dispatchHideAlert: () => void;
 }
 
 /**
@@ -148,7 +154,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                             toggle={!controlsDisabled}
                         />
                         <IconButton
-                            onClick={this.tileDeleteHandler}
+                            onClick={this.tileDeleteAlertHandler}
                             iconClass={"ms-Icon ms-Icon--Delete"}
                             title={lf("Delete the selected tile")}
                             disabled={controlsDisabled}
@@ -286,18 +292,28 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         dispatchCreateNewTile(tileset.tiles[selected].data, tileset.tiles.length, backgroundColor);
     }
 
-    protected tileDeleteHandler = () => {
-        const { tileset, selected, dispatchDeleteTile, referencedTiles } = this.props;
+    protected tileDeleteAlertHandler = () => {
+        const { tileset, selected, dispatchShowAlert, dispatchHideAlert, referencedTiles } = this.props;
 
         const info = tileset.tiles[selected];
 
         if (!selected || !info || info.qualifiedName) return;
 
+        // tile cannot be deleted because it is referenced in the code
         if (referencedTiles && referencedTiles.indexOf(info.projectId) !== -1) {
+            dispatchShowAlert("Unable to delete",
+                "This tile is used in your game. Remove all blocks using the tile before deleting.",
+                [{ label: "Cancel", onClick: dispatchHideAlert }]);
             return;
         }
 
-        dispatchDeleteTile(selected);
+        dispatchShowAlert("Are you sure?",
+            "Deleting this tile will remove it from all other tile maps in your game.",
+            [{ label: "Yes", onClick: this.deleteTile}, { label: "No", onClick: dispatchHideAlert }]);
+    }
+
+    protected deleteTile = () => {
+        this.props.dispatchDeleteTile(this.props.selected);
     }
 
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
@@ -439,7 +455,9 @@ const mapDispatchToProps = {
     dispatchCreateNewTile,
     dispatchSetGalleryOpen,
     dispatchOpenTileEditor,
-    dispatchDeleteTile
+    dispatchDeleteTile,
+    dispatchShowAlert,
+    dispatchHideAlert
 };
 
 
