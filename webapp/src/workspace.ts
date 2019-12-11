@@ -449,6 +449,7 @@ export enum PullStatus {
     UpToDate,
     GotChanges,
     NeedsCommit,
+    BranchDeleted
 }
 
 const GIT_JSON = pxt.github.GIT_JSON
@@ -466,8 +467,15 @@ export async function pullAsync(hd: Header, checkOnly = false) {
         return PullStatus.NoSourceControl
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
-    let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    if (sha == gitjson.commit.sha)
+    const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    if  (!sha) {// 404: branch does not exist, repo is gone or no rights to access repo
+        // try to get the list of heads to see if we can access the project
+        const heads = await pxt.github.listRefsAsync(parsed.fullName, "heads");
+        if (heads && heads.length)
+            return PullStatus.BranchDeleted;
+        else
+            return PullStatus.NoSourceControl; // something is wrong
+    } else if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
     if (checkOnly)
         return PullStatus.GotChanges

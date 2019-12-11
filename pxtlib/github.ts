@@ -374,6 +374,10 @@ namespace pxt.github {
     export function getRefAsync(repopath: string, branch: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
+            .catch(err => {
+                if (err.statusCode == 404) return undefined;
+                else Promise.reject(err);
+            })
     }
 
     function generateNextRefName(res: RefsResult, pref: string): string {
