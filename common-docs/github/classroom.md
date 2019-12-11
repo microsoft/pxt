@@ -29,6 +29,8 @@ Public or private? A repository can be made public later on once all the assignm
 
 Using the collaborator button, the student invites the teacher account as a collaborator of the project. This will the teacher access to the private assignment repository.
 
+![Screenshot of the collaborator page on GitHub](/static/github/classroom/addcollaborator.png)
+
 #### ~ hint
 
 ##### GitHub and 404
@@ -55,7 +57,7 @@ To finish the assignment, the student can click on the **Pull Request** button t
 The teacher can go to https://github.com/pulls to see the list of opened Pull Requests that need reviewing. 
 Once the assignment is graded, the teacher can merge the Pull Request to finalize the flow.
 
-### Step 7: (optinal) Student makes the repository public
+### Step 7: (optional) Student makes the repository public
 
 If the student wants to add this project to his portfolio, he can simply make it public and it will be visible on his GitHub user page.
 
