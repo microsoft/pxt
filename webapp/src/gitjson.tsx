@@ -813,7 +813,7 @@ ${content}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
                 <div className="ui form">
                     {!prUrl ? undefined :
                         <a href={prUrl} role="button" className="ui link create-pr"
@@ -826,7 +826,7 @@ ${content}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
                         : <div className="ui segment">
                             {lf("No local changes found.")}
                             {" "}
@@ -835,7 +835,7 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} /> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} /> : undefined}
                 </div>
             </div>
         )
@@ -851,6 +851,7 @@ interface GitHubViewProps {
     isBlocks: boolean;
     needsCommit: boolean;
     user: pxt.editor.UserInfo;
+    pullStatus: workspace.PullStatus;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -860,6 +861,14 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
+        const { pullStatus } = this.props;
+
+        if (pullStatus == workspace.PullStatus.BranchDeleted)
+            return <div className="ui error message">
+                <div className="content">
+                    {lf("This branch was deleted from GitHub, please switch to a different branch.")}
+                </div>
+            </div>
 
         if (needsCommitMessage)
             return <div className="ui warning message">
