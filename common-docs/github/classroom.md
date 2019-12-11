@@ -29,6 +29,14 @@ Public or private? A repository can be made public later on once all the assignm
 
 Using the collaborator button, the student invites the teacher account as a collaborator of the project. This will the teacher access to the private assignment repository.
 
+#### ~ hint
+
+##### GitHub and 404
+
+If you try the invitation link and it gives you a **404** error, it most likely means that you are not signed in with GitHub. GitHub shows 404 pages when you try to access private repositories or invitation links.
+
+#### ~
+
 ### Step 3: Student creates a branch
 
 From the GitHub view, click on **#master** and select **create branch** option. You can keep the default name of the branch.

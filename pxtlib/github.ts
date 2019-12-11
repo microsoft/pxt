@@ -1113,11 +1113,14 @@ namespace pxt.github {
 
     export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
         let lines = toLines(content);
-        if (!/^<<<<<<<[^<]/.test(lines[startMarkerLine])) {
-            // invalid line, no marker found
-            return content;
+        let startLine = startMarkerLine;
+        while (startLine < lines.length) {
+            if (/^<<<<<<<[^<]/.test(lines[startLine])) {
+                break;
+            }
+            startLine++;
         }
-        let middleLine = startMarkerLine + 1;
+        let middleLine = startLine + 1;
         while (middleLine < lines.length) {
             if (/^=======$/.test(lines[middleLine]))
                 break;
@@ -1132,15 +1135,16 @@ namespace pxt.github {
         }
         if (endLine >= lines.length) {
             // no match?
+            pxt.debug(`diff marker mistmatch: ${lines.length} -> ${startLine} ${middleLine} ${endLine}`)
             return content;
         }
 
         // remove locals
-        lines[startMarkerLine] = undefined;
+        lines[startLine] = undefined;
         lines[middleLine] = undefined;
         lines[endLine] = undefined;
         if (!local)
-            for (let i = startMarkerLine; i <= middleLine; ++i)
+            for (let i = startLine; i <= middleLine; ++i)
                 lines[i] = undefined;
         if (!remote)
             for (let i = middleLine; i <= endLine; ++i)
