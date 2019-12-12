@@ -774,13 +774,16 @@ ${content}
         });
         if (description === null) return;
 
-        const gh = this.parsedRepoId();
+        this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
+            const gh = this.parsedRepoId();
             const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, description);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
-            } catch (e) {
+        } catch (e) {
             this.handleGithubError(e);
+        } finally {
+            this.hideLoading();
         }
     }
 
