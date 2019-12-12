@@ -124,7 +124,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={true}
                     />
                 </div>
-                <div
+                <div role="button"
                     className={`image-editor-confirm`}
                     title={lf("Done")}
                     onClick={onDoneClick}>
