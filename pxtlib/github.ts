@@ -340,10 +340,10 @@ namespace pxt.github {
     }
 
     export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
-        headBranch: string, msg: string) {
+        headBranch: string, title: string, msg?: string) {
         const res = await ghPostAsync(repopath + "/pulls", {
-            title: msg,
-            body: lf("Automatically created from MakeCode."),
+            title: title,
+            body: msg || lf("Automatically created from MakeCode."),
             head: headBranch,
             base: baseBranch,
             maintainer_can_modify: true
@@ -1361,22 +1361,29 @@ namespace pxt.github {
         return ghPostAsync("https://api.github.com/graphql", payload);
     }
 
+    export interface PullRequest {
+        number: number;
+        state?: "OPEN" | "CLOSED" | "MERGED";
+        mergeable?: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+    }
+
     /**
      * Finds the first PR associated with a branch
      * @param reponame 
      * @param headName 
      */
-    export function findPRNumberforBranchAsync(reponame: string, headName: string) : Promise<number> {
+    export function findPRNumberforBranchAsync(reponame: string, headName: string) : Promise<PullRequest> {
         const repoId = parseRepoId(reponame);
         const query = 
 `
 {
     repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
-        pullRequests(last: 1, states: OPEN, headRefName: ${JSON.stringify(headName)}) {
+        pullRequests(last: 1, states: [OPEN, MERGED], headRefName: ${JSON.stringify(headName)}) {
             edges {
                 node {
-                    title
                     number
+                    state
+                    mergeable
                 }
             }
         }
@@ -1403,9 +1410,19 @@ namespace pxt.github {
 }*/
 
 return ghGraphQLQueryAsync(query)
-            .then(resp => {
+            .then<pxt.github.PullRequest>(resp => {
                 const edge = resp.data.repository.pullRequests.edges[0]
-                return (edge && edge.node && edge.node.number) || -1;
+                if (edge && edge.node) {
+                    const node = edge.node;
+                    return {
+                        number: node.number,
+                        mergeable: node.mergeable,
+                        state: node.state
+                    }
+                }
+                return {
+                    number: -1
+                }
             })    
     }
 }

@@ -765,7 +765,7 @@ ${content}
     }
 
     private async handlePullRequest() {
-        const description = await core.promptAsync({
+        const title = await core.promptAsync({
             header: lf("Create pull request"),
             body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
             helpUrl: "/github/pull-request",
@@ -773,12 +773,20 @@ ${content}
             hideCancel: true,
             placeholder: lf("Describe the changes in this branch.")
         });
-        if (description === null) return;
+        if (title === null) return;
 
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
             const gh = this.parsedRepoId();
-            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, description);
+            const msg = 
+`
+![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
+
+${lf("This image shows the blocks code from the last commit in this pull request.")}
+${lf("This image may take a few minutes to refresh.")}
+
+`
+            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
         } catch (e) {
@@ -824,8 +832,8 @@ ${content}
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
-        const prNumber = this.getData("pkg-git-pr:" + header.id)
-        const showPr = prNumber !== null && (gs.isFork || !master);
+        const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
+        const showPr = pr !== null && (gs.isFork || !master);
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -844,12 +852,12 @@ ${content}
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
                 <div className="ui form">
-                    {showPr && prNumber > -1 &&
-                        <a href={`https://github.com/${githubId.fullName}/pull/${prNumber}`} role="button" className="ui tiny basic button create-pr"
+                    {showPr && pr.number > 0 &&
+                        <a href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
                             target="_blank" rel="noopener noreferrer">
-                            {lf("Pull request (#{0})", prNumber)}
+                            {lf("Pull request (#{0})", pr.number)}
                         </a>}
-                    {showPr && prNumber < 0 &&
+                    {showPr && pr.number <= 0 &&
                         <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
                     }
                     <h3 className="header">
