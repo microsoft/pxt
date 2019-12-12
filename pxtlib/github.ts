@@ -1405,7 +1405,7 @@ namespace pxt.github {
 return ghGraphQLQueryAsync(query)
             .then(resp => {
                 const edge = resp.data.repository.pullRequests.edges[0]
-                return edge && edge.node && edge.node.number;
+                return (edge && edge.node && edge.node.number) || -1;
             })    
     }
 }
