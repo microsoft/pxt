@@ -16,18 +16,23 @@ Let's illustrate it for a **homework** asignment.
 
 ### Step 1: Students create a new repository 
 
-From the MakeCode editor, the student create a **private** repository for the assignment that will be hosted under their account. 
-Students should all name the repository with the assignment name (e.g. "homework" in this example).
+From the MakeCode editor, the student create a **public** repository for the assignment that will be hosted under their account. Students should all name the repository with the assignment name (e.g. "homework" in this example).
 
 #### ~ hint
 
-Public or private? A repository can be made public later on once all the assignments have been returned. It will be part of the student **portfolio**.
+##### Private repositories
+
+A repository can be also made **private** (at creation or later in the settings), in which case only the student can access it. See **step 2** to give access to the teacher.
 
 #### ~
 
-### Step 2: Student invite teacher as collaborator
+### Step 2: (optional) Student invite teacher as collaborator
 
-Using the collaborator button, the student invites the teacher account as a collaborator of the project. This will the teacher access to the private assignment repository.
+If the repository is **private**, the student will have to invite the teacher as **collaborator**.
+
+* open the **collaborators** page using the collaborator button
+* enter the teacher alias in the textbox and send the invitation. 
+* the teacher needs to accept the invitation to get access to the private repository
 
 ![Screenshot of the collaborator page on GitHub](/static/github/classroom/addcollaborator.png)
 
@@ -35,7 +40,7 @@ Using the collaborator button, the student invites the teacher account as a coll
 
 ##### GitHub and 404
 
-If you try the invitation link and it gives you a **404** error, it most likely means that you are not signed in with GitHub. GitHub shows 404 pages when you try to access private repositories or invitation links.
+If you try the invitation link and it gives you a **404** error, it most likely means that you are not signed in with GitHub. 
 
 ![GitHub 404 page](/static/github/classroom/404.png)
 
