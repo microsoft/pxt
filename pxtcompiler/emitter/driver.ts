@@ -290,7 +290,7 @@ namespace ts.pxtc {
         return res
     }
 
-    export function decompile(program: Program, opts: CompileOptions, fileName: string, includeGreyBlockMessages = false, generatedVarDeclarations?: pxt.Map<pxt.blocks.VarDeclaration>) {
+    export function decompile(program: Program, opts: CompileOptions, fileName: string, includeGreyBlockMessages = false) {
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         const apis = getApiInfo(program, opts.jres);
@@ -299,8 +299,7 @@ namespace ts.pxtc {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
-            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"],
-            generatedVarDeclarations: generatedVarDeclarations
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
         let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);

@@ -381,7 +381,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            let generatedVarDecls: pxt.Map<pxt.blocks.VarDeclaration>;
             return this.saveToTypeScriptAsync() // make sure Python gets converted
                 .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
@@ -392,7 +391,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
-                            generatedVarDecls = compilationResult.generatedVarDeclarations;
                             const oldJs = compilationResult.source;
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
@@ -417,7 +415,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {
-                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile, generatedVarDecls)
+                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
                                     .then(resp => {
                                         if (!resp.success) {
                                             this.currFile.diagnostics = resp.diagnostics;
