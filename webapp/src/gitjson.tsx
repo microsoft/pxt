@@ -778,8 +778,8 @@ ${content}
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
             const gh = this.parsedRepoId();
-            const msg = 
-lf(`
+            const msg =
+                lf(`
 ### How to use this pull request
 
 - [ ] assign a reviewer
@@ -787,15 +787,15 @@ lf(`
 - [ ] apply requested changes if any
 - [ ] merge once approved
 `); // TODO
-/*
+            /*
+                        `
+            ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
+            
+            ${lf("This image shows the blocks code from the last commit in this pull request.")}
+            ${lf("This image may take a few minutes to refresh.")}
+            
             `
-![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
-
-${lf("This image shows the blocks code from the last commit in this pull request.")}
-${lf("This image may take a few minutes to refresh.")}
-
-`
-*/
+            */
             const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
@@ -919,11 +919,11 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
         if (pullRequest && pullRequest.number > 0 && pullRequest.state == "MERGED")
             return <div className="ui icon warning message">
-            <i className="exclamation circle icon"></i>
-            <div className="content">
-                {lf("This branch has been merged, please switch back to the master branch.")}
+                <i className="exclamation circle icon"></i>
+                <div className="content">
+                    {lf("This branch has been merged, please switch back to the master branch.")}
+                </div>
             </div>
-        </div>
 
         if (pullStatus == workspace.PullStatus.BranchDeleted)
             return <div className="ui icon warning message">

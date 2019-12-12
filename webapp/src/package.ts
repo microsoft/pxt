@@ -720,7 +720,7 @@ data.mountVirtualApi("pkg-git-pull-status", {
 
 data.mountVirtualApi("pkg-git-pr", {
     getAsync: p => {
-        const missing = <pxt.github.PullRequest>{ 
+        const missing = <pxt.github.PullRequest>{
             number: -1
         };
         p = data.stripProtocol(p)
@@ -729,7 +729,7 @@ data.mountVirtualApi("pkg-git-pr", {
         const ghid = f.getPkgId() == "this" && header && header.githubId;
         if (!ghid) return Promise.resolve(missing);
         const parsed = pxt.github.parseRepoId(ghid);
-        if (!parsed || !parsed.tag ||parsed.tag == "master") return Promise.resolve(missing);
+        if (!parsed || !parsed.tag || parsed.tag == "master") return Promise.resolve(missing);
         return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
             .catch(e => missing);
     },
