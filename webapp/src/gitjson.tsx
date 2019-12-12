@@ -778,19 +778,24 @@ ${content}
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
             const gh = this.parsedRepoId();
-            const msg = 
-`
+            const msg = ''; // TODO
+/*
+            `
 ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
 
 ${lf("This image shows the blocks code from the last commit in this pull request.")}
 ${lf("This image may take a few minutes to refresh.")}
 
 `
+*/
             const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
             data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
             core.infoNotification(lf("Pull request created successfully!", id));
         } catch (e) {
-            this.handleGithubError(e);
+            if (e.statusCode == 422)
+                core.warningNotification(lf("Please commit changes before creating a pull request."));
+            else
+                this.handleGithubError(e);
         } finally {
             this.hideLoading();
         }
