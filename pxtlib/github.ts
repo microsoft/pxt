@@ -1372,10 +1372,10 @@ namespace pxt.github {
      * @param reponame 
      * @param headName 
      */
-    export function findPRNumberforBranchAsync(reponame: string, headName: string) : Promise<PullRequest> {
+    export function findPRNumberforBranchAsync(reponame: string, headName: string): Promise<PullRequest> {
         const repoId = parseRepoId(reponame);
-        const query = 
-`
+        const query =
+            `
 {
     repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
         pullRequests(last: 1, states: [OPEN, MERGED], headRefName: ${JSON.stringify(headName)}) {
@@ -1389,27 +1389,27 @@ namespace pxt.github {
         }
     }
 }
-`    
+`
 
-/*
-{
-  "data": {
-    "repository": {
-      "pullRequests": {
-        "edges": [
-          {
-            "node": {
-              "title": "use close icon instead of cancel",
-              "number": 6324
+        /*
+        {
+          "data": {
+            "repository": {
+              "pullRequests": {
+                "edges": [
+                  {
+                    "node": {
+                      "title": "use close icon instead of cancel",
+                      "number": 6324
+                    }
+                  }
+                ]
+              }
             }
           }
-        ]
-      }
-    }
-  }
-}*/
+        }*/
 
-return ghGraphQLQueryAsync(query)
+        return ghGraphQLQueryAsync(query)
             .then<pxt.github.PullRequest>(resp => {
                 const edge = resp.data.repository.pullRequests.edges[0]
                 if (edge && edge.node) {
@@ -1423,6 +1423,6 @@ return ghGraphQLQueryAsync(query)
                 return {
                     number: -1
                 }
-            })    
+            })
     }
 }
