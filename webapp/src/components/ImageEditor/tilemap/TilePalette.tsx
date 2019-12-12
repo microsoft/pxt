@@ -301,15 +301,15 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         // tile cannot be deleted because it is referenced in the code
         if (referencedTiles && referencedTiles.indexOf(info.projectId) !== -1) {
-            dispatchShowAlert("Unable to delete",
-                "This tile is used in your game. Remove all blocks using the tile before deleting.",
-                [{ label: "Cancel", onClick: dispatchHideAlert }]);
+            dispatchShowAlert(lf("Unable to delete"),
+                lf("This tile is used in your game. Remove all blocks using the tile before deleting."),
+                [{ label: lf("Cancel"), onClick: dispatchHideAlert }]);
             return;
         }
 
-        dispatchShowAlert("Are you sure?",
-            "Deleting this tile will remove it from all other tile maps in your game.",
-            [{ label: "Yes", onClick: this.deleteTile}, { label: "No", onClick: dispatchHideAlert }]);
+        dispatchShowAlert(lf("Are you sure?"),
+            lf("Deleting this tile will remove it from all other tile maps in your game."),
+            [{ label: lf("Yes"), onClick: this.deleteTile}, { label: lf("No"), onClick: dispatchHideAlert }]);
     }
 
     protected deleteTile = () => {

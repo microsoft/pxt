@@ -26,16 +26,16 @@ class AlertImpl extends React.Component<AlertProps, {}> {
 
     render() {
         const { title, text, options, dispatchHideAlert } = this.props;
-        return  <div className="image-editor-alert-container" onClick={dispatchHideAlert}>
-            <div className="image-editor-alert" >
+        return  <div className="image-editor-alert-container" role="region" onClick={dispatchHideAlert}>
+            <div className="image-editor-alert" role="dialog">
                 <div className="title">
                     <span className="ms-Icon ms-Icon--Warning"></span>
                     <span>{title}</span>
-                    <span className="ms-Icon ms-Icon--Cancel" onClick={dispatchHideAlert}></span>
+                    <span className="ms-Icon ms-Icon--Cancel" role="button" onClick={dispatchHideAlert}></span>
                 </div>
                 <div className="text">{text}</div>
                 {options && <div className="options">
-                    { options.map(opt => <div className="button" onClick={opt.onClick}>{opt.label}</div>) }
+                    { options.map(opt => <div className="button" role="button" onClick={opt.onClick}>{opt.label}</div>) }
                 </div>}
             </div>
         </div>
