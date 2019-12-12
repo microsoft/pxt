@@ -768,6 +768,7 @@ ${content}
         const description = await core.promptAsync({
             header: lf("Create pull request"),
             body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
+            helpUrl: "/github/pull-request",
             hasCloseIcon: true,
             hideCancel: true,
             placeholder: lf("Describe the changes in this branch.")
