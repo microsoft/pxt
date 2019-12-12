@@ -6,6 +6,7 @@ import { SideBar } from './SideBar';
 import { BottomBar } from './BottomBar';
 import { TopBar } from './TopBar';
 import { ImageCanvas } from './ImageCanvas';
+import { Alert, AlertInfo } from './Alert';
 
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
@@ -31,6 +32,7 @@ export interface ImageEditorProps {
 export interface ImageEditorState {
     editingTile: boolean;
     editTileValue?: string;
+    alert?: AlertInfo;
 }
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> {
@@ -64,9 +66,9 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     render(): JSX.Element {
         const { singleFrame } = this.props;
-        const instanceStore = this.getStore()
+        const instanceStore = this.getStore();
 
-        const { editTileValue, editingTile } = this.state;
+        const { editTileValue, editingTile, alert } = this.state;
 
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
@@ -78,6 +80,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         {singleFrame ? undefined : <Timeline />}
                     </div>
                     <BottomBar singleFrame={singleFrame} />
+                    {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>
             { editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} /> }
@@ -159,7 +162,9 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
         }
 
-        const state = this.getStore().getState()
+        const state = this.getStore().getState();
+
+        if (state.editor) this.setState({ alert: state.editor.alert });
 
         if (!!state.editor.editingTile != !!this.state.editingTile) {
             if (state.editor.editingTile) {

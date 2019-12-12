@@ -1,0 +1,49 @@
+.image-editor-alert-container {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(30, 30, 30, 0.5);
+
+}
+
+.image-editor-alert {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: var(--sidebar-icon-active-color);
+    background-color: var(--editing-tools-bg-color);
+    font-family: sans-serif;
+    border-radius: 5px;
+    padding: 0.5rem;
+    transform: translateX(-50%) translateY(-50%);
+    max-width: 60%;
+    min-width: 20rem;
+}
+
+.image-editor-alert .text {
+    padding: 0.5rem 0;
+}
+
+.image-editor-alert .options {
+    text-align: right;
+}
+
+.image-editor-alert .button {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.5rem;
+    background-color: #4b7bec;
+    cursor: pointer;
+}
+
+.image-editor-alert .ms-Icon--Warning {
+    vertical-align: top;
+    padding-right: 0.5rem;
+}
+
+.image-editor-alert .ms-Icon--Cancel {
+    float: right;
+    cursor: pointer;
+}
