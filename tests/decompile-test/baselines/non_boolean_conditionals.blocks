@@ -54,14 +54,6 @@
 <statement name="DO0">
 </statement>
 <next>
-<block type="variables_set">
-<field name="VAR">v</field>
-<value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-</value>
-<next>
 <block type="controls_if">
 <mutation elseif="0" else="0" />
 <value name="IF0">
@@ -421,8 +413,6 @@
 </value>
 <statement name="DO">
 </statement>
-</block>
-</next>
 </block>
 </next>
 </block>
