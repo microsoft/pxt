@@ -749,7 +749,6 @@ ${content}
 
         const { header } = this.props.parent.state
         if (b) {
-            _package.invalidatePullStatus(header);
             this.setState({
                 previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
             });
@@ -970,7 +969,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             <div className="ui header">{lf("Extension zone")}</div>
             <div className="ui field">
                 <a href={testurl}
-                    role="button" className="ui button"
+                    role="button" className="ui basic button"
                     target={`${pxt.appTarget.id}testproject`} rel="noopener noreferrer">
                     {lf("Test Extension")}
                 </a>
@@ -980,7 +979,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </span>
             </div>
             {showFork && <div className="ui field">
-                <sui.Button text={lf("Fork repository")}
+                <sui.Button className="basic" text={lf("Fork repository")}
                     onClick={this.handleForkClick}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
@@ -996,7 +995,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
                 :
                 <div className="ui field">
-                    <sui.Button text={lf("Create release")}
+                    <sui.Button className="basic" text={lf("Create release")}
                         onClick={this.handleBumpClick}
                         onKeyDown={sui.fireClickOnEnter} />
                     <span className="inline-help">
@@ -1006,7 +1005,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>}
             {needsLicenseMessage ? <div className={`ui field`}>
                 <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                    role="button" className="ui button"
+                    role="button" className="ui basic button"
                     target="_blank" rel="noopener noreferrer">
                     {lf("Add license")}
                 </a>
