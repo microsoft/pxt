@@ -1,4 +1,3 @@
-let list: number[] = []
 function doSomething () {
-    list = []
+    let list: number[] = []
 }

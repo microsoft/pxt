@@ -1,5 +1,5 @@
+let string = 0
 player.onChatCommand("run",  [ChatArgument.number],function ({ number }) {
-  let string = 0
   if (number == string) {
 
   }

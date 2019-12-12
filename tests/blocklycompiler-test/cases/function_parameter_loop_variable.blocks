@@ -1,0 +1,190 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id=",;TamAzS~IYgZEZ.7X0-">index</variable>
+  </variables>
+  <block type="pxt-on-start" x="0" y="0">
+    <statement name="HANDLER">
+      <block type="pxt_controls_for">
+        <value name="VAR">
+          <shadow type="variables_get_reporter">
+            <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+          </shadow>
+        </value>
+        <value name="TO">
+          <shadow type="math_whole_number">
+            <field name="NUM">2</field>
+          </shadow>
+        </value>
+        <statement name="DO">
+          <block type="variables_set">
+            <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+            <value name="VALUE">
+              <shadow type="math_number">
+                <field name="NUM">3</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="device_show_number">
+                <value name="number">
+                  <block type="variables_get">
+                    <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </statement>
+        <next>
+          <block type="pxt_controls_for_of">
+            <value name="VAR">
+              <shadow type="variables_get_reporter">
+                <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+              </shadow>
+            </value>
+            <value name="LIST">
+              <block type="lists_create_with">
+                <mutation items="2" />
+                <value name="ADD0">
+                  <shadow type="math_number">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+                <value name="ADD1">
+                  <shadow type="math_number">
+                    <field name="NUM">2</field>
+                  </shadow>
+                </value>
+              </block>
+            </value>
+            <statement name="DO">
+              <block type="variables_set">
+                <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+                <value name="VALUE">
+                  <shadow type="math_number">
+                    <field name="NUM">5</field>
+                  </shadow>
+                  <block type="math_arithmetic">
+                    <field name="OP">ADD</field>
+                    <value name="A">
+                      <shadow type="math_number">
+                        <field name="NUM">5</field>
+                      </shadow>
+                    </value>
+                    <value name="B">
+                      <shadow type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                      <block type="variables_get">
+                        <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+                  <block type="device_show_number">
+                    <value name="number">
+                      <shadow type="math_number">
+                        <field name="NUM">0</field>
+                      </shadow>
+                      <block type="variables_get">
+                        <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+                      </block>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </statement>
+            <next>
+              <block type="function_call">
+                <mutation name="test" functionid="2D57#[Rr2JtIX#i![4M5">
+                  <arg name="index" id="24vxj9ydfkfqizhbc4kh" type="number" />
+                </mutation>
+                <value name="24vxj9ydfkfqizhbc4kh">
+                  <shadow type="math_number">
+                    <field name="NUM">-1</field>
+                  </shadow>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="function_definition" x="538" y="16">
+    <mutation name="test" functionid="2D57#[Rr2JtIX#i![4M5">
+      <arg name="index" id="24vxj9ydfkfqizhbc4kh" type="number" />
+    </mutation>
+    <field name="function_name">test</field>
+    <value name="24vxj9ydfkfqizhbc4kh">
+      <shadow type="argument_reporter_number">
+        <field name="VALUE">index</field>
+      </shadow>
+    </value>
+    <statement name="STACK">
+      <block type="variables_set">
+        <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+        <value name="VALUE">
+          <shadow type="math_number">
+            <field name="NUM">9</field>
+          </shadow>
+        </value>
+        <next>
+          <block type="device_show_number">
+            <value name="number">
+              <block type="argument_reporter_number">
+                <field name="VALUE">index</field>
+              </block>
+            </value>
+            <next>
+              <block type="pxt_controls_for">
+                <value name="VAR">
+                  <shadow type="variables_get_reporter">
+                    <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+                  </shadow>
+                </value>
+                <value name="TO">
+                  <shadow type="math_whole_number">
+                    <field name="NUM">3</field>
+                  </shadow>
+                </value>
+                <statement name="DO">
+                  <block type="device_print_message">
+                    <value name="text">
+                      <shadow type="text">
+                        <field name="TEXT">Hello!</field>
+                      </shadow>
+                      <block type="stringFromCharCode">
+                        <value name="code">
+                          <shadow type="math_number">
+                            <field name="NUM">0</field>
+                          </shadow>
+                          <block type="math_arithmetic">
+                            <field name="OP">ADD</field>
+                            <value name="A">
+                              <shadow type="math_number">
+                                <field name="NUM">0</field>
+                              </shadow>
+                              <block type="variables_get">
+                                <field name="VAR" id=",;TamAzS~IYgZEZ.7X0-">index</field>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <shadow type="math_number">
+                                <field name="NUM">65</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

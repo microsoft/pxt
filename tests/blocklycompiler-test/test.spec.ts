@@ -419,6 +419,10 @@ describe("blockly compiler", function () {
         it("should narrow variable types when used as function call arguments", (done: () => void) => {
             blockTestAsync("function_call_inference").then(done, done);
         });
+
+        it("should not rename or hoist function parameters and loop variables", (done: () => void) => {
+            blockTestAsync("function_parameter_loop_variable").then(done, done);
+        });
     });
 
     describe("compiling special blocks", () => {
