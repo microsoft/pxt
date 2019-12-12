@@ -438,6 +438,7 @@ declare namespace ts.pxtc {
         noPeepHole?: boolean;
         time?: boolean;
         noIncr?: boolean;
+        rawELF?: boolean;
     }
 
     interface CompileTarget {

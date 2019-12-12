@@ -465,7 +465,7 @@ namespace pxt {
 
         if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
             return ts.pxtc.BINARY_PXT64
-        else if (trg.useUF2)
+        else if (trg.useUF2 && !trg.switches.rawELF)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
             return ts.pxtc.BINARY_ELF
