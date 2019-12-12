@@ -1350,4 +1350,60 @@ namespace pxt.github {
         };
         return cfg;
     }
+
+    /**
+     * Executes a GraphQL query against GitHub v4 api
+     * @param query 
+     */
+    export function ghGraphQLAsync(query: string): Promise<any> {
+        return ghPostAsync("https://api.github.com/graphql", query);
+    }
+
+    /**
+     * Finds the first PR associated with a branch
+     * @param reponame 
+     * @param headName 
+     */
+    export function findPRNumberforBranchAsync(reponame: string, headName: string) : Promise<number> {
+        const repoId = parseRepoId(reponame);
+        const query = 
+`
+{
+    repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
+      pullRequests(last: 1, states: OPEN, headRefName: ${JSON.stringify(headName)}) {
+        edges {
+          node {
+            title
+            number
+          }
+        }
+      }
+    }
+  }
+`    
+
+/*
+{
+  "data": {
+    "repository": {
+      "pullRequests": {
+        "edges": [
+          {
+            "node": {
+              "title": "use close icon instead of cancel",
+              "number": 6324
+            }
+          }
+        ]
+      }
+    }
+  }
+}*/
+
+return ghGraphQLAsync(query)
+            .then(resp => {
+                const edge = resp.data.repository.pullRequests.edges[0]
+                return edge && edge.node && edge.node.number;
+            })    
+    }
 }
