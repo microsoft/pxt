@@ -863,7 +863,7 @@ ${lf("This image may take a few minutes to refresh.")}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
                     {showPr && pr.number > 0 &&
                         <a href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
@@ -879,7 +879,7 @@ ${lf("This image may take a few minutes to refresh.")}
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                         : <div className="ui segment">
                             {lf("No local changes found.")}
                             {" "}
@@ -888,7 +888,7 @@ ${lf("This image may take a few minutes to refresh.")}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} /> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} /> : undefined}
                 </div>
             </div>
         )
@@ -905,6 +905,7 @@ interface GitHubViewProps {
     needsCommit: boolean;
     user: pxt.editor.UserInfo;
     pullStatus: workspace.PullStatus;
+    pullRequest: pxt.github.PullRequest;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -914,7 +915,15 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { pullStatus } = this.props;
+        const { pullStatus, pullRequest } = this.props;
+
+        if (pullRequest && pullRequest.number > 0 && pullRequest.state == "MERGED")
+            return <div className="ui icon warning message">
+            <i className="exclamation circle icon"></i>
+            <div className="content">
+                {lf("This branch has been merged, please switch back to the master branch.")}
+            </div>
+        </div>
 
         if (pullStatus == workspace.PullStatus.BranchDeleted)
             return <div className="ui icon warning message">
