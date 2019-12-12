@@ -198,23 +198,20 @@
     width: ~"calc(20% - 2px)";
 }
 
-.ui.button.image-editor-confirm {
-    position: absolute;
-    right: 0.5rem;
-    bottom: 2.5rem;
+.image-editor-confirm {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
     background-color: #4b7bec;
     color: #ffffff;
+    cursor: pointer;
 }
 
-.ui.button.image-editor-confirm.animation {
-    right: 7.5rem;
-}
-
-.ui.button.image-editor-confirm:hover {
+.image-editor-confirm:hover {
     background-color: darken(#4b7bec, 5%);
 }
 
-.ui.button.image-editor-confirm:active {
+.image-editor-confirm:active {
     background-color: darken(#4b7bec, 10%);
 }
 
