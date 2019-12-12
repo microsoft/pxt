@@ -122,6 +122,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.delayLoadXml) {
             if (this.loadingXml) return
             pxt.debug(`loading blockly`)
+            pxt.perf.measureStart("domUpdate loadBlockly")
             this.loadingXml = true
 
             const loadingDimmer = document.createElement("div");
@@ -158,6 +159,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         // It's possible Blockly reloads and the loading dimmer is no longer a child of the editorDiv
                         editorDiv.removeChild(loadingDimmer);
                     } catch { }
+                    pxt.perf.measureEnd("domUpdate loadBlockly")
                 });
 
             this.loadingXmlPromise.done();
@@ -341,7 +343,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
-                disagreeLbl: lf("Cancel"),
+                hideCancel: true,
+                hasCloseIcon: true,
                 size: "tiny"
             }).then(value => {
                 callback(value);
@@ -430,6 +433,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private prepareBlockly(forceHasCategories?: boolean) {
+        pxt.perf.measureStart("prepareBlockly")
         let blocklyDiv = document.getElementById('blocksEditor');
         pxsim.U.clear(blocklyDiv);
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
@@ -511,6 +515,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.initBlocklyToolbox();
         this.initWorkspaceSounds();
         this.resize();
+        pxt.perf.measureEnd("prepareBlockly")
     }
 
     resize(e?: Event) {
@@ -541,20 +546,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected resizeFieldEditorView() {
-        const blocklyDiv = this.getBlocksEditorDiv();
-        if (!blocklyDiv) return;
-
-        const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        if (!blocklyToolboxDiv) return;
-
-        const workspaceRect = blocklyDiv.getBoundingClientRect();
-        const toolboxRect = blocklyToolboxDiv.getBoundingClientRect();
-
+        if (!window) return;
+        // Full-screen editor
         blocklyFieldView.setEditorBounds({
-            top: workspaceRect.top,
-            left: toolboxRect.right,
-            width: workspaceRect.width - toolboxRect.width,
-            height: workspaceRect.height
+            top: 0,
+            left: 0,
+            width: window.innerWidth,
+            height: window.innerHeight
         });
     }
 
@@ -658,6 +656,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const container = document.getElementById('debuggerToolbox');
         if (!container) return;
 
+        pxt.perf.measureStart("updateToolbox")
         const debugging = !!this.parent.state.debugging;
         let debuggerToolbox = debugging ? <DebuggerToolbox ref={this.handleDebuggerToolboxRef} parent={this.parent} apis={this.blockInfo.apis.byQName} /> : <div />;
 
@@ -668,6 +667,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.toolbox.show();
         }
         ReactDOM.render(debuggerToolbox, container);
+        pxt.perf.measureEnd("updateToolbox")
     }
 
     showPackageDialog() {
@@ -721,7 +721,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private _loadBlocklyPromise: Promise<void>;
     loadBlocklyAsync() {
-        if (!this._loadBlocklyPromise)
+        if (!this._loadBlocklyPromise) {
+            pxt.perf.measureStart("loadBlockly")
             this._loadBlocklyPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => {
                     // Initialize the "Make a function" button
@@ -755,6 +756,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     this.prepareBlockly();
                 })
                 .then(() => pxt.editor.initEditorExtensionsAsync())
+                .then(() => pxt.perf.measureEnd("loadBlockly"))
+        }
         return this._loadBlocklyPromise;
     }
 
@@ -971,6 +974,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private refreshToolbox() {
         if (!this.blockInfo) return;
+        pxt.perf.measureStart("refreshToolbox")
         // no toolbox when readonly
         if (pxt.shell.isReadOnly()) return;
 
@@ -1015,6 +1019,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.renderToolbox(true);
             }
         }
+        pxt.perf.measureEnd("refreshToolbox")
     }
 
     filterToolbox(showCategories?: boolean) {

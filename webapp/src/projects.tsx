@@ -269,8 +269,11 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     signOutGithub() {
         pxt.tickEvent("home.github.signout");
         const githubProvider = cloudsync.githubProvider();
-        if (githubProvider)
+        if (githubProvider) {
             githubProvider.logout();
+            this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub"))
+        }
     }
 
     renderCore() {
@@ -519,6 +522,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             url={selectedElement.url}
                             imageUrl={selectedElement.imageUrl}
                             largeImageUrl={selectedElement.largeImageUrl}
+                            videoUrl={selectedElement.videoUrl}
                             youTubeId={selectedElement.youTubeId}
                             buttonLabel={selectedElement.buttonLabel}
                             scr={selectedElement}
@@ -627,6 +631,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     description?: string;
     imageUrl?: string;
     largeImageUrl?: string;
+    videoUrl?: string;
     youTubeId?: string;
     buttonLabel?: string;
     url?: string;
@@ -711,16 +716,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, videoUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
 
-        let image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
-
-        if (/\.mp4$/.test(image) && pxt.BrowserUtils.isElectron()) {
-            // we don't support mp4 in electron, so try out luck as gif
-            image = image.replace(/\.mp4$/, ".gif");
-        }
+        const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
+        const video = !pxt.BrowserUtils.isElectron() && videoUrl;
 
         let clickLabel = lf("Show Instructions");
         if (buttonLabel)
@@ -754,8 +755,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             />
 
         return <div className="ui grid stackable padded">
-            {image && <div className="imagewrapper">
-                {/\.mp4$/.test(image) ? <video className="video" src={image} autoPlay={true} controls={false} loop={true} playsInline={true} />
+            {(video || image) && <div className="imagewrapper">
+                {video ? <video className="video" src={video} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
             <div className="column twelve wide">
@@ -786,19 +787,6 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
 export interface ImportDialogState {
     visible?: boolean;
-}
-
-function githubLogin() {
-    core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
-    const self = window.location.href.replace(/#.*/, "")
-    const state = ts.pxtc.Util.guidGen();
-    pxt.storage.setLocal("oauthState", state)
-    pxt.storage.setLocal("oauthType", "github")
-    const login = pxt.Cloud.getServiceUrl() +
-        "/oauth/login?state=" + state +
-        "&response_type=token&client_id=gh-token&redirect_uri=" +
-        encodeURIComponent(self)
-    window.location.href = login
 }
 
 export class ImportDialog extends data.Component<ISettingsProps, ImportDialogState> {
@@ -891,12 +879,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             onClick={this.cloneGithub}
                         /> : undefined}
                 </div>
-                {pxt.github.token || true ? undefined :
-                    <p>
-                        <br /><br />
-                        <a className="small" href="#github" role="button" onClick={githubLogin}
-                            aria-label={lf("GitHub login")}>{lf("GitHub login")}</a>
-                    </p>}
             </sui.Modal>
         )
     }

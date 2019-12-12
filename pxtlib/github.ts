@@ -117,6 +117,10 @@ namespace pxt.github {
         return ghRequestAsync({ url }).then(resp => resp.text)
     }
 
+    function ghProxyJsonAsync(path: string) {
+        return Cloud.apiRequestWithCdnAsync({ url: "gh/" + path }).then(r => r.json)
+    }
+
     export class MemoryGithubDb implements IGithubDb {
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
@@ -131,7 +135,7 @@ namespace pxt.github {
             }
 
             // load and cache
-            return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/${tag}/text`)
+            return ghProxyJsonAsync(`${repopath}/${tag}/text`)
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -370,6 +374,10 @@ namespace pxt.github {
     export function getRefAsync(repopath: string, branch: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
+            .catch(err => {
+                if (err.statusCode == 404) return undefined;
+                else Promise.reject(err);
+            })
     }
 
     function generateNextRefName(res: RefsResult, pref: string): string {
@@ -422,6 +430,7 @@ namespace pxt.github {
         let head: string = null
         const fetch = !useProxy() ?
             ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
+            // no CDN caching here
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
                     let res = Object.keys(r.refs)
@@ -579,7 +588,7 @@ namespace pxt.github {
     }
 
     export function mkRepoIconUrl(repo: ParsedRepo): string {
-        return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
+        return Cloud.cdnApiUrl(`gh/${repo.fullName}/icon`)
     }
 
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
@@ -657,7 +666,7 @@ namespace pxt.github {
                 .then((r: Repo) => mkRepo(r, config, rid.tag));
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
+        return ghProxyJsonAsync(`${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -1108,11 +1117,14 @@ namespace pxt.github {
 
     export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
         let lines = toLines(content);
-        if (!/^<<<<<<<[^<]/.test(lines[startMarkerLine])) {
-            // invalid line, no marker found
-            return content;
+        let startLine = startMarkerLine;
+        while (startLine < lines.length) {
+            if (/^<<<<<<<[^<]/.test(lines[startLine])) {
+                break;
+            }
+            startLine++;
         }
-        let middleLine = startMarkerLine + 1;
+        let middleLine = startLine + 1;
         while (middleLine < lines.length) {
             if (/^=======$/.test(lines[middleLine]))
                 break;
@@ -1127,15 +1139,16 @@ namespace pxt.github {
         }
         if (endLine >= lines.length) {
             // no match?
+            pxt.debug(`diff marker mistmatch: ${lines.length} -> ${startLine} ${middleLine} ${endLine}`)
             return content;
         }
 
         // remove locals
-        lines[startMarkerLine] = undefined;
+        lines[startLine] = undefined;
         lines[middleLine] = undefined;
         lines[endLine] = undefined;
         if (!local)
-            for (let i = startMarkerLine; i <= middleLine; ++i)
+            for (let i = startLine; i <= middleLine; ++i)
                 lines[i] = undefined;
         if (!remote)
             for (let i = middleLine; i <= endLine; ++i)

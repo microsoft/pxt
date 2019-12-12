@@ -1,10 +1,11 @@
 import * as React from "react";
 
 import { connect } from 'react-redux';
-import { ImageEditorStore } from './store/imageReducer';
-import { dispatchChangeInterval, dispatchChangePreviewAnimating } from './actions/dispatch';
+import { ImageEditorStore, AnimationState } from './store/imageReducer';
+import { dispatchChangeInterval, dispatchChangePreviewAnimating, dispatchChangeOverlayEnabled } from './actions/dispatch';
 import { IconButton } from "./Button";
 import { CursorSizes } from "./CursorSizes";
+import { Toggle } from "./Toggle";
 
 
 export interface TopBarProps {
@@ -12,7 +13,9 @@ export interface TopBarProps {
     interval: number;
     previewAnimating: boolean;
     dispatchChangePreviewAnimating: (animating: boolean) => void;
+    dispatchChangeOverlayEnabled: () => void;
     singleFrame?: boolean;
+    isTilemap?: boolean;
 }
 
 export interface TopBarState {
@@ -26,7 +29,7 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
     }
 
     render() {
-        const { interval, previewAnimating, dispatchChangePreviewAnimating, singleFrame } = this.props;
+        const { interval, previewAnimating, singleFrame, isTilemap, dispatchChangeOverlayEnabled } = this.props;
 
         const intervalVal = this.state.interval == null ? interval : this.state.interval;
 
@@ -58,6 +61,9 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
                         </div>
                     </div>
                 }
+                { isTilemap &&
+                    <Toggle initialValue={true} label={lf("Show walls")} onChange={dispatchChangeOverlayEnabled} />
+                }
             </div>
         );
     }
@@ -81,18 +87,21 @@ export class TopBarImpl extends React.Component<TopBarProps, TopBarState> {
     }
 }
 
-function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
+    let state = present as AnimationState;
     if (!state) return {};
 
     return {
         interval: state.interval,
-        previewAnimating: editor.previewAnimating
+        previewAnimating: editor.previewAnimating,
+        isTilemap: editor.isTilemap
     };
 }
 
 const mapDispatchToProps = {
     dispatchChangeInterval,
-    dispatchChangePreviewAnimating
+    dispatchChangePreviewAnimating,
+    dispatchChangeOverlayEnabled
 };
 
 

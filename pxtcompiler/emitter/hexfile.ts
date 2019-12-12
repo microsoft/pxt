@@ -551,7 +551,7 @@ namespace ts.pxtc {
                 for (let i = 0; i < hd.length; ++i)
                     pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
                 applyPatches(null, resbuf)
-                if (uf2) {
+                if (uf2 && !bin.target.switches.rawELF) {
                     let bn = bin.options.name || "pxt"
                     bn = bn.replace(/[^a-zA-Z0-9\-\.]+/g, "_")
                     uf2.filename = "Projects/" + bn + ".elf"
@@ -806,7 +806,8 @@ ${info.id}_IfaceVT:
         let offsets: pxt.Map<number> = {}
         for (let e of info.itable) {
             offsets[e.idx + ""] = offset
-            descs += `  .short ${e.idx}, ${e.info} ; ${e.name}\n`
+            const desc = !e.proc ? 0 : e.proc.isGetter() ? 1 : 2
+            descs += `  .short ${e.idx}, ${desc} ; ${e.name}\n`
             descs += `  .word ${e.proc ? e.proc.vtLabel() + "@fn" : e.info}\n`
             offset += descSize
             if (e.setProc) {

@@ -469,7 +469,7 @@ namespace ts.pxtc {
 
     export function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
-        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
+        if (pxtc.Util.userLanguage() == "en") return Promise.resolve(cleanLocalizations(apis));
 
         const errors: pxt.Map<number> = {};
         const langLower = lang.toLowerCase();
@@ -535,11 +535,18 @@ namespace ts.pxtc {
                     updateBlockDef(fn.attributes);
                 })
             })))
-            .then(() => apis)
+            .then(() => cleanLocalizations(apis))
             .finally(() => {
                 if (Object.keys(errors).length)
                     pxt.reportError(`loc.errors`, `invalid translation`, errors);
             })
+    }
+
+    function cleanLocalizations(apis: ApisInfo) {
+        Util.values(apis.byQName)
+        .filter(fb => fb.attributes.block && /^{[^:]+:[^}]+}/.test(fb.attributes.block))
+        .forEach(fn => { fn.attributes.block = fn.attributes.block.replace(/^{[^:]+:[^}]+}/, ''); });
+        return apis;
     }
 
     export function emptyExtInfo(): ExtensionInfo {

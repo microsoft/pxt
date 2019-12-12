@@ -1,0 +1,27 @@
+.image-editor-pivot-outer {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-content: center;
+
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.image-editor-pivot-option {
+    color: var(--sidebar-icon-inactive-color);
+    transition: color 0.1s;
+    font-family: sans-serif;
+    padding: .4rem .5rem .2rem;
+}
+
+.image-editor-pivot-option:hover {
+    color: var(--sidebar-icon-active-color);
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.image-editor-pivot-option.selected {
+    color: var(--sidebar-icon-active-color);
+    border-bottom: 1px solid var(--sidebar-icon-inactive-color);
+}

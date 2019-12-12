@@ -600,8 +600,10 @@ namespace pxt.blocks {
             }
         });
         if (fn.attributes.imageLiteral) {
+            const columns = (fn.attributes.imageLiteralColumns || 5) * fn.attributes.imageLiteral;
+            const rows = fn.attributes.imageLiteralRows || 5;
             let ri = block.appendDummyInput();
-            ri.appendField(new pxtblockly.FieldMatrix("", { columns: fn.attributes.imageLiteral * 5 }), "LEDS");
+            ri.appendField(new pxtblockly.FieldMatrix("", { columns, rows }), "LEDS");
         }
 
         if (fn.attributes.inlineInputMode === "external") {

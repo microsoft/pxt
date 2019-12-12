@@ -384,20 +384,18 @@ namespace pxt.runner {
     }
 
     export let editorLanguageMode = LanguageMode.Blocks;
-    export let editorLocale = "en";
 
-    export function setEditorContextAsync(mode: LanguageMode, locale: string) {
+    export function setEditorContextAsync(mode: LanguageMode, localeInfo: string) {
         editorLanguageMode = mode;
-        if (locale != editorLocale) {
+        if (localeInfo != pxt.Util.localeInfo()) {
             const localeLiveRx = /^live-/;
-            editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
                 pxt.appTarget.id,
                 pxt.webConfig.commitCdnUrl,
-                editorLocale.replace(localeLiveRx, ''),
+                localeInfo.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
                 pxt.appTarget.versions.targetCrowdinBranch,
-                localeLiveRx.test(editorLocale)
+                localeLiveRx.test(localeInfo)
             );
         }
 
@@ -699,7 +697,7 @@ ${linkString}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.markdownAsync(docid, editorLocale, pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(docid)
             .then(md => renderMarkdownAsync(content, md, { path: docid }))
     }
 
@@ -715,7 +713,7 @@ ${linkString}
         // start the work
         let toc: TOCMenuEntry[];
         return Promise.delay(100)
-            .then(() => pxt.Cloud.markdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
+            .then(() => pxt.Cloud.markdownAsync(summaryid))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -723,7 +721,7 @@ ${linkString}
                 pxt.docs.visitTOC(toc, entry => {
                     if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
                     tocsp.push(
-                        pxt.Cloud.markdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
+                        pxt.Cloud.markdownAsync(entry.path)
                             .then(md => {
                                 entry.markdown = md;
                             }, e => {
@@ -881,7 +879,7 @@ ${linkString}
         compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        compilePython?: pxtc.CompileResult;
+        compilePython?: pxtc.transpile.TranspileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
@@ -911,9 +909,10 @@ ${linkString}
                 }
                 programCache = program;
 
-                let compilePython: pxtc.CompileResult = undefined;
-                if (pxt.appTarget.appTheme.python)
-                    compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
+                let compilePython: pxtc.transpile.TranspileResult = undefined;
+                if (pxt.appTarget.appTheme.python) {
+                    compilePython = ts.pxtc.transpile.tsToPy(program, "main.ts");
+                }
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(program, opts.jres);

@@ -10,11 +10,23 @@ namespace ts.pxtc.decompiler {
 
         // Allow for arguments for which fixed instances exist to be decompiled
         // even if the expression is not a direct reference to a fixed instance
-        DecompileIndirectFixedInstances = "decompileIndirectFixedInstances"
+        DecompileIndirectFixedInstances = "decompileIndirectFixedInstances",
+
+        // When set on a function, the argument expression will be passed up
+        // as a string of TypeScript code instead of being decompiled into blocks. The
+        // field editor is expected to parse the code itself and also preserve it
+        // if the valus is invalid (like a grey-block would)
+        DecompileArgumentAsString = "decompileArgumentAsString"
     }
 
     export const FILE_TOO_LARGE_CODE = 9266;
     export const DECOMPILER_ERROR = 9267;
+
+    interface DecompileModuleExport {
+        name: string;
+        initializer: string;
+    }
+
     const SK = ts.SyntaxKind;
 
     /**
@@ -40,6 +52,7 @@ namespace ts.pxtc.decompiler {
         functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
         declaredKinds?: pxt.Map<KindDeclarationInfo>;
+        tileset: pxt.sprite.TileInfo[];
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
@@ -333,6 +346,7 @@ namespace ts.pxtc.decompiler {
             attrs: attrs,
             compInfo: compInfo,
             localReporters: [],
+            tileset: [],
             opts: options || {}
         };
         const fileText = file.getFullText();
@@ -362,12 +376,20 @@ namespace ts.pxtc.decompiler {
                     });
                 });
             }
-            else if (isModuleDeclaration(topLevelNode) && !checkStatement(topLevelNode, env, false, true)) {
-                const kindName = topLevelNode.name.text;
-                const exported = getKindExports(topLevelNode);
+            else if (isModuleDeclaration(topLevelNode)) {
+                if (!checkKindNamespaceDeclaration(topLevelNode as ts.NamespaceDeclaration, env)) {
+                    const kindName = topLevelNode.name.text;
+                    const exported = getModuleExports(topLevelNode);
 
-                if (env.declaredKinds[kindName]) {
-                    env.declaredKinds[kindName].declaredNames.push(...exported);
+                    if (env.declaredKinds[kindName]) {
+                        env.declaredKinds[kindName].declaredNames.push(...(exported.map(({ name }) => name)));
+                    }
+                }
+                else if (!checkTilesetNamespace(topLevelNode as ts.NamespaceDeclaration)) {
+                    env.tileset = getModuleExports(topLevelNode).map(({ name, initializer }) => ({
+                        projectId: parseInt(name.substr(pxt.sprite.TILE_PREFIX.length)),
+                        data: pxt.sprite.imageLiteralToBitmap(initializer).data()
+                    }));
                 }
             }
             else if (topLevelNode.kind === SK.Block) {
@@ -400,10 +422,13 @@ namespace ts.pxtc.decompiler {
             }));
         });
 
-        if (enumMembers.length) {
+        if (enumMembers.length || env.tileset.length) {
             write("<variables>")
             enumMembers.forEach(e => {
                 write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
+            });
+            env.tileset.forEach(e => {
+                write(`<variable type="${pxt.sprite.BLOCKLY_TILESET_TYPE}">${pxt.sprite.tileToBlocklyVariable(e)}</variable>`)
             });
             write("</variables>")
         }
@@ -1337,13 +1362,15 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = attributes.imageLiteral * 5;
-            if (nc * 5 != leds.length) {
-                error(node, Util.lf("Invalid image pattern"));
+            const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+            const nr = attributes.imageLiteralRows || 5;
+            const nleds = nc * nr;
+            if (nleds != leds.length) {
+                error(node, Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length));
                 return undefined;
             }
             let ledString = '';
-            for (let r = 0; r < 5; ++r) {
+            for (let r = 0; r < nr; ++r) {
                 for (let c = 0; c < nc; ++c) {
                     ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
                 }
@@ -1836,6 +1863,11 @@ ${output}</xml>`;
                     if (shimAttrs && shimAttrs.shim === "TD_ID" && paramInfo.isEnum) {
                         e = unwrapNode(shimCall.args[0]) as ts.Expression;
                     }
+                }
+
+                if (param && param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileArgumentAsString]) {
+                    addField(getField(U.htmlEscape(param.definitionName), Util.htmlEscape(e.getText())));
+                    return;
                 }
 
                 switch (e.kind) {
@@ -2497,9 +2529,11 @@ ${output}</xml>`;
                     return Util.lf("Only string literals supported for image literals")
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-                const nc = attributes.imageLiteral * 5;
-                if (nc * 5 != leds.length) {
-                    return Util.lf("Invalid image pattern");
+                const nr = attributes.imageLiteralRows || 5;
+                const nc = (attributes.imageLiteralColumns || 5) * attributes.imageLiteral;
+                const nleds = nc * nr;
+                if (nc * nr != leds.length) {
+                    return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
                 }
                 return undefined;
             }
@@ -2817,49 +2851,56 @@ ${output}</xml>`;
         }
 
         function checkNamespaceDeclaration(n: ts.NamespaceDeclaration) {
-            if (!isModuleBlock(n.body)) {
-                return Util.lf("Namespaces cannot be nested.")
-            }
+            const kindCheck = checkKindNamespaceDeclaration(n, env);
+            if (!kindCheck) return undefined;
 
-            const kindInfo = env.blocks.kindsByName[n.name.text]
-            if (!kindInfo) {
-                return Util.lf("Only namespaces with 'kind' blocks can be decompiled");
-            }
+            const tilesetCheck = checkTilesetNamespace(n);
+            if (!tilesetCheck) return undefined;
 
-            const fail = Util.lf("Namespaces may only contain valid 'kind' exports");
+            return kindCheck;
+        }
+    }
 
-            // Each statement must be of the form `export const kind = kindNamespace.create()`
-            for (const statement of n.body.statements) {
-                // There isn't really a way to persist comments, so to be safe just bail out
-                if (isCommented(statement)) return fail;
+    function checkKindNamespaceDeclaration(n: ts.NamespaceDeclaration, env: DecompilerEnv) {
+        if (!isModuleBlock(n.body)) {
+            return Util.lf("Namespaces cannot be nested.")
+        }
 
-                if (isVariableStatement(statement) && statement.declarationList.declarations) {
-                    const isSingleDeclaration = statement.declarationList.declarations.length === 1;
-                    const isExport = statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword;
-                    const isConst = statement.declarationList.flags & NodeFlags.Const
+        const kindInfo = env.blocks.kindsByName[n.name.text]
+        if (!kindInfo) {
+            return Util.lf("Only namespaces with 'kind' blocks can be decompiled");
+        }
 
-                    if (isSingleDeclaration && isExport && isConst) {
-                        const declaration = statement.declarationList.declarations[0];
-                        if (!declaration.initializer || !isCallExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
-                            return fail;
-                        }
+        const fail = Util.lf("Namespaces may only contain valid 'kind' exports");
 
-                        const call = declaration.initializer;
+        // Each statement must be of the form `export const kind = kindNamespace.create()`
+        for (const statement of n.body.statements) {
+            // There isn't really a way to persist comments, so to be safe just bail out
+            if (isCommented(statement)) return fail;
 
-                        if (call.arguments.length) {
-                            return fail;
-                        }
+            if (isVariableStatement(statement) && statement.declarationList.declarations) {
+                const isSingleDeclaration = statement.declarationList.declarations.length === 1;
+                const isExport = statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword;
+                const isConst = statement.declarationList.flags & NodeFlags.Const
 
-                        // The namespace is emitted from the blocks, but it's optional when decompiling
-                        if (isPropertyAccessExpression(call.expression) && isIdentifier(call.expression.expression)) {
-                            if (call.expression.expression.text !== kindInfo.name || call.expression.name.text !== kindInfo.createFunctionName) return fail;
-                        }
-                        else if (isIdentifier(call.expression)) {
-                            if (call.expression.text !== kindInfo.createFunctionName) return fail;
-                        }
-                        else {
-                            return fail;
-                        }
+                if (isSingleDeclaration && isExport && isConst) {
+                    const declaration = statement.declarationList.declarations[0];
+                    if (!declaration.initializer || !isCallExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
+                        return fail;
+                    }
+
+                    const call = declaration.initializer;
+
+                    if (call.arguments.length) {
+                        return fail;
+                    }
+
+                    // The namespace is emitted from the blocks, but it's optional when decompiling
+                    if (isPropertyAccessExpression(call.expression) && isIdentifier(call.expression.expression)) {
+                        if (call.expression.expression.text !== kindInfo.name || call.expression.name.text !== kindInfo.createFunctionName) return fail;
+                    }
+                    else if (isIdentifier(call.expression)) {
+                        if (call.expression.text !== kindInfo.createFunctionName) return fail;
                     }
                     else {
                         return fail;
@@ -2869,9 +2910,68 @@ ${output}</xml>`;
                     return fail;
                 }
             }
-
-            return undefined;
+            else {
+                return fail;
+            }
         }
+
+        return undefined;
+    }
+
+    function checkTilesetNamespace(n: ts.NamespaceDeclaration) {
+        if (!isModuleBlock(n.body)) {
+            return Util.lf("Namespaces cannot be nested.")
+        }
+
+        if (n.name.text !== pxt.sprite.TILE_NAMESPACE) {
+            return Util.lf("Tileset namespace must be named myTiles");
+        }
+
+        const fail = Util.lf("The myTiles namespace can only export tile variables with image literal initializers and no duplicate ids");
+
+        const nameRegex = new RegExp(`${pxt.sprite.TILE_PREFIX}(\\d+)`);
+        const foundIds: string[] = [];
+
+        // Each statement must be of the form "export const tile{ID} = img``;"
+        for (const statement of (n.body as ts.ModuleBlock).statements) {
+            // There isn't really a way to persist comments, so to be safe just bail out
+            if (isCommented(statement)) return fail;
+
+            if (isVariableStatement(statement) && statement.declarationList.declarations) {
+                const isSingleDeclaration = statement.declarationList.declarations.length === 1;
+                const isExport = statement.modifiers && statement.modifiers.length === 1 && statement.modifiers[0].kind === SK.ExportKeyword;
+                const isConst = statement.declarationList.flags & NodeFlags.Const
+
+                if (isSingleDeclaration && isExport && isConst) {
+                    const declaration = statement.declarationList.declarations[0];
+                    if (!declaration.initializer || !isTaggedTemplateExpression(declaration.initializer) || !isIdentifier(declaration.name)) {
+                        return fail;
+                    }
+
+                    const tag = declaration.initializer;
+
+                    if (!isIdentifier(tag.tag) || tag.tag.text !== "img") {
+                        return fail;
+                    }
+
+                    const match = nameRegex.exec(declaration.name.text);
+
+                    if (!match || foundIds.indexOf(match[1]) !== -1) {
+                        return fail;
+                    }
+
+                    foundIds.push(match[1]);
+                }
+                else {
+                    return fail;
+                }
+            }
+            else {
+                return fail;
+            }
+        }
+
+        return undefined;
     }
 
     function isEmptyStringNode(node: Node) {
@@ -3270,8 +3370,15 @@ ${output}</xml>`;
         return res;
     }
 
-    function getKindExports(n: ModuleDeclaration): string[] {
-        return (n.body as ModuleBlock).statements.map(s => ((s as VariableStatement).declarationList.declarations[0].name as Identifier).text);
+    function getModuleExports(n: ModuleDeclaration): DecompileModuleExport[] {
+        return (n.body as ModuleBlock).statements.map(s => {
+            const decl = (s as VariableStatement).declarationList.declarations[0];
+
+            return {
+                name: (decl.name as ts.Identifier).text,
+                initializer: decl.initializer.getText()
+            };
+        });
     }
 
     function isOutputExpression(expr: ts.Expression): boolean {

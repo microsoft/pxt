@@ -21,15 +21,14 @@ namespace pxt.crowdin {
     function apiUri(branch: string, prj: string, key: string, cmd: string, args?: Map<string>) {
         Util.assert(!!prj && !!key && !!cmd);
         const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
-        let suff = "?";
-        if (!testMode)
-            suff = "key=" + key;
-        if (branch) {
-            if (!args) args = {};
+        args = args || {};
+        if (testMode)
+            delete args["key"]; // ensure no key is passed in test mode
+        else
+            args["key"] = key;
+        if (branch)
             args["branch"] = branch;
-        }
-        if (args) suff += "&" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
-        return apiRoot + cmd + suff;
+        return apiRoot + cmd + "?" + Object.keys(args).map(k => `${k}=${encodeURIComponent(args[k])}`).join("&");
     }
 
     export interface CrowdinFileInfo {
@@ -174,6 +173,7 @@ namespace pxt.crowdin {
                     .then(() => startAsync())
             } else if (!data.success && data.error.code == 53) {
                 // file is being updated
+                pxt.log(`${filename} being updated, waiting 5s and retry...`)
                 return Promise.delay(5000) // wait 5s and try again
                     .then(() => uploadTranslationAsync(branch, prj, key, filename, data));
             } else if (code == 200) {

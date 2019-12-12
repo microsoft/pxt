@@ -30,3 +30,23 @@ namespace SpriteKind {
     //% isKind
     export const Enemy = create();
 }
+
+
+
+namespace tiles {
+    interface TileMapData {
+
+    }
+
+    export function createTilemap(data: Buffer, layer: number, tiles: number, scale: number): TileMapData {
+        return null;
+    }
+
+    //% blockId=tilemap_editor block="%tilemap"
+    //% tilemap.fieldEditor="tilemap"
+    //% tilemap.fieldOptions.decompileArgumentAsString="true"
+    //% tilemap.fieldOptions.filter="tile"
+    //% group="Animate" duplicateShadowOnDrag
+    export function setTilemap(tilemap: TileMapData) {
+    }
+}

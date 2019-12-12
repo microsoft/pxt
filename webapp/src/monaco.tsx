@@ -74,8 +74,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
+                    let qName = this.python ? si.pyQName : si.qName;
+                    let name = this.python ? si.pyName : si.name;
                     let completionSnippet: string;
-                    if (insertSnippet && this.python) {
+                    let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
+                    if (this.python && insertSnippet && isMultiLine) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
@@ -97,14 +100,19 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                             createLineReplacementPyAmendment(insertSnippet))
                     } else {
                         completionSnippet = insertSnippet
+                        // if we're past the first ".", i.e. we're doing member completion, be sure to
+                        // remove what precedes the "." in the full snippet.
+                        // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
+                        if (completions.isMemberCompletion
+                            && completionSnippet.startsWith(qName)) {
+                            completionSnippet = completionSnippet.replace(qName, name)
+                        }
                     }
-                    const label = this.python
-                        ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
-                        : (completions.isMemberCompletion ? si.name : si.qName);
+                    const label = completions.isMemberCompletion ? name : qName
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
-                    return {
-                        label,
+                    let res: monaco.languages.CompletionItem = {
+                        label: label,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation,
                         detail: insertSnippet,
@@ -112,7 +120,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
                         insertText: completionSnippet,
-                    } as monaco.languages.CompletionItem;
+                    };
+                    return res
                 })
                 return items;
             });
@@ -198,6 +207,52 @@ class HoverProvider implements monaco.languages.HoverProvider {
                 return res
             });
     }
+}
+
+// reference: https://github.com/microsoft/vscode/blob/master/extensions/python/language-configuration.json
+// documentation: https://code.visualstudio.com/api/language-extensions/language-configuration-guide
+const pythonLanguageConfiguration: monaco.languages.LanguageConfiguration = {
+    "comments": {
+        "lineComment": "#",
+        "blockComment": ["\"\"\"", "\"\"\""]
+    },
+    "brackets": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        { "open": "{", "close": "}" },
+        { "open": "[", "close": "]" },
+        { "open": "(", "close": ")" },
+        { "open": "\"", "close": "\"", "notIn": ["string"] },
+        { "open": "r\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "R\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "u\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "U\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "f\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "F\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "b\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "B\"", "close": "\"", "notIn": ["string", "comment"] },
+        { "open": "'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "r'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "R'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "u'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "U'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "f'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "F'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "b'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "B'", "close": "'", "notIn": ["string", "comment"] },
+        { "open": "`", "close": "`", "notIn": ["string"] }
+    ],
+    onEnterRules: [
+        {
+            beforeText: /^\s*(?:def|class|for|if|elif|else|while|try|with|finally|except|async).*?:\s*$/,
+            action: {
+                indentAction: 1/*IndentAction.Indent*/
+            }
+        }
+    ]
 }
 
 class FormattingProvider implements monaco.languages.DocumentRangeFormattingEditProvider {
@@ -524,8 +579,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // any errors?
                 if (res.diagnostics && res.diagnostics.length)
                     return undefined;
-                if (res.generated[tsName])
-                    return res.generated[tsName]
+                if (res.outfiles[tsName]) {
+                    return res.outfiles[tsName]
+                }
                 return ""
             })
     }
@@ -726,6 +782,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
             monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
             monaco.languages.registerDocumentRangeFormattingEditProvider("python", new FormattingProvider(this, true));
+            monaco.languages.setLanguageConfiguration("python", pythonLanguageConfiguration)
 
             this.editorViewZones = [];
 
@@ -969,7 +1026,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
             && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
-                || (this.fileType == "python" && this.currFile.name == "main.py"));
+                || (pxt.appTarget.appTheme.pythonToolbox && this.fileType == "python" && this.currFile.name == "main.py"));
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {

@@ -274,6 +274,9 @@ _start_${name}:
 
         const immMax = (1 << 23) - 1
 
+        if (pxt.options.debug)
+            console.log("EMIT", proc.toString())
+
         emitAll()
         resText = ""
         for (let t of alltmps) t.currUses = 0
@@ -608,15 +611,17 @@ _start_${name}:
                 write(`callind ${nargs}`)
             } else if (calledProcId.ifaceIndex != null) {
                 let idx = calledProcId.ifaceIndex + " ; ." + bin.ifaceMembers[calledProcId.ifaceIndex]
-                if (/Set/.test(calledProcId.mapMethod)) {
+                if (calledProcId.isSet) {
                     write(`callset ${idx}`)
                     U.assert(nargs == 2)
-                }
-                else if (/Get/.test(calledProcId.mapMethod)) {
+                } else if (calledProcId.noArgs) {
+                    // TODO implementation of op_callget needs to auto-bind if needed
                     write(`callget ${idx}`)
                     U.assert(nargs == 1)
-                } else
+                } else {
+                    // TODO impl of op_calliface needs to call getter and then the lambda if needed
                     write(`calliface ${nargs}, ${idx}`)
+                }
             } else if (calledProcId.virtualIndex != null) {
                 U.oops()
             } else {

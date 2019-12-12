@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ImageEditorStore } from './store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground } from './actions/dispatch';
+import { ImageEditorStore, AnimationState } from '../store/imageReducer';
+import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground } from '../actions/dispatch';
 
 export interface PaletteProps {
     colors: string[];
@@ -83,7 +83,8 @@ class PaletteImpl extends React.Component<PaletteProps,{}> {
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
 }
 
-function mapStateToProps({ present: state, editor }: ImageEditorStore, ownProps: any) {
+function mapStateToProps({ store: { present }, editor }: ImageEditorStore, ownProps: any) {
+    let state = (present as AnimationState);
     if (!state) return {};
     return {
         selected: editor.selectedColor,

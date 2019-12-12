@@ -249,11 +249,12 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     signOutGithub() {
-        pxt.tickEvent("home.github.signout");
+        pxt.tickEvent("menu.github.signout");
         const githubProvider = cloudsync.githubProvider();
         if (githubProvider) {
             githubProvider.logout();
             this.props.parent.forceUpdate();
+            core.infoNotification(lf("Signed out from GitHub..."))
         }
     }
 
