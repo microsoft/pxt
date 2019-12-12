@@ -6,6 +6,7 @@
 .image-editor-tilemap-minimap {
     height: 10rem;
     background-color: #3d3d3d;
+    border: 1px solid var(--sidebar-icon-inactive-color);
 }
 
 .image-editor-tile-buttons .timeline-frame-outer {
@@ -117,19 +118,28 @@
     transition: fill 0.1s, stroke 0.1s;
 }
 
-.tile-palette-page-arrow:hover {
-    fill: var(--sidebar-icon-active-color);
-    stroke: var(--sidebar-icon-active-color);
-}
-
 .tile-palette-page-dot {
     fill: var(--sidebar-icon-inactive-color);
     cursor: pointer;
     transition: fill 0.1s;
 }
 
-.tile-palette-page-dot:hover {
-    fill: var(--sidebar-icon-active-color);
+.tile-palette-pages:not(.disabled) {
+    .tile-palette-page-arrow:hover {
+        fill: var(--sidebar-icon-active-color);
+        stroke: var(--sidebar-icon-active-color);
+    }
+
+    .tile-palette-page-dot:hover {
+        fill: var(--sidebar-icon-active-color);
+    }
+}
+
+.tile-palette-pages.disabled {
+    .tile-palette-page-arrow,
+    .tile-palette-page-dot {
+        opacity: 0.5;
+    }
 }
 
 .tile-canvas {

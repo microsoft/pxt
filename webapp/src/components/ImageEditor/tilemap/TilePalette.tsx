@@ -400,7 +400,7 @@ function pageControls(pages: number, selected: number, onClick: (index: number) 
     const pageMap: boolean[] = [];
     for (let i = 0; i < pages; i++) pageMap[i] = i === selected;
 
-    return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} 10`} className="tile-palette-pages">
+    return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} 10`} className={`tile-palette-pages ${pages < 2 ?  'disabled' : ''}`}>
         <polygon
             className="tile-palette-page-arrow"
             points="1,5 4,3 4,7"
