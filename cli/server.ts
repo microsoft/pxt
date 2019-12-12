@@ -39,7 +39,8 @@ function setupRootDir() {
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
-        path.join(nodeutil.pxtCoreDir, "webapp/public")
+        path.join(nodeutil.pxtCoreDir, "webapp/public"),
+        path.join(nodeutil.pxtCoreDir, "common-docs")
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
