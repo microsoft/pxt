@@ -778,7 +778,15 @@ ${content}
         this.showLoading("github.createpr", true, lf("creating pull request..."));
         try {
             const gh = this.parsedRepoId();
-            const msg = ''; // TODO
+            const msg = 
+lf(`
+### How to use this pull request
+
+- [ ] assign a reviewer
+- [ ] reviewer approves or request changes
+- [ ] apply requested changes if any
+- [ ] merge once approved
+`); // TODO
 /*
             `
 ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
