@@ -820,8 +820,8 @@ ${content}
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
-        const showPr = gs.isFork || !master;
         const prNumber = this.getData("pkg-git-pr:" + header.id)
+        const showPr = prNumber !== null && (gs.isFork || !master);
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
