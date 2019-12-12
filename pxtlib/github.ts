@@ -823,7 +823,6 @@ namespace pxt.github {
 
     export interface GitJson {
         repo: string;
-        prUrl?: string; // if any
         commit: pxt.github.Commit;
         isFork?: boolean;
     }
@@ -1355,8 +1354,11 @@ namespace pxt.github {
      * Executes a GraphQL query against GitHub v4 api
      * @param query 
      */
-    export function ghGraphQLAsync(query: string): Promise<any> {
-        return ghPostAsync("https://api.github.com/graphql", query);
+    export function ghGraphQLQueryAsync(query: string): Promise<any> {
+        const payload = JSON.stringify({
+            query
+        })
+        return ghPostAsync("https://api.github.com/graphql", payload);
     }
 
     /**
@@ -1370,16 +1372,16 @@ namespace pxt.github {
 `
 {
     repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
-      pullRequests(last: 1, states: OPEN, headRefName: ${JSON.stringify(headName)}) {
-        edges {
-          node {
-            title
-            number
-          }
+        pullRequests(last: 1, states: OPEN, headRefName: ${JSON.stringify(headName)}) {
+            edges {
+                node {
+                    title
+                    number
+                }
+            }
         }
-      }
     }
-  }
+}
 `    
 
 /*
@@ -1400,7 +1402,7 @@ namespace pxt.github {
   }
 }*/
 
-return ghGraphQLAsync(query)
+return ghGraphQLQueryAsync(query)
             .then(resp => {
                 const edge = resp.data.repository.pullRequests.edges[0]
                 return edge && edge.node && edge.node.number;

@@ -718,6 +718,22 @@ data.mountVirtualApi("pkg-git-pull-status", {
     expirationTime: p => 3600 * 1000
 })
 
+data.mountVirtualApi("pkg-git-pr", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(undefined);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed || !parsed.tag ||parsed.tag == "master") return Promise.resolve(undefined);
+        return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
+            .catch(e => -1);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
     getSync: p => {

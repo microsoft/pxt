@@ -67,8 +67,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const parsed = this.parsedRepoId()
         header.githubId = parsed.fullName + "#" + newBranch
         gs.repo = header.githubId
-        gs.prUrl = null
         await this.saveGitJsonAsync(gs)
+        data.invalidateHeader("pkg-git-pr", header);
     }
 
     private async newBranchAsync() {
@@ -224,6 +224,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
         else if (statusCode == 404)
             core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
+        else if (statusCode == 403)
+            core.warningNotification(lf("GitHub rate limit exceeded, please wait and try again."))
         else {
             pxt.reportException(e);
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
@@ -749,6 +751,7 @@ ${content}
 
         const { header } = this.props.parent.state
         if (b) {
+            data.invalidateHeader("pkg-git-pr", header);
             this.setState({
                 previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
             });
@@ -765,6 +768,7 @@ ${content}
         if (!gs)
             return <div></div>; // shortcut for projects not using github, should not happen when visible
 
+        const { header } = this.props.parent.state;
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const files = pkg.mainEditorPkg().sortedFiles();
         const diffFiles = files
@@ -784,7 +788,7 @@ ${content}
         const needsCommit = diffFiles.length > 0;
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
-        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + this.props.parent.state.header.id);
+        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
         const hasissue = pullStatus == workspace.PullStatus.BranchDeleted;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
@@ -797,6 +801,7 @@ ${content}
         // this will show existing PR if any
         const prUrl = !gs.isFork && master ? null :
             `https://github.com/${githubId.fullName}/compare/${githubId.tag}?expand=1`
+        const prNumber = this.getData("pkg-git-pr:" + header.id)
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -816,9 +821,10 @@ ${content}
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
                 <div className="ui form">
                     {!prUrl ? undefined :
-                        <a href={prUrl} role="button" className="ui link create-pr"
+                        <a href={prUrl} role="button" className="ui tiny basic button create-pr"
                             target="_blank" rel="noopener noreferrer">
                             {lf("Pull request")}
+                            {prNumber > -1 ? `(#${prNumber})` : ''}
                         </a>}
                     <h3 className="header">
                         <i className="large github icon" />
