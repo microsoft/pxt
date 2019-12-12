@@ -50,6 +50,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handlePullClick = this.handlePullClick.bind(this);
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
+        this.handlePullRequest = this.handlePullRequest.bind(this);
     }
 
     private clearCache() {
@@ -763,6 +764,26 @@ ${content}
         }
     }
 
+    private async handlePullRequest() {
+        const description = await core.promptAsync({
+            header: lf("Create pull request"),
+            body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
+            hasCloseIcon: true,
+            hideCancel: true,
+            placeholder: lf("Describe the changes in this branch.")
+        });
+        if (description === null) return;
+
+        const gh = this.parsedRepoId();
+        try {
+            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, description);
+            data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
+            core.infoNotification(lf("Pull request created successfully!", id));
+            } catch (e) {
+            this.handleGithubError(e);
+        }
+    }
+
     renderCore(): JSX.Element {
         const gs = this.getGitJson();
         if (!gs)
@@ -799,8 +820,7 @@ ${content}
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
-        const prUrl = !gs.isFork && master ? null :
-            `https://github.com/${githubId.fullName}/compare/${githubId.tag}?expand=1`
+        const showPr = gs.isFork || !master;
         const prNumber = this.getData("pkg-git-pr:" + header.id)
         return (
             <div id="githubArea">
@@ -820,12 +840,14 @@ ${content}
                 </div>
                 <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
                 <div className="ui form">
-                    {!prUrl ? undefined :
-                        <a href={prUrl} role="button" className="ui tiny basic button create-pr"
+                    {showPr && prNumber > -1 &&
+                        <a href={`https://github.com/${githubId.fullName}/pull/${prNumber}`} role="button" className="ui tiny basic button create-pr"
                             target="_blank" rel="noopener noreferrer">
-                            {lf("Pull request")}
-                            {prNumber > -1 ? `(#${prNumber})` : ''}
+                            {lf("Pull request (#{0})", prNumber)}
                         </a>}
+                    {showPr && prNumber < 0 &&
+                        <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
+                    }
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
