@@ -63,6 +63,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         value={width}
                         onChange={this.handleWidthChange}
                         onBlur={this.handleDimensionalBlur}
+                        onKeyDown={this.handleDimensionalKeydown}
                     />
 
                     <IconButton
@@ -77,6 +78,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         value={height}
                         onChange={this.handleHeightChange}
                         onBlur={this.handleDimensionalBlur}
+                        onKeyDown={this.handleDimensionalKeydown}
                     />
                 </div>
                 { !singleFrame && <div className="image-editor-seperator"/> }
@@ -176,6 +178,13 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             width: null,
             height: null
         });
+    }
+
+    protected handleDimensionalKeydown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        const charCode = (typeof event.which == "number") ? event.which : event.keyCode
+        if (charCode === 13) {
+            event.currentTarget.blur();
+        }
     }
 
     protected zoomIn = () => {
