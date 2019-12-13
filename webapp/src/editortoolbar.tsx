@@ -149,7 +149,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
 
-        let downloadButtonClasses = boards? "left attached " : "";
+        let downloadButtonClasses = boards ? "left attached " : "";
         let hwIconClasses = "";
         let hwMenuClasses = ""
         let displayRight = false;
@@ -184,7 +184,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         if (boards) {
             el.push(
-                <sui.DropdownMenu role="menuitem" icon={`caret down ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+                <sui.DropdownMenu role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={this.onHwItemClick} />
                     <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={this.compile} />
                 </sui.DropdownMenu>
