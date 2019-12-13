@@ -9,19 +9,19 @@
         @targetstyle@
     </style>
     <style>
-#repocolumn {
-    padding-left: 2rem;
-    padding-top: 2rem;
-}
-#makecode {
-  width: 100%;
-  height: 100%;
-  border: none;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  top: 0;
-}        
+        #repocolumn {
+            padding-left: 2rem;
+            padding-top: 2rem;
+        }
+        #makecode {
+            width: 100%;
+            height: 100%;
+            border: none;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+        }
     </style>
     <script type="text/javascript" src="/blb/jquery.js"></script>
     <script type="text/javascript" src="/blb/semantic.js"></script>
@@ -35,33 +35,37 @@
         async function fetchUserRepos(user) {
             const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token}&anti_cache=${Math.random()}`);
             const msg = await response.json();
-            console.log("message");
             return msg;
         }
 
         async function update() {
-            const user = $("#user").val();
-            const repoes = await fetchUserRepos(user);
-            $("#repoes")
-                .empty()
-                .append(
-                    repoes.map(repo =>
-                        $(
-`<div class="ui link item">
+            $('#userparent').addClass('loading');
+            try {
+                const user = $("#user").val();
+                const repoes = await fetchUserRepos(user);
+                $("#repoes")
+                    .empty()
+                    .append(
+                        repoes.map(repo =>
+                            $(
+                                `<div class="ui link item">
     <i class="github middle aligned icon"></i>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
     </div>
 </div>`).click(() => {
-                            const url =
-                                "@homeurl@beta#pub:" +
-                                "https://github.com/" +
-                                repo.full_name;
-                            console.log(url);
-                            $("#makecode").attr("src", url);
-                        })
-                    )
-                );
+                                    const url =
+                                        "@homeurl@beta#pub:" +
+                                        "https://github.com/" +
+                                        repo.full_name;
+                                    console.log(url);
+                                    $("#makecode").attr("src", url);
+                                })
+                        )
+                    );
+            } finally {
+                $('#userparent').removeClass('loading');
+            }
         }
 
         $(function () {
@@ -79,17 +83,16 @@
     </script>
 </head>
 
-<body id='root' class='root'>    
+<body id='root' class='root'>
     <div id="columns" class="ui grid fluid">
         <div id="repocolumn" class="four wide column">
-            <h3>MakeCode GitHub Grader</h3>
+            <h4>MakeCode GitHub Grader</h4>
             <div id="signinmsg" class="ui hidden warning message">
                 Please sign in with GitHub in <a href="@homeurl@">@homeurl@</a> to use this page.
             </div>
-            <div class="ui form">
-                <div class="ui field">
-                    <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user name" />
-                </div>
+            <div id="userparent" class="ui left icon input">
+                <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user name" />
+                <i class="search icon"></i>
             </div>
             <div id="repoes" class="ui selection list"></div>
         </div>
