@@ -177,7 +177,7 @@ pre {
     background-color: @simulatorBackground;
 }
 
-#downloadArea .download-button {
+#editortools .download-button.icon-and-text {
     text-align: center;
 }
 
@@ -439,7 +439,9 @@ div.simframe > iframe {
     position: relative;
 }
 
-.ui.button.big-play-button {
+.ui.button.big-play-button,
+.ui.button.hw-button,
+.ui.button.hw-button > .icon.caret {
     /* Fixes an error in some webkit browsers where icons get repositioned on hover */
     position: relative;
 }
@@ -466,7 +468,6 @@ div.simframe > iframe {
     border-bottom-left-radius: 100px;
     top: 40%;
     height: 20%;
-    z-index: @sidedocZIndex;
     padding: 0;
     margin: 0;
     background: @grey;
@@ -478,6 +479,13 @@ div.simframe > iframe {
     &:focus {
       opacity: 1;
     }
+}
+#computertogglesim,
+#sidedocstoggle {
+    z-index: @sidedocZIndex;
+}
+#mobiletogglesim {
+    z-index: @blocklyToolboxZIndex;
 }
 
 // Factor in 4rem height of top bar
@@ -1013,6 +1021,12 @@ p.ui.font.small {
             margin-bottom: 1.5rem;
         }
     }
+    .ui.button.hw-button > .icon.caret {
+        left: -3px;
+    }
+    .collapsedEditorTools .hw-button:hover:after {
+        left: 200%;
+    }
 }
 
 /* Mobile */
@@ -1025,6 +1039,12 @@ p.ui.font.small {
         bottom: 3px;
         .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
+    }
+    .hw-button:hover:after {
+        left: -140%;
+    }
+    .collapsedEditorTools .hw-button:hover:after {
+        left: 200%;
     }
 }
 
@@ -1054,6 +1074,11 @@ p.ui.font.small {
 
     #editortools {
         z-index: @simulatorZIndex + 1;
+    }
+
+    .ui.button.hw-button > .icon.caret {
+        left: -3px;
+        top: 2px;
     }
 }
 

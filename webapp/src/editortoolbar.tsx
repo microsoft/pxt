@@ -136,7 +136,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         return saveInput;
     }
 
-    private getCompileButton(view: View): JSX.Element[] {
+    private getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
         const compileLoading = !!compiling;
@@ -145,17 +145,36 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
 
-        let downloadButtonClasses = "";
+        let downloadButtonClasses = boards? "left attached" : "";
+        let hwIconClasses = "";
+        let hwMenuClasses = ""
+        let displayRight = false;
         if (isSaving) {
-            downloadButtonClasses = "disabled";
+            downloadButtonClasses = "disabled ";
         } else if (compileLoading) {
-            downloadButtonClasses = "loading disabled";
+            downloadButtonClasses = "loading disabled ";
+        }
+        switch (view) {
+            case View.Mobile:
+                downloadButtonClasses += "download-button-full";
+                displayRight = collapsed;
+                break;
+            case View.Tablet:
+                downloadButtonClasses += `download-button-full ${!collapsed ? 'large fluid' : ''}`;
+                hwMenuClasses = !collapsed ? "large" : "";
+                hwIconClasses = !collapsed ? "large" : "";
+                displayRight = collapsed;
+                break;
+            case View.Computer:
+            default:
+                downloadButtonClasses += "huge fluid";
+                hwMenuClasses = "large";
+                hwIconClasses = "large";
         }
 
         let el = [];
-        el.push(<EditorToolbarButton icon={downloadIcon} className={`primary huge fluid left attached download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+        el.push(<EditorToolbarButton role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
-        const sizeClass = view == View.Mobile ? 'small' : 'large';
         let deviceName = pxt.hwName || lf("device");
         let tooltip = pxt.hwName || lf("Click to select hardware")
 
@@ -168,7 +187,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         if (boards) {
             el.push(
-                <sui.DropdownMenu role="menuitem" icon={'caret down large'} title={lf("Download options")} className={`${sizeClass} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true}>
+                <sui.DropdownMenu role="menuitem" icon={`caret down ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={onHwItemClick} />
                     <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={onDownloadItemClick} />
                 </sui.DropdownMenu>
@@ -239,7 +258,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className="ui grid">
                         {!targetTheme.bigRunButton && <div className="left aligned column four wide">
                             <div className="ui icon small buttons">
-                                {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
+                                {compileBtn && this.getCompileButton(mobile, true)}
                             </div>
                         </div>}
                         <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'twelve'} wide`}>
@@ -273,7 +292,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                         <div className="ui icon large buttons">
                                             {trace && <EditorToolbarButton key='tracebtn' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='mobile' />}
                                             {debug && <EditorToolbarButton key='debugbtn' className={`debug-button ${debugging ? 'orange' : ''}`} icon="icon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='mobile' />}
-                                            {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} onButtonClick={this.compile} view='mobile' />}
+                                            {compileBtn && this.getCompileButton(mobile)}
                                         </div>
                                     </div>
                                 </div>
@@ -286,7 +305,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     <div className="ui grid seven column">
                         <div className="left aligned six wide column">
                             <div className="ui icon buttons">
-                                {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='tablet' />}
+                                {compileBtn && this.getCompileButton(tablet, true)}
                             </div>
                         </div>
                         {showSave && <div className="column four wide">
@@ -307,17 +326,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                         <div className="five wide column">
                             <div className="ui grid right aligned">
-                                {compileBtn && <div className="row">
-                                    <div className="column">
-                                        <EditorToolbarButton role="menuitem" className={`primary large fluid download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='tablet' />
+                                {compileBtn && <div className="ui row items" style={ { paddingBottom: 0, marginBottom: '1rem' } }>
+                                    <div className="ui item">
+                                        {this.getCompileButton(tablet)}
                                     </div>
                                 </div>}
                                 {showProjectRename &&
-                                    <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
-                                        <div className="column">
-                                            <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`} title={lf("Pick a name for your project")}>
-                                                {this.getSaveInput(tablet, showSave, "fileNameInput1", projectName)}
-                                            </div>
+                                    <div className="ui row items" style={compileBtn ? { paddingTop: 0, marginTop: 0 } : {}}>
+                                        <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`} title={lf("Pick a name for your project")}>
+                                            {this.getSaveInput(tablet, showSave, "fileNameInput1", projectName)}
                                         </div>
                                     </div>}
                             </div>

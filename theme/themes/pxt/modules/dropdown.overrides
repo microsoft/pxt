@@ -28,9 +28,14 @@
     }
 }
 
-.ui.dropdown.above > .menu {
+.ui.dropdown.menuAbove > .menu {
     top: 0%;
     transform: translateY(-100%);
+}
+
+.ui.buttons > .ui.dropdown.menuRight:last-child .menu {
+    right: auto;
+    left: 0;
 }
 
 .ui.dropdown.active::before,

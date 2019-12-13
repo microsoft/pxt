@@ -300,7 +300,7 @@ namespace pxt.editor {
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
-        showChooseHwDialog(): void;
+        showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
         showRecipesDialog(): void;
 

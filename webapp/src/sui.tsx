@@ -74,6 +74,7 @@ export interface DropdownProps extends UiProps {
     avatarImage?: string;
     avatarInitials?: string;
     displayAbove?: boolean;
+    displayRight?: boolean;
     dataTooltip?: string;
 }
 
@@ -309,7 +310,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, dataTooltip } = this.props;
+        const { disabled, title, role, icon, className, avatarImage, avatarInitials, children, displayAbove, displayRight, dataTooltip } = this.props;
         const { open } = this.state;
 
         const aria = {
@@ -329,7 +330,8 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             'dropdown',
             icon ? 'icon' : '',
             className || '',
-            displayAbove ? 'above' : ''
+            displayAbove ? 'menuAbove' : '',
+            displayRight ? 'menuRight' : ''
         ]);
         const menuClasses = cx([
             'menu',
