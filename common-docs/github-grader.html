@@ -24,6 +24,7 @@
             bottom: 0;
             top: 0;
             overflow: scroll;
+            overflow-y: hidden;
         }
 
         #makecodecolumn {
@@ -45,11 +46,21 @@
         if (!token)
             $('#signinmsg').removeClass('hidden');
 
+        async function sniffReadme(repo) {
+            const response = await fetch(`https://raw.githubusercontent.com/${repo.full_name}/master/README.md?token=${token}`);
+            const msg = await response.text();
+            return msg.indexOf('PXT/@targetid@') > -1;
+        }
 
         async function fetchUserRepos(user) {
             const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token}&anti_cache=${Math.random()}`);
             const msg = await response.json();
-            return msg;
+            for (let i = 0; i < msg.length; ++i) {
+                const ok = await sniffReadme(msg[i]);
+                if (!ok)
+                    msg[i] = undefined;
+            }
+            return msg.filter(m => !!m);
         }
 
         async function update() {
