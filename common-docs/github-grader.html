@@ -9,15 +9,27 @@
         @targetstyle@
     </style>
     <style>
-        #repocolumn {
-            padding-left: 2rem;
-            padding-top: 2rem;
+        #user {
+            width: 14rem;
         }
-        #makecode {
-            width: 100%;
+        #repocolumn {
+            padding: 0.5rem;
+            position:absolute;
+            width: 15rem;
             height: 100%;
             border: none;
             left: 0;
+            right: calc(100% - 15rem);
+            bottom: 0;
+            top: 0;
+            overflow: scroll;
+        }
+        #makecodecolumn {
+            position:absolute;
+            width: calc(100% - 15rem);
+            height: 100%;
+            border: none;
+            left: 15rem;
             right: 0;
             bottom: 0;
             top: 0;
@@ -59,7 +71,7 @@
                                         "https://github.com/" +
                                         repo.full_name;
                                     console.log(url);
-                                    $("#makecode").attr("src", url);
+                                    $("#makecodecolumn").attr("src", url);
                                 })
                         )
                     );
@@ -84,23 +96,18 @@
 </head>
 
 <body id='root' class='root'>
-    <div id="columns" class="ui grid fluid">
-        <div id="repocolumn" class="four wide column">
-            <h4>MakeCode GitHub Grader</h4>
-            <div id="signinmsg" class="ui hidden warning message">
-                Please sign in with GitHub in <a href="@homeurl@">@homeurl@</a> to use this page.
-            </div>
-            <div id="userparent" class="ui left icon input">
-                <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user name" />
-                <i class="search icon"></i>
-            </div>
-            <div id="repoes" class="ui selection list"></div>
+    <div id="repocolumn">
+        <h4>MakeCode GitHub Grader</h4>
+        <div id="signinmsg" class="ui hidden warning message">
+            Please sign in with GitHub in <a href="@homeurl@">@homeurl@</a> to use this page.
         </div>
-        <div class="twelve wide column">
-            <iframe id="makecode" />
+        <div id="userparent" class="ui left icon input">
+            <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
+            <i class="search icon"></i>
         </div>
+        <div id="repoes" class="ui selection list"></div>
     </div>
-
+    <iframe id="makecodecolumn" src="@homeurl@beta" />
     <!-- @include footer.html -->
     <!-- @include tracking.html -->
 </body>
