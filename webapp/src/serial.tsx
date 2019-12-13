@@ -217,10 +217,6 @@ export class Editor extends srceditor.Editor {
     }
 
     appendRawData(data: string) {
-        // ensure \r\n newlines for windows <10
-        if (data && pxt.BrowserUtils.isWindows() && !pxt.BrowserUtils.isWindows10()) {
-            data = data.replace(/[^\r]\n/g, '\r\n');
-        }
         this.rawDataBuffer += data;
         if (this.rawDataBuffer.length > this.maxBufferLength) {
             this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
@@ -433,7 +429,11 @@ export class Editor extends srceditor.Editor {
     downloadRaw() {
         core.infoNotification(lf("Exporting text...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(Util.toUTF8(this.rawDataBuffer), pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
+        let buf = this.rawDataBuffer;
+        // ensure \r\n newlines for windows <10
+        if (pxt.BrowserUtils.isWindows() && !pxt.BrowserUtils.isWindows10())
+            buf = buf.replace(/[^\r]\n/g, '\r\n');
+        pxt.commands.browserDownloadAsync(Util.toUTF8(buf), pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {
