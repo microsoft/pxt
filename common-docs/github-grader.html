@@ -6,6 +6,10 @@
     <title>MakeCode Maker - Board Designer</title>
     <!-- @include head.html -->
     <style>
+#repocolumn {
+    padding-left: 2rem;
+    padding-top: 2rem;
+}
 #makecode {
   width: 100%;
   height: 100%;
@@ -18,10 +22,12 @@
     </style>
     <script type="text/javascript" src="/blb/jquery.js"></script>
     <script type="text/javascript" src="/blb/semantic.js"></script>
+    <script type="text/javascript" src="/blb/target.js"></script>
     <script>
         const api = "https://api.github.com";
+        const token = localStorage[pxtTargetBundle.id + "/githubtoken"]
         async function fetchUserRepos(user) {
-            const response = await fetch(`${api}/users/${user}/repos?sort=updated`);
+            const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token}&anti_cache=${Math.random()}`);
             const msg = await response.json();
             console.log("message");
             return msg;
@@ -36,6 +42,7 @@
                     repoes.map(repo =>
                         $(`<div class="ui link item"><div class="content"><a class="header">${repo.name.replace(/^pxt-/, '')}</div></div></div>`).click(() => {
                             const url =
+                                pxtTargetBundle.appTheme.homeUrl +
                                 "/beta#pub:" +
                                 "https://github.com/" +
                                 repo.full_name;
@@ -63,7 +70,7 @@
 
 <body id='root' class='root'>    
     <div id="columns" class="ui grid fluid">
-        <div class="four wide column">
+        <div id="repocolumn" class="four wide column">
             <h3>MakeCode GitHub Grader</h3>
             <div class="ui form">
                 <div class="ui field">
