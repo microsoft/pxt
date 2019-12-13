@@ -25,7 +25,11 @@
     <script type="text/javascript" src="/blb/target.js"></script>
     <script>
         const api = "https://api.github.com";
-        const token = localStorage[pxtTargetBundle.id + "/githubtoken"]
+        const token = localStorage[pxtTargetBundle.id + "/githubtoken"];
+        if (!token)
+            $('#signin').removeClass('hidden');
+
+
         async function fetchUserRepos(user) {
             const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token}&anti_cache=${Math.random()}`);
             const msg = await response.json();
@@ -40,7 +44,13 @@
                 .empty()
                 .append(
                     repoes.map(repo =>
-                        $(`<div class="ui link item"><div class="content"><a class="header">${repo.name.replace(/^pxt-/, '')}</div></div></div>`).click(() => {
+                        $(
+`<div class="ui link item">
+    <i class="github middle aligned icon"></i>
+    <div class="content">
+        <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
+    </div>
+</div>`).click(() => {
                             const url =
                                 pxtTargetBundle.appTheme.homeUrl +
                                 "/beta#pub:" +
@@ -72,12 +82,15 @@
     <div id="columns" class="ui grid fluid">
         <div id="repocolumn" class="four wide column">
             <h3>MakeCode GitHub Grader</h3>
+            <div id="signin" class="ui hidden warning message">
+                Please sign in with GitHub in <a href="/" /> to use this page.
+            </div>
             <div class="ui form">
                 <div class="ui field">
                     <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user name" />
                 </div>
             </div>
-            <div id="repoes" class="ui list"></div>
+            <div id="repoes" class="ui selection list"></div>
         </div>
         <div class="twelve wide column">
             <iframe id="makecode" />
