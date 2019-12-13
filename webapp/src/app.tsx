@@ -220,6 +220,8 @@ export class ProjectView
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active });
+        data.invalidate('pkg-git-pull-status');
+        data.invalidate('pkg-git-pr');
 
         if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {

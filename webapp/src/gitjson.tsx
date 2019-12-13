@@ -105,7 +105,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async switchBranchAsync() {
+    public async switchBranchAsync() {
         const gid = this.parsedRepoId()
         const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
         const branchList = Object.keys(branches.refs).map(r => ({
@@ -779,14 +779,14 @@ ${content}
         try {
             const gh = this.parsedRepoId();
             const msg =
-                lf(`
-### How to use this pull request
+                `
+### ${lf("How to use this pull request")}
 
-- [ ] assign a reviewer
-- [ ] reviewer approves or request changes
-- [ ] apply requested changes if any
-- [ ] merge once approved
-`); // TODO
+- [ ] ${lf("assign a reviewer")}
+- [ ] ${lf("reviewer approves or request changes")}
+- [ ] ${lf("apply requested changes if any")}
+- [ ] ${lf("merge once approved")}
+`; // TODO
             /*
                         `
             ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
@@ -911,6 +911,13 @@ interface GitHubViewProps {
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
+        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
+    }
+
+    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.branch.switch");
+        e.stopPropagation();
+        this.props.parent.switchBranchAsync().done();
     }
 
     renderCore() {
@@ -921,7 +928,8 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
             return <div className="ui icon warning message">
                 <i className="exclamation circle icon"></i>
                 <div className="content">
-                    {lf("This branch has been merged, please switch back to the master branch.")}
+                    {lf("This pull request has been merged.")}
+                    <span className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
                 </div>
             </div>
 
@@ -930,6 +938,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 <i className="exclamation circle icon"></i>
                 <div className="content">
                     {lf("This branch was not found, please pull again or switch to a different branch.")}
+                    <span className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
                 </div>
             </div>
 
