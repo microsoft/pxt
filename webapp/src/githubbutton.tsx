@@ -62,7 +62,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         // existing repo
         const meta: pkg.PackageGitStatus = this.getData("pkg-git-status:" + header.id);
         const pullStatus = meta && this.getData("pkg-git-pull-status:" + header.id);
-        const hasissue = pullStatus == workspace.PullStatus.BranchDeleted;
+        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const modified = meta && !!meta.modified;
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;

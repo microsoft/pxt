@@ -105,7 +105,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         }
     }
 
-    private async switchBranchAsync() {
+    public async switchBranchAsync() {
         const gid = this.parsedRepoId()
         const branches = await pxt.github.listRefsExtAsync(gid.fullName, "heads")
         const branchList = Object.keys(branches.refs).map(r => ({
@@ -126,14 +126,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             }
         }))
 
-        branchList.unshift({
-            name: lf("Create new branch"),
-            description: lf("Based on {0}", gid.tag),
-            onClick: () => {
-                core.hideDialog()
-                return this.newBranchAsync()
-            }
-        })
+        // only branch from master...
+        if (gid.tag == "master") {
+            branchList.unshift({
+                name: lf("Create new branch"),
+                description: lf("Based on {0}", gid.tag),
+                onClick: () => {
+                    core.hideDialog()
+                    return this.newBranchAsync()
+                }
+            })
+        }
 
         await core.confirmAsync({
             header: lf("Switch to a different branch"),
@@ -779,14 +782,14 @@ ${content}
         try {
             const gh = this.parsedRepoId();
             const msg =
-                lf(`
-### How to use this pull request
+                `
+### ${lf("How to use this pull request")}
 
-- [ ] assign a reviewer
-- [ ] reviewer approves or request changes
-- [ ] apply requested changes if any
-- [ ] merge once approved
-`); // TODO
+- [ ] ${lf("assign a reviewer")}
+- [ ] ${lf("reviewer approves or request changes")}
+- [ ] ${lf("apply requested changes if any")}
+- [ ] ${lf("merge once approved")}
+`; // TODO
             /*
                         `
             ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
@@ -835,7 +838,7 @@ ${content}
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
-        const hasissue = pullStatus == workspace.PullStatus.BranchDeleted;
+        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
@@ -911,6 +914,13 @@ interface GitHubViewProps {
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props)
+        this.handleSwitchBranch = this.handleSwitchBranch.bind(this);
+    }
+
+    private handleSwitchBranch(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.branch.switch");
+        e.stopPropagation();
+        this.props.parent.switchBranchAsync().done();
     }
 
     renderCore() {
@@ -921,15 +931,17 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
             return <div className="ui icon warning message">
                 <i className="exclamation circle icon"></i>
                 <div className="content">
-                    {lf("This branch has been merged, please switch back to the master branch.")}
+                    {lf("This pull request has been merged.")}
+                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
                 </div>
             </div>
 
-        if (pullStatus == workspace.PullStatus.BranchDeleted)
+        if (pullStatus == workspace.PullStatus.BranchNotFound)
             return <div className="ui icon warning message">
                 <i className="exclamation circle icon"></i>
                 <div className="content">
-                    {lf("This branch was deleted from GitHub, please switch to a different branch.")}
+                    {lf("This branch was not found, please pull again or switch to a different branch.")}
+                    <span role="button" className="ui link" onClick={this.handleSwitchBranch} onKeyDown={sui.fireClickOnEnter}>{lf("Switch branch")}</span>
                 </div>
             </div>
 

@@ -372,6 +372,7 @@ namespace pxt.github {
     }
 
     export function getRefAsync(repopath: string, branch: string) {
+        branch = branch || "master";
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
             .catch(err => {
@@ -578,6 +579,7 @@ namespace pxt.github {
             has_issues: true, // default
             has_projects: false,
             has_wiki: false,
+            allow_rebase_merge: false
         }).then(v => mkRepo(v, null))
     }
 
