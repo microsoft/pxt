@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MakeCode Maker - Board Designer</title>
+    <!-- @include head.html -->
+    <style>
+#makecode {
+  width: 100%;
+  height: 100%;
+  border: none;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+}        
+    </style>
+    <script type="text/javascript" src="/blb/jquery.js"></script>
+    <script type="text/javascript" src="/blb/semantic.js"></script>
+    <script>
+        const api = "https://api.github.com";
+        async function fetchUserRepos(user) {
+            const response = await fetch(`${api}/users/${user}/repos?sort=updated`);
+            const msg = await response.json();
+            console.log("message");
+            return msg;
+        }
+
+        async function update() {
+            const user = $("#user").val();
+            const repoes = await fetchUserRepos(user);
+            $("#repoes")
+                .empty()
+                .append(
+                    repoes.map(repo =>
+                        $(`<div class="ui link item"><div class="content"><a class="header">${repo.name.replace(/^pxt-/, '')}</div></div></div>`).click(() => {
+                            const url =
+                                "/beta#pub:" +
+                                "https://github.com/" +
+                                repo.full_name;
+                            console.log(url);
+                            $("#makecode").attr("src", url);
+                        })
+                    )
+                );
+        }
+
+        $(function () {
+            console.log(`loaded...`);
+            $("#generate").click(update);
+            $("#user").on("keydown", function search(e) {
+                if (e.keyCode == 13) {
+                    update();
+                }
+            });
+
+        });
+
+        console.log("starting...");
+    </script>
+</head>
+
+<body id='root' class='root'>    
+    <div id="columns" class="ui grid fluid">
+        <div class="four wide column">
+            <h3>MakeCode GitHub Grader</h3>
+            <div class="ui form">
+                <div class="ui field">
+                    <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user name" />
+                </div>
+            </div>
+            <div id="repoes" class="ui list"></div>
+        </div>
+        <div class="twelve wide column">
+            <iframe id="makecode" />
+        </div>
+    </div>
+
+    <!-- @include footer.html -->
+    <!-- @include tracking.html -->
+</body>
+
+</html>

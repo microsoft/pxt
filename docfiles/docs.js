@@ -312,8 +312,8 @@ function setupLangPicker() {
     var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
 
-    if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
-        var localesContainer = document.querySelector("#availablelocales");
+    var localesContainer = document.querySelector("#availablelocales");
+    if (appTheme && appTheme.availableLocales && appTheme.selectLanguage && localesContainer) {
         appTheme.availableLocales.forEach(function(locale) {
             var card = languageOption(locale);
             localesContainer.appendChild(card);
