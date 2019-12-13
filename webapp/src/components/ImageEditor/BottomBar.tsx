@@ -24,6 +24,8 @@ export interface BottomBarProps {
     dispatchToggleOnionSkinEnabled: () => void;
 
     singleFrame?: boolean;
+
+    onDoneClick?: () => void;
 }
 
 export interface BottomBarState {
@@ -50,7 +52,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             dispatchToggleAspectRatioLocked,
             dispatchToggleOnionSkinEnabled,
             resizeDisabled,
-            singleFrame
+            singleFrame,
+            onDoneClick
         } = this.props;
 
         const width = this.state.width == null ? imageDimensions[0] : this.state.width;
@@ -125,6 +128,12 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         title={lf("Zoom In")}
                         toggle={true}
                     />
+                </div>
+                <div role="button"
+                    className={`image-editor-confirm`}
+                    title={lf("Done")}
+                    onClick={onDoneClick}>
+                        {lf("Done")}
                 </div>
             </div>
         );

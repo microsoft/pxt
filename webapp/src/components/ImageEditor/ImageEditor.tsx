@@ -84,18 +84,11 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                         <ImageCanvas />
                         {singleFrame ? undefined : <Timeline />}
                     </div>
-                    <BottomBar singleFrame={singleFrame} />
+                    <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} />
                     {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>
             { editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} resizeDisabled={true} /> }
-            { !editingTile && this.props.onDoneClicked && <button
-                className={`image-editor-confirm ui small button`}
-                title={lf("Done")}
-                onClick={this.onDoneClick}>
-                    {lf("Done")}
-                </button>
-            }
         </div>
     }
 
