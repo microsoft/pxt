@@ -340,10 +340,10 @@ namespace pxt.github {
     }
 
     export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
-        headBranch: string, msg: string) {
+        headBranch: string, title: string, msg?: string) {
         const res = await ghPostAsync(repopath + "/pulls", {
-            title: msg,
-            body: lf("Automatically created from MakeCode."),
+            title: title,
+            body: msg || lf("Automatically created from MakeCode."),
             head: headBranch,
             base: baseBranch,
             maintainer_can_modify: true
@@ -823,7 +823,6 @@ namespace pxt.github {
 
     export interface GitJson {
         repo: string;
-        prUrl?: string; // if any
         commit: pxt.github.Commit;
         isFork?: boolean;
     }
@@ -1349,5 +1348,81 @@ namespace pxt.github {
             preferredEditor: commitFiles.find(f => /.blocks$/.test(f)) ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
         };
         return cfg;
+    }
+
+    /**
+     * Executes a GraphQL query against GitHub v4 api
+     * @param query 
+     */
+    export function ghGraphQLQueryAsync(query: string): Promise<any> {
+        const payload = JSON.stringify({
+            query
+        })
+        return ghPostAsync("https://api.github.com/graphql", payload);
+    }
+
+    export interface PullRequest {
+        number: number;
+        state?: "OPEN" | "CLOSED" | "MERGED";
+        mergeable?: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+    }
+
+    /**
+     * Finds the first PR associated with a branch
+     * @param reponame 
+     * @param headName 
+     */
+    export function findPRNumberforBranchAsync(reponame: string, headName: string): Promise<PullRequest> {
+        const repoId = parseRepoId(reponame);
+        const query =
+            `
+{
+    repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
+        pullRequests(last: 1, states: [OPEN, MERGED], headRefName: ${JSON.stringify(headName)}) {
+            edges {
+                node {
+                    number
+                    state
+                    mergeable
+                }
+            }
+        }
+    }
+}
+`
+
+        /*
+        {
+          "data": {
+            "repository": {
+              "pullRequests": {
+                "edges": [
+                  {
+                    "node": {
+                      "title": "use close icon instead of cancel",
+                      "number": 6324
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }*/
+
+        return ghGraphQLQueryAsync(query)
+            .then<pxt.github.PullRequest>(resp => {
+                const edge = resp.data.repository.pullRequests.edges[0]
+                if (edge && edge.node) {
+                    const node = edge.node;
+                    return {
+                        number: node.number,
+                        mergeable: node.mergeable,
+                        state: node.state
+                    }
+                }
+                return {
+                    number: -1
+                }
+            })
     }
 }

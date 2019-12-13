@@ -50,6 +50,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handlePullClick = this.handlePullClick.bind(this);
         this.handleBranchClick = this.handleBranchClick.bind(this);
         this.handleGithubError = this.handleGithubError.bind(this);
+        this.handlePullRequest = this.handlePullRequest.bind(this);
     }
 
     private clearCache() {
@@ -67,8 +68,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const parsed = this.parsedRepoId()
         header.githubId = parsed.fullName + "#" + newBranch
         gs.repo = header.githubId
-        gs.prUrl = null
         await this.saveGitJsonAsync(gs)
+        data.invalidateHeader("pkg-git-pr", header);
     }
 
     private async newBranchAsync() {
@@ -224,6 +225,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             core.warningNotification(lf("GitHub access token looks invalid; sign out and try again."));
         else if (statusCode == 404)
             core.warningNotification(lf("GitHub resource not found; please check that it still exists."));
+        else if (statusCode == 403)
+            core.warningNotification(lf("GitHub rate limit exceeded, please wait and try again."))
         else {
             pxt.reportException(e);
             core.warningNotification(lf("Oops, something went wrong. Please try again."))
@@ -749,6 +752,7 @@ ${content}
 
         const { header } = this.props.parent.state
         if (b) {
+            data.invalidateHeader("pkg-git-pr", header);
             this.setState({
                 previousCfgKey: this.pkgConfigKey(pkg.mainEditorPkg().files[pxt.CONFIG_NAME].content)
             });
@@ -760,11 +764,57 @@ ${content}
         }
     }
 
+    private async handlePullRequest() {
+        const title = await core.promptAsync({
+            header: lf("Create pull request"),
+            body: lf("Pull requests let you tell others about changes you've pushed to a branch in a repository on GitHub."),
+            helpUrl: "/github/pull-request",
+            hasCloseIcon: true,
+            hideCancel: true,
+            placeholder: lf("Describe the changes in this branch.")
+        });
+        if (title === null) return;
+
+        this.showLoading("github.createpr", true, lf("creating pull request..."));
+        try {
+            const gh = this.parsedRepoId();
+            const msg =
+                lf(`
+### How to use this pull request
+
+- [ ] assign a reviewer
+- [ ] reviewer approves or request changes
+- [ ] apply requested changes if any
+- [ ] merge once approved
+`); // TODO
+            /*
+                        `
+            ![${lf("A rendered view of the blocks")}](https://github.com/${gh.fullName}/raw/${gh.tag}/.makecode/blocks.png)
+            
+            ${lf("This image shows the blocks code from the last commit in this pull request.")}
+            ${lf("This image may take a few minutes to refresh.")}
+            
+            `
+            */
+            const id = await pxt.github.createPRFromBranchAsync(gh.fullName, "master", gh.tag, title, msg);
+            data.invalidateHeader("pkg-git-pr", this.props.parent.state.header);
+            core.infoNotification(lf("Pull request created successfully!", id));
+        } catch (e) {
+            if (e.statusCode == 422)
+                core.warningNotification(lf("Please commit changes before creating a pull request."));
+            else
+                this.handleGithubError(e);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
     renderCore(): JSX.Element {
         const gs = this.getGitJson();
         if (!gs)
             return <div></div>; // shortcut for projects not using github, should not happen when visible
 
+        const { header } = this.props.parent.state;
         const isBlocksMode = pkg.mainPkg.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const files = pkg.mainEditorPkg().sortedFiles();
         const diffFiles = files
@@ -784,7 +834,7 @@ ${content}
         const needsCommit = diffFiles.length > 0;
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
-        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + this.props.parent.state.header.id);
+        const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
         const hasissue = pullStatus == workspace.PullStatus.BranchDeleted;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
@@ -795,8 +845,8 @@ ${content}
         const url = `https://github.com/${githubId.fullName}${master ? "" : `/tree/${githubId.tag}`}`;
         const needsToken = !pxt.github.token;
         // this will show existing PR if any
-        const prUrl = !gs.isFork && master ? null :
-            `https://github.com/${githubId.fullName}/compare/${githubId.tag}?expand=1`
+        const pr: pxt.github.PullRequest = this.getData("pkg-git-pr:" + header.id)
+        const showPr = pr !== null && (gs.isFork || !master);
         return (
             <div id="githubArea">
                 <div id="serialHeader" className="ui serialHeader">
@@ -813,20 +863,23 @@ ${content}
                         <sui.Link className="ui button" icon="external alternate" href={url} title={lf("Open repository in GitHub.")} target="_blank" onKeyDown={sui.fireClickOnEnter} />
                     </div>
                 </div>
-                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
+                <MessageComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                 <div className="ui form">
-                    {!prUrl ? undefined :
-                        <a href={prUrl} role="button" className="ui link create-pr"
+                    {showPr && pr.number > 0 &&
+                        <a href={`https://github.com/${githubId.fullName}/pull/${pr.number}`} role="button" className="ui tiny basic button create-pr"
                             target="_blank" rel="noopener noreferrer">
-                            {lf("Pull request")}
+                            {lf("Pull request (#{0})", pr.number)}
                         </a>}
+                    {showPr && pr.number <= 0 &&
+                        <sui.Button className="tiny basic create-pr" text={lf("Pull request")} onClick={this.handlePullRequest} />
+                    }
                     <h3 className="header">
                         <i className="large github icon" />
                         <span className="repo-name">{githubId.fullName}</span>
                         <span onClick={this.handleBranchClick} role="button" className="repo-branch">{"#" + githubId.tag}<i className="dropdown icon" /></span>
                     </h3>
                     {needsCommit ?
-                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} />
+                        <CommmitComponent parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                         : <div className="ui segment">
                             {lf("No local changes found.")}
                             {" "}
@@ -835,7 +888,7 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} /> : undefined}
+                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} /> : undefined}
                 </div>
             </div>
         )
@@ -852,6 +905,7 @@ interface GitHubViewProps {
     needsCommit: boolean;
     user: pxt.editor.UserInfo;
     pullStatus: workspace.PullStatus;
+    pullRequest: pxt.github.PullRequest;
 }
 
 class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
@@ -861,7 +915,15 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
 
     renderCore() {
         const { needsCommitMessage } = this.props.parent.state;
-        const { pullStatus } = this.props;
+        const { pullStatus, pullRequest } = this.props;
+
+        if (pullRequest && pullRequest.number > 0 && pullRequest.state == "MERGED")
+            return <div className="ui icon warning message">
+                <i className="exclamation circle icon"></i>
+                <div className="content">
+                    {lf("This branch has been merged, please switch back to the master branch.")}
+                </div>
+            </div>
 
         if (pullStatus == workspace.PullStatus.BranchDeleted)
             return <div className="ui icon warning message">
