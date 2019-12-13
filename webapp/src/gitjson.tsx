@@ -929,7 +929,7 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
             return <div className="ui icon warning message">
                 <i className="exclamation circle icon"></i>
                 <div className="content">
-                    {lf("Branch was not found, please pull again or switch to a different branch.")}
+                    {lf("This branch was not found, please pull again or switch to a different branch.")}
                 </div>
             </div>
 
