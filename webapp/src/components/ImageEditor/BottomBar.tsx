@@ -11,6 +11,7 @@ export interface BottomBarProps {
     imageDimensions: [number, number];
     cursorLocation: [number, number];
 
+    resizeDisabled: boolean;
     hasUndo: boolean;
     hasRedo: boolean;
 
@@ -48,7 +49,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
             onionSkinEnabled,
             dispatchToggleAspectRatioLocked,
             dispatchToggleOnionSkinEnabled,
-            dispatchChangeZoom,
+            resizeDisabled,
             singleFrame
         } = this.props;
 
@@ -57,30 +58,32 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
 
         return (
             <div className="image-editor-bottombar">
-                <div className="image-editor-resize">
-                    <input className="image-editor-input"
-                        title={lf("Image Width")}
-                        value={width}
-                        onChange={this.handleWidthChange}
-                        onBlur={this.handleDimensionalBlur}
-                        onKeyDown={this.handleDimensionalKeydown}
-                    />
+                { !resizeDisabled &&
+                    <div className="image-editor-resize">
+                        <input className="image-editor-input"
+                            title={lf("Image Width")}
+                            value={width}
+                            onChange={this.handleWidthChange}
+                            onBlur={this.handleDimensionalBlur}
+                            onKeyDown={this.handleDimensionalKeydown}
+                        />
 
-                    <IconButton
-                        onClick={dispatchToggleAspectRatioLocked}
-                        iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
-                        title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
-                        toggle={!aspectRatioLocked}
-                    />
+                        <IconButton
+                            onClick={dispatchToggleAspectRatioLocked}
+                            iconClass={aspectRatioLocked ? "ms-Icon ms-Icon--Lock" : "ms-Icon ms-Icon--Unlock"}
+                            title={aspectRatioLocked ? lf("Unlock Aspect Ratio") : lf("Lock Aspect Ratio")}
+                            toggle={!aspectRatioLocked}
+                        />
 
-                    <input className="image-editor-input"
-                        title={lf("Image Height")}
-                        value={height}
-                        onChange={this.handleHeightChange}
-                        onBlur={this.handleDimensionalBlur}
-                        onKeyDown={this.handleDimensionalKeydown}
-                    />
-                </div>
+                        <input className="image-editor-input"
+                            title={lf("Image Height")}
+                            value={height}
+                            onChange={this.handleHeightChange}
+                            onBlur={this.handleDimensionalBlur}
+                            onKeyDown={this.handleDimensionalKeydown}
+                        />
+                    </div>
+                }
                 { !singleFrame && <div className="image-editor-seperator"/> }
                 { !singleFrame && <div>
                     <IconButton
@@ -90,7 +93,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         toggle={!onionSkinEnabled}
                     />
                 </div> }
-                { cursorLocation && <div className="image-editor-seperator"/> }
+                { cursorLocation && !resizeDisabled && <div className="image-editor-seperator"/> }
                 <div className="image-editor-coordinate-preview">
                     {cursorLocation && `${cursorLocation[0]}, ${cursorLocation[1]}`}
                 </div>
@@ -206,6 +209,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
+        resizeDisabled: editor.resizeDisabled,
         hasUndo: !!past.length,
         hasRedo: !!future.length
     };

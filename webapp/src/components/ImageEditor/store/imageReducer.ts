@@ -79,6 +79,7 @@ export interface EditorState {
     cursorSize: CursorSize;
     overlayEnabled?: boolean;
     alert?: AlertInfo;
+    resizeDisabled?: boolean;
 }
 
 export interface GalleryTile {
@@ -184,6 +185,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.SET_GALLERY_OPEN:
         case actions.SHOW_ALERT:
         case actions.HIDE_ALERT:
+        case actions.DISABLE_RESIZE:
             return {
                 ...state,
                 editor: editorReducer(state.editor, action)
@@ -471,6 +473,12 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             return {
                 ...state,
                 alert: null
+            }
+        case actions.DISABLE_RESIZE:
+            // no tick, this is not initiated by the user
+            return {
+                ...state,
+                resizeDisabled: true
             }
     }
     return state;

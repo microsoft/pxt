@@ -11,10 +11,10 @@ import { Alert, AlertInfo } from './Alert';
 import { Timeline } from './Timeline';
 import { addKeyListener, removeKeyListener } from './keyboardShortcuts';
 
-import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCloseTileEditor } from './actions/dispatch';
+import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchSetInitialFrames, dispatchSetInitialTilemap, dispatchCloseTileEditor, dispatchDisableResize } from './actions/dispatch';
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
-import { Unsubscribe } from 'redux';
+import { Unsubscribe, Action } from 'redux';
 
 export interface ImageEditorSaveState {
     editor: EditorState;
@@ -25,6 +25,7 @@ export interface ImageEditorProps {
     singleFrame?: boolean;
     onChange?: (value: string) => void;
     initialValue?: string;
+    resizeDisabled?: boolean;
     store?: Store<ImageEditorStore>;
     onDoneClicked?: (value: string) => void;
 }
@@ -49,6 +50,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         if (this.props.initialValue) {
             this.initSingleFrame(pxt.sprite.imageLiteralToBitmap(this.props.initialValue));
+        }
+
+        if (this.props.resizeDisabled) {
+            this.dispatchOnStore(dispatchDisableResize());
         }
 
         this.unsubscribeChangeListener = this.getStore().subscribe(this.onStoreChange);
@@ -83,7 +88,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>
-            { editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} /> }
+            { editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} resizeDisabled={true} /> }
             { !editingTile && this.props.onDoneClicked && <button
                 className={`image-editor-confirm ui small button`}
                 title={lf("Done")}
@@ -95,19 +100,19 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     initSingleFrame(value: pxt.sprite.Bitmap) {
-        this.getStore().dispatch(dispatchSetInitialFrames([{ bitmap: value.data() }], 100));
+        this.dispatchOnStore(dispatchSetInitialFrames([{ bitmap: value.data() }], 100))
     }
 
     initAnimation(frames: pxt.sprite.Bitmap[], interval: number) {
-        this.getStore().dispatch(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
+        this.dispatchOnStore(dispatchSetInitialFrames(frames.map(frame => ({ bitmap: frame.data() })), interval));
     }
 
     initTilemap(data: pxt.sprite.TilemapData, gallery: GalleryTile[]) {
-        this.getStore().dispatch(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId, data.projectReferences));
+        this.dispatchOnStore(dispatchSetInitialTilemap(data.tilemap.data(), data.tileset, gallery, [data.layers], data.nextId, data.projectReferences));
     }
 
     onResize() {
-        this.getStore().dispatch(dispatchChangeZoom(0));
+        this.dispatchOnStore(dispatchChangeZoom(0));
     }
 
     getCurrentFrame(): pxt.sprite.Bitmap {
@@ -145,12 +150,12 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     restorePersistentData(oldValue: ImageEditorSaveState) {
         if (oldValue) {
-            this.getStore().dispatch(dispatchSetInitialState(oldValue.editor, oldValue.past));
+            this.dispatchOnStore(dispatchSetInitialState(oldValue.editor, oldValue.past));
         }
     }
 
     setCurrentFrame(bitmap: pxt.sprite.Bitmap) {
-        this.getStore().dispatch(dispatchImageEdit({ bitmap: bitmap.data() }))
+        this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }))
     }
 
     protected getStore() {
@@ -216,6 +221,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         const store = this.getStore();
         const tileEditState = store.getState().editor.editingTile;
 
-        store.dispatch(dispatchCloseTileEditor(parsed.data(), tileEditState.tilesetIndex));
+        this.dispatchOnStore(dispatchCloseTileEditor(parsed.data(), tileEditState.tilesetIndex))
+    }
+
+    protected dispatchOnStore(action: Action) {
+        this.getStore().dispatch(action);
     }
 }
