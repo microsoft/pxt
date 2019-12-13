@@ -129,7 +129,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                         title={lf("Swap the background and foreground colors.")}
                         toggle={true} />
                 </div>
-                <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`} onClick={this.wallClickHandler} role="button">
+                <div className={`tile-palette-swatch wall ${drawingMode == TileDrawingMode.Wall ? 'selected' : ''}`}
+                    onClick={this.wallClickHandler}
+                    title={lf("Draw walls")}
+                    role="button">
                     <span className="xicon wall" />
                 </div>
             </div>
@@ -339,8 +342,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             if (index >= 0) {
                 if (isRightClick) this.props.dispatchChangeBackgroundColor(index);
                 else this.props.dispatchChangeSelectedColor(index);
-                // automatically switch into tile drawing mode
-                this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
             }
             else {
                 const { selected, backgroundColor, tileset } = this.props;
@@ -353,6 +354,8 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     qname
                 );
             }
+            // automatically switch into tile drawing mode
+            this.props.dispatchChangeDrawingMode(TileDrawingMode.Default);
         }
     }
 
