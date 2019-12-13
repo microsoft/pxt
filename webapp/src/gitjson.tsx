@@ -835,7 +835,7 @@ ${content}
         const displayDiffFiles = isBlocksMode && !pxt.options.debug ? diffFiles.filter(f => /\.blocks$/.test(f.name)) : diffFiles;
 
         const pullStatus: workspace.PullStatus = this.getData("pkg-git-pull-status:" + header.id);
-        const hasissue = pullStatus == workspace.PullStatus.BranchDeleted;
+        const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const githubId = this.parsedRepoId()
         const master = githubId.tag == "master";
@@ -925,11 +925,11 @@ class MessageComponent extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>
             </div>
 
-        if (pullStatus == workspace.PullStatus.BranchDeleted)
+        if (pullStatus == workspace.PullStatus.BranchNotFound)
             return <div className="ui icon warning message">
                 <i className="exclamation circle icon"></i>
                 <div className="content">
-                    {lf("This branch was deleted from GitHub, please switch to a different branch.")}
+                    {lf("Branch was not found, please pull again or switch to a different branch.")}
                 </div>
             </div>
 
