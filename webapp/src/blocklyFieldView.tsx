@@ -123,8 +123,8 @@ export class FieldEditorView<U> implements pxt.react.FieldEditorView<U> {
         this.resizeFrameRef = undefined;
         const bounds = this.editorBounds;
 
-        let horizontalPadding = 20;
-        let verticalPadding = 20;
+        let horizontalPadding = 25;
+        let verticalPadding = 25;
 
 
         if (bounds.width - (horizontalPadding * 2) < 500) {
