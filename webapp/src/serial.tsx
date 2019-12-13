@@ -217,6 +217,10 @@ export class Editor extends srceditor.Editor {
     }
 
     appendRawData(data: string) {
+        // ensure \r\n newlines for windows <10
+        if (data && pxt.BrowserUtils.isWindows() && !pxt.BrowserUtils.isWindows10()) {
+            data = data.replace(/[^\r]\n/g, '\r\n');
+        }
         this.rawDataBuffer += data;
         if (this.rawDataBuffer.length > this.maxBufferLength) {
             this.rawDataBuffer.slice(this.rawDataBuffer.length / 4);
