@@ -311,7 +311,6 @@ function setupLangPicker() {
     var appTheme = pxt.appTarget.appTheme;
     var initialLang = pxt.Util.normalizeLanguageCode(pxt.BrowserUtils.getCookieLang())[0];
     var modalContainer = document.querySelector("#langmodal");
-    if (!modalContainer) return; // no language stuff on this page
 
     if (appTheme && appTheme.availableLocales && appTheme.selectLanguage) {
         var localesContainer = document.querySelector("#availablelocales");
