@@ -1025,7 +1025,8 @@ p.ui.font.small {
         left: -3px;
     }
     .collapsedEditorTools .hw-button:hover:after {
-        left: 200%;
+        transform: translateX(0%)!important;
+        left: -2rem;
     }
 }
 
@@ -1041,10 +1042,12 @@ p.ui.font.small {
         background-image: @poweredBySmall;
     }
     .hw-button:hover:after {
-        left: -140%;
+        transform: translateX(-100%)!important;
+        left: 3rem;
     }
     .collapsedEditorTools .hw-button:hover:after {
-        left: 200%;
+        transform: translateX(0%)!important;
+        left: -2rem;
     }
 }
 

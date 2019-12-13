@@ -136,7 +136,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         return saveInput;
     }
 
-    private getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
+    protected onHwItemClick = () => {
+        this.props.parent.showChooseHwDialog(true);
+    }
+
+    protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
         const compileLoading = !!compiling;
@@ -145,7 +149,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const downloadText = targetTheme.useUploadMessage ? lf("Upload") : lf("Download");
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
 
-        let downloadButtonClasses = boards? "left attached" : "";
+        let downloadButtonClasses = boards? "left attached " : "";
         let hwIconClasses = "";
         let hwMenuClasses = ""
         let displayRight = false;
@@ -178,18 +182,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         let deviceName = pxt.hwName || lf("device");
         let tooltip = pxt.hwName || lf("Click to select hardware")
 
-        const onHwItemClick = () => {
-            this.props.parent.showChooseHwDialog(true);
-        }
-        const onDownloadItemClick = () => {
-            this.compile(this.getViewString(view));
-        }
-
         if (boards) {
             el.push(
                 <sui.DropdownMenu role="menuitem" icon={`caret down ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={onHwItemClick} />
-                    <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={onDownloadItemClick} />
+                    <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={this.onHwItemClick} />
+                    <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={this.compile} />
                 </sui.DropdownMenu>
             )
         }
