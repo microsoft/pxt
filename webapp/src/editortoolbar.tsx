@@ -177,14 +177,14 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         }
 
         let el = [];
-        el.push(<EditorToolbarButton role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
+        el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
         let deviceName = pxt.hwName || lf("device");
         let tooltip = pxt.hwName || lf("Click to select hardware")
 
         if (boards) {
             el.push(
-                <sui.DropdownMenu role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
                     <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={this.onHwItemClick} />
                     <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={this.compile} />
                 </sui.DropdownMenu>
