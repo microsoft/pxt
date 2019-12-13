@@ -41,3 +41,4 @@ export const dispatchSetGalleryOpen = (open: boolean) => ({ type: actions.SET_GA
 export const dispatchOpenTileEditor = (editIndex?: number) => ({ type: actions.OPEN_TILE_EDITOR, index: editIndex })
 export const dispatchCloseTileEditor = (result?: pxt.sprite.BitmapData, index?: number) => ({ type: actions.CLOSE_TILE_EDITOR, result, index })
 export const dispatchDeleteTile = (index: number) => ({ type: actions.DELETE_TILE, index });
+export const dispatchDisableResize = () => ({ type: actions.DISABLE_RESIZE })

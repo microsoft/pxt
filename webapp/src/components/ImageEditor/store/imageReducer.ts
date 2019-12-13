@@ -79,6 +79,7 @@ export interface EditorState {
     cursorSize: CursorSize;
     overlayEnabled?: boolean;
     alert?: AlertInfo;
+    resizeDisabled?: boolean;
 }
 
 export interface GalleryTile {
@@ -184,6 +185,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
         case actions.SET_GALLERY_OPEN:
         case actions.SHOW_ALERT:
         case actions.HIDE_ALERT:
+        case actions.DISABLE_RESIZE:
             return {
                 ...state,
                 editor: editorReducer(state.editor, action)
@@ -472,6 +474,12 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
                 ...state,
                 alert: null
             }
+        case actions.DISABLE_RESIZE:
+            // no tick, this is not initiated by the user
+            return {
+                ...state,
+                resizeDisabled: true
+            }
     }
     return state;
 }
@@ -488,7 +496,8 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                 ...state,
                 tilemap: {
                     ...state.tilemap,
-                    bitmap: pxt.sprite.Tilemap.fromData(state.tilemap.bitmap).resize(width, height).data()
+                    bitmap: resizeTilemap(state.tilemap.bitmap, width, height),
+                    overlayLayers: state.tilemap.overlayLayers && state.tilemap.overlayLayers.map(o => resizeBitmap(o, width, height))
                 }
             };
         case actions.CREATE_NEW_TILE:
@@ -633,6 +642,14 @@ function deleteTile(index: number, tilemap: pxt.sprite.Tilemap) {
     }
 
     return result;
+}
+
+function resizeBitmap(data: pxt.sprite.BitmapData, newWidth: number, newHeight: number) {
+    return pxt.sprite.Bitmap.fromData(data).resize(newWidth, newHeight).data();
+}
+
+function resizeTilemap(data: pxt.sprite.BitmapData, newWidth: number, newHeight: number) {
+    return pxt.sprite.Tilemap.fromData(data).resize(newWidth, newHeight).data();
 }
 
 export function setTelemetryFunction(cb: (event: string) => void) {
