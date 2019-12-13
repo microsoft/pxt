@@ -551,7 +551,12 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 if (!tileImage) {
                     tileImage = this.generateTile(color, this.props.tilemapState.tileset);
                 }
-                context.drawImage(tileImage,  left * this.cellWidth,  top * this.cellWidth);
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < width; y++) {
+                        context.drawImage(tileImage,  (left + x) * this.cellWidth,  (top + y) * this.cellWidth);
+                    }
+                }
+
             }
             else {
                 context.fillStyle = this.props.colors[color]
