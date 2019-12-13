@@ -126,14 +126,17 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             }
         }))
 
-        branchList.unshift({
-            name: lf("Create new branch"),
-            description: lf("Based on {0}", gid.tag),
-            onClick: () => {
-                core.hideDialog()
-                return this.newBranchAsync()
-            }
-        })
+        // only branch from master...
+        if (gid.tag == "master") {
+            branchList.unshift({
+                name: lf("Create new branch"),
+                description: lf("Based on {0}", gid.tag),
+                onClick: () => {
+                    core.hideDialog()
+                    return this.newBranchAsync()
+                }
+            })
+        }
 
         await core.confirmAsync({
             header: lf("Switch to a different branch"),
