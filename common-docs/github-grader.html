@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <title>MakeCode Maker - Board Designer</title>
-    <!-- @include head.html -->
+    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" />
+    <style>
+        @targetstyle@
+    </style>
     <style>
 #repocolumn {
     padding-left: 2rem;
@@ -22,12 +25,11 @@
     </style>
     <script type="text/javascript" src="/blb/jquery.js"></script>
     <script type="text/javascript" src="/blb/semantic.js"></script>
-    <script type="text/javascript" src="/blb/target.js"></script>
     <script>
         const api = "https://api.github.com";
-        const token = localStorage[pxtTargetBundle.id + "/githubtoken"];
+        const token = localStorage["@targetid@/githubtoken"];
         if (!token)
-            $('#signin').removeClass('hidden');
+            $('#signinmsg').removeClass('hidden');
 
 
         async function fetchUserRepos(user) {
@@ -52,8 +54,7 @@
     </div>
 </div>`).click(() => {
                             const url =
-                                pxtTargetBundle.appTheme.homeUrl +
-                                "/beta#pub:" +
+                                "@homeurl@beta#pub:" +
                                 "https://github.com/" +
                                 repo.full_name;
                             console.log(url);
@@ -82,8 +83,8 @@
     <div id="columns" class="ui grid fluid">
         <div id="repocolumn" class="four wide column">
             <h3>MakeCode GitHub Grader</h3>
-            <div id="signin" class="ui hidden warning message">
-                Please sign in with GitHub in <a href="/" /> to use this page.
+            <div id="signinmsg" class="ui hidden warning message">
+                Please sign in with GitHub in <a href="@homeurl@">@homeurl@</a> to use this page.
             </div>
             <div class="ui form">
                 <div class="ui field">
