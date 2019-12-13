@@ -885,6 +885,24 @@ namespace pxsim {
             })
         }
 
+        static requestPause() {
+            const r = runtime;
+            if (!r) return;
+
+            Runtime.postMessage(<PauseMessage>{
+                type: "pause"
+            })
+        }
+
+        static requestContinue() {
+            const r = runtime;
+            if (!r) return;
+
+            Runtime.postMessage(<ContinueMessage>{
+                type: "continue"
+            })
+        }
+
         restart() {
             this.kill();
             setTimeout(() =>

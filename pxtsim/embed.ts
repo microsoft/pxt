@@ -169,6 +169,13 @@ namespace pxsim {
         parts: (string | ArrayBuffer)[];
     }
 
+    export interface PauseMessage extends SimulatorMessage {
+        type: "pause";
+    }
+    export interface ContinueMessage extends SimulatorMessage {
+        type: "continue";
+    }
+
     export interface TutorialStepInfo {
         fullscreen?: boolean;
         hasHint?: boolean;
@@ -270,6 +277,12 @@ namespace pxsim {
                 case 'debugger':
                     if (runtime)
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
+                    break;
+                case "pause":
+                    // TODO(1580): Add pause/resume capabilities to simulator
+                    break;
+                case "continue":
+                    // TODO(1580): Add pause/resume capabilities to simulator
                     break;
                 case 'simulator':
                     let simData = data as SimulatorCommandMessage;
