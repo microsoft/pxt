@@ -139,8 +139,7 @@ namespace pxt.cpp {
         return null
     }
 
-    let prevExtInfo: pxtc.ExtensionInfo;
-    let prevSnapshot: Map<string>;
+    let prevExtInfos: Map<pxtc.ExtensionInfo> = {};
 
     export class PkgConflictError extends Error {
         pkg0: Package;
@@ -157,7 +156,9 @@ namespace pxt.cpp {
     }
 
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
-        let pkgSnapshot: Map<string> = {}
+        let pkgSnapshot: Map<string> = {
+            "__appVariant": pxt.appTargetVariant || ""
+        }
         let constsName = "dal.d.ts"
         let sourcePath = "/source/"
 
@@ -167,9 +168,10 @@ namespace pxt.cpp {
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
         }
 
-        if (prevSnapshot && U.stringMapEq(pkgSnapshot, prevSnapshot)) {
+        const key = JSON.stringify(pkgSnapshot)
+        if (prevExtInfos[key]) {
             pxt.debug("Using cached extinfo")
-            return prevExtInfo
+            return prevExtInfos[key]
         }
 
         pxt.debug("Generating new extinfo")
@@ -905,7 +907,7 @@ namespace pxt.cpp {
                         fileName = fullName
 
                         // parseCpp() will remove doc comments, to prevent excessive recompilation
-                        pxt.debug("Parse C++: " + fullName)
+                        // pxt.debug("Parse C++: " + fullName)
                         parseCpp(src, isHeader)
                         res.extensionFiles[sourcePath + fullName] = src
 
@@ -1068,8 +1070,9 @@ int main() {
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
 
-        prevSnapshot = pkgSnapshot
-        prevExtInfo = res
+        if (Object.keys(prevExtInfos).length > 10)
+            prevExtInfos = {}
+        prevExtInfos[key] = res
 
         return res;
     }
@@ -1252,9 +1255,10 @@ int main() {
     }
 }
 
-namespace pxt.hex {
+namespace pxt.hexloader {
     const downloadCache: Map<Promise<pxtc.HexInfo>> = {};
     let cdnUrlPromise: Promise<string>;
+    let hexInfoMemCache: pxt.Map<pxtc.HexInfo> = {}
 
     export let showLoading: (msg: string) => void = (msg) => { };
     export let hideLoading: () => void = () => { };
@@ -1421,8 +1425,9 @@ namespace pxt.hex {
         if (!extInfo.sha)
             return Promise.resolve<any>(null)
 
-        if (pxtc.hex.isSetupFor(extInfo))
-            return Promise.resolve(pxtc.hex.currentHexInfo)
+        const cached = hexInfoMemCache[extInfo.sha]
+        if (cached)
+            return Promise.resolve(cached)
 
         pxt.debug("get hex info: " + extInfo.sha)
 
@@ -1456,6 +1461,14 @@ namespace pxt.hex {
                             return Promise.resolve(null);
                         })
                 }
+            })
+            .then(res => {
+                if (res) {
+                    if (Object.keys(hexInfoMemCache).length > 20)
+                        hexInfoMemCache = {}
+                    hexInfoMemCache[extInfo.sha] = res
+                }
+                return res
             })
     }
 

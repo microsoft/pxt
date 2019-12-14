@@ -1017,66 +1017,56 @@ namespace ts.pxtc {
         return !!((p as BlockPart).kind);
     }
 
-    // TODO should be internal
-    export namespace hex {
-        export function isSetupFor(extInfo: ExtensionInfo) {
-            return currentSetup == extInfo.sha
-        }
-
-        export let currentSetup: string = null;
-        export let currentHexInfo: pxtc.HexInfo;
-
-        export interface ChecksumBlock {
-            magic: number;
-            endMarkerPos: number;
-            endMarker: number;
-            regions: { start: number; length: number; checksum: number; }[];
-        }
-
-        export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
-            let magic = pxt.HF2.read32(buf, pos)
-            if ((magic & 0x7fffffff) != 0x07eeb07c) {
-                pxt.log("no checksum block magic")
-                return null
-            }
-            let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
-            let endMarker = pxt.HF2.read32(buf, pos + 8)
-            if (endMarkerPos & 3) {
-                pxt.log("invalid end marker position")
-                return null
-            }
-            let pageSize = 1 << (endMarker & 0xff)
-            if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
-                pxt.log("invalid page size: " + pageSize)
-                return null
-            }
-
-            let blk: ChecksumBlock = {
-                magic,
-                endMarkerPos,
-                endMarker,
-                regions: []
-            }
-
-            for (let i = pos + 12; i < buf.length - 7; i += 8) {
-                let r = {
-                    start: pageSize * pxt.HF2.read16(buf, i),
-                    length: pageSize * pxt.HF2.read16(buf, i + 2),
-                    checksum: pxt.HF2.read32(buf, i + 4)
-                }
-                if (r.length && r.checksum) {
-                    blk.regions.push(r)
-                } else {
-                    break
-                }
-            }
-
-            //console.log(hexDump(buf), blk)
-
-            return blk
-        }
-
+    export interface ChecksumBlock {
+        magic: number;
+        endMarkerPos: number;
+        endMarker: number;
+        regions: { start: number; length: number; checksum: number; }[];
     }
+
+    export function parseChecksumBlock(buf: ArrayLike<number>, pos = 0): ChecksumBlock {
+        let magic = pxt.HF2.read32(buf, pos)
+        if ((magic & 0x7fffffff) != 0x07eeb07c) {
+            pxt.log("no checksum block magic")
+            return null
+        }
+        let endMarkerPos = pxt.HF2.read32(buf, pos + 4)
+        let endMarker = pxt.HF2.read32(buf, pos + 8)
+        if (endMarkerPos & 3) {
+            pxt.log("invalid end marker position")
+            return null
+        }
+        let pageSize = 1 << (endMarker & 0xff)
+        if (pageSize != pxt.appTarget.compile.flashCodeAlign) {
+            pxt.log("invalid page size: " + pageSize)
+            return null
+        }
+
+        let blk: ChecksumBlock = {
+            magic,
+            endMarkerPos,
+            endMarker,
+            regions: []
+        }
+
+        for (let i = pos + 12; i < buf.length - 7; i += 8) {
+            let r = {
+                start: pageSize * pxt.HF2.read16(buf, i),
+                length: pageSize * pxt.HF2.read16(buf, i + 2),
+                checksum: pxt.HF2.read32(buf, i + 4)
+            }
+            if (r.length && r.checksum) {
+                blk.regions.push(r)
+            } else {
+                break
+            }
+        }
+
+        //console.log(hexDump(buf), blk)
+
+        return blk
+    }
+
 
     export namespace UF2 {
         export const UF2_MAGIC_START0 = 0x0A324655; // "UF2\n"

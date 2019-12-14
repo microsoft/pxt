@@ -465,7 +465,7 @@ class Host
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
+        return pxt.hexloader.getHexInfoAsync(this, extInfo).catch(core.handleNetworkError);
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {

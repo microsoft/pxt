@@ -706,8 +706,7 @@ namespace ts.pxtc.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
-        target: { isNative: false, hasHex: false, switches: {} },
-        hexinfo: null
+        target: { isNative: false, hasHex: false, switches: {} }
     }
 
     class Host implements LanguageServiceHost {

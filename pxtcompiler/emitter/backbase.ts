@@ -1676,7 +1676,7 @@ ${baseLabel}_nochk:
         }
 
         private emitCallRaw(name: string) {
-            let inf = hex.lookupFunc(name)
+            let inf = hexfile.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
             this.alignedCall(name)
         }
