@@ -630,6 +630,8 @@ namespace pxsim {
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
         pausedOnBreakpoint: boolean = false;
+        pausedSimulator: boolean = false;
+        pausedSimulatorContinuation: () => void;
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -889,18 +891,19 @@ namespace pxsim {
             const r = runtime;
             if (!r) return;
 
-            Runtime.postMessage(<PauseMessage>{
-                type: "pause"
-            })
+            runtime.pausedSimulator = true
+            // TODO: pause the timers (right now some timers advance while paused)
         }
 
         static requestContinue() {
             const r = runtime;
             if (!r) return;
 
-            Runtime.postMessage(<ContinueMessage>{
-                type: "continue"
-            })
+            runtime.pausedSimulator = false
+            if (runtime.pausedSimulatorContinuation) {
+                runtime.pausedSimulatorContinuation()
+                runtime.pausedSimulatorContinuation = undefined
+            }
         }
 
         restart() {
@@ -1102,15 +1105,27 @@ namespace pxsim {
                 __this.cleanScheduledExpired()
                 yieldReset();
                 let now = Date.now()
-                if (now - lastYield >= 20) {
+                let isYieldElapsed = now - lastYield >= 20
+                let isYielding = __this.pausedSimulator || isYieldElapsed
+                if (isYielding) {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
+                }
+
+                if (__this.pausedSimulator) {
+                    if (!__this.pausedSimulatorContinuation) {
+                        __this.pausedSimulatorContinuation = loopForSchedule(s)
+                        __this.pauseScheduled();
+                    }
+                }
+
+                if (isYieldElapsed) {
                     /* tslint:disable:no-string-based-set-timeout */
                     setTimeout(loopForSchedule(s), 5)
-                    return true
                 }
-                return false
+
+                return isYielding
             }
 
             function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
