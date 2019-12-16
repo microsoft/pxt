@@ -8,7 +8,7 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@
+        @targetstyle@ 
         #user {
             width: 14rem;
         }
@@ -41,11 +41,11 @@
             bottom: 3rem;
             top: 3rem;
         }
+
         .footer {
             position: absolute !important;
             bottom: 0 !important;
         }
-
     </style>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
@@ -65,7 +65,7 @@
             },
             "microbit": {
                 name: "micro:bit",
-                url: "https://microbit.makecode.com/beta"
+                url: "https://makecode.microbit.org/beta"
             },
             "maker": {
                 name: "Maker",
@@ -90,7 +90,7 @@
                 if (!target)
                     items[i] = undefined;
                 else
-                items[i].target = target;
+                    items[i].target = target;
             }
             return items.filter(m => !!m);
         }
@@ -132,8 +132,11 @@
         <div class="description">${targets[repo.target].name}</div>
     </div>
 </div>`).click(() => {
+                                    if (typeof mscc !== "undefined" && !mscc.hasConsent())
+                                        mscc.setConsent();
+                                    pxt.aiTrackEvent("grader.openrepo")
                                     const url = targets[repo.target].url +
-                                        "?editorlayout=ide&ws=mem" +
+                                        "?controller=1&editorlayout=ide&ws=mem" +
                                         "#pub:" +
                                         "https://github.com/" +
                                         repo.full_name
@@ -195,13 +198,13 @@
 </head>
 
 <body id='root' class='root'>
-	<nav class="ui menu inverted fixed borderless">
-		<div class="menu left">
-			<div class="ui item">
+    <nav class="ui menu inverted fixed borderless">
+        <div class="menu left">
+            <div class="ui item">
                 MakeCode GitHub Grader
-			</div>
-		</div>
-	</nav>
+            </div>
+        </div>
+    </nav>
     <div id="repocolumn">
         <div id="userparent" class="ui left icon input">
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
