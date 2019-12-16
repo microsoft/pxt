@@ -84,7 +84,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
-        const deleteFiles = pkg.getPkgId() == "this";
+        const deleteFiles = !pxt.shell.isReadOnly() && pkg.getPkgId() == "this";
         return pkg.sortedFiles().map(file => {
             const meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             // we keep this disabled, until implemented for cloud syncing
