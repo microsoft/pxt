@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>MakeCode Grader</title>
-	<link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
+    <link rel="stylesheet"
+        href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
+        type="text/css">
     <style>
         @targetstyle@
     </style>
@@ -14,9 +16,9 @@
         }
 
         #repoes {
-            overflow-y: hidden;
+            overflow-y: scroll;
         }
-        
+
         #repocolumn {
             padding: 0.5rem;
             position: absolute;
@@ -42,11 +44,13 @@
             top: 0;
         }
     </style>
-    <script type="text/javascript" src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
-    <script type="text/javascript" src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
+    <script type="text/javascript"
+        src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
+    <script type="text/javascript"
+        src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
     <script>
         const api = "https://api.github.com";
-        const token = localStorage["core/githubtoken"];
+
         const targets = {
             "ev3": {
                 name: "LEGO Mindstorms EV3",
@@ -66,18 +70,15 @@
             }
         }
 
-        if (!token)
-            $('#signinmsg').removeClass('hidden');
-
         async function sniffTarget(repo) {
-            const response = await fetch(`https://raw.githubusercontent.com/${repo.full_name}/master/README.md?token=${token}`);
+            const response = await fetch(`https://raw.githubusercontent.com/${repo.full_name}/master/README.md?token=${token()}`);
             const msg = await response.text();
             return Object.keys(targets)
                 .find(k => msg.indexOf(`PXT/${k}`) > -1)
         }
 
         async function fetchUserRepos(user) {
-            const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token}&anti_cache=${Math.random()}`);
+            const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token()}&anti_cache=${Math.random()}`);
             const msg = await response.json();
             for (let i = 0; i < msg.length; ++i) {
                 const target = await sniffTarget(msg[i]);
@@ -106,7 +107,7 @@
         <div class="description">${targets[repo.target].name}</div>
     </div>
 </div>`).click(() => {
-                                    const url = targets[repo.target].url +  
+                                    const url = targets[repo.target].url +
                                         "#pub:" +
                                         "https://github.com/" +
                                         repo.full_name;
@@ -120,8 +121,40 @@
             }
         }
 
+        function token() {
+            return localStorage["core/githubtoken"];
+        }
+
+        function checkToken() {
+            // sniff oauth
+            let keys = {};
+            window.location.hash.replace(/^#/,'').split('&')
+                .map(v => v.split('=', 2))
+                .forEach(a => keys[a[0]] = a[1]);
+
+            if (keys["access_token"]) {
+                if (keys["state"] == localStorage["core/oauthState"]) {
+                    localStorage["core/githubtoken"] = keys["access_token"];
+                }
+                delete localStorage["core/oauthState"];
+                window.location.hash = "";
+            }
+            
+            // force sign...
+            if (token()) return;
+
+            console.log(`redirecting to oauth page`)
+            const state = Math.random().toString();
+            localStorage["core/oauthState"] = state;
+            const login = "https://makecode.com/oauth/login?state=" + state +
+                "&response_type=token&client_id=gh-token&redirect_uri=" +
+                encodeURIComponent(window.location.href.split('#', 1)[0])
+            window.location.href = login;
+        }
+
         $(function () {
             console.log(`loaded...`);
+            checkToken();
             $("#generate").click(update);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
