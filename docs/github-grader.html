@@ -16,33 +16,38 @@
         }
 
         #repoes {
-            overflow-y: scroll;
+            overflow-y: auto;
         }
 
         #repocolumn {
             padding: 0.5rem;
             position: absolute;
             width: 15rem;
-            height: 100%;
+            height: calc(100% - 3rem);
             border: none;
             left: 0;
             right: calc(100% - 15rem);
-            bottom: 0;
+            bottom: 3rem;
             top: 0;
-            overflow: scroll;
-            overflow-y: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         #makecodecolumn {
             position: absolute;
             width: calc(100% - 15rem);
-            height: 100%;
+            height: calc(100% - 3rem);
             border: none;
             left: 15rem;
             right: 0;
-            bottom: 0;
+            bottom: 3rem;
             top: 0;
         }
+        .footer {
+            position: absolute !important;
+            bottom: 0 !important;
+        }
+
     </style>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
@@ -128,7 +133,7 @@
         function checkToken() {
             // sniff oauth
             let keys = {};
-            window.location.hash.replace(/^#/,'').split('&')
+            window.location.hash.replace(/^#/, '').split('&')
                 .map(v => v.split('=', 2))
                 .forEach(a => keys[a[0]] = a[1]);
 
@@ -139,7 +144,7 @@
                 delete localStorage["core/oauthState"];
                 window.location.hash = "";
             }
-            
+
             // force sign...
             if (token()) return;
 
@@ -180,9 +185,13 @@
         </div>
         <div id="repoes" class="ui selection list"></div>
     </div>
-    <iframe id="makecodecolumn" />
-    <!-- @include footer.html -->
-    <!-- @include tracking.html -->
+    <iframe id="makecodecolumn"></iframe>
+    </div>
+    <script type="text/javascript"
+        src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
+    <!-- @include apptracking.html -->
+    <!-- @include thin-footer.html -->
 </body>
+
 
 </html>
