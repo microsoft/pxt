@@ -9,23 +9,8 @@ namespace pxt.blocks {
     let registeredFieldEditors: Map<FieldEditorOptions> = {};
 
     export function initFieldEditors() {
-        // Initialize PXT custom editors
-        const noteValidator = (text: string): string => {
-            if (text === null) {
-                return null;
-            }
-            text = String(text);
-
-            let n = parseFloat(text || '0');
-            if (isNaN(n) || n < 0) {
-                // Invalid number.
-                return null;
-            }
-            // Get the value in range.
-            return String(Math.round(Number(text)));
-        };
         registerFieldEditor('text', pxtblockly.FieldTextInput);
-        registerFieldEditor('note', pxtblockly.FieldNote, noteValidator);
+        registerFieldEditor('note', pxtblockly.FieldNote);
         registerFieldEditor('gridpicker', pxtblockly.FieldGridPicker);
         registerFieldEditor('textdropdown', pxtblockly.FieldTextDropdown);
         registerFieldEditor('numberdropdown', pxtblockly.FieldNumberDropdown);

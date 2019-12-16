@@ -37,6 +37,10 @@
 @gridPickerZIndex: @blocklyWidgetDivZIndex+1; /* Needs to be above the @blocklyWidgetDivZIndex */
 @gridPickerTooltipZIndex: (@dimmerZIndex)-5; /* Just below dimmer */
 
+/* Note Picker */
+@noteEditorWhiteKey: 1000;
+@noteEditorBlackKey: 1001;
+
 /* Monaco */
 @monacoFlyoutZIndex: @blocklyFlyoutZIndex; /* Same as blockly Flyout */
 @monacoInnerZIndex: @menuBarZIndex+1; /* Above menu bar */
