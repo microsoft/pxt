@@ -9,8 +9,6 @@
         type="text/css">
     <style>
         @targetstyle@
-    </style>
-    <style>
         #user {
             width: 14rem;
         }
@@ -22,26 +20,26 @@
         #repocolumn {
             padding: 0.5rem;
             position: absolute;
-            width: 15rem;
-            height: calc(100% - 3rem);
+            width: 18rem;
+            height: calc(100% - 6rem);
             border: none;
             left: 0;
-            right: calc(100% - 15rem);
+            right: calc(100% - 18rem);
             bottom: 3rem;
-            top: 0;
+            top: 3rem;
             overflow-x: hidden;
             overflow-y: auto;
         }
 
         #makecodecolumn {
             position: absolute;
-            width: calc(100% - 15rem);
-            height: calc(100% - 3rem);
+            width: calc(100% - 18rem);
+            height: calc(100% - 6rem);
             border: none;
-            left: 15rem;
+            left: 18rem;
             right: 0;
             bottom: 3rem;
-            top: 0;
+            top: 3rem;
         }
         .footer {
             position: absolute !important;
@@ -83,30 +81,52 @@
         }
 
         async function fetchUserRepos(user) {
-            const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token()}&anti_cache=${Math.random()}`);
-            const msg = await response.json();
-            for (let i = 0; i < msg.length; ++i) {
-                const target = await sniffTarget(msg[i]);
+            const query = `user:${user} in:name,description,readme "for PXT/"`;
+            const url = `${api}/search/repositories?q=${encodeURIComponent(query)}&sort=updated&access_token=${token()}&anti_cache=${Math.random()}`;
+            const response = await fetch(url);
+            const { items } = await response.json();
+            for (let i = 0; i < items.length; ++i) {
+                const target = await sniffTarget(items[i]);
                 if (!target)
-                    msg[i] = undefined;
+                    items[i] = undefined;
                 else
-                    msg[i].target = target;
+                items[i].target = target;
             }
-            return msg.filter(m => !!m);
+            return items.filter(m => !!m);
+        }
+
+        async function fetchUser(user) {
+            const response = await fetch(`${api}/users/${user}?access_token=${token()}`);
+            const msg = await response.json();
+            return msg;
         }
 
         async function update() {
             $('#userparent').addClass('loading');
             try {
-                const user = $("#user").val();
-                const repoes = await fetchUserRepos(user);
                 $("#repoes")
-                    .empty()
+                    .empty();
+                const userName = $("#user").val();
+                const user = await fetchUser(userName);
+                $('#repoes')
+                    .append(`<a href="https://github.com/${user.login}" class="ui link item" title="Open user profile">
+                    <div class="ui mini image">
+      <img src="${user.avatar_url}">
+    </div>
+    <div class="content">
+        <div class="header">${user.name}</div>
+        <div class="description">${user.login}</div>
+    </div>
+</a>`)
+                const repoes = await fetchUserRepos(userName);
+                $("#repoes")
                     .append(
                         repoes.map(repo =>
                             $(
                                 `<div class="ui link item">
-    <i class="github middle aligned icon"></i>
+                                    <div class="ui mini image">
+      <img src="${targets[repo.target].url.replace(/\/\w+$/, '')}/favicon.ico">
+    </div>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
         <div class="description">${targets[repo.target].name}</div>
@@ -174,11 +194,14 @@
 </head>
 
 <body id='root' class='root'>
+	<nav class="ui menu inverted fixed borderless">
+		<div class="menu left">
+			<div class="ui item">
+                MakeCode GitHub Grader
+			</div>
+		</div>
+	</nav>
     <div id="repocolumn">
-        <h4>MakeCode GitHub Grader</h4>
-        <div id="signinmsg" class="ui hidden warning message">
-            Please sign in with GitHub in <a href="@homeurl@">@homeurl@</a> to use this page.
-        </div>
         <div id="userparent" class="ui left icon input">
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
             <i class="search icon"></i>
