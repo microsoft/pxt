@@ -573,8 +573,10 @@ namespace pxt {
                 .then(() => loadDepsRecursive(null, this))
                 .then(() => {
                     // get paletter config loading deps, so the more higher level packages take precedence
-                    if (this.config.palette && appTarget.runtime)
-                        appTarget.runtime.palette = U.clone(this.config.palette)
+                    if (this.config.palette && appTarget.runtime) {
+                        appTarget.runtime.palette = U.clone(this.config.palette);
+                        if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
+                    }
                     // get screen size loading deps, so the more higher level packages take precedence
                     if (this.config.screenSize && appTarget.runtime)
                         appTarget.runtime.screenSize = U.clone(this.config.screenSize);

@@ -1051,6 +1051,7 @@ export class NewProjectNameDialog extends ExitAndSaveDialog {
 
 export interface ChooseHwDialogState {
     visible?: boolean;
+    skipDownload?: boolean;
 }
 
 export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialogState> {
@@ -1059,7 +1060,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            visible: false
+            visible: false,
+            skipDownload: false
         }
         this.close = this.close.bind(this);
     }
@@ -1072,8 +1074,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         this.setState({ visible: false });
     }
 
-    show() {
-        this.setState({ visible: true });
+    show(skipDownload?: boolean) {
+        this.setState({ visible: true, skipDownload: !!skipDownload });
     }
 
     fetchGallery(): pxt.CodeCard[] {
@@ -1097,10 +1099,10 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         }, { interactiveConsent: true });
         this.hide()
 
-        pxt.setHwVariant(cfg.name)
+        pxt.setHwVariant(cfg.name, card.name)
         let editor = this.props.parent
         editor.reloadHeaderAsync()
-            .then(() => editor.compile())
+            .then(() => !this.state.skipDownload && editor.compile())
             .done()
     }
 
