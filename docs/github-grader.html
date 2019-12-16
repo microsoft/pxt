@@ -8,40 +8,43 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@
-    </style>
-    <style>
+        @targetstyle@ 
         #user {
             width: 14rem;
         }
 
         #repoes {
-            overflow-y: scroll;
+            overflow-y: auto;
         }
 
         #repocolumn {
             padding: 0.5rem;
             position: absolute;
-            width: 15rem;
-            height: 100%;
+            width: 18rem;
+            height: calc(100% - 6rem);
             border: none;
             left: 0;
-            right: calc(100% - 15rem);
-            bottom: 0;
-            top: 0;
-            overflow: scroll;
-            overflow-y: hidden;
+            right: calc(100% - 18rem);
+            bottom: 3rem;
+            top: 3rem;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
 
         #makecodecolumn {
             position: absolute;
-            width: calc(100% - 15rem);
-            height: 100%;
+            width: calc(100% - 18rem);
+            height: calc(100% - 6rem);
             border: none;
-            left: 15rem;
+            left: 18rem;
             right: 0;
-            bottom: 0;
-            top: 0;
+            bottom: 3rem;
+            top: 3rem;
+        }
+
+        .footer {
+            position: absolute !important;
+            bottom: 0 !important;
         }
     </style>
     <script type="text/javascript"
@@ -62,7 +65,7 @@
             },
             "microbit": {
                 name: "micro:bit",
-                url: "https://microbit.makecode.com/beta"
+                url: "https://makecode.microbit.org/beta"
             },
             "maker": {
                 name: "Maker",
@@ -78,39 +81,65 @@
         }
 
         async function fetchUserRepos(user) {
-            const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token()}&anti_cache=${Math.random()}`);
-            const msg = await response.json();
-            for (let i = 0; i < msg.length; ++i) {
-                const target = await sniffTarget(msg[i]);
+            const query = `user:${user} in:name,description,readme "for PXT/"`;
+            const url = `${api}/search/repositories?q=${encodeURIComponent(query)}&sort=updated&access_token=${token()}&anti_cache=${Math.random()}`;
+            const response = await fetch(url);
+            const { items } = await response.json();
+            for (let i = 0; i < items.length; ++i) {
+                const target = await sniffTarget(items[i]);
                 if (!target)
-                    msg[i] = undefined;
+                    items[i] = undefined;
                 else
-                    msg[i].target = target;
+                    items[i].target = target;
             }
-            return msg.filter(m => !!m);
+            return items.filter(m => !!m);
+        }
+
+        async function fetchUser(user) {
+            const response = await fetch(`${api}/users/${user}?access_token=${token()}`);
+            const msg = await response.json();
+            return msg;
         }
 
         async function update() {
             $('#userparent').addClass('loading');
             try {
-                const user = $("#user").val();
-                const repoes = await fetchUserRepos(user);
                 $("#repoes")
-                    .empty()
+                    .empty();
+                const userName = $("#user").val();
+                const user = await fetchUser(userName);
+                $('#repoes')
+                    .append(`<a href="https://github.com/${user.login}" class="ui link item" title="Open user profile">
+                    <div class="ui mini image">
+      <img src="${user.avatar_url}">
+    </div>
+    <div class="content">
+        <div class="header">${user.name}</div>
+        <div class="description">${user.login}</div>
+    </div>
+</a>`)
+                const repoes = await fetchUserRepos(userName);
+                $("#repoes")
                     .append(
                         repoes.map(repo =>
                             $(
                                 `<div class="ui link item">
-    <i class="github middle aligned icon"></i>
+                                    <div class="ui mini image">
+      <img src="${targets[repo.target].url.replace(/\/\w+$/, '')}/favicon.ico">
+    </div>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
         <div class="description">${targets[repo.target].name}</div>
     </div>
 </div>`).click(() => {
+                                    if (typeof mscc !== "undefined" && !mscc.hasConsent())
+                                        mscc.setConsent();
+                                    pxt.aiTrackEvent("grader.openrepo")
                                     const url = targets[repo.target].url +
+                                        "?controller=1&editorlayout=ide&ws=mem" +
                                         "#pub:" +
                                         "https://github.com/" +
-                                        repo.full_name;
+                                        repo.full_name
                                     console.log(url);
                                     $("#makecodecolumn").attr("src", url);
                                 })
@@ -128,7 +157,7 @@
         function checkToken() {
             // sniff oauth
             let keys = {};
-            window.location.hash.replace(/^#/,'').split('&')
+            window.location.hash.replace(/^#/, '').split('&')
                 .map(v => v.split('=', 2))
                 .forEach(a => keys[a[0]] = a[1]);
 
@@ -139,7 +168,7 @@
                 delete localStorage["core/oauthState"];
                 window.location.hash = "";
             }
-            
+
             // force sign...
             if (token()) return;
 
@@ -169,20 +198,27 @@
 </head>
 
 <body id='root' class='root'>
-    <div id="repocolumn">
-        <h4>MakeCode GitHub Grader</h4>
-        <div id="signinmsg" class="ui hidden warning message">
-            Please sign in with GitHub in <a href="@homeurl@">@homeurl@</a> to use this page.
+    <nav class="ui menu inverted fixed borderless">
+        <div class="menu left">
+            <div class="ui item">
+                MakeCode GitHub Grader
+            </div>
         </div>
+    </nav>
+    <div id="repocolumn">
         <div id="userparent" class="ui left icon input">
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
             <i class="search icon"></i>
         </div>
         <div id="repoes" class="ui selection list"></div>
     </div>
-    <iframe id="makecodecolumn" />
-    <!-- @include footer.html -->
-    <!-- @include tracking.html -->
+    <iframe id="makecodecolumn"></iframe>
+    </div>
+    <script type="text/javascript"
+        src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
+    <!-- @include apptracking.html -->
+    <!-- @include thin-footer.html -->
 </body>
+
 
 </html>
