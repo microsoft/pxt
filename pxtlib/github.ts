@@ -117,6 +117,10 @@ namespace pxt.github {
         return ghRequestAsync({ url }).then(resp => resp.text)
     }
 
+    function ghProxyJsonAsync(path: string) {
+        return Cloud.apiRequestWithCdnAsync({ url: "gh/" + path }).then(r => r.json)
+    }
+
     export class MemoryGithubDb implements IGithubDb {
         private configs: pxt.Map<pxt.PackageConfig> = {};
         private packages: pxt.Map<CachedPackage> = {};
@@ -131,7 +135,7 @@ namespace pxt.github {
             }
 
             // load and cache
-            return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/${tag}/text`)
+            return ghProxyJsonAsync(`${repopath}/${tag}/text`)
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -336,10 +340,10 @@ namespace pxt.github {
     }
 
     export async function createPRFromBranchAsync(repopath: string, baseBranch: string,
-        headBranch: string, msg: string) {
+        headBranch: string, title: string, msg?: string) {
         const res = await ghPostAsync(repopath + "/pulls", {
-            title: msg,
-            body: lf("Automatically created from MakeCode."),
+            title: title,
+            body: msg || lf("Automatically created from MakeCode."),
             head: headBranch,
             base: baseBranch,
             maintainer_can_modify: true
@@ -368,8 +372,13 @@ namespace pxt.github {
     }
 
     export function getRefAsync(repopath: string, branch: string) {
+        branch = branch || "master";
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
             .then(resolveRefAsync)
+            .catch(err => {
+                if (err.statusCode == 404) return undefined;
+                else Promise.reject(err);
+            })
     }
 
     function generateNextRefName(res: RefsResult, pref: string): string {
@@ -422,6 +431,7 @@ namespace pxt.github {
         let head: string = null
         const fetch = !useProxy() ?
             ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
+            // no CDN caching here
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
                     let res = Object.keys(r.refs)
@@ -569,6 +579,7 @@ namespace pxt.github {
             has_issues: true, // default
             has_projects: false,
             has_wiki: false,
+            allow_rebase_merge: false
         }).then(v => mkRepo(v, null))
     }
 
@@ -579,7 +590,7 @@ namespace pxt.github {
     }
 
     export function mkRepoIconUrl(repo: ParsedRepo): string {
-        return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
+        return Cloud.cdnApiUrl(`gh/${repo.fullName}/icon`)
     }
 
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
@@ -657,7 +668,7 @@ namespace pxt.github {
                 .then((r: Repo) => mkRepo(r, config, rid.tag));
 
         // always use proxy
-        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
+        return ghProxyJsonAsync(`${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -814,7 +825,6 @@ namespace pxt.github {
 
     export interface GitJson {
         repo: string;
-        prUrl?: string; // if any
         commit: pxt.github.Commit;
         isFork?: boolean;
     }
@@ -1108,11 +1118,14 @@ namespace pxt.github {
 
     export function resolveMergeConflictMarker(content: string, startMarkerLine: number, local: boolean, remote: boolean): string {
         let lines = toLines(content);
-        if (!/^<<<<<<<[^<]/.test(lines[startMarkerLine])) {
-            // invalid line, no marker found
-            return content;
+        let startLine = startMarkerLine;
+        while (startLine < lines.length) {
+            if (/^<<<<<<<[^<]/.test(lines[startLine])) {
+                break;
+            }
+            startLine++;
         }
-        let middleLine = startMarkerLine + 1;
+        let middleLine = startLine + 1;
         while (middleLine < lines.length) {
             if (/^=======$/.test(lines[middleLine]))
                 break;
@@ -1127,15 +1140,16 @@ namespace pxt.github {
         }
         if (endLine >= lines.length) {
             // no match?
+            pxt.debug(`diff marker mistmatch: ${lines.length} -> ${startLine} ${middleLine} ${endLine}`)
             return content;
         }
 
         // remove locals
-        lines[startMarkerLine] = undefined;
+        lines[startLine] = undefined;
         lines[middleLine] = undefined;
         lines[endLine] = undefined;
         if (!local)
-            for (let i = startMarkerLine; i <= middleLine; ++i)
+            for (let i = startLine; i <= middleLine; ++i)
                 lines[i] = undefined;
         if (!remote)
             for (let i = middleLine; i <= endLine; ++i)
@@ -1336,5 +1350,81 @@ namespace pxt.github {
             preferredEditor: commitFiles.find(f => /.blocks$/.test(f)) ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
         };
         return cfg;
+    }
+
+    /**
+     * Executes a GraphQL query against GitHub v4 api
+     * @param query 
+     */
+    export function ghGraphQLQueryAsync(query: string): Promise<any> {
+        const payload = JSON.stringify({
+            query
+        })
+        return ghPostAsync("https://api.github.com/graphql", payload);
+    }
+
+    export interface PullRequest {
+        number: number;
+        state?: "OPEN" | "CLOSED" | "MERGED";
+        mergeable?: "MERGEABLE" | "CONFLICTING" | "UNKNOWN";
+    }
+
+    /**
+     * Finds the first PR associated with a branch
+     * @param reponame 
+     * @param headName 
+     */
+    export function findPRNumberforBranchAsync(reponame: string, headName: string): Promise<PullRequest> {
+        const repoId = parseRepoId(reponame);
+        const query =
+            `
+{
+    repository(owner: ${JSON.stringify(repoId.owner)}, name: ${JSON.stringify(repoId.project)}) {
+        pullRequests(last: 1, states: [OPEN, MERGED], headRefName: ${JSON.stringify(headName)}) {
+            edges {
+                node {
+                    number
+                    state
+                    mergeable
+                }
+            }
+        }
+    }
+}
+`
+
+        /*
+        {
+          "data": {
+            "repository": {
+              "pullRequests": {
+                "edges": [
+                  {
+                    "node": {
+                      "title": "use close icon instead of cancel",
+                      "number": 6324
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }*/
+
+        return ghGraphQLQueryAsync(query)
+            .then<pxt.github.PullRequest>(resp => {
+                const edge = resp.data.repository.pullRequests.edges[0]
+                if (edge && edge.node) {
+                    const node = edge.node;
+                    return {
+                        number: node.number,
+                        mergeable: node.mergeable,
+                        state: node.state
+                    }
+                }
+                return {
+                    number: -1
+                }
+            })
     }
 }

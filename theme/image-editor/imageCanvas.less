@@ -31,13 +31,21 @@
     display: none;
 }
 
+.image-editor-canvas .paint-surface.overlay {
+    opacity: 0.5;
+}
+
+.image-editor-canvas .paint-surface.hide {
+    display: none;
+}
+
 .paint-surface {
-    /* image-rendering: optimizeSpeed;
+    image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-optimize-contrast;
-    image-rendering: optimize-contrast; */
+    image-rendering: optimize-contrast;
     image-rendering: pixelated;
-    /* -ms-interpolation-mode: nearest-neighbor; */
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 .checkerboard {
@@ -51,7 +59,18 @@
     position: fixed;
     height: 0px;
     width: 0px;
-    border: 2px dotted #000000;
+    border: 3px solid #dddddd;
+}
+
+.image-editor-floating-layer:before {
+    content: "";
+    border: 3px dashed #000000;
+    display: block;
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    bottom: -3px;
+    right: -3px;
 }
 
 .paint-container {

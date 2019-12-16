@@ -408,7 +408,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const screenshotDisabled = actionLoading || recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const screenshot = !light && targetTheme.simScreenshot;
+        const screenshot = targetTheme.simScreenshot;
         const gif = !light && !!targetTheme.simGif;
         const isGifRecording = recordingState == ShareRecordingState.GifRecording;
         const isGifRendering = recordingState == ShareRecordingState.GifRendering;

@@ -109,6 +109,8 @@ declare namespace pxt {
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
+        paletteNames?: string[]; // human readable names for palette colors
+        tilesetFieldEditorIdentity?: string; // The qualified name of the API used with the field_tileset field editor. Currently, only for pxt-arcade
         screenSize?: Size;
         bannedCategories?: string[]; // a list of categories to exclude blocks from
     }
@@ -183,7 +185,7 @@ declare namespace pxt {
         yottaCorePackage?: string; // pxt-microbit-core
         yottaConfig?: any; // additional config
         yottaConfigCompatibility?: boolean; // enforce emitting backward compatible yotta config entries (YOTTA_CFG_)
-        
+
         platformioIni?: string[];
 
         codalTarget?: string | {
@@ -358,6 +360,7 @@ declare namespace pxt {
         shareFinishedTutorials?: boolean; // always pop a share dialog once the tutorial is finished
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
+        pythonToolbox?: boolean; // Code toolbox for Python
     }
 
     interface SocialOptions {
@@ -437,6 +440,7 @@ declare namespace ts.pxtc {
         noPeepHole?: boolean;
         time?: boolean;
         noIncr?: boolean;
+        rawELF?: boolean;
     }
 
     interface CompileTarget {

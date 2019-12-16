@@ -39,7 +39,8 @@ function setupRootDir() {
         path.join(nodeutil.targetDir, "sim/public"),
         path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
-        path.join(nodeutil.pxtCoreDir, "webapp/public")
+        path.join(nodeutil.pxtCoreDir, "webapp/public"),
+        path.join(nodeutil.pxtCoreDir, "common-docs")
     ]
     docsDir = path.join(root, "docs")
     packagedDir = path.join(root, "built/packaged")
@@ -841,7 +842,7 @@ function readMdAsync(pathname: string, lang: string): Promise<string> {
     } else {
         // ask makecode cloud for translations
         const mdpath = pathname.replace(/^\//, '');
-        return pxt.Cloud.markdownAsync(mdpath, lang, true);
+        return pxt.Cloud.markdownAsync(mdpath, lang);
     }
 }
 

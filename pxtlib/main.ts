@@ -8,6 +8,7 @@
 
 namespace pxt.perf {
     // These functions are defined in docfiles/pxtweb/cookieCompliance.ts
+    export declare let perfReportLogged: boolean;
     export declare function report(): void;
     export declare function recordMilestone(msg: string, time?: number): void;
     export declare function measureStart(name: string): void;
@@ -259,12 +260,15 @@ namespace pxt {
     // the pxt.json of hw---variant would generally specify compileServiceVariant
     // This is controlled by ?hw=variant or by configuration created by dragging `config.bin`
     // into editor.
-    export function setHwVariant(variant: string) {
+    export function setHwVariant(variant: string, name?: string) {
         variant = variant.replace(/.*---/, "")
-        if (/^[\w\-]+$/.test(variant))
-            hwVariant = variant
-        else
-            hwVariant = null
+        if (/^[\w\-]+$/.test(variant)) {
+            hwVariant = variant;
+            hwName = name || variant;
+        } else {
+            hwVariant = null;
+            hwName = null;
+        }
     }
 
     export function hasHwVariants(): boolean {
@@ -464,7 +468,7 @@ namespace pxt {
 
         if (trg.nativeType == ts.pxtc.NATIVE_TYPE_VM)
             return ts.pxtc.BINARY_PXT64
-        else if (trg.useUF2)
+        else if (trg.useUF2 && !trg.switches.rawELF)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
             return ts.pxtc.BINARY_ELF

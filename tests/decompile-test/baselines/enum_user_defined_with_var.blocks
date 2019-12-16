@@ -9,22 +9,11 @@
 <block type="variables_set">
 <field name="VAR">varEnumTest</field>
 <value name="VALUE">
-<shadow type="math_number">
-<field name="NUM">0</field>
-</shadow>
-</value>
-<next>
-<block type="variables_set">
-<field name="VAR">varEnumTest</field>
-<value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="enum_user_shim">
 <field name="MEMBER">A</field>
 </block>
 </value>
-</block>
-</next>
-<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;enums.ts&#34; &#47;&#62;</comment>
 </block>
 </statement>
 </block>

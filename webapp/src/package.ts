@@ -702,6 +702,41 @@ data.mountVirtualApi("pkg-git-status", {
     }
 })
 
+export function invalidatePullStatus(hd: pxt.workspace.Header) {
+    data.invalidateHeader("pkg-git-pull-status", hd)
+}
+
+data.mountVirtualApi("pkg-git-pull-status", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const ghid = f.getPkgId() == "this" && f.header && f.header.githubId;
+        if (!ghid) return Promise.resolve(workspace.PullStatus.NoSourceControl)
+        return workspace.pullAsync(f.header, true)
+            .catch(e => workspace.PullStatus.NoSourceControl);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+data.mountVirtualApi("pkg-git-pr", {
+    getAsync: p => {
+        const missing = <pxt.github.PullRequest>{
+            number: -1
+        };
+        p = data.stripProtocol(p)
+        const f = allEditorPkgs().find(pkg => pkg.header && pkg.header.id == p);
+        const header = f.header;
+        const ghid = f.getPkgId() == "this" && header && header.githubId;
+        if (!ghid) return Promise.resolve(missing);
+        const parsed = pxt.github.parseRepoId(ghid);
+        if (!parsed || !parsed.tag || parsed.tag == "master") return Promise.resolve(missing);
+        return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
+            .catch(e => missing);
+    },
+    expirationTime: p => 3600 * 1000
+})
+
+
 // pkg-status:<guid>
 data.mountVirtualApi("pkg-status", {
     getSync: p => {

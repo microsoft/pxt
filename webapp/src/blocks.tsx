@@ -343,7 +343,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 header: message,
                 initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
-                disagreeLbl: lf("Cancel"),
+                hideCancel: true,
+                hasCloseIcon: true,
                 size: "tiny"
             }).then(value => {
                 callback(value);
@@ -545,20 +546,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected resizeFieldEditorView() {
-        const blocklyDiv = this.getBlocksEditorDiv();
-        if (!blocklyDiv) return;
-
-        const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        if (!blocklyToolboxDiv) return;
-
-        const workspaceRect = blocklyDiv.getBoundingClientRect();
-        const toolboxRect = blocklyToolboxDiv.getBoundingClientRect();
-
+        if (!window) return;
+        // Full-screen editor
         blocklyFieldView.setEditorBounds({
-            top: workspaceRect.top,
-            left: toolboxRect.right,
-            width: workspaceRect.width - toolboxRect.width,
-            height: workspaceRect.height
+            top: 0,
+            left: 0,
+            width: window.innerWidth,
+            height: window.innerHeight
         });
     }
 

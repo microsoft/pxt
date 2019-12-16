@@ -1,0 +1,9 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="tilemap_editor">
+<field name="tilemap">tiles.createTilemap&#38;&#35;40&#59;null&#38;&#35;44&#59; 0&#38;&#35;44&#59; 8 &#38;&#35;42&#59;&#38;&#35;42&#59; 8&#38;&#35;44&#59; 9&#38;&#35;41&#59;</field>
+</block>
+</statement>
+</block>
+</xml>

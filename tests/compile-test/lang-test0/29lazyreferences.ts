@@ -33,3 +33,35 @@ function testLazyRef() {
     assert(qq == null, "&r")
 }
 testLazyRef()
+
+// https://github.com/microsoft/pxt-arcade/issues/1519
+namespace InlinePlusCond {
+    interface MFX {
+        _dummy: any;
+    }
+    
+    const zero = 0 as any as MFX
+    const one = 1 as any as MFX
+    function sub(a:MFX, b:MFX) {
+        return ((a as any as number) - (b as any as number)) as any as MFX
+    }
+    class Foobar {
+        constructor(public x: MFX, public y: MFX) {}
+    }
+    
+    function testIt() {
+        let s = new Foobar(zero, one)
+        let right = true
+    
+        let vv = zero
+    
+        s.x = sub(
+            right ? vv : vv,
+            s.y
+        );
+
+        assert(s.x as any as number == -1, "mfx")
+    }
+
+    testIt()
+}

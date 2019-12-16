@@ -74,8 +74,11 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
+                    let qName = this.python ? si.pyQName : si.qName;
+                    let name = this.python ? si.pyName : si.name;
                     let completionSnippet: string;
-                    if (insertSnippet && this.python) {
+                    let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
+                    if (this.python && insertSnippet && isMultiLine) {
                         // For python, we want to replace the entire line because when creating
                         // new functions these need to be placed before the line the user was typing
                         // unlike with typescript where callbacks use lambdas.
@@ -87,7 +90,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         //      player.on_chat(on_chat_handler)
                         // whereas TS looks like:
                         //      player.onChat(() => {
-                        //          
+                        //
                         //      })
                         //
                         // At the time of this writting, Monaco does not support item completions that replace the
@@ -97,14 +100,19 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                             createLineReplacementPyAmendment(insertSnippet))
                     } else {
                         completionSnippet = insertSnippet
+                        // if we're past the first ".", i.e. we're doing member completion, be sure to
+                        // remove what precedes the "." in the full snippet.
+                        // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
+                        if (completions.isMemberCompletion
+                            && completionSnippet.startsWith(qName)) {
+                            completionSnippet = completionSnippet.replace(qName, name)
+                        }
                     }
-                    const label = this.python
-                        ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
-                        : (completions.isMemberCompletion ? si.name : si.qName);
+                    const label = completions.isMemberCompletion ? name : qName
                     const documentation = pxt.Util.rlf(si.attributes.jsDoc);
                     const block = pxt.Util.rlf(si.attributes.block);
-                    return {
-                        label,
+                    let res: monaco.languages.CompletionItem = {
+                        label: label,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation,
                         detail: insertSnippet,
@@ -112,7 +120,8 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         sortText: `${tosort(i)} ${insertSnippet}`,
                         filterText: `${label} ${documentation} ${block}`,
                         insertText: completionSnippet,
-                    } as monaco.languages.CompletionItem;
+                    };
+                    return res
                 })
                 return items;
             });
@@ -372,7 +381,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            let generatedVarDecls: pxt.Map<pxt.blocks.VarDeclaration>;
             return this.saveToTypeScriptAsync() // make sure Python gets converted
                 .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
@@ -383,7 +391,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const oldWorkspace = pxt.blocks.loadWorkspaceXml(mainPkg.files[blockFile].content);
                     if (oldWorkspace) {
                         return pxt.blocks.compileAsync(oldWorkspace, blocksInfo).then((compilationResult) => {
-                            generatedVarDecls = compilationResult.generatedVarDeclarations;
                             const oldJs = compilationResult.source;
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
@@ -408,7 +415,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {
-                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile, generatedVarDecls)
+                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
                                     .then(resp => {
                                         if (!resp.success) {
                                             this.currFile.diagnostics = resp.diagnostics;
@@ -606,12 +613,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
 
-            const workspaceRect = this.editor.getDomNode().getBoundingClientRect();
             blocklyFieldView.setEditorBounds({
-                top: workspaceRect.top,
-                left: workspaceRect.left,
-                width: monacoArea.offsetWidth - toolboxWidth,
-                height: workspaceRect.height
+                top: 0,
+                left: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
@@ -1017,7 +1023,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return pxt.appTarget.appTheme.monacoToolbox
             && !readOnly
             && ((this.fileType == "typescript" && this.currFile.name == "main.ts")
-                || (this.fileType == "python" && this.currFile.name == "main.py"));
+                || (pxt.appTarget.appTheme.pythonToolbox && this.fileType == "python" && this.currFile.name == "main.py"));
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {

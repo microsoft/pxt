@@ -327,8 +327,8 @@ namespace pxt.blocks {
         }
     }
 
-    function infer(e: Environment, w: Blockly.Workspace) {
-        if (w) w.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.Block) => {
+    function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Workspace) {
+        if (allBlocks) allBlocks.filter(b => !b.disabled).forEach((b: Blockly.Block) => {
             try {
                 switch (b.type) {
                     case "math_op2":
@@ -899,7 +899,6 @@ namespace pxt.blocks {
         blockDeclarations: pxt.Map<VarInfo[]>;
         blocksInfo: pxtc.BlocksInfo;
         allVariables: VarInfo[];
-        generatedVarDeclarations: pxt.Map<VarDeclaration>;
     }
 
     export interface RenameMap {
@@ -928,8 +927,7 @@ namespace pxt.blocks {
             idToScope: {},
             blockDeclarations: {},
             allVariables: [],
-            blocksInfo: null,
-            generatedVarDeclarations: {}
+            blocksInfo: null
         }
     };
 
@@ -1071,7 +1069,11 @@ namespace pxt.blocks {
     }
 
     function compileVariableGet(e: Environment, b: Blockly.Block): JsNode {
-        let binding = lookup(e, b, b.getField("VAR").getText());
+        const name = b.getField("VAR").getText();
+        let binding = lookup(e, b, name);
+        if (!binding) // trying to compile a disabled block with a bogus variable
+            return mkText(name);
+
         if (!binding.firstReference) binding.firstReference = b;
 
         assert(binding != null && binding.type != null);
@@ -1294,7 +1296,7 @@ namespace pxt.blocks {
     function compileImage(e: Environment, b: Blockly.Block, frames: number, columns: number, rows: number, n: string, f: string, args?: JsNode[]): JsNode {
         args = args === undefined ? [] : args;
         let state = "\n";
-        rows =  rows || 5;
+        rows = rows || 5;
         columns = (columns || 5) * frames;
         let leds = b.getFieldValue("LEDS");
         leds = leds.replace(/[ `\n]+/g, '');
@@ -1432,7 +1434,7 @@ namespace pxt.blocks {
 
         if (firstBlock && e.blockDeclarations[firstBlock.id]) {
             e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
-                stmts.unshift(mkVariableDeclaration(varInfo, e));
+                stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
                 varInfo.alreadyDeclared = BlockDeclarationType.Implicit;
             });
         }
@@ -1574,7 +1576,7 @@ namespace pxt.blocks {
     export function compileBlockAsync(b: Blockly.Block, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const w = b.workspace;
         const e = mkEnv(w, blockInfo);
-        infer(e, w);
+        infer(w && w.getAllBlocks(), e, w);
         const compiled = compileStatementBlock(e, b)
         removeAllPlaceholders();
         return tdASTtoTS(e, compiled);
@@ -1593,18 +1595,23 @@ namespace pxt.blocks {
             return -hash;
     }
 
-    function compileWorkspace(e: Environment, w: Blockly.Workspace): [JsNode[], BlockDiagnostic[], pxt.Map<VarDeclaration>] {
+    function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): [JsNode[], BlockDiagnostic[]] {
         try {
             // all compiled top level blocks are events
-            const topblocks = w.getTopBlocks(true).sort((a, b) => {
+            let allBlocks = w.getAllBlocks();
+            // the top blocks are storted by blockly
+            let topblocks = w.getTopBlocks(true);
+            // reorder remaining events by names (top blocks still contains disabled blocks)
+            topblocks = topblocks.sort((a, b) => {
                 return eventWeight(a, e) - eventWeight(b, e)
             });
-
-            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
-
+            // update disable blocks
+            updateDisabledBlocks(e, allBlocks, topblocks);
+            // drop disabled blocks
+            allBlocks = allBlocks.filter(b => !b.disabled);
+            topblocks = topblocks.filter(b => !b.disabled);
             trackAllVariables(topblocks, e);
-
-            infer(e, w);
+            infer(allBlocks, e, w);
 
             const stmtsMain: JsNode[] = [];
 
@@ -1615,7 +1622,7 @@ namespace pxt.blocks {
 
             commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
 
-            topblocks.filter(b => !b.disabled).forEach(b => {
+            topblocks.forEach(b => {
                 if (commentMap.idToComments[b.id]) {
                     commentMap.idToComments[b.id].forEach(comment => {
                         append(stmtsMain, compileWorkspaceComment(comment).children);
@@ -1695,7 +1702,24 @@ namespace pxt.blocks {
                 }
             });
 
-            const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, e));
+            const tiles = pxtblockly.getAllTilesetTiles(w);
+            if (tiles.length) {
+                const tilesetFieldEditorIdentity = pxt.appTarget.runtime && pxt.appTarget.runtime.tilesetFieldEditorIdentity;
+
+                stmtsEnums.push(mkGroup([
+                    mkText(`namespace ${pxt.sprite.TILE_NAMESPACE}`),
+                    mkBlock(tiles.map(
+                        t => mkGroup(
+                            [
+                                mkStmt(mkText(tilesetFieldEditorIdentity ? `//% blockIdentity=${tilesetFieldEditorIdentity}` : "")),
+                                mkStmt(mkText(`export const ${pxt.sprite.TILE_PREFIX}${t.projectId} = ${pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(t.data), "typescript")}`))
+                            ]
+                        )
+                    ))
+                ]));
+            }
+
+            const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
 
             const diags: BlockDiagnostic[] = [];
 
@@ -1711,7 +1735,7 @@ namespace pxt.blocks {
                 });
             });
 
-            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags, e.generatedVarDeclarations];
+            return [stmtsEnums.concat(leftoverVars.concat(stmtsMain)), diags];
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1725,7 +1749,7 @@ namespace pxt.blocks {
             removeAllPlaceholders();
         }
 
-        return [null, null, null] // unreachable
+        return [null, null] // unreachable
     }
 
     export function callKey(e: Environment, b: Blockly.Block): string {
@@ -1792,7 +1816,6 @@ namespace pxt.blocks {
         sourceMap: SourceInterval[];
         stats: pxt.Map<number>;
         diagnostics: BlockDiagnostic[];
-        generatedVarDeclarations?: pxt.Map<VarDeclaration>;
     }
 
     export function findBlockId(sourceMap: SourceInterval[], loc: { start: number; length: number; }): string {
@@ -1814,12 +1837,12 @@ namespace pxt.blocks {
 
     export function compileAsync(b: Blockly.Workspace, blockInfo: pxtc.BlocksInfo): Promise<BlockCompilationResult> {
         const e = mkEnv(b, blockInfo);
-        const [nodes, diags, decl] = compileWorkspace(e, b);
-        const result = tdASTtoTS(e, nodes, diags, decl);
+        const [nodes, diags] = compileWorkspace(e, b, blockInfo);
+        const result = tdASTtoTS(e, nodes, diags);
         return result;
     }
 
-    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[], varDecls?: pxt.Map<VarDeclaration>): Promise<BlockCompilationResult> {
+    function tdASTtoTS(env: Environment, app: JsNode[], diags?: BlockDiagnostic[]): Promise<BlockCompilationResult> {
         let res = flattenNode(app)
 
         // Note: the result of format is not used!
@@ -1829,10 +1852,10 @@ namespace pxt.blocks {
                 source: res.output,
                 sourceMap: res.sourceMap,
                 stats: env.stats,
-                diagnostics: diags || [],
-                generatedVarDeclarations: varDecls
+                diagnostics: diags || []
             };
         })
+
     }
 
     function maybeAddComment(b: Blockly.Block, comments: string[]) {
@@ -1891,7 +1914,7 @@ namespace pxt.blocks {
         }
     }
 
-    function mkVariableDeclaration(v: VarInfo, e: Environment) {
+    function mkVariableDeclaration(v: VarInfo, blockInfo: pxtc.BlocksInfo) {
         const t = getConcreteType(v.type);
         let defl: JsNode;
 
@@ -1902,32 +1925,21 @@ namespace pxt.blocks {
             defl = defaultValueForType(t);
         }
 
-        let emitTp = false;
-        let tpname: string | undefined;
+        let tp = ""
         if (defl.op == "null" || defl.op == "[]") {
-            tpname = t.type
+            let tpname = t.type
             // If the type is "Array" or null[] it means that we failed to narrow the type of array.
             // Best we can do is just default to number[]
             if (tpname === "Array" || tpname === "null[]") {
                 tpname = "number[]";
             }
-            const tpinfo = e.blocksInfo.apis.byQName[tpname]
-            if (tpinfo && tpinfo.attributes.autoCreate) {
+            let tpinfo = blockInfo.apis.byQName[tpname]
+            if (tpinfo && tpinfo.attributes.autoCreate)
                 defl = mkText(tpinfo.attributes.autoCreate + "()")
-            }
-            else {
-                emitTp = true;
-            }
+            else
+                tp = ": " + tpname
         }
-
-        e.generatedVarDeclarations[v.escapedName] = {
-            value: flattenNode([defl]).output
-        };
-        if (emitTp) {
-            e.generatedVarDeclarations[v.escapedName].type = tpname;
-        }
-
-        return mkStmt(mkText("let " + v.escapedName + (emitTp ? `: ${tpname}` : "") + " = "), defl)
+        return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
     }
 
     function countOptionals(b: Blockly.Block) {
@@ -2157,8 +2169,6 @@ namespace pxt.blocks {
     }
 
     function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
-        topBlocks = topBlocks.filter(b => !b.disabled);
-
         let id = 1;
         let topScope: Scope;
 
@@ -2319,10 +2329,10 @@ namespace pxt.blocks {
     }
 
     function getVarInfo(name: string, scope: Scope): VarInfo {
-        if (scope.declaredVars[name]) {
+        if (scope && scope.declaredVars[name]) {
             return scope.declaredVars[name];
         }
-        else if (scope.parent) {
+        else if (scope && scope.parent) {
             return getVarInfo(name, scope.parent);
         }
         else {

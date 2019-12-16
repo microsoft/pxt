@@ -133,7 +133,9 @@ namespace ts.pxtc {
         "checkSubtype",
         "failedCast",
         "buildResume",
-        "mkVTable"
+        "mkVTable",
+        "bind",
+        "leaveAccessor"
     ]
 
     export function jsEmit(bin: Binary) {
@@ -287,17 +289,24 @@ switch (step) {
         if (proc.perfCounterNo) {
             writeRaw(`__this.stopPerfCounter(${proc.perfCounterNo});\n`)
         }
-        write(`return leave(s, r0)`)
+
+        if (proc.isGetter())
+            write(`return leaveAccessor(s, r0)`)
+        else
+            write(`return leave(s, r0)`)
 
         writeRaw(`  default: oops()`)
         writeRaw(`} } }`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
         info.argumentNames = proc.args && proc.args.map(a => a.getName());
-
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
+        if (proc.isGetter())
+            writeRaw(`${proc.label()}.isGetter = true;`)
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)
+
+        writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
 
         writeRaw(fnctor(proc.label() + "_mk", proc.label(), maxStack, Object.keys(localsCache)))
         writeRaw(hexlits)
@@ -606,30 +615,39 @@ function ${id}(s) {
 
             if (procid.ifaceIndex != null) {
                 U.assert(callproc == null)
-                let isSet = false
                 const ifaceFieldName = bin.ifaceMembers[procid.ifaceIndex]
-                U.assert(!!ifaceFieldName)
-                if (procid.mapMethod) {
-                    write(`if (!${frameRef}.arg0.vtable.iface) {`)
-                    let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
-                    args.splice(1, 0, JSON.stringify(ifaceFieldName))
-                    write(`  s.retval = ${shimToJs(procid.mapMethod)}ByString(${args.join(", ")});`)
-                    write(`} else {`)
-                    if (/Set/.test(procid.mapMethod))
-                        isSet = true
+                U.assert(!!ifaceFieldName, `no name for ${procid.ifaceIndex}`)
+
+                write(`if (!${frameRef}.arg0.vtable.iface) {`)
+                let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
+                args.splice(1, 0, JSON.stringify(ifaceFieldName))
+                const accessor = `pxsim_pxtrt.map${procid.isSet ? "Set" : "Get"}ByString`
+                if (procid.noArgs)
+                    write(`  s.retval = ${accessor}(${args.join(", ")});`)
+                else {
+                    U.assert(!procid.isSet)
+                    write(`  setupLambda(${frameRef}, ${accessor}(${args.slice(0, 2).join(", ")}), ${topExpr.args.length});`)
+                    write(`  ${callIt}`)
                 }
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${ifaceFieldName}"];`)
+                write(`} else {`)
+
+                write(`  ${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${procid.isSet ? "set/" : ""}${ifaceFieldName}"];`)
                 let fld = `${frameRef}.arg0.fields["${ifaceFieldName}"]`
-                if (isSet) {
-                    write(`if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
-                    write(`else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) }`)
+                if (procid.isSet) {
+                    write(`  if (${frameRef}.fn === null) { ${fld} = ${frameRef}.arg1; }`)
+                    write(`  else if (${frameRef}.fn === undefined) { failedCast(${frameRef}.arg0) } `)
+                } else if (procid.noArgs) {
+                    write(`  if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
+                    write(`  else if (!${frameRef}.fn.isGetter) { s.retval = bind(${frameRef}); }`)
                 } else {
-                    write(`if (${frameRef}.fn == null) { s.retval = ${fld}; }`)
+                    write(`  if (${frameRef}.fn == null) { setupLambda(${frameRef}, ${fld}, ${topExpr.args.length}); ${callIt} }`)
+                    // this is tricky - we need to do two calls, first to the accessor
+                    // and then on the returned lambda - this is handled by leaveAccessor() runtime
+                    // function
+                    write(`  else if (${frameRef}.fn.isGetter) { ${frameRef}.stage2Call = true; ${callIt}; }`)
                 }
-                write(`else { ${callIt} }`)
-                if (procid.mapMethod) {
-                    write(`}`)
-                }
+                write(` else { ${callIt} }`)
+                write(`}`)
                 callIt = ""
             } else if (procid.virtualIndex == -1) {
                 // lambda call
