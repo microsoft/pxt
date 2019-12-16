@@ -90,7 +90,7 @@ namespace pxtblockly {
         }
 
         public static getGalleryTiles(): TilesetDropdownOption[] {
-            return FieldTileset.galleryTiles;
+            return FieldTileset.galleryTiles || [];
         }
 
         public isFieldCustom_ = true;
