@@ -179,8 +179,8 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         const widthVal = parseInt(this.state.width);
         const heightVal = parseInt(this.state.height);
 
-        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 999);
-        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 999);
+        const width = isNaN(widthVal) ? imageDimensions[0] : Math.min(Math.max(widthVal, 1), 512);
+        const height = isNaN(heightVal) ? imageDimensions[1] : Math.min(Math.max(heightVal, 1), 512);
 
         if (width !== imageDimensions[0] || height !== imageDimensions[1]) {
             dispatchChangeImageDimensions([width, height]);
