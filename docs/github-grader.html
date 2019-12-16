@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>MakeCode Grader</title>
-    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" />
+	<link rel="stylesheet" href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css" type="text/css">
     <style>
         @targetstyle@
     </style>
@@ -42,27 +42,49 @@
             top: 0;
         }
     </style>
-    <script type="text/javascript" src="/blb/jquery.js"></script>
-    <script type="text/javascript" src="/blb/semantic.js"></script>
+    <script type="text/javascript" src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
+    <script type="text/javascript" src="https://pxt.azureedge.net/blob/fc2f56f46189a2e8be3743a1a5abed3b676f9318/doccdn/semantic.js"></script>
     <script>
         const api = "https://api.github.com";
-        const token = localStorage["@targetid@/githubtoken"];
+        const token = localStorage["core/githubtoken"];
+        const targets = {
+            "ev3": {
+                name: "LEGO Mindstorms EV3",
+                url: "https://makecode.mindstorms.com/beta"
+            },
+            "arcade": {
+                name: "Arcade",
+                url: "https://arcade.makecode.com/beta"
+            },
+            "microbit": {
+                name: "micro:bit",
+                url: "https://microbit.makecode.com/beta"
+            },
+            "maker": {
+                name: "Maker",
+                url: "https://maker.makecode.com"
+            }
+        }
+
         if (!token)
             $('#signinmsg').removeClass('hidden');
 
-        async function sniffReadme(repo) {
+        async function sniffTarget(repo) {
             const response = await fetch(`https://raw.githubusercontent.com/${repo.full_name}/master/README.md?token=${token}`);
             const msg = await response.text();
-            return msg.indexOf('PXT/@targetid@') > -1;
+            return Object.keys(targets)
+                .find(k => msg.indexOf(`PXT/${k}`) > -1)
         }
 
         async function fetchUserRepos(user) {
             const response = await fetch(`${api}/users/${user}/repos?sort=updated&access_token=${token}&anti_cache=${Math.random()}`);
             const msg = await response.json();
             for (let i = 0; i < msg.length; ++i) {
-                const ok = await sniffReadme(msg[i]);
-                if (!ok)
+                const target = await sniffTarget(msg[i]);
+                if (!target)
                     msg[i] = undefined;
+                else
+                    msg[i].target = target;
             }
             return msg.filter(m => !!m);
         }
@@ -81,10 +103,11 @@
     <i class="github middle aligned icon"></i>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
+        <div class="description">${targets[repo.target].name}</div>
     </div>
 </div>`).click(() => {
-                                    const url =
-                                        "@homeurl@beta#pub:" +
+                                    const url = targets[repo.target].url +  
+                                        "#pub:" +
                                         "https://github.com/" +
                                         repo.full_name;
                                     console.log(url);
@@ -124,7 +147,7 @@
         </div>
         <div id="repoes" class="ui selection list"></div>
     </div>
-    <iframe id="makecodecolumn" src="@homeurl@beta" />
+    <iframe id="makecodecolumn" />
     <!-- @include footer.html -->
     <!-- @include tracking.html -->
 </body>
