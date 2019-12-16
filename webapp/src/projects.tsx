@@ -237,6 +237,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
+        this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
