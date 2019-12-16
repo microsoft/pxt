@@ -133,9 +133,10 @@
     </div>
 </div>`).click(() => {
                                     const url = targets[repo.target].url +
+                                        "?editorlayout=ide&ws=mem" +
                                         "#pub:" +
                                         "https://github.com/" +
-                                        repo.full_name;
+                                        repo.full_name
                                     console.log(url);
                                     $("#makecodecolumn").attr("src", url);
                                 })
