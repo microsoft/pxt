@@ -18,7 +18,7 @@ In this release, we support a friendlier authentication flow where you are asked
 
 ![OAuth authorization screen](/static/blog/makecode-with-github/oauth.png)
 
-If you're authenticating with developer token, that's still supported too.
+If you're authenticating with a developer token, that's still supported too.
 
 ## Pull Request integration
 
