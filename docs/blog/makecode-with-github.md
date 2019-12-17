@@ -1,0 +1,63 @@
+# MakeCode with GitHub (episode 3)
+
+This blog post is part of series documenting the integration of GitHub authoring in MakeCode. In previous episodes, we introduces a integrated [GitHub authoring experience for extensions](/blog/github-packages); then we added support for [diffing and branching](github-extensions-episode-2).
+
+In this iteration, we bring a friendly GitHub experience for all users, not just extension writers. 
+
+## New button position!
+
+We've moved the GitHub button next to the save button. It's always available 
+and it also displays whether changes need to be pushed or pulled.
+
+![GitHub button next to save](/static/blog/makecode-with-github/button.png)
+
+## OAuth authentication
+
+In the past, one would have to use a developer token to sign in with GitHub in MakeCode. 
+In this release, we support a friendlier flow where you will be asked the **Microsoft MakeCode for GitHub** application to sign in.
+
+![OAuth authorization screen](/static/blog/makecode-with-github/oauth.png)
+
+For those who using developer token, they are still supported.
+
+## Pull Request integration
+
+The experience to create and review pull requests has been streamlined. MakeCode will create a pull request for you and directly open the pull request review page. Additionally, all the rendered diff
+automatically display on the pull request timeline.
+
+![Pull request button](/static/blog/makecode-with-github/pullrequest.png)
+
+## Rendered blocks diff attached to each commit
+
+If a commit modifies blocs, 
+MakeCode will automatically add the [rendered diff to the commit](https://github.com/pelikhan/pxt-ghdemo/commit/c2d19e4324c10eef74f207899121800ba25e7666#commitcomment-36469566). 
+This allows you to review
+
+![A rendered blocks diff attached to a commit](/static/blog/makecode-with-github/comment.png)
+
+## Rendered blocks image in the README
+
+The README displays the rendered blocs for the last commit. This is particularly useful when navigating to a MakeCode project through GitHub.
+
+![A rendered blocks image in the README](/static/blog/makecode-with-github/readme.png)
+
+## Explorer
+
+The [GitHub Explorer](https://makecode.com/github-explorer) is designed to quickly load and review
+MakeCode projects hosted on GitHub from a given user. The main scenario is a teacher wanting to review
+the projects from a student.
+
+![The GitHub Explorer application](/static/blog/makecode-with-github/explorer.png)
+
+## Roll-out
+
+This new GitHub authoring is currently available in:
+
+* `/beta` version of [micro:bit editor](https://makecode.microbit.org/beta)
+* `/beta` version of [MakeCode Arcade](https://arcade.makecode.com/beta)
+* `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
+* The [Maker Editor](https://maker.makecode.com)
+
+## Feedback?
+
+Drop us a note in the MakeCode forums at https://forum.makecode.com 
