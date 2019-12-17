@@ -56,12 +56,3 @@ Click on **Revert** to see how it works.
 
 GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom).
 
-## Help pages
-
-* [Commits](/github/commit)
-* [Diff](/github/diff)
-* [Releases](/github/release)
-* [Fork](/github/fork)
-* [Classroom](/github/classroom)
-* [Token](/github/token)
-* [Test Extension](/github/test-extension)
