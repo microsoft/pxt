@@ -171,7 +171,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
-                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} role="complementary"></canvas>
+                    <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} onTouchStart={this.canvasTouchHandler} role="complementary"></canvas>
                     { showCreateTile &&
                         <div ref="create-tile-ref">
                             <IconButton
@@ -322,9 +322,17 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected canvasClickHandler = (ev: React.MouseEvent<HTMLCanvasElement>) => {
+        this.handleCanvasClickCore(ev.clientX, ev.clientY, ev.button > 0);
+    }
+
+    protected canvasTouchHandler = (ev: React.TouchEvent<HTMLCanvasElement>) => {
+        this.handleCanvasClickCore(ev.changedTouches[0].clientX, ev.changedTouches[0].clientY, false);
+    }
+
+    protected handleCanvasClickCore(clientX: number, clientY: number, isRightClick: boolean) {
         const bounds = this.canvas.getBoundingClientRect();
-        const column = ((ev.clientX - bounds.left) / (bounds.width / 4)) | 0;
-        const row = ((ev.clientY - bounds.top) / (bounds.height / 4)) | 0;
+        const column = ((clientX - bounds.left) / (bounds.width / 4)) | 0;
+        const row = ((clientY - bounds.top) / (bounds.height / 4)) | 0;
 
         const tile = this.renderedTiles[row * 4 + column];
         if (tile) {
@@ -338,8 +346,6 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             else {
                 index = tile.index;
             }
-
-            const isRightClick = ev.button > 0;
 
             if (index >= 0) {
                 if (isRightClick) this.props.dispatchChangeBackgroundColor(index);
