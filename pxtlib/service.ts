@@ -318,9 +318,9 @@ namespace ts.pxtc {
                     combinedProperties: []
                 }
                 ex.attributes.block =
-                    isGet ? `%${paramName} %property` :
-                        isSet ? `set %${paramName} %property to %${paramValue}` :
-                            `change %${paramName} %property by %${paramValue}`
+                    isGet ? U.lf("%{0} %property", paramName) :
+                        isSet ? U.lf("set %{0} %property to %{1}", paramName, paramValue) :
+                            U.lf("change %{0} %property by %{1}", paramName, paramValue)
                 updateBlockDef(ex.attributes)
                 blocks.push(ex)
             }
