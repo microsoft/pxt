@@ -73,6 +73,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected lastTool: ImageEditorTool;
 
     protected tileCache: HTMLCanvasElement[] = [];
+    protected hasHover: boolean;
 
     render() {
         const imageState = this.getImageState();
@@ -98,7 +99,6 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         this.canvasLayers = overlayLayers.map(layer => this.refs[`paint-surface-${layer.toString()}`] as HTMLCanvasElement);
 
         bindGestureEvents(this.refs["canvas-bounds"] as HTMLDivElement, this);
-        // bindGestureEvents(this.floatingLayer, this);
 
         const canvasBounds = this.refs["canvas-bounds"] as HTMLDivElement;
 
@@ -108,6 +108,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         });
 
         canvasBounds.addEventListener("mousemove", ev => {
+            if (!ev.button) this.hasHover = true;
             if (!this.edit) this.updateCursorLocation(ev);
         });
 
@@ -270,7 +271,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             if (!this.cursorLocation || x !== this.cursorLocation[0] || y !== this.cursorLocation[1]) {
                 this.cursorLocation = [x, y];
 
-                this.props.dispatchChangeCursorLocation((x < 0 || y < 0 || x >= this.imageWidth || y >= this.imageHeight) ? null : this.cursorLocation);
+                if (this.hasHover)
+                    this.props.dispatchChangeCursorLocation((x < 0 || y < 0 || x >= this.imageWidth || y >= this.imageHeight) ? null : this.cursorLocation);
 
                 if (!this.edit) this.redraw();
 
@@ -357,7 +359,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected redraw() {
-        const { prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth, drawingMode } = this.props;
+        const { prevFrame: nextFrame, onionSkinEnabled, selectedColor, toolWidth, drawingMode, tool } = this.props;
         const imageState = this.getImageState();
         const activeColor = drawingMode == TileDrawingMode.Wall ? WALL_COLOR : selectedColor;
 
@@ -401,7 +403,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 this.redrawFloatingLayer(this.editState);
 
                 if (this.cursorLocation && this.shouldDrawCursor()) {
-                    this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, activeColor );
+                    const color = tool === ImageEditorTool.Erase ? 0 : activeColor;
+                    this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, color );
                 }
             }
 
@@ -713,6 +716,8 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
 
     protected shouldDrawCursor() {
+        if (!this.hasHover) return false;
+
         switch (this.props.tool) {
             case ImageEditorTool.Fill:
             case ImageEditorTool.Marquee:
