@@ -4,7 +4,7 @@
     height: 100%;
     overflow: hidden;
     display: flex;
-    flex-direction: column
+    flex-direction: column;
 }
 
 .image-editor-timeline-frame {
@@ -107,6 +107,7 @@
     height: 2rem;
 }
 
+
 .timeline-frame-actions .image-editor-button {
     /* color: #000000; */
     flex-grow: 1;
@@ -126,3 +127,21 @@
 }
 
 /* .timeline-frame-actions */
+
+
+/* CSS fixes for Edge rendering issue with position: relative */
+.edge {
+    .image-editor-timeline-frame,
+    .image-editor-timeline-frames-outer,
+    .timeline-frame-actions {
+        position: static;
+    }
+
+    .timeline-frame-outer canvas {
+        height: 6rem;
+    }
+
+    .timeline-frame-actions {
+        margin-top: -2rem;
+    }
+}
