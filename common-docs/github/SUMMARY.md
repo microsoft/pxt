@@ -8,4 +8,4 @@
     * [classroom](/github/classroom)
     * [test extension](/github/test-extension)
     * [token](/github/token)
-    * [Explorer](https://makecode.com/github-explorer)
+    * [explorer](https://makecode.com/github-explorer)
