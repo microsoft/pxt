@@ -10,6 +10,8 @@ namespace pxtblockly {
 
     export type TilesetDropdownOption = [ImageJSON, string];
 
+    const PREVIEW_SIDE_LENGTH = 32;
+
     export class FieldTileset extends FieldImages implements Blockly.FieldCustom {
         private static tileCache: pxt.Map<string>;
         private static galleryTiles: TilesetDropdownOption[];
@@ -81,19 +83,20 @@ namespace pxtblockly {
 
             return {
                 src: uri,
-                width: 50,
-                height: 50,
+                width: PREVIEW_SIDE_LENGTH,
+                height: PREVIEW_SIDE_LENGTH,
                 alt: FieldTileset.getTileKey(t).split(".").pop()
             }
         }
 
         public static getGalleryTiles(): TilesetDropdownOption[] {
-            return FieldTileset.galleryTiles;
+            return FieldTileset.galleryTiles || [];
         }
 
         public isFieldCustom_ = true;
         protected selected: pxt.sprite.TileInfo;
         protected blocksInfo: pxtc.BlocksInfo;
+        protected transparent: TilesetDropdownOption;
 
         constructor(text: string, options: FieldImageDropdownOptions, validator?: Function) {
             super(text, options, validator);
@@ -104,19 +107,36 @@ namespace pxtblockly {
             }
         }
 
+        init() {
+            super.init();
+
+            if (this.sourceBlock_ && this.sourceBlock_.workspace && !this.sourceBlock_.isInFlyout) {
+                const tiles = getAllTilesetTiles(this.sourceBlock_.workspace);
+
+                if (!tiles.some(t => t.projectId === 0)) {
+                    // Ensure transparency exists or else compilation will fail
+                    // TODO: Other tile sizes
+                    saveTilesetTile(this.sourceBlock_.workspace, { projectId: 0, data: new pxt.sprite.Bitmap(16, 16).data() });
+                }
+            }
+        }
+
         menuGenerator_ = () => {
-            let options: any[][] = [[{
-                    src: bitmapToImageURI(new pxt.sprite.Bitmap(16, 16), 16, false),
-                    width: 50,
-                    height: 50,
-                    alt: "transparency"
-                }, "null"
-            ]];
+            if (!this.transparent) {
+                this.transparent = [{
+                    src: mkTransparentTileImage(16),
+                    width: PREVIEW_SIDE_LENGTH,
+                    height: PREVIEW_SIDE_LENGTH,
+                    alt: pxt.U.lf("transparency")
+                }, "myTiles.tile0"];
+            }
+
+            let options: TilesetDropdownOption[] = [this.transparent];
 
             if (this.sourceBlock_) {
                 // projectId 0 is reserved for transparency, which is always included
                 const projectTiles = getAllTilesetTiles(this.sourceBlock_.workspace).filter(t => t.projectId !== 0);
-                options.push(...projectTiles.map(info => [FieldTileset.getTileImageJSON(info, this.sourceBlock_.workspace, this.blocksInfo), FieldTileset.getTileKey(info)]).filter(([, b]) => !!b));
+                options.push(...projectTiles.map(info => [FieldTileset.getTileImageJSON(info, this.sourceBlock_.workspace, this.blocksInfo), FieldTileset.getTileKey(info)]).filter(([, b]) => !!b) as TilesetDropdownOption[]);
 
                 const galleryTiles = FieldTileset.getGalleryTiles();
 
@@ -129,5 +149,25 @@ namespace pxtblockly {
 
             return options;
         }
+    }
+
+    function mkTransparentTileImage(sideLength: number) {
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = sideLength;
+        canvas.height = sideLength;
+
+        context.fillStyle = "#aeaeae";
+        context.fillRect(0, 0, sideLength, sideLength);
+
+        context.fillStyle = "#dedede";
+
+        for (let x = 0; x < sideLength; x += 4) {
+            for (let y = 0; y < sideLength; y += 4) {
+                if (((x + y) >> 2) & 1) context.fillRect(x, y, 4, 4);
+            }
+        }
+
+        return canvas.toDataURL();
     }
 }

@@ -3034,9 +3034,9 @@ export class ProjectView
         this.scriptSearch.showExperiments();
     }
 
-    showChooseHwDialog() {
+    showChooseHwDialog(skipDownload?: boolean) {
         if (this.chooseHwDialog)
-            this.chooseHwDialog.show()
+            this.chooseHwDialog.show(skipDownload)
     }
 
     showRecipesDialog() {

@@ -9,59 +9,73 @@
 
 @blocklyLightTextColor: #fff;
 @blocklyDarkTextColor: #575E75;
+@fieldNoteSelectedColor: yellowgreen;
 
 ////// Note Editor Field ////////
-.blocklyDropDownContent .blocklyPianoDiv {
-    position: relative
-}
+.blocklyDropDownContent {
+    .blocklyPianoDiv {
+        position: relative;
+        touch-action: none;
+    }
 
-.blocklyDropDownContent .blocklyNote {
-    border: solid 0.5px;
-    cursor: pointer;
-    display: inline-block;
-    position: absolute;
-    top: 0px;
-    border-bottom-left-radius: 3px;
-    border-bottom-right-radius: 3px;
-}
+    .blocklyNote {
+        border: solid 0.5px;
+        cursor: pointer;
+        display: inline-block;
+        position: absolute;
+        top: 0px;
+        border-bottom-left-radius: 3px;
+        border-bottom-right-radius: 3px;
+        background-color: white;
+        z-index: @noteEditorWhiteKey;
+    }
 
-.blocklyDropDownContent .blocklyNote:hover {
-    background-color: yellow !important
-}
+    .blocklyNote.black {
+        background-color: black;
+        z-index: @noteEditorBlackKey;
+    }
 
-.blocklyDropDownContent .blocklyNoteLabel {
-    border: solid 0.5px;
-    color: white;
-    display: inline-block;
-    line-height: normal;
-    position: absolute;
-    text-align: center;
-    font-family: @blocklyFont;
-    font-size: 12pt;
-}
+    .blocklyNote:hover {
+        background-color: yellow !important;
+    }
 
-.blocklyDropDownContent .blocklyNotePrevNext {
-    border: solid 0.5px;
-    border-top: 0;
-    cursor: pointer;
-    color: white;
-    display: inline-block;
-    font-weight: bold;
-    line-height: normal;
-    position: absolute;
-    text-align: center;
-}
+    .blocklyNote.selected {
+        background-color: @fieldNoteSelectedColor !important;
+    }
 
-.blocklyDropdownTextLabel {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    width: 70px;
-    display: inline-block;
-    color: white;
-    font-size: 12px;
-}
+    .blocklyNoteLabel {
+        border: solid 0.5px;
+        color: white;
+        display: inline-block;
+        line-height: normal;
+        position: absolute;
+        text-align: center;
+        font-family: @blocklyFont;
+        font-size: 12pt;
+    }
 
+    .blocklyNotePrevNext {
+        border: solid 0.5px;
+        border-top: 0;
+        cursor: pointer;
+        color: white;
+        display: inline-block;
+        font-weight: bold;
+        line-height: normal;
+        position: absolute;
+        text-align: center;
+    }
+
+    .blocklyDropdownTextLabel {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        width: 70px;
+        display: inline-block;
+        color: white;
+        font-size: 12px;
+    }
+}
 ////// Grid Picker Editor Field ////////
 .blocklyGridPickerTooltip {
     z-index: @gridPickerZIndex;
@@ -246,10 +260,10 @@
 .blocklyCanvasOverlayOuter {
     padding: 0.5rem;
     margin: 0.1rem;
-    background: #fffae7;
-    border: solid 2px #dedede;
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
+    background: #249ca3;
+    border: solid 2px #249ca3;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
     border-bottom-left-radius: 0;
     border-bottom-left-radius: 0;
 }
@@ -260,11 +274,10 @@
     z-index: 10000;
     position: relative;
     overflow: hidden;
-    border: solid 5px;
-    border-left-color: #2f99a1;
-    border-right-color: #2f99a1;
-    border-top-color: #f290c1;
-    border-bottom-color: #f290c1;
+    border: solid 5px #333333;
+
+    clip-path: polygon(0% 4px, 4px 0%, calc(100% - 2px) 0%, 100% 4px,
+    100% calc(100% - 2px), calc(100% - 2px) 100%, 4px 100%, 0 calc(100% - 2px));
 
     .cross-x, .cross-y {
         background-color: #575E75;

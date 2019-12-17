@@ -53,7 +53,7 @@ export class TimelineImpl extends React.Component<TimelineProps, TimelineState> 
         }
 
         return (
-            <div className="image-editor-timeline">
+            <div className={`image-editor-timeline ${pxt.BrowserUtils.isEdge() ? 'edge' : ''}`}>
                 <div className="image-editor-timeline-preview" >
                     <TimelineFrame frames={previewAnimating ? frames : [frames[currentFrame]]} colors={colors} interval={interval} animating={true} />
                 </div>
