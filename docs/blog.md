@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode with GitHub](/blog/minecraft/makecode-with-github)
+## [MakeCode with GitHub](/blog/makecode-with-github)
 
 December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
 
