@@ -4,7 +4,8 @@
 
 December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
 
-The latest episode of streamlining the hosting of code in GitHub in MakeCode!
+The latest episode of our GitHub intergration - streamlining the hosting of code
+in GitHub inside of MakeCode!
 **[Continue reading this blog post](/blog/makecode-with-github)**
 
 ## [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
