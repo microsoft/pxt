@@ -8,7 +8,11 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@ #user {
+        @targetstyle@ 
+        nav.ui.menu {
+            font-size: 0.8rem;
+        }
+        #user {
             width: 14rem;
         }
 
@@ -20,12 +24,12 @@
             padding: 0.5rem;
             position: absolute;
             width: 18rem;
-            height: calc(100% - 6rem);
+            height: calc(100% - 5.3rem);
             border: none;
             left: 0;
             right: calc(100% - 18rem);
             bottom: 3rem;
-            top: 3rem;
+            top: 2.3rem;
             overflow-x: hidden;
             overflow-y: auto;
         }
@@ -33,12 +37,12 @@
         #makecodecolumn {
             position: absolute;
             width: calc(100% - 18rem);
-            height: calc(100% - 6rem);
+            height: calc(100% - 5.3rem);
             border: none;
             left: 18rem;
             right: 0;
             bottom: 3rem;
-            top: 3rem;
+            top: 2.3rem;
         }
 
         .footer {
@@ -59,7 +63,7 @@
 
         const targets = {
             "ev3": {
-                name: "LEGO Mindstorms EV3",
+                name: "LEGO® MINDSTORMS® Education EV3",
                 url: "https://makecode.mindstorms.com/beta"
             },
             "arcade": {
@@ -72,7 +76,8 @@
             },
             "adafruit": {
                 name: "Adafruit Circuit Playground Express",
-                url: "https://makecode.adafruit.com/beta"
+                url: "https://makecode.adafruit.com/beta",
+                icon: "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg"
             },
             "minecraft": {
                 name: "Minecraft",
@@ -81,6 +86,10 @@
             "maker": {
                 name: "Maker",
                 url: "https://maker.makecode.com"
+            },
+            "calliopemini": {
+                name: "Calliope Mini",
+                url: "https://makecode.calliope.cc/beta"
             }
         }
 
@@ -141,6 +150,8 @@
                 $("#repoes")
                     .append(
                         repoes.map(repo => {
+                            const target = targets[repo.target];
+                            const icon = target.icon || (target.url.replace(/\/\w+$/, '') + "/favicon.ico");
                             const item = $(
                                 `<div class="ui link item">
     <div class="extra">
@@ -149,11 +160,11 @@
         </a>
     </div>    
     <div class="ui mini image">
-      <img src="${targets[repo.target].url.replace(/\/\w+$/, '')}/favicon.ico">
+      <img src="${icon}">
     </div>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
-        <div class="description">${targets[repo.target].name}</div>
+        <div class="description">${target.name}</div>
     </div>
 </div>`);
                             item.click(event => {
@@ -163,7 +174,7 @@
                                 $('#repoes').children().removeClass('active');
                                 item.addClass('active');
                                 const url = targets[repo.target].url +
-                                    "?controller=1&readonly=1&ws=mem" +
+                                    "?controller=1&readonly=1&ws=mem&nocookiebanner=1" +
                                     "#pub:" +
                                     "https://github.com/" +
                                     repo.full_name
