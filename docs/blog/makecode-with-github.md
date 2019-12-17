@@ -37,7 +37,7 @@ This allows you to review code changes as blocks as in addtion to just text.
 
 ## Rendered blocks image in the README
 
-The `README` file displays the rendered blocs for the last commit. This is particularly useful when navigating to a MakeCode project through GitHub.
+The `README`  fiel displays the [rendered blocs for the last commit](https://github.com/pelikhan/pxt-ghdemo#blocks-preview) in the ``master`` branch. This is particularly useful when navigating to a MakeCode project through GitHub.
 
 ![A rendered blocks image in the README](/static/blog/makecode-with-github/readme.png)
 
