@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+
 <head>
     <meta charset="UTF-8">
     <title>MakeCode GitHub Explorer</title>
@@ -7,9 +8,7 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@ 
-        
-        #user {
+        @targetstyle@ #user {
             width: 14rem;
         }
 
@@ -67,6 +66,14 @@
                 name: "micro:bit",
                 url: "https://makecode.microbit.org/beta"
             },
+            "adafruit": {
+                name: "Adafruit Circuit Playground Express",
+                url: "https://makecode.adafruit.com/beta"
+            },
+            "minecraft": {
+                name: "Minecraft",
+                url: "https://minecraft.makecode.com/beta"
+            },
             "maker": {
                 name: "Maker",
                 url: "https://maker.makecode.com"
@@ -97,6 +104,8 @@
 
         async function fetchUser(user) {
             const response = await fetch(`${api}/users/${user}?access_token=${token()}`);
+            if (response.status != 200)
+                return undefined;
             const msg = await response.json();
             return msg;
         }
@@ -108,8 +117,14 @@
                     .empty();
                 const userName = $("#user").val();
                 const user = await fetchUser(userName);
+                if (!user) {
+                    $('#repoes').append(`<div class="ui item">
+                        user not found
+                    </div>`)
+                    return;
+                }
                 $('#repoes')
-                    .append(`<a href="https://github.com/${user.login}" class="ui link item" title="Open user profile">
+                    .append(`<a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
                     <div class="ui mini image">
       <img src="${user.avatar_url}">
     </div>
@@ -123,15 +138,21 @@
                     .append(
                         repoes.map(repo =>
                             $(
-                                `<div class="ui link item">
-                                    <div class="ui mini image">
+`<div class="ui link item">
+    <div class="extra">
+        <a class="ui right floated icon mini button" target="_blank" href="https://github.com/${repo.full_name}">
+          <i class="github icon"></i>
+        </a>
+    </div>    
+    <div class="ui mini image">
       <img src="${targets[repo.target].url.replace(/\/\w+$/, '')}/favicon.ico">
     </div>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
         <div class="description">${targets[repo.target].name}</div>
     </div>
-</div>`).click(() => {
+</div>`)
+    .click(() => {
                                     if (typeof mscc !== "undefined" && !mscc.hasConsent())
                                         mscc.setConsent();
                                     pxt.aiTrackEvent("grader.openrepo")
@@ -144,7 +165,7 @@
                                     $("#makecodecolumn").attr("src", url);
                                 })
                         )
-                    );
+    );
             } finally {
                 $('#userparent').removeClass('loading');
             }

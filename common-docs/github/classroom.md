@@ -68,6 +68,10 @@ Once the assignment is graded, the teacher can merge the Pull Request to finaliz
 
 If the student wants to add this project to his portfolio, he can simply make it public and it will be visible on his GitHub user page.
 
+## GitHub Explorer
+
+The [MakeCode GitHub Explorer](https://makecode.com/github-explorer) page allows to list and browse MakeCode repositories seamlessly.
+
 ## GitHub classroom
 
 You can also use [GitHub classroom](https://classroom.github.com) to managed your assignments. The GitHub integration is fully compatible with the GitHub classroom system.
