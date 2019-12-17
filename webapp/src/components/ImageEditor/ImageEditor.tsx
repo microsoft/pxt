@@ -75,6 +75,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         const { editTileValue, editingTile, alert } = this.state;
 
+        const isAnimationEditor = instanceStore.getState().store.present.kind === "Animation"
+
         return <div className="image-editor-outer">
             <Provider store={instanceStore}>
                 <div className={`image-editor ${editingTile ? "editing-tile" : ""}`}>
@@ -82,13 +84,13 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     <div className="image-editor-content">
                         <SideBar />
                         <ImageCanvas />
-                        {singleFrame ? undefined : <Timeline />}
+                        {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
                     <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} />
                     {alert && alert.title && <Alert title={alert.title} text={alert.text} options={alert.options} />}
                 </div>
             </Provider>
-            { editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} resizeDisabled={true} /> }
+            {editingTile && <ImageEditor store={tileEditorStore} onDoneClicked={this.onTileEditorFinished} initialValue={editTileValue} singleFrame={true} resizeDisabled={true} />}
         </div>
     }
 
