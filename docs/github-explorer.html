@@ -37,19 +37,26 @@
         #makecodecolumn {
             position: absolute;
             width: calc(100% - 18rem);
-            height: calc(100% - 5.3rem);
+            height: calc(100% - 2.3rem);
             border: none;
             left: 18rem;
             right: 0;
-            bottom: 3rem;
+            bottom: 0rem;
             top: 2.3rem;
         }
 
-        .footer {
+        #footer {
             position: absolute !important;
+            left: 0;
+            right: 0;
+            width: 18rem;
             bottom: 0 !important;
+            font-size: 0.7rem;
+            margin: 0.5rem;
         }
-
+        #footer a {
+            color: black;
+        }
         .ui.selection.list>.item.active {
             border: solid 2px grey;
         }
@@ -286,10 +293,15 @@
         <div id="repoes" class="ui selection list"></div>
     </div>
     <iframe id="makecodecolumn"></iframe>
+    <footer id="footer" class="hideprint">
+        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
+        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
+        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
+        <div class="item">© 2019 Microsoft</div>
+    </footer>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
     <!-- @include tracking.html -->
-    <!-- @include thin-footer.html -->
 </body>
 
 
