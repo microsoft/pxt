@@ -1,13 +1,13 @@
-# MakeCode with GitHub (episode 3)
+# MakeCode with GitHub (Episode 3)
 
-This blog post is a continuation in a series posts documenting the integration of GitHub authoring in MakeCode. In previous episodes, we first introduced the integrated [GitHub authoring experience for extensions](/blog/github-packages); then we discussed the new support for [diffing and branching](github-extensions-episode-2).
+This blog post is a continuation in a series posts documenting the integration of GitHub authoring in MakeCode. In the previous two episodes, we introduced integrated [GitHub authoring experience for extensions](/blog/github-packages); then we discussed the new support for [diffing and branching](github-extensions-episode-2).
 
-With this episode, we tell you about our next iteration of GitHub intergration - putting in a friendly GitHub experience for all users, not just extension writers. 
+In this episode, we tell you about our next iteration of GitHub intergration - putting in a friendly GitHub experience for all users, not just extension writers. 
 
 ## New button position!
 
-We've moved the GitHub button right next to the save button. It's always available 
-and it will display whether or not there are changes needing to be pushed or pulled.
+We've moved the GitHub button right next to the project save button. It's always present 
+and it shows you whether or not there are changes needing to be pushed or pulled.
 
 ![GitHub button next to save](/static/blog/makecode-with-github/button.png)
 
@@ -18,7 +18,7 @@ In this release, we support a friendlier authentication flow where you are asked
 
 ![OAuth authorization screen](/static/blog/makecode-with-github/oauth.png)
 
-If your're using developer token, they are still supported.
+If you're authenticating with developer token, that's still supported too.
 
 ## Pull Request integration
 
@@ -37,15 +37,15 @@ This allows you to review code changes as blocks in addtion to just seeing them 
 
 ## Rendered blocks image in the README
 
-The `README` file displays the [rendered blocs for the last commit](https://github.com/pelikhan/pxt-ghdemo#blocks-preview) in the ``master`` branch. This is particularly useful when navigating to a MakeCode project through GitHub.
+The **README** file displays the [rendered blocs for the last commit](https://github.com/pelikhan/pxt-ghdemo#blocks-preview) in the ``master`` branch. This is particularly useful when navigating to a MakeCode project through GitHub.
 
 ![A rendered blocks image in the README](/static/blog/makecode-with-github/readme.png)
 
 ## Explorer
 
 The [GitHub Explorer](https://makecode.com/github-explorer) is designed to quickly load and review
-MakeCode projects hosted on GitHub from a given user. The main scenario is a teacher wanting to review
-the projects from a student.
+MakeCode projects hosted on GitHub from a given user. The typical usage scenario for the explorer is
+when a teacher wants to review projects completed by a student.
 
 ![The GitHub Explorer application](/static/blog/makecode-with-github/explorer.png)
 
