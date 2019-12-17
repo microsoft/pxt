@@ -45,6 +45,10 @@
             position: absolute !important;
             bottom: 0 !important;
         }
+
+        .ui.selection.list>.item.active {
+            border: solid 2px grey;
+        }
     </style>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
@@ -136,9 +140,9 @@
                 const repoes = await fetchUserRepos(userName);
                 $("#repoes")
                     .append(
-                        repoes.map(repo =>
-                            $(
-`<div class="ui link item">
+                        repoes.map(repo => {
+                            const item = $(
+                                `<div class="ui link item">
     <div class="extra">
         <a class="ui right floated icon mini button" target="_blank" href="https://github.com/${repo.full_name}">
           <i class="github icon"></i>
@@ -151,21 +155,23 @@
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
         <div class="description">${targets[repo.target].name}</div>
     </div>
-</div>`)
-    .click(() => {
-                                    if (typeof mscc !== "undefined" && !mscc.hasConsent())
-                                        mscc.setConsent();
-                                    pxt.aiTrackEvent("grader.openrepo")
-                                    const url = targets[repo.target].url +
-                                        "?controller=1&readonly=1&ws=mem" +
-                                        "#pub:" +
-                                        "https://github.com/" +
-                                        repo.full_name
-                                    console.log(url);
-                                    $("#makecodecolumn").attr("src", url);
-                                })
-                        )
-    );
+</div>`);
+                            item.click(event => {
+                                if (typeof mscc !== "undefined" && !mscc.hasConsent())
+                                    mscc.setConsent();
+                                pxt.aiTrackEvent("grader.openrepo")
+                                $('#repoes').children().removeClass('active');
+                                item.addClass('active');
+                                const url = targets[repo.target].url +
+                                    "?controller=1&readonly=1&ws=mem" +
+                                    "#pub:" +
+                                    "https://github.com/" +
+                                    repo.full_name
+                                $("#makecodecolumn").attr("src", url);
+                            })
+
+                            return item;
+                        }))
             } finally {
                 $('#userparent').removeClass('loading');
             }
