@@ -31,7 +31,7 @@ display automatically on the pull request timeline.
 
 If a commit modifies blocks, 
 MakeCode will automatically add the [rendered diff to the commit](https://github.com/pelikhan/pxt-ghdemo/commit/c2d19e4324c10eef74f207899121800ba25e7666#commitcomment-36469566). 
-This allows you to review code changes as blocks as in addtion to just text.
+This allows you to review code changes as blocks in addtion to just seeing them as text.
 
 ![A rendered blocks diff attached to a commit](/static/blog/makecode-with-github/comment.png)
 
