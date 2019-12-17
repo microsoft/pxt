@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode with GitHub](/blog/minecraft/makecode-with-github)
+
+December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
+
+The latest episode of streamlining the hosting of code in GitHub in MakeCode!
+**[Continue reading this blog post](/blog/makecode-with-github)**
+
 ## [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
 
 December 2nd, 2019 by [Jaqster](https://github.com/jaqster)
