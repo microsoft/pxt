@@ -8,6 +8,7 @@
         type="text/css">
     <style>
         @targetstyle@ 
+        
         #user {
             width: 14rem;
         }
@@ -169,8 +170,18 @@
             }
 
             // force sign...
-            if (token()) return;
+            if (!token()) {
+                $("#signin").show();
+                $('#signout').hide();
+                $('#userparent').hide();
+            } else {
+                $("#signin").hide();
+                $('#signout').show();
+                $('#userparent').show();
+            }
+        }
 
+        function navigateSignin() {
             console.log(`redirecting to oauth page`)
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
@@ -180,10 +191,18 @@
             window.location.href = login;
         }
 
+        function navigateSignout() {
+            delete localStorage["core/oauthState"];
+            delete localStorage["core/githubtoken"];
+            window.location.reload();
+        }
+
         $(function () {
             console.log(`loaded...`);
             checkToken();
             $("#generate").click(update);
+            $('#signinbtn').click(navigateSignin)
+            $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
                     update();
@@ -203,13 +222,25 @@
                 MakeCode GitHub Explorer
             </div>
         </div>
-		<div class="menu right">
-			<a href="/github" target="_blank" class="ui item">
-				Docs
-			</a>
-		</div>        
+        <div class="menu right">
+            <a href="/github/explorer" target="_blank" class="ui item">
+                Docs
+            </a>
+            <div id="signout" class="ui link item">
+                Sign out
+            </div>
+        </div>
     </nav>
     <div id="repocolumn">
+        <div id="signin">
+            <p>
+                Sign in to access your MakeCode repositories.
+            </p>
+            <button id="signinbtn" class="ui icon button">
+                <i class="ui github icon"></i>
+                Sign in
+            </button>
+        </div>
         <div id="userparent" class="ui left icon input">
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
             <i class="search icon"></i>
@@ -217,7 +248,6 @@
         <div id="repoes" class="ui selection list"></div>
     </div>
     <iframe id="makecodecolumn"></iframe>
-    </div>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
     <!-- @include apptracking.html -->
