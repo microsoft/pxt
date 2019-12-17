@@ -8,7 +8,11 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@ #user {
+        @targetstyle@ 
+        nav.ui.menu {
+            font-size: 0.8rem;
+        }
+        #user {
             width: 14rem;
         }
 
@@ -20,12 +24,12 @@
             padding: 0.5rem;
             position: absolute;
             width: 18rem;
-            height: calc(100% - 6rem);
+            height: calc(100% - 5.3rem);
             border: none;
             left: 0;
             right: calc(100% - 18rem);
             bottom: 3rem;
-            top: 3rem;
+            top: 2.3rem;
             overflow-x: hidden;
             overflow-y: auto;
         }
@@ -33,19 +37,26 @@
         #makecodecolumn {
             position: absolute;
             width: calc(100% - 18rem);
-            height: calc(100% - 6rem);
+            height: calc(100% - 2.3rem);
             border: none;
             left: 18rem;
             right: 0;
-            bottom: 3rem;
-            top: 3rem;
+            bottom: 0rem;
+            top: 2.3rem;
         }
 
-        .footer {
+        #footer {
             position: absolute !important;
+            left: 0;
+            right: 0;
+            width: 18rem;
             bottom: 0 !important;
+            font-size: 0.7rem;
+            margin: 0.5rem;
         }
-
+        #footer a {
+            color: black;
+        }
         .ui.selection.list>.item.active {
             border: solid 2px grey;
         }
@@ -59,7 +70,7 @@
 
         const targets = {
             "ev3": {
-                name: "LEGO Mindstorms EV3",
+                name: "LEGO® MINDSTORMS® Education EV3",
                 url: "https://makecode.mindstorms.com/beta"
             },
             "arcade": {
@@ -72,7 +83,8 @@
             },
             "adafruit": {
                 name: "Adafruit Circuit Playground Express",
-                url: "https://makecode.adafruit.com/beta"
+                url: "https://makecode.adafruit.com/beta",
+                icon: "https://pxt.azureedge.net/blob/1215b9ef46d3e04bc9923a1a333d92db92eb5419/static/logo.square.black.svg"
             },
             "minecraft": {
                 name: "Minecraft",
@@ -81,6 +93,10 @@
             "maker": {
                 name: "Maker",
                 url: "https://maker.makecode.com"
+            },
+            "calliopemini": {
+                name: "Calliope Mini",
+                url: "https://makecode.calliope.cc/beta"
             }
         }
 
@@ -141,6 +157,8 @@
                 $("#repoes")
                     .append(
                         repoes.map(repo => {
+                            const target = targets[repo.target];
+                            const icon = target.icon || (target.url.replace(/\/\w+$/, '') + "/favicon.ico");
                             const item = $(
                                 `<div class="ui link item">
     <div class="extra">
@@ -149,21 +167,21 @@
         </a>
     </div>    
     <div class="ui mini image">
-      <img src="${targets[repo.target].url.replace(/\/\w+$/, '')}/favicon.ico">
+      <img src="${icon}">
     </div>
     <div class="content">
         <div class="header">${repo.name.replace(/^pxt-/, '')}</div>
-        <div class="description">${targets[repo.target].name}</div>
+        <div class="description">${target.name}</div>
     </div>
 </div>`);
                             item.click(event => {
                                 if (typeof mscc !== "undefined" && !mscc.hasConsent())
                                     mscc.setConsent();
-                                pxt.aiTrackEvent("grader.openrepo")
+                                pxt.aiTrackEvent("github.explorer.search")
                                 $('#repoes').children().removeClass('active');
                                 item.addClass('active');
                                 const url = targets[repo.target].url +
-                                    "?controller=1&readonly=1&ws=mem" +
+                                    "?controller=1&readonly=1&ws=mem&nocookiebanner=1" +
                                     "#pub:" +
                                     "https://github.com/" +
                                     repo.full_name
@@ -209,7 +227,7 @@
         }
 
         function navigateSignin() {
-            console.log(`redirecting to oauth page`)
+            pxt.aiTrackEvent("github.explorer.signin")
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
             const login = "https://makecode.com/oauth/login?state=" + state +
@@ -219,6 +237,7 @@
         }
 
         function navigateSignout() {
+            pxt.aiTrackEvent("github.explorer.signout")
             delete localStorage["core/oauthState"];
             delete localStorage["core/githubtoken"];
             window.location.reload();
@@ -232,6 +251,7 @@
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
+                    pxt.aiTrackEvent("github.explorer.search")
                     update();
                 }
             });
@@ -239,6 +259,7 @@
         });
 
         console.log("starting...");
+        pxt.aiTrackEvent("github.explorer.loaded")
     </script>
 </head>
 
@@ -275,10 +296,15 @@
         <div id="repoes" class="ui selection list"></div>
     </div>
     <iframe id="makecodecolumn"></iframe>
+    <footer id="footer" class="hideprint">
+        <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
+        <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
+        <a class="item" href="https://makecode.com/trademarks" target="_blank" rel="noopener">Trademarks</a>
+        <div class="item">© 2019 Microsoft</div>
+    </footer>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/795d8506c80a04f5ca26f577a8d6152e2fa3e7a6/doccdn/pxtweb.js"></script>
     <!-- @include tracking.html -->
-    <!-- @include thin-footer.html -->
 </body>
 
 
