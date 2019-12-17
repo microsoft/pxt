@@ -58,8 +58,10 @@ GitHub can be used to create and collect assignments from students. [Learn more.
 
 ## Help pages
 
-* [Classroom](/github/classroom)
 * [Commits](/github/commit)
-* [Releases](/github/release)
 * [Diff](/github/diff)
+* [Releases](/github/release)
+* [Fork](/github/fork)
+* [Classroom](/github/classroom)
 * [Token](/github/token)
+* [Test Extension](/github/test-extension)

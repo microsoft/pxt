@@ -57,6 +57,17 @@
     * [Array](/types/array)
     * [Function](/types/function)
 
+## GitHub #github
+
+* [GitHub](/github)
+    * [Commits](/github/commit)
+    * [Diff](/github/diff)
+    * [Releases](/github/release)
+    * [Fork](/github/fork)
+    * [Classroom](/github/classroom)
+    * [Token](/github/token)
+    * [Test Extension](/github/test-extension)
+
 ## #other
 
 ## Miscellaneous #misc
