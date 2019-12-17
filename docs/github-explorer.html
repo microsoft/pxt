@@ -177,7 +177,7 @@
                             item.click(event => {
                                 if (typeof mscc !== "undefined" && !mscc.hasConsent())
                                     mscc.setConsent();
-                                pxt.aiTrackEvent("grader.openrepo")
+                                pxt.aiTrackEvent("github.explorer.search")
                                 $('#repoes').children().removeClass('active');
                                 item.addClass('active');
                                 const url = targets[repo.target].url +
@@ -227,7 +227,7 @@
         }
 
         function navigateSignin() {
-            console.log(`redirecting to oauth page`)
+            pxt.aiTrackEvent("github.explorer.signin")
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
             const login = "https://makecode.com/oauth/login?state=" + state +
@@ -237,6 +237,7 @@
         }
 
         function navigateSignout() {
+            pxt.aiTrackEvent("github.explorer.signout")
             delete localStorage["core/oauthState"];
             delete localStorage["core/githubtoken"];
             window.location.reload();
@@ -250,6 +251,7 @@
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
+                    pxt.aiTrackEvent("github.explorer.search")
                     update();
                 }
             });
@@ -257,6 +259,7 @@
         });
 
         console.log("starting...");
+        pxt.aiTrackEvent("github.explorer.loaded")
     </script>
 </head>
 
