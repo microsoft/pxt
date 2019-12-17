@@ -212,6 +212,7 @@ jobs:
 
         config.files = pkgFiles.filter(s => !/test/.test(s));
         config.testFiles = pkgFiles.filter(s => /test/.test(s));
+        config.supportedTargets = [pxt.appTarget.id];
 
         const configMap: Map<string> = config as any
         // make it look nice
