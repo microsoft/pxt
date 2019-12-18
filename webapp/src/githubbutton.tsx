@@ -66,12 +66,12 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const modified = meta && !!meta.modified;
         const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
-        const title = 
+        const title =
             hasissue ? lf("{0}: there is an issue with your GitHub connection.", repoName)
-            : haspull ? lf("{0}: remote changes are ready to be pulled.", repoName)
-            : modified ? lf("{0}: review, commit & push local changes to GitHub.", repoName)
-            : lf("{0}: local changes are synchronized with GitHub.", repoName)
- 
+                : haspull ? lf("{0}: remote changes are ready to be pulled.", repoName)
+                    : modified ? lf("{0}: review, commit & push local changes to GitHub.", repoName)
+                        : lf("{0}: local changes are synchronized with GitHub.", repoName)
+
         return <div key="githubeditorbtn" role="button" className={`${defaultCls} ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
