@@ -17,7 +17,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">f</field>
 </shadow>
 </value>
@@ -43,7 +43,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">doing</field>
 </shadow>
 </value>
@@ -68,7 +68,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">f</field>
 </shadow>
 </value>
@@ -93,7 +93,7 @@
 </value>
 <value name="HANDLER_DRAG_PARAM_f">
 <shadow type="argument_reporter_custom">
-<mutation typename="TestClass" />
+<mutation typename="testNamespace.TestClass" />
 <field name="VALUE">f</field>
 </shadow>
 </value>
