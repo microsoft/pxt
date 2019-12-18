@@ -54,5 +54,8 @@ Click on **Revert** to see how it works.
 
 ## Classroom usage
 
-GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom).
+GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom) or quickly review their repositories in the [Explorer](/github/explorer)
 
+## Frequently Asked Questions
+
+Do you have more questions? Try the [FAQ](/github/faq).
