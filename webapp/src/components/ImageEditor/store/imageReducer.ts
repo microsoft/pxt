@@ -268,6 +268,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 ...state,
                 editor: {
                     ...state.editor,
+                    selectedColor: -1,
+                    backgroundColor: -1,
                     isTilemap: true,
                     tilemapPalette: {
                         category: TileCategory.Forest,
@@ -276,6 +278,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     drawingMode: TileDrawingMode.Default,
                     overlayEnabled: true,
                     tileGallery: action.gallery,
+                    tileGalleryOpen: true,
                     referencedTiles: action.referencedTiles
                 },
                 store: {

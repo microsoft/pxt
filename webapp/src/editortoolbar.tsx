@@ -140,6 +140,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         this.props.parent.showChooseHwDialog(true);
     }
 
+    protected onHwDownloadClick = () => {
+        this.compile();
+    }
+
     protected getCompileButton(view: View, collapsed?: boolean): JSX.Element[] {
         const targetTheme = pxt.appTarget.appTheme;
         const { compiling, isSaving } = this.props.parent.state;
@@ -151,12 +155,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         let downloadButtonClasses = boards ? "left attached " : "";
         let hwIconClasses = "";
-        let hwMenuClasses = ""
         let displayRight = false;
         if (isSaving) {
-            downloadButtonClasses = "disabled ";
+            downloadButtonClasses += "disabled ";
         } else if (compileLoading) {
-            downloadButtonClasses = "loading disabled ";
+            downloadButtonClasses += "loading disabled ";
         }
         switch (view) {
             case View.Mobile:
@@ -165,28 +168,29 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 break;
             case View.Tablet:
                 downloadButtonClasses += `download-button-full ${!collapsed ? 'large fluid' : ''}`;
-                hwMenuClasses = !collapsed ? "large" : "";
                 hwIconClasses = !collapsed ? "large" : "";
                 displayRight = collapsed;
                 break;
             case View.Computer:
             default:
                 downloadButtonClasses += "huge fluid";
-                hwMenuClasses = "large";
                 hwIconClasses = "large";
         }
 
         let el = [];
         el.push(<EditorToolbarButton key="downloadbutton" role="menuitem" icon={downloadIcon} className={`primary download-button ${downloadButtonClasses}`} text={view != View.Mobile ? downloadText : undefined} title={compileTooltip} onButtonClick={this.compile} view='computer' />)
 
-        let deviceName = pxt.hwName || lf("device");
-        let tooltip = pxt.hwName || lf("Click to select hardware")
+        const deviceName = pxt.hwName || lf("device");
+        const tooltip = pxt.hwName || lf("Click to select hardware")
+
+        const hardwareMenuText = view == View.Mobile ? lf("Hardware") : lf("Choose hardware");
+        const downloadMenuText = view == View.Mobile ? (pxt.hwName || lf("Download")) : lf("Download to {0}", deviceName);
 
         if (boards) {
             el.push(
-                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwMenuClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
-                    <sui.Item role="menuitem" icon="microchip" text={lf("Choose hardware")} tabIndex={-1} onClick={this.onHwItemClick} />
-                    <sui.Item role="menuitem" icon="download" text={lf("Download to {0}", deviceName)} tabIndex={-1} onClick={this.compile} />
+                <sui.DropdownMenu key="downloadmenu" role="menuitem" icon={`ellipsis horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight}>
+                    <sui.Item role="menuitem" icon="microchip" text={hardwareMenuText} tabIndex={-1} onClick={this.onHwItemClick} />
+                    <sui.Item role="menuitem" icon="download" text={downloadMenuText} tabIndex={-1} onClick={this.onHwDownloadClick} />
                 </sui.DropdownMenu>
             )
         }

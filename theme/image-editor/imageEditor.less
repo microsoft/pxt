@@ -66,6 +66,7 @@
     flex-direction: row;
     flex-grow: 1;
     flex-shrink: 1;
+    height: 100%;
 }
 
 .image-editor-label {
@@ -114,6 +115,7 @@
 
     margin-left: auto;
     margin-right: auto;
+    cursor: pointer;
 }
 
 
@@ -210,11 +212,11 @@
 }
 
 .image-editor-confirm:hover {
-    background-color: darken(#4b7bec, 5%);
+    background-color: darken(@green, 5%);
 }
 
 .image-editor-confirm:active {
-    background-color: darken(#4b7bec, 10%);
+    background-color: darken(@green, 10%);
 }
 
 .image-editor.editing-tile {
