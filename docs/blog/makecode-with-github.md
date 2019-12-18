@@ -2,7 +2,7 @@
 
 This blog post is a continuation in a series posts documenting the integration of GitHub authoring in MakeCode. In the previous two episodes, we introduced integrated [GitHub authoring experience for extensions](/blog/github-packages); then we discussed the new support for [diffing and branching](github-extensions-episode-2).
 
-In this episode, we tell you about our next iteration of GitHub intergration - putting in a friendly GitHub experience for all users, not just extension writers. 
+In this episode, we tell you about our next iteration of GitHub integration - putting in a friendly GitHub experience for all users, not just extension writers. 
 
 ## New button position!
 
