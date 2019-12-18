@@ -65,7 +65,7 @@ namespace ts.pxtc {
         proc_return() { return "pop {pc}" }
 
         debugger_stmt(lbl: string) {
-            if (target.gc) oops()
+            oops()
             return `
     @stackempty locals
     ldr r0, [r6, #0] ; debugger
@@ -76,7 +76,7 @@ ${lbl}:
         }
 
         debugger_bkpt(lbl: string) {
-            if (target.gc) oops()
+            oops()
             return `
     @stackempty locals
     ldr r0, [r6, #0] ; brk
@@ -86,7 +86,7 @@ ${lbl}:
         }
 
         debugger_proc(lbl: string) {
-            if (target.gc) oops()
+            oops()
             return `
     ldr r0, [r6, #0]  ; brk-entry
     ldr r0, [r0, #4]  ; brk-entry
@@ -186,7 +186,7 @@ ${lbl}:`
         }
 
         restoreThreadStack() {
-            if (target.gc && target.switches.gcDebug)
+            if (target.switches.gcDebug)
                 return "movs r7, #0\n    str r7, [r6, #4]\n"
             else
                 return ""
