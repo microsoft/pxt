@@ -505,6 +505,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected generateTile(index: number, tileset: pxt.sprite.TileSet) {
+        if (!tileset.tiles[index]) {
+            return null;
+        }
         const tileImage = document.createElement("canvas");
         tileImage.width = tileset.tileWidth * TILE_SCALE;
         tileImage.height = tileset.tileWidth * TILE_SCALE;
@@ -533,6 +536,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                         tileImage = this.generateTile(index, tileset);
                     }
 
+                    if (!tileImage) {
+                        // invalid tileset index
+                        continue;
+                    }
+
                     context.drawImage(tileImage,  (x + x0) * this.cellWidth,  (y + y0) * this.cellWidth);
                 }
                 else {
@@ -554,6 +562,12 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                 if (!tileImage) {
                     tileImage = this.generateTile(color, this.props.tilemapState.tileset);
                 }
+
+                if (!tileImage) {
+                    // invalid tileset index
+                    return;
+                }
+
                 for (let x = 0; x < width; x++) {
                     for (let y = 0; y < width; y++) {
                         context.drawImage(tileImage,  (left + x) * this.cellWidth,  (top + y) * this.cellWidth);
