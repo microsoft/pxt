@@ -270,9 +270,6 @@ namespace pxt.cpp {
         if (compile.switches.numFloat)
             cpp_options["PXT_USE_FLOAT"] = 1
 
-        if (compile.vtableShift)
-            cpp_options["PXT_VTABLE_SHIFT"] = compile.vtableShift
-
         if (compile.nativeType == pxtc.NATIVE_TYPE_VM)
             cpp_options["PXT_VM"] = 1
 
