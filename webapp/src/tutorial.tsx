@@ -288,6 +288,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         }
 
         this.toggleHint = this.toggleHint.bind(this);
+        this.closeHint = this.closeHint.bind(this);
         this.hintOnClick = this.hintOnClick.bind(this);
         this.closeLightbox = this.closeLightbox.bind(this);
         this.tutorialCardKeyDown = this.tutorialCardKeyDown.bind(this);
@@ -407,7 +408,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
     private removeHintOnClick() {
         // cleanup hintOnClick
-        document.removeEventListener('click', this.hintOnClick);
+        document.removeEventListener('click', this.closeHint);
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
@@ -472,6 +473,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         this.showHint(!this.state.showHint, showFullText);
     }
 
+    closeHint(evt?: any) {
+        this.showHint(false);
+    }
+
     showHint(visible: boolean, showFullText?: boolean) {
         this.removeHintOnClick();
         this.closeLightbox();
@@ -491,7 +496,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
             const options = this.props.parent.state.tutorialOptions;
             if (!options.tutorialStepInfo[options.tutorialStep].unplugged)
-                document.addEventListener('click', this.hintOnClick); // add close listener if not modal
+                document.addEventListener('click', this.closeHint); // add close listener if not modal
             pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
         }
         th.showHint(visible, showFullText);
@@ -528,6 +533,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
 
         const isRtl = pxt.Util.isUserLanguageRtl();
         return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''} ${this.state.showSeeMore ? 'seemore' : ''}  ${!this.state.showHint ? 'showTooltip' : ''} ${hasHint ? 'hasHint' : ''}`} style={tutorialStepExpanded ? this.getExpandedCardStyle('height') : null} >
+            {hasHint && this.state.showHint && !unplugged && <div className='mask' onClick={this.closeHint}></div>}
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron orange large`} className={`prevbutton left attached ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="widedesktop only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
