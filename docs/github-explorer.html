@@ -8,10 +8,10 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@ 
-        nav.ui.menu {
+        @targetstyle@ nav.ui.menu {
             font-size: 0.8rem;
         }
+
         #user {
             width: 14rem;
         }
@@ -54,9 +54,11 @@
             font-size: 0.7rem;
             margin: 0.5rem;
         }
+
         #footer a {
             color: black;
         }
+
         .ui.selection.list>.item.active {
             border: solid 2px grey;
         }
@@ -98,6 +100,12 @@
                 name: "Calliope Mini",
                 url: "https://makecode.calliope.cc/beta"
             }
+        }
+
+        function trackClick(id) {
+            if (typeof mscc !== "undefined" && !mscc.hasConsent())
+                mscc.setConsent();
+            pxt.aiTrackEvent(id);
         }
 
         async function sniffTarget(repo) {
@@ -170,9 +178,7 @@
     </div>
 </div>`);
                             item.click(event => {
-                                if (typeof mscc !== "undefined" && !mscc.hasConsent())
-                                    mscc.setConsent();
-                                pxt.aiTrackEvent("github.explorer.search")
+                                trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
                                 item.addClass('active');
                                 const url = targets[repo.target].url +
@@ -222,7 +228,7 @@
         }
 
         function navigateSignin() {
-            pxt.aiTrackEvent("github.explorer.signin")
+            trackClick("github.explorer.signin")
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
             const login = "https://makecode.com/oauth/login?state=" + state +
@@ -232,7 +238,7 @@
         }
 
         function navigateSignout() {
-            pxt.aiTrackEvent("github.explorer.signout")
+            trackClick("github.explorer.signout")
             delete localStorage["core/oauthState"];
             delete localStorage["core/githubtoken"];
             window.location.reload();
@@ -246,7 +252,7 @@
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
-                    pxt.aiTrackEvent("github.explorer.search")
+                    trackClick("github.explorer.search")
                     update();
                 }
             });
