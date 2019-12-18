@@ -452,7 +452,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
     if (name) {
         name = name.toLocaleLowerCase().replace(/\s+/g, '-');
         name = name.replace(/[^\w\-]/g, '');
-        if (!/^pxt-/.test(name)) name = 'pxt-' + name;
+        if (!name) name = lf("Untitled");
     }
 
     let repoName: string = name || "";
