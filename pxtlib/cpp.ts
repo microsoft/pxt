@@ -255,9 +255,6 @@ namespace pxt.cpp {
         if (compile.switches.boxDebug)
             cpp_options["PXT_BOX_DEBUG"] = 1
 
-        if (compile.gc)
-            cpp_options["PXT_GC"] = 1
-
         if (compile.utf8)
             cpp_options["PXT_UTF8"] = 1
 
