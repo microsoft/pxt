@@ -205,6 +205,7 @@ jobs:
             "testDependencies",
             "public",
             "targetVersions",
+            "supportedTargets",
             "preferredEditor",
             "additionalFilePath",
             "additionalFilePaths"
