@@ -538,7 +538,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
                     if (!tileImage) {
                         // invalid tileset index
-                        return;
+                        continue;
                     }
 
                     context.drawImage(tileImage,  (x + x0) * this.cellWidth,  (y + y0) * this.cellWidth);
