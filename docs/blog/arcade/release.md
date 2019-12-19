@@ -40,7 +40,7 @@ The **Image Size** control lets you change you sprite's image to the exact width
 
 To bring in the full power of MakeCode GitHub Integration, a **GitHub** button is now present right next
 to the **Save** button. Now you can have your project's changes synced to/from GitHub with just a button
-click. If you haven't learned about our new GitHub integration, read about it starting with this [blog post](\blog\github-packages).
+click. If you haven't learned about our new GitHub integration, read about it starting with this [blog post](/blog/github-packages).
 
 ![GitHub button](/static/blog/arcade/release-12-2019/github-integrate.png)
 
