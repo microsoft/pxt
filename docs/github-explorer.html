@@ -8,8 +8,10 @@
         href="https://pxt.azureedge.net/blob/2163189fd5e35c0981ed55318415582a7c9aeb12/doccdn/semantic.css"
         type="text/css">
     <style>
-        @targetstyle@ nav.ui.menu {
-            font-size: 0.8rem;
+        @targetstyle@ 
+        
+        label, nav.ui.menu {
+            font-size: 0.8rem !important;
         }
 
         #user {
@@ -24,12 +26,12 @@
             padding: 0.5rem;
             position: absolute;
             width: 18rem;
-            height: calc(100% - 5.3rem);
+            height: calc(100% - 6rem);
             border: none;
             left: 0;
             right: calc(100% - 18rem);
             bottom: 3rem;
-            top: 2.3rem;
+            top: 3rem;
             overflow-x: hidden;
             overflow-y: auto;
         }
@@ -37,12 +39,12 @@
         #makecodecolumn {
             position: absolute;
             width: calc(100% - 18rem);
-            height: calc(100% - 2.3rem);
+            height: calc(100% - 3rem);
             border: none;
             left: 18rem;
             right: 0;
             bottom: 0rem;
-            top: 2.3rem;
+            top: 3rem;
         }
 
         #footer {
@@ -61,9 +63,6 @@
 
         .ui.selection.list>.item.active {
             border: solid 2px grey;
-        }
-        #editlabel {
-            color: white !important;
         }
     </style>
     <script type="text/javascript"
@@ -294,7 +293,7 @@
 </head>
 
 <body id='root' class='root'>
-    <nav class="ui menu inverted fixed borderless">
+    <nav class="ui menu fixed borderless">
         <div class="menu left">
             <div class="ui item">
                 MakeCode GitHub Explorer
