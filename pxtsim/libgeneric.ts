@@ -543,6 +543,10 @@ namespace pxsim {
             return r
         }
 
+        export function isReadOnly(buf: RefBuffer) {
+            return buf.isStatic
+        }
+
         export function getBytes(buf: RefBuffer) {
             // not sure if this is any useful...
             return buf.data;
@@ -566,8 +570,15 @@ namespace pxsim {
             setByte(buf, off, v);
         }
 
+        function checkWrite(buf: RefBuffer) {
+            if (buf.isStatic) U.userError("Writing to read only buffer.")
+        }
+
         export function setByte(buf: RefBuffer, off: number, v: number) {
-            if (inRange(buf, off)) buf.data[off] = v
+            if (inRange(buf, off)) {
+                checkWrite(buf)
+                buf.data[off] = v
+            }
         }
 
         export function length(buf: RefBuffer) {
@@ -581,6 +592,7 @@ namespace pxsim {
                 length = buf.data.length;
             length = Math.min(length, buf.data.length - offset);
 
+            checkWrite(buf)
             buf.data.fill(value, offset, offset + length)
         }
 
@@ -627,6 +639,7 @@ namespace pxsim {
                 return;
             }
 
+            checkWrite(buf)
             if (offset < 0) {
                 offset = -offset;
                 memmove(buf.data, start + offset, buf.data, start, len - offset);
@@ -643,6 +656,8 @@ namespace pxsim {
 
             if (start < 0 || start + len > buf.data.length || start + len < start
                 || len == 0 || offset == 0 || offset == INT_MIN) return;
+
+            checkWrite(buf)
 
             if (offset < 0)
                 offset += len << 8; // try to make it positive
@@ -680,6 +695,7 @@ namespace pxsim {
             if (length < 0)
                 return;
 
+            checkWrite(buf)
             memmove(buf.data, dstOffset, src.data, srcOffset, length)
         }
     }
