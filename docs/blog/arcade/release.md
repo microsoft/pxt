@@ -16,7 +16,8 @@ process.
 
 #### Game Compat
 
-Our latest changes shouldn't change the way your older games run but you will need to use the newer APIs from now on.
+Our latest changes shouldn't change the way your older games run but you will need to use the newer APIs in
+your games from now on.
 
 ### ~
 
