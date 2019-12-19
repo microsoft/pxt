@@ -55,19 +55,19 @@ interface Category extends DropdownOption {
 const options: Category[] = [
     {
         id: "forest",
-        text: "Forest",
+        text: lf("Forest"),
         tiles: []
     }, {
         id: "aquatic",
-        text: "Aquatic",
+        text: lf("Aquatic"),
         tiles: []
     }, {
         id: "dungeon",
-        text: "Dungeon",
+        text: lf("Dungeon"),
         tiles: []
     }, {
         id: "misc",
-        text: "Miscellaneous",
+        text: lf("Miscellaneous"),
         tiles: []
     }
 ];
@@ -75,10 +75,10 @@ const options: Category[] = [
 const tabs: PivotOption[] = [
     {
         id: "custom",
-        text: "My Tiles"
+        text: lf("My Tiles")
     }, {
         id: "gallery",
-        text: "Gallery"
+        text: lf("Gallery")
     }
 ]
 
