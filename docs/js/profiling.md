@@ -72,3 +72,28 @@ Also, the memory reported for arrays is a low bound (the memory allocated is lar
 to growth factor of arrays).
 Finally, on hardware heap fragmentation might mean less memory is available than
 one would think.
+
+### Profiling on hardware
+
+You can use `control.gcStats()`. It will return an object with various garbage collector
+statistics. Example output:
+
+```json
+{
+  "numGC": 146,
+  "numBlocks": 1,
+  "totalBytes": 87712,
+  "lastFreeBytes": 34976,
+  "lastMaxBlockBytes": 25092,
+  "minFreeBytes": 32328
+}
+```
+
+The GC has run 146 times since reset.
+It has allocated 1 chunk of memory (this is typically 1 or 2), with a
+total size (of all chunks is more than 1) of 87712 bytes.
+Upon last collection, there were 34976 free bytes and the biggest
+contiguous block was 25092 bytes (this is the largest allocation that
+would still succeed right after that last collection).
+Since reset, the minimum free memory was 32328
+(which means that if the device had 32k less memory it would crash).
