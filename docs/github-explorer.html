@@ -164,8 +164,9 @@
                     </div>`)
                     return;
                 }
-                $('#repoes')
-                    .append(`<a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
+                $('#repoes')                
+                    .append(`<div class="ui separator"></div>
+<a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
                     <div class="ui mini image">
       <img src="${user.avatar_url}">
     </div>
@@ -176,6 +177,7 @@
 </a>`)
                 const repoes = await fetchUserRepos(userName);
                 $("#repoes")
+                    .append(`<div class="ui separator"></div>`)
                     .append(
                         repoes.map(repo => {
                             const target = targets[repo.target];
@@ -317,15 +319,6 @@
         </div>
     </nav>
     <div id="repocolumn">
-        <div id="signin">
-            <p>
-                Sign in to access your MakeCode repositories.
-            </p>
-            <button id="signinbtn" class="ui icon button">
-                <i class="ui github icon"></i>
-                Sign in
-            </button>
-        </div>
         <div id="userparent" class="ui left icon input">
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
             <i class="search icon"></i>
@@ -333,6 +326,15 @@
         <div id="repoes" class="ui selection list"></div>
     </div>
     <iframe id="makecodecolumn"></iframe>
+    <div id="signin">
+        <p>
+            Sign in to access your MakeCode repositories.
+        </p>
+        <button id="signinbtn" class="ui icon button">
+            <i class="ui github icon"></i>
+            Sign in
+        </button>
+    </div>
     <footer id="footer" class="hideprint">
         <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
         <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>
