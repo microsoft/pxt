@@ -353,7 +353,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             }
             else {
                 const { selected, backgroundColor, tileset } = this.props;
-                const newIndex = tileset.tiles.length;
+                const newIndex = tileset.tiles.length || 1; // transparent is index 0, so default to 1
 
                 this.props.dispatchCreateNewTile(
                     tile.bitmap,
@@ -372,11 +372,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         if (button) {
             const column = this.categoryTiles.length % 4;
-            const row = Math.floor(this.categoryTiles.length / 4);
+            const row = Math.floor(this.categoryTiles.length / 4) % 4;
 
             button.style.position = "absolute";
-            button.style.left = (column * 25) + "%";
-            button.style.top = (row * 25) + "%";
+            button.style.left = "calc(" + (column / 4) + " * (100% - 0.5rem) + 0.25rem)";
+            button.style.top = "calc(" + (row / 4) + " * (100% - 0.5rem) + 0.25rem)";
         }
     }
 
