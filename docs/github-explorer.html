@@ -198,8 +198,8 @@
                                 const readOnly = !$('#edit').is(':checked');
 
                                 const url = targets[repo.target].url +
-                                    `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:https://github.com/` +
-                                    repo.full_name
+                                    `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:` 
+                                    + repo.full_name + "#master";
                                 $("#makecodecolumn").attr("src", url);
                             })
 
