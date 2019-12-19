@@ -14,6 +14,14 @@
             font-size: 0.8rem !important;
         }
 
+        #signin {
+            margin-left: calc(50% - 10rem);
+            margin-top: 10rem;
+            width: 20rem;
+            text-align: center;
+            margin-right: calc(50% - 10rem);            
+        }
+
         #user {
             width: 14rem;
         }
@@ -26,12 +34,12 @@
             padding: 0.5rem;
             position: absolute;
             width: 18rem;
-            height: calc(100% - 6rem);
+            height: calc(100% - 5.3rem);
             border: none;
             left: 0;
             right: calc(100% - 18rem);
             bottom: 3rem;
-            top: 3rem;
+            top: 2.3rem;
             overflow-x: hidden;
             overflow-y: auto;
         }
@@ -39,12 +47,12 @@
         #makecodecolumn {
             position: absolute;
             width: calc(100% - 18rem);
-            height: calc(100% - 3rem);
+            height: calc(100% - 2.3rem);
             border: none;
             left: 18rem;
             right: 0;
             bottom: 0rem;
-            top: 3rem;
+            top: 2.3rem;
         }
 
         #footer {
@@ -234,10 +242,14 @@
                 $("#signin").show();
                 $('#signout').hide();
                 $('#userparent').hide();
+                $('#repocolumn').hide();
+                $('#makecodecolumn').hide();
             } else {
                 $("#signin").hide();
                 $('#signout').show();
                 $('#userparent').show();
+                $('#repocolumn').show();
+                $('#makecodecolumn').show();
             }
         }
 
@@ -300,12 +312,13 @@
             </div>
         </div>
         <div class="menu right">
+            <!--
             <div class="ui item">
                 <div class="ui toggle checkbox">
                     <input type="checkbox" name="edit" id="edit">
                     <label id="editlabel">Edit</label>
                 </div>
-            </div>
+            </div>-->
             <a href="https://forum.makecode.com" target="_blank" class="ui item">
                 Forum
             </a>
@@ -329,7 +342,7 @@
         <p>
             Sign in to access your MakeCode repositories.
         </p>
-        <button id="signinbtn" class="ui icon button">
+        <button id="signinbtn" class="ui icon basic button">
             <i class="ui github icon"></i>
             Sign in
         </button>
