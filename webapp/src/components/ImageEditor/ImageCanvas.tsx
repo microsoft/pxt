@@ -2,8 +2,10 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { ImageEditorStore, ImageEditorTool, AnimationState, TilemapState, TileDrawingMode } from './store/imageReducer';
-import { dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation,
-    dispatchChangeImageTool, dispatchChangeSelectedColor, dispatchChangeBackgroundColor } from "./actions/dispatch";
+import {
+    dispatchImageEdit, dispatchChangeZoom, dispatchChangeCursorLocation,
+    dispatchChangeImageTool, dispatchChangeSelectedColor, dispatchChangeBackgroundColor
+} from "./actions/dispatch";
 import { GestureTarget, ClientCoordinates, bindGestureEvents } from './util';
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
@@ -67,6 +69,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     protected zoom = 2.5;
     protected panX = 0;
     protected panY = 0;
+    protected hasInteracted = false;
 
     protected lastPanX: number;
     protected lastPanY: number;
@@ -83,9 +86,9 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             <div className="paint-container">
                 <canvas ref="paint-surface-bg" className="paint-surface" />
                 <canvas ref="paint-surface" className="paint-surface" />
-                { overlayLayers.map( (layer, index) => {
+                {overlayLayers.map((layer, index) => {
                     return <canvas ref={`paint-surface-${layer.toString()}`} className={`paint-surface overlay ${!this.props.overlayEnabled ? 'hide' : ''}`} key={index} />
-                }) }
+                })}
                 <div ref="floating-layer-border" className="image-editor-floating-layer" />
             </div>
         </div>
@@ -103,6 +106,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         const canvasBounds = this.refs["canvas-bounds"] as HTMLDivElement;
 
         canvasBounds.addEventListener("wheel", ev => {
+            this.hasInteracted = true
             this.updateZoom(ev.deltaY / 30, ev.clientX, ev.clientY);
             ev.preventDefault();
         });
@@ -161,6 +165,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     onClick(coord: ClientCoordinates, isRightClick?: boolean): void {
+        this.hasInteracted = true
         if (this.isPanning()) return;
 
         if (this.isColorSelect()) {
@@ -178,6 +183,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     onDragStart(coord: ClientCoordinates, isRightClick?: boolean): void {
+        this.hasInteracted = true
         if (this.isPanning()) {
             this.lastPanX = coord.clientX;
             this.lastPanY = coord.clientY;
@@ -225,6 +231,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
+        this.hasInteracted = true
         if (!ev.repeat) {
             // hotkeys for switching temporarily between tools
             this.lastTool = this.props.tool;
@@ -404,7 +411,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
                 if (this.cursorLocation && this.shouldDrawCursor()) {
                     const color = tool === ImageEditorTool.Erase ? 0 : activeColor;
-                    this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, color );
+                    this.drawCursor(this.cursorLocation[0] - (toolWidth >> 1), this.cursorLocation[1] - (toolWidth >> 1), toolWidth, color);
                 }
             }
 
@@ -541,7 +548,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
                         continue;
                     }
 
-                    context.drawImage(tileImage,  (x + x0) * this.cellWidth,  (y + y0) * this.cellWidth);
+                    context.drawImage(tileImage, (x + x0) * this.cellWidth, (y + y0) * this.cellWidth);
                 }
                 else {
                     if (!transparent) context.clearRect((x + x0) * this.cellWidth, (y + y0) * this.cellWidth, this.cellWidth, this.cellWidth);
@@ -570,7 +577,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
 
                 for (let x = 0; x < width; x++) {
                     for (let y = 0; y < width; y++) {
-                        context.drawImage(tileImage,  (left + x) * this.cellWidth,  (top + y) * this.cellWidth);
+                        context.drawImage(tileImage, (left + x) * this.cellWidth, (top + y) * this.cellWidth);
                     }
                 }
 
@@ -649,6 +656,13 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             const newHeight = unit * this.imageHeight;
             const minimumVisible = this.imageWidth > 1 && this.imageHeight > 1 ? unit * 2 : unit >> 1;
 
+            // Hack: If the user hasn't interacted, don't trust the pan since this can
+            // drift for buggy reasons during init (probably we should fix this). If you
+            // do, remove the "hasInteracted" variable.
+            if (!this.hasInteracted) {
+                this.panY = 0
+            }
+
             this.panX = Math.max(Math.min(this.panX, newWidth - minimumVisible), -(bounds.width - minimumVisible));
             this.panY = Math.max(Math.min(this.panY, newHeight - minimumVisible), -(bounds.height - minimumVisible));
 
@@ -658,7 +672,7 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             this.canvas.style.left = `${-this.panX}px`
             this.canvas.style.top = `${-this.panY}px`
 
-            this.canvas.style.clipPath =  `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
+            this.canvas.style.clipPath = `polygon(${this.panX}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY}px, ${this.panX + bounds.width}px ${this.panY + bounds.height}px, ${this.panX}px ${this.panY + bounds.height}px)`;
             // this.canvas.style.imageRendering = "pixelated"
 
             this.cloneCanvasStyle(this.canvas, this.background);
