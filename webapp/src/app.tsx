@@ -3848,6 +3848,8 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 async function importGithubProject(repoid: string) {
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
+        // normalize for precise matching
+        repoid = pxt.github.normalizeRepoId(repoid);
         // try to find project with same id
         let hd = workspace.getHeaders().find(h => h.githubId == repoid);
         if (!hd)
