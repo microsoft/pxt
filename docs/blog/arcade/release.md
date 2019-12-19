@@ -1,9 +1,9 @@
 # Arcade release
 
-We are please to annouce the first release of MakeCode Arcade! Putting together a fun, educational,
-and engaging game developent platform has been a long two year, but highly rewarding process. We've
-had this editor in Beta for quite some time but now we feel it's time to call it ready for general
-release. Yea!
+We are pleased to annouce the first release of MakeCode Arcade! Putting together a fun, educational,
+and engaging game developent platform has been a long two year effort, but yet a highly rewarding process
+for us. We've had this editor in Beta for quite some time but now we feel it's time to call it ready for
+general release. Yea!
 
 ## API changes
 
@@ -22,7 +22,7 @@ Our latest changes shouldn't change the way your older games run but you will ne
 
 ### Tilemap changes
 
-TODO: described dem tilemap changes
+TODO: describe dem tilemap changes
 
 ## New Sprite Editor
 
