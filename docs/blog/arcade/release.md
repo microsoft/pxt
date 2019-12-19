@@ -1,14 +1,28 @@
 # Arcade release
 
-INTRO
+We are please to annouce the first release of MakeCode Arcade! Putting together a fun, educational,
+and engaging game developent platform has been a long two year, but highly rewarding process. We've
+had this editor in Beta for quite some time but now we feel it's time to call it ready for general
+release. Yea!
 
 ## API changes
 
-As part of the beta phase, we learned a lot about the usage of the Arcade editor. As a result, we completely rehauled the tilemap and sprite editors. Here is the a summary of the API changes. Your older games will still run but you will have to use these APIs going forward.
+During the beta phase of Arcade, we learned a lot about how game objects and coding work together
+in the MakeCode editor. As a result, we completely revamped the tilemap and sprite editors.
+In this post, we'll give you a summary some of the API changes and UI adjustments we made through this
+process.
+
+### ~ hint
+
+#### Game Compat
+
+Our latest changes shouldn't change the way your older games run but you will need to use the newer APIs from now on.
+
+### ~
 
 ### Tilemap changes
 
-TODO: descript tilemap changes
+TODO: described dem tilemap changes
 
 ## New Sprite Editor
 
