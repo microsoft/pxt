@@ -164,7 +164,7 @@
                     return;
                 }
                 $('#repoes')                
-                    .append(`<div class="ui separator"></div>
+                    .append(`
 <a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
                     <div class="ui mini image">
       <img src="${user.avatar_url}">
@@ -176,7 +176,7 @@
 </a>`)
                 const repoes = await fetchUserRepos(userName);
                 $("#repoes")
-                    .append(`<div class="ui separator"></div>`)
+                    .append(`<div class="ui divider"></div>`)
                     .append(
                         repoes.map(repo => {
                             const target = targets[repo.target];
