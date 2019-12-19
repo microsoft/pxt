@@ -65,7 +65,12 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
         if (this.props.singleFrame) {
-            this.initSingleFrame(value as pxt.sprite.Bitmap, options);
+            let bitmap = value as pxt.sprite.Bitmap;
+            if (bitmap.height == 0 || bitmap.width == 0) {
+                // Default to 16 x 16 if image is empty
+                bitmap = new pxt.sprite.Bitmap(16, 16);
+            }
+            this.initSingleFrame(bitmap, options);
         }
         else {
             this.initAnimation(value as any, options);
