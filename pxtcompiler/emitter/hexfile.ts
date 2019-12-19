@@ -147,13 +147,6 @@ namespace ts.pxtc {
             }
         }
 
-        export function encodeVTPtr(ptr: number, opts: CompileOptions) {
-            let vv = ptr >> opts.target.vtableShift
-            assert(vv < 0xffff)
-            assert(vv << opts.target.vtableShift == ptr)
-            return vv
-        }
-
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo, hexinfo: pxtc.HexInfo) {
             if (isSetupFor(extInfo))
                 return;
@@ -766,7 +759,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let s = `
-        .balign ${1 << opts.target.vtableShift}
+        .balign 4
 ${info.id}_VT:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
