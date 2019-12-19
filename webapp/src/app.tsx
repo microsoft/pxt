@@ -3851,7 +3851,9 @@ async function importGithubProject(repoid: string) {
         // normalize for precise matching
         repoid = pxt.github.normalizeRepoId(repoid);
         // try to find project with same id
-        let hd = workspace.getHeaders().find(h => h.githubId == repoid);
+        let hd = workspace.getHeaders().find(h => h.githubId &&
+            pxt.github.normalizeRepoId(h.githubId) == repoid
+        );
         if (!hd)
             hd = await workspace.importGithubAsync(repoid)
         if (hd)
