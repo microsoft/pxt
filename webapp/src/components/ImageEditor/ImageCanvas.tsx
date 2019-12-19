@@ -145,9 +145,11 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             // which is applied here and then set back to null
 
             if (this.props.zoomDelta === 0) {
-                this.zoomToCanvas();
+                if (!this.hasInteracted)
+                    this.zoomToCanvas();
             }
             else {
+                this.hasInteracted = true;
                 this.updateZoom(this.props.zoomDelta)
             }
             this.props.dispatchChangeZoom(null);
@@ -625,23 +627,31 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
         }
     }
 
+    protected getCenteredPan(): [number, number] {
+        let [resX, resY] = [0, 0]
+
+        const outer = this.refs["canvas-bounds"] as HTMLDivElement;
+        const bounds = outer.getBoundingClientRect();
+        const canvasBounds = this.canvas.getBoundingClientRect();
+
+        if (canvasBounds.width < bounds.width) {
+            resX = -((bounds.width >> 1) - (canvasBounds.width >> 1));
+        }
+
+        if (canvasBounds.height < bounds.height) {
+            resY = -((bounds.height >> 1) - (canvasBounds.height >> 1));
+        }
+
+        return [resX, resY]
+    }
+
     protected zoomToCanvas() {
         this.zoom = 10;
         const outer = this.refs["canvas-bounds"] as HTMLDivElement;
 
         this.applyZoom();
         if (this.canvas && outer) {
-            const bounds = outer.getBoundingClientRect();
-            const canvasBounds = this.canvas.getBoundingClientRect();
-
-            if (canvasBounds.width < bounds.width) {
-                this.panX = -((bounds.width >> 1) - (canvasBounds.width >> 1));
-            }
-
-            if (canvasBounds.height < bounds.height) {
-                this.panY = -((bounds.height >> 1) - (canvasBounds.height >> 1));
-            }
-
+            [this.panX, this.panY] = this.getCenteredPan()
         }
         this.applyZoom();
     }
@@ -657,10 +667,10 @@ class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements G
             const minimumVisible = this.imageWidth > 1 && this.imageHeight > 1 ? unit * 2 : unit >> 1;
 
             // Hack: If the user hasn't interacted, don't trust the pan since this can
-            // drift for buggy reasons during init (probably we should fix this). If you
+            // drift for buggy reasons during init. Probably we should fix this, if you
             // do, remove the "hasInteracted" variable.
             if (!this.hasInteracted) {
-                this.panY = 0
+                [this.panX, this.panY] = this.getCenteredPan();
             }
 
             this.panX = Math.max(Math.min(this.panX, newWidth - minimumVisible), -(bounds.width - minimumVisible));
