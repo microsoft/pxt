@@ -62,6 +62,9 @@
         .ui.selection.list>.item.active {
             border: solid 2px grey;
         }
+        #editlabel {
+            color: white !important;
+        }
     </style>
     <script type="text/javascript"
         src="https://pxt.azureedge.net/blob/4d9b3a258759c53e7bc66b6fc554c51e2434437c/doccdn/jquery.js"></script>
@@ -105,7 +108,8 @@
         function trackClick(id) {
             if (typeof mscc !== "undefined" && !mscc.hasConsent())
                 mscc.setConsent();
-            pxt.aiTrackEvent(id);
+            if (typeof pxt !== "undefined")
+                pxt.aiTrackEvent(id);
         }
 
         async function sniffTarget(repo) {
@@ -138,12 +142,21 @@
             return msg;
         }
 
-        async function update() {
+        async function fetchCurrentUser() {
+            const response = await fetch(`${api}/user?access_token=${token()}`);
+            if (response.status != 200)
+                return undefined;
+            const msg = await response.json();
+            return msg;
+        }
+
+        async function update(userName) {
             $('#userparent').addClass('loading');
             try {
                 $("#repoes")
                     .empty();
-                const userName = $("#user").val();
+                $("#makecodecolumn").attr("src", "");
+
                 const user = await fetchUser(userName);
                 if (!user) {
                     $('#repoes').append(`<div class="ui item">
@@ -181,10 +194,10 @@
                                 trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
                                 item.addClass('active');
+                                const readOnly = !$('#edit').is(':checked');
+
                                 const url = targets[repo.target].url +
-                                    "?controller=1&readonly=1&ws=mem&nocookiebanner=1" +
-                                    "#pub:" +
-                                    "https://github.com/" +
+                                    `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:https://github.com/` +
                                     repo.full_name
                                 $("#makecodecolumn").attr("src", url);
                             })
@@ -247,20 +260,34 @@
         $(function () {
             console.log(`loaded...`);
             checkToken();
-            $("#generate").click(update);
             $('#signinbtn').click(navigateSignin)
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
                     trackClick("github.explorer.search")
-                    update();
+                    const userName = $("#user").val();
+                    update(userName);
                 }
             });
+            $('#edit').change(function () {
+                trackClick("github.explorer.edit")
+                const userName = $("#user").val();
+                update(userName);
+            })
 
+            console.log("starting...");
+            if (typeof pxt !== "undefined")
+                pxt.aiTrackEvent("github.explorer.loaded")
+
+            fetchCurrentUser()
+                .then(user => {
+                    if (user) {
+                        $("#user").val(user.login);
+                        update(user.login);
+                    }
+                })
+            
         });
-
-        console.log("starting...");
-        pxt.aiTrackEvent("github.explorer.loaded")
     </script>
 </head>
 
@@ -272,6 +299,12 @@
             </div>
         </div>
         <div class="menu right">
+            <div class="ui item">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="edit" id="edit">
+                    <label id="editlabel">Edit</label>
+                </div>
+            </div>
             <a href="https://forum.makecode.com" target="_blank" class="ui item">
                 Forum
             </a>
