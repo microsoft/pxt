@@ -4046,7 +4046,13 @@ function dumplogAsync(c: commandParser.ParsedCommand) {
 function dumpheapAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumpheapAsync())
+        .then(() => gdb.dumpheapAsync(c.args[0]))
+}
+
+function dumpmemAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.dumpMemAsync(c.args[0]))
 }
 
 async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
@@ -5966,10 +5972,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "heap",
         help: "attempt to dump GC and codal heap log using openocd",
-        argString: "",
+        argString: "[<memdump-file.bin>]",
         aliases: ["dumpheap"],
         advanced: true,
     }, dumpheapAsync);
+
+    p.defineCommand({
+        name: "memdump",
+        help: "attempt to dump raw memory image using openocd",
+        argString: "<memdump-file.bin>",
+        aliases: ["dumpmem"],
+        advanced: true,
+    }, dumpmemAsync);
 
     p.defineCommand({
         name: "builddaldts",

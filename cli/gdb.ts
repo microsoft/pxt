@@ -366,13 +366,29 @@ function VAR_BLOCK_WORDS(vt: number) {
     return (((vt) << 12) >> (12 + 2))
 }
 
-export async function dumpheapAsync() {
+export async function dumpMemAsync(filename: string) {
     await initGdbServerAsync()
 
     let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
+    memStart &= ~0xffff
     let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
     let mem = await getMemoryAsync(memStart, memEnd - memStart)
+    fs.writeFileSync(filename, mem)
+}
+
+export async function dumpheapAsync(filename?: string) {
+    let memStart = findAddr("_sdata", true) || findAddr("__data_start__")
+    let memEnd = findAddr("_estack", true) || findAddr("__StackTop")
+    console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
+    let mem: Buffer
+    if (filename) {
+        const buf = fs.readFileSync(filename)
+        mem = buf.slice(memStart & 0xffff)
+    } else {
+        await initGdbServerAsync()
+        mem = await getMemoryAsync(memStart, memEnd - memStart)
+    }
     let heapDesc = findAddr("heap")
     let m = /\.bss\.heap\s+0x000000[a-f0-9]+\s+0x([a-f0-9]+)/.exec(getMap())
     let heapSz = 8
