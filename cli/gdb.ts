@@ -525,6 +525,15 @@ export async function dumpheapAsync(filename?: string) {
     const string_cons_vt = findAddr("pxt::string_cons_vt")
     const string_skiplist16_vt = findAddr("pxt::string_skiplist16_vt")
 
+    const PNG: any = require("pngjs").PNG;
+    const visWidth = 256
+    const visHeight = 256
+    const heapVis = new PNG({ width: visWidth, height: visHeight })
+    const visData: Uint8Array = heapVis.data
+
+    for (let i = 0; i < visWidth * visHeight * 4; ++i)
+        visData[i] = 0xff
+
     /*
     struct VTable {
         uint16_t numbytes;
@@ -547,7 +556,9 @@ export async function dumpheapAsync(filename?: string) {
             let category = ""
             let addWords = 0
             fields = {}
+            let color = 0x000000
             if (vtable & FREE_MASK) {
+                color = 0x00ff00
                 category = "free"
                 numbytes = VAR_BLOCK_WORDS(vtable) << 2
                 maxFree = Math.max(numbytes, maxFree)
@@ -681,9 +692,28 @@ export async function dumpheapAsync(filename?: string) {
             objects[obj.addr] = obj
             byCategory[category] += (addWords + numwords) * 4
             numByCategory[category]++
+
+            for (let i = 0; i < numwords; ++i) {
+                const j = (objPtr & 0xffffff) + i * 4
+                if (category == "free") {
+                    const mask = Math.min(i / 1, 255) | 0
+                    color = (mask << 16) | 0x00ff00
+                }
+                visData[j] = (color >> 16) & 0xff
+                visData[j + 1] = (color >> 8) & 0xff
+                visData[j + 2] = (color >> 0) & 0xff
+                visData[j + 3] = 0xff // alpha
+            }
+
             objPtr += numwords * 4
         }
     }
+
+    heapVis.pack()
+        .pipe(fs.createWriteStream('heap.png'))
+        .on('finish', function () {
+            console.log('Written heap.png!');
+        });
 
     let cats = Object.keys(byCategory)
     cats.sort((a, b) => byCategory[b] - byCategory[a])
