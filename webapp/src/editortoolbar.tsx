@@ -124,12 +124,15 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                 onChangeValue={this.saveProjectName} />)
         }
 
-        if (showSave) {
+        const { header } = this.props.parent.state;
+        const showGithubButton = pxt.appTarget.cloud && pxt.appTarget.cloud.githubPackages;
+        const hasRepository = header && !!header.githubId;
+        if (showSave && !(showGithubButton && hasRepository)) {
             const sizeClass = view == View.Computer ? 'small' : 'large';
             saveInput.push(<EditorToolbarButton icon='save' className={`${sizeClass} right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view={this.getViewString(view)} key={`save${view}`} />)
         }
 
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.githubPackages) {
+        if (showGithubButton) {
             saveInput.push(<githubbutton.GithubButton parent={this.props.parent} key={`githubbtn${view}`} />)
         }
 
@@ -198,7 +201,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging } = this.props.parent.state;
+        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging, header } = this.props.parent.state;
 
         if (home) return <div />; // Don't render if we're in the home screen
 
@@ -228,6 +231,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
         const showGithub = !!pxt.appTarget.cloud && !!pxt.appTarget.cloud.githubPackages;
+        const hasRepository = header && !!header.githubId;
 
         const trace = !!targetTheme.enableTrace;
         const tracing = this.props.parent.state.tracing;
@@ -310,7 +314,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div>
                         {showSave && <div className="column four wide">
-                            <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                            {!(showGithub && hasRepository) && <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />}
                             {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtntablet`} className={"small"} />}
                         </div>}
                         <div className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
@@ -327,7 +331,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         </div>
                         <div className="five wide column">
                             <div className="ui grid right aligned">
-                                {compileBtn && <div className="ui row items" style={ { paddingBottom: 0, marginBottom: '1rem' } }>
+                                {compileBtn && <div className="ui row items" style={{ paddingBottom: 0, marginBottom: '1rem' }}>
                                     <div className="ui item">
                                         {this.getCompileButton(tablet)}
                                     </div>
