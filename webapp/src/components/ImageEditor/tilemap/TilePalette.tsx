@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { ImageEditorStore, TilemapState, TileCategory, TileDrawingMode, GalleryTile } from '../store/imageReducer';
-import { dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground,
+import {
+    dispatchChangeSelectedColor, dispatchChangeBackgroundColor, dispatchSwapBackgroundForeground,
     dispatchChangeTilePaletteCategory, dispatchChangeTilePalettePage, dispatchChangeDrawingMode,
     dispatchCreateNewTile, dispatchSetGalleryOpen, dispatchOpenTileEditor, dispatchDeleteTile,
-    dispatchShowAlert, dispatchHideAlert } from '../actions/dispatch';
+    dispatchShowAlert, dispatchHideAlert
+} from '../actions/dispatch';
 import { TimelineFrame } from '../TimelineFrame';
 import { Dropdown, DropdownOption } from '../Dropdown';
 import { Pivot, PivotOption } from '../Pivot';
@@ -81,7 +83,12 @@ interface UserTile {
 
 type RenderedTile = GalleryTile | UserTile
 
-class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
+const DrawModeSelector: React.FunctionComponent<{}> = (ps) => {
+    return (
+    );
+}
+
+class TilePaletteImpl extends React.Component<TilePaletteProps, {}> {
     protected canvas: HTMLCanvasElement;
     protected renderedTiles: RenderedTile[];
     protected categoryTiles: RenderedTile[];
@@ -140,9 +147,9 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             </div>
             <Pivot options={tabs} selected={galleryOpen ? 1 : 0} onChange={this.pivotHandler} />
             <div className="tile-palette-controls-outer">
-                { galleryOpen && <Dropdown onChange={this.dropdownHandler} options={options} selected={category} /> }
+                {galleryOpen && <Dropdown onChange={this.dropdownHandler} options={options} selected={category} />}
 
-                { !galleryOpen &&
+                {!galleryOpen &&
                     <div className="tile-palette-controls">
                         <IconButton
                             onClick={this.tileEditHandler}
@@ -172,7 +179,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             <div className="tile-canvas-outer" onContextMenu={this.preventContextMenu}>
                 <div className="tile-canvas">
                     <canvas ref="tile-canvas-surface" className="paint-surface" onMouseDown={this.canvasClickHandler} onTouchStart={this.canvasTouchHandler} role="complementary"></canvas>
-                    { showCreateTile &&
+                    {showCreateTile &&
                         <div ref="create-tile-ref">
                             <IconButton
                                 onClick={this.tileCreateHandler}
@@ -184,7 +191,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                     }
                 </div>
                 <div className="tile-canvas-controls">
-                    { pageControls(totalPages, page, this.pageHandler) }
+                    {pageControls(totalPages, page, this.pageHandler)}
                 </div>
             </div>
         </div>;
@@ -314,7 +321,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         dispatchShowAlert(lf("Are you sure?"),
             lf("Deleting this tile will remove it from all other tile maps in your game."),
-            [{ label: lf("Yes"), onClick: this.deleteTile}, { label: lf("No"), onClick: dispatchHideAlert }]);
+            [{ label: lf("Yes"), onClick: this.deleteTile }, { label: lf("No"), onClick: dispatchHideAlert }]);
     }
 
     protected deleteTile = () => {
@@ -411,7 +418,7 @@ function pageControls(pages: number, selected: number, onClick: (index: number) 
     const pageMap: boolean[] = [];
     for (let i = 0; i < pages; i++) pageMap[i] = i === selected;
 
-    return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} 10`} className={`tile-palette-pages ${pages < 2 ?  'disabled' : ''}`}>
+    return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${width} 10`} className={`tile-palette-pages ${pages < 2 ? 'disabled' : ''}`}>
         <polygon
             className="tile-palette-page-arrow"
             points="1,5 4,3 4,7"
@@ -424,13 +431,13 @@ function pageControls(pages: number, selected: number, onClick: (index: number) 
                     cx={8 + index * 5}
                     cy="5"
                     r={isSelected ? 2 : 1}
-                    onClick={!isSelected ? () => onClick(index) : undefined}/>
+                    onClick={!isSelected ? () => onClick(index) : undefined} />
             )
         }
         <polygon
             className="tile-palette-page-arrow"
             points={`${width - 1},5 ${width - 4},3 ${width - 4},7`}
-            onClick={(selected < pages - 1) ? () =>  onClick(selected + 1) : undefined} />
+            onClick={(selected < pages - 1) ? () => onClick(selected + 1) : undefined} />
     </svg>
 }
 
