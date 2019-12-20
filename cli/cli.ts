@@ -3749,7 +3749,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
             filename: f,
             diagnostics: infos
         })
-        infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
+        infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
@@ -5101,13 +5101,29 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                             const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                             pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
-                            addSnippet(<CodeSnippet>{
-                                name: card.name,
-                                code: tutorial.code,
-                                type: "blocks",
-                                ext: "ts",
-                                packages: pkgs
-                            }, "tutorial" + gal.name, cardIndex);
+
+                            if (tutorial.code.indexOf("namespace") !== -1) {
+                                // Handles tilemaps and spritekinds
+                                tutorial.steps
+                                    .filter(step => !!step.contentMd)
+                                    .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
+                                        .forEach((snippet, snippetIndex) => addSnippet(
+                                            snippet,
+                                            "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
+                                            cardIndex)
+                                        )
+                                    );
+                            }
+                            else {
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: tutorial.code,
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "tutorial" + gal.name, cardIndex);
+                            }
+
                             break;
                         }
                         case "example": {
