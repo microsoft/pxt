@@ -243,7 +243,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         if (!!tile.qualifiedName) {
             // For gallery tile, find the category then the page within the category
             const category = options.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) !== -1);
-            if (!category && !category.tiles) return;
+            if (!category || !category.tiles) return;
             const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) / TILES_PER_PAGE), 0);
 
             dispatchSetGalleryOpen(true);
