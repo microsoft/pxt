@@ -101,8 +101,10 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         const { gallery, tileset } = props;
         options.forEach(opt => {
-            opt.tiles.push.apply(opt.tiles,
-                gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth));
+            if (opt.tiles.length == 0) {
+                opt.tiles.push.apply(opt.tiles,
+                    gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth));
+                }
         })
     }
 
@@ -219,7 +221,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected updateGalleryTiles() {
-        const { tileset, page, gallery, category, galleryOpen } = this.props;
+        const { page, category, galleryOpen } = this.props;
 
         if (galleryOpen) {
             this.categoryTiles = options[category].tiles;
@@ -233,26 +235,28 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected jumpToPageContaining(index: number) {
-        const { tileset, gallery, dispatchSetGalleryOpen, dispatchChangeTilePaletteCategory,
+        const { tileset, dispatchSetGalleryOpen, dispatchChangeTilePaletteCategory,
             dispatchChangeTilePalettePage } = this.props;
         if (!index || index < 0 || index >= tileset.tiles.length) return;
+
         const tile = tileset.tiles[index];
         if (!!tile.qualifiedName) {
             // For gallery tile, find the category then the page within the category
-            const galleryTile = gallery.find(t => t.qualifiedName == tile.qualifiedName);
-            const category = options.find(opt => opt.tiles.indexOf(galleryTile) !== -1);
+            const category = options.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) !== -1);
+            if (!category || !category.tiles) return;
             const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) / TILES_PER_PAGE), 0);
 
+            dispatchSetGalleryOpen(true);
             dispatchChangeTilePaletteCategory(options.indexOf(category) as TileCategory);
             dispatchChangeTilePalettePage(page);
-            dispatchSetGalleryOpen(true);
         } else {
             // For custom tile, find the page
             const categoryTiles = this.getCustomTiles().map(([t, i]) => t);
+            if (!categoryTiles) return;
             const page = Math.max(Math.floor(categoryTiles.findIndex(t => t.projectId == tile.projectId) / TILES_PER_PAGE), 0);
 
-            dispatchChangeTilePalettePage(page);
             dispatchSetGalleryOpen(false);
+            dispatchChangeTilePalettePage(page);
         }
     }
 
