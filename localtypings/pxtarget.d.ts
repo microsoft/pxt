@@ -49,6 +49,7 @@ declare namespace pxt {
         ignoreDocsErrors?: boolean;
         uploadDocs?: boolean; // enable uploading to crowdin on master or v* builds
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
+        multiVariants?: string[];
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
         unsupportedBrowsers?: BrowserOptions[]; // list of unsupported browsers for a specific target (eg IE11 in arcade). check browserutils.js browser() function for strings
         checkdocsdirs?: string[]; // list of folders for checkdocs, irrespective of SUMMARY.md
@@ -741,7 +742,6 @@ declare namespace ts.pxtc {
         sourceFiles?: string[];
         generatedFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
-        hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
         noEmit?: boolean;
         forceEmit?: boolean;
@@ -794,6 +794,10 @@ declare namespace ts.pxtc {
         onlyPublic: boolean;
         commBase?: number;
         skipCloudBuild?: boolean;
+        hexinfo?: HexInfo;
+        otherMultiVariants?: ExtensionInfo[];
+        appVariant?: string;
+        outputPrefix?: string;
     }
 
     interface HexInfo {

@@ -2110,7 +2110,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
                         // Place the base HEX image in the hex cache if necessary
                         let sha = options.extinfo.sha;
-                        let hex: string[] = options.hexinfo.hex;
+                        let hex: string[] = options.extinfo.hexinfo.hex;
                         let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
@@ -2601,7 +2601,7 @@ class SnippetHost implements pxt.Host {
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo)
+        return pxt.hexloader.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -2678,13 +2678,13 @@ class Host
             }
 
         try {
-            pxt.debug(`reading ${resolved}`)
+            // pxt.debug(`reading ${resolved}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
                 for (let addPath of module.config.additionalFilePaths || []) {
                     try {
-                        pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
+                        // pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
                     }
@@ -2771,8 +2771,9 @@ class Host
         }
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
-            return pxt.hex.getHexInfoAsync(this, extInfo)
+            return pxt.hexloader.getHexInfoAsync(this, extInfo)
 
+        setBuildEngine()
         return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
             .then(() => build.thisBuild.patchHexInfo(extInfo))
     }
@@ -3255,8 +3256,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         sourceFiles: sources,
         target: mainPkg.getTargetOptions(),
         ast: true,
-        noEmit: true,
-        hexinfo: null
+        noEmit: true
     }
 
     opts.target.isNative = false
@@ -4803,12 +4803,12 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
         let r = pxtc.UF2.toBin(buf as any)
         if (r) {
             console.log("UF2 file detected.")
-            console.log(pxtc.hex.hexDump(r.buf, r.start))
+            console.log(pxtc.hexDump(r.buf, r.start))
             return Promise.resolve()
         }
     }
     console.log("Binary file assumed.")
-    console.log(pxtc.hex.hexDump(buf))
+    console.log(pxtc.hexDump(buf))
     return Promise.resolve()
 }
 
