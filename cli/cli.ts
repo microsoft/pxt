@@ -5107,11 +5107,14 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 tutorial.steps
                                     .filter(step => !!step.contentMd)
                                     .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
-                                        .forEach((snippet, snippetIndex) => addSnippet(
-                                            snippet,
-                                            "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
-                                            cardIndex)
-                                        )
+                                        .forEach((snippet, snippetIndex) => {
+                                            snippet.packages = pkgs;
+                                            addSnippet(
+                                                snippet,
+                                                "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
+                                                cardIndex
+                                            )
+                                        })
                                     );
                             }
                             else {
