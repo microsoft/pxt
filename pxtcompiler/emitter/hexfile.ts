@@ -157,13 +157,6 @@ namespace ts.pxtc {
             }
         }
 
-        export function encodeVTPtr(ptr: number, opts: CompileOptions) {
-            let vv = ptr >> opts.target.vtableShift
-            assert(vv < 0xffff)
-            assert(vv << opts.target.vtableShift == ptr)
-            return vv
-        }
-
         export function setupFor(opts: CompileTarget, extInfo: ExtensionInfo) {
             ctx = cachedCtxs.find(c => c.sha == extInfo.sha)
 
