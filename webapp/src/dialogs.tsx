@@ -35,6 +35,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
             return core.confirmAsync({
                 header: lf("About"),
                 hideCancel: true,
+                hasCloseIcon: true,
                 agreeLbl: lf("Ok"),
                 agreeClass: "positive",
                 buttons,
@@ -451,7 +452,6 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
     if (name) {
         name = name.toLocaleLowerCase().replace(/\s+/g, '-');
         name = name.replace(/[^\w\-]/g, '');
-        if (!/^pxt-/.test(name)) name = 'pxt-' + name;
     }
 
     let repoName: string = name || "";
@@ -663,6 +663,8 @@ export function showReportAbuseAsync(pubId?: string) {
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
     core.confirmAsync({
         header: lf("Report Abuse"),
+        hideCancel: true,
+        hasCloseIcon: true,
         onLoaded: (el) => {
             urlInput = el.querySelectorAll('input')[0] as HTMLInputElement;
             reasonInput = el.querySelectorAll('textarea')[0] as HTMLTextAreaElement;

@@ -52,6 +52,7 @@ declare namespace pxt {
         platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
+        paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
         npmDependencies?: Map<string>;

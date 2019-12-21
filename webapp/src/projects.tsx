@@ -237,6 +237,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
+        this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.signOutGithub = this.signOutGithub.bind(this);
     }
@@ -261,6 +262,12 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         this.props.parent.showResetDialog();
     }
 
+    showReportAbuse() {
+        pxt.tickEvent("home.reportabuse", undefined, { interactiveConsent: true });
+        this.props.parent.showReportAbuse();
+    }
+
+
     showAboutDialog() {
         pxt.tickEvent("home.about");
         this.props.parent.showAboutDialog();
@@ -280,6 +287,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
         const { highContrast } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const githubUser = this.getData("github:user") as pxt.editor.UserInfo;
+        const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
 
         // tslint:disable react-a11y-anchors
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -293,8 +301,9 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 {lf("Sign out")}
             </div> : undefined}
             <div className="ui divider"></div>
-            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
+            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
+            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }
@@ -1051,6 +1060,7 @@ export class NewProjectNameDialog extends ExitAndSaveDialog {
 
 export interface ChooseHwDialogState {
     visible?: boolean;
+    skipDownload?: boolean;
 }
 
 export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialogState> {
@@ -1059,7 +1069,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            visible: false
+            visible: false,
+            skipDownload: false
         }
         this.close = this.close.bind(this);
     }
@@ -1072,8 +1083,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         this.setState({ visible: false });
     }
 
-    show() {
-        this.setState({ visible: true });
+    show(skipDownload?: boolean) {
+        this.setState({ visible: true, skipDownload: !!skipDownload });
     }
 
     fetchGallery(): pxt.CodeCard[] {
@@ -1097,10 +1108,10 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         }, { interactiveConsent: true });
         this.hide()
 
-        pxt.setHwVariant(cfg.name)
+        pxt.setHwVariant(cfg.name, card ? card.name : (cfg.description || cfg.name))
         let editor = this.props.parent
         editor.reloadHeaderAsync()
-            .then(() => editor.compile())
+            .then(() => !this.state.skipDownload && editor.compile())
             .done()
     }
 

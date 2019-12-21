@@ -23,7 +23,7 @@ function crowdinCredentialsAsync(): Promise<CrowdinCredentials> {
         key = process.env[pxt.crowdin.KEY_VARIABLE];
     if (!key) {
         pxt.log(`Crowdin operation skipped: '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
-        return undefined;
+        return Promise.resolve(undefined);
     }
     return Promise.resolve({ prj, key, branch });
 }
@@ -138,7 +138,6 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 export function downloadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
     const name = (parsed && parsed.args[0]) || "";
     const crowdinDir = pxt.appTarget.id;
-
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();

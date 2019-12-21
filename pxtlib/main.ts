@@ -167,8 +167,6 @@ namespace pxt {
         U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
-        if (!comp.vtableShift)
-            comp.vtableShift = 2
         if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
             comp.noSourceInFlash = true // no point putting sources in hex to be flashed
         if (comp.utf8 === undefined)
@@ -263,12 +261,15 @@ namespace pxt {
     // the pxt.json of hw---variant would generally specify compileServiceVariant
     // This is controlled by ?hw=variant or by configuration created by dragging `config.bin`
     // into editor.
-    export function setHwVariant(variant: string) {
+    export function setHwVariant(variant: string, name?: string) {
         variant = variant.replace(/.*---/, "")
-        if (/^[\w\-]+$/.test(variant))
-            hwVariant = variant
-        else
-            hwVariant = null
+        if (/^[\w\-]+$/.test(variant)) {
+            hwVariant = variant;
+            hwName = name || variant;
+        } else {
+            hwVariant = null;
+            hwName = null;
+        }
     }
 
     export function hasHwVariants(): boolean {

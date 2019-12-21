@@ -1005,6 +1005,8 @@ export async function importGithubAsync(id: string): Promise<Header> {
         const commit = await pxt.github.getCommitAsync(parsed.fullName, sha)
         if (!commit.tree.tree.find(f => f.path == pxt.CONFIG_NAME)) {
             pxt.log(`github: detected import non-makecode project`)
+            if (pxt.shell.isReadOnly())
+                U.userError(lf("This repository looks empty."));
             isEmpty = true; // needs initialization
             forceTemplateFiles = false;
             // ask user before modifying project
@@ -1022,6 +1024,8 @@ export async function importGithubAsync(id: string): Promise<Header> {
             // this means repo is completely empty;
             // put all default files in there
             pxt.log(`github: detected import empty project`)
+            if (pxt.shell.isReadOnly())
+                U.userError(lf("This repository looks empty."));
             await cloudsync.ensureGitHubTokenAsync();
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n");
             isEmpty = true;

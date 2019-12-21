@@ -321,7 +321,7 @@ namespace ts.pxtc {
                             parameters = callbackParameters.map((sym, i) => {
                                 return {
                                     name: sym.getName(),
-                                    type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                                    type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p), undefined, TypeFormatFlags.UseFullyQualifiedType)
                                 };
                             });
                         }

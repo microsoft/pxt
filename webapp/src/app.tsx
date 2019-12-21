@@ -3034,9 +3034,9 @@ export class ProjectView
         this.scriptSearch.showExperiments();
     }
 
-    showChooseHwDialog() {
+    showChooseHwDialog(skipDownload?: boolean) {
         if (this.chooseHwDialog)
-            this.chooseHwDialog.show()
+            this.chooseHwDialog.show(skipDownload)
     }
 
     showRecipesDialog() {
@@ -3848,8 +3848,12 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
 async function importGithubProject(repoid: string) {
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
+        // normalize for precise matching
+        repoid = pxt.github.normalizeRepoId(repoid);
         // try to find project with same id
-        let hd = workspace.getHeaders().find(h => h.githubId == repoid);
+        let hd = workspace.getHeaders().find(h => h.githubId &&
+            pxt.github.normalizeRepoId(h.githubId) == repoid
+        );
         if (!hd)
             hd = await workspace.importGithubAsync(repoid)
         if (hd)

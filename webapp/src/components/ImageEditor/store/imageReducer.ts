@@ -38,6 +38,7 @@ export enum TileDrawingMode {
 
 // State that goes on the undo/redo stack
 export interface AnimationState {
+    kind: "Animation",
     visible: boolean;
     colors: string[];
 
@@ -49,6 +50,7 @@ export interface AnimationState {
 }
 
 export interface TilemapState {
+    kind: "Tilemap"
     tileset: pxt.sprite.TileSet;
     aspectRatioLocked: boolean;
     tilemap: pxt.sprite.ImageState;
@@ -120,7 +122,8 @@ export interface TilemapStore {
     future: TilemapState[];
 }
 
-const initialState: AnimationState =  {
+const initialState: AnimationState = {
+    kind: "Animation",
     visible: true,
     colors: [
         "#000000",
@@ -247,6 +250,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     ...state.store,
                     past: [],
                     present: {
+                        kind: "Animation",
                         visible: true,
                         colors: pxt.appTarget.runtime.palette.slice(),
 
@@ -264,6 +268,8 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 ...state,
                 editor: {
                     ...state.editor,
+                    selectedColor: -1,
+                    backgroundColor: -1,
                     isTilemap: true,
                     tilemapPalette: {
                         category: TileCategory.Forest,
@@ -272,12 +278,14 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     drawingMode: TileDrawingMode.Default,
                     overlayEnabled: true,
                     tileGallery: action.gallery,
+                    tileGalleryOpen: true,
                     referencedTiles: action.referencedTiles
                 },
                 store: {
                     ...state.store,
                     past: [],
                     present: {
+                        kind: "Tilemap",
                         colors: pxt.appTarget.runtime.palette.slice(),
                         aspectRatioLocked: false,
                         tilemap: {
@@ -404,7 +412,8 @@ const editorReducer = (state: EditorState, action: any): EditorState => {
             tickEvent(`foreground-color-${action.selectedColor}`);
 
             // If the selected tool is the eraser, make sure to switch to pencil
-            return { ...state,
+            return {
+                ...state,
                 selectedColor: action.selectedColor,
                 tool: state.tool === ImageEditorTool.Erase ? ImageEditorTool.Paint : state.tool
             };

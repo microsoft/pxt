@@ -90,7 +90,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         //      player.on_chat(on_chat_handler)
                         // whereas TS looks like:
                         //      player.onChat(() => {
-                        //          
+                        //
                         //      })
                         //
                         // At the time of this writting, Monaco does not support item completions that replace the
@@ -613,12 +613,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
 
-            const workspaceRect = this.editor.getDomNode().getBoundingClientRect();
             blocklyFieldView.setEditorBounds({
-                top: workspaceRect.top,
-                left: workspaceRect.left,
-                width: monacoArea.offsetWidth - toolboxWidth,
-                height: workspaceRect.height
+                top: 0,
+                left: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
             });
 
             if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;

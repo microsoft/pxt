@@ -257,9 +257,6 @@ namespace pxt.cpp {
         if (compile.switches.boxDebug)
             cpp_options["PXT_BOX_DEBUG"] = 1
 
-        if (compile.gc)
-            cpp_options["PXT_GC"] = 1
-
         if (compile.utf8)
             cpp_options["PXT_UTF8"] = 1
 
@@ -271,9 +268,6 @@ namespace pxt.cpp {
 
         if (compile.switches.numFloat)
             cpp_options["PXT_USE_FLOAT"] = 1
-
-        if (compile.vtableShift)
-            cpp_options["PXT_VTABLE_SHIFT"] = compile.vtableShift
 
         if (compile.nativeType == pxtc.NATIVE_TYPE_VM)
             cpp_options["PXT_VM"] = 1

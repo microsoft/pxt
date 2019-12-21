@@ -472,13 +472,18 @@ namespace ts.pxtc {
         function applyHexPatches(myhex: string[]) {
             const marker = "40505854" // @PXT
             for (let i = 0; i < myhex.length; ++i) {
-                let idx = myhex[i].indexOf(marker)
-                if (idx > 0) {
-                    let off = (idx - 9) >> 1
-                    let bytes = readHex(myhex, i, off, 200)
-                    let patch = patchString(bytes)
-                    if (patch)
-                        writeHex(myhex, i, off, patch)
+                // There could be a few such hex strings per line
+                for (let k = 0; k < 4; ++k) {
+                    let idx = myhex[i].indexOf(marker)
+                    if (idx > 0) {
+                        let off = (idx - 9) >> 1
+                        let bytes = readHex(myhex, i, off, 200)
+                        let patch = patchString(bytes)
+                        if (patch)
+                            writeHex(myhex, i, off, patch)
+                    } else {
+                        break
+                    }
                 }
             }
         }
@@ -807,7 +812,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let s = `
-        .balign ${1 << opts.target.vtableShift}
+        .balign 4
 ${info.id}_VT:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
