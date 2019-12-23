@@ -24,6 +24,7 @@
   "Approve": "承認",
   "Assigns a value to a variable": "変数に値を設定します",
   "B": "シ",
+  "Back": "戻る",
   "Bad HTTP status code: {0} at {1}; message: {2}": "期待と異なるHTTPステータスコード：{1}で{0}、メッセージ「{2}」",
   "Beta": "ベータ",
   "Blocks": "ブロック",
