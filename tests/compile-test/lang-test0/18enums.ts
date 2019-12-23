@@ -56,6 +56,11 @@ function testEnums() {
     if (kk & En2.D2) {
         assert(false, "e&")
     }
+
+    // https://github.com/microsoft/pxt-arcade/issues/774
+    let bar = Foo.B;  // inferred to type Foo
+    bar |= Foo.A;
+    bar = ~(~bar | Foo.B);
 }
 
 
@@ -79,6 +84,11 @@ function switchB(e: En) {
         default: return 17;
     }
     return r;
+}
+
+enum Foo {
+    A = 1 << 0,
+    B = 1 << 1
 }
 
 testEnums()

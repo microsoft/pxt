@@ -3082,39 +3082,33 @@ ${lbl}: .short 0xffff
             if (folded)
                 return emitLit(folded.val)
 
-            let tp = typeOf(node.operand)
-            if (node.operator == SK.ExclamationToken) {
-                return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
-            }
-
-            if (isNumberType(tp)) {
-                switch (node.operator) {
-                    case SK.PlusPlusToken:
-                        return emitIncrement(node.operand, "numops::adds", false)
-                    case SK.MinusMinusToken:
-                        return emitIncrement(node.operand, "numops::subs", false)
-                    case SK.MinusToken: {
-                        let inner = emitExpr(node.operand)
-                        let v = valueToInt(inner)
-                        if (v != null)
-                            return emitLit(-v)
-                        return emitIntOp("numops::subs", emitLit(0), inner)
-                    }
-                    case SK.PlusToken:
-                        return emitExpr(node.operand) // no-op
-                    case SK.TildeToken: {
-                        let inner = emitExpr(node.operand)
-                        let v = valueToInt(inner)
-                        if (v != null)
-                            return emitLit(~v)
-                        return rtcallMaskDirect(mapIntOpName("numops::bnot"), [inner]);
-                    }
-                    default:
-                        break
+            switch (node.operator) {
+                case SK.ExclamationToken:
+                    return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
+                case SK.PlusPlusToken:
+                    return emitIncrement(node.operand, "numops::adds", false)
+                case SK.MinusMinusToken:
+                    return emitIncrement(node.operand, "numops::subs", false)
+                case SK.MinusToken: {
+                    let inner = emitExpr(node.operand)
+                    let v = valueToInt(inner)
+                    if (v != null)
+                        return emitLit(-v)
+                    return emitIntOp("numops::subs", emitLit(0), inner)
                 }
+                case SK.PlusToken:
+                    return emitExpr(node.operand) // no-op
+                case SK.TildeToken: {
+                    let inner = emitExpr(node.operand)
+                    let v = valueToInt(inner)
+                    if (v != null)
+                        return emitLit(~v)
+                    return rtcallMaskDirect(mapIntOpName("numops::bnot"), [inner]);
+                }
+                default:
+                    throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
             }
 
-            throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
         }
 
         function doNothing() { }
