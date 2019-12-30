@@ -1623,6 +1623,10 @@ function processLf(filename: string, translationStrings: pxt.Map<string>): void 
         })
 }
 
+function getGalleryUrl(props: pxt.GalleryProps | string): string {
+    return typeof props === "string" ? props : props.url
+}
+
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
@@ -1691,9 +1695,10 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
 `;
             Object.keys(targetConfig.galleries).forEach(k => {
                 targetStrings[k] = k;
-                const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
+                const gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
-                const gurl = `/${targetConfig.galleries[k].replace(/^\//, '')}`;
+                const gurl = `/${galleryUrl.replace(/^\//, '')}`;
                 tocmd +=
                     `* [${k}](${gurl})
 `;
@@ -5026,7 +5031,11 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     if (fs.existsSync("targetconfig.json")) {
         const targeConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
         if (targeConfig.galleries)
-            Object.keys(targeConfig.galleries).forEach(gallery => todo.push(targeConfig.galleries[gallery]));
+            Object.keys(targeConfig.galleries)
+                .forEach(gallery => {
+                    const url = getGalleryUrl(targeConfig.galleries[gallery])
+                    todo.push(url)
+                });
     }
 
     // push files from targetconfig checkdocsdirs
@@ -5090,7 +5099,8 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         if (targetConfig && targetConfig.galleries) {
             Object.keys(targetConfig.galleries).forEach(k => {
                 pxt.log(`gallery ${k}`);
-                let gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
+                let gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
                 let gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 pxt.debug(`found ${gallery.length} galleries`);
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {

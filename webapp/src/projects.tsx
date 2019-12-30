@@ -157,7 +157,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const lang = pxt.Util.userLanguage();
         // collect localized and unlocalized galleries
-        let galleries: pxt.Map<string> = {};
+        let galleries: pxt.Map<string | pxt.GalleryProps> = {};
         if (targetConfig && targetConfig.localizedGalleries && targetConfig.localizedGalleries[lang])
             pxt.Util.jsonCopyFrom(galleries, targetConfig.localizedGalleries[lang]);
         if (targetConfig && targetConfig.galleries)
@@ -198,15 +198,26 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
                 </div>
             </div>
-            {Object.keys(galleries).map(galleryName =>
-                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
-                    <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
-                    <div className="content">
-                        <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]}
-                            onClick={this.chgGallery} setSelected={this.setSelected} selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
+            {Object.keys(galleries)
+                .filter(galleryName => {
+                    let galProps = galleries[galleryName] as pxt.GalleryProps | string
+                    if (typeof galProps === "string")
+                        return true
+                    let exp = galProps.experimentName
+                    return !exp || !!(pxt.appTarget.appTheme as any)[exp]
+                })
+                .map(galleryName => {
+                    let galProps = galleries[galleryName] as pxt.GalleryProps | string
+                    let url = typeof galProps === "string" ? galProps : galProps.url
+                    return <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
+                        <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
+                        <div className="content">
+                            <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={url}
+                                onClick={this.chgGallery} setSelected={this.setSelected} selectedIndex={selectedCategory == galleryName ? selectedIndex : undefined} />
+                        </div>
                     </div>
-                </div>
-            )}
+                }
+                )}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
                 {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} /> : undefined}
