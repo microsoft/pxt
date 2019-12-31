@@ -892,7 +892,7 @@ namespace pxt {
                     pxt.debug(`building for ${v}`)
                 const curr = await fillExtInfoAsync(ext ? v : null)
                 curr.appVariant = v
-                curr.outputPrefix = v ? v + "-" : ""
+                curr.outputPrefix = variants.length == 1 || !v ? "" : v + "-"
                 if (ext) {
                     ext.otherMultiVariants.push(curr)
                 } else {
