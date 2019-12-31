@@ -3046,15 +3046,15 @@ ${lbl}: .short 0xffff
 
         function emitDeleteExpression(node: DeleteExpression) {
             let objExpr: Expression
-            let keyExpr: () => ir.Expr
+            let keyExpr: Expression
             if (node.expression.kind == SK.PropertyAccessExpression) {
                 const inner = node.expression as PropertyAccessExpression
                 objExpr = inner.expression
-                keyExpr = () => emitStringLiteral(inner.name.text)
+                keyExpr = irToNode(emitStringLiteral(inner.name.text))
             } else if (node.expression.kind == SK.ElementAccessExpression) {
                 const inner = node.expression as ElementAccessExpression
                 objExpr = inner.expression
-                keyExpr = () => emitExpr(inner.argumentExpression)
+                keyExpr = inner.argumentExpression
             } else {
                 throw userError(9276, lf("expression not supported as argument to 'delete'"))
             }
@@ -3066,11 +3066,7 @@ ${lbl}: .short 0xffff
             if (isArrayType(objExprType))
                 throw userError(9277, lf("'delete' not supported on array"))
 
-            const args = [
-                emitExpr(objExpr),
-                keyExpr()
-            ]
-            return rtcallMaskDirect("pxtrt::mapDeleteByString", args)
+            return rtcallMask("pxtrt::mapDeleteByString", [objExpr, keyExpr], null)
         }
         function emitTypeOfExpression(node: TypeOfExpression) {
             return rtcallMask("pxt::typeOf", [node.expression], null)
