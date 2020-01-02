@@ -247,7 +247,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9281
+    // next free error 9282
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -1858,15 +1858,18 @@ ${lbl}: .short 0xffff
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
-            const decl = getDecl(node);
+            let decl = getDecl(node);
 
             const fold = constantFoldDecl(decl)
             if (fold)
                 return emitLit(fold.val)
 
-            if (decl.kind == SK.GetAccessor) {
-                return emitCallCore(node, node, [], null)
-            }
+            if (decl.kind == SK.SetAccessor)
+                decl = checkGetter(decl)
+
+            if (decl.kind == SK.GetAccessor)
+                return emitCallCore(node, node, [], null, decl as GetAccessorDeclaration)
+
             if (decl.kind == SK.EnumMember) {
                 throw userError(9210, lf("Cannot compute enum value"))
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -1891,6 +1894,15 @@ ${lbl}: .short 0xffff
                 return emitLocalLoad(decl as VariableDeclaration)
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
+            }
+        }
+
+        function checkGetter(decl: Declaration) {
+            const getter = getDeclarationOfKind(decl.symbol, SK.GetAccessor)
+            if (getter == null) {
+                throw userError(9281, lf("setter currently requires a corresponding getter"))
+            } else {
+                return getter as GetAccessorDeclaration
             }
         }
 
@@ -3226,7 +3238,8 @@ ${lbl}: .short 0xffff
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 let decl = getDecl(trg)
-                if (decl && decl.kind == SK.GetAccessor) {
+                if (decl && (decl.kind == SK.GetAccessor || decl.kind == SK.SetAccessor)) {
+                    checkGetter(decl)
                     decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
                     if (!decl) {
                         unhandled(trg, lf("setter not available"), 9253)
