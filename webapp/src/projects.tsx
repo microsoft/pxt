@@ -200,6 +200,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             </div>
             {Object.keys(galleries)
                 .filter(galleryName => {
+                    // hide galleries that are part of an experiment and that experiment is
+                    // not enabled
                     let galProps = galleries[galleryName] as pxt.GalleryProps | string
                     if (typeof galProps === "string")
                         return true
