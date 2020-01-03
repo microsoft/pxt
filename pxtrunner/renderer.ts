@@ -102,12 +102,13 @@ namespace pxt.runner {
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
+            const pkg = decompileResult.package;
+            pkg.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME);
+            const compressed = pkg.compressToFileAsync();
             const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
-                decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
-                decompileResult.package.compressToFileAsync()
-                    .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
-            })
+                compressed.done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'));
+            });
             $menu.append($editBtn);
         }
 
