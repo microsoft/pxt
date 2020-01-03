@@ -953,8 +953,6 @@ ${linkString}
     function getApiInfo(program: ts.Program, opts: pxtc.CompileOptions) {
         if (!apiCache) apiCache = {};
 
-        // FIXME: If some page theoretically included two different verions of the same package, this might fail.
-        // It's very unlikely
         const key = Object.keys(opts.fileSystem).sort().join(";");
 
         if (!apiCache[key]) apiCache[key] = pxtc.getApiInfo(program, opts.jres);
