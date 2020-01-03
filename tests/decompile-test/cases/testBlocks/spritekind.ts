@@ -31,6 +31,33 @@ namespace SpriteKind {
     export const Enemy = create();
 }
 
+namespace images {
+    //% blockId=tileset_tile_picker block="%tile"
+    //% shim=TD_ID
+    //% tile.fieldEditor="tileset"
+    //% tile.fieldOptions.decompileIndirectFixedInstances="true"
+    //% weight=10 blockNamespace="scene" group="Tiles"
+    //% blockHidden=1 duplicateShadowOnDrag
+    export function _tile(tile: Image) {
+        return tile
+    }
+}
+
+namespace scene {
+    /**
+     * Run code when a certain kind of sprite overlaps a tile
+     * @param kind
+     * @param tile
+     * @param handler
+     */
+    //% group="Tiles"
+    //% weight=100 draggableParameters="reporter" blockGap=8
+    //% blockId=spriteshittile block="on $sprite of kind $kind=spritekind overlaps $tile at $location"
+    //% tile.shadow=tileset_tile_picker
+    //% help=tiles/on-overlap-tile
+    export function onOverlapTile(kind: number, tile: Image, handler: (sprite: number, number) => void) {
+    }
+}
 
 
 namespace tiles {

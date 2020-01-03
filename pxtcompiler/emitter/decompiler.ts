@@ -508,6 +508,10 @@ ${output}</xml>`;
                     return blockInfo.attributes;
                 }
             }
+            else if (callInfo.decl) {
+                const parsed = parseComments(callInfo.decl);
+                if (parsed) return parsed;
+            }
             return {
                 paramDefl: {},
                 callingConvention: ir.CallingConvention.Plain
@@ -1075,7 +1079,7 @@ ${output}</xml>`;
 
             const info = env.compInfo(callInfo);
 
-            if (blockId && info.thisParameter) {
+            if (blockId && info && info.thisParameter) {
                 const r = mkExpr(blockId);
                 r.inputs = [getValue(U.htmlEscape(info.thisParameter.definitionName), n.expression, info.thisParameter.shadowBlockId)];
                 return r;
