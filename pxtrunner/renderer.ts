@@ -103,7 +103,7 @@ namespace pxt.runner {
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
             const pkg = decompileResult.package;
-            pkg.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME);
+            pkg.setPreferredEditor($svg ? pxt.BLOCKS_PROJECT_NAME : $py ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME);
             const compressed = pkg.compressToFileAsync();
             const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
