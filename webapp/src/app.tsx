@@ -1852,6 +1852,7 @@ export class ProjectView
         if (!hasHome) return;
 
         this.stopSimulator(true); // don't keep simulator around
+        this.showKeymap(false); // close keymap if open
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
