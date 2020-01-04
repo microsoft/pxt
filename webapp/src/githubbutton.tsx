@@ -75,6 +75,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         return <div key="githubeditorbtn" role="button" className={`${defaultCls} ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
+            {!!ghid.project && <span className="ui mobile hide">{ghid.project}{ghid.tag != "master" ? `#${ghid.tag}` : ""}</span>}
             <i className={`ui long ${
                 hasissue ? "exclamation circle"
                     : haspull ? "arrow alternate down"
