@@ -553,12 +553,12 @@ namespace pxt.HF2 {
     }
 
     export type ReadAsync = (addr: number, len: number) => Promise<ArrayLike<number>>
-    function readChecksumBlockAsync(readWordsAsync: ReadAsync): Promise<pxtc.hex.ChecksumBlock> {
+    function readChecksumBlockAsync(readWordsAsync: ReadAsync): Promise<pxtc.ChecksumBlock> {
         if (!pxt.appTarget.compile.flashChecksumAddr)
-            return Promise.resolve(null as pxtc.hex.ChecksumBlock)
+            return Promise.resolve(null as pxtc.ChecksumBlock)
         return readWordsAsync(pxt.appTarget.compile.flashChecksumAddr, 12)
             .then(buf => {
-                let blk = pxtc.hex.parseChecksumBlock(buf)
+                let blk = pxtc.parseChecksumBlock(buf)
                 if (!blk)
                     return null
                 return readWordsAsync(blk.endMarkerPos, 1)
@@ -576,7 +576,7 @@ namespace pxt.HF2 {
         if (!pxt.appTarget.compile.flashChecksumAddr)
             return Promise.resolve(blocks)
         let blBuf = pxtc.UF2.readBytes(blocks, pxt.appTarget.compile.flashChecksumAddr, 12 * 4)
-        let blChk = pxtc.hex.parseChecksumBlock(blBuf)
+        let blChk = pxtc.parseChecksumBlock(blBuf)
         if (!blChk)
             return Promise.resolve(blocks)
         return readChecksumBlockAsync(readWordsAsync)

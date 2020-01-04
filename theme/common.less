@@ -317,20 +317,23 @@ div.simframe > iframe {
     border-top-left-radius: 0px!important;
     border-bottom-left-radius: 0px!important;
 }
-#editordropdown.active, #mainmenu #editordropdown.active:focus {
-    background-color: @editorToggleColor!important;
-}
 #editordropdown .menu > .item {
     width: 184px;
     opacity: 1;
 }
-#editordropdown .menu > .item.selected {
-    background: none;
-    color: @mainMenuInvertedBackground !important;
-}
 #editordropdown .menu > .item.selected:after {
     content: '✔';
     float: right;
+}
+
+#root:not(.hc) #editordropdown {
+    .menu > .item.selected {
+        background: none;
+        color: @mainMenuInvertedBackground !important;
+    }
+    &.active, #mainmenu #editordropdown.active:focus {
+        background-color: @editorToggleColor!important;
+    }
 }
 
 /* Help card */
@@ -778,13 +781,9 @@ p.ui.font.small {
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 80px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
+    #root.sandbox .active.item.javascript-menuitem ~ .toggle,
     #root.sandbox .active.item.python-menuitem ~ .toggle {
-        margin-left: 120px !important;
+        margin-left: 80px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
@@ -1265,11 +1264,9 @@ p.ui.font.small {
         width: 40px;
         height: 38px;
     }
-    .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 40px !important;
-    }
+    .active.item.javascript-menuitem ~ .toggle,
     .active.item.python-menuitem ~ .toggle {
-        margin-left: 80px !important;
+        margin-left: 40px !important;
     }
     /* Top Menu */
     #maineditor {
@@ -1290,6 +1287,18 @@ p.ui.font.small {
     }
     .ui.mini.image {
         display: block !important;
+    }
+
+    /* Python/JS dropdown */
+    #editordropdown .menu > .item.selected:after {
+        position: absolute;
+        left: 1em;
+    }
+    #root #editordropdown .menu .item {
+        width: auto;
+    }
+    #root #editordropdown .menu .item .text {
+        display: inline-block!important;
     }
 }
 
@@ -1498,13 +1507,9 @@ div.simframe.ui.embed {
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 280px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
+    .active.item.javascript-menuitem ~ .toggle,
     .active.item.python-menuitem ~ .toggle {
-        margin-left: 420px !important;
+        margin-left: 280px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }

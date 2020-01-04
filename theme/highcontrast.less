@@ -200,6 +200,16 @@
             background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
         }
+
+        .dropdown, .dropdown:hover {
+            &:not(.visible) i, .selected i, .selected span {
+                color: @HCmainMenuTextColor !important;
+            }
+        }
+
+        .dropdown:focus:not(.visible) i {
+            color: @HCtextColor !important;
+        }
     }
 
     /* Editor toolbar */

@@ -2110,7 +2110,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
                         // Place the base HEX image in the hex cache if necessary
                         let sha = options.extinfo.sha;
-                        let hex: string[] = options.hexinfo.hex;
+                        let hex: string[] = options.extinfo.hexinfo.hex;
                         let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
@@ -2601,7 +2601,7 @@ class SnippetHost implements pxt.Host {
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        return pxt.hex.getHexInfoAsync(this, extInfo)
+        return pxt.hexloader.getHexInfoAsync(this, extInfo)
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -2678,13 +2678,13 @@ class Host
             }
 
         try {
-            pxt.debug(`reading ${resolved}`)
+            // pxt.debug(`reading ${resolved}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
                 for (let addPath of module.config.additionalFilePaths || []) {
                     try {
-                        pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
+                        // pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
                     }
@@ -2771,8 +2771,9 @@ class Host
         }
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
-            return pxt.hex.getHexInfoAsync(this, extInfo)
+            return pxt.hexloader.getHexInfoAsync(this, extInfo)
 
+        setBuildEngine()
         return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
             .then(() => build.thisBuild.patchHexInfo(extInfo))
     }
@@ -3255,8 +3256,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         sourceFiles: sources,
         target: mainPkg.getTargetOptions(),
         ast: true,
-        noEmit: true,
-        hexinfo: null
+        noEmit: true
     }
 
     opts.target.isNative = false
@@ -3749,7 +3749,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
             filename: f,
             diagnostics: infos
         })
-        infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
+        infos.forEach(info => pxt.log(`${f}:(${info.line},${info.column}): ${info.category} ${info.messageText}`));
     }
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
@@ -4046,7 +4046,13 @@ function dumplogAsync(c: commandParser.ParsedCommand) {
 function dumpheapAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => gdb.dumpheapAsync())
+        .then(() => gdb.dumpheapAsync(c.args[0]))
+}
+
+function dumpmemAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.dumpMemAsync(c.args[0]))
 }
 
 async function buildDalDTSAsync(c: commandParser.ParsedCommand) {
@@ -4797,12 +4803,12 @@ export function hexdumpAsync(c: commandParser.ParsedCommand) {
         let r = pxtc.UF2.toBin(buf as any)
         if (r) {
             console.log("UF2 file detected.")
-            console.log(pxtc.hex.hexDump(r.buf, r.start))
+            console.log(pxtc.hexDump(r.buf, r.start))
             return Promise.resolve()
         }
     }
     console.log("Binary file assumed.")
-    console.log(pxtc.hex.hexDump(buf))
+    console.log(pxtc.hexDump(buf))
     return Promise.resolve()
 }
 
@@ -5101,13 +5107,32 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                             const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                             pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
-                            addSnippet(<CodeSnippet>{
-                                name: card.name,
-                                code: tutorial.code,
-                                type: "blocks",
-                                ext: "ts",
-                                packages: pkgs
-                            }, "tutorial" + gal.name, cardIndex);
+
+                            if (tutorial.code.indexOf("namespace") !== -1) {
+                                // Handles tilemaps and spritekinds
+                                tutorial.steps
+                                    .filter(step => !!step.contentMd)
+                                    .forEach((step, stepIndex) => getCodeSnippets(`${gal.name}-${stepIndex}`, step.contentMd)
+                                        .forEach((snippet, snippetIndex) => {
+                                            snippet.packages = pkgs;
+                                            addSnippet(
+                                                snippet,
+                                                "tutorial" + `${gal.name}-${stepIndex}-${snippetIndex}`,
+                                                cardIndex
+                                            )
+                                        })
+                                    );
+                            }
+                            else {
+                                addSnippet(<CodeSnippet>{
+                                    name: card.name,
+                                    code: tutorial.code,
+                                    type: "blocks",
+                                    ext: "ts",
+                                    packages: pkgs
+                                }, "tutorial" + gal.name, cardIndex);
+                            }
+
                             break;
                         }
                         case "example": {
@@ -5966,10 +5991,18 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     p.defineCommand({
         name: "heap",
         help: "attempt to dump GC and codal heap log using openocd",
-        argString: "",
+        argString: "[<memdump-file.bin>]",
         aliases: ["dumpheap"],
         advanced: true,
     }, dumpheapAsync);
+
+    p.defineCommand({
+        name: "memdump",
+        help: "attempt to dump raw memory image using openocd",
+        argString: "<memdump-file.bin>",
+        aliases: ["dumpmem"],
+        advanced: true,
+    }, dumpmemAsync);
 
     p.defineCommand({
         name: "builddaldts",
