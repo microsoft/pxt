@@ -167,8 +167,6 @@ namespace pxt {
         U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
-        if (!comp.vtableShift)
-            comp.vtableShift = 2
         if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
             comp.noSourceInFlash = true // no point putting sources in hex to be flashed
         if (comp.utf8 === undefined)
@@ -227,9 +225,9 @@ namespace pxt {
         }
     }
 
-    export function reloadAppTargetVariant() {
+    export function reloadAppTargetVariant(temporary = false) {
         pxt.perf.measureStart("reloadAppTargetVariant")
-        const curr = JSON.stringify(appTarget);
+        const curr = temporary ? "" : JSON.stringify(appTarget);
         appTarget = U.clone(savedAppTarget)
         if (appTargetVariant) {
             const v = appTarget.variants && appTarget.variants[appTargetVariant];
@@ -240,17 +238,20 @@ namespace pxt {
         }
         patchAppTarget();
         // check if apptarget changed
-        if (onAppTargetChanged && curr != JSON.stringify(appTarget))
+        if (!temporary && onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
         pxt.perf.measureEnd("reloadAppTargetVariant")
     }
 
     // this is set by compileServiceVariant in pxt.json
-    export function setAppTargetVariant(variant: string, force?: boolean): void {
+    export function setAppTargetVariant(variant: string, opts: {
+        force?: boolean,
+        temporary?: boolean
+    } = {}): void {
         pxt.debug(`app variant: ${variant}`);
-        if (!force && (appTargetVariant === variant || (!appTargetVariant && !variant))) return;
+        if (!opts.force && (appTargetVariant === variant || (!appTargetVariant && !variant))) return;
         appTargetVariant = variant
-        reloadAppTargetVariant();
+        reloadAppTargetVariant(opts.temporary);
     }
 
     // notify when app target was changed

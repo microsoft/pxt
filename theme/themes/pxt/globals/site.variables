@@ -148,6 +148,7 @@ default semantic
 @mainMenuBackground: @white;
 @mainMenuInvertedBackground: @black;
 @mainMenuTutorialBackground: @orange;
+@mainMenuTutorialButtons: @mainMenuTutorialBackground;
 
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;

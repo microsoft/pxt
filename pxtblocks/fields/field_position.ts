@@ -166,12 +166,12 @@ namespace pxtblockly {
 
         private setXY(x: number, y: number) {
             const xField = this.getFieldByName(this.params.xInputName);
-            if (xField) {
+            if (xField && typeof xField.getValue() == "number") {
                 xField.setValue(String(x));
                 xField.setText(String(x));
             }
             const yField = this.getFieldByName(this.params.yInputName);
-            if (yField) {
+            if (yField && typeof yField.getValue() == "number") {
                 yField.setValue(String(y));
                 yField.setText(String(y));
             }

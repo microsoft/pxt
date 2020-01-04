@@ -83,12 +83,6 @@ namespace ts.pxtc {
         rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
         call_lbl(lbl: string, saveStack?: boolean) { return "TBD(call_lbl)" }
         call_reg(reg: string) { return "TBD(call_reg)" }
-        vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
-            return "TBD(vcall)"
-        }
-        prologue_vtable(arg_index: number, vtableShift: number) {
-            return "TBD(prologue_vtable"
-        }
         helper_prologue() { return "TBD(lambda_prologue)" }
         helper_epilogue() { return "TBD(lambda_epilogue)" }
         pop_clean(pops: boolean[]) { return "TBD" }
@@ -1676,7 +1670,7 @@ ${baseLabel}_nochk:
         }
 
         private emitCallRaw(name: string) {
-            let inf = hex.lookupFunc(name)
+            let inf = hexfile.lookupFunc(name)
             assert(!!inf, "unimplemented raw function: " + name)
             this.alignedCall(name)
         }

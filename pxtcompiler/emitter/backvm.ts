@@ -115,7 +115,7 @@ ${info.id}_IfaceVT:
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
-${hex.hexPrelude()}
+${hexfile.hexPrelude()}
 `
 
         const ctx: EmitCtx = {
@@ -161,7 +161,7 @@ _start_${name}:
                 ; magic - \\0 added by assembler
                 .string "\\nPXT64\\n"
                 .hex 5471fe2b5e213768 ; magic
-                .hex ${hex.hexTemplateHash()} ; hex template hash
+                .hex ${hexfile.hexTemplateHash()} ; hex template hash
                 .hex 0000000000000000 ; @SRCHASH@
                 .word ${bin.globalsWords}   ; num. globals
                 .word ${bin.nonPtrGlobals} ; non-ptr globals
@@ -368,7 +368,7 @@ _start_${name}:
         }
 
         function callRT(name: string) {
-            const inf = hex.lookupFunc(name)
+            const inf = hexfile.lookupFunc(name)
             if (!inf) U.oops("missing function: " + name)
             let id = ctx.opcodeMap[inf.name]
             if (id == null) {

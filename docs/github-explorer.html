@@ -9,9 +9,19 @@
         type="text/css">
     <style>
         @targetstyle@ 
-        nav.ui.menu {
-            font-size: 0.8rem;
+        
+        label, nav.ui.menu {
+            font-size: 0.8rem !important;
         }
+
+        #signin {
+            margin-left: calc(50% - 10rem);
+            margin-top: 10rem;
+            width: 20rem;
+            text-align: center;
+            margin-right: calc(50% - 10rem);            
+        }
+
         #user {
             width: 14rem;
         }
@@ -54,9 +64,11 @@
             font-size: 0.7rem;
             margin: 0.5rem;
         }
+
         #footer a {
             color: black;
         }
+
         .ui.selection.list>.item.active {
             border: solid 2px grey;
         }
@@ -100,6 +112,13 @@
             }
         }
 
+        function trackClick(id) {
+            if (typeof mscc !== "undefined" && !mscc.hasConsent())
+                mscc.setConsent();
+            if (typeof pxt !== "undefined")
+                pxt.aiTrackEvent(id);
+        }
+
         async function sniffTarget(repo) {
             const response = await fetch(`https://raw.githubusercontent.com/${repo.full_name}/master/README.md?token=${token()}`);
             const msg = await response.text();
@@ -130,12 +149,21 @@
             return msg;
         }
 
-        async function update() {
+        async function fetchCurrentUser() {
+            const response = await fetch(`${api}/user?access_token=${token()}`);
+            if (response.status != 200)
+                return undefined;
+            const msg = await response.json();
+            return msg;
+        }
+
+        async function update(userName) {
             $('#userparent').addClass('loading');
             try {
                 $("#repoes")
                     .empty();
-                const userName = $("#user").val();
+                $("#makecodecolumn").attr("src", "");
+
                 const user = await fetchUser(userName);
                 if (!user) {
                     $('#repoes').append(`<div class="ui item">
@@ -143,8 +171,9 @@
                     </div>`)
                     return;
                 }
-                $('#repoes')
-                    .append(`<a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
+                $('#repoes')                
+                    .append(`
+<a href="https://github.com/${user.login}" target="_blank" class="ui link item" title="Open user profile">
                     <div class="ui mini image">
       <img src="${user.avatar_url}">
     </div>
@@ -155,6 +184,7 @@
 </a>`)
                 const repoes = await fetchUserRepos(userName);
                 $("#repoes")
+                    .append(`<div class="ui divider"></div>`)
                     .append(
                         repoes.map(repo => {
                             const target = targets[repo.target];
@@ -170,16 +200,14 @@
     </div>
 </div>`);
                             item.click(event => {
-                                if (typeof mscc !== "undefined" && !mscc.hasConsent())
-                                    mscc.setConsent();
-                                pxt.aiTrackEvent("github.explorer.search")
+                                trackClick("github.explorer.open")
                                 $('#repoes').children().removeClass('active');
                                 item.addClass('active');
+                                const readOnly = !$('#edit').is(':checked');
+
                                 const url = targets[repo.target].url +
-                                    "?controller=1&readonly=1&ws=mem&nocookiebanner=1" +
-                                    "#pub:" +
-                                    "https://github.com/" +
-                                    repo.full_name
+                                    `?nocookiebanner=1&${readOnly ? 'controller=1&readonly=1&ws=mem&' : 'editorLayout=ide&nosandbox=1'}#pub:github:` 
+                                    + repo.full_name + "#master";
                                 $("#makecodecolumn").attr("src", url);
                             })
 
@@ -214,15 +242,19 @@
                 $("#signin").show();
                 $('#signout').hide();
                 $('#userparent').hide();
+                $('#repocolumn').hide();
+                $('#makecodecolumn').hide();
             } else {
                 $("#signin").hide();
                 $('#signout').show();
                 $('#userparent').show();
+                $('#repocolumn').show();
+                $('#makecodecolumn').show();
             }
         }
 
         function navigateSignin() {
-            pxt.aiTrackEvent("github.explorer.signin")
+            trackClick("github.explorer.signin")
             const state = Math.random().toString();
             localStorage["core/oauthState"] = state;
             const login = "https://makecode.com/oauth/login?state=" + state +
@@ -232,7 +264,7 @@
         }
 
         function navigateSignout() {
-            pxt.aiTrackEvent("github.explorer.signout")
+            trackClick("github.explorer.signout")
             delete localStorage["core/oauthState"];
             delete localStorage["core/githubtoken"];
             window.location.reload();
@@ -241,31 +273,55 @@
         $(function () {
             console.log(`loaded...`);
             checkToken();
-            $("#generate").click(update);
             $('#signinbtn').click(navigateSignin)
             $('#signout').click(navigateSignout);
             $("#user").on("keydown", function search(e) {
                 if (e.keyCode == 13) {
-                    pxt.aiTrackEvent("github.explorer.search")
-                    update();
+                    trackClick("github.explorer.search")
+                    const userName = $("#user").val();
+                    update(userName);
                 }
             });
+            $('#edit').change(function () {
+                trackClick("github.explorer.edit")
+                const userName = $("#user").val();
+                update(userName);
+            })
 
+            console.log("starting...");
+            if (typeof pxt !== "undefined")
+                pxt.aiTrackEvent("github.explorer.loaded")
+
+            fetchCurrentUser()
+                .then(user => {
+                    if (user) {
+                        $("#user").val(user.login);
+                        update(user.login);
+                    }
+                })
+            
         });
-
-        console.log("starting...");
-        pxt.aiTrackEvent("github.explorer.loaded")
     </script>
 </head>
 
 <body id='root' class='root'>
-    <nav class="ui menu inverted fixed borderless">
+    <nav class="ui menu fixed borderless">
         <div class="menu left">
             <div class="ui item">
                 MakeCode GitHub Explorer
             </div>
         </div>
         <div class="menu right">
+            <!--
+            <div class="ui item">
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="edit" id="edit">
+                    <label id="editlabel">Edit</label>
+                </div>
+            </div>-->
+            <a href="https://forum.makecode.com" target="_blank" class="ui item">
+                Forum
+            </a>
             <a href="/github/explorer" target="_blank" class="ui item">
                 Docs
             </a>
@@ -275,15 +331,6 @@
         </div>
     </nav>
     <div id="repocolumn">
-        <div id="signin">
-            <p>
-                Sign in to access your MakeCode repositories.
-            </p>
-            <button id="signinbtn" class="ui icon button">
-                <i class="ui github icon"></i>
-                Sign in
-            </button>
-        </div>
         <div id="userparent" class="ui left icon input">
             <input id="user" class="ui fluid" type="text" placeholder="Enter GitHub user" />
             <i class="search icon"></i>
@@ -291,6 +338,15 @@
         <div id="repoes" class="ui selection list"></div>
     </div>
     <iframe id="makecodecolumn"></iframe>
+    <div id="signin">
+        <p>
+            Sign in to access your MakeCode repositories.
+        </p>
+        <button id="signinbtn" class="ui icon basic button">
+            <i class="ui github icon"></i>
+            Sign in
+        </button>
+    </div>
     <footer id="footer" class="hideprint">
         <a class="item" href="https://makecode.com/privacy" target="_blank" rel="noopener">Privacy &amp; Cookies</a>
         <a class="item" href="https://makecode.com/termsofuse" target="_blank" rel="noopener"> Terms Of Use</a>

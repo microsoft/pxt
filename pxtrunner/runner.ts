@@ -60,7 +60,7 @@ namespace pxt.runner {
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-            return pxt.hex.getHexInfoAsync(this, extInfo)
+            return pxt.hexloader.getHexInfoAsync(this, extInfo)
         }
 
         cacheStoreAsync(id: string, val: string): Promise<void> {
@@ -885,6 +885,7 @@ ${linkString}
     }
 
     let programCache: ts.Program;
+    let apiCache: pxt.Map<pxtc.ApisInfo>;
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
@@ -915,7 +916,7 @@ ${linkString}
                 }
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(program, opts.jres);
+                let apis = getApiInfo(program, opts);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
@@ -949,6 +950,16 @@ ${linkString}
             });
     }
 
+    function getApiInfo(program: ts.Program, opts: pxtc.CompileOptions) {
+        if (!apiCache) apiCache = {};
+
+        const key = Object.keys(opts.fileSystem).sort().join(";");
+
+        if (!apiCache[key]) apiCache[key] = pxtc.getApiInfo(program, opts.jres);
+
+        return apiCache[key];
+    }
+
     export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
@@ -958,7 +969,7 @@ ${linkString}
             .then(opts => {
                 opts.ast = true
                 const resp = pxtc.compile(opts)
-                const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+                const apis = getApiInfo(resp.ast, opts);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);

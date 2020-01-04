@@ -200,6 +200,16 @@
             background: @HCtextColor !important;
             color: @HCmainMenuTextColor !important;
         }
+
+        .dropdown, .dropdown:hover {
+            &:not(.visible) i, .selected i, .selected span {
+                color: @HCmainMenuTextColor !important;
+            }
+        }
+
+        .dropdown:focus:not(.visible) i {
+            color: @HCtextColor !important;
+        }
     }
 
     /* Editor toolbar */
@@ -458,11 +468,15 @@
     }
 
     /* Dropdown */
-    .ui.menu .ui.dropdown .menu {
+    .ui.menu .ui.dropdown .menu,
+    #editortools .ui.dropdown .menu {
         border: 1px solid @HCtextColor !important;
     }
 
-    .ui.menu .ui.dropdown .menu, .ui.menu .ui.dropdown .menu > .item {
+    .ui.menu .ui.dropdown .menu,
+    .ui.menu .ui.dropdown .menu > .item,
+    #editortools .ui.dropdown .menu,
+    #editortools .ui.dropdown .menu > .item {
         background: @HCbackground !important;
         color: @HCtextColor !important;
 
@@ -477,7 +491,8 @@
         }
     }
 
-    .ui.menu .ui.dropdown .menu > .divider {
+    .ui.menu .ui.dropdown .menu > .divider,
+    #editortools .ui.dropdown .menu > .divider {
         background: @HCbackground !important;
         border-top: 1px solid @HCtextColor !important;
     }
@@ -544,6 +559,20 @@
             color: @HCaccessibleMenuColor !important;
             background: @HCaccessibleMenuBackground !important;
         }
+    }
+
+    [data-tooltip]:after,
+    [data-tooltip]:before {
+        color: @HCtextColor!important;
+        background-color: @HCbackground!important;
+    }
+
+    [data-tooltip]:after {
+        border: 1px solid @HCtextColor!important;
+    }
+
+    [data-tooltip]:before {
+        box-shadow: 1px 1px 0 0 @HCtextColor!important;
     }
 }
 

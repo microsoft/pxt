@@ -247,7 +247,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9281
+    // next free error 9282
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -955,7 +955,7 @@ namespace ts.pxtc {
         currNodeWave++
 
         if (opts.target.isNative) {
-            if (!opts.hexinfo) {
+            if (!opts.extinfo || !opts.extinfo.hexinfo) {
                 // we may have not been able to compile or download the hex file
                 return {
                     diagnostics: [{
@@ -971,8 +971,8 @@ namespace ts.pxtc {
                 };
             }
 
-            hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
-            hex.setupInlineAssembly(opts);
+            hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo());
+            hexfile.setupInlineAssembly(opts);
         }
 
         let bin = new Binary()
@@ -1858,15 +1858,18 @@ ${lbl}: .short 0xffff
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
-            const decl = getDecl(node);
+            let decl = getDecl(node);
 
             const fold = constantFoldDecl(decl)
             if (fold)
                 return emitLit(fold.val)
 
-            if (decl.kind == SK.GetAccessor) {
-                return emitCallCore(node, node, [], null)
-            }
+            if (decl.kind == SK.SetAccessor)
+                decl = checkGetter(decl)
+
+            if (decl.kind == SK.GetAccessor)
+                return emitCallCore(node, node, [], null, decl as GetAccessorDeclaration)
+
             if (decl.kind == SK.EnumMember) {
                 throw userError(9210, lf("Cannot compute enum value"))
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -1891,6 +1894,15 @@ ${lbl}: .short 0xffff
                 return emitLocalLoad(decl as VariableDeclaration)
             } else {
                 throw unhandled(node, lf("Unknown property access for {0}", stringKind(decl)), 9237);
+            }
+        }
+
+        function checkGetter(decl: Declaration) {
+            const getter = getDeclarationOfKind(decl.symbol, SK.GetAccessor)
+            if (getter == null) {
+                throw userError(9281, lf("setter currently requires a corresponding getter"))
+            } else {
+                return getter as GetAccessorDeclaration
             }
         }
 
@@ -2103,7 +2115,7 @@ ${lbl}: .short 0xffff
                     }
                     nm = parse[1]
                     if (opts.target.isNative) {
-                        hex.validateShim(getDeclName(decl), nm, attrs, true, litargs.map(v => true))
+                        hexfile.validateShim(getDeclName(decl), nm, attrs, true, litargs.map(v => true))
                     }
                     return ir.rtcallMask(nm, 0, attrs.callingConvention, litargs)
                 }
@@ -2126,7 +2138,7 @@ ${lbl}: .short 0xffff
             }
 
             if (opts.target.isNative) {
-                hex.validateShim(getDeclName(decl), nm, attrs, hasRet, args.map(isNumberLike))
+                hexfile.validateShim(getDeclName(decl), nm, attrs, hasRet, args.map(isNumberLike))
             }
 
             return rtcallMask(nm, args, attrs)
@@ -3016,7 +3028,7 @@ ${lbl}: .short 0xffff
                 if (attrs.shim[0] == "@")
                     return undefined;
                 if (opts.target.isNative) {
-                    hex.validateShim(getDeclName(node),
+                    hexfile.validateShim(getDeclName(node),
                         attrs.shim,
                         attrs,
                         funcHasReturn(node),
@@ -3046,15 +3058,15 @@ ${lbl}: .short 0xffff
 
         function emitDeleteExpression(node: DeleteExpression) {
             let objExpr: Expression
-            let keyExpr: () => ir.Expr
+            let keyExpr: Expression
             if (node.expression.kind == SK.PropertyAccessExpression) {
                 const inner = node.expression as PropertyAccessExpression
                 objExpr = inner.expression
-                keyExpr = () => emitStringLiteral(inner.name.text)
+                keyExpr = irToNode(emitStringLiteral(inner.name.text))
             } else if (node.expression.kind == SK.ElementAccessExpression) {
                 const inner = node.expression as ElementAccessExpression
                 objExpr = inner.expression
-                keyExpr = () => emitExpr(inner.argumentExpression)
+                keyExpr = inner.argumentExpression
             } else {
                 throw userError(9276, lf("expression not supported as argument to 'delete'"))
             }
@@ -3066,11 +3078,7 @@ ${lbl}: .short 0xffff
             if (isArrayType(objExprType))
                 throw userError(9277, lf("'delete' not supported on array"))
 
-            const args = [
-                emitExpr(objExpr),
-                keyExpr()
-            ]
-            return rtcallMaskDirect("pxtrt::mapDeleteByString", args)
+            return rtcallMask("pxtrt::mapDeleteByString", [objExpr, keyExpr], null)
         }
         function emitTypeOfExpression(node: TypeOfExpression) {
             return rtcallMask("pxt::typeOf", [node.expression], null)
@@ -3082,39 +3090,36 @@ ${lbl}: .short 0xffff
             if (folded)
                 return emitLit(folded.val)
 
-            let tp = typeOf(node.operand)
-            if (node.operator == SK.ExclamationToken) {
-                return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
-            }
-
-            if (isNumberType(tp)) {
-                switch (node.operator) {
-                    case SK.PlusPlusToken:
-                        return emitIncrement(node.operand, "numops::adds", false)
-                    case SK.MinusMinusToken:
-                        return emitIncrement(node.operand, "numops::subs", false)
-                    case SK.MinusToken: {
-                        let inner = emitExpr(node.operand)
-                        let v = valueToInt(inner)
-                        if (v != null)
-                            return emitLit(-v)
+            switch (node.operator) {
+                case SK.ExclamationToken:
+                    return fromBool(ir.rtcall("Boolean_::bang", [emitCondition(node.operand)]))
+                case SK.PlusPlusToken:
+                    return emitIncrement(node.operand, "numops::adds", false)
+                case SK.MinusMinusToken:
+                    return emitIncrement(node.operand, "numops::subs", false)
+                case SK.PlusToken:
+                case SK.MinusToken: {
+                    let inner = emitExpr(node.operand)
+                    let v = valueToInt(inner)
+                    if (v != null)
+                        return emitLit(-v)
+                    if (node.operator == SK.MinusToken)
                         return emitIntOp("numops::subs", emitLit(0), inner)
-                    }
-                    case SK.PlusToken:
-                        return emitExpr(node.operand) // no-op
-                    case SK.TildeToken: {
-                        let inner = emitExpr(node.operand)
-                        let v = valueToInt(inner)
-                        if (v != null)
-                            return emitLit(~v)
-                        return rtcallMaskDirect(mapIntOpName("numops::bnot"), [inner]);
-                    }
-                    default:
-                        break
+                    else
+                        // force conversion to number
+                        return emitIntOp("numops::subs", inner, emitLit(0))
                 }
+                case SK.TildeToken: {
+                    let inner = emitExpr(node.operand)
+                    let v = valueToInt(inner)
+                    if (v != null)
+                        return emitLit(~v)
+                    return rtcallMaskDirect(mapIntOpName("numops::bnot"), [inner]);
+                }
+                default:
+                    throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
             }
 
-            throw unhandled(node, lf("unsupported prefix unary operation"), 9245)
         }
 
         function doNothing() { }
@@ -3233,7 +3238,8 @@ ${lbl}: .short 0xffff
                 }
             } else if (trg.kind == SK.PropertyAccessExpression) {
                 let decl = getDecl(trg)
-                if (decl && decl.kind == SK.GetAccessor) {
+                if (decl && (decl.kind == SK.GetAccessor || decl.kind == SK.SetAccessor)) {
+                    checkGetter(decl)
                     decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
                     if (!decl) {
                         unhandled(trg, lf("setter not available"), 9253)
@@ -3636,7 +3642,7 @@ ${lbl}: .short 0xffff
 
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: Expression[] = null) {
             let fmt: string[] = []
-            let inf = hex.lookupFunc(name)
+            let inf = hexfile.lookupFunc(name)
 
             if (isThumb()) {
                 let inf2 = U.lookup(thumbFuns, name)

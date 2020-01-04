@@ -12,14 +12,60 @@ class GetSet {
     }
 }
 
+class GetSet2 {
+    _x: number;
+
+    set x(v: number) {
+        glb1 += 4
+        this._x = v
+    }
+
+    get x() {
+        glb1++
+        return this._x
+    }
+}
+
 interface GetSetIface {
     x: number;
 }
 
 function testAccessors() {
     msg("testAccessors")
-    glb1 = 0
     let f = new GetSet()
+    glb1 = 0
+    f.x = 12
+    assert(glb1 == 4, "s")
+    assert(f.x == 12, "s12")
+    function getf() {
+        glb1 += 100
+        return f
+    }
+    getf().x++
+    assert(glb1 == 110, "s10")
+    assert(f.x == 13, "s13")
+}
+
+function testAccessors2() {
+    msg("testAccessors2")
+    let f = new GetSet2()
+    glb1 = 0
+    f.x = 12
+    assert(glb1 == 4, "s")
+    assert(f.x == 12, "s12")
+    function getf() {
+        glb1 += 100
+        return f
+    }
+    getf().x++
+    assert(glb1 == 110, "s10")
+    assert(f.x == 13, "s13")
+}
+
+function testAccessorsIface() {
+    msg("testAccessorsIface")
+    glb1 = 0
+    let f = new GetSet() as GetSetIface
     f.x = 12
     assert(glb1 == 4, "s")
     assert(f.x == 12, "s12")
@@ -35,20 +81,15 @@ function testAccessors() {
 function testAccessorsAny() {
     msg("testAccessorsAny")
     glb1 = 0
-    let f = new GetSet() as GetSetIface
+    let f = new GetSet() as any
     f.x = 12
     assert(glb1 == 4, "s")
     assert(f.x == 12, "s12")
-    function getf() {
-        glb1 += 100
-        return f
-    }
-    getf().x++
-    assert(glb1 == 110, "s10")
-    assert(f.x == 13, "s13")
 }
 
 testAccessors()
+testAccessors2()
+testAccessorsIface()
 testAccessorsAny()
 
 namespace FieldRedef {

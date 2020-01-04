@@ -52,6 +52,7 @@ namespace pxt.editor {
 
         tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
+        keymap?: boolean;
 
         simState?: SimState;
         autoRun?: boolean;
@@ -288,6 +289,8 @@ namespace pxt.editor {
         startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean): void;
         showLightbox(): void;
         hideLightbox(): void;
+        showKeymap(show: boolean): void;
+        toggleKeymap(): void;
 
         showReportAbuse(): void;
         showLanguagePicker(): void;

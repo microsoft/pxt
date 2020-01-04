@@ -232,6 +232,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     constructor(props: ProjectSettingsMenuProps) {
         super(props);
         this.state = {
+            highContrast: props.highContrast
         }
 
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
@@ -250,6 +251,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
     toggleHighContrast() {
         pxt.tickEvent("home.togglecontrast", undefined, { interactiveConsent: true });
         this.props.parent.toggleHighContrast();
+        this.setState({ highContrast: !this.state.highContrast });
     }
 
     toggleGreenScreen() {

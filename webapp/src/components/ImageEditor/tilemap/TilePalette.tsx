@@ -46,29 +46,39 @@ export interface TilePaletteProps {
  */
 const SCALE = pxt.BrowserUtils.isEdge() ? 25 : 1;
 
-const options: DropdownOption[] = [
+const TILES_PER_PAGE = 16;
+
+interface Category extends DropdownOption {
+    tiles: GalleryTile[];
+}
+
+const options: Category[] = [
     {
         id: "forest",
-        text: "Forest"
+        text: lf("Forest"),
+        tiles: []
     }, {
         id: "aquatic",
-        text: "Aquatic"
+        text: lf("Aquatic"),
+        tiles: []
     }, {
         id: "dungeon",
-        text: "Dungeon"
+        text: lf("Dungeon"),
+        tiles: []
     }, {
         id: "misc",
-        text: "Miscellaneous"
+        text: lf("Miscellaneous"),
+        tiles: []
     }
 ];
 
 const tabs: PivotOption[] = [
     {
         id: "custom",
-        text: "My Tiles"
+        text: lf("My Tiles")
     }, {
         id: "gallery",
-        text: "Gallery"
+        text: lf("Gallery")
     }
 ]
 
@@ -86,10 +96,30 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected renderedTiles: RenderedTile[];
     protected categoryTiles: RenderedTile[];
 
+    constructor(props: TilePaletteProps) {
+        super(props);
+
+        const { gallery, tileset } = props;
+        options.forEach(opt => {
+            if (opt.tiles.length == 0) {
+                opt.tiles.push.apply(opt.tiles,
+                    gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth));
+                }
+        })
+    }
+
     componentDidMount() {
         this.canvas = this.refs["tile-canvas-surface"] as HTMLCanvasElement;
         this.updateGalleryTiles();
         this.redrawCanvas();
+    }
+
+    componentWillReceiveProps(nextProps: TilePaletteProps) {
+        if (this.props.selected != nextProps.selected) {
+            this.jumpToPageContaining(nextProps.selected);
+        } else if (this.props.backgroundColor != nextProps.backgroundColor) {
+            this.jumpToPageContaining(nextProps.backgroundColor);
+        }
     }
 
     componentDidUpdate() {
@@ -105,7 +135,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         const wall = emptyTile.data();
         this.updateGalleryTiles();
 
-        let totalPages = Math.ceil(this.categoryTiles.length / 16);
+        let totalPages = Math.ceil(this.categoryTiles.length / TILES_PER_PAGE);
 
         // Add an empty page for the tile create button if the last page is full
         if (!galleryOpen && this.categoryTiles.length % 16 === 0) totalPages++;
@@ -191,21 +221,43 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected updateGalleryTiles() {
-        const { tileset, page, gallery, category, galleryOpen } = this.props;
+        const { page, category, galleryOpen } = this.props;
 
         if (galleryOpen) {
-            this.categoryTiles = gallery.filter(t => t.tags.indexOf(options[category].id) !== -1 && t.tileWidth === tileset.tileWidth);
+            this.categoryTiles = options[category].tiles;
         }
         else {
-            this.categoryTiles = tileset.tiles
-                .map((t, i) => ([t, i] as [pxt.sprite.TileInfo, number]))
-                .filter(([t]) => t.projectId != undefined && t.data)
-                .sort(([a], [b]) => a.projectId - b.projectId)
-                .map(([t, i]) => ({ index: i, bitmap: t.data }));
+            this.categoryTiles = this.getCustomTiles().map(([t, i]) => ({ index: i, bitmap: t.data }));
         }
 
-        const startIndex = page * 16;
-        this.renderedTiles = this.categoryTiles.slice(startIndex, startIndex + 16);
+        const startIndex = page * TILES_PER_PAGE;
+        this.renderedTiles = this.categoryTiles.slice(startIndex, startIndex + TILES_PER_PAGE);
+    }
+
+    protected jumpToPageContaining(index: number) {
+        const { tileset, dispatchSetGalleryOpen, dispatchChangeTilePaletteCategory,
+            dispatchChangeTilePalettePage } = this.props;
+        if (!index || index < 0 || index >= tileset.tiles.length) return;
+
+        const tile = tileset.tiles[index];
+        if (!!tile.qualifiedName) {
+            // For gallery tile, find the category then the page within the category
+            const category = options.find(opt => opt.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) !== -1);
+            if (!category || !category.tiles) return;
+            const page = Math.max(Math.floor(category.tiles.findIndex(t => t.qualifiedName == tile.qualifiedName) / TILES_PER_PAGE), 0);
+
+            dispatchSetGalleryOpen(true);
+            dispatchChangeTilePaletteCategory(options.indexOf(category) as TileCategory);
+            dispatchChangeTilePalettePage(page);
+        } else {
+            // For custom tile, find the page
+            const categoryTiles = this.getCustomTiles().map(([t, i]) => t);
+            if (!categoryTiles) return;
+            const page = Math.max(Math.floor(categoryTiles.findIndex(t => t.projectId == tile.projectId) / TILES_PER_PAGE), 0);
+
+            dispatchSetGalleryOpen(false);
+            dispatchChangeTilePalettePage(page);
+        }
     }
 
     protected redrawCanvas() {
@@ -353,7 +405,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
             }
             else {
                 const { selected, backgroundColor, tileset } = this.props;
-                const newIndex = tileset.tiles.length;
+                const newIndex = tileset.tiles.length || 1; // transparent is index 0, so default to 1
 
                 this.props.dispatchCreateNewTile(
                     tile.bitmap,
@@ -372,11 +424,11 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
 
         if (button) {
             const column = this.categoryTiles.length % 4;
-            const row = Math.floor(this.categoryTiles.length / 4);
+            const row = Math.floor(this.categoryTiles.length / 4) % 4;
 
             button.style.position = "absolute";
-            button.style.left = (column * 25) + "%";
-            button.style.top = (row * 25) + "%";
+            button.style.left = "calc(" + (column / 4) + " * (100% - 0.5rem) + 0.25rem)";
+            button.style.top = "calc(" + (row / 4) + " * (100% - 0.5rem) + 0.25rem)";
         }
     }
 
@@ -393,6 +445,14 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();
+
+    // Returns all custom tiles and their index in the entire tileset, sorted by index.
+    protected getCustomTiles() {
+        return this.props.tileset.tiles
+            .map((t, i) => ([t, i] as [pxt.sprite.TileInfo, number]))
+            .filter(([t]) => t.projectId != undefined && t.data)
+            .sort(([a], [b]) => a.projectId - b.projectId);
+    }
 
     protected getTileIndex(g: GalleryTile) {
         const { tileset } = this.props;
