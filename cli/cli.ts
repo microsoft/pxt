@@ -1492,9 +1492,11 @@ interface CiBuildInfo {
 function ciBuildInfo(): CiBuildInfo {
     const isTravis = (process.env.TRAVIS === "true");
     const isGithubAction = (!!process.env.GITHUB_ACTIONS);
+    const isAzurePipelines = (process.env.TF_BUILD === "True");
 
     if (isTravis) return travisInfo();
     else if (isGithubAction) return githubActionInfo();
+    else if (isAzurePipelines) return travisInfo(); // azure pipelines uses same info
     else {
         // local build
         return {
