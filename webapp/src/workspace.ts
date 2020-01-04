@@ -900,6 +900,7 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
     const supportedTargets = cfg.supportedTargets || [];
     if (supportedTargets.indexOf(pxt.appTarget.id) < 0) {
         supportedTargets.push(pxt.appTarget.id);
+        supportedTargets.sort(); // keep list stable
         cfg.supportedTargets = supportedTargets;
     }
 
