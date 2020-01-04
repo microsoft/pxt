@@ -3782,17 +3782,40 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pyStrictSyntaxC
             return Promise.resolve();
         }
 
-        let inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "" }
+        let isPy = snippet.ext === "py"
+        let inFiles;
+        if (isPy)
+            inFiles = { "main.ts": "", "main.py": snippet.code, "main.blocks": "" }
+        else
+            inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "" }
         const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
         host.cache = cache;
         const pkg = new pxt.MainPackage(host);
         return pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
-                let resp = pxtc.compile(opts)
+                let resp: { outfiles: Map<string>, success: boolean, diagnostics: pxtc.KsDiagnostic[], ast?: ts.Program };
+                if (isPy) {
+                    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+                    const stsCompRes = pxtc.compile(opts);
+                    const apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
+                    if (!apisInfo || !apisInfo.byQName)
+                        throw Error("Failed to get apisInfo")
+                    opts.apisInfo = apisInfo
+
+                    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+
+                    const { outfiles, diagnostics } = pxt.py.py2ts(opts)
+                    const success = diagnostics.length == 0
+                    resp = { outfiles, success, diagnostics, ast: stsCompRes.ast }
+                } else {
+                    resp = pxtc.compile(opts)
+                }
 
                 if (resp.outfiles && snippet.file) {
-                    const dir = snippet.file.replace(/\.ts$/, '');
+                    const dir = snippet.file
+                        .replace(/\.ts$/, '')
+                        .replace(/\.py$/, '');
                     nodeutil.mkdirP(dir);
                     nodeutil.mkdirP(path.join(dir, "built"));
                     Object.keys(resp.outfiles).forEach(outfile => {
@@ -5196,9 +5219,10 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "cards": "ts",
         "sim": "ts",
         "ghost": "ts",
-        "codecard": "json"
+        "codecard": "json",
+        "python": "py"
     }
-    const snippets = getSnippets(md);
+    let snippets = getSnippets(md);
     const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
     const pkgs: pxt.Map<string> = {
         "blocksprj": "*"
