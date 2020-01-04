@@ -896,6 +896,14 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
     delete cfg.additionalFilePaths
     delete cfg.targetVersions;
 
+    // add list of supported targets
+    const supportedTargets = cfg.supportedTargets || [];
+    if (supportedTargets.indexOf(pxt.appTarget.id) < 0) {
+        supportedTargets.push(pxt.appTarget.id);
+        supportedTargets.sort(); // keep list stable
+        cfg.supportedTargets = supportedTargets;
+    }
+
     // patch dependencies
     const localDependencies = Object.keys(cfg.dependencies)
         .filter(d => /^(file|workspace):/.test(cfg.dependencies[d]));
