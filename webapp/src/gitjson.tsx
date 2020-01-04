@@ -1088,6 +1088,7 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
                 </span>
             </div> : undefined}
+            <div></div>
         </div>
     }
 }

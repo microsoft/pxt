@@ -75,6 +75,7 @@ declare namespace pxt {
         snippetBuilders?: SnippetConfig[];
         experimentalHw?: boolean;
         requiredCategories?: string[]; // ensure that those block categories are visible
+        supportedTargets?: string[]; // a hint about targets in which this extension is supported
     }
 
     interface PackageExtension {
