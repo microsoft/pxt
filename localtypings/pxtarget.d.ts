@@ -5,10 +5,14 @@
 
 declare namespace pxt {
     // targetconfig.json
+    interface GalleryProps {
+        url: string,
+        experimentName?: string
+    }
     interface TargetConfig {
         packages?: PackagesConfig;
         // common galleries
-        galleries?: pxt.Map<string>;
+        galleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;

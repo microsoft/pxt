@@ -451,7 +451,7 @@ namespace pxt.runner {
             options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
-                .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
+                .then(() => runner.decompileSnippetAsync(msg.code, msg.options))
                 .then(result => {
                     const blocksSvg = result.blocksSvg as SVGSVGElement;
                     return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
@@ -887,7 +887,7 @@ ${linkString}
     let programCache: ts.Program;
     let apiCache: pxt.Map<pxtc.ApisInfo>;
 
-    export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
+    export function decompileSnippetAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
         const packageid = options && options.packageId ? "pub:" + options.packageId :
             options && options.package ? "docs:" + options.package
@@ -910,6 +910,7 @@ ${linkString}
                 }
                 programCache = program;
 
+                // decompile to python
                 let compilePython: pxtc.transpile.TranspileResult = undefined;
                 if (pxt.appTarget.appTheme.python) {
                     compilePython = ts.pxtc.transpile.tsToPy(program, "main.ts");

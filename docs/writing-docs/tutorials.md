@@ -403,6 +403,28 @@ player.onChat("blockleft", function () {
 ```
 ````
 
+## Using Python
+
+If the target supports Python, snippets can be written directly in Python by using "python" after the triple tick like this:
+````
+```python
+for i in range(100):
+    mobs.spawn(AnimalMob.CHICKEN, positions.create(0, 10, 0))
+```
+````
+
+Note that if the target supports python then snippets written in the usuall way like:
+````
+```typescript
+basic.showString("Hello!")
+```
+or
+```blocks
+basic.showString("Hello!")
+```
+````
+users will have the option of clicking the Python icon to see the snippet in Python just like they can with Blocks and Javascript/Typescript.
+
 ## Testing
 
 When developing your new tutorials, it is easiest to first render and view them as a markdown documentation page until all steps look OK to you. Going through all the steps several times using the tutorial runner might become quite tedious while developing the tutorial.
