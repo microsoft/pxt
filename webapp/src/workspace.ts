@@ -876,10 +876,12 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
     if (gitjson.isFork == null) {
         const p = pxt.github.parseRepoId(gitjson.repo)
-        const r = await pxt.github.repoAsync(p.fullName, null)
-        gitjson.isFork = !!r.fork
-        files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
-        await saveAsync(h, files)
+        const r = await pxt.github.repoAsync(p.fullName, null);
+        if (r) {
+            gitjson.isFork = !!r.fork
+            files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
+            await saveAsync(h, files)
+        }
     }
 
     // automatically update project name with github name
