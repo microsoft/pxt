@@ -65,7 +65,12 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         const hasissue = pullStatus == workspace.PullStatus.BranchNotFound;
         const haspull = pullStatus == workspace.PullStatus.GotChanges;
         const modified = meta && !!meta.modified;
-        const repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+        let repoName = ghid.project && ghid.tag ? `${ghid.project}${ghid.tag == "master" ? "" : `#${ghid.tag}`}` : ghid.fullName;
+        // shrink name...
+        repoName = repoName.replace(/^pxt-/, '');
+        if (repoName.length > 18) 
+            repoName = repoName.slice(0, 16) + '..'
+
         const title =
             hasissue ? lf("{0}: there is an issue with your GitHub connection.", repoName)
                 : haspull ? lf("{0}: remote changes are ready to be pulled.", repoName)
@@ -75,7 +80,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
         return <div key="githubeditorbtn" role="button" className={`${defaultCls} ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
-            {!!ghid.project && <span className="ui mobile hide">{ghid.project}{ghid.tag != "master" ? `#${ghid.tag}` : ""}</span>}
+            <span className="ui mobile hide">{repoName}{ghid.tag != "master" ? `#${ghid.tag}` : ""}</span>
             <i className={`ui long ${
                 hasissue ? "exclamation circle"
                     : haspull ? "arrow alternate down"
