@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
+
+January 6th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that MakeCode Arcade has been officially released for general availability today!
+**[Continue reading this blog post](/blog/arcade/general-release)**
+
 ## [MakeCode with GitHub](/blog/makecode-with-github)
 
 December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)

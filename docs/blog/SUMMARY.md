@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode Arcade Released for General Availability!](/blog/arcade/general-release)
     * [MakeCode with GitHub](/blog/makecode-with-github)
     * [Minecraft Hour of Code](/blog/minecraft/hour-of-code-2019)
     * [Translations in Context](/blog/translations-in-context)
