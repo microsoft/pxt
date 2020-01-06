@@ -8,5 +8,6 @@
     * [classroom](/github/classroom)
     * [test extension](/github/test-extension)
     * [token](/github/token)
+    * [offline](/github/offline)
     * [explorer](/github/explorer)
     * [FAQ](/github/FAQ)

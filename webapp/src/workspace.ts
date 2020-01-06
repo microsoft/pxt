@@ -540,8 +540,8 @@ export interface CommitOptions {
     blocksDiffScreenshotAsync?: () => Promise<string>;
 }
 
-const BLOCKS_PREVIEW_PATH = ".makecode/blocks.png";
-const BLOCKSDIFF_PREVIEW_PATH = ".makecode/blocksdiff.png";
+const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
+const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -583,7 +583,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
-        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.makecode\//.test(f)).join(", ")),
+        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.github\/makecode\//.test(f)).join(", ")),
         parents: [gitjson.commit.sha],
         tree: treeId
     }
@@ -876,10 +876,24 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
 
     if (gitjson.isFork == null) {
         const p = pxt.github.parseRepoId(gitjson.repo)
-        const r = await pxt.github.repoAsync(p.fullName, null)
-        gitjson.isFork = !!r.fork
-        files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
-        await saveAsync(h, files)
+        const r = await pxt.github.repoAsync(p.fullName, null);
+        if (r) {
+            gitjson.isFork = !!r.fork
+            files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
+            await saveAsync(h, files)
+        }
+    }
+
+    // automatically update project name with github name
+    const ghid = pxt.github.parseRepoId(h.githubId);
+    if (ghid.project) {
+        const ghname = ghid.project.replace(/^pxt-/, '').replace(/-+/g, ' ')
+        if (ghname != h.name) {
+            const cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
+            cfg.name = ghname;
+            h.name = ghname;
+            await saveAsync(h, files);
+        }
     }
 }
 

@@ -332,42 +332,6 @@ class WizardMenu extends sui.StatelessUIElement<WizardMenuProps> {
     }
 }
 
-export function showCommitDialogAsync(repo: string) {
-    let input: HTMLInputElement;
-    const deflMsg = lf("Updates.")
-    let bump = false
-    const setBump = (v: boolean) => {
-        bump = !!v
-    }
-    return core.confirmAsync({
-        header: lf("Commit to {0}", repo),
-        agreeLbl: lf("Commit"),
-        onLoaded: (el) => {
-            input = el.querySelectorAll('input')[0] as HTMLInputElement;
-        },
-        jsx: <div className="ui form">
-            <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Describe your changes.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-labelledby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
-            </div>
-            <div className="ui field">
-                <sui.PlainCheckbox
-                    label={lf("Publish to users (bump)")}
-                    onChange={setBump} />
-            </div>
-        </div>,
-    }).then(res => {
-        if (res) {
-            pxt.tickEvent("app.commit.ok");
-            return {
-                msg: input.value || deflMsg,
-                bump
-            }
-        }
-        return undefined;
-    })
-}
-
 export function showPRDialogAsync(repo: string, prURL: string): Promise<void> {
     return core.confirmAsync({
         header: lf("Commit conflict in {0}", repo),
