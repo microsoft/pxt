@@ -2307,7 +2307,8 @@ namespace pxt.py {
     export interface Py2TsRes {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
-        outfiles: { [key: string]: string }
+        outfiles: { [key: string]: string },
+        syntaxInfo?: pxtc.SyntaxInfo
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
@@ -2433,6 +2434,25 @@ namespace pxt.py {
             if (!syntaxInfo.symbols)
                 syntaxInfo.symbols = []
 
+            // always return global symbols because we might need to check for
+            // name collisions downstream
+            {
+                syntaxInfo.globalNames = syntaxInfo.globalNames || {}
+                let existing: SymbolInfo[] = []
+                const addSym = (v: SymbolInfo) => {
+                    if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
+                        let s = cleanSymbol(v)
+                        syntaxInfo!.globalNames![s.qName || s.name] = s
+                    }
+                }
+                existing = syntaxInfo.symbols.slice()
+                for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
+                    if (s && s.vars)
+                        U.values(s.vars).forEach(addSym)
+                }
+                apis.forEach(addSym)
+            }
+
             if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
                 const tp = typeOf(attr.value)
@@ -2459,17 +2479,7 @@ namespace pxt.py {
                 }
 
             } else if (syntaxInfo.type == "identifierCompletion") {
-                let existing: SymbolInfo[] = []
-                const addSym = (v: SymbolInfo) => {
-                    if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
-                        syntaxInfo!.symbols!.push(v)
-                }
-                existing = syntaxInfo.symbols.slice()
-                for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
-                    if (s && s.vars)
-                        U.values(s.vars).forEach(addSym)
-                }
-                apis.forEach(addSym)
+                syntaxInfo.symbols = pxt.U.values(syntaxInfo.globalNames)
             } else {
                 let sym = (infoNode as Expr).symbolInfo
                 if (sym)
@@ -2483,7 +2493,8 @@ namespace pxt.py {
         return {
             outfiles: outfiles,
             success: outDiag.length === 0,
-            diagnostics: outDiag
+            diagnostics: outDiag,
+            syntaxInfo
         }
 
         function patchedDiags() {

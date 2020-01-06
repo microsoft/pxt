@@ -237,7 +237,7 @@ namespace ts.pxtc.decompiler {
         }
     }
 
-    export type NamesSet = pxt.Map<boolean>
+    export type NamesSet = pxt.Map<boolean | {}>
     /**
      * Uses the language service to ensure that there are no duplicate variable
      * names in the given file. All variables in Blockly are global, so this is
@@ -285,7 +285,7 @@ namespace ts.pxtc.decompiler {
         }
     }
 
-    export function getNewName(name: string, takenNames: NamesSet) {
+    export function getNewName(name: string, takenNames: NamesSet, recordNewName = true) {
         // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
         if (name.length === 1) {
             const charCode = name.charCodeAt(0);
@@ -294,7 +294,8 @@ namespace ts.pxtc.decompiler {
                 for (let i = 1; i < 26; i++) {
                     const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
                     if (!takenNames[newChar]) {
-                        takenNames[newChar] = true;
+                        if (recordNewName)
+                            takenNames[newChar] = true;
                         return newChar;
                     }
                 }
@@ -305,7 +306,8 @@ namespace ts.pxtc.decompiler {
         for (let i = 2; ; i++) {
             const toTest = name + i;
             if (!takenNames[toTest]) {
-                takenNames[toTest] = true;
+                if (recordNewName)
+                    takenNames[toTest] = true;
                 return toTest;
             }
         }

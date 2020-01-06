@@ -735,6 +735,7 @@ declare namespace ts.pxtc {
         position: number;
 
         symbols?: SymbolInfo[];
+        globalNames?: pxt.Map<SymbolInfo>;
         beginPos?: number;
         endPos?: number;
         auxResult?: any;
