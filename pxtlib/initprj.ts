@@ -54,7 +54,7 @@ ${lf("To edit this repository in MakeCode.")}
 ${lf("This image shows the blocks code from the last commit in master.")}
 ${lf("This image may take a few minutes to refresh.")}
 
-![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.makecode/blocks.png)
+![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.github/makecode/blocks.png)
 
 ## ${lf("Supported targets")}
 

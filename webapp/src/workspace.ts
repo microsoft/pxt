@@ -540,8 +540,8 @@ export interface CommitOptions {
     blocksDiffScreenshotAsync?: () => Promise<string>;
 }
 
-const BLOCKS_PREVIEW_PATH = ".makecode/blocks.png";
-const BLOCKSDIFF_PREVIEW_PATH = ".makecode/blocksdiff.png";
+const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
+const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -583,7 +583,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
-        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.makecode\//.test(f)).join(", ")),
+        message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.github\/makecode\//.test(f)).join(", ")),
         parents: [gitjson.commit.sha],
         tree: treeId
     }
