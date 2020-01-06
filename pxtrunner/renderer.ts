@@ -3,7 +3,9 @@
 namespace pxt.runner {
     const JS_ICON = "icon xicon js";
     const PY_ICON = "icon xicon python";
-    const BLOCKS_ICON = "icon xicon blocks"
+    const BLOCKS_ICON = "icon xicon blocks";
+    const PY_FILE = "main.py";
+    const BLOCKS_FILE = "main.blocks";
 
     export interface ClientRenderOptions {
         snippetClass?: string;
@@ -102,8 +104,17 @@ namespace pxt.runner {
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
-            const pkg = decompileResult.package;
-            pkg.setPreferredEditor($svg ? pxt.BLOCKS_PROJECT_NAME : $py ? pxt.PYTHON_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME);
+            const { package: pkg, compileBlocks, compilePython } = decompileResult;
+            const host = pkg.host();
+
+            if ($svg && compileBlocks) {
+                pkg.setPreferredEditor(pxt.BLOCKS_PROJECT_NAME);
+                host.writeFile(pkg, BLOCKS_FILE, compileBlocks.outfiles[BLOCKS_FILE]);
+            } else if ($py && compilePython) {
+                pkg.setPreferredEditor(pxt.PYTHON_PROJECT_NAME);
+                host.writeFile(pkg, PY_FILE, compileBlocks.outfiles[PY_FILE]);
+            }
+
             const compressed = pkg.compressToFileAsync();
             const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });

@@ -56,7 +56,8 @@ namespace pxt.runner {
         writeFile(module: pxt.Package, filename: string, contents: string): void {
             if (filename == pxt.CONFIG_NAME)
                 return; // ignore config writes
-            throw Util.oops("trying to write " + module + " / " + filename)
+            const epkg = getEditorPkg(module);
+            epkg.files[filename] = contents;
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
