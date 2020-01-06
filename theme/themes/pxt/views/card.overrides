@@ -212,6 +212,15 @@ a.ui.card:focus,
 /* Mobile only */
 
 @media only screen and (max-width: @largestMobileScreen) {
+    .ui.card.file {
+        .fileimage {
+            top: 2rem;
+            left: 1rem;
+            width: 2rem;
+            height: 1.5rem;                
+        }
+    }
+
     .ui.card, .ui.cards>.card {
         .content .description {
             display: none;
