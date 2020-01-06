@@ -83,6 +83,29 @@
   font-size: @h3;
 }
 
+/* Sidedocs in Monaco editor */
+.sideDocs.py,
+.sideDocs.js {
+    #sidedocs {
+        width: 50%!important;
+        min-width: 18rem;
+    }
+
+    #sidedocsframe, #sidedocsframe-wrapper {
+        width: 100%!important;
+    }
+
+    #sidedocstoggle {
+        right: calc(~'50% - 0.5rem')!important;
+    }
+
+    @media only screen and (max-width: 36rem) {
+        #sidedocstoggle {
+            right: 17rem!important;
+        }
+    }
+}
+
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     .sideDocs #sidedocs, .sideDocs #sidedocsframe, .sideDocs #sidedocsframe-wrapper {

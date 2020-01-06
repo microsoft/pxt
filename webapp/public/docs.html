@@ -119,6 +119,9 @@
             var backLabel = document.getElementById('back-label');
             if (backLabel)
                 backLabel.textContent = pxt.Util.lf("Go back")
+            var editorlang = pxt.Util.getEditorLanguagePref();
+            if (editorlang == "py") document.body.classList.add("py");
+
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
             var project = /project=([^&?]+)/i.exec(window.location.href);
             var code = /code=([^&?]+)/i.exec(window.location.href);
