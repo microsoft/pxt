@@ -3049,7 +3049,9 @@ export class ProjectView
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {
-        if (!this.state.header) return Promise.resolve(false);
+        // don't show rename project prompt on github projects
+        if (!this.state.header || this.state.header.githubId) 
+            return Promise.resolve(false);
 
         const opts: core.PromptOptions = {
             header: lf("Rename your project"),
