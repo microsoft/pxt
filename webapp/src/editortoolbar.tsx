@@ -230,6 +230,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showZoomControls = true;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
+            && !!targetTheme.githubEditor
             && !readOnly && !isController && !debugging && !tutorial;
 
         const trace = !!targetTheme.enableTrace;
