@@ -43,11 +43,14 @@ namespace pxt.runner {
 
     function highlight($js: JQuery) {
         if (typeof hljs !== "undefined") {
-            if ($js.hasClass("highlight"))
+            if ($js.hasClass("highlight")) {
                 hljs.highlightBlock($js[0]);
-            else $js.find('code.highlight').each(function (i, block) {
-                hljs.highlightBlock(block);
-            });
+            }
+            else {
+                $js.find('code.highlight').each(function (i, block) {
+                    hljs.highlightBlock(block);
+                });
+            }
         }
     }
 
@@ -232,7 +235,7 @@ namespace pxt.runner {
             if (!job) return Promise.resolve(); // done
 
             const { el, options, render } = job;
-            return pxt.runner.decompileToBlocksAsync(el.text(), options)
+            return pxt.runner.decompileSnippetAsync(el.text(), options)
                 .then(r => {
                     const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
                     if (errors && errors.length) {
@@ -365,6 +368,7 @@ namespace pxt.runner {
     }
 
     function renderStaticPythonAsync(options: ClientRenderOptions): Promise<void> {
+        // Highlight python snippets if the snippet has compile python
         const woptions: WidgetOptions = {
             showEdit: !!options.showEdit,
             run: !!options.simulator
@@ -459,7 +463,7 @@ namespace pxt.runner {
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
         if (pxt.appTarget.id == "core") return Promise.resolve();
 
-        return pxt.runner.decompileToBlocksAsync('', options)
+        return pxt.runner.decompileSnippetAsync('', options)
             .then((r) => {
                 let res: pxt.Map<string> = {};
                 const info = r.compileBlocks.blocksInfo;
@@ -531,7 +535,7 @@ namespace pxt.runner {
             if (!m) return renderNextAsync();
 
             const code = m[1];
-            return pxt.runner.decompileToBlocksAsync(code, options)
+            return pxt.runner.decompileSnippetAsync(code, options)
                 .then(r => {
                     if (r.blocksSvg) {
                         let $newel = $('<span class="block"/>').append(r.blocksSvg);
@@ -831,6 +835,33 @@ namespace pxt.runner {
         })
     }
 
+    function renderDirectPython(options?: ClientRenderOptions) {
+        // Highlight python snippets written with the ```python
+        // language tag (as opposed to the ```spy tag, see renderStaticPythonAsync for that)
+        const woptions: WidgetOptions = {
+            showEdit: !!options.showEdit,
+            run: !!options.simulator
+        }
+
+        function render(e: Node, ignored: boolean) {
+            if (typeof hljs !== "undefined") {
+                $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
+                hljs.highlightBlock(e)
+            }
+            const opts = pxt.U.clone(woptions);
+            if (ignored) {
+                opts.run = false;
+                opts.showEdit = false;
+            }
+            fillWithWidget(options, $(e).parent(), $(e), /* py */ undefined, /* JQuery */ undefined, /* decompileResult */ undefined, opts);
+        }
+
+        $('code.lang-python').each((i, e) => {
+            render(e, false);
+            $(e).removeClass('lang-python');
+        });
+    }
+
     function renderTypeScript(options?: ClientRenderOptions) {
         const woptions: WidgetOptions = {
             showEdit: !!options.showEdit,
@@ -921,6 +952,7 @@ namespace pxt.runner {
         renderGhost(options);
         renderSims(options);
         renderTypeScript(options);
+        renderDirectPython(options);
         return Promise.resolve()
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderNamespaces(options))

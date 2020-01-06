@@ -2096,11 +2096,15 @@ export class ProjectView
                 if (src === undefined && open) { // failed to convert
                     return core.confirmAsync({
                         header: lf("Oops, there is a problem converting your code."),
-                        body: lf("We are unable to convert your code back to JavaScript."),
+                        body: lf("We are unable to convert your code to JavaScript."),
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
-                    }).then(b => { })
+                    }).then(b => {
+                        if (this.isPythonActive()) {
+                            pxt.Util.setEditorLanguagePref("py"); // stay in python, else go to blocks
+                        }
+                    })
                 }
                 if (src === undefined
                     || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
