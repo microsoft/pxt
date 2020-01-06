@@ -319,11 +319,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {compileBtn && this.getCompileButton(tablet, true)}
                             </div>
                         </div>
-                        {showSave || showGithub && <div className="column four wide">
+                        {(showSave || showGithub) && <div className="column four wide">
                             {showSave && <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />}
                             {showGithub && <githubbutton.GithubButton parent={this.props.parent} key={`githubbtntablet`} className={"small"} />}
                         </div>}
-                        <div className={`column ${showSave || showGithub ? 'six' : 'ten'} wide right aligned`}>
+                        <div className={`column ${(showSave || showGithub) ? 'six' : 'ten'} wide right aligned`}>
                             {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(tablet)}</div>}
                             {showZoomControls && <div className="ui icon small buttons">{this.getZoomControl(tablet)}</div>}
                             {targetTheme.bigRunButton &&
