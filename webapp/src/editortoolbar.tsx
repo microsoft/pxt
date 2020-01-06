@@ -210,7 +210,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
-        const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial && !debugging && !disableFileAccessinMaciOs;
+        const hasRepository = header && !!header.githubId;
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu 
+            && !tutorial && !debugging && !disableFileAccessinMaciOs
+            && !hasRepository;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -220,7 +223,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const hasUndo = this.props.parent.editor.hasUndo();
 
-        const hasRepository = header && !!header.githubId;
         const showProjectRename = !tutorial && !readOnly && !isController
             && !targetTheme.hideProjectRename && !debugging
             && !hasRepository;
