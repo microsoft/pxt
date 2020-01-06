@@ -892,6 +892,7 @@ ${content}
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
                     {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} /> : undefined}
+                    <div></div>
                 </div>
             </div>
         )
@@ -999,12 +1000,19 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
         super(props);
         this.handleBumpClick = this.handleBumpClick.bind(this);
         this.handleForkClick = this.handleForkClick.bind(this);
+        this.handleSaveClick = this.handleSaveClick.bind(this);
     }
 
     private handleForkClick(e: React.MouseEvent<HTMLElement>) {
         pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
         e.stopPropagation();
         this.props.parent.forkAsync(false).done();
+    }
+
+    private handleSaveClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.extensionzone.save", undefined, { interactiveConsent: true });
+        e.stopPropagation();
+        this.props.parent.props.parent.saveAndCompile();
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
@@ -1061,6 +1069,17 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/fork", lf("Learn more about forking repositories."))}
                 </span>
             </div>}
+            {needsLicenseMessage && <div className={`ui field`}>
+                <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
+                    role="button" className="ui basic button"
+                    target="_blank" rel="noopener noreferrer">
+                    {lf("Add license")}
+                </a>
+                <span className="inline-help">
+                    {lf("Your project doesn't seem to have a license.")}
+                    {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                </span>
+            </div>}
             {gs.commit && gs.commit.tag ?
                 <div className="ui field">
                     <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}
@@ -1077,18 +1096,15 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                         {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
                     </span>
                 </div>}
-            {needsLicenseMessage ? <div className={`ui field`}>
-                <a href={`https://github.com/${githubId.fullName}/community/license/new?branch=${githubId.tag}&template=mit`}
-                    role="button" className="ui basic button"
-                    target="_blank" rel="noopener noreferrer">
-                    {lf("Add license")}
-                </a>
+            <div className="ui field">
+                <sui.Button className="basic" text={lf("Save for offline")}
+                    onClick={this.handleSaveClick}
+                    onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
-                    {lf("Your project doesn't seem to have a license.")}
-                    {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
+                    {lf("Export this extension to a file that can be imported without Internet.")}
+                    {sui.helpIconLink("/github/offline", lf("Learn more about offline support for extensions."))}
                 </span>
-            </div> : undefined}
-            <div></div>
+            </div>
         </div>
     }
 }
