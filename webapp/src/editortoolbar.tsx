@@ -234,7 +234,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             && !targetTheme.hideProjectRename && !debugging;
         const showUndoRedo = !readOnly && !debugging;
         const showZoomControls = true;
-        const showGithub = !!pxt.appTarget.cloud 
+        const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages;
 
         const trace = !!targetTheme.enableTrace;
