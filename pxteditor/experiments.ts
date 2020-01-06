@@ -138,6 +138,12 @@ namespace pxt.editor.experiments {
                 id: "checkForHwVariantWebUSB",
                 name: lf("Detect Hardware with WebUSB"),
                 description: lf("When compiling, use WebUSB to detect hardware configuration.")
+            },
+            {
+                id: "githubEditor",
+                name: lf("GitHub editor"),
+                description: lf("Review, commit and push to GitHub."),
+                feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

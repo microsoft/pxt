@@ -367,6 +367,7 @@ declare namespace pxt {
         leanShare?: boolean; // use leanscript.html instead of script.html for sharing pages
         nameProjectFirst?: boolean;
         pythonToolbox?: boolean; // Code toolbox for Python
+        githubEditor?: boolean; // allow editing github repositories from the editor
     }
 
     interface SocialOptions {
