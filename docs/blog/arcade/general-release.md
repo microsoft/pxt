@@ -6,7 +6,7 @@ Ringing in the New Year with a New Release! The MakeCode team is very happy and 
 
 For those of you who have been following our progress, you’ll know that we’ve been working on MakeCode Arcade for about 2 years now... and we’ve had it in Beta for the past year while we’ve continued to get feedback, fix bugs, make improvements and just generally polish up the experience.
 
-Huge thanks to everyone who has been using the Beta version, filing bugs and offering us suggestions (shout-outs to Kevin J Walters and Alex Kulcsar for helping us find a lot of great bugs!). Also big thanks to our *amazing* hardware partners who have worked with us to make super fun Arcade-compatible game devices that really bring the Arcade games to life!  Check them out here – https://arcade.makecode.com/hardware.  
+Huge thanks to everyone who has been using the Beta version, filing bugs and offering us suggestions (shout-outs to Kevin J Walters and [Alex Kulcsar](https://twitter.com/AlexKulcsar) for helping us find a lot of great bugs!). Also big thanks to our *amazing* hardware partners who have worked with us to make super fun Arcade-compatible game devices that really bring the Arcade games to life!  Check them out here – https://arcade.makecode.com/hardware.  
  
 ![Several boards that run Arcade](/static/blog/arcade/general-release/arcade-boards.jpg)
 
