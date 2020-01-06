@@ -104,21 +104,22 @@ namespace pxt.runner {
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
-            const { package: pkg, compileBlocks, compilePython } = decompileResult;
-            const host = pkg.host();
-
-            if ($svg && compileBlocks) {
-                pkg.setPreferredEditor(pxt.BLOCKS_PROJECT_NAME);
-                host.writeFile(pkg, BLOCKS_FILE, compileBlocks.outfiles[BLOCKS_FILE]);
-            } else if ($py && compilePython) {
-                pkg.setPreferredEditor(pxt.PYTHON_PROJECT_NAME);
-                host.writeFile(pkg, PY_FILE, compileBlocks.outfiles[PY_FILE]);
-            }
-
-            const compressed = pkg.compressToFileAsync();
-            const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
+            const $editBtn = snippetBtn(lf("Edit"), "edit icon");
+            $editBtn.click(() => {
                 pxt.tickEvent("docs.btn", { button: "edit" });
-                compressed.done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'));
+                const { package: pkg, compileBlocks, compilePython } = decompileResult;
+                const host = pkg.host();
+
+                if ($svg && compileBlocks) {
+                    pkg.setPreferredEditor(pxt.BLOCKS_PROJECT_NAME);
+                    host.writeFile(pkg, BLOCKS_FILE, compileBlocks.outfiles[BLOCKS_FILE]);
+                } else if ($py && compilePython) {
+                    pkg.setPreferredEditor(pxt.PYTHON_PROJECT_NAME);
+                    host.writeFile(pkg, PY_FILE, compileBlocks.outfiles[PY_FILE]);
+                }
+
+                pkg.compressToFileAsync()
+                    .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'));
             });
             $menu.append($editBtn);
         }
