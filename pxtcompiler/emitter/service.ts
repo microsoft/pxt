@@ -804,7 +804,7 @@ namespace ts.pxtc.service {
         }
     }
 
-    type Py2TsRes = {
+    interface Py2TsRes {
         // TODO: use the real types from converter.ts
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
