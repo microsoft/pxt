@@ -2436,22 +2436,20 @@ namespace pxt.py {
 
             // always return global symbols because we might need to check for
             // name collisions downstream
-            {
-                syntaxInfo.globalNames = syntaxInfo.globalNames || {}
-                let existing: SymbolInfo[] = []
-                const addSym = (v: SymbolInfo) => {
-                    if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
-                        let s = cleanSymbol(v)
-                        syntaxInfo!.globalNames![s.qName || s.name] = s
-                    }
+            syntaxInfo.globalNames = syntaxInfo.globalNames || {}
+            let existing: SymbolInfo[] = []
+            const addSym = (v: SymbolInfo) => {
+                if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
+                    let s = cleanSymbol(v)
+                    syntaxInfo!.globalNames![s.qName || s.name] = s
                 }
-                existing = syntaxInfo.symbols.slice()
-                for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
-                    if (s && s.vars)
-                        U.values(s.vars).forEach(addSym)
-                }
-                apis.forEach(addSym)
             }
+            existing = syntaxInfo.symbols.slice()
+            for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
+                if (s && s.vars)
+                    U.values(s.vars).forEach(addSym)
+            }
+            apis.forEach(addSym)
 
             if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
