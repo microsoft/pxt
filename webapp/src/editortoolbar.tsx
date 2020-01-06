@@ -211,7 +211,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const hasRepository = header && !!header.githubId;
-        const showSave = !readOnly && !isController && !targetTheme.saveInMenu 
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu
             && !tutorial && !debugging && !disableFileAccessinMaciOs
             && !hasRepository;
         const compile = pxt.appTarget.compile;
