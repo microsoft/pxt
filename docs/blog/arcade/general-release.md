@@ -14,7 +14,7 @@ For those who may be new to MakeCode Arcade, here’s a little overview video:
 
 https://youtu.be/UCq1VUIqpHI
 
-## New features and improvements
+## New Features and Improvements
 
 Lots of new features and improvements are in this new release since the last stable Beta. These are some biggest improvements and more important features:
 
@@ -28,7 +28,7 @@ The simulator has also had a new coat of paint with bigger buttons and better bu
  
 ![Simulator theme](/static/blog/arcade/general-release/theme-simulator.png)
 
-### Sprite editor
+### Sprite Editor
 
 We know people spend a lot of time designing their sprites, so we made this a bigger window with some improved design tools (marquee, pan, etc.).   
  
@@ -82,11 +82,11 @@ For those people who are lucky enough to have several different Arcade boards, w
  
 ![Download to hardware](/static/blog/arcade/general-release/download-hardware.png)
 
-### Performance improvements
+### Performance Improvements
 
 We spent a lot of time working on making Arcade run faster, especially on Chromebooks and other lower-powered computers, so you should see snappier page loads and simulator runs now too!
 
-### GitHub authoring
+### GitHub Authoring
 
 For games that are big/complex, or they have multiple people working on them, and for anyone writing Arcade extensions, we have a cool new integration with GitHub that allows you to store and work on your projects in a GitHub repo.   
 
@@ -96,17 +96,17 @@ To bring in the full power of GitHub integration to the editor, a **GitHub** but
 
 Read more about this feature here – https://makecode.com/blog/makecode-with-github.
 
-## Future releases and updates
+## Future Releases and Updates
 
 Now that MakeCode Arcade has been released, we will be following the same annual update path we use for our other editors. This means we will only do one major update in the summer, so teachers can expect to have a stable version to work with during the school year.
 
-## Coding curriculum
+## Coding Curriculum
 
 The MakeCode Arcade curriculum is freely available at https://arcade.makecode.com/courses/csintro. This curriculum covers Computer Science and game development concepts through a series of activities and lessons. Also, there are plenty of game tutorials, lessons, and samples available: https://arcade.makecode.com/docs. 
  
 ![Lesson to choose from](/static/blog/arcade/general-release/lessons.png)
 
-## Connecting with us
+## Connecting With Us
 
 If you find any issues, or have suggestions, please log them on GitHub (https://github.com/microsoft/pxt-arcade/issues). If you have questions, or would like to participate in the MakeCode community, please join the Forum (https://forum.makecode.com) or follow us on social [@MSMakeCode](https://twitter.com/MSMakeCode).
 
