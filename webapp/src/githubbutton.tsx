@@ -84,7 +84,7 @@ export class GithubButton extends sui.UIElement<GithubButtonProps, GithubButtonS
                     : modified ? lf("{0}: review, commit & push local changes to GitHub.", repoName)
                         : lf("{0}: local changes are synchronized with GitHub.", repoName)
 
-        return <div key="githubeditorbtn" role="button" className={`${defaultCls} 
+        return <div key="githubeditorbtn" role="button" className={`${defaultCls}
             ${this.props.className || ""}`}
             title={title} onClick={this.handleClick}>
             <i className="github icon" />
