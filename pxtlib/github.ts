@@ -272,10 +272,11 @@ namespace pxt.github {
         tree: string; // sha		
     }
 
-    function ghPostAsync(path: string, data: any) {
+    function ghPostAsync(path: string, data: any, headers?: any, method?: string) {
         return ghRequestAsync({
             url: /^https:/.test(path) ? path : "https://api.github.com/repos/" + path,
-            method: "POST",
+            headers,
+            method: method || "POST",
             allowHttpErrors: true,
             data: data
         }).then(resp => {
@@ -581,6 +582,25 @@ namespace pxt.github {
             has_wiki: false,
             allow_rebase_merge: false
         }).then(v => mkRepo(v, null))
+    }
+
+    export function enablePagesAsync(repo: string) {
+        // https://developer.github.com/v3/repos/pages/#enable-a-pages-site
+        return ghPostAsync(`https://api.github.com/repos/${repo}/pages`, {
+            source: {
+                branch: "master",
+                path: ""
+          }
+        }, {
+            "Accept": "application/vnd.github.switcheroo-preview+json"
+        }).then(r => {
+            const url = r.html_url;
+            // update repo home page
+            return ghPostAsync(`https://api.github.com/repos/${repo}`,
+            {
+                "homepage": url
+            }, undefined, "PATCH");
+        });
     }
 
     export function repoIconUrl(repo: GitRepo): string {

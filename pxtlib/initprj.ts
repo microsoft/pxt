@@ -15,7 +15,7 @@ namespace pxt.template {
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
 `,
-            "_config.yml": "theme: jekyll-theme-cayman",
+            "_config.yml": "theme: jekyll-theme-primer",
             "Makefile": `all: deploy
 
 build:
@@ -28,7 +28,7 @@ test:
 \tpxt test
 `,
 
-            "README.md": `# [@NAME@](https://@REPO_OWNER@.github.io/@REPO_NAME@/) ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
+            "README.md": `# @NAME@ ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
 
 @DESCRIPTION@
 
