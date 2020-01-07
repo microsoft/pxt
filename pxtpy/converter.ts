@@ -1245,16 +1245,11 @@ namespace pxt.py {
                     stmts(n.body))
             }
 
-            let isStringLike = false;
-            if (n.iter.kind == "Name") {
-                const v = lookupVar((n.iter as py.Name).id);
-                isStringLike = !!v && !!v.pyRetType && find(v.pyRetType) == tpString;
-            } else if (n.iter.kind == "Str") {
-                isStringLike = true;
+            if (currIteration > 0) {
+                const typeOfTarget = typeOf(n.target);
+                unifyTypeOf(n.iter, typeOf(n.iter) == tpString ? typeOfTarget : mkArrayType(typeOfTarget));
             }
 
-            const typeOfTarget = typeOf(n.target);
-            unifyTypeOf(n.iter, isStringLike ? typeOfTarget : mkArrayType(typeOfTarget));
             return B.mkStmt(
                 B.mkText("for ("),
                 expr(n.target),
