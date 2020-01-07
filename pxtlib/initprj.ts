@@ -15,8 +15,8 @@ namespace pxt.template {
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
 `,
-            "_config.yml": 
-`
+            "_config.yml":
+                `
 makecode:
   target: @TARGET@
   platform: @PLATFORM@
@@ -34,10 +34,10 @@ test:
 \tpxt test
 `,
 
-            "README.md": 
-`> ${lf("Open this page at {0}", 
-"[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
-)}
+            "README.md":
+                `> ${lf("Open this page at {0}",
+                    "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
+                )}
 
 @DESCRIPTION@
 
@@ -136,7 +136,7 @@ jobs:
         env:
           CI: true
 `,
-        ".vscode/tasks.json":
+            ".vscode/tasks.json":
                 `
 // A task runner that calls the MakeCode (PXT) compiler
 {
