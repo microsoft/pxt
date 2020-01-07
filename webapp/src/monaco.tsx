@@ -76,7 +76,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                     let insertSnippet = this.python ? si.pySnippet : si.snippet;
                     let qName = this.python ? si.pyQName : si.qName;
                     let name = this.python ? si.pyName : si.name;
-                    let completionSnippet: string;
+                    let completionSnippet: string | undefined = undefined;
                     let isMultiLine = insertSnippet && insertSnippet.indexOf("\n") >= 0
                     if (this.python && insertSnippet && isMultiLine) {
                         // For python, we want to replace the entire line because when creating
@@ -104,6 +104,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         // remove what precedes the "." in the full snippet.
                         // E.g. if the user is typing "mobs.", we want to complete with "spawn" (name) not "mobs.spawn" (qName)
                         if (completions.isMemberCompletion
+                            && completionSnippet
                             && completionSnippet.startsWith(qName)) {
                             completionSnippet = completionSnippet.replace(qName, name)
                         }
