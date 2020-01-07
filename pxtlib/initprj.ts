@@ -36,7 +36,7 @@ test:
 
             "README.md": 
 `> ${lf("Open this page at {0}", 
-"[https://@REPO_OWNER@.github.io/@REPO_NAME@/](https://@REPO_OWNER@.github.io/@REPO_NAME@/)"
+"[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
 )}
 
 @DESCRIPTION@
