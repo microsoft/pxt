@@ -15,7 +15,13 @@ namespace pxt.template {
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
 `,
-            "_config.yml": "theme: jekyll-theme-primer",
+            "_config.yml": 
+`
+makecode:
+  target: @TARGET@
+  platform: @PLATFORM@
+  home_url: @HOMEURL@
+theme: jekyll-theme-slate`,
             "Makefile": `all: deploy
 
 build:
@@ -28,7 +34,10 @@ test:
 \tpxt test
 `,
 
-            "README.md": `# @NAME@ ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
+            "README.md": 
+`> ${lf("Open this page at {0}", 
+"[https://@REPO_OWNER@.github.io/@REPO_NAME@/](https://@REPO_OWNER@.github.io/@REPO_NAME@/)"
+)}
 
 @DESCRIPTION@
 
@@ -41,7 +50,7 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
 * ${lf("search for **https://github.com/@REPO@** and import")}
 
-## ${lf("Edit this extension")}
+## ${lf("Edit this extension")} ![${lf("Build status badge")}](https://github.com/@REPO@/workflows/MakeCode/badge.svg)
 
 ${lf("To edit this repository in MakeCode.")}
 
