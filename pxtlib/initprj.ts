@@ -15,7 +15,7 @@ namespace pxt.template {
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
 `,
-
+            "_config.yml": "theme: jekyll-theme-cayman",
             "Makefile": `all: deploy
 
 build:
@@ -36,7 +36,7 @@ test:
 
 ${lf("This repository can be added as an **extension** in MakeCode.")}
 
-* ${lf("open @HOMEURL@")}
+* ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **New Project**")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
 * ${lf("search for the URL of this repository and import")}
@@ -45,7 +45,7 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 
 ${lf("To edit this repository in MakeCode.")}
 
-* ${lf("open @HOMEURL@")}
+* ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **Import** then click on **Import URL**")}
 * ${lf("paste the repository URL and click import")}
 
@@ -56,12 +56,11 @@ ${lf("This image may take a few minutes to refresh.")}
 
 ![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.github/makecode/blocks.png)
 
-## ${lf("Supported targets")}
+### ${lf("Metadata (used for search, rendering)")}
 
 * for PXT/@TARGET@
-* for PXT/@PLATFORM@
-${lf("(The metadata above is needed for package search.)")}
-
+<script src="https://makecode.com/gh-pages-embed.js"></script>
+<script>makeCodeRender("@HOMEURL@", "@REPO@");</script>
 `,
 
             ".gitignore":
