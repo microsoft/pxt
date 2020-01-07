@@ -179,7 +179,7 @@ namespace pxt.py {
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
-        // defined by a symbol, 
+        // defined by a symbol,
         //  either in external (non-py) APIs (like default/common packages)
         //  or in internal (py) APIs (probably main.py)
         let sym = lookupApi(tp + "@type") || lookupApi(tp)
@@ -1244,14 +1244,17 @@ namespace pxt.py {
                     B.mkText(")"),
                     stmts(n.body))
             }
-            unifyTypeOf(n.iter, mkArrayType(typeOf(n.target)))
+            const typeOfTarget = typeOf(n.target);
+            const outType = n.iter.kind == "Str" ? typeOfTarget : mkArrayType(typeOfTarget);
+            unifyTypeOf(n.iter, outType);
             return B.mkStmt(
                 B.mkText("for ("),
                 expr(n.target),
                 B.mkText(" of "),
                 expr(n.iter),
                 B.mkText(")"),
-                stmts(n.body))
+                stmts(n.body)
+            );
         },
         While: (n: py.While) => {
             U.assert(n.orelse.length == 0)
