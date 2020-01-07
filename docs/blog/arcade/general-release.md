@@ -108,7 +108,7 @@ The MakeCode Arcade curriculum is freely available at https://arcade.makecode.co
 
 ## Connecting With Us
 
-If you find any issues, or have suggestions, please log them as a [GitHub issue](https://github.com/microsoft/pxt-arcade/issues). If you have questions, or would like to participate in the MakeCode community, please join the [MakeCode Forum](https://forum.makecode.com) or follow us on social [@MSMakeCode](https://twitter.com/MSMakeCode).
+If you find any issues, or have suggestions, please log them as a [GitHub issue](https://github.com/microsoft/pxt-arcade/issues). If you have questions, or would like to participate in the MakeCode community, please join the [MakeCode Forum](https://forum.makecode.com) or follow us on social media at [@MSMakeCode](https://twitter.com/MSMakeCode).
 
 <br/>
 Happy Making and Coding!
