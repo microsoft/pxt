@@ -953,7 +953,10 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     const templateFiles = pxt.template.packageFiles(name);
     pxt.template.packageFilesFixup(templateFiles, {
-        repo: parsed.fullName
+        repo: parsed.fullName,
+        repo_owner: parsed.owner,
+        repo_name: parsed.project,
+        repo_tag: parsed.tag
     });
 
     if (forceTemplateFiles) {
