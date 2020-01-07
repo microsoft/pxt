@@ -39,7 +39,7 @@ ${lf("This repository can be added as an **extension** in MakeCode.")}
 * ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **New Project**")}
 * ${lf("click on **Extensions** under the gearwheel menu")}
-* ${lf("search for the URL of this repository and import")}
+* ${lf("search for **https://github.com/@REPO@** and import")}
 
 ## ${lf("Edit this extension")}
 
@@ -47,7 +47,7 @@ ${lf("To edit this repository in MakeCode.")}
 
 * ${lf("open [@HOMEURL@](@HOMEURL@)")}
 * ${lf("click on **Import** then click on **Import URL**")}
-* ${lf("paste the repository URL and click import")}
+* ${lf("paste **https://github.com/@REPO@** and click import")}
 
 ## ${lf("Blocks preview")}
 
