@@ -869,9 +869,17 @@ namespace pxt.py {
                     return throwError(node, 3009, "Unsupported operator: >>>");
                 case ts.SyntaxKind.AsteriskAsteriskToken:
                     return "**"
+                case ts.SyntaxKind.AsteriskAsteriskEqualsToken:
+                    return "**="
+                case ts.SyntaxKind.PercentEqualsToken:
+                    return "%="
+                case ts.SyntaxKind.AsteriskEqualsToken:
+                    return "*="
+                case ts.SyntaxKind.SlashEqualsToken:
+                    return "/="
                 default:
                     pxt.tickEvent("depython.todo", { op: s })
-                    return "# TODO unknown op: " + s
+                    return throwError(node, 3008, `Unsupported Python operator (code: ${s})`);
             }
         }
         function emitBinExp(s: ts.BinaryExpression): ExpRes {
