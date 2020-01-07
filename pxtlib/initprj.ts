@@ -65,11 +65,10 @@ ${lf("This image may take a few minutes to refresh.")}
 
 ![${lf("A rendered view of the blocks")}](https://github.com/@REPO@/raw/master/.github/makecode/blocks.png)
 
-### ${lf("Metadata (used for search, rendering)")}
+#### ${lf("Metadata (used for search, rendering)")}
 
 * for PXT/@TARGET@
-<script src="https://makecode.com/gh-pages-embed.js"></script>
-<script>makeCodeRender("@HOMEURL@", "@REPO@");</script>
+<script src="https://makecode.com/gh-pages-embed.js"></script><script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
 `,
 
             ".gitignore":
