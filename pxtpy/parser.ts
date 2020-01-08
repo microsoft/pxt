@@ -10,7 +10,7 @@ namespace pxt.py {
     let indentStack: number[]
     let prevToken: Token
     let diags: pxtc.KsDiagnostic[]
-    let traceParser = true
+    let traceParser = false
     let traceLev = ""
 
     type Parse = () => AST
