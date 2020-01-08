@@ -702,12 +702,13 @@ namespace pxt.py {
     }
 
     function stmt(): Stmt[] {
-        if (peekToken().type == TokenType.Indent) {
-            error(9573, U.lf("unexpected indent"))
-            shiftToken()
-        }
+        const prevErr = diags.length;
+        const hasIndentationError = peekToken().type == TokenType.Indent;
 
-        let prevErr = diags.length
+        if (hasIndentationError) {
+            shiftToken();
+            error(9573, U.lf("unexpected indent"));
+        }
 
         let decorators: Expr[] = []
         while (currentOp() == "MatMult") {
@@ -746,6 +747,11 @@ namespace pxt.py {
                 if (peekToken().type == TokenType.EOF)
                     break
             }
+
+            if (hasIndentationError && peekToken().type === TokenType.Dedent) {
+                shiftToken();
+            }
+
             inParens = 0
             if (traceParser)
                 pxt.log(traceLev + "skip: " + skp.join(", "))
