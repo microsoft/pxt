@@ -16,8 +16,7 @@ namespace pxt.template {
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
 `,
             "_config.yml":
-                `
-makecode:
+                `makecode:
   target: @TARGET@
   platform: @PLATFORM@
   home_url: @HOMEURL@
