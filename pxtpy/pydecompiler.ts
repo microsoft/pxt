@@ -1031,7 +1031,7 @@ namespace pxt.py {
                 return exps.map((el, i) => {
                     if (i == 0) {
                         return el + ",";
-                    } else if (i == exps.length -1) {
+                    } else if (i == exps.length - 1) {
                         return indent1(el);
                     } else {
                         return indent1(el + ",");
