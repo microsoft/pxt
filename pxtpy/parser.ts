@@ -10,7 +10,7 @@ namespace pxt.py {
     let indentStack: number[]
     let prevToken: Token
     let diags: pxtc.KsDiagnostic[]
-    let traceParser = false
+    let traceParser = true
     let traceLev = ""
 
     type Parse = () => AST
@@ -215,30 +215,32 @@ namespace pxt.py {
             }
 
             shiftToken()
-            let level = NaN
+            let rangeStart: Stmt[];
             if (peekToken().type != TokenType.Indent) {
-                error(9554, U.lf("expecting indent"))
+                error(9554, U.lf("expecting indent"));
+                rangeStart = stmt();
             } else {
-                level = parseInt(peekToken().value)
-                shiftToken()
-            }
-            let r = stmt()
-            if (!isNaN(level)) {
-                for (; ;) {
+                const level = parseInt(peekToken().value);
+                shiftToken();
+                rangeStart = stmt();
+
+                for (;;) {
                     if (peekToken().type == TokenType.Dedent) {
-                        const isFinal = parseInt(peekToken().value) < level;
+                        const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
                         shiftToken()
                         if (isFinal)
                             break
                     }
-                    U.pushRange(r, stmt())
+                    U.pushRange(rangeStart, stmt());
                 }
             }
+
             if (traceParser) {
-                traceLev = prevTr
-                pxt.log(traceLev + "}")
+                traceLev = prevTr;
+                pxt.log(traceLev + "}");
             }
-            return r
+
+            return rangeStart;
         } else {
             return simple_stmt()
         }
