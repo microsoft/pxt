@@ -38,8 +38,6 @@ test:
                     "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
                 )}
 
-@DESCRIPTION@
-
 ## ${lf("Use this extension")}
 
 ${lf("This repository can be added as an **extension** in MakeCode.")}
