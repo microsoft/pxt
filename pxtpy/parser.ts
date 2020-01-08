@@ -217,7 +217,7 @@ namespace pxt.py {
             shiftToken()
             let rangeStart: Stmt[];
             if (peekToken().type != TokenType.Indent) {
-                error(9554, U.lf("expecting indent"));
+                error(9554, U.lf("expected an indented block"));
                 rangeStart = stmt();
             } else {
                 const level = parseInt(peekToken().value);
