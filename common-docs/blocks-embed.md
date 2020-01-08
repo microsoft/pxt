@@ -22,10 +22,12 @@ You can use [GitHub pages](https://help.github.com/en/github/working-with-github
 
 * enable [GitHub pages](https://help.github.com/en/github/working-with-github-pages/creating-a-github-pages-site#creating-your-site) on your repository
 * add the following entry in the ``_config.yml``
+
 ```
-makecode:
-  home_url: @homeurl@
+  makecode:
+    home_url: @homeurl@
 ```
+
 * copy the following text at the bottom of your ``README.md`` file
 ```
 <script src="https://makecode.com/gh-pages-embed.js"></script><script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
