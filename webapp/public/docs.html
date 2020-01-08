@@ -82,7 +82,7 @@
 
 <body id="docs">
     <style type="text/css">
-        @import "/blb/highlight.js/styles/vs.css";
+        @import "/blb/highlight.js/styles/vs2015.css";
     </style>
     <div id="sidedocs-back-button" class="ui" style="display: none">
         <i class="ui icon left arrow"></i>
@@ -120,7 +120,10 @@
             if (backLabel)
                 backLabel.textContent = pxt.Util.lf("Go back")
             var editorlang = pxt.Util.getEditorLanguagePref();
-            if (editorlang == "py") document.body.classList.add("py");
+            if (editorlang == "py") {
+                document.body.classList.add("py");
+                document.body.classList.add("inverted");
+            }
 
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
             var project = /project=([^&?]+)/i.exec(window.location.href);
