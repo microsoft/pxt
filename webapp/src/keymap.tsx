@@ -15,27 +15,29 @@ interface KeymapData {
     map: { [key: string]: string[] };
 };
 
+const rlf = pxt.U.rlf;
+
 const _data: { [key: string]: KeymapData[] } = {
     "arcade": [ {
-            title: lf("player 1"),
+            title: rlf("player 1"),
             map: {
-                [lf("up")]: ["↑", "W"],
-                [lf("down")]: ["↓", "S"],
-                [lf("left")]: ["→", "A"],
-                [lf("right")]: ["←", "D"],
-                "a": ["Z", lf("{id:keyboard symbol}space")],
-                "b": ["X", lf("{id:keyboard symbol}enter")]
+                [rlf("up")]: ["↑", "W"],
+                [rlf("down")]: ["↓", "S"],
+                [rlf("left")]: ["→", "A"],
+                [rlf("right")]: ["←", "D"],
+                "a": ["Z", rlf("{id:keyboard symbol}space")],
+                "b": ["X", rlf("{id:keyboard symbol}enter")]
             }
         },
         {
-            title: lf("player 2"),
+            title: rlf("player 2"),
             map: {
-                [lf("up")]: ["I"],
-                [lf("down")]: ["K"],
-                [lf("left")]: ["J"],
-                [lf("right")]: ["L"],
-                [lf("a")]: ["U"],
-                [lf("b")]: ["O"]
+                [rlf("up")]: ["I"],
+                [rlf("down")]: ["K"],
+                [rlf("left")]: ["J"],
+                [rlf("right")]: ["L"],
+                [rlf("a")]: ["U"],
+                [rlf("b")]: ["O"]
             }
         } ]
     }
