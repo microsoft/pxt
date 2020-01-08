@@ -320,14 +320,14 @@ namespace pxt.py {
                 return ['return']
 
             let [exp, expSup] = emitExp(s.expression)
-            let stmt = `return ${exp}`
-            return expSup.concat([stmt])
+            let stmt = expWrap("return ", exp);
+            return expSup.concat(stmt)
         }
         function emitWhileStmt(s: ts.WhileStatement): string[] {
             let [cond, condSup] = emitExp(s.expression)
             let body = emitBody(s.statement)
-            let whileStmt = `while ${cond}:`;
-            return condSup.concat([whileStmt]).concat(body)
+            let whileStmt = expWrap("while ", cond);
+            return condSup.concat(whileStmt).concat(body)
         }
         type RangeItr = {
             name: string,
@@ -363,7 +363,7 @@ namespace pxt.py {
             if (fromNumSup.length)
                 return null
 
-            let result_fromIncl = fromNum
+            let result_fromIncl = expToStr(fromNum)
 
             // TODO body must not mutate loop variable
 
@@ -382,10 +382,11 @@ namespace pxt.py {
                 return null
             }
 
-            let [toNum, toNumSup] = emitExp(s.condition.right)
+            let [toNumExp, toNumSup] = emitExp(s.condition.right)
             if (toNumSup.length)
                 return null
 
+            let toNum = expToStr(toNumExp);
             let result_toExcl = toNum
             if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken
                 && isNormalInteger(toNum)) {
@@ -440,7 +441,7 @@ namespace pxt.py {
             let [exp, expSup] = emitExp(s.expression)
 
             let out = expSup
-            out.push(`for ${name} in ${exp}:`)
+            out = out.concat(expWrap(`for ${name} in `, exp, ":"))
 
             let body = emitBody(s.statement)
 
@@ -485,7 +486,7 @@ namespace pxt.py {
                     out = out.concat(decls)
                 } else {
                     let [exp, expSup] = emitExp(s.initializer)
-                    out = out.concat(expSup).concat([exp])
+                    out = out.concat(expSup).concat(exp)
                 }
             }
 
@@ -494,7 +495,7 @@ namespace pxt.py {
             if (s.condition) {
                 let [condStr, condSup] = emitExp(s.condition)
                 out = out.concat(condSup)
-                cond = condStr
+                cond = expToStr(condStr);
             } else {
                 cond = "True"
             }
@@ -519,7 +520,7 @@ namespace pxt.py {
                     // general case
                     let [inc, incSup] = emitExp(s.incrementor)
                     out = out.concat(incSup)
-                        .concat([indent1(inc)])
+                        .concat(inc.map(indent1))
                 }
             }
 
@@ -535,7 +536,7 @@ namespace pxt.py {
             let [cond, condSup] = emitExp(s.expression)
             sup = sup.concat(condSup)
 
-            let ifStmt = `if ${cond}:`
+            let ifStmt = `if ${expToStr(cond)}:`
 
             let ifRest: string[] = []
             let th = emitBody(s.thenStatement)
@@ -650,7 +651,7 @@ namespace pxt.py {
             let nm = getName(s.name)
             if (s.initializer) {
                 let [init, initSup] = emitExp(s.initializer)
-                return initSup.concat([`${nm} = ${init}`])
+                return initSup.concat([`${nm} = ${expToStr(init)}`])
             }
             else {
                 // can't do declerations without initilization in python
@@ -675,7 +676,7 @@ namespace pxt.py {
             let incDec = e.operator === ts.SyntaxKind.MinusMinusToken ? " -= 1" : " += 1"
 
             let out = sup
-            out.push(`${operand}${incDec}`)
+            out.push(`${expToStr(operand)}${incDec}`)
 
             return out
         }
@@ -685,7 +686,7 @@ namespace pxt.py {
                 return unaryExp
 
             let [exp, expSup] = emitExp(s.expression)
-            return expSup.concat([`${exp}`])
+            return expSup.concat(exp)
         }
         function emitBlock(s: ts.Block): string[] {
             let stmts = s.getChildren()
@@ -749,7 +750,7 @@ namespace pxt.py {
             else {
                 let [exp, sup] = emitExp(s.body)
                 stmts = stmts.concat(sup)
-                stmts.push(exp)
+                stmts.concat(exp)
             }
             if (stmts.length) {
                 out = out.concat(stmts.map(indent1))
@@ -774,7 +775,7 @@ namespace pxt.py {
                 if (initSup.length) {
                     return throwError(s, 3007, `TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
                 }
-                initPart = ` = ${initExp}`
+                initPart = ` = ${expToStr(initExp)}`
             }
             return `${nm}${typePart}${initPart}`
         }
@@ -793,9 +794,9 @@ namespace pxt.py {
                 let declStmt: string;
                 if (s.type) {
                     let translatedType = pxtc.emitType(s.type)
-                    declStmt = `${varNm}: ${translatedType} = ${exp}`
+                    declStmt = `${varNm}: ${translatedType} = ${expToStr(exp)}`
                 } else {
-                    declStmt = `${varNm} = ${exp}`
+                    declStmt = `${varNm} = ${expToStr(exp)}`
                 }
                 out.push(declStmt)
                 return out
@@ -808,9 +809,17 @@ namespace pxt.py {
         ///
         /// EXPRESSIONS
         ///
-        type ExpRes = [/*expression:*/string, /*supportingStatements:*/string[]]
-        function asExpRes(str: string): ExpRes {
-            return [str, []]
+        type ExpRes = [/*expression:*/string[], /*supportingStatements:*/string[]]
+        function asExpRes(str: string, sup?: string[]): ExpRes {
+            return [[str], sup || []]
+        }
+        function expToStr(exps: string[], char: string = '\n'): string {
+            return exps.join(char)
+        }
+        function expWrap( pre: string = "", exps: string[], suff: string = ""): string[] {
+            exps[0] = pre + exps[0];
+            exps[exps.length - 1] = exps[exps.length - 1] + suff;
+            return exps;
         }
         function emitOp(s: ts.BinaryOperator | ts.PrefixUnaryOperator | ts.PostfixUnaryOperator, node: ts.Node): string {
             switch (s) {
@@ -889,20 +898,19 @@ namespace pxt.py {
             let isRStr = isStringType(s.right)
             let isStrConcat = s.operatorToken.kind === ts.SyntaxKind.PlusToken
                 && (isLStr || isRStr)
-            let wrap = (s: string) => `str(${s})`
 
             let [left, leftSup] = emitExp(s.left)
             if (isStrConcat && !isLStr)
-                left = wrap(left)
+                left = expWrap("str(", left, ")")
 
             let op = emitOp(s.operatorToken.kind, s)
 
             let [right, rightSup] = emitExp(s.right)
             if (isStrConcat && !isRStr)
-                right = wrap(right)
+                right = expWrap("str(", right, ")")
             let sup = leftSup.concat(rightSup)
 
-            return [`${left} ${op} ${right}`, sup];
+            return [expWrap(expToStr(left) + " " + op + " ", right), sup];
         }
         function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
             // short-circuit if the dot expression is a well-known symbol
@@ -915,10 +923,10 @@ namespace pxt.py {
             // special: foo.length
             if (right === "length") {
                 // TODO confirm the type is correct!
-                return [`len(${left})`, leftSup]
+                return asExpRes(`len(${expToStr(left)})`, leftSup)
             }
 
-            return [`${left}.${right}`, leftSup];
+            return asExpRes(`${expToStr(left)}.${right}`, leftSup);
         }
         function getSimpleExpNameParts(s: ts.Expression, skipNamespaces = false): string[] {
             // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
@@ -1015,6 +1023,23 @@ namespace pxt.py {
                 return out
             }
         }
+        // determine whether a comma-separated list (array, function parameters) should
+        // use newlines to separate items
+        function getCommaSep(exps: string[]): string[] {
+            let res = exps.join(", ");
+            if (res.length > 60) {
+                return exps.map((el, i) => {
+                    if (i == 0) {
+                        return el + ",";
+                    } else if (i == exps.length -1) {
+                        return indent1(el);
+                    } else {
+                        return indent1(el + ",");
+                    }
+                })
+            }
+            return [res];
+        }
         function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): ExpRes {
             // special case: function arguments to higher-order functions
             // reason 1: if the argument is a function and the parameter it is being passed to is also a function type,
@@ -1056,9 +1081,11 @@ namespace pxt.py {
             }
 
             // TODO inspect type info to rewrite things like console.log, Math.max, etc.
-            let [fn, fnSup] = emitExp(s.expression)
+            let [fnExp, fnSup] = emitExp(s.expression)
+            let fn = expToStr(fnExp);
 
-            let argExps = (s.arguments || ts.createNodeArray())
+            let sargs = s.arguments || ts.createNodeArray();
+            let argExps = sargs
                 .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
             let sup = argExps
                 .map(([_, aSup]) => aSup)
@@ -1070,16 +1097,12 @@ namespace pxt.py {
                 // The format is _py.py_type_name, so remove the type
                 fn = fn.substr(7).split("_").filter((_, i) => i !== 0).join("_");
                 const recv = argExps.shift()![0];
-                const args = argExps
-                    .map(([a, _]) => a)
-                    .join(", ");
-                return [`${recv}.${fn}(${args})`, sup]
+                const args = getCommaSep(argExps.map(([a, _]) => a).reduce((p, c) => p.concat(c), []))
+                return [expWrap(`${recv}.${fn}(`, args, ")"), sup]
             }
 
-            let args = argExps
-                .map(([a, _]) => a)
-                .join(", ")
-            return [`${fn}(${args})`, sup]
+            let args = getCommaSep(argExps.map(([a, _]) => a).reduce((p, c) => p.concat(c), [])) //getCommaSep(argExps.map(([a, _]) => a));
+            return [expWrap(`${fn}(`, args, ")"), sup]
         }
         type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
         function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationExtended> {
@@ -1116,8 +1139,8 @@ namespace pxt.py {
                         .join(", ");
 
                     let stmt = paramList.length
-                        ? `lambda ${paramList}: ${fnBody}`
-                        : `lambda: ${fnBody}`;
+                        ? `lambda ${paramList}: ${expToStr(fnBody)}`
+                        : `lambda: ${expToStr(fnBody)}`;
                     return asExpRes(stmt)
                 }
             }
@@ -1126,7 +1149,7 @@ namespace pxt.py {
             let fnName = s.name ? getName(s.name) : getNewGlobalName(nameHint || "my_function")
             let fnDef = emitFuncDecl(s, fnName, altParams, skipType)
 
-            return [fnName, fnDef]
+            return asExpRes(fnName, fnDef)
         }
         function getUnaryOpSpacing(s: ts.SyntaxKind): string {
             switch (s) {
@@ -1144,16 +1167,16 @@ namespace pxt.py {
             let [exp, expSup] = emitExp(s.operand)
             // TODO handle order-of-operations ? parenthesis?
             let space = getUnaryOpSpacing(s.operator)
-            let res = `${op}${space}${exp}`
-            return [res, expSup]
+            let res = `${op}${space}${expToStr(exp)}`
+            return asExpRes(res, expSup)
         }
         function emitPostUnaryExp(s: ts.PostfixUnaryExpression): ExpRes {
             let op = emitOp(s.operator, s);
             let [exp, expSup] = emitExp(s.operand)
             // TODO handle order-of-operations ? parenthesis?
             let space = getUnaryOpSpacing(s.operator)
-            let res = `${exp}${space}${op}`
-            return [res, expSup]
+            let res = `${expToStr(exp)}${space}${op}`
+            return asExpRes(res, expSup)
         }
         function emitArrayLitExp(s: ts.ArrayLiteralExpression): ExpRes {
             let els = s.elements
@@ -1161,11 +1184,9 @@ namespace pxt.py {
             let sup = els
                 .map(([_, sup]) => sup)
                 .reduce((p, c) => p.concat(c), [])
-            let inner = els
-                .map(([e, _]) => e)
-                .join(", ")
-            let exp = `[${inner}]`
-            return [exp, sup]
+
+            let inner = getCommaSep(els.map(([e, _]) => e).reduce((p, c) => p.concat(c), []));
+            return [expWrap("[", inner, "]"), sup]
         }
         function emitElAccessExp(s: ts.ElementAccessExpression): ExpRes {
             if (!s.argumentExpression)
@@ -1173,12 +1194,12 @@ namespace pxt.py {
             let [left, leftSup] = emitExp(s.expression)
             let [arg, argSup] = emitExp(s.argumentExpression)
             let sup = leftSup.concat(argSup)
-            let exp = `${left}[${arg}]`
-            return [exp, sup]
+            let exp = `${expToStr(left)}[${expToStr(arg)}]`
+            return asExpRes(exp, sup)
         }
         function emitParenthesisExp(s: ts.ParenthesizedExpression): ExpRes {
             let [inner, innerSup] = emitExp(s.expression)
-            return [`(${inner})`, innerSup]
+            return asExpRes(`(${expToStr(inner)})`, innerSup)
         }
         function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral | ts.TaggedTemplateExpression): ExpRes {
             if (ts.isNoSubstitutionTemplateLiteral(s))
@@ -1187,8 +1208,8 @@ namespace pxt.py {
             let [tag, tagSup] = emitExp(s.tag)
             let [temp, tempSup] = emitExp(s.template)
             let sup = tagSup.concat(tempSup)
-            let exp = `${tag}(${temp})`;
-            return [exp, sup]
+            let exp = `${expToStr(tag)}(${expToStr(temp)})`;
+            return asExpRes(exp, sup)
         }
         function emitIdentifierExp(s: ts.Identifier): ExpRes {
             // TODO disallow keywords and built-ins?
@@ -1262,8 +1283,8 @@ namespace pxt.py {
             let [tru, truSup] = emitExp(s.whenTrue)
             let [fls, flsSup] = emitExp(s.whenFalse)
             let sup = condSup.concat(truSup).concat(flsSup)
-            let exp = `${tru} if ${cond} else ${fls}`
-            return [exp, sup]
+            let exp = `${tru} if ${expToStr(cond)} else ${expToStr(fls)}`
+            return asExpRes(exp, sup)
         }
         function emitExp(s: ts.Expression): ExpRes {
             switch (s.kind) {
@@ -1310,7 +1331,7 @@ namespace pxt.py {
                     return emitCondExp(s as ts.ConditionalExpression)
                 default:
                     // TODO handle more expressions
-                    return [s.getText(), ["# unknown expression:  " + s.kind]] // uncomment for easier locating
+                    return asExpRes(s.getText(), ["# unknown expression:  " + s.kind]) // uncomment for easier locating
                 // throw Error("Unknown expression: " + s.kind)
             }
         }
