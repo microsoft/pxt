@@ -1013,7 +1013,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     await saveAsync(hd, currFiles)
 
-    // enable github pages
+    // try enable github pages
     await pxt.github.enablePagesAsync(parsed.fullName);
 
     return hd
