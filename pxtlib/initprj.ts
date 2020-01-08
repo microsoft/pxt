@@ -10,7 +10,7 @@ namespace pxt.template {
 }
 `;
     function defaultFiles(): Map<string> {
-        return {
+        const files : Map<string> = {
             "tsconfig.json": TS_CONFIG,
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
@@ -164,8 +164,17 @@ jobs:
     }]
 }
 `
-        }
+        };
+
+        // override files from target
+        const overrides = pxt.appTarget.bundledpkgs["template"];
+        if (overrides)
+            Util.jsonCopyFrom(files, overrides);
+
+        return files;
     }
+
+    export const TEMPLATE_PRJ = "template";
 
     export function packageFiles(name: string): pxt.Map<string> {
         const prj = pxt.appTarget.blocksprj || pxt.appTarget.tsprj;
