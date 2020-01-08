@@ -220,17 +220,19 @@ namespace pxt.py {
                 error(9554, U.lf("expecting indent"))
             } else {
                 level = parseInt(peekToken().value)
+                shiftToken()
             }
-            shiftToken()
             let r = stmt()
-            for (; ;) {
-                if (peekToken().type == TokenType.Dedent) {
-                    const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
-                    shiftToken()
-                    if (isFinal)
-                        break
+            if (!isNaN(level)) {
+                for (; ;) {
+                    if (peekToken().type == TokenType.Dedent) {
+                        const isFinal = parseInt(peekToken().value) < level;
+                        shiftToken()
+                        if (isFinal)
+                            break
+                    }
+                    U.pushRange(r, stmt())
                 }
-                U.pushRange(r, stmt())
             }
             if (traceParser) {
                 traceLev = prevTr
