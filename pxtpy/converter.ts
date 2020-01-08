@@ -2259,6 +2259,7 @@ namespace pxt.py {
     function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef): boolean {
         let result =
             sym.kind === SK.Variable
+            && !sym.isParam
             && sym.modifier === undefined
             && (
                 sym.firstRefPos! < sym.firstAssignPos!
