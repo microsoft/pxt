@@ -161,12 +161,6 @@ jobs:
         "command": "pxt clean",
         "group": "test",
         "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt serial",
-        "type": "shell",
-        "command": "pxt serial",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
     }]
 }
 `
