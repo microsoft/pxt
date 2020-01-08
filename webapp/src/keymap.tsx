@@ -17,25 +17,25 @@ interface KeymapData {
 
 const _data: { [key: string]: KeymapData[] } = {
     "arcade": [ {
-            title: "player 1",
+            title: lf("player 1"),
             map: {
-                "up": ["↑", "W"],
-                "down": ["↓", "S"],
-                "left": ["→", "A"],
-                "right": ["←", "D"],
-                "a": ["Z", "space"],
-                "b": ["X", "enter"]
+                [lf("up")]: ["↑", "W"],
+                [lf("down")]: ["↓", "S"],
+                [lf("left")]: ["→", "A"],
+                [lf("right")]: ["←", "D"],
+                "a": ["Z", lf("{id:keyboard symbol}space")],
+                "b": ["X", lf("{id:keyboard symbol}enter")]
             }
         },
         {
-            title: "player 2",
+            title: lf("player 2"),
             map: {
-                "up": ["I"],
-                "down": ["K"],
-                "left": ["J"],
-                "right": ["L"],
-                "a": ["U"],
-                "b": ["O"]
+                [lf("up")]: ["I"],
+                [lf("down")]: ["K"],
+                [lf("left")]: ["J"],
+                [lf("right")]: ["L"],
+                [lf("a")]: ["U"],
+                [lf("b")]: ["O"]
             }
         } ]
     }
