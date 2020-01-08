@@ -1245,7 +1245,7 @@ namespace pxt.py {
                     stmts(n.body))
             }
 
-            if (currIteration > 0) {
+            if (currIteration > 1) {
                 const typeOfTarget = typeOf(n.target);
                 unifyTypeOf(n.iter, typeOf(n.iter) == tpString ? typeOfTarget : mkArrayType(typeOfTarget));
             }
