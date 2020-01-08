@@ -16,7 +16,7 @@ A quick solution is take screenshots of the snippets but that approach can quick
 
 The MakeCode approach to solving this issue is to render the **JavaScript** code snippets on the client using the same block rendering engine as the editor. Under the hood, an ``iframe`` from the MakeCode editor will render the blocks for you.
 
-## GitHub pages
+## GitHub pages #githubpages
 
 You can use [GitHub pages](https://help.github.com/en/github/working-with-github-pages) to render your README.md file as a web site.
 
