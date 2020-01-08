@@ -1029,12 +1029,13 @@ namespace pxt.py {
             let res = exps.join(", ");
             if (res.length > 60) {
                 return exps.map((el, i) => {
+                    let sep = el.charAt(el.length - 1) == "," ? "" : ",";
                     if (i == 0) {
-                        return el + ",";
+                        return el + sep;
                     } else if (i == exps.length - 1) {
                         return indent1(el);
                     } else {
-                        return indent1(el + ",");
+                        return indent1(el + sep);
                     }
                 })
             }
