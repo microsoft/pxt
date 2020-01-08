@@ -9,7 +9,7 @@ namespace pxt.template {
     "exclude": ["pxt_modules/**/*test.ts"]
 }
 `;
-    function defaultFiles(): Map<string> {
+    export function defaultFiles(): Map<string> {
         const files : Map<string> = {
             "tsconfig.json": TS_CONFIG,
 
@@ -168,8 +168,11 @@ jobs:
 
         // override files from target
         const overrides = pxt.appTarget.bundledpkgs["template"];
-        if (overrides)
-            Util.jsonCopyFrom(files, overrides);
+        if (overrides) {
+            Object.keys(overrides)
+                .filter(k => k != pxt.CONFIG_NAME)
+                .forEach(k => files[k] = overrides[k]);
+        }
 
         return files;
     }
