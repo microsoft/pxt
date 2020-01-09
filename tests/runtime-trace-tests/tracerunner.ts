@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
 
+// tslint:disable:no-import-side-effect mocha-no-side-effect-code
 import "mocha";
 import * as chai from "chai";
 
@@ -13,7 +14,7 @@ import * as util from "../common/testUtils";
 import { resolve } from 'url';
 import { promisify } from 'util';
 
-// TODO: Split this file up. I (dazuniga) spent ~1hr trying to split this file into two pieces but I cannot figure out 
+// TODO: Split this file up. I (dazuniga) spent ~1hr trying to split this file into two pieces but I cannot figure out
 // how to make that work with the way we're using jake & namespaces / modules
 
 // setup
@@ -266,7 +267,7 @@ function compileTsToJs(filename: string): ts.Program {
         skipLibCheck: true
     }
     // TODO: it'd be great to include the python helper fns so we can cover
-    // more scenarios however this doesn't work easily since we use custom methods 
+    // more scenarios however this doesn't work easily since we use custom methods
     // like Array.removeAt which don't exist in vanilla JS. We'd need to provide
     // an implementation for these tests
     // const pyHelpers = ["pxt-python-helpers.ts"]
