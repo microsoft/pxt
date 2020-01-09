@@ -215,14 +215,14 @@ namespace pxt.py {
             }
 
             shiftToken()
-            let rangeStart: Stmt[];
+            let outputRange: Stmt[];
             if (peekToken().type != TokenType.Indent) {
                 error(9554, U.lf("expected an indented block"));
-                rangeStart = stmt();
+                outputRange = stmt();
             } else {
                 const level = parseInt(peekToken().value);
                 shiftToken();
-                rangeStart = stmt();
+                outputRange = stmt();
 
                 for (;;) {
                     if (peekToken().type == TokenType.Dedent) {
@@ -231,7 +231,7 @@ namespace pxt.py {
                         if (isFinal)
                             break
                     }
-                    U.pushRange(rangeStart, stmt());
+                    U.pushRange(outputRange, stmt());
                 }
             }
 
@@ -240,7 +240,7 @@ namespace pxt.py {
                 pxt.log(traceLev + "}");
             }
 
-            return rangeStart;
+            return outputRange;
         } else {
             return simple_stmt()
         }
