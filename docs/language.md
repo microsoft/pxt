@@ -310,21 +310,17 @@ The following language features should be fully supported and work according to 
 * byte literal
 * *args
 * type annotations using ":" syntax
-
-*: variable semantics have slightly different scoping rules than Python 3 and global & nonlocal keywords are unsupported.
-
-## Partially supported language features
-The following language features work in some scenarios but do not fully implement the Python 3 specification.
-
-* slice notation
-* with
-* assert
-* import, import from
+* slice notation**
 * lambda
 
-## Unstable language features
-The following language features work in some scenarios but their use is discouraged because they aren't well tested and their semantics may change in the future.
+*: variable semantics have slightly different scoping rules than Python 3 and global & nonlocal keywords are unsupported.
+**: some slice notation is not yet supported
 
+## Not supported language features
+The following language features are not yet supported.
+
+* with
+* assert
 * classes
 * __constructor
 * super()
@@ -333,10 +329,7 @@ The following language features work in some scenarios but their use is discoura
 * try
 * generators
 * attributes
-
-## Not supported language features
-The following language features are not yet supported.
-
+* import, import from
 * sets
 * list comprehensions
 * set comprehensions
