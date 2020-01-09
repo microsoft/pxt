@@ -11,5 +11,5 @@ if True: # TS9554 missing
 
 a = 5
 if True:
-    b = 3
-   c = 4 # TS9552 inconsistent
+    b = 3 # TS9552 inconsistent
+   c = 4
