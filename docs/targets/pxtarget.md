@@ -283,3 +283,10 @@ PXT expects to find the C/C++ sources on github.
         serviceId: string;
     }
 ```
+
+## Additional settings
+
+### template project
+
+You can add or modify the default files created with a new project by adding
+a library called ``template`` (make it ``hidden``).
