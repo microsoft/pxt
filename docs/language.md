@@ -24,6 +24,8 @@ and might not be available in your editor.
 
 ## ~
 
+# Static TypeScript
+
 ## Supported language features
 
 * variable declarations with `let`, `const`
@@ -280,3 +282,68 @@ and dynamic maps.
 * `Object.keys()` is currently not implemented for classes; when it will be
   the order of fields will be static declaration order
 * how to validate types of C++ classes (Pin mostly)?
+
+
+# Python
+
+## Supported language features
+The following language features should be fully supported and work according to the Python 3 language specification.
+
+* lists
+* dictionaries
+* function definitions
+* function calling
+* method calling
+* calling into any MakeCode library code
+* literals: strings, numbers, boolean, None
+* many list methods: pop, clear, index, count, len
+* many string methods: casefold, capitalize, center, count, endswith, find, index, isalnum, isalph, isascii, isdigit, isnumeric, isspace, isdecimal, isidentifier, islower, isprintable, istitle, issupper, join, ljust, lower, lstrip, replace, rfind, rindex, rjust, rsplit, rstrip, split, splitlines, startswith, strip, swapcase, title, upper, zfill, ord
+* many math functions: int, min, max, abs, randint
+* while loop
+* for-in loop with range(), array or string literal
+* break, continue
+* conditional statements (if, elif, else)
+* pass statement
+* variables*
+* if expression / ternary operator
+* comparison (in, notin)
+* byte literal
+* *args
+* type annotations using ":" syntax
+
+*: variable semantics have slightly different scoping rules than Python 3 and global & nonlocal keywords are unsupported.
+
+## Partially supported language features
+The following language features work in some scenarios but do not fully implement the Python 3 specification.
+
+* slice notation
+* with
+* assert
+* import, import from
+* lambda
+
+## Unstable language features
+The following language features work in some scenarios but their use is discouraged because they aren't well tested and their semantics may change in the future.
+
+* classes
+* __constructor
+* super()
+* global & nonlocal
+* raise
+* try
+* generators
+* attributes
+
+## Not supported language features
+The following language features are not yet supported.
+
+* sets
+* list comprehensions
+* set comprehensions
+* dictionary comprehensions
+* await
+* yield, yield from
+* "..."
+* format strings
+* arrays
+* all list, string, math methods not listed above
