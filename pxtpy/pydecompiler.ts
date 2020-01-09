@@ -297,6 +297,10 @@ namespace pxt.py {
                 return []
             } else if (ts.isModuleDeclaration(s)) {
                 return emitModuleDeclaration(s);
+            } else if (ts.isBreakStatement(s)) {
+                return ['break']
+            } else if (ts.isContinueStatement(s)) {
+                return ['continue']
             } else {
                 return throwError(s, 3002, `Not implemented: ${ts.SyntaxKind[s.kind]} (${s.kind})`);
             }
@@ -816,7 +820,7 @@ namespace pxt.py {
         function expToStr(exps: string[], char: string = '\n'): string {
             return exps.join(char)
         }
-        function expWrap( pre: string = "", exps: string[], suff: string = ""): string[] {
+        function expWrap(pre: string = "", exps: string[], suff: string = ""): string[] {
             exps[0] = pre + exps[0];
             exps[exps.length - 1] = exps[exps.length - 1] + suff;
             return exps;
