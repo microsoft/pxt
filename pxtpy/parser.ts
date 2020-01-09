@@ -215,28 +215,32 @@ namespace pxt.py {
             }
 
             shiftToken()
-            let level = NaN
+            let outputRange: Stmt[];
             if (peekToken().type != TokenType.Indent) {
-                error(9554, U.lf("expecting indent"))
+                error(9554, U.lf("expected an indented block"));
+                outputRange = stmt();
             } else {
-                level = parseInt(peekToken().value)
-            }
-            shiftToken()
-            let r = stmt()
-            for (; ;) {
-                if (peekToken().type == TokenType.Dedent) {
-                    const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
-                    shiftToken()
-                    if (isFinal)
-                        break
+                const level = parseInt(peekToken().value);
+                shiftToken();
+                outputRange = stmt();
+
+                for (;;) {
+                    if (peekToken().type == TokenType.Dedent) {
+                        const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
+                        shiftToken()
+                        if (isFinal)
+                            break
+                    }
+                    U.pushRange(outputRange, stmt());
                 }
-                U.pushRange(r, stmt())
             }
+
             if (traceParser) {
-                traceLev = prevTr
-                pxt.log(traceLev + "}")
+                traceLev = prevTr;
+                pxt.log(traceLev + "}");
             }
-            return r
+
+            return outputRange;
         } else {
             return simple_stmt()
         }
@@ -698,12 +702,13 @@ namespace pxt.py {
     }
 
     function stmt(): Stmt[] {
-        if (peekToken().type == TokenType.Indent) {
-            error(9573, U.lf("unexpected indent"))
-            shiftToken()
-        }
+        const prevErr = diags.length;
+        const hasIndentationError = peekToken().type == TokenType.Indent;
 
-        let prevErr = diags.length
+        if (hasIndentationError) {
+            shiftToken();
+            error(9573, U.lf("unexpected indent"));
+        }
 
         let decorators: Expr[] = []
         while (currentOp() == "MatMult") {
@@ -742,6 +747,11 @@ namespace pxt.py {
                 if (peekToken().type == TokenType.EOF)
                     break
             }
+
+            if (hasIndentationError && peekToken().type === TokenType.Dedent) {
+                shiftToken();
+            }
+
             inParens = 0
             if (traceParser)
                 pxt.log(traceLev + "skip: " + skp.join(", "))
