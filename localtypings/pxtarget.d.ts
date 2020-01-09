@@ -575,6 +575,8 @@ declare namespace ts.pxtc {
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
+        emitAsConstant?: boolean; // used by the blocklycompiler to indicate that an enum should be compiled to a constant with the enumIdentity attribute set
+        enumIdentity?: string; // used by the decompiler to map constants to enum dropdown values
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         py2tsOverride?: string; // used to map functions in python that have an equivalent (but differently named) ts function
         pyHelper?: string; // used to specify functions on the _py namespace that provide implementations. Should be of the form py_class_methname

@@ -394,6 +394,52 @@ export function readUntil(del: string) : string {
 }
 ```
 
+
+### Tip: using dropdowns for constants
+
+Enums in TypeScript can be verbose, so sometimes it is desirable to compile a dropdown to a constant
+variable rather than an enum member (for example, `Item.Shovel` could instead be `SHOVEL`).
+
+To achieve this behavior, set `emitAsConstant` to true on an enum
+
+```typescript
+//% emitAsConstant
+enum Item {
+    //% block="Iron"
+    Iron = 1
+}
+```
+
+and then declare a constant for that enum member like so:
+
+```typescript
+//% enumIdentity="Item.Iron"
+const IRON = Item.Iron;
+```
+
+If the enum has a shim function, you can also set `blockIdentity` just like you can for enum members. This
+will make the decompiler will convert any instance of that constant into the block for that enum.
+
+```typescript
+//% emitAsConstant
+enum Item {
+    //% block="Iron"
+    //% blockIdentity="blocks.item"
+    Iron = 1
+}
+
+namespace blocks {
+    //% shim=TD_ID
+    //% blockId=minecraftItem
+    //% block="item %item"
+    function item(item: Item): number;
+}
+
+//% enumIdentity="Item.Iron"
+//% blockIdentity="blocks.item"
+const IRON = Item.Iron;
+```
+
 ### Tip: implicit conversion for string parameters
 
 If you have an API that takes a string as an argument it is possible to bypass the usual
