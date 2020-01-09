@@ -100,7 +100,7 @@ function checkDiagnostics(diagnostics: pxtc.KsDiagnostic[], baseName: string, fi
 
         chai.assert(
             !code || errorsInLine.filter(d => d.code == code).length != 0,
-            `${baseName}(${lineNo + 1}): expecting error TS${code} but got ${JSON.stringify(diagnostics, undefined, 4)}`
+            `${baseName}(${lineNo + 1}): expecting error TS${code} but got ${JSON.stringify(errorsInLine, undefined, 4)}`
         );
     });
 
