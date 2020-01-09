@@ -96,9 +96,10 @@ function checkDiagnostics(diagnostics: pxtc.KsDiagnostic[], baseName: string, fi
 
     lines.forEach((line: string, lineNo: number) => {
         const code = errCode(line);
+        const errorsInLine = diagnostics.filter(d => d.line == lineNo);
 
         chai.assert(
-            !code || diagnostics.filter(d => d.line == lineNo && d.code == code).length != 0,
+            !code || errorsInLine.filter(d => d.code == code).length != 0,
             `${baseName}(${lineNo + 1}): expecting error TS${code} but got ${JSON.stringify(diagnostics, undefined, 4)}`
         );
     });
