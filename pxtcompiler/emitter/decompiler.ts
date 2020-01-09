@@ -237,7 +237,7 @@ namespace ts.pxtc.decompiler {
         }
     }
 
-    export type NamesSet = pxt.Map<boolean>
+    export type NamesSet = pxt.Map<boolean | {}>
     /**
      * Uses the language service to ensure that there are no duplicate variable
      * names in the given file. All variables in Blockly are global, so this is
@@ -285,7 +285,7 @@ namespace ts.pxtc.decompiler {
         }
     }
 
-    export function getNewName(name: string, takenNames: NamesSet) {
+    export function getNewName(name: string, takenNames: NamesSet, recordNewName = true) {
         // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
         if (name.length === 1) {
             const charCode = name.charCodeAt(0);
@@ -294,7 +294,8 @@ namespace ts.pxtc.decompiler {
                 for (let i = 1; i < 26; i++) {
                     const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
                     if (!takenNames[newChar]) {
-                        takenNames[newChar] = true;
+                        if (recordNewName)
+                            takenNames[newChar] = true;
                         return newChar;
                     }
                 }
@@ -305,7 +306,8 @@ namespace ts.pxtc.decompiler {
         for (let i = 2; ; i++) {
             const toTest = name + i;
             if (!takenNames[toTest]) {
-                takenNames[toTest] = true;
+                if (recordNewName)
+                    takenNames[toTest] = true;
                 return toTest;
             }
         }
@@ -926,6 +928,12 @@ ${output}</xml>`;
         }
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
+            if (isDeclaredElsewhere(identifier)) {
+                const info = pxtInfo(identifier);
+
+                const id = blocksInfo.apis.byQName[info.commentAttrs.blockIdentity];
+                return getEnumFieldBlock(id, info.commentAttrs.enumIdentity);
+            }
             const name = getVariableName(identifier);
             const oldName = identifier.text;
             let localReporterArg: PropertyDesc = null;
@@ -1086,14 +1094,18 @@ ${output}</xml>`;
             }
 
             let idfn = attributes.blockIdentity ? blocksInfo.apis.byQName[attributes.blockIdentity] : blocksInfo.blocksById[blockId];
-            let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
+            return getEnumFieldBlock(idfn, value);
+        }
+
+        function getEnumFieldBlock(idfn: SymbolInfo, value: string) {
+            let f = /(?:%|\$)([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
             const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
             r.fields = [{
                 kind: "field",
                 name: U.htmlEscape(f[1]),
                 value
             }];
-            return r
+            return r;
         }
 
         function getArrayLiteralExpression(n: ts.ArrayLiteralExpression): ExpressionNode {
@@ -1866,6 +1878,11 @@ ${output}</xml>`;
                     if (shimAttrs && shimAttrs.shim === "TD_ID" && paramInfo.isEnum) {
                         e = unwrapNode(shimCall.args[0]) as ts.Expression;
                     }
+                }
+
+                if (param && paramInfo && paramInfo.isEnum && e.kind === SK.Identifier) {
+                    addField(getField(U.htmlEscape(param.definitionName), pxtInfo(e).commentAttrs.enumIdentity));
+                    return;
                 }
 
                 if (param && param.fieldOptions && param.fieldOptions[DecompileParamKeys.DecompileArgumentAsString]) {
@@ -2668,6 +2685,10 @@ ${output}</xml>`;
                             }
                         }
                     }
+                    else if (e.kind === SK.Identifier) {
+                        const attributes = pxtInfo(e).commentAttrs;
+                        if (attributes && attributes.enumIdentity) return undefined;
+                    }
                     return Util.lf("Enum arguments may only be literal property access expressions");
                 }
                 else if (isLiteralNode(e) && (param.fieldEditor || param.shadowBlockId)) {
@@ -3096,9 +3117,10 @@ ${output}</xml>`;
             case SK.NoSubstitutionTemplateLiteral:
                 return checkStringLiteral(n as ts.StringLiteral);
             case SK.Identifier:
+                const pInfo = pxtInfo(n);
                 if (isUndefined(n)) {
                     return Util.lf("Undefined is not supported in blocks");
-                } else if (isDeclaredElsewhere(n as Identifier)) {
+                } else if (isDeclaredElsewhere(n as Identifier) && !(pInfo.commentAttrs && pInfo.commentAttrs.blockIdentity && pInfo.commentAttrs.enumIdentity)) {
                     return Util.lf("Variable is declared in another file");
                 } else {
                     return undefined;

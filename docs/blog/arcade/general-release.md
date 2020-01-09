@@ -2,7 +2,7 @@
 
 **Posted on January 6th, 2019 by [Jaqster](https://github.com/jaqster)**
 
-Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that MakeCode Arcade has been officially released for general availability today!
+Ringing in the New Year with a New Release! The MakeCode team is very happy and proud to announce that [MakeCode Arcade](https://arcade.makecode.com) has been officially released for general availability today!
 
 For those of you who have been following our progress, you’ll know that we’ve been working on MakeCode Arcade for about 2 years now... and we’ve had it in Beta for the past year while we’ve continued to get feedback, fix bugs, make improvements and just generally polish up the experience.
 

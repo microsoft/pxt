@@ -669,36 +669,6 @@ namespace ts.pxtc {
             return symbol.name
         return typechecker.getFullyQualifiedName(symbol);
     }
-
-    /*
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
-        const typechecker = program.getTypeChecker()
-
-        for (let s of symbols) {
-            let qName = getFullName(typechecker, s)
-            const gsi = Util.lookup(apiInfo.byQName, qName);
-
-            // filter out symbols starting with __
-            if (gsi && /^__/.test(gsi.name))
-                continue;
-
-            if (!r.isMemberCompletion && gsi)
-                continue; // global symbol
-
-            if (Util.lookup(r.entries, qName))
-                continue;
-
-            const decl = s.valueDeclaration || (s.declarations || [])[0]
-            if (!decl) continue;
-
-            const si = createSymbolInfo(typechecker, qName, decl)
-            if (!si) continue;
-
-            si.isContextual = true;
-
-            r.entries[qName] = si;
-        }
-    }*/
 }
 
 
@@ -782,7 +752,8 @@ namespace ts.pxtc.service {
         decls: pxt.Map<Declaration>;
     }
 
-    let lastApiInfo: CachedApisInfo;
+    let lastApiInfo: CachedApisInfo | undefined;
+    let lastPyIdentifierSyntaxInfo: SyntaxInfo | undefined;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
@@ -833,10 +804,29 @@ namespace ts.pxtc.service {
         }
     }
 
+    interface Py2TsRes {
+        // TODO: use the real types from converter.ts
+        diagnostics: pxtc.KsDiagnostic[],
+        success: boolean,
+        outfiles: { [key: string]: string },
+        syntaxInfo?: pxtc.SyntaxInfo
+    }
+    function updatePySyntaxInfo(opts: CompileOptions) {
+        // TODO: We call py2ts here directly to get the python syntax info.
+        // We likely already have the syntax info from a previous compile,
+        // we should do better about cache the latest results and serving those
+        // here. Also, we shouldn't mutate "opts" (the input).
+        let res = (pxt as any).py.py2ts(opts) as Py2TsRes
+        if (res.syntaxInfo && res.syntaxInfo.symbols) {
+            lastPyIdentifierSyntaxInfo = res.syntaxInfo
+        }
+    }
+
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
-            lastApiInfo = null
+            lastApiInfo = undefined
+            lastPyIdentifierSyntaxInfo = undefined
             host.reset()
             transpile.resetCache()
         },
@@ -860,11 +850,9 @@ namespace ts.pxtc.service {
             };
             if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
                 addApiInfo(opts);
-                // TODO: we likely already have the syntax info from a previous compile,
-                // we should do better about cache the latest results and serving those
-                // here. Also, we shouldn't mutate "opts" (the input) and instead make
-                // the syntaxInfo part of the output.
-                (pxt as any).py.py2ts(opts)
+                updatePySyntaxInfo(opts)
+                if (lastPyIdentifierSyntaxInfo)
+                    return lastPyIdentifierSyntaxInfo
             }
             return opts.syntaxInfo
         },
@@ -874,7 +862,7 @@ namespace ts.pxtc.service {
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
-            const python = /\.py$/.test(v.fileName);
+            const isPython = /\.py$/.test(v.fileName);
             let dotIdx = -1
             let complPosition = -1
             for (let i = v.position - 1; i >= 0; --i) {
@@ -916,11 +904,17 @@ namespace ts.pxtc.service {
                 position: complPosition,
                 type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
             };
-            // TODO: we likely already have the syntax info from a previous compile,
-            // we should do better about cache the latest results and serving those
-            // here. Also, we shouldn't mutate "opts" (the input) and instead make
-            // the syntaxInfo part of the output.
-            (pxt as any).py.py2ts(opts)
+            if (isPython) {
+                updatePySyntaxInfo(opts)
+            }
+
+            let takenNames: pxt.Map<SymbolInfo> = {}
+            if (isPython && lastPyIdentifierSyntaxInfo && lastPyIdentifierSyntaxInfo.globalNames) {
+                takenNames = lastPyIdentifierSyntaxInfo.globalNames
+            } else {
+                takenNames = lastApiInfo.apis.byQName
+            }
+
             let symbols = opts.syntaxInfo.symbols || []
 
             for (let si of symbols) {
@@ -933,13 +927,13 @@ namespace ts.pxtc.service {
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
-                    if (python)
-                        si.pySnippet = getSnippet(lastApiInfo.apis, v.runtime, si, n, python);
+                    let snippet = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
+                    if (isPython)
+                        si.pySnippet = snippet
                     else
-                        si.snippet = getSnippet(lastApiInfo.apis, v.runtime, si, n, python);
+                        si.snippet = snippet
                 }
             }
-            //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
 
             // sort entries
             r.entries = pxt.Util.values(entries);
@@ -1012,7 +1006,7 @@ namespace ts.pxtc.service {
             const n = lastApiInfo.decls[o.qName];
             if (!fn || !n || !ts.isFunctionLike(n))
                 return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis, v.runtime, fn, n as FunctionLikeDeclaration, !!o.python)
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis, lastApiInfo.apis.byQName, v.runtime, fn, n as FunctionLikeDeclaration, !!o.python)
         },
         blocksInfo: v => blocksInfoOp(v as any, v.blocks && v.blocks.bannedCategories),
         apiSearch: v => {
@@ -1254,21 +1248,30 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(apis: ApisInfo, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+    export function getSnippet(apis: ApisInfo, takenNames: pxt.Map<SymbolInfo>, runtimeOps: pxt.RuntimeOptions, fn: SymbolInfo, decl: ts.FunctionLikeDeclaration, python?: boolean): string {
         const PY_INDENT: string = (pxt as any).py.INDENT;
 
         let findex = 0;
         let preStmt = "";
 
         let fnName = ""
-        if (n.kind == SK.Constructor) {
-            fnName = getSymbolName(n.symbol) || n.parent.name.getText();
+        if (decl.kind == SK.Constructor) {
+            fnName = getSymbolName(decl.symbol) || decl.parent.name.getText();
         } else {
-            fnName = getSymbolName(n.symbol) || n.name.getText();
+            fnName = getSymbolName(decl.symbol) || decl.name.getText();
         }
 
         if (python)
             fnName = snakify(fnName).toLowerCase();
+
+        if (python)
+            fnName = snakify(fnName).toLowerCase();
+
+        function getUniqueName(inName: string): string {
+            if (takenNames[inName])
+                return ts.pxtc.decompiler.getNewName(inName, takenNames, false)
+            return inName
+        }
 
         const attrs = fn.attributes;
 
@@ -1382,7 +1385,7 @@ namespace ts.pxtc.service {
             return python ? "None" : "null";
         }
 
-        const args = n.parameters ? n.parameters
+        const args = decl.parameters ? decl.parameters
             .filter(param => !param.initializer && !param.questionToken)
             .map(getParameterDefault) : [];
 
@@ -1456,8 +1459,15 @@ namespace ts.pxtc.service {
         let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
-        if (attrs && attrs.blockSetVariable)
-            insertText = `${python ? "" : "let "}${python ? snakify(attrs.blockSetVariable).toLowerCase() : attrs.blockSetVariable} = ${insertText}`;
+        if (attrs && attrs.blockSetVariable) {
+            if (python) {
+                let varName = snakify(attrs.blockSetVariable).toLowerCase()
+                varName = getUniqueName(varName)
+                insertText = `${varName} = ${insertText}`;
+            } else {
+                insertText = `let ${attrs.blockSetVariable} = ${insertText}`;
+            }
+        }
 
         return preStmt + insertText;
 
@@ -1497,6 +1507,7 @@ namespace ts.pxtc.service {
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n).toLowerCase();
+                n = getUniqueName(n)
                 preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
                 return n;
             } else {
@@ -1512,7 +1523,9 @@ namespace ts.pxtc.service {
 
         function emitFn(n: string): string {
             if (python) {
-                if (n) n = snakify(n).toLowerCase();
+                n = n || "fn"
+                n = snakify(n).toLowerCase();
+                n = getUniqueName(n)
                 preStmt += `def ${n}():\n${PY_INDENT}pass\n`;
                 return n;
             } else return `function () {}`;

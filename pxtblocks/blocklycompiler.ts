@@ -1154,6 +1154,19 @@ namespace pxt.blocks {
             if (b.getField(p.definitionName) instanceof pxtblockly.FieldTextInput) {
                 return H.mkStringLiteral(f);
             }
+
+            // For some enums in pxt-minecraft, we emit the members as constants that are defined in
+            // libs/core. For example, Blocks.GoldBlock is emitted as GOLD_BLOCK
+            const type = e.blocksInfo.apis.byQName[p.type];
+            if (type && type.attributes.emitAsConstant) {
+                for (const symbolName of Object.keys(e.blocksInfo.apis.byQName)) {
+                    const symbol = e.blocksInfo.apis.byQName[symbolName];
+                    if (symbol && symbol.attributes && symbol.attributes.enumIdentity === f) {
+                        return mkText(symbolName);
+                    }
+                }
+            }
+
             return mkText(f);
         }
         else {

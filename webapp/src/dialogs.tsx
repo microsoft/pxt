@@ -485,6 +485,7 @@ export function showCreateGithubRepoDialogAsync(name?: string) {
             pxt.tickEvent("github.create.cancel");
         else {
             if (!repoNameError()) {
+                repoDescription = repoDescription || lf("A MakeCode project")
                 core.showLoading("creategithub", lf("creating {0} repository...", repoName))
                 return pxt.github.createRepoAsync(repoName, repoDescription.trim(), !repoPublic)
                     .finally(() => core.hideLoading("creategithub"))

@@ -15,3 +15,8 @@ for (const text of strList) {
 for (const num of [1, 2, 3]) {
     console.log(num)
 }
+
+for (let animal of ["alligator", "hippopotamus", "lionfish", "coelacanth"]) {
+    console.log(animal)
+}
+

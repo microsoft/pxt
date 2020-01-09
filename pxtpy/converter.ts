@@ -1395,9 +1395,12 @@ namespace pxt.py {
                 B.mkStmt(expr(n.value)),
         Pass: (n: py.Pass) => B.mkStmt(B.mkText("")),
         Break: (n: py.Break) => B.mkStmt(B.mkText("break")),
-        Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
+        Continue: (n: py.Continue) => B.mkStmt(B.mkText("continue")),
 
-        Delete: (n: py.Delete) => stmtTODO(n),
+        Delete: (n: py.Delete) => {
+            error(n, 9550, U.lf("delete statements are unsupported"));
+            return stmtTODO(n)
+        },
         Try: (n: py.Try) => {
             let r = [
                 B.mkText("try"),
@@ -1414,9 +1417,18 @@ namespace pxt.py {
                 r.push(B.mkText("finally"), stmts(n.finalbody))
             return B.mkStmt(B.mkGroup(r))
         },
-        AsyncFunctionDef: (n: py.AsyncFunctionDef) => stmtTODO(n),
-        AsyncFor: (n: py.AsyncFor) => stmtTODO(n),
-        AsyncWith: (n: py.AsyncWith) => stmtTODO(n),
+        AsyncFunctionDef: (n: py.AsyncFunctionDef) => {
+            error(n, 9551, U.lf("async function definitions are unsupported"));
+            return stmtTODO(n)
+        },
+        AsyncFor: (n: py.AsyncFor) => {
+            error(n, 9552, U.lf("async for statements are unsupported"));
+            return stmtTODO(n)
+        },
+        AsyncWith: (n: py.AsyncWith) => {
+            error(n, 9553, U.lf("async with statements are unsupported"));
+            return stmtTODO(n)
+        },
         Global: (n: py.Global) => {
             const globalScope = topScope();
             const current = currentScope();
@@ -1464,8 +1476,10 @@ namespace pxt.py {
         let target: Expr;
         // TODO handle more than 1 target
         if (n.kind === "Assign") {
-            if (n.targets.length != 1)
+            if (n.targets.length != 1) {
+                error(n, 9553, U.lf("multi-target assignment statements are unsupported"));
                 return stmtTODO(n)
+            }
             target = n.targets[0]
             value = n.value
             annotation = null
@@ -1532,8 +1546,10 @@ namespace pxt.py {
         }
         if (value)
             unifyTypeOf(target, typeOf(value))
-        else
+        else {
+            error(n, 9555, U.lf("unable to determine value of assignment"));
             return stmtTODO(n)
+        }
         if (isConstCall) {
             // first run would have "let" in it
             defvar(getName(target), {})
@@ -1545,8 +1561,10 @@ namespace pxt.py {
             let tup = target as py.Tuple
             let targs = [B.mkText("let "), B.mkText("[")]
             let nonNames = tup.elts.filter(e => e.kind !== "Name")
-            if (nonNames.length)
+            if (nonNames.length) {
+                error(n, 9556, U.lf("non-trivial tuple assignment unsupported"));
                 return stmtTODO(n)
+            }
             let tupNames = tup.elts
                 .map(e => e as py.Name)
                 .map(convertName)
@@ -2265,6 +2283,7 @@ namespace pxt.py {
     function shouldHoist(sym: SymbolInfo, scope: py.ScopeDef): boolean {
         let result =
             sym.kind === SK.Variable
+            && !sym.isParam
             && sym.modifier === undefined
             && (
                 sym.firstRefPos! < sym.firstAssignPos!
@@ -2313,7 +2332,8 @@ namespace pxt.py {
     export interface Py2TsRes {
         diagnostics: pxtc.KsDiagnostic[],
         success: boolean,
-        outfiles: { [key: string]: string }
+        outfiles: { [key: string]: string },
+        syntaxInfo?: pxtc.SyntaxInfo
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
@@ -2439,6 +2459,23 @@ namespace pxt.py {
             if (!syntaxInfo.symbols)
                 syntaxInfo.symbols = []
 
+            // always return global symbols because we might need to check for
+            // name collisions downstream
+            syntaxInfo.globalNames = syntaxInfo.globalNames || {}
+            let existing: SymbolInfo[] = []
+            const addSym = (v: SymbolInfo) => {
+                if (isGlobalSymbol(v) && existing.indexOf(v) < 0) {
+                    let s = cleanSymbol(v)
+                    syntaxInfo!.globalNames![s.qName || s.name] = s
+                }
+            }
+            existing = syntaxInfo.symbols.slice()
+            for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
+                if (s && s.vars)
+                    U.values(s.vars).forEach(addSym)
+            }
+            apis.forEach(addSym)
+
             if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
                 const tp = typeOf(attr.value)
@@ -2465,17 +2502,7 @@ namespace pxt.py {
                 }
 
             } else if (syntaxInfo.type == "identifierCompletion") {
-                let existing: SymbolInfo[] = []
-                const addSym = (v: SymbolInfo) => {
-                    if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
-                        syntaxInfo!.symbols!.push(v)
-                }
-                existing = syntaxInfo.symbols.slice()
-                for (let s: ScopeDef | undefined = infoScope; !!s; s = s.parent) {
-                    if (s && s.vars)
-                        U.values(s.vars).forEach(addSym)
-                }
-                apis.forEach(addSym)
+                syntaxInfo.symbols = pxt.U.values(syntaxInfo.globalNames)
             } else {
                 let sym = (infoNode as Expr).symbolInfo
                 if (sym)
@@ -2489,7 +2516,8 @@ namespace pxt.py {
         return {
             outfiles: outfiles,
             success: outDiag.length === 0,
-            diagnostics: outDiag
+            diagnostics: outDiag,
+            syntaxInfo
         }
 
         function patchedDiags() {

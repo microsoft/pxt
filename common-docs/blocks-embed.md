@@ -16,7 +16,24 @@ A quick solution is take screenshots of the snippets but that approach can quick
 
 The MakeCode approach to solving this issue is to render the **JavaScript** code snippets on the client using the same block rendering engine as the editor. Under the hood, an ``iframe`` from the MakeCode editor will render the blocks for you.
 
-## Plugins
+## GitHub pages #githubpages
+
+You can use [GitHub pages](https://help.github.com/en/github/working-with-github-pages) to render your README.md file as a web site.
+
+* enable [GitHub pages](https://help.github.com/en/github/working-with-github-pages/creating-a-github-pages-site#creating-your-site) on your repository
+* add the following entry in the ``_config.yml``
+
+```
+  makecode:
+    home_url: @homeurl@
+```
+
+* copy the following text at the bottom of your ``README.md`` file
+```
+<script src="https://makecode.com/gh-pages-embed.js"></script><script>makeCodeRender("{{ site.makecode.home_url }}", "{{ site.github.owner_name }}/{{ site.github.repository_name }}");</script>
+```
+
+## Other Plugins
 
 Here is an integration sample:
 
@@ -30,7 +47,7 @@ To render blocks in your own HTML documents or to make plugins for a document pl
 
 ### ~ hint
 
-Try this [fiddle](https://jsfiddle.net/L8msdjpu/2/) to see an embedded blocks rendering example.
+Try this [fiddle](https://jsfiddle.net/nq0hyz97/) to see an embedded blocks rendering example.
 
 ### ~
 

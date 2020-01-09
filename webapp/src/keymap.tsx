@@ -15,38 +15,16 @@ interface KeymapData {
     map: { [key: string]: string[] };
 };
 
-const _data: { [key: string]: KeymapData[] } = {
-    "arcade": [ {
-            title: "player 1",
-            map: {
-                "up": ["↑", "W"],
-                "down": ["↓", "S"],
-                "left": ["→", "A"],
-                "right": ["←", "D"],
-                "a": ["Z", "space"],
-                "b": ["X", "enter"]
-            }
-        },
-        {
-            title: "player 2",
-            map: {
-                "up": ["I"],
-                "down": ["K"],
-                "left": ["J"],
-                "right": ["L"],
-                "a": ["U"],
-                "b": ["O"]
-            }
-        } ]
-    }
 export class Keymap extends data.Component<ISettingsProps, KeymapState> {
-    private keymap: KeymapData[];
+    private static _data: { [key: string]: KeymapData[] };
+    protected keymap: KeymapData[];
     constructor(props: ISettingsProps) {
         super(props);
 
+        this.setData();
         const board = pxt.appTarget && pxt.appTarget.appTheme
             && pxt.appTarget.appTheme.boardName.toLowerCase();
-        this.keymap = board && _data[board];
+        this.keymap = board && Keymap._data[board];
     }
 
     componentDidMount() {
@@ -81,5 +59,34 @@ export class Keymap extends data.Component<ISettingsProps, KeymapState> {
                 </div>
             })}
         </div>;
+    }
+
+    private setData() {
+        if (!Keymap._data) {
+            Keymap._data = {
+                "arcade": [ {
+                        title: lf("player 1"),
+                        map: {
+                            [lf("up")]: ["↑", "W"],
+                            [lf("down")]: ["↓", "S"],
+                            [lf("left")]: ["→", "A"],
+                            [lf("right")]: ["←", "D"],
+                            "a": ["Z", lf("{id:keyboard symbol}space")],
+                            "b": ["X", lf("{id:keyboard symbol}enter")]
+                        }
+                    },
+                    {
+                        title: lf("player 2"),
+                        map: {
+                            [lf("up")]: ["I"],
+                            [lf("down")]: ["K"],
+                            [lf("left")]: ["J"],
+                            [lf("right")]: ["L"],
+                            [lf("a")]: ["U"],
+                            [lf("b")]: ["O"]
+                        }
+                    } ]
+                }
+            }
     }
 }

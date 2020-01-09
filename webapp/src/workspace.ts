@@ -468,7 +468,7 @@ export async function pullAsync(hd: Header, checkOnly = false) {
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     const sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    if  (!sha) {
+    if (!sha) {
         // 404: branch does not exist, repo is gone or no rights to access repo
         // try to get the list of heads to see if we can access the project
         const heads = await pxt.github.listRefsAsync(parsed.fullName, "heads");
@@ -953,7 +953,10 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
     const templateFiles = pxt.template.packageFiles(name);
     pxt.template.packageFilesFixup(templateFiles, {
-        repo: parsed.fullName
+        repo: parsed.fullName,
+        repoowner: parsed.owner,
+        reponame: parsed.project,
+        repotag: parsed.tag
     });
 
     if (forceTemplateFiles) {
@@ -1009,6 +1012,13 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
         .forEach(f => delete currFiles[f]);
 
     await saveAsync(hd, currFiles)
+
+    // try enable github pages
+    try {
+        await pxt.github.enablePagesAsync(parsed.fullName);
+    } catch (e) {
+        pxt.reportException(e);
+    }
 
     return hd
 }
