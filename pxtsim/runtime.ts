@@ -383,6 +383,10 @@ namespace pxsim {
         }
     }
 
+    export interface EventBusBoard {
+        bus: EventBus;
+    }
+
     class BareBoard extends BaseBoard {
     }
 
