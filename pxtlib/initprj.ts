@@ -167,7 +167,7 @@ jobs:
         };
 
         // override files from target
-        const overrides = pxt.appTarget.bundledpkgs["template"];
+        const overrides = pxt.appTarget.bundledpkgs[pxt.template.TEMPLATE_PRJ];
         if (overrides) {
             Object.keys(overrides)
                 .filter(k => k != pxt.CONFIG_NAME)
