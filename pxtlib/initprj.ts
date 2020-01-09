@@ -9,8 +9,8 @@ namespace pxt.template {
     "exclude": ["pxt_modules/**/*test.ts"]
 }
 `;
-    function defaultFiles(): Map<string> {
-        return {
+    export function defaultFiles(): Map<string> {
+        const files: Map<string> = {
             "tsconfig.json": TS_CONFIG,
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
@@ -164,8 +164,20 @@ jobs:
     }]
 }
 `
+        };
+
+        // override files from target
+        const overrides = pxt.appTarget.bundledpkgs[pxt.template.TEMPLATE_PRJ];
+        if (overrides) {
+            Object.keys(overrides)
+                .filter(k => k != pxt.CONFIG_NAME)
+                .forEach(k => files[k] = overrides[k]);
         }
+
+        return files;
     }
+
+    export const TEMPLATE_PRJ = "template";
 
     export function packageFiles(name: string): pxt.Map<string> {
         const prj = pxt.appTarget.blocksprj || pxt.appTarget.tsprj;
