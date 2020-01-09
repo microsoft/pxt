@@ -1389,7 +1389,7 @@ namespace pxt.py {
                 B.mkStmt(expr(n.value)),
         Pass: (n: py.Pass) => B.mkStmt(B.mkText("")),
         Break: (n: py.Break) => B.mkStmt(B.mkText("break")),
-        Continue: (n: py.Continue) => B.mkStmt(B.mkText("break")),
+        Continue: (n: py.Continue) => B.mkStmt(B.mkText("continue")),
 
         Delete: (n: py.Delete) => {
             error(n, 9550, U.lf("delete statements are unsupported"));
