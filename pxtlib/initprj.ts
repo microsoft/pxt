@@ -10,7 +10,7 @@ namespace pxt.template {
 }
 `;
     export function defaultFiles(): Map<string> {
-        const files : Map<string> = {
+        const files: Map<string> = {
             "tsconfig.json": TS_CONFIG,
 
             "test.ts": `// ${lf("tests go here; this will not be compiled when this package is used as an extension.")}
