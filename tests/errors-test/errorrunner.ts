@@ -39,7 +39,7 @@ for (const file of fs.readdirSync(casesDir)) {
         continue;
     }
 
-    const filename = path.join(casesDir, file)
+    const filename = path.join(casesDir, file);
     if (/\.ts$/.test(file)) {
         tsFileNames.push(filename);
     } else if (/\.py$/.test(file)) {
@@ -86,7 +86,7 @@ async function pyErrorTestAsync(filename: string) {
 }
 
 function checkDiagnostics(diagnostics: pxtc.KsDiagnostic[], baseName: string, fileText: string) {
-    const lines = fileText.split(/\r?\n/)
+    const lines = fileText.split(/\r?\n/);
     for (let diag of diagnostics) {
         chai.assert(
             errCode(lines[diag.line]) !== 0,
