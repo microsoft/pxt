@@ -1061,13 +1061,14 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
 
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
-        this.handleChange = this.handleChange.bind(this);
+        this.handleTextChange = this.handleTextChange.bind(this);
+        this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.save = this.save.bind(this);
         this.skip = this.skip.bind(this);
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
-        this.handleChange(newProps.parent.state.projectName);
+        this.handleTextChange(newProps.parent.state.projectName);
     }
 
     hide() {
@@ -1095,8 +1096,13 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         }
     }
 
-    handleChange(name: string) {
+    handleTextChange(name: string) {
         this.setState({ projectName: name });
+    }
+
+    handleLanguageChange(ev: React.ChangeEvent<HTMLSelectElement>) {
+        const lang = parseInt(ev.target.value);
+        this.setState({ language: lang });
     }
 
     askNameAsync() {
@@ -1112,50 +1118,49 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     }
 
     save() {
-        const { projectName: newName } = this.state;
+        const { projectName: newName, language } = this.state;
+
         this.hide();
         if (this.createProjectCb) {
             this.createProjectCb({
                 name: newName,
-                language: LanguageOption.BlocksOnly
+                language: language
             });
         }
         this.createProjectCb = null;
     }
 
     renderCore() {
-        const { visible, projectName } = this.state;
+        const { visible, projectName, language } = this.state;
 
         const actions = [{
             label: lf("Create"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
-        }]
+        }];
 
-        return (
-            <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
-                onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Create a Project")}
-                closeOnDimmerClick closeOnDocumentClick closeOnEscape
-                modalDidOpen={this.modalDidOpen}
-            >
-                <div>
-                    <p>{lf("Give your project a name.")}</p>
-                    <div className="ui form">
-                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
-                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                            value={projectName || ''} onChange={this.handleChange} />
-                    </div>
+        return <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
+            onClose={this.hide} dimmer={true} buttons={actions}
+            closeIcon={true} header={lf("Create a Project")}
+            closeOnDimmerClick closeOnDocumentClick closeOnEscape
+            modalDidOpen={this.modalDidOpen}
+        >
+            <div>
+                <p>{lf("Give your project a name.")}</p>
+                <div className="ui form">
+                    <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                        value={projectName || ''} onChange={this.handleTextChange} />
                 </div>
-                <select className="ui dropdown" /** onChange={onPublicChanged} **/ aria-label={lf("Selected Language")}>
-                    <option aria-selected={true} value={LanguageOption.Standard}>{lf("Standard")}</option>
-                    <option aria-selected={false} value={LanguageOption.BlocksOnly}>{lf("{0} Only", "Blocks")}</option>
-                    <option aria-selected={false} value={LanguageOption.PythonOnly}>{lf("{0} Only", "Python")}</option>
-                    <option aria-selected={false} value={LanguageOption.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
-                </select>
-            </sui.Modal>
-        )
+            </div>
+            <select className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
+                <option aria-selected={language === LanguageOption.Standard} value={LanguageOption.Standard}>{lf("Standard")}</option>
+                <option aria-selected={language === LanguageOption.BlocksOnly} value={LanguageOption.BlocksOnly}>{lf("{0} Only", "Blocks")}</option>
+                <option aria-selected={language === LanguageOption.PythonOnly} value={LanguageOption.PythonOnly}>{lf("{0} Only", "Python")}</option>
+                <option aria-selected={language === LanguageOption.JavaScriptOnly} value={LanguageOption.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
+            </select>
+        </sui.Modal>
     }
 }
 
