@@ -19,6 +19,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: ImageEditor;
     protected closeEditor: () => void;
+    protected options: any;
 
     constructor(props: ImageFieldEditorProps) {
         super(props);
@@ -64,6 +65,7 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
 
     init(value: U, close: () => void, options?: any) {
         this.closeEditor = close;
+        this.options = options;
         if (this.props.singleFrame) {
             let bitmap = value as pxt.sprite.Bitmap;
             if (bitmap.height == 0 || bitmap.width == 0) {
@@ -105,6 +107,10 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     restorePersistentData(oldValue: any) {
         if (this.ref) {
             this.ref.restorePersistentData(oldValue);
+
+            if (this.options && this.options.disableResize) {
+                this.ref.disableResize();
+            }
         }
     }
 
@@ -115,9 +121,11 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
     }
 
     protected initSingleFrame(value: pxt.sprite.Bitmap, options?: any) {
-
-
         this.ref.initSingleFrame(value);
+
+        if (options.disableResize) {
+            this.ref.disableResize();
+        }
     }
 
     protected initAnimation(value: pxt.sprite.AnimationData, options?: any) {
@@ -129,6 +137,10 @@ export class ImageFieldEditor<U extends ImageType> extends React.Component<Image
         }
 
         this.ref.initAnimation(value.frames.map(b => pxt.sprite.Bitmap.fromData(b)), value.interval);
+
+        if (options.disableResize) {
+            this.ref.disableResize();
+        }
     }
 
     protected toggleGallery = () => {
