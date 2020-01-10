@@ -438,8 +438,9 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         if (pxt.appTarget.appTheme.nameProjectFirst) {
-            this.props.parent.askForProjectNameAsync()
-                .then(name => {
+            this.props.parent.askForProjectSettingsAsync()
+                .then(projectSettings => {
+                    const {name, language} = projectSettings
                     this.props.parent.newProject({ name });
                 })
         } else {
@@ -996,29 +997,24 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         })
     }
 
-    headerText() {
-        return lf("Project has no name {0}", this.state.emoji)
-    }
-
-    actions(): sui.ModalButton[] {
-        return [{
-            label: lf("Save"),
-            onclick: this.save,
-            icon: 'check',
-            className: 'approve positive'
-        }, {
-            label: lf("Skip"),
-            onclick: this.skip
-        }]
-    }
-
     renderCore() {
         const { visible, projectName } = this.state;
 
+        const actions = [{
+                label: lf("Save"),
+                onclick: this.save,
+                icon: 'check',
+                className: 'approve positive'
+            }, {
+                label: lf("Skip"),
+                onclick: this.skip
+            }
+        ];
+
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
-                onClose={this.hide} dimmer={true} buttons={this.actions()}
-                closeIcon={true} header={this.headerText()}
+                onClose={this.hide} dimmer={true} buttons={actions}
+                closeIcon={true} header={lf("Project has no name {0}", this.state.emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
@@ -1035,40 +1031,131 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 }
 
-export class NewProjectNameDialog extends ExitAndSaveDialog {
-    private nameCb: (name: string) => void;
+enum LanguageOption {
+    Standard,
+    PythonOnly,
+    BlocksOnly,
+    JavaScriptOnly
+}
 
-    headerText() {
-        return lf("Your project needs a name {0}", this.state.emoji)
+export interface NewProjectDialogState {
+    projectName?: string;
+    language?: LanguageOption;
+    visible?: boolean;
+}
+
+export interface ProjectInfo {
+    name: string;
+    language: LanguageOption;
+}
+
+export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectDialogState> {
+    private createProjectCb: (projectState: ProjectInfo) => void;
+
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false,
+            language: LanguageOption.Standard
+        }
+
+        this.hide = this.hide.bind(this);
+        this.modalDidOpen = this.modalDidOpen.bind(this);
+        this.handleChange = this.handleChange.bind(this);
+        this.save = this.save.bind(this);
+        this.skip = this.skip.bind(this);
     }
 
-    actions(): sui.ModalButton[] {
-        return [{
-            label: lf("Create"),
-            onclick: this.save,
-            icon: 'check',
-            className: 'approve positive'
-        }]
+    componentWillReceiveProps(newProps: ISettingsProps) {
+        this.handleChange(newProps.parent.state.projectName);
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
+        this.setState({ visible: true });
+    }
+
+    modalDidOpen(ref: HTMLElement) {
+        // Save on enter typed
+        let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
+        if (dialogInput) {
+            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
+            dialogInput.onkeydown = (e: KeyboardEvent) => {
+                const charCode = core.keyCodeFromEvent(e);
+                if (charCode === core.ENTER_KEY) {
+                    e.preventDefault();
+                    const approveButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
+                    if (approveButton) approveButton.click();
+                }
+            }
+        }
+    }
+
+    handleChange(name: string) {
+        this.setState({ projectName: name });
     }
 
     askNameAsync() {
-        this.setState({ projectName: "", emoji: "" })
-        this.show()
-        return new Promise<string>(resolve => {
-            this.nameCb = resolve
-        })
+        this.setState({ projectName: "" })
+        this.show();
+        return new Promise<ProjectInfo>(resolve => {
+            this.createProjectCb = resolve;
+        });
     }
 
     skip() {
-        this.hide()
+        this.hide();
     }
 
     save() {
         const { projectName: newName } = this.state;
         this.hide();
-        if (this.nameCb)
-            this.nameCb(newName)
-        this.nameCb = null
+        if (this.createProjectCb) {
+            this.createProjectCb({
+                name: newName,
+                language: LanguageOption.BlocksOnly
+            });
+        }
+        this.createProjectCb = null;
+    }
+
+    renderCore() {
+        const { visible, projectName } = this.state;
+
+        const actions = [{
+            label: lf("Create"),
+            onclick: this.save,
+            icon: 'check',
+            className: 'approve positive'
+        }]
+
+        return (
+            <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
+                onClose={this.hide} dimmer={true} buttons={actions}
+                closeIcon={true} header={lf("Create a Project")}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                modalDidOpen={this.modalDidOpen}
+            >
+                <div>
+                    <p>{lf("Give your project a name.")}</p>
+                    <div className="ui form">
+                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            value={projectName || ''} onChange={this.handleChange} />
+                    </div>
+                </div>
+                <select className="ui dropdown" /** onChange={onPublicChanged} **/ aria-label={lf("Selected Language")}>
+                    <option aria-selected={true} value={LanguageOption.Standard}>{lf("Standard")}</option>
+                    <option aria-selected={false} value={LanguageOption.BlocksOnly}>{lf("{0} Only", "Blocks")}</option>
+                    <option aria-selected={false} value={LanguageOption.PythonOnly}>{lf("{0} Only", "Python")}</option>
+                    <option aria-selected={false} value={LanguageOption.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
+                </select>
+            </sui.Modal>
+        )
     }
 }
 

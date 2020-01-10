@@ -110,7 +110,7 @@ export class ProjectView
     importDialog: projects.ImportDialog;
     signInDialog: cloud.SignInDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
-    newProjectNameDialog: projects.NewProjectNameDialog;
+    newProjectDialog: projects.NewProjectDialog;
     chooseHwDialog: projects.ChooseHwDialog;
     chooseRecipeDialog: tutorial.ChooseRecipeDialog;
     prevEditorId: string;
@@ -3016,8 +3016,8 @@ export class ProjectView
         }
     }
 
-    askForProjectNameAsync() {
-        return this.newProjectNameDialog.askNameAsync()
+    askForProjectSettingsAsync() {
+        return this.newProjectDialog.askNameAsync()
     }
 
     showPackageDialog() {
@@ -3417,8 +3417,8 @@ export class ProjectView
         this.exitAndSaveDialog = c;
     }
 
-    private handleNewProjectNameDialogRef = (c: projects.NewProjectNameDialog) => {
-        this.newProjectNameDialog = c;
+    private handleNewProjectDialogRef = (c: projects.NewProjectDialog) => {
+        this.newProjectDialog = c;
     }
 
     private handleShareEditorRef = (c: share.ShareEditor) => {
@@ -3588,7 +3588,7 @@ export class ProjectView
                 {hasCloud ? <cloud.SignInDialog parent={this} ref={this.handleSignInDialogRef} onComplete={this.cloudSignInComplete} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
-                {sandbox ? undefined : <projects.NewProjectNameDialog parent={this} ref={this.handleNewProjectNameDialogRef} />}
+                {sandbox ? undefined : <projects.NewProjectDialog parent={this} ref={this.handleNewProjectDialogRef} />}
                 {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {recipes ? <tutorial.ChooseRecipeDialog parent={this} ref={this.handleChooseRecipeDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
