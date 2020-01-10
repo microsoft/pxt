@@ -516,7 +516,8 @@ namespace pxt.blocks {
             c.parentType = p;
         }
 
-        p.isArrayType = true;
+        if (isArrayType(p.type))
+            p.isArrayType = true;
     }
 
     function getConcreteType(point: Point, found: Point[] = []) {
