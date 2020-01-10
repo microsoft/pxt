@@ -14,6 +14,8 @@ namespace pxtblockly {
         initWidth: string;
         initHeight: string;
 
+        disableResize: string;
+
         filter?: string;
     }
 
@@ -21,6 +23,7 @@ namespace pxtblockly {
         initColor: number;
         initWidth: number;
         initHeight: number;
+        disableResize: boolean;
         filter?: string;
     }
 
@@ -167,6 +170,7 @@ namespace pxtblockly {
             initColor: 1,
             initWidth: 16,
             initHeight: 16,
+            disableResize: false,
         };
 
         if (!opts) {
@@ -205,6 +209,10 @@ namespace pxtblockly {
 
         if (opts.filter) {
             parsed.filter = opts.filter;
+        }
+
+        if (opts.disableResize) {
+            parsed.disableResize = opts.disableResize.toLowerCase() === "true" || opts.disableResize === "1";
         }
 
         parsed.initColor = withDefault(opts.initColor, parsed.initColor);

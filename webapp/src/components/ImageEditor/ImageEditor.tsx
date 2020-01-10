@@ -53,7 +53,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         }
 
         if (this.props.resizeDisabled) {
-            this.dispatchOnStore(dispatchDisableResize());
+            this.disableResize();
         }
 
         this.unsubscribeChangeListener = this.getStore().subscribe(this.onStoreChange);
@@ -151,6 +151,10 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
     setCurrentFrame(bitmap: pxt.sprite.Bitmap) {
         this.dispatchOnStore(dispatchImageEdit({ bitmap: bitmap.data() }))
+    }
+
+    disableResize() {
+        this.dispatchOnStore(dispatchDisableResize());
     }
 
     protected getStore() {
