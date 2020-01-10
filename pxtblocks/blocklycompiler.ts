@@ -527,7 +527,11 @@ namespace pxt.blocks {
                 if (t.parentType) {
                     const parent = getConcreteType(t.parentType, found);
                     if (parent.type && parent.type !== "Array") {
-                        t.type = parent.type.substr(0, parent.type.length - 2);
+                        if (isArrayType(parent.type)) {
+                            t.type = parent.type.substr(0, parent.type.length - 2);
+                        } else {
+                            t.type = parent.type;
+                        }
                         return t;
                     }
                 }
