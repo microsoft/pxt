@@ -308,7 +308,6 @@ The following language features should be fully supported and work according to 
 * if expression / ternary operator
 * comparison (in, notin)
 * byte literal
-* *args
 * type annotations using ":" syntax
 * slice notation**
 * lambda
@@ -336,7 +335,7 @@ The following language features are not yet supported.
 * dictionary comprehensions
 * await
 * yield, yield from
-* "..."
 * format strings
 * arrays
 * all list, string, math methods not listed above
+* *args / varargs
