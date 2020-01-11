@@ -583,10 +583,10 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         }
     }
 
-    // add compiled javascript
+    // add compiled javascript to be run in github pages
     const opts: compiler.CompileOptions = {}
     const compileResp = await compiler.compileAsync(opts);
-    if (compileResp && compileResp.outfiles[pxtc.BINARY_JS]) {
+    if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
         const binaryjs = compileResp.outfiles[pxtc.BINARY_JS];
         const meta: any = U.clone(pxt.appTarget.versions);
         meta.simUrl = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/${pxt.appTarget.versions.target}/---simulator`);        
