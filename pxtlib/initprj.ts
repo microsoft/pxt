@@ -20,6 +20,8 @@ namespace pxt.template {
   target: @TARGET@
   platform: @PLATFORM@
   home_url: @HOMEURL@
+  sim_url: @SIMURL@
+  cdn_url: @CDNURL@
 theme: jekyll-theme-slate`,
             "Makefile": `all: deploy
 
@@ -32,7 +34,8 @@ deploy:
 test:
 \tpxt test
 `,
-
+            "Gemfile": `source 'https://rubygems.org'
+gem 'github-pages', group: :jekyll_plugins`,
             "README.md":
                 `> ${lf("Open this page at {0}",
                     "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
@@ -74,6 +77,7 @@ node_modules
 yotta_modules
 yotta_targets
 pxt_modules
+_site
 *.db
 *.tgz
 .header.json
@@ -246,6 +250,7 @@ jobs:
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
         if (options)
             Util.jsonMergeFrom(configMap, options);
+        Object.keys(pxt.webConfig).forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
         configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
