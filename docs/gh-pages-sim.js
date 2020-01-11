@@ -2,7 +2,7 @@
  * Loads the compile assets/js/binary.js file and executes it
  * in a #simframe iframe
  */
-function makeCodeRun() {
+(function () {
     var code = "";
     var isReady = false;
     var simState = {}
@@ -126,4 +126,4 @@ function makeCodeRun() {
             simStateChanged = false
         }, 200)
     }
-}
+})();
