@@ -20,8 +20,6 @@ namespace pxt.template {
   target: @TARGET@
   platform: @PLATFORM@
   home_url: @HOMEURL@
-  sim_url: @SIMURL@
-  cdn_url: @CDNURL@
 theme: jekyll-theme-slate`,
             "Makefile": `all: deploy
 
@@ -255,10 +253,6 @@ jobs:
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
         configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
-        // /beta---simulator -> /
-        if (pxt.webConfig.simUrl)
-            configMap["simurl"] = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, 
-                `/`);
 
         U.iterMap(files, (k, v) => {
             v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
