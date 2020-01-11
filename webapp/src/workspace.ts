@@ -542,7 +542,7 @@ export interface CommitOptions {
 
 const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
-const BINARY_JS_PATH = "static/binary.js";
+const BINARY_JS_PATH = "assets/js/binary.js";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -732,6 +732,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
+            } else if (path == BINARY_JS_PATH) {
+                // local build wins, does not matter
+                text = files[path];
             } else {
                 const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?
