@@ -255,6 +255,10 @@ jobs:
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
         configMap["homeurl"] = pxt.appTarget.appTheme.homeUrl || "???";
+        // /beta---simulator -> /v0.1.2---simulator
+        if (pxt.webConfig.simUrl)
+            configMap["simurl"] = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, 
+                `/${pxt.appTarget.versions.target}---simulator`);
 
         U.iterMap(files, (k, v) => {
             v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
