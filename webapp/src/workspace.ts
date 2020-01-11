@@ -586,8 +586,12 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript
     const opts: compiler.CompileOptions = {}
     const compileResp = await compiler.compileAsync(opts);
-    if (compileResp && compileResp.outfiles[pxtc.BINARY_JS])
-        await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
+    if (compileResp && compileResp.outfiles[pxtc.BINARY_JS]) {
+        const jssrc = 
+`// versions: ${JSON.stringify(pxt.appTarget.versions)}
+${compileResp.outfiles[pxtc.BINARY_JS]}`        
+        await addToTree(BINARY_JS_PATH, jssrc);
+    }
 
     // create tree
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
