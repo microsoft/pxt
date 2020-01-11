@@ -24,6 +24,11 @@ declare namespace pxt {
         height: number;
     }
 
+    interface CodeCardAction {
+        url: string,
+        editor?: CodeCardEditorType
+    }
+
     /**
      * The schema for the pxt.json package files
      */
@@ -139,6 +144,7 @@ declare namespace pxt {
         responsive?: boolean;
         cardType?: CodeCardType;
         editor?: CodeCardEditorType;
+        otherActions?: CodeCardAction[];
 
         header?: string;
         any?: number;
