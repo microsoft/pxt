@@ -590,7 +590,6 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         const binaryjs = compileResp.outfiles[pxtc.BINARY_JS];
         const meta: any = U.clone(pxt.appTarget.versions);
         meta.sha = U.sha256(binaryjs + JSON.stringify(meta));
-        const jssrc = 
         await addToTree(BINARY_JS_PATH, `// meta=${JSON.stringify(meta)}
 ${binaryjs}`);
     }
