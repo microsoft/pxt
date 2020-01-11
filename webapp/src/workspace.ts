@@ -584,16 +584,18 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 
     // add compiled javascript to be run in github pages
-    const opts: compiler.CompileOptions = {}
-    const compileResp = await compiler.compileAsync(opts);
-    if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
-        const binaryjs = compileResp.outfiles[pxtc.BINARY_JS];
-        const meta: any = U.clone(pxt.appTarget.versions);
-        meta.simUrl = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/${pxt.appTarget.versions.target}/---simulator`);        
-        meta.cdnUrl = pxt.webConfig.cdnUrl;
-        meta.sha = U.sha256(binaryjs + JSON.stringify(meta));
-        await addToTree(BINARY_JS_PATH, `// meta=${JSON.stringify(meta)}
+    if (!parsed.tag || parsed.tag == "master") {
+        const opts: compiler.CompileOptions = {}
+        const compileResp = await compiler.compileAsync(opts);
+        if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
+            const binaryjs = compileResp.outfiles[pxtc.BINARY_JS];
+            const meta: any = U.clone(pxt.appTarget.versions);
+            meta.simUrl = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/${pxt.appTarget.versions.target}/---simulator`);
+            meta.cdnUrl = pxt.webConfig.cdnUrl;
+            meta.sha = U.sha256(binaryjs + JSON.stringify(meta));
+            await addToTree(BINARY_JS_PATH, `// meta=${JSON.stringify(meta)}
 ${binaryjs}`);
+        }
     }
 
     // create tree
