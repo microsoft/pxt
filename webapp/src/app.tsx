@@ -2109,7 +2109,7 @@ export class ProjectView
                     })
                 }
                 if (src === undefined
-                    || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
+                    || (this.editorFile && this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)))
                     return Promise.resolve();
                 return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });

@@ -141,11 +141,11 @@ default semantic
 }
 .setDocsAvatarUrl();
 
-@blocksIconUrl: "../docs/static/blocks.svg";
+@blocksIconUrl: "../docs/static/icons/blocks.svg";
 @blocksIcon: data-uri(@blocksIconUrl);
-@pyIconUrl: "../docs/static/py.svg";
+@pyIconUrl: "../docs/static/icons/py.svg";
 @pyIcon: data-uri(@pyIconUrl);
-@jsIconUrl: "../docs/static/js.svg";
+@jsIconUrl: "../docs/static/icons/js.svg";
 @jsIcon: data-uri(@jsIconUrl);
 
 /*-------------------
