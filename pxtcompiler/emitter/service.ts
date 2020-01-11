@@ -120,7 +120,12 @@ namespace ts.pxtc {
             r += s.slice(i, j)
             i = j
         }
-        return r
+
+        // If the name is is all caps (like a constant), preserve it
+        if (r.toUpperCase() === r) {
+            return r;
+        }
+        return r.toLowerCase();
     }
 
     export function emitType(s: ts.TypeNode): string {
@@ -369,7 +374,7 @@ namespace ts.pxtc {
                 case SymbolKind.Method:
                 case SymbolKind.Property:
                 case SymbolKind.Function:
-                    r.pyName = snakify(r.name).toLowerCase()
+                    r.pyName = snakify(r.name)
                     break
                 case SymbolKind.Enum:
                 case SymbolKind.Class:
@@ -1262,10 +1267,7 @@ namespace ts.pxtc.service {
         }
 
         if (python)
-            fnName = snakify(fnName).toLowerCase();
-
-        if (python)
-            fnName = snakify(fnName).toLowerCase();
+            fnName = snakify(fnName);
 
         function getUniqueName(inName: string): string {
             if (takenNames[inName])
@@ -1400,7 +1402,7 @@ namespace ts.pxtc.service {
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
                 if (python && snippetPrefix)
-                    snippetPrefix = snakify(snippetPrefix).toLowerCase();
+                    snippetPrefix = snakify(snippetPrefix);
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis.byQName[element.namespace];
@@ -1445,7 +1447,7 @@ namespace ts.pxtc.service {
                     if (params.thisParameter) {
                         snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
                         if (python && snippetPrefix)
-                            snippetPrefix = snakify(snippetPrefix).toLowerCase();
+                            snippetPrefix = snakify(snippetPrefix);
                     }
                     isInstance = true;
                 }
@@ -1461,7 +1463,7 @@ namespace ts.pxtc.service {
 
         if (attrs && attrs.blockSetVariable) {
             if (python) {
-                let varName = snakify(attrs.blockSetVariable).toLowerCase()
+                let varName = snakify(attrs.blockSetVariable);
                 varName = getUniqueName(varName)
                 insertText = `${varName} = ${insertText}`;
             } else {
@@ -1506,7 +1508,7 @@ namespace ts.pxtc.service {
                 let functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
-                n = snakify(n).toLowerCase();
+                n = snakify(n);
                 n = getUniqueName(n)
                 preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
                 return n;
@@ -1524,7 +1526,7 @@ namespace ts.pxtc.service {
         function emitFn(n: string): string {
             if (python) {
                 n = n || "fn"
-                n = snakify(n).toLowerCase();
+                n = snakify(n);
                 n = getUniqueName(n)
                 preStmt += `def ${n}():\n${PY_INDENT}pass\n`;
                 return n;
