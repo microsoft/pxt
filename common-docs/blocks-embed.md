@@ -26,8 +26,6 @@ You can use [GitHub pages](https://help.github.com/en/github/working-with-github
 ```
   makecode:
     home_url: @homeurl@
-    sim_url: @simurl@
-    cdn_url: @cdnurl@
 ```
 
 * copy the following text at the bottom of your ``README.md`` file
