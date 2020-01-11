@@ -587,10 +587,12 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     const opts: compiler.CompileOptions = {}
     const compileResp = await compiler.compileAsync(opts);
     if (compileResp && compileResp.outfiles[pxtc.BINARY_JS]) {
+        const binaryjs = compileResp.outfiles[pxtc.BINARY_JS];
+        const meta: any = U.clone(pxt.appTarget.versions);
+        meta.sha = U.sha256(binaryjs + JSON.stringify(meta));
         const jssrc = 
-`// meta: ${JSON.stringify(pxt.appTarget.versions)}
-${compileResp.outfiles[pxtc.BINARY_JS]}`        
-        await addToTree(BINARY_JS_PATH, jssrc);
+        await addToTree(BINARY_JS_PATH, `// meta=${JSON.stringify(meta)}
+${binaryjs}`);
     }
 
     // create tree
