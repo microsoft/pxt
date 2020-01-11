@@ -588,7 +588,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     const compileResp = await compiler.compileAsync(opts);
     if (compileResp && compileResp.outfiles[pxtc.BINARY_JS]) {
         const jssrc = 
-`// versions: ${JSON.stringify(pxt.appTarget.versions)}
+`// meta: ${JSON.stringify(pxt.appTarget.versions)}
 ${compileResp.outfiles[pxtc.BINARY_JS]}`        
         await addToTree(BINARY_JS_PATH, jssrc);
     }
