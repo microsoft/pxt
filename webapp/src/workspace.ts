@@ -542,6 +542,7 @@ export interface CommitOptions {
 
 const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
+const BINARY_JS_PATH = "static/binary.js";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -566,6 +567,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
+    // add screenshots
     let blocksDiffSha: string;
     if (options
         && treeUpdate.tree.find(e => e.path == "main.blocks")) {
@@ -581,6 +583,13 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         }
     }
 
+    // add compiled javascript
+    const opts: compiler.CompileOptions = {}
+    const compileResp = await compiler.compileAsync(opts);
+    if (compileResp && compileResp.outfiles[pxtc.BINARY_JS])
+        await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
+
+    // create tree
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
         message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.github\/makecode\//.test(f)).join(", ")),
