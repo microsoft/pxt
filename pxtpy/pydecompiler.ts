@@ -394,7 +394,7 @@ namespace pxt.py {
             let result_toExcl = toNum
             if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken
                 && isNormalInteger(toNum)) {
-                // Note that we have to be careful here because 
+                // Note that we have to be careful here because
                 // <= 3.5 is not the same as < 4.5
                 // so we only want to handle <= when the toNum is very well behaved
                 result_toExcl = "" + (Number(toNum) + 1)
@@ -771,7 +771,10 @@ namespace pxt.py {
             let typePart = ""
             if (s.type && inclTypesIfAvail) {
                 let typ = pxtc.emitType(s.type)
-                typePart = `: ${typ}`
+
+                if (typ && typ.indexOf("(TODO") === -1) {
+                    typePart = `: ${typ}`
+                }
             }
             let initPart = ""
             if (s.initializer) {
