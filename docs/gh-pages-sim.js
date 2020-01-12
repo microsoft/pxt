@@ -18,7 +18,7 @@
 
     // helpers
     function fetchCode() {
-        sendReq("./assets/js/binary.js", null, function (c, status) {
+        sendReq("./assets/js/binary.js", function (c, status) {
             if (status != 200)
                 return;
             code = c;
@@ -106,12 +106,7 @@
             }
         };
         xhttp.open("GET", url, true);
-        if (data) {
-            xhttp.setRequestHeader("Content-Type", "application/json");
-            xhttp.send(JSON.stringify(data))
-        } else {
-            xhttp.send();
-        }
+        xhttp.send();
     }
 
     function initSimState() {
