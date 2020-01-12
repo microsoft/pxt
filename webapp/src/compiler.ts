@@ -138,6 +138,17 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                 resp.outfiles[pxtc.BINARY_ASM] = prevasm.content
             }
 
+            // add metadata about current build
+            if (resp.outfiles[pxtc.BINARY_JS]) {
+                const meta: any = {
+                    simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
+                    cdnUrl: pxt.webConfig.cdnUrl
+                };
+                resp.outfiles[pxtc.BINARY_JS] = 
+`// meta=${JSON.stringify(meta)}
+${resp.outfiles[pxtc.BINARY_JS]}`;
+            }
+
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics(resp.diagnostics)
 
