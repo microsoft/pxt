@@ -590,7 +590,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
             const binaryjs = compileResp.outfiles[pxtc.BINARY_JS];
             const meta: any = U.clone(pxt.appTarget.versions);
-            meta.simUrl = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/${pxt.appTarget.versions.target}/---simulator`);
+            meta.simUrl = pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`);
             meta.cdnUrl = pxt.webConfig.cdnUrl;
             meta.sha = U.sha256(binaryjs + JSON.stringify(meta));
             await addToTree(BINARY_JS_PATH, `// meta=${JSON.stringify(meta)}
