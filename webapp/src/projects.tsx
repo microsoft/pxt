@@ -747,7 +747,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             case "tutorial":
             case "example":
                 icon = "xicon blocks"
-                if (action) icon = action.editor == "py" ? "xicon python" : "xicon js";
+                if (action) {
+                    if (action.editor == "py") icon = "xicon python";
+                    else if (action.editor == "js") icon = "xicon js";
+                }
                 break;
             case "codeExample":
                 icon = (action && action.editor == "py") ? "xicon python" : "xicon js";
@@ -765,13 +768,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 
-    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+    protected getActionTitle(type: string, action?: pxt.CodeCardAction): string {
         let title = lf("Open in blocks");
-        if (action && action.editor) {
-            if (action.editor == "py") title = lf("Open in Python")
-            else if (action.editor == "js") title = lf("Open in Javascript")
+        if (action && action.editor == "py") {
+            title = lf("Open in Python");
+        } else if (type == "codeExample" || (action && action.editor == "js")) {
+            title = lf("Open in JavaScript");
         }
+        return title;
+    }
 
+    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
         return <div className={`card-action ui items ${action && action.editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, action)}
             {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
@@ -790,7 +797,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 onClick={onClick}
                 onKeyDown={sui.fireClickOnEnter}
                 autoFocus={autoFocus}
-                title={title}
+                title={this.getActionTitle(type, action)}
             /> }
         </div>
     }
