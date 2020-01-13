@@ -37,7 +37,7 @@ namespace pxt {
             }
     
             // github adds a newline when web editing
-            return JSON.stringify(config, null, 4) + "\n"
+            return JSON.stringify(newCfg, null, 4) + "\n"
         }
 
         static parseAndValidConfig(configStr: string): pxt.PackageConfig {
