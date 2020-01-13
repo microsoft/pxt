@@ -35,7 +35,7 @@ namespace pxt {
                 if (!newCfg.hasOwnProperty(f))
                     newCfg[f] = configMap[f]
             }
-    
+
             // github adds a newline when web editing
             return JSON.stringify(newCfg, null, 4) + "\n"
         }
