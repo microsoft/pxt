@@ -4,10 +4,40 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
+    const CONFIG_FIELDS_ORDER = [
+        "name",
+        "version",
+        "description",
+        "license",
+        "dependencies",
+        "files",
+        "testFiles",
+        "testDependencies",
+        "public",
+        "targetVersions",
+        "supportedTargets",
+        "preferredEditor",
+        "additionalFilePath",
+        "additionalFilePaths"
+    ]
+
     export class Package {
+
         static stringifyConfig(config: pxt.PackageConfig): string {
+            // reorg fields
+            const configMap: Map<string> = config as any
+            const newCfg: any = {}
+            for (const f of CONFIG_FIELDS_ORDER) {
+                if (configMap.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+            for (const f of Object.keys(configMap)) {
+                if (!newCfg.hasOwnProperty(f))
+                    newCfg[f] = configMap[f]
+            }
+
             // github adds a newline when web editing
-            return JSON.stringify(config, null, 4) + "\n"
+            return JSON.stringify(newCfg, null, 4) + "\n"
         }
 
         static parseAndValidConfig(configStr: string): pxt.PackageConfig {
