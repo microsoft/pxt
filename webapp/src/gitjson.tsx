@@ -891,7 +891,8 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!isBlocksMode ? <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} /> : undefined}
+                    {!needsCommit && master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
                 </div>
             </div>
@@ -995,28 +996,14 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
     }
 }
 
-class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
+class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
     constructor(props: GitHubViewProps) {
         super(props);
         this.handleBumpClick = this.handleBumpClick.bind(this);
-        this.handleForkClick = this.handleForkClick.bind(this);
-        this.handleSaveClick = this.handleSaveClick.bind(this);
-    }
-
-    private handleForkClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
-        e.stopPropagation();
-        this.props.parent.forkAsync(false).done();
-    }
-
-    private handleSaveClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.extensionzone.save", undefined, { interactiveConsent: true });
-        e.stopPropagation();
-        this.props.parent.props.parent.saveAndCompile();
     }
 
     private handleBumpClick(e: React.MouseEvent<HTMLElement>) {
-        pxt.tickEvent("github.extensionzone.bump", undefined, { interactiveConsent: true });
+        pxt.tickEvent("github.releasezone.bump", undefined, { interactiveConsent: true });
         e.stopPropagation();
         const { needsCommit, master } = this.props;
         if (needsCommit)
@@ -1037,6 +1024,49 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             cloudsync.githubProvider()
                 .loginAsync()
                 .then(() => pxt.github.token && this.props.parent.bumpAsync());
+    }
+
+    renderCore() {
+        const { gs } = this.props;
+        return <div className="ui transparent segment">
+            <div className="ui header">{lf("Release zone")}</div>
+            {gs.commit && gs.commit.tag ?
+                <div className="ui field">
+                    <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}
+                        {sui.helpIconLink("/github/release", lf("Learn about releases."))}
+                    </p>
+                </div>
+                :
+                <div className="ui field">
+                    <sui.Button className="basic" text={lf("Create release")}
+                        onClick={this.handleBumpClick}
+                        onKeyDown={sui.fireClickOnEnter} />
+                    <span className="inline-help">
+                        {lf("Bump up the version number and create a release on GitHub.")}
+                        {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
+                    </span>
+                </div>}
+        </div>
+    }
+}
+
+class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
+    constructor(props: GitHubViewProps) {
+        super(props);
+        this.handleForkClick = this.handleForkClick.bind(this);
+        this.handleSaveClick = this.handleSaveClick.bind(this);
+    }
+
+    private handleForkClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.extensionzone.fork", undefined, { interactiveConsent: true });
+        e.stopPropagation();
+        this.props.parent.forkAsync(false).done();
+    }
+
+    private handleSaveClick(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("github.extensionzone.save", undefined, { interactiveConsent: true });
+        e.stopPropagation();
+        this.props.parent.props.parent.saveAndCompile();
     }
 
     renderCore() {
@@ -1080,22 +1110,6 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/license", lf("Learn more about licenses."))}
                 </span>
             </div>}
-            {gs.commit && gs.commit.tag ?
-                <div className="ui field">
-                    <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}
-                        {sui.helpIconLink("/github/release", lf("Learn about releases."))}
-                    </p>
-                </div>
-                :
-                <div className="ui field">
-                    <sui.Button className="basic" text={lf("Create release")}
-                        onClick={this.handleBumpClick}
-                        onKeyDown={sui.fireClickOnEnter} />
-                    <span className="inline-help">
-                        {lf("Bump up the version number and create a release on GitHub.")}
-                        {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
-                    </span>
-                </div>}
             <div className="ui field">
                 <sui.Button className="basic" text={lf("Save for offline")}
                     onClick={this.handleSaveClick}

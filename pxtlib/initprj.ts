@@ -206,40 +206,11 @@ jobs:
         const pkgFiles = Object.keys(files).filter(s =>
             /\.(blocks|md|ts|asm|cpp|h|py)$/.test(s))
 
-        const fieldsOrder = [
-            "name",
-            "version",
-            "description",
-            "license",
-            "dependencies",
-            "files",
-            "testFiles",
-            "testDependencies",
-            "public",
-            "targetVersions",
-            "supportedTargets",
-            "preferredEditor",
-            "additionalFilePath",
-            "additionalFilePaths"
-        ]
-
         config.files = pkgFiles.filter(s => !/test/.test(s));
         config.testFiles = pkgFiles.filter(s => /test/.test(s));
         config.supportedTargets = [pxt.appTarget.id];
 
-        const configMap: Map<string> = config as any
-        // make it look nice
-        const newCfg: any = {}
-        for (const f of fieldsOrder) {
-            if (configMap.hasOwnProperty(f))
-                newCfg[f] = configMap[f]
-        }
-        for (const f of Object.keys(configMap)) {
-            if (!newCfg.hasOwnProperty(f))
-                newCfg[f] = configMap[f]
-        }
-
-        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(newCfg);
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
 
         return files
     }
