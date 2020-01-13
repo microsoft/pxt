@@ -526,7 +526,8 @@ export async function bumpAsync(hd: Header, newVer = "") {
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
-        createTag: "v" + cfg.version
+        createTag: "v" + cfg.version,
+        binaryJs: true
     })
 }
 
@@ -534,6 +535,7 @@ export interface CommitOptions {
     message?: string;
     createTag?: string;
     filenamesToCommit?: string[];
+    binaryJs?: boolean;
     // render blocks to png
     blocksScreenshotAsync?: () => Promise<string>;
     // render blocks diff to png
@@ -584,7 +586,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 
     // add compiled javascript to be run in github pages
-    if (!parsed.tag || parsed.tag == "master") {
+    if (options.binaryJs && (!parsed.tag || parsed.tag == "master")) {
         const opts: compiler.CompileOptions = {}
         const compileResp = await compiler.compileAsync(opts);
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
