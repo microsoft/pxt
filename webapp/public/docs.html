@@ -78,12 +78,11 @@
     </style>
     <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
     <link id="blocklycss" rel="stylesheet" data-rtl="/blb/rtlblockly.css" href="/blb/blockly.css" type="text/css">
+    <link rel="stylesheet" title="light" href="/blb/highlight.js/styles/vs.css" type="text/css">
+    <link rel="stylesheet" title="dark" href="/blb/highlight.js/styles/vs2015.css" type="text/css" disabled>
 </head>
 
 <body id="docs">
-    <style type="text/css">
-        @import "/blb/highlight.js/styles/vs.css";
-    </style>
     <div id="sidedocs-back-button" class="ui" style="display: none">
         <i class="ui icon left arrow"></i>
         <span id="back-label"></span>
@@ -119,6 +118,7 @@
             var backLabel = document.getElementById('back-label');
             if (backLabel)
                 backLabel.textContent = pxt.Util.lf("Go back")
+
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
             var project = /project=([^&?]+)/i.exec(window.location.href);
             var code = /code=([^&?]+)/i.exec(window.location.href);
