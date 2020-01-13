@@ -74,7 +74,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">c</field>
+<field name="VAR">z2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -106,7 +106,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">c</field>
+<field name="VAR">z2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -338,7 +338,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">c2</field>
+<field name="VAR">c</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -346,7 +346,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">c3</field>
+<field name="VAR">c2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
