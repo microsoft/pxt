@@ -761,11 +761,17 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 break;
         }
         return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
-            ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" />
-            : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} />
+            ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
+            : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 
-    protected getActionCard(text: string, type: string, onClick: any, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+        let title = lf("Open in blocks");
+        if (action && action.editor) {
+            if (action.editor == "py") title = lf("Open in Python")
+            else if (action.editor == "js") title = lf("Open in Javascript")
+        }
+
         return <div className={`card-action ui items ${action && action.editor || ""}`} key={key}>
             {this.getActionIcon(onClick, type, action)}
             {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
@@ -775,13 +781,16 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     target={'_blank'}
                     text={text}
                     className={`button attached approve large positive`}
+                    title={lf("Open link in new window")}
+                    autoFocus={autoFocus}
                 />
             : <sui.Button
                 text={text}
                 className={`approve attached large positive`}
                 onClick={onClick}
                 onKeyDown={sui.fireClickOnEnter}
-                autoFocus={false}
+                autoFocus={autoFocus}
+                title={title}
             /> }
         </div>
     }
@@ -852,10 +861,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             </div>
             <div className="actions column ten wide">
                 <div className="segment">
-                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick)}
+                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
                     {otherActions && otherActions.map( (el, i) => {
                         let onClick = this.handleActionClick(el);
-                        return this.getActionCard(clickLabel, cardType, onClick, el, `action${i}`);
+                        return this.getActionCard(clickLabel, cardType, onClick, false, el, `action${i}`);
                     })}
                     {cardType === "forumUrl" &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
