@@ -20,7 +20,9 @@ namespace pxt.template {
   target: @TARGET@
   platform: @PLATFORM@
   home_url: @HOMEURL@
-theme: jekyll-theme-slate`,
+theme: jekyll-theme-slate
+include: assets/**
+`,
             "Makefile": `all: deploy
 
 build:
