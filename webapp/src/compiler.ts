@@ -77,6 +77,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
+    jsMetaVersion?: string;
 }
 
 export let emptyProgram =
@@ -139,10 +140,13 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             }
 
             // add metadata about current build
-            if (resp.outfiles[pxtc.BINARY_JS]) {
+            if (options.jsMetaVersion && resp.outfiles[pxtc.BINARY_JS]) {
                 const meta: any = {
                     simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
-                    cdnUrl: pxt.webConfig.cdnUrl
+                    cdnUrl: pxt.webConfig.cdnUrl,
+                    version: options.jsMetaVersion,
+                    target: pxt.appTarget.id,
+                    targetVersion: pxt.appTarget.versions.target
                 };
                 resp.outfiles[pxtc.BINARY_JS] =
                     `// meta=${JSON.stringify(meta)}
