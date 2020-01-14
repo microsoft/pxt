@@ -433,6 +433,7 @@ class SandboxMenuItem extends data.Component<ISettingsProps, {}> {
 interface IEditorSelectorProps extends ISettingsProps {
     python?: boolean;
     sandbox?: boolean;
+    headless?: boolean;
 }
 
 export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
@@ -446,7 +447,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
 
         return (<div>
             <div id="editortoggle" className="ui grid padded">
-                {this.props.sandbox && <SandboxMenuItem parent={this.props.parent} />}
+                {this.props.sandbox && !this.props.headless && <SandboxMenuItem parent={this.props.parent} />}
                 <BlocksMenuItem parent={this.props.parent} />
                 {pxt.Util.isPyLangPref() && pythonEnabled ? <PythonMenuItem parent={this.props.parent} /> : <JavascriptMenuItem parent={this.props.parent} />}
                 {pythonEnabled && <sui.DropdownMenu id="editordropdown" role="menuitem" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
@@ -548,6 +549,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const logoWide = !!targetTheme.logoWide;
         const portraitLogoSize = logoWide ? "small" : "mini";
 
+        const simOpts = pxt.appTarget.simulator;
+        const isHeadless = simOpts && simOpts.headless;
+
         const hasCloud = this.hasCloud();
         const user = hasCloud ? this.getUser() : undefined;
         const showCloud = !sandbox && !inTutorial && !debugging && !!user;
@@ -573,7 +577,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     </span>
                 </div>}
             {!inTutorial && !targetTheme.blocksOnly && !debugging && <div className="ui item link editor-menuitem">
-                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} />
+                <container.EditorSelector parent={this.props.parent} sandbox={sandbox} python={targetTheme.python} headless={isHeadless} />
             </div>}
             {inTutorial && activityName && <div className="ui item">{activityName}</div>}
             {inTutorial && !hideIteration && <tutorial.TutorialMenu parent={this.props.parent} />}

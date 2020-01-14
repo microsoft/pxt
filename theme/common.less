@@ -771,21 +771,23 @@ p.ui.font.small {
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
-    #root.sandbox .active.item.sim-menuitem ~ .toggle {
-        margin-left: 0 !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 40px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
-    }
-    #root.sandbox .active.item.javascript-menuitem ~ .toggle,
-    #root.sandbox .active.item.python-menuitem ~ .toggle {
-        margin-left: 80px !important;
-        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
-        background: @editorToggleColor !important;
+    #root.sandbox:not(.headless) {
+        .active.item.sim-menuitem ~ .toggle {
+            margin-left: 0 !important;
+            box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+        .active.item.blocks-menuitem ~ .toggle {
+            margin-left: 40px !important;
+            box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
+        .active.item.javascript-menuitem ~ .toggle,
+        .active.item.python-menuitem ~ .toggle {
+            margin-left: 80px !important;
+            box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+            background: @editorToggleColor !important;
+        }
     }
 
     .simView #boardview {
@@ -1501,18 +1503,18 @@ div.simframe.ui.embed {
         bottom: 1.5rem !important;
     }
 
-    .active.item.sim-menuitem ~ .toggle {
+    &:not(.headless) .active.item.sim-menuitem ~ .toggle {
         margin-left: 0 !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.blocks-menuitem ~ .toggle {
+    &:not(.headless) .active.item.blocks-menuitem ~ .toggle {
         margin-left: 140px !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    .active.item.javascript-menuitem ~ .toggle,
-    .active.item.python-menuitem ~ .toggle {
+    &:not(.headless) .active.item.javascript-menuitem ~ .toggle,
+    &:not(.headless) .active.item.python-menuitem ~ .toggle {
         margin-left: 280px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
