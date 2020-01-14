@@ -1455,7 +1455,7 @@ namespace pxt.blocks {
     }
 
     function compileTypescriptBlock(e: Environment, b: Blockly.Block) {
-        return ((b as GrayBlockStatement).getLines() as string[]).map(line => mkText(line + "\n"));
+        return (b as GrayBlockStatement).getLines().map(line => mkText(line + "\n"));
     }
 
     function compileDebuggeStatementBlock(e: Environment, b: Blockly.Block) {
