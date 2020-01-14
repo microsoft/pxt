@@ -220,6 +220,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.initLayout();
             this.editor.clearUndo();
             this.reportDeprecatedBlocks();
+            this.updateGrayBlocks();
 
             this.typeScriptSaveable = true;
         } catch (e) {
@@ -456,6 +457,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (blockId == "variables_set") {
                     // Need to bump suffix in flyout
                     this.clearFlyoutCaches();
+                }
+                if (blockId === pxtc.TS_STATEMENT_TYPE || blockId === pxtc.TS_OUTPUT_TYPE) {
+                    this.updateGrayBlocks();
                 }
                 pxt.tickEvent("blocks.create", { "block": blockId });
                 if (ev.xml.tagName == 'SHADOW')
@@ -1470,6 +1474,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
         this.showFlyoutInternal_(xmlList);
         this.parent.forceUpdate();
+    }
+
+    protected updateGrayBlocks() {
+        if (this.editor) {
+            const pythonEnabled = pxt.Util.isPyLangPref();
+            this.editor.getAllBlocks(false).forEach(b => {
+                if (b.type === pxtc.TS_STATEMENT_TYPE || b.type === pxtc.TS_OUTPUT_TYPE) {
+                    (b as pxt.blocks.GrayBlock).setPythonEnabled(pythonEnabled);
+                }
+            })
+        }
     }
 
     ///////////////////////////////////////////////////////////
