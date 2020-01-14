@@ -99,29 +99,39 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             })
     }
 
-    chgGallery(scr: pxt.CodeCard) {
+    chgGallery(scr: pxt.CodeCard, action?: pxt.CodeCardAction) {
         pxt.tickEvent("projects.gallery", { name: scr.name });
+        let url = action ? action.url : scr.url;
+        let editor = action ? action.editor : "blocks";
+        let editorPref = editor + "prj";
         switch (scr.cardType) {
             case "template":
                 const prj = pxt.Util.clone(pxt.appTarget.blocksprj);
                 prj.config.dependencies = {}; // clear all dependencies
-                this.chgCode(scr, true, prj); break;
-            case "example": this.chgCode(scr, true); break;
-            case "codeExample": this.chgCode(scr, false); break;
+                this.chgCode(scr.name, url, true, pxt.BLOCKS_PROJECT_NAME, prj); break;
+            case "example": this.chgCode(scr.name, url, true, editorPref); break;
+            case "codeExample": this.chgCode(scr.name, url, false); break;
             case "side":
-                this.props.parent.newEmptyProject(scr.name, scr.url);
+                this.props.parent.newEmptyProject(scr.name, url);
                 break;
-            case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
+            case "tutorial":
+                if (editor != "blocks") {
+                    pxt.Util.setEditorLanguagePref(editor);
+                    this.props.parent.newEmptyProject(scr.name, url, editorPref);
+                } else {
+                    this.props.parent.startTutorial(url, scr.name);
+                }
+                break;
             default:
-                const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url); // Tutorial
+                const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(url); // Tutorial
                 if (m) this.props.parent.startTutorial(m[1]);
                 else {
-                    if (scr.youTubeId && !scr.url) // Youtube video
+                    if (scr.youTubeId && !url) // Youtube video
                         return; // Handled by href
-                    else if (/^https:\/\//i.test(scr.url)) // External video
+                    else if (/^https:\/\//i.test(url)) // External video
                         return; // Handled by href
-                    else if (scr.url) // Docs url, open in new tab
-                        if (/^\//i.test(scr.url))
+                    else if (url) // Docs url, open in new tab
+                        if (/^\//i.test(url))
                             return; // Handled by href
                         else
                             core.errorNotification(lf("Sorry, the project url looks invalid."));
@@ -131,8 +141,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         }
     }
 
-    chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name: scr.name, path: scr.url, loadBlocks, prj });
+    chgCode(name: string, path: string, loadBlocks: boolean, preferredEditor?: string, prj?: pxt.ProjectTemplate) {
+        return this.props.parent.importExampleAsync({ name, path, loadBlocks, preferredEditor, prj });
     }
 
     importProject() {
@@ -382,7 +392,7 @@ interface ProjectsCarouselProps extends ISettingsProps {
     name: string;
     path?: string;
     cardWidth?: number;
-    onClick: (src: any) => void;
+    onClick: (src: any, action?: pxt.CodeCardAction) => void;
     selectedIndex?: number;
     setSelected?: (name: string, index: number) => void;
 }
@@ -553,6 +563,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                             onClick={this.props.onClick}
                             cardType={selectedElement.cardType}
                             tags={selectedElement.tags}
+                            otherActions={selectedElement.otherActions}
                         />
                     </div>}
                 </div>
@@ -660,14 +671,14 @@ export interface ProjectsDetailProps extends ISettingsProps {
     buttonLabel?: string;
     url?: string;
     scr?: any;
-    onClick: (scr: any) => void;
+    onClick: (scr: any, action?: pxt.CodeCardAction) => void;
     cardType: pxt.CodeCardType;
     tags?: string[];
+    otherActions?: pxt.CodeCardAction[];
 }
 
 export interface ProjectsDetailState {
 }
-
 
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
     private linkRef: React.RefObject<HTMLAnchorElement>;
@@ -713,9 +724,92 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
     }
 
+    protected getClickLabel(cardType: string) {
+        const { youTubeId } = this.props;
+        let clickLabel = lf("Show Instructions");
+        if (cardType == "tutorial")
+            clickLabel = lf("Start Tutorial");
+        else if (cardType == "codeExample" || cardType == "example")
+            clickLabel = lf("Open Example");
+        else if (cardType == "forumUrl")
+            clickLabel = lf("Open in Forum");
+        else if (cardType == "template")
+            clickLabel = lf("New Project");
+        else if (youTubeId)
+            clickLabel = lf("Play Video");
+        return clickLabel;
+    }
+
+    protected getActionIcon(onClick: any, type: string, action?: pxt.CodeCardAction): JSX.Element {
+        const { youTubeId } = this.props;
+        let icon = "file text";
+        switch (type) {
+            case "tutorial":
+            case "example":
+                icon = "xicon blocks"
+                if (action) {
+                    if (action.editor == "py") icon = "xicon python";
+                    else if (action.editor == "js") icon = "xicon js";
+                }
+                break;
+            case "codeExample":
+                icon = (action && action.editor == "py") ? "xicon python" : "xicon js";
+                break;
+            case "forumUrl":
+                icon = "comments"
+                break;
+            case "template":
+            default:
+                if (youTubeId) icon = "video camera";
+                break;
+        }
+        return this.isLink() && type != "example" // TODO (shakao)  migrate forumurl to otherAction json in md
+            ? <sui.Link role="button" className="link button attached" icon={icon} href={this.getUrl()} target="_blank" tabIndex={-1} />
+            : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
+    }
+
+    protected getActionTitle(type: string, action?: pxt.CodeCardAction): string {
+        let title = lf("Open in blocks");
+        if (action && action.editor == "py") {
+            title = lf("Open in Python");
+        } else if (type == "codeExample" || (action && action.editor == "js")) {
+            title = lf("Open in JavaScript");
+        }
+        return title;
+    }
+
+    protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
+        return <div className={`card-action ui items ${action && action.editor || ""}`} key={key}>
+            {this.getActionIcon(onClick, type, action)}
+            {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
+                <sui.Link
+                    href={this.getUrl()}
+                    refCallback={this.linkRef}
+                    target={'_blank'}
+                    text={text}
+                    className={`button attached approve large positive`}
+                    title={lf("Open link in new window")}
+                    autoFocus={autoFocus}
+                />
+            : <sui.Button
+                text={text}
+                className={`approve attached large positive`}
+                onClick={onClick}
+                onKeyDown={sui.fireClickOnEnter}
+                autoFocus={autoFocus}
+                title={this.getActionTitle(type, action)}
+            /> }
+        </div>
+    }
+
     handleDetailClick() {
         const { scr, onClick } = this.props;
         onClick(scr);
+    }
+
+    handleActionClick(action?: pxt.CodeCardAction) {
+        const { scr, onClick } = this.props;
+        return () => onClick(scr, action);
     }
 
     handleOpenForumUrlInEditor() {
@@ -740,50 +834,26 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, videoUrl, youTubeId, buttonLabel, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, videoUrl,
+            youTubeId, buttonLabel, cardType, tags, otherActions } = this.props;
 
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
         const descriptions = description && description.split("\n");
         const image = largeImageUrl || imageUrl || (youTubeId && `https://img.youtube.com/vi/${youTubeId}/0.jpg`);
         const video = !pxt.BrowserUtils.isElectron() && videoUrl;
 
-        let clickLabel = lf("Show Instructions");
+        let clickLabel: string;
         if (buttonLabel)
             clickLabel = ts.pxtc.Util.rlf(buttonLabel);
-        else if (cardType == "tutorial")
-            clickLabel = lf("Start Tutorial");
-        else if (cardType == "codeExample" || cardType == "example")
-            clickLabel = lf("Open Example");
-        else if (cardType == "forumUrl")
-            clickLabel = lf("Open in Forum");
-        else if (cardType == "template")
-            clickLabel = lf("New Project");
-        else if (youTubeId)
-            clickLabel = lf("Play Video");
-
-        const action = this.isLink() ?
-            <sui.Link
-                href={this.getUrl()}
-                refCallback={this.linkRef}
-                target={'_blank'}
-                text={clickLabel}
-                className={`ui button approve huge positive`}
-            />
-            :
-            <sui.Button
-                text={clickLabel}
-                className={`approve huge positive`}
-                onClick={this.handleDetailClick}
-                onKeyDown={sui.fireClickOnEnter}
-                autoFocus={true}
-            />
+        else
+            clickLabel = this.getClickLabel(cardType);
 
         return <div className="ui grid stackable padded">
-            {(video || image) && <div className="imagewrapper">
+            {false && (video || image) && <div className="imagewrapper">
                 {video ? <video className="video" src={video} autoPlay={true} controls={false} loop={true} playsInline={true} />
                     : <div className="image" style={{ backgroundImage: `url("${image}")` }} />}
             </div>}
-            <div className="column twelve wide">
+            <div className="column six wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
                     {tags && <div className="ui labels">
@@ -794,15 +864,19 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                             {desc}
                         </p>
                     })}
-                    <div className="actions">
-                        {action}
-                        {cardType === "forumUrl" && <sui.Button
-                            text={lf("Open in Editor")}
-                            className={`approve huge`}
-                            onClick={this.handleOpenForumUrlInEditor}
-                            onKeyDown={sui.fireClickOnEnter}
-                        />}
-                    </div>
+                </div>
+            </div>
+            <div className="actions column ten wide">
+                <div className="segment">
+                    {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
+                    {otherActions && otherActions.map( (el, i) => {
+                        let onClick = this.handleActionClick(el);
+                        return this.getActionCard(clickLabel, cardType, onClick, false, el, `action${i}`);
+                    })}
+                    {cardType === "forumUrl" &&
+                        // TODO (shakao) migrate forumurl to otherAction json in md
+                        this.getActionCard(lf("Open in Editor"), "example", this.handleOpenForumUrlInEditor)
+                    }
                 </div>
             </div>
         </div>;

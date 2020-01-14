@@ -141,6 +141,13 @@ default semantic
 }
 .setDocsAvatarUrl();
 
+@blocksIconUrl: "../docs/static/icons/blocks.svg";
+@blocksIcon: data-uri(@blocksIconUrl);
+@pyIconUrl: "../docs/static/icons/py.svg";
+@pyIcon: data-uri(@pyIconUrl);
+@jsIconUrl: "../docs/static/icons/js.svg";
+@jsIcon: data-uri(@jsIconUrl);
+
 /*-------------------
    Menu
 --------------------*/
@@ -303,6 +310,7 @@ default semantic
 @homeDetailViewColor: @homeCardColor;
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
+@homeDetailCardActionBackground: @grey;
 
 /*-------------------
    Tutorial
