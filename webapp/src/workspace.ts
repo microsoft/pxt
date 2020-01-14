@@ -545,6 +545,7 @@ export interface CommitOptions {
 const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
 const BINARY_JS_PATH = "assets/js/binary.js";
+const VERSION_TXT_PATH = "assets/version.txt";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -591,6 +592,8 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         const compileResp = await compiler.compileAsync(opts);
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
             await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
+            if (cfg.version)
+                await addToTree(VERSION_TXT_PATH, cfg.version);
         }
     }
 
@@ -737,7 +740,7 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
-            } else if (path == BINARY_JS_PATH) {
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH) {
                 // local build wins, does not matter
                 text = files[path];
             } else {
