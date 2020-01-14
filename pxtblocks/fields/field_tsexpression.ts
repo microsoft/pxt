@@ -44,7 +44,7 @@ namespace pxtblockly {
         }
 
         protected setPythonText() {
-            this.setText(pxt.Util.lf("<python expression>"))
+            this.setText(pxt.Util.lf("<python code>"))
         }
     }
 }
