@@ -74,26 +74,9 @@ export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
-        const options = targetTheme.docMenu.map(m => {
-            return {
-                key: "docsmenu" + m.path,
-                content: pxt.Util.rlf(m.name),
-                role: "menuitem",
-                'aria-label': pxt.Util.rlf(m.name),
-                onClick: this.doDocEntryAction(parent, m),
-                value: m.path,
-                onKeyDown: () => {
-                    console.log("Key DOWN");
-                }
-            }
-        })
-        const onChange = (e: any, data: any) => {
-            const m = this.lookUpByPath(data.value);
-            this.doDocEntryAction(parent, m)();
-        };
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
             className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
-            {renderDocItems(this.props.parent, "", targetTheme.docMenu)}
+            {renderDocItems(parent, "", targetTheme.docMenu)}
         </sui.DropdownMenu>
     }
 }
