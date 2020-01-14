@@ -202,12 +202,17 @@
         }
 
         .dropdown, .dropdown:hover {
-            &:not(.visible) i, .selected i, .selected span {
+            .selected i, .selected span {
                 color: @HCmainMenuTextColor !important;
             }
         }
 
-        .dropdown:focus:not(.visible) i {
+        .dropdown.active:hover:not(.visible) i {
+            color: @HCmainMenuTextColor !important;
+        }
+
+        .dropdown:focus:not(.visible) i,
+        .dropdown.active:focus:not(.visible) i {
             color: @HCtextColor !important;
         }
     }
