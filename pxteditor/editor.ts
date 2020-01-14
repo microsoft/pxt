@@ -102,9 +102,17 @@ namespace pxt.editor {
         temporary?: boolean;
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
-        tsOnly?: boolean;
+        tsOnly?: boolean; // TODO jwunderl: remove this and pass as languages LanguageOption ?
+        languages?: LanguageOption;
         preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
         extensionUnderTest?: string; // workspace id of the extension under test
+    }
+
+    export enum LanguageOption {
+        Standard,
+        PythonOnly,
+        BlocksOnly,
+        JavaScriptOnly
     }
 
     export interface ExampleImportOptions {
@@ -314,7 +322,7 @@ namespace pxt.editor {
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
-        askForProjectSettingsAsync(): Promise<{ name: string, language: number }>;
+        askForProjectSettingsAsync(): Promise<ProjectCreationOptions>;
 
         pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;

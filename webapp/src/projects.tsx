@@ -440,8 +440,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         if (pxt.appTarget.appTheme.nameProjectFirst) {
             this.props.parent.askForProjectSettingsAsync()
                 .then(projectSettings => {
-                    const {name, language} = projectSettings
-                    this.props.parent.newProject({ name });
+                    const { name, languages } = projectSettings
+                    this.props.parent.newProject({ name, languages });
                 })
         } else {
             this.props.parent.newProject({ name });
@@ -1031,32 +1031,20 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 }
 
-enum LanguageOption {
-    Standard,
-    PythonOnly,
-    BlocksOnly,
-    JavaScriptOnly
-}
-
 export interface NewProjectDialogState {
     projectName?: string;
-    language?: LanguageOption;
+    language?: pxt.editor.LanguageOption;
     visible?: boolean;
 }
 
-export interface ProjectInfo {
-    name: string;
-    language: LanguageOption;
-}
-
 export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectDialogState> {
-    private createProjectCb: (projectState: ProjectInfo) => void;
+    private createProjectCb: (projectState: pxt.editor.ProjectCreationOptions) => void;
 
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
             visible: false,
-            language: LanguageOption.Standard
+            language: pxt.editor.LanguageOption.Standard
         }
 
         this.hide = this.hide.bind(this);
@@ -1108,7 +1096,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
     askNameAsync() {
         this.setState({ projectName: "" })
         this.show();
-        return new Promise<ProjectInfo>(resolve => {
+        return new Promise<pxt.editor.ProjectCreationOptions>(resolve => {
             this.createProjectCb = resolve;
         });
     }
@@ -1124,7 +1112,7 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
         if (this.createProjectCb) {
             this.createProjectCb({
                 name: newName,
-                language: language
+                languages: language
             });
         }
         this.createProjectCb = null;
@@ -1139,6 +1127,8 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
             icon: 'check',
             className: 'approve positive'
         }];
+
+        const LO = pxt.editor.LanguageOption;
 
         return <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
             onClose={this.hide} dimmer={true} buttons={actions}
@@ -1155,10 +1145,10 @@ export class NewProjectDialog extends data.Component<ISettingsProps, NewProjectD
                 </div>
             </div>
             <select className="ui dropdown" onChange={this.handleLanguageChange} aria-label={lf("Selected Language")}>
-                <option aria-selected={language === LanguageOption.Standard} value={LanguageOption.Standard}>{lf("Standard")}</option>
-                <option aria-selected={language === LanguageOption.BlocksOnly} value={LanguageOption.BlocksOnly}>{lf("{0} Only", "Blocks")}</option>
-                <option aria-selected={language === LanguageOption.PythonOnly} value={LanguageOption.PythonOnly}>{lf("{0} Only", "Python")}</option>
-                <option aria-selected={language === LanguageOption.JavaScriptOnly} value={LanguageOption.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
+                <option aria-selected={language === LO.Standard} value={LO.Standard}>{lf("Standard")}</option>
+                <option aria-selected={language === LO.BlocksOnly} value={LO.BlocksOnly}>{lf("{0} Only", "Blocks")}</option>
+                <option aria-selected={language === LO.PythonOnly} value={LO.PythonOnly}>{lf("{0} Only", "Python")}</option>
+                <option aria-selected={language === LO.JavaScriptOnly} value={LO.JavaScriptOnly}>{lf("{0} Only", "JavaScript")}</option>
             </select>
         </sui.Modal>
     }
