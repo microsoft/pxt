@@ -4,6 +4,18 @@
 namespace pxt.blocks {
     export let promptTranslateBlock: (blockId: string, blockTranslationIds: string[]) => void;
 
+    export interface GrayBlock extends Blockly.Block {
+        setPythonEnabled(enabled: boolean): void;
+    }
+
+    export interface GrayBlockStatement extends GrayBlock {
+        domToMutation(xmlElement: Element): void;
+        mutationToDom(): Element;
+
+        getLines: () => string[];
+        declaredVariables: string;
+    }
+
     const typeDefaults: Map<{ field: string, block: string, defaultValue: string }> = {
         "string": {
             field: "TEXT",
@@ -1593,42 +1605,70 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_STATEMENT_TYPE] = {
             init: function () {
-                let that: Blockly.Block = this;
+                let that: GrayBlockStatement = this;
                 that.setColour("#717171")
                 that.setPreviousStatement(true);
                 that.setNextStatement(true);
                 that.setInputsInline(false);
 
-                this.domToMutation = (element: Element) => {
+                let pythonMode: boolean;
+                let lines: string[];
+
+                that.domToMutation = (element: Element) => {
                     const n = parseInt(element.getAttribute("numlines"));
-                    this.declaredVariables = element.getAttribute("declaredvars");
+                    that.declaredVariables = element.getAttribute("declaredvars");
+
+                    lines = [];
                     for (let i = 0; i < n; i++) {
                         const line = element.getAttribute("line" + i);
-                        that.appendDummyInput().appendField(line, "LINE" + i);
+                        lines.push(line);
                     }
+
+                    // Add the initial TS inputs
+                    that.setPythonEnabled(false);
                 };
 
-                this.mutationToDom = () => {
+                that.mutationToDom = () => {
                     let mutation = document.createElement("mutation");
-                    let i = 0;
 
-                    while (true) {
-                        const val = that.getFieldValue("LINE" + i);
-                        if (val === null) {
-                            break;
-                        }
-
-                        mutation.setAttribute("line" + i, val);
-                        i++;
+                    if (lines) {
+                        lines.forEach((line, index) => mutation.setAttribute("line" + index, line));
+                        mutation.setAttribute("numlines", lines.length.toString());
                     }
 
-                    mutation.setAttribute("numlines", i.toString());
-                    if (this.declaredVariables) {
+                    if (that.declaredVariables) {
                         mutation.setAttribute("declaredvars", this.declaredVariables);
                     }
 
                     return mutation;
                 };
+
+                // Consumed by the webapp
+                that.setPythonEnabled = (enabled: boolean) => {
+                    if (pythonMode === enabled) return;
+
+                    // Remove all inputs
+                    while (that.inputList.length) {
+                        that.removeInput(that.inputList[0].name);
+                    }
+
+                    pythonMode = enabled;
+                    if (enabled) {
+                        // This field must be named LINE0 because otherwise Blockly will crash
+                        // when trying to make an insertion marker. All insertion marker blocks
+                        // need to have the same fields as the real block, and this field will
+                        // always be created by domToMutation regardless of TS or Python mode
+                        that.appendDummyInput().appendField(Util.lf("<python code>"), "LINE0")
+                    }
+                    else {
+                        lines.forEach((line, index) => {
+                            that.appendDummyInput().appendField(line, "LINE" + index);
+                        });
+                    }
+                }
+
+                // Consumed by BlocklyCompiler
+                that.getLines = () => lines;
 
                 that.setEditable(false);
 
@@ -1644,13 +1684,17 @@ namespace pxt.blocks {
 
         Blockly.Blocks[pxtc.TS_OUTPUT_TYPE] = {
             init: function () {
-                let that: Blockly.Block = this;
+                let that: GrayBlock = this;
                 that.setColour("#717171")
                 that.setPreviousStatement(false);
                 that.setNextStatement(false);
                 that.setOutput(true);
                 that.setEditable(false);
                 that.appendDummyInput().appendField(new pxtblockly.FieldTsExpression(""), "EXPRESSION");
+
+                that.setPythonEnabled = (enabled: boolean) => {
+                    (that.getField("EXPRESSION") as pxtblockly.FieldTsExpression).setPythonEnabled(enabled);
+                }
 
                 setHelpResources(that,
                     pxtc.TS_OUTPUT_TYPE,
