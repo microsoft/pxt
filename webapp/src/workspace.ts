@@ -360,8 +360,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     h.modificationTime = h.recentUse;
 
     const cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
-    if (cfg && cfg.preferredEditor)
+    if (cfg && cfg.preferredEditor) {
         h.editor = cfg.preferredEditor
+        pxt.Util.setEditorLanguagePref(cfg.preferredEditor);
+    }
     return importAsync(h, text)
         .then(() => h)
 }

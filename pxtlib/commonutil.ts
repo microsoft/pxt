@@ -229,6 +229,7 @@ namespace ts.pxtc.Util {
     }
 
     export function setEditorLanguagePref(lang: string): void {
+        if (lang.match(/prj$/)) lang = lang.replace(/prj$/, "")
         localStorage.setItem("editorlangpref", lang);
     }
 
