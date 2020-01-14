@@ -1659,11 +1659,13 @@ namespace pxt.blocks {
                         // need to have the same fields as the real block, and this field will
                         // always be created by domToMutation regardless of TS or Python mode
                         that.appendDummyInput().appendField(Util.lf("<python code>"), "LINE0")
+                        that.setTooltip(lf("A Python statement that could not be converted to blocks"));
                     }
                     else {
                         lines.forEach((line, index) => {
                             that.appendDummyInput().appendField(line, "LINE" + index);
                         });
+                        that.setTooltip(lf("A JavaScript statement that could not be converted to blocks"));
                     }
                 }
 
@@ -1694,6 +1696,13 @@ namespace pxt.blocks {
 
                 that.setPythonEnabled = (enabled: boolean) => {
                     (that.getField("EXPRESSION") as pxtblockly.FieldTsExpression).setPythonEnabled(enabled);
+
+                    if (enabled) {
+                        that.setTooltip(lf("A Python expression that could not be converted to blocks"));
+                    }
+                    else {
+                        that.setTooltip(lf("A JavaScript expression that could not be converted to blocks"));
+                    }
                 }
 
                 setHelpResources(that,
