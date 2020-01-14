@@ -522,7 +522,7 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
 
 export async function bumpAsync(hd: Header, newVer = "") {
     let files = await getTextAsync(hd.id)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     cfg.version = newVer || bumpedVersion(cfg)
     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
@@ -590,7 +590,9 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
 
     // add compiled javascript to be run in github pages
     if (options.binaryJs && (!parsed.tag || parsed.tag == "master")) {
-        const opts: compiler.CompileOptions = {}
+        const opts: compiler.CompileOptions = {
+            jsMeta: true
+        }
         const compileResp = await compiler.compileAsync(opts);
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
             await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
