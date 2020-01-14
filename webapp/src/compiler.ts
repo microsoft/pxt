@@ -142,7 +142,10 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             if (resp.outfiles[pxtc.BINARY_JS]) {
                 const meta: any = {
                     simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
-                    cdnUrl: pxt.webConfig.cdnUrl
+                    cdnUrl: pxt.webConfig.cdnUrl,
+                    version: pkg.mainPkg.config.version,
+                    target: pxt.appTarget.id,
+                    targetVersion: pxt.appTarget.versions.target
                 };
                 resp.outfiles[pxtc.BINARY_JS] =
                     `// meta=${JSON.stringify(meta)}
