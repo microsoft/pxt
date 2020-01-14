@@ -287,12 +287,14 @@ namespace ts.pxtc.decompiler {
 
     export function getNewName(name: string, takenNames: NamesSet, recordNewName = true) {
         // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
-        if (name.length === 1) {
+        // DO NOT apply this logic to variables named x, y, or z since those are generally meaningful names
+        if (name.length === 1 && name !== "x" && name !== "y" && name !== "z") {
             const charCode = name.charCodeAt(0);
             if (charCode >= lowerCaseAlphabetStartCode && charCode <= lowerCaseAlphabetEndCode) {
                 const offset = charCode - lowerCaseAlphabetStartCode;
                 for (let i = 1; i < 26; i++) {
                     const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
+                    if (newChar === "x" || newChar === "y" || newChar === "z") continue;
                     if (!takenNames[newChar]) {
                         if (recordNewName)
                             takenNames[newChar] = true;
