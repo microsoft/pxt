@@ -140,6 +140,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
 
             // add metadata about current build
             if (resp.outfiles[pxtc.BINARY_JS]) {
+                pkg.mainPkg.loadConfig(); // ensure config up to date
                 const meta: any = {
                     simUrl: pxt.webConfig.simUrl.replace(/\/[^\-]*---simulator/, `/v${pxt.appTarget.versions.target}/---simulator`),
                     cdnUrl: pxt.webConfig.cdnUrl,
