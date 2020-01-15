@@ -592,14 +592,14 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (pxt.appTarget.appTheme.githubCompiledJs 
         && options.binaryJs 
         && (!parsed.tag || parsed.tag == "master")) {
+        const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
-            jsMetaVersion: cfg.version
+            jsMetaVersion: v
         }
         const compileResp = await compiler.compileAsync(opts);
         if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
             await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
-            if (cfg.version)
-                await addToTree(VERSION_TXT_PATH, cfg.version);
+            await addToTree(VERSION_TXT_PATH, v);
         }
     }
 
@@ -1026,7 +1026,8 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     await saveAsync(hd, currFiles)
     await commitAsync(hd, {
         message: lf("Initial files for MakeCode project"),
-        filenamesToCommit: Object.keys(currFiles)
+        filenamesToCommit: Object.keys(currFiles),
+        binaryJs: true
     })
 
     // remove files not in the package (only in git)
