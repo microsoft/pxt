@@ -927,7 +927,9 @@ namespace ts.pxtc.service {
                     /^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
-                    si.attributes.deprecated
+                    si.attributes.deprecated ||
+                    // don't emit members of enum marked as "emitAsConstant"
+                    (si.kind == SymbolKind.EnumMember && lastApiInfo.apis.byQName[si.namespace]?.attributes.emitAsConstant)
                 ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
