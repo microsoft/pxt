@@ -927,7 +927,9 @@ namespace ts.pxtc.service {
                     /^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
-                    si.attributes.deprecated
+                    si.attributes.deprecated ||
+                    // don't members with an alias
+                    si.attributes.alias
                 ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
@@ -1549,6 +1551,9 @@ namespace ts.pxtc.service {
                                 let fullName = checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
                                 let pxtSym = apis.byQName[fullName]
                                 if (pxtSym) {
+                                    if (pxtSym.attributes.alias)
+                                        // use pyAlias if python; or default to alias
+                                        return (python && pxtSym.attributes.pyAlias) || pxtSym.attributes.alias; // prefer alias
                                     return python ? pxtSym.pyQName : pxtSym.qName
                                 }
                                 else
