@@ -891,7 +891,7 @@ ${content}
                     {displayDiffFiles.length ? <div className="ui">
                         {displayDiffFiles.map(df => this.showDiff(isBlocksMode, df))}
                     </div> : undefined}
-                    {!needsCommit && master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    {master && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
                     <div></div>
                 </div>
@@ -1027,13 +1027,17 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { gs, githubId } = this.props;
+        const { gs, githubId, needsCommit } = this.props;
         const tag = gs.commit && gs.commit.tag;
         const compiledJs = !!pxt.appTarget.appTheme.githubCompiledJs;
         const ghpages = compiledJs && `https://${githubId.owner}.github.io/${githubId.project}`;
+
+        if (needsCommit && !compiledJs) // nothing to show here
+            return <div></div>
+
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Release zone")}</div>
-            {!tag && <div className="ui field">
+            {!needsCommit && !tag && <div className="ui field">
                 <sui.Button className="basic" text={lf("Create release")}
                     onClick={this.handleBumpClick}
                     onKeyDown={sui.fireClickOnEnter} />
@@ -1042,7 +1046,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
                 </span>
             </div>}
-            {tag &&
+            {!needsCommit && tag &&
                 <div className="ui field">
                     <p className="inline-help">{lf("Current release: {0}", tag)}
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
@@ -1052,8 +1056,8 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 <div className="ui field">
                     <a className="ui basic button" href={ghpages} target="_blank">{lf("Open Project")}</a>
                     <span className="inline-help">
-                        {lf("The last release of your project.")}
-                        {sui.helpIconLink("/github/publish", lf("Learn about publishing projects."))}
+                        {lf("Commit & create release to update.")}
+                        {sui.helpIconLink("/github/pages", lf("Learn about publishing projects."))}
                     </span>
                 </div>}
         </div>
