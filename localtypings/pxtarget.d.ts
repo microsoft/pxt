@@ -666,7 +666,8 @@ declare namespace ts.pxtc {
 
         duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
 
-        alias?: string; // another symbol alias for this member 
+        alias?: string; // another symbol alias for this member
+        pyAlias?: string; // optional python version of the alias
     }
 
     interface ParameterDesc {

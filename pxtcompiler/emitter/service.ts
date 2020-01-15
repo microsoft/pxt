@@ -1552,7 +1552,8 @@ namespace ts.pxtc.service {
                                 let pxtSym = apis.byQName[fullName]
                                 if (pxtSym) {
                                     if (pxtSym.attributes.alias)
-                                        return pxtSym.attributes.alias; // prefer alias
+                                        // use pyAlias if python; or default to alias
+                                        return (python && pxtSym.attributes.pyAlias) || pxtSym.attributes.alias; // prefer alias
                                     return python ? pxtSym.pyQName : pxtSym.qName
                                 }
                                 else
