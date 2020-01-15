@@ -1030,6 +1030,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
         const { gs, githubId } = this.props;
         const tag = gs.commit && gs.commit.tag;
         const compiledJs = !!pxt.appTarget.appTheme.githubCompiledJs;
+        const ghpages = compiledJs && `https://${githubId.owner}.github.io/${githubId.project}`;
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Release zone")}</div>
             {!tag && <div className="ui field">
@@ -1037,7 +1038,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                     onClick={this.handleBumpClick}
                     onKeyDown={sui.fireClickOnEnter} />
                 <span className="inline-help">
-                    {lf("Publish your code to extension users.")}
+                    {lf("Snapshot and publish your code.")}
                     {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
                 </span>
             </div>}
@@ -1047,10 +1048,13 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
                     </p>
                 </div>}
-            {compiledJs ??
+            {compiledJs &&
                 <div className="ui field">
-                    {lf("Live at:")}
-                    <a href={`https://${githubId.owner}.github.io/${githubId.project}`} target="_blank"></a>
+                    <a className="ui basic button" href={ghpages} target="_blank">{lf("Open Project")}</a>
+                    <span className="inline-help">
+                        {lf("The last release of your project.")}
+                        {sui.helpIconLink("/github/publish", lf("Learn about publishing projects."))}
+                    </span>
                 </div>}
         </div>
     }
