@@ -1027,24 +1027,30 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
     }
 
     renderCore() {
-        const { gs } = this.props;
+        const { gs, githubId } = this.props;
+        const tag = gs.commit && gs.commit.tag;
+        const compiledJs = !!pxt.appTarget.appTheme.githubCompiledJs;
         return <div className="ui transparent segment">
             <div className="ui header">{lf("Release zone")}</div>
-            {gs.commit && gs.commit.tag ?
+            {!tag && <div className="ui field">
+                <sui.Button className="basic" text={lf("Create release")}
+                    onClick={this.handleBumpClick}
+                    onKeyDown={sui.fireClickOnEnter} />
+                <span className="inline-help">
+                    {lf("Publish your code to extension users.")}
+                    {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
+                </span>
+            </div>}
+            {tag &&
                 <div className="ui field">
-                    <p className="inline-help">{lf("Current release: {0}", gs.commit.tag)}
+                    <p className="inline-help">{lf("Current release: {0}", tag)}
                         {sui.helpIconLink("/github/release", lf("Learn about releases."))}
                     </p>
-                </div>
-                :
+                </div>}
+            {compiledJs ??
                 <div className="ui field">
-                    <sui.Button className="basic" text={lf("Create release")}
-                        onClick={this.handleBumpClick}
-                        onKeyDown={sui.fireClickOnEnter} />
-                    <span className="inline-help">
-                        {lf("Bump up the version number and create a release on GitHub.")}
-                        {sui.helpIconLink("/github/release", lf("Learn more about extension releases."))}
-                    </span>
+                    {lf("Live at:")}
+                    <a href={`https://${githubId.owner}.github.io/${githubId.project}`} target="_blank"></a>
                 </div>}
         </div>
     }
