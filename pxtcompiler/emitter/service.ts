@@ -928,7 +928,7 @@ namespace ts.pxtc.service {
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
-                    // don't emit members with ann alias
+                    // don't members with an alias
                     si.attributes.alias
                 ) continue; // ignore
                 entries[si.qName] = si
