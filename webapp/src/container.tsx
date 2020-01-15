@@ -261,7 +261,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
-            {renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
+            {docItems && renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">
