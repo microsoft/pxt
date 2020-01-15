@@ -928,8 +928,8 @@ namespace ts.pxtc.service {
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated ||
-                    // don't emit members of enum marked as "emitAsConstant"
-                    (si.kind == SymbolKind.EnumMember && lastApiInfo.apis.byQName[si.namespace]?.attributes.emitAsConstant)
+                    // don't emit members with ann alias
+                    si.attributes.alias
                 ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
@@ -1551,6 +1551,8 @@ namespace ts.pxtc.service {
                                 let fullName = checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
                                 let pxtSym = apis.byQName[fullName]
                                 if (pxtSym) {
+                                    if (pxtSym.attributes.alias)
+                                        return pxtSym.attributes.alias; // prefer alias
                                     return python ? pxtSym.pyQName : pxtSym.qName
                                 }
                                 else
