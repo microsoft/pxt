@@ -5,6 +5,7 @@
     * [fork](/github/fork)
     * [diff](/github/diff)
     * [release](/github/release)
+    * [pages](/github/pages)
     * [classroom](/github/classroom)
     * [test extension](/github/test-extension)
     * [token](/github/token)
