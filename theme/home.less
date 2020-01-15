@@ -216,44 +216,67 @@
             bottom: 0;
             text-align: right;
 
+            .segment {
+                white-space: nowrap;
+                padding: 0;
+            }
+
             .card-action {
                 display: inline-block;
+                position: relative;
                 margin: 0 0 0 1rem;
                 text-align: center;
-                border-radius: 0.25rem!important;
+                border: 5px solid transparent;
+                border-radius: 0.75rem!important;
                 overflow: hidden;
+                transition-duration: 0.1s;
+
+                > .item, > .icon {
+                    background: @homeDetailCardActionBackground;
+                    height: 8rem;
+                }
+
+                .button.attached i {
+                    display: block;
+                    margin: auto!important;
+                    font-size: 5rem;
+                    line-height: 8rem;
+                    opacity: 0.1;
+                    color: @homeCardHeaderColor;
+                }
+
+                .button.approve {
+                    color: @homeCardHeaderColor;
+                    background-color: @orange;
+                    transition-duration: 0s;
+                }
+                &:first-child .button.approve {
+                    background-color: @green;
+                }
+                &:last-child {
+                    margin-right: 6rem;
+                }
             }
-            .card-action > .item,
-            .card-action > .icon {
-                background: @homeDetailCardActionBackground;
-                height: 8rem;
+            .card-action-title {
+                position: absolute;
+                top: 40%;
+                left: 50%;
+                font-size: 1.43rem;
+                font-weight: 700;
+                color: @homeCardHeaderColor;
+                transform: translateX(-50%) translateY(-50%);
             }
             .card-action:hover {
                 cursor: pointer;
-                .link.button {
-                    background: darken(@homeDetailCardActionBackground, 10%);
-                }
-                i.xicon {
-                    filter: invert(100%);
-                }
-                i.icon {
+                border-color: @white;
+                transform: scale(1.1);
+                .card-action-title, .approve {
                     color: @white;
                 }
-                .ui.positive.button {
-                    color: @white;
-                    background-color: darken(@green, 10%);
+                .ui.button:first-child:hover {
+                    z-index: auto;
                 }
             }
-            .card-action .button.attached i {
-                display: block;
-                margin: auto!important;
-                font-size: 5rem;
-                line-height: 8rem;
-            }
-            .card-action:last-child {
-                margin-right: 6rem;
-            }
-
             /* custom icons (override font to avoid mac/windows alignment issue) */
             .card-action .xicon:before {
                 visibility: hidden;
@@ -261,6 +284,7 @@
             .card-action i.xicon {
                 background: transparent @blocksIcon no-repeat center center;
                 background-size: 70%;
+                background-blend-mode: color-burn;
                 font-size: 6.5rem!important;
             }
             .card-action .xicon.python { background-image: @pyIcon; }
@@ -554,8 +578,35 @@
                 height: 8rem;
                 overflow: hidden;
             }
-            .actions .card-action:last-child {
-                margin-right: 0;
+            .actions {
+                height: 9rem;
+                .card-action {
+                    > .item, > .icon {
+                        height: 2rem;
+                    }
+                    .xicon {
+                        background-image: none;
+                    }
+                    .button.approve {
+                        padding: .35em 1em .5em;
+                    }
+                    &:last-child {
+                        margin-right: 0;
+                    }
+                }
+
+                .card-action-title {
+                    top: 25%;
+                    font-size: 1rem;
+                }
+
+                .segment {
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    margin: 0 1rem 0.5rem;
+                    white-space: normal;
+                }
             }
         }
     }

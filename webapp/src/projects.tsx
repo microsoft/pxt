@@ -740,20 +740,31 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         return clickLabel;
     }
 
-    protected getActionIcon(onClick: any, type: string, action?: pxt.CodeCardAction): JSX.Element {
+    protected getActionEditor(type: string, action?: pxt.CodeCardAction): pxt.CodeCardEditorType {
+        switch (type) {
+            case "tutorial":
+            case "example":
+                if (action && action.editor) return action.editor;
+                return "blocks";
+            case "codeExample":
+                if (action && action.editor) return action.editor;
+                return "js";
+            default:
+                return null;
+        }
+    }
+
+    protected getActionIcon(onClick: any, type: string, editor?: pxt.CodeCardEditorType): JSX.Element {
         const { youTubeId } = this.props;
         let icon = "file text";
         switch (type) {
             case "tutorial":
             case "example":
                 icon = "xicon blocks"
-                if (action) {
-                    if (action.editor == "py") icon = "xicon python";
-                    else if (action.editor == "js") icon = "xicon js";
-                }
+                if (editor) icon = (editor == "py") ? "xicon python" : "xicon " + editor;
                 break;
             case "codeExample":
-                icon = (action && action.editor == "py") ? "xicon python" : "xicon js";
+                icon = (editor == "py") ? "xicon python" : "xicon js";
                 break;
             case "forumUrl":
                 icon = "comments"
@@ -768,36 +779,42 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             : <sui.Item role="button" className="button attached" icon={icon} onClick={onClick} tabIndex={-1} />
     }
 
-    protected getActionTitle(type: string, action?: pxt.CodeCardAction): string {
-        let title = lf("Open in blocks");
-        if (action && action.editor == "py") {
-            title = lf("Open in Python");
-        } else if (type == "codeExample" || (action && action.editor == "js")) {
-            title = lf("Open in JavaScript");
+    protected getActionTitle(editor: pxt.CodeCardEditorType): string {
+        switch (editor) {
+            case "py":
+                return "Python";
+            case "js":
+                return "JavaScript";
+            case "blocks":
+                return "Blocks";
+            default:
+                return null;
         }
-        return title;
     }
 
     protected getActionCard(text: string, type: string, onClick: any, autoFocus?: boolean, action?: pxt.CodeCardAction, key?: string): JSX.Element {
-        return <div className={`card-action ui items ${action && action.editor || ""}`} key={key}>
-            {this.getActionIcon(onClick, type, action)}
+        let editor = this.getActionEditor(type, action);
+        let title = this.getActionTitle(editor);
+        return <div className={`card-action ui items ${editor || ""}`} key={key}>
+            {this.getActionIcon(onClick, type, editor)}
+            {title && <div className="card-action-title">{title}</div>}
             {this.isLink() && type != "example" ? // TODO (shakao)  migrate forumurl to otherAction json in md
                 <sui.Link
                     href={this.getUrl()}
                     refCallback={this.linkRef}
                     target={'_blank'}
                     text={text}
-                    className={`button attached approve large positive`}
+                    className={`button attached approve large`}
                     title={lf("Open link in new window")}
                     autoFocus={autoFocus}
                 />
             : <sui.Button
                 text={text}
-                className={`approve attached large positive`}
+                className={`approve attached large`}
                 onClick={onClick}
                 onKeyDown={sui.fireClickOnEnter}
                 autoFocus={autoFocus}
-                title={this.getActionTitle(type, action)}
+                title={lf("Open in {0}", title)}
             /> }
         </div>
     }
