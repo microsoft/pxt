@@ -42,35 +42,6 @@ function renderDocItems(parent: pxt.editor.IProjectView, cls: string, elements: 
 }
 
 export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    private docMenuCache: pxt.Map<pxt.DocMenuEntry>; // path -> docEntry
-    private lookUpByPath(path: string) {
-        if (!this.docMenuCache) {
-            this.docMenuCache = {};
-            // Populate the cache
-            const targetTheme = pxt.appTarget.appTheme;
-            targetTheme.docMenu.forEach(m => {
-                this.docMenuCache[m.path] = m;
-            })
-        }
-        return this.docMenuCache[path];
-    }
-
-    private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
-        if (m.tutorial) {
-            return () => { openTutorial(parent, m.path) };
-        } else if (!/^\//.test(m.path) && !m.popout) {
-            return () => { window.open(m.path, "docs"); };
-        } else if (m.popout) {
-            return () => { window.open(`${pxt.appTarget.appTheme.homeUrl}${m.path}`, "docs"); };
-        } else {
-            return () => { openDocs(parent, m.path) };
-        }
-    }
-
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
