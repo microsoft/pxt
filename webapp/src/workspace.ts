@@ -360,8 +360,10 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     h.modificationTime = h.recentUse;
 
     const cfg: pxt.PackageConfig = pxt.Package.parseAndValidConfig(text[pxt.CONFIG_NAME]);
-    if (cfg && cfg.preferredEditor)
+    if (cfg && cfg.preferredEditor) {
         h.editor = cfg.preferredEditor
+        pxt.Util.setEditorLanguagePref(cfg.preferredEditor);
+    }
     return importAsync(h, text)
         .then(() => h)
 }
@@ -520,13 +522,14 @@ export function bumpedVersion(cfg: pxt.PackageConfig) {
 
 export async function bumpAsync(hd: Header, newVer = "") {
     let files = await getTextAsync(hd.id)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let cfg = pxt.Package.parseAndValidConfig(files[pxt.CONFIG_NAME]);
     cfg.version = newVer || bumpedVersion(cfg)
     files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
     await saveAsync(hd, files)
     return await commitAsync(hd, {
         message: cfg.version,
-        createTag: "v" + cfg.version
+        createTag: "v" + cfg.version,
+        binaryJs: true
     })
 }
 
@@ -534,6 +537,7 @@ export interface CommitOptions {
     message?: string;
     createTag?: string;
     filenamesToCommit?: string[];
+    binaryJs?: boolean;
     // render blocks to png
     blocksScreenshotAsync?: () => Promise<string>;
     // render blocks diff to png
@@ -542,6 +546,8 @@ export interface CommitOptions {
 
 const BLOCKS_PREVIEW_PATH = ".github/makecode/blocks.png";
 const BLOCKSDIFF_PREVIEW_PATH = ".github/makecode/blocksdiff.png";
+const BINARY_JS_PATH = "assets/js/binary.js";
+const VERSION_TXT_PATH = "assets/version.txt";
 export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     await cloudsync.ensureGitHubTokenAsync();
 
@@ -566,6 +572,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     if (treeUpdate.tree.length == 0)
         U.userError(lf("Nothing to commit!"))
 
+    // add screenshots
     let blocksDiffSha: string;
     if (options
         && treeUpdate.tree.find(e => e.path == "main.blocks")) {
@@ -581,6 +588,20 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         }
     }
 
+    // add compiled javascript to be run in github pages
+    if (options.binaryJs && (!parsed.tag || parsed.tag == "master")) {
+        const opts: compiler.CompileOptions = {
+            jsMetaVersion: cfg.version
+        }
+        const compileResp = await compiler.compileAsync(opts);
+        if (compileResp && compileResp.success && compileResp.outfiles[pxtc.BINARY_JS]) {
+            await addToTree(BINARY_JS_PATH, compileResp.outfiles[pxtc.BINARY_JS]);
+            if (cfg.version)
+                await addToTree(VERSION_TXT_PATH, cfg.version);
+        }
+    }
+
+    // create tree
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
         message: options.message || lf("Update {0}", treeUpdate.tree.map(e => e.path).filter(f => !/\.github\/makecode\//.test(f)).join(", ")),
@@ -723,6 +744,9 @@ async function githubUpdateToAsync(hd: Header, options: UpdateOptions) {
                 // if xml merge fails, leave an empty xml payload to force decompilation
                 blocksNeedDecompilation = blocksNeedDecompilation || !d3;
                 text = d3 || "";
+            } else if (path == BINARY_JS_PATH || path == VERSION_TXT_PATH) {
+                // local build wins, does not matter
+                text = files[path];
             } else {
                 const d3 = pxt.github.diff3(files[path], oldEnt.blobContent, treeEnt.blobContent, lf("local changes"), lf("remote changes (pulled from Github)"))
                 if (!d3) // merge failed?

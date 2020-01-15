@@ -1939,11 +1939,12 @@ export class ProjectView
     ////////////           Workspace              /////////////
     ///////////////////////////////////////////////////////////
 
-    newEmptyProject(name?: string, documentation?: string) {
+    newEmptyProject(name?: string, documentation?: string, preferredEditor?: string) {
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name,
-            documentation
+            documentation,
+            preferredEditor
         })
     }
 
@@ -1984,7 +1985,7 @@ export class ProjectView
         if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
             && cfg.files.indexOf("main.py") < 0) {
             cfg.files.push("main.py");
-            files["main.py"] = "\n";
+            if (!files["main.py"]) files["main.py"] = "\n";
         }
         if (options.tutorial && options.tutorial.metadata) {
             if (options.tutorial.metadata.codeStart) {
@@ -2028,7 +2029,7 @@ export class ProjectView
     }
 
     importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
-        const { name, path, loadBlocks, prj } = options;
+        const { name, path, loadBlocks, prj, preferredEditor } = options;
         core.showLoading("changingcode", lf("loading..."));
         let features: string[];
         return pxt.gallery.loadExampleAsync(name.toLowerCase(), path)
@@ -2037,7 +2038,7 @@ export class ProjectView
                 const opts: pxt.editor.ProjectCreationOptions = example;
                 if (prj) opts.prj = prj;
                 features = example.features;
-                if (loadBlocks) {
+                if (loadBlocks && preferredEditor == "blocksprj") {
                     return this.createProjectAsync(opts)
                         .then(() => {
                             return this.loadBlocklyAsync()
@@ -2051,7 +2052,8 @@ export class ProjectView
                                 })
                         });
                 } else {
-                    opts.tsOnly = true
+                    opts.tsOnly = !loadBlocks;
+                    opts.preferredEditor = preferredEditor;
                     return this.createProjectAsync(opts)
                         .then(() => Promise.delay(500));
                 }
@@ -2107,7 +2109,7 @@ export class ProjectView
                     })
                 }
                 if (src === undefined
-                    || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
+                    || (this.editorFile && this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)))
                     return Promise.resolve();
                 return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });
@@ -3514,6 +3516,7 @@ export class ProjectView
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
             hideTutorialIteration ? "hideIteration" : "",
+            this.editor != this.blocksEditor ? "editorlang-text" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);

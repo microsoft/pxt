@@ -179,7 +179,7 @@ namespace pxt.py {
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
-        // defined by a symbol, 
+        // defined by a symbol,
         //  either in external (non-py) APIs (like default/common packages)
         //  or in internal (py) APIs (probably main.py)
         let sym = lookupApi(tp + "@type") || lookupApi(tp)
@@ -843,6 +843,9 @@ namespace pxt.py {
                 if (sym.pyInstanceType)
                     return sym.pyInstanceType
             }
+            else if (builtInTypes[tpName])
+                return builtInTypes[tpName]
+
             error(e, 9506, U.lf("cannot find type '{0}'", tpName))
         }
 
@@ -892,7 +895,7 @@ namespace pxt.py {
             if (!p.pyType)
                 error(n, 9530, U.lf("parameter '{0}' missing pyType", p.name))
             unify(n, getOrSetSymbolType(v), p.pyType!)
-            let res = [quote(p.name), typeAnnot(p.pyType!)]
+            let res = [quote(p.name), typeAnnot(p.pyType!, true)]
             if (p.default) {
                 res.push(B.mkText(" = " + p.default))
             }
@@ -988,7 +991,7 @@ namespace pxt.py {
         }
     }
 
-    function typeAnnot(t: Type) {
+    function typeAnnot(t: Type, defaultToAny = false) {
         let s = t2s(t)
         if (s[0] == "?") {
             // TODO:
@@ -999,7 +1002,7 @@ namespace pxt.py {
             // work around using any:
             // return B.mkText(": any /** TODO: type **/")
             // but for now we can just omit the type and most of the type it'll be inferable
-            return B.mkText("")
+            return defaultToAny ? B.mkText(": any") : B.mkText("")
         }
         return B.mkText(": " + t2s(t))
     }

@@ -167,7 +167,7 @@ function initConfigAsync(): Promise<void> {
 
 
 function loadGithubTokenAsync(): Promise<string> {
-    pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"];
+    pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"] || process.env["GITHUB_TOKEN"];
     return Promise.resolve(pxt.github.token);
 }
 
@@ -5355,7 +5355,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`-- testing github packages-- `);
-    pxt.log(`make sure to store your github token (GITHUB_ACCESS_TOKEN env var) to avoid throttling`)
+    pxt.log(`make sure to store your github token (GITHUB_ACCESS_TOKEN/GITHUB_TOKEN env var) to avoid throttling`)
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
@@ -5595,7 +5595,7 @@ PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
                    in the lower level runtime if any
 PXT_ASMDEBUG     - embed additional information in generated binary.asm file
 PXT_ACCESS_TOKEN - pxt access token
-GITHUB_ACCESS_TOKEN - github access token
+GITHUB_ACCESS_TOKEN/GITHUB_TOKEN - github access token
 ${pxt.crowdin.KEY_VARIABLE} - crowdin key
 `)
         return Promise.resolve();

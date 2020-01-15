@@ -333,6 +333,30 @@ svg {
     display: none;
 }
 
+.docs.footer.inverted a.item {
+    color: rgba(114, 163, 211, 1.0);
+}
+.docs.footer.inverted a.item i.icon {
+    color: rgba(255, 255, 255, .6);
+}
+
+.docs.footer.inverted a.item:hover i.icon,
+.docs.footer.inverted a.item:focus i.icon {
+    color: rgba(255, 255, 255, 0.8);
+}
+.docs.footer.inverted .divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.docs.footer.inverted .ui.divided.horizontal.list > .item:not(:first-child) {
+    border-left: 1px solid rgba(255, 255, 255, .4);
+}
+
+.docs.footer.inverted span.item {
+    color: rgba(255, 255, 255, .6);
+}
+
 @media only screen and (max-width: 1144px) {
     .hidemobile {
         display: none !important;

@@ -30,7 +30,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">2</field>
@@ -38,7 +38,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="math_arithmetic">
@@ -51,7 +51,7 @@
 <value name="B">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
 <block type="variables_get">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 </block>
 </value>
 </block>

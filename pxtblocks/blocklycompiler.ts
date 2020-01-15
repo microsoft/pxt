@@ -1455,22 +1455,7 @@ namespace pxt.blocks {
     }
 
     function compileTypescriptBlock(e: Environment, b: Blockly.Block) {
-        let res: JsNode[] = [];
-        let i = 0;
-
-        while (true) {
-            const value = b.getFieldValue("LINE" + i);
-            i++;
-
-            if (value !== null) {
-                res.push(mkText(value + "\n"));
-            }
-            else {
-                break;
-            }
-        }
-
-        return res;
+        return (b as GrayBlockStatement).getLines().map(line => mkText(line + "\n"));
     }
 
     function compileDebuggeStatementBlock(e: Environment, b: Blockly.Block) {
@@ -2247,7 +2232,7 @@ namespace pxt.blocks {
                 currentScope.referencedVars.push(info.id);
             }
             else if (block.type === pxtc.TS_STATEMENT_TYPE) {
-                const declaredVars: string = (block as any).declaredVariables
+                const declaredVars: string = (block as GrayBlockStatement).declaredVariables
                 if (declaredVars) {
                     const varNames = declaredVars.split(",");
                     varNames.forEach(vName => {

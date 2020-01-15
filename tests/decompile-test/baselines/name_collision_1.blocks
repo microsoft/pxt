@@ -10,7 +10,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -18,7 +18,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">y</field>
+<field name="VAR">x2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -34,7 +34,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">z</field>
+<field name="VAR">x3</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">2</field>
@@ -42,7 +42,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">z</field>
+<field name="VAR">x3</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -76,7 +76,7 @@
 </value>
 <statement name="DO0">
 <block type="variables_set">
-<field name="VAR">a</field>
+<field name="VAR">x4</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">3</field>
@@ -84,7 +84,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">a</field>
+<field name="VAR">x4</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -121,7 +121,7 @@
 </value>
 <statement name="DO">
 <block type="variables_set">
-<field name="VAR">b</field>
+<field name="VAR">x5</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">4</field>
@@ -129,7 +129,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">b</field>
+<field name="VAR">x5</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -149,7 +149,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">c</field>
+<field name="VAR">y</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -157,7 +157,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">c</field>
+<field name="VAR">y</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -165,7 +165,7 @@
 </value>
 <next>
 <block type="variables_set">
-<field name="VAR">d</field>
+<field name="VAR">y2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -173,7 +173,7 @@
 </value>
 <next>
 <block type="variables_change">
-<field name="VAR">d</field>
+<field name="VAR">y2</field>
 <value name="VALUE">
 <shadow type="math_number">
 <field name="NUM">1</field>

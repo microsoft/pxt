@@ -20,7 +20,9 @@ namespace pxt.template {
   target: @TARGET@
   platform: @PLATFORM@
   home_url: @HOMEURL@
-theme: jekyll-theme-slate`,
+theme: jekyll-theme-slate
+include: assets
+`,
             "Makefile": `all: deploy
 
 build:
@@ -32,7 +34,8 @@ deploy:
 test:
 \tpxt test
 `,
-
+            "Gemfile": `source 'https://rubygems.org'
+gem 'github-pages', group: :jekyll_plugins`,
             "README.md":
                 `> ${lf("Open this page at {0}",
                     "[https://@REPOOWNER@.github.io/@REPONAME@/](https://@REPOOWNER@.github.io/@REPONAME@/)"
@@ -74,6 +77,7 @@ node_modules
 yotta_modules
 yotta_targets
 pxt_modules
+_site
 *.db
 *.tgz
 .header.json
@@ -204,40 +208,11 @@ jobs:
         const pkgFiles = Object.keys(files).filter(s =>
             /\.(blocks|md|ts|asm|cpp|h|py)$/.test(s))
 
-        const fieldsOrder = [
-            "name",
-            "version",
-            "description",
-            "license",
-            "dependencies",
-            "files",
-            "testFiles",
-            "testDependencies",
-            "public",
-            "targetVersions",
-            "supportedTargets",
-            "preferredEditor",
-            "additionalFilePath",
-            "additionalFilePaths"
-        ]
-
         config.files = pkgFiles.filter(s => !/test/.test(s));
         config.testFiles = pkgFiles.filter(s => /test/.test(s));
         config.supportedTargets = [pxt.appTarget.id];
 
-        const configMap: Map<string> = config as any
-        // make it look nice
-        const newCfg: any = {}
-        for (const f of fieldsOrder) {
-            if (configMap.hasOwnProperty(f))
-                newCfg[f] = configMap[f]
-        }
-        for (const f of Object.keys(configMap)) {
-            if (!newCfg.hasOwnProperty(f))
-                newCfg[f] = configMap[f]
-        }
-
-        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(newCfg);
+        files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
 
         return files
     }
@@ -246,6 +221,7 @@ jobs:
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
         if (options)
             Util.jsonMergeFrom(configMap, options);
+        Object.keys(pxt.webConfig).forEach(k => configMap[k.toLowerCase()] = (<any>pxt.webConfig)[k]);
         configMap["platform"] = pxt.appTarget.platformid || pxt.appTarget.id
         configMap["target"] = pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
