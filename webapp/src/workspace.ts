@@ -589,8 +589,8 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     }
 
     // add compiled javascript to be run in github pages
-    if (pxt.appTarget.appTheme.githubCompiledJs 
-        && options.binaryJs 
+    if (pxt.appTarget.appTheme.githubCompiledJs
+        && options.binaryJs
         && (!parsed.tag || parsed.tag == "master")) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {

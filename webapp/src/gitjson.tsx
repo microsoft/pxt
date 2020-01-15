@@ -1054,7 +1054,7 @@ class ReleaseZone extends sui.StatelessUIElement<GitHubViewProps> {
                 </div>}
             {compiledJs &&
                 <div className="ui field">
-                    <a className="ui basic button" href={ghpages} target="_blank">{lf("Open Project")}</a>
+                    <a className="ui basic button" href={ghpages} target="_blank" rel="noopener noreferrer">{lf("Open Project")}</a>
                     <span className="inline-help">
                         {lf("Commit & create release to update.")}
                         {sui.helpIconLink("/github/pages", lf("Learn about publishing projects."))}
