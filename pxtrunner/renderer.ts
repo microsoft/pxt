@@ -63,13 +63,13 @@ namespace pxt.runner {
             .each((i, el) => {
                 try {
                     highlightLineElement(el);
-                } catch(e) {
+                } catch (e) {
                     pxt.reportException(e);
                 }
             })
     }
 
-    function highlightLineElement(el :Element) {
+    function highlightLineElement(el: Element) {
         const $el = $(el);
         const span = document.createElement("span");
         span.className = "highlight-line"
