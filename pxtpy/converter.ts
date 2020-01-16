@@ -1787,7 +1787,18 @@ namespace pxt.py {
         BinOp: (n: py.BinOp) => {
             let r = handleFmt(n)
             if (r) return r
-            r = binop(expr(n.left), n.op, expr(n.right))
+
+            const left = expr(n.left);
+            const right = expr(n.right);
+
+            if (isArrayType(n.left) && isArrayType(n.right)) {
+                if (n.op === "Add") {
+                    return B.H.extensionCall("concat", [left, right], false);
+                }
+            }
+
+            r = binop(left, n.op, right)
+
             if (numOps[n.op]) {
                 unifyTypeOf(n.left, tpNumber)
                 unifyTypeOf(n.right, tpNumber)
@@ -2600,6 +2611,12 @@ namespace pxt.py {
         return {
             parts
         };
+    }
+
+    function isArrayType(expr: py.Expr) {
+        const t = find(typeOf(expr));
+
+        return t && t.primType === "@array";
     }
 
     function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {
