@@ -368,6 +368,7 @@ declare namespace pxt {
         nameProjectFirst?: boolean;
         pythonToolbox?: boolean; // Code toolbox for Python
         githubEditor?: boolean; // allow editing github repositories from the editor
+        githubCompiledJs?: boolean; // commit binary.js in commit when creating a github release
     }
 
     interface SocialOptions {
@@ -664,6 +665,9 @@ declare namespace ts.pxtc {
         paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
 
         duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
+
+        alias?: string; // another symbol alias for this member
+        pyAlias?: string; // optional python version of the alias
     }
 
     interface ParameterDesc {

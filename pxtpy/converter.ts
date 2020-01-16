@@ -1228,6 +1228,7 @@ namespace pxt.py {
         },
         For: (n: py.For) => {
             U.assert(n.orelse.length == 0)
+            n.target.forTargetEndPos = n.endPos
             if (isCallTo(n.iter, "range")) {
                 let r = n.iter as py.Call
                 let def = expr(n.target)
@@ -1786,7 +1787,18 @@ namespace pxt.py {
         BinOp: (n: py.BinOp) => {
             let r = handleFmt(n)
             if (r) return r
-            r = binop(expr(n.left), n.op, expr(n.right))
+
+            const left = expr(n.left);
+            const right = expr(n.right);
+
+            if (isArrayType(n.left) && isArrayType(n.right)) {
+                if (n.op === "Add") {
+                    return B.H.extensionCall("concat", [left, right], false);
+                }
+            }
+
+            r = binop(left, n.op, right)
+
             if (numOps[n.op]) {
                 unifyTypeOf(n.left, tpNumber)
                 unifyTypeOf(n.right, tpNumber)
@@ -1804,7 +1816,18 @@ namespace pxt.py {
         Lambda: (n: py.Lambda) => exprTODO(n),
         IfExp: (n: py.IfExp) =>
             B.mkInfix(B.mkInfix(expr(n.test), "?", expr(n.body)), ":", expr(n.orelse)),
-        Dict: (n: py.Dict) => exprTODO(n),
+        Dict: (n: py.Dict) => {
+            ctx.blockDepth++;
+            const elts = n.keys.map((k, i) => {
+                const v = n.values[i]
+                if (k === undefined)
+                    return exprTODO(n)
+                return B.mkStmt(B.mkInfix(expr(k), ":", expr(v)), B.mkText(","))
+            })
+            const res = B.mkBlock(elts);
+            ctx.blockDepth--;
+            return res
+        },
         Set: (n: py.Set) => exprTODO(n),
         ListComp: (n: py.ListComp) => exprTODO(n),
         SetComp: (n: py.SetComp) => exprTODO(n),
@@ -2168,6 +2191,13 @@ namespace pxt.py {
             if (v.isImport)
                 return v
             addCaller(n, v)
+            if (n.forTargetEndPos && v.forVariableEndPos !== n.forTargetEndPos) {
+                if (v.forVariableEndPos)
+                    // defined in more than one 'for'; make sure it's hoisted
+                    v.lastRefPos = v.forVariableEndPos + 1
+                else
+                    v.forVariableEndPos = n.forTargetEndPos
+            }
         } else if (currIteration > 0) {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
@@ -2193,6 +2223,9 @@ namespace pxt.py {
 
             if (s.firstRefPos === undefined || s.firstRefPos > location.startPos) {
                 s.firstRefPos = location.startPos;
+            }
+            if (s.lastRefPos === undefined || s.lastRefPos < location.startPos) {
+                s.lastRefPos = location.startPos;
             }
         }
     }
@@ -2282,8 +2315,8 @@ namespace pxt.py {
             sym.kind === SK.Variable
             && !sym.isParam
             && sym.modifier === undefined
-            && (
-                sym.firstRefPos! < sym.firstAssignPos!
+            && (sym.lastRefPos! > sym.forVariableEndPos!
+                || sym.firstRefPos! < sym.firstAssignPos!
                 || sym.firstAssignDepth! > scope.blockDepth!);
         return !!result
     }
@@ -2578,6 +2611,12 @@ namespace pxt.py {
         return {
             parts
         };
+    }
+
+    function isArrayType(expr: py.Expr) {
+        const t = find(typeOf(expr));
+
+        return t && t.primType === "@array";
     }
 
     function buildOverride(override: TypeScriptOverride, args: B.JsNode[], recv?: B.JsNode) {

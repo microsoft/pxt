@@ -310,7 +310,7 @@ default semantic
 @homeDetailViewColor: @homeCardColor;
 @homeDetailCloseColor: white;
 @homeDetailCloseBackground: @grey;
-@homeDetailCardActionBackground: @grey;
+@homeDetailCardActionBackground: darken(@homeDetailViewBackground, 10%);
 
 /*-------------------
    Tutorial

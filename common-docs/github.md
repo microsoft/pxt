@@ -56,6 +56,10 @@ Click on **Revert** to see how it works.
 
 GitHub can be used to create and collect assignments from students. [Learn more...](/github/classroom) or quickly review their repositories in the [Explorer](/github/explorer)
 
+## Repository as web sites
+
+MakeCode uses [GitHub Pages](/github/pages) to turn your repositories into web sites! This is a great way to build your portfolio or share a playable game with friends.
+
 ## Frequently Asked Questions
 
 Do you have more questions? Try the [FAQ](/github/faq).

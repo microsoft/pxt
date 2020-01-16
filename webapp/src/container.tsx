@@ -33,9 +33,8 @@ function openDocs(parent: pxt.editor.IProjectView, path: string) {
     parent.setSideDoc(path);
 }
 
-function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
-    const targetTheme = pxt.appTarget.appTheme;
-    return targetTheme.docMenu.map(m =>
+function renderDocItems(parent: pxt.editor.IProjectView, elements: pxt.DocMenuEntry[], cls: string = "") {
+    return elements.map(m =>
         m.tutorial ? <DocsMenuItem key={"docsmenututorial" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openTutorial} />
             : !/^\//.test(m.path) ? <a key={"docsmenulink" + m.path} role="menuitem" aria-label={m.name} title={m.name} className={`ui item link ${cls}`} href={m.path} target="docs">{pxt.Util.rlf(m.name)}</a>
                 : <DocsMenuItem key={"docsmenu" + m.path} role="menuitem" ariaLabel={pxt.Util.rlf(m.name)} text={pxt.Util.rlf(m.name)} className={"ui " + cls} parent={parent} path={m.path} onItemClick={openDocs} />
@@ -43,58 +42,12 @@ function renderDocItems(parent: pxt.editor.IProjectView, cls: string) {
 }
 
 export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
-    constructor(props: ISettingsProps) {
-        super(props);
-    }
-
-    private docMenuCache: pxt.Map<pxt.DocMenuEntry>; // path -> docEntry
-    private lookUpByPath(path: string) {
-        if (!this.docMenuCache) {
-            this.docMenuCache = {};
-            // Populate the cache
-            const targetTheme = pxt.appTarget.appTheme;
-            targetTheme.docMenu.forEach(m => {
-                this.docMenuCache[m.path] = m;
-            })
-        }
-        return this.docMenuCache[path];
-    }
-
-    private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
-        if (m.tutorial) {
-            return () => { openTutorial(parent, m.path) };
-        } else if (!/^\//.test(m.path) && !m.popout) {
-            return () => { window.open(m.path, "docs"); };
-        } else if (m.popout) {
-            return () => { window.open(`${pxt.appTarget.appTheme.homeUrl}${m.path}`, "docs"); };
-        } else {
-            return () => { openDocs(parent, m.path) };
-        }
-    }
-
     renderCore() {
         const parent = this.props.parent;
         const targetTheme = pxt.appTarget.appTheme;
-        const options = targetTheme.docMenu.map(m => {
-            return {
-                key: "docsmenu" + m.path,
-                content: pxt.Util.rlf(m.name),
-                role: "menuitem",
-                'aria-label': pxt.Util.rlf(m.name),
-                onClick: this.doDocEntryAction(parent, m),
-                value: m.path,
-                onKeyDown: () => {
-                    console.log("Key DOWN");
-                }
-            }
-        })
-        const onChange = (e: any, data: any) => {
-            const m = this.lookUpByPath(data.value);
-            this.doDocEntryAction(parent, m)();
-        };
         return <sui.DropdownMenu role="menuitem" icon="help circle large"
-            className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")}>
-            {renderDocItems(this.props.parent, "")}
+            className="item mobile hide help-dropdown-menuitem" textClass={"landscape only"} title={lf("Help")} >
+            {renderDocItems(parent, targetTheme.docMenu)}
         </sui.DropdownMenu>
     }
 }
@@ -288,7 +241,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showGreenScreen = targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href);
         const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
         const showProjectSettings = targetTheme.showProjectSettings;
-        const docItem = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial)[0];
+        const docItems = targetTheme.docMenu && targetTheme.docMenu.filter(d => !d.tutorial);
 
         // Electron does not currently support webusb
         const githubUser = !readOnly && !isController && this.getData("github:user") as pxt.editor.UserInfo;
@@ -308,7 +261,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
             {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
-            {docItem ? <DocsMenuItem key={"mobiledocsmenudocs"} role="menuitem" ariaLabel={pxt.Util.rlf(docItem.name)} text={pxt.Util.rlf(docItem.name)} className={"ui mobile only"} parent={this.props.parent} path={docItem.path} onItemClick={openDocs} /> : undefined}
+            {docItems && renderDocItems(this.props.parent, docItems, "ui mobile only inherit")}
             {githubUser ? <div className="ui divider"></div> : undefined}
             {githubUser ? <div className="ui item" title={lf("Sign out {0} from GitHub", githubUser.name)} role="menuitem" onClick={this.signOutGithub}>
                 <div className="avatar" role="presentation">

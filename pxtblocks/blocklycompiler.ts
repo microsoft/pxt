@@ -1134,8 +1134,8 @@ namespace pxt.blocks {
         return mkStmt(mkInfix(ref, "+=", expr))
     }
 
-    function eventArgs(call: StdFunc, b: Blockly.Block): string[] {
-        return visibleParams(call, countOptionals(b)).map(ar => ar.definitionName).filter(ar => !!ar);
+    function eventArgs(call: StdFunc, b: Blockly.Block): BlockParameter[] {
+        return visibleParams(call, countOptionals(b)).filter(ar => !!ar.definitionName);
     }
 
     function compileCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -1261,14 +1261,6 @@ namespace pxt.blocks {
             return mkStmt(H.mkCall(f, args.concat([callback]), false));
     }
 
-    function compileArg(e: Environment, b: Blockly.Block, arg: string, comments: string[]): JsNode {
-        // b.getFieldValue may be string, numbers
-        const argb = getInputTargetBlock(b, arg);
-        if (argb) return compileExpression(e, argb, comments);
-        if (b.getField(arg) instanceof pxtblockly.FieldTextInput) return H.mkStringLiteral(b.getFieldValue(arg));
-        return mkText(b.getFieldValue(arg))
-    }
-
     function compileStartEvent(e: Environment, b: Blockly.Block): JsNode {
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
@@ -1280,8 +1272,8 @@ namespace pxt.blocks {
         return body;
     }
 
-    function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: string[], ns: string, comments: string[]): JsNode {
-        const compiledArgs: JsNode[] = args.map(arg => compileArg(e, b, arg, comments));
+    function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: BlockParameter[], ns: string, comments: string[]): JsNode {
+        const compiledArgs: JsNode[] = args.map(arg => compileArgument(e, b, arg, comments));
         const bBody = getInputTargetBlock(b, "HANDLER");
         const body = compileStatements(e, bBody);
 
@@ -1487,7 +1479,7 @@ namespace pxt.blocks {
 
         const ns = options.namespace;
         const name = options.callName || "pauseUntil";
-        const arg = compileArg(e, b, "PREDICATE", comments);
+        const arg = compileArgument(e, b, { definitionName: "PREDICATE", actualName: "PREDICATE" }, comments);
         const lambda = [mkGroup([mkText("() => "), arg])];
 
         if (ns) {
@@ -1759,7 +1751,7 @@ namespace pxt.blocks {
         const call = e.stdCallTable[b.type];
         if (call) {
             // detect if same event is registered already
-            const compiledArgs = eventArgs(call, b).map(arg => compileArg(e, b, arg, []));
+            const compiledArgs = eventArgs(call, b).map(arg => compileArgument(e, b, arg, []));
             const key = JSON.stringify({ name: call.f, ns: call.namespace, compiledArgs })
                 .replace(/"id"\s*:\s*"[^"]+"/g, ''); // remove blockly ids
             return key;

@@ -44,9 +44,11 @@ namespace pxt.py {
         isParam?: boolean;
         isImport?: SymbolInfo;
         modifier?: VarModifier;
+        forVariableEndPos?: number;
 
         /* usage information */
         firstRefPos?: number;
+        lastRefPos?: number;
         firstAssignPos?: number;
         firstAssignDepth?: number;
     }
@@ -69,6 +71,7 @@ namespace pxt.py {
         tsType?: Type;
         symbolInfo?: SymbolInfo;
         inCalledPosition?: boolean; // it's an f in f(...)
+        forTargetEndPos?: number; // it's X in "for X in ..." and this is the position of the end of that for
         _exprBrand: void;
     }
 

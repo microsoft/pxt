@@ -144,6 +144,11 @@ namespace pxt.editor.experiments {
                 name: lf("GitHub editor"),
                 description: lf("Review, commit and push to GitHub."),
                 feedbackUrl: "https://github.com/microsoft/pxt/issues/6419"
+            },
+            {
+                id: "githubCompiledJs",
+                name: lf("GitHub Pages JavaScript"),
+                description: lf("Commit compiled javascript when creating a release")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

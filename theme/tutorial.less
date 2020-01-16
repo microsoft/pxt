@@ -6,7 +6,12 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
-@highlightLineColor: #fcfc90;
+@highlightLineBackground: #fcfc90;
+@highlightLineColor: #000;
+@highlightLineStringColor: #bf0000;
+@highlightLineNumberColor: #007f00;
+@highlightLineClassColor: #007f00;
+@highlightLineKeywordColor: #0000ff;
 @tutorialCardHeight: 8rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
@@ -252,9 +257,24 @@ code.lang-filterblocks {
 span.highlight-line {
     font-weight: bold;
     white-space: pre-wrap;
-    background: @highlightLineColor;
-    display: block;
+    background: @highlightLineBackground;
+    display: inline-block;
     padding: 0.5rem;
+    margin-left: -0.5rem;
+    color: @highlightLineColor;
+
+    .hljs-string, .hljs-meta-string {
+        color: @highlightLineStringColor;
+    }
+    .hljs-class {
+        color: @highlightLineClassColor;
+    }
+    .hljs-number {
+        color: @highlightLineNumberColor;
+    }
+    .hljs-keyword {
+        color: @highlightLineKeywordColor;
+    }
 }
 
 #tutorialcard .prevbutton,
@@ -467,6 +487,9 @@ span.highlight-line {
 
     #flyoutHeader {
         box-sizing: content-box;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     div {
