@@ -3832,14 +3832,9 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "github": {
             // #github:owner/user --> import
             // #github:create-repository:headerid --> create repo
+            const repoid = pxt.github.parseRepoId(hash.arg);
             const [ghCmd, ghArg] = hash.arg.split(':', 2);
-            const repoid = pxt.github.parseRepoId(ghCmd);
-            if (!ghArg && repoid) { // #github:owner/repo syntax
-                pxt.BrowserUtils.changeHash("");
-                importGithubProject(ghCmd, true);
-                return true;
-            }
-            else if (ghCmd == "create-repository") {
+            if (ghCmd == "create-repository") {
                 // #github:create-repository:HEADERID
                 pxt.BrowserUtils.changeHash("");
                 const hd = workspace.getHeader(ghArg);
@@ -3849,6 +3844,10 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                         .done(r => r && theEditor.reloadHeaderAsync())
                     return true;
                 }
+            } else if (repoid) {
+                pxt.BrowserUtils.changeHash("");
+                importGithubProject(hash.arg, true);
+                return true;
             }
             break;
         }
@@ -3893,14 +3892,20 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
             pxt.github.normalizeRepoId(h.githubId) == repoid
         );
         if (!hd) {
-            if (requireSignin)
-                await cloudsync.githubProvider().routedLoginAsync(repoid);
+            if (requireSignin) {
+                const token = await cloudsync.githubProvider().routedLoginAsync(repoid);
+                if (!token.accessToken) { // did not sign in, give up
+                    theEditor.openHome();
+                    return;
+                }
+            }
             hd = await workspace.importGithubAsync(repoid);
         }
         if (hd)
             await theEditor.loadHeaderAsync(hd, null)
     } catch (e) {
         core.handleNetworkError(e)
+        theEditor.openHome();
     } finally {
         core.hideLoading("loadingheader")
     }
