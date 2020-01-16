@@ -1804,7 +1804,18 @@ namespace pxt.py {
         Lambda: (n: py.Lambda) => exprTODO(n),
         IfExp: (n: py.IfExp) =>
             B.mkInfix(B.mkInfix(expr(n.test), "?", expr(n.body)), ":", expr(n.orelse)),
-        Dict: (n: py.Dict) => exprTODO(n),
+        Dict: (n: py.Dict) => {
+            ctx.blockDepth++;
+            const elts = n.keys.map((k, i) => {
+                const v = n.values[i]
+                if (k === undefined)
+                    return exprTODO(n)
+                return B.mkStmt(B.mkInfix(expr(k), ":", expr(v)), B.mkText(","))
+            })
+            const res = B.mkBlock(elts);
+            ctx.blockDepth--;
+            return res
+        },
         Set: (n: py.Set) => exprTODO(n),
         ListComp: (n: py.ListComp) => exprTODO(n),
         SetComp: (n: py.SetComp) => exprTODO(n),
