@@ -30,19 +30,19 @@ export class GithubProvider extends cloudsync.ProviderBase {
     }
 
     loginAsync(redirect?: boolean, silent?: boolean): Promise<cloudsync.ProviderLoginResponse> {
-        return this.routedLoginAsync(undefined, undefined);
+        return this.routedLoginAsync(undefined);
     }
 
-    private routedLoginAsync(header: pxt.workspace.Header, route: string) {
+    routedLoginAsync(route: string) {
         this.loginCheck()
         let p = Promise.resolve();
         if (!this.token()) {
-            p = p.then(() => this.showLoginAsync(header, route));
+            p = p.then(() => this.showLoginAsync(route));
         }
         return p.then(() => { return { accessToken: this.token() } as cloudsync.ProviderLoginResponse; });
     }
 
-    private showLoginAsync(header: pxt.workspace.Header, route: string): Promise<void> {
+    private showLoginAsync(route: string): Promise<void> {
         pxt.tickEvent("github.login.dialog");
         // auth flow if github provider is prsent
         const oAuthSupported = pxt.appTarget
@@ -101,7 +101,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
                     return this.saveAndValidateTokenAsync(hextoken);
                 }
                 else {
-                    return this.oauthRedirectAsync(header, route);
+                    return this.oauthRedirectAsync(route);
                 }
             }
         })
@@ -112,9 +112,9 @@ export class GithubProvider extends cloudsync.ProviderBase {
         }
     }
 
-    private oauthRedirectAsync(header: pxt.workspace.Header, route: string): Promise<void> {
-        core.showLoading("ghlogin", lf("Signing you in to GitHub..."))
-        const state = cloudsync.setOauth(this.name, header && route ? `#github:${header.id}:${route}` : undefined);
+    private oauthRedirectAsync(route: string): Promise<void> {
+        core.showLoading("ghlogin", lf("Signing you into GitHub..."))
+        const state = cloudsync.setOauth(this.name, route ? `#github:${route}` : undefined);
         const self = window.location.href.replace(/#.*/, "")
         const login = pxt.Cloud.getServiceUrl() +
             "/oauth/login?state=" + state +
@@ -190,7 +190,7 @@ export class GithubProvider extends cloudsync.ProviderBase {
 
     async createRepositoryAsync(projectName: string, header: pxt.workspace.Header): Promise<boolean> {
         pxt.tickEvent("github.filelist.create.start");
-        await this.routedLoginAsync(header, "create-repository")
+        await this.routedLoginAsync(`create-repository:${header.id}`)
         if (!this.token()) {
             pxt.tickEvent("github.filelist.create.notoken");
             return false;
