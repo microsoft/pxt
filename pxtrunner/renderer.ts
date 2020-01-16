@@ -82,8 +82,9 @@ namespace pxt.runner {
         if (inewline < 0)
             return; // there should have been a new line here
 
+        // split the next node
         (next as Text).textContent = text.substring(0, inewline + 1);
-        span.appendChild(document.createTextNode(text.substring(inewline + 1).replace(/^\s+/, '')));
+        $(document.createTextNode(text.substring(inewline + 1).replace(/^\s+/, ''))).insertAfter($(next));
 
         // process and highlight new line
         next = next.nextSibling;
