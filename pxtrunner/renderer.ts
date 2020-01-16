@@ -53,7 +53,65 @@ namespace pxt.runner {
                     hljs.highlightBlock(block);
                 });
             }
+            highlightLine($js);
         }
+    }
+
+    function highlightLine($js: JQuery) {
+        // apply line highlighting
+        $js.find("span.hljs-comment:contains(@highlight)")
+            .each((i, el) => {
+                try {
+                    highlightLineElement(el);
+                } catch (e) {
+                    pxt.reportException(e);
+                }
+            })
+    }
+
+    function highlightLineElement(el: Element) {
+        const $el = $(el);
+        const span = document.createElement("span");
+        span.className = "highlight-line"
+
+        // find new line and split text node
+        let next = el.nextSibling;
+        if (!next || next.nodeType != Node.TEXT_NODE) return; // end of snippet?
+        let text = (next as Text).textContent;
+        let inewline = text.indexOf('\n');
+        if (inewline < 0)
+            return; // there should have been a new line here
+
+        // split the next node
+        (next as Text).textContent = text.substring(0, inewline + 1);
+        $(document.createTextNode(text.substring(inewline + 1).replace(/^\s+/, ''))).insertAfter($(next));
+
+        // process and highlight new line
+        next = next.nextSibling;
+        while (next) {
+            let nextnext = next.nextSibling; // before we hoist it from the tree
+            if (next.nodeType == Node.TEXT_NODE) {
+                text = (next as Text).textContent;
+                const inewline = text.indexOf('\n');
+                if (inewline < 0) {
+                    span.appendChild(next);
+                    next = nextnext;
+                } else {
+                    // we've hit the end of the line... split node in two
+                    span.appendChild(document.createTextNode(text.substring(0, inewline)));
+                    (next as Text).textContent = text.substring(inewline + 1);
+                    break;
+                }
+            } else {
+                span.appendChild(next);
+                next = nextnext;
+            }
+        }
+
+        // insert back
+        $(span).insertAfter($el);
+        // remove line entry
+        $el.remove();
     }
 
     function appendBlocks($parent: JQuery, $svg: JQuery) {
@@ -865,6 +923,7 @@ namespace pxt.runner {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
+                highlightLine($(e));
             }
             const opts = pxt.U.clone(woptions);
             if (ignored) {
@@ -890,6 +949,7 @@ namespace pxt.runner {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
+                highlightLine($(e));
             }
             const opts = pxt.U.clone(woptions);
             if (ignored) {
