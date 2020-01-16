@@ -8,6 +8,9 @@
 @inlineBlockColor: #D83B01;
 @highlightLineBackground: #fcfc90;
 @highlightLineColor: #000;
+@highlightLineStringColor: #bf0000;
+@highlightLineNumberColor: #007f00;
+@highlightLineClassColor: #007f00;
 @tutorialCardHeight: 8rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
@@ -257,6 +260,16 @@ span.highlight-line {
     display: inline-block;
     padding: 0.5rem;
     color: @highlightLineColor;
+
+    .hljs-string, .hljs-meta-string {
+        color: @highlightLineStringColor;
+    }
+    .hljs-class {
+        color: @highlightLineClassColor;
+    }
+    .hljs-number {
+        color: @highlightLineNumberColor;
+    }
 }
 
 #tutorialcard .prevbutton,
