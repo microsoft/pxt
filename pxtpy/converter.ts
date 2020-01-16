@@ -1228,6 +1228,7 @@ namespace pxt.py {
         },
         For: (n: py.For) => {
             U.assert(n.orelse.length == 0)
+            n.target.forTargetEndPos = n.endPos
             if (isCallTo(n.iter, "range")) {
                 let r = n.iter as py.Call
                 let def = expr(n.target)
@@ -2168,6 +2169,13 @@ namespace pxt.py {
             if (v.isImport)
                 return v
             addCaller(n, v)
+            if (n.forTargetEndPos && v.forVariableEndPos !== n.forTargetEndPos) {
+                if (v.forVariableEndPos)
+                    // defined in more than one 'for'; make sure it's hoisted
+                    v.lastRefPos = v.forVariableEndPos + 1
+                else
+                    v.forVariableEndPos = n.forTargetEndPos
+            }
         } else if (currIteration > 0) {
             error(n, 9516, U.lf("name '{0}' is not defined", n.id))
         }
@@ -2193,6 +2201,9 @@ namespace pxt.py {
 
             if (s.firstRefPos === undefined || s.firstRefPos > location.startPos) {
                 s.firstRefPos = location.startPos;
+            }
+            if (s.lastRefPos === undefined || s.lastRefPos < location.startPos) {
+                s.lastRefPos = location.startPos;
             }
         }
     }
@@ -2282,8 +2293,8 @@ namespace pxt.py {
             sym.kind === SK.Variable
             && !sym.isParam
             && sym.modifier === undefined
-            && (
-                sym.firstRefPos! < sym.firstAssignPos!
+            && (sym.lastRefPos! > sym.forVariableEndPos!
+                || sym.firstRefPos! < sym.firstAssignPos!
                 || sym.firstAssignDepth! > scope.blockDepth!);
         return !!result
     }
