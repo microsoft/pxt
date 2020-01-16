@@ -1773,7 +1773,7 @@ namespace pxt.blocks {
                         {
                             "type": "input_value",
                             "name": "LIST",
-                            "check": "Array"
+                            "check": ["Array", "String"]
                         }
                     ],
                     "previousStatement": null,

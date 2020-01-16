@@ -280,6 +280,10 @@ describe("blockly compiler", function () {
             blockTestAsync("lists_length_with_for_of").then(done, done);
         });
 
+        it("should not declare strings as stris when using for each string block", (done: () => void) => {
+            blockTestAsync("for_each_string").then(done, done);
+        });
+
         it("should handle empty array blocks", (done: () => void) => {
             blockTestAsync("lists_empty_arrays").then(done, done);
         });
