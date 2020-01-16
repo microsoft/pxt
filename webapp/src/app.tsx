@@ -3903,6 +3903,8 @@ async function importGithubProject(repoid: string, requireSignin?: boolean) {
         }
         if (hd)
             await theEditor.loadHeaderAsync(hd, null)
+        else
+            theEditor.openHome();
     } catch (e) {
         core.handleNetworkError(e)
         theEditor.openHome();
