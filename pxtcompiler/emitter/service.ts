@@ -939,8 +939,7 @@ namespace ts.pxtc.service {
                 if (isFunctionLike(n)) {
                     // snippet/pySnippet might have been set already
                     if ((isPython && !si.pySnippet)
-                        || (!isPython && !si.snippet))
-                    {
+                        || (!isPython && !si.snippet)) {
                         let snippet = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
                         if (isPython)
                             si.pySnippet = snippet
