@@ -948,6 +948,7 @@ namespace pxt.runner {
             if (typeof hljs !== "undefined") {
                 $(e).text($(e).text().replace(/^\s*\r?\n/, ''))
                 hljs.highlightBlock(e)
+                highlightLine($(e));
             }
             const opts = pxt.U.clone(woptions);
             if (ignored) {
