@@ -18,15 +18,16 @@ namespace ts.pxtc {
         n: string;
         t: any;
         scale?: number;
+        snippet?: string;
     }
 
     export const ts2PyFunNameMap: pxt.Map<FunOverride> = {
-        "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword },
-        "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword },
-        "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword },
-        "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword },
-        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword },
-        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword },
+        "Math.trunc": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: "int(0)" },
+        "Math.min": { n: "min", t: ts.SyntaxKind.NumberKeyword, snippet: "min(0, 0)" },
+        "Math.max": { n: "max", t: ts.SyntaxKind.NumberKeyword, snippet: "max(0, 0)" },
+        "Math.abs": { n: "abs", t: ts.SyntaxKind.NumberKeyword, snippet: "abs(0)" },
+        "Math.randomRange": { n: "randint", t: ts.SyntaxKind.NumberKeyword, snippet: "randint(0, 10)" },
+        "console.log": { n: "print", t: ts.SyntaxKind.VoidKeyword, snippet: 'print(":)")' },
         ".length": { n: "len", t: ts.SyntaxKind.NumberKeyword },
         ".toLowerCase()": { n: "string.lower", t: ts.SyntaxKind.StringKeyword },
         ".toUpperCase()": { n: "string.upper", t: ts.SyntaxKind.StringKeyword },
@@ -37,7 +38,7 @@ namespace ts.pxtc {
         "control.createBufferFromArray": { n: "bytes", t: ts.SyntaxKind.Unknown },
         "!!": { n: "bool", t: ts.SyntaxKind.BooleanKeyword },
         ".indexOf": { n: "Array.index", t: ts.SyntaxKind.NumberKeyword },
-        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword }
+        "parseInt": { n: "int", t: ts.SyntaxKind.NumberKeyword, snippet: 'int("0")' }
     }
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
@@ -624,6 +625,8 @@ namespace ts.pxtc {
                 let override = U.lookup(ts2PyFunNameMap, si.qName);
                 if (override && override.n) {
                     si.pyQName = override.n;
+                    si.pySnippet = override.snippet;
+                    si.pySnippetName = override.n;
                 } else if (si.namespace) {
                     let par = res.byQName[si.namespace]
                     if (par) {
@@ -934,11 +937,16 @@ namespace ts.pxtc.service {
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
-                    let snippet = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
-                    if (isPython)
-                        si.pySnippet = snippet
-                    else
-                        si.snippet = snippet
+                    // snippet/pySnippet might have been set already
+                    if ((isPython && !si.pySnippet)
+                        || (!isPython && !si.snippet))
+                    {
+                        let snippet = getSnippet(lastApiInfo.apis, takenNames, v.runtime, si, n, isPython);
+                        if (isPython)
+                            si.pySnippet = snippet
+                        else
+                            si.snippet = snippet
+                    }
                 }
             }
 
