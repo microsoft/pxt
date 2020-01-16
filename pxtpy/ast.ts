@@ -176,6 +176,11 @@ namespace pxt.py {
         alwaysThrows?: boolean;
         callers?: Expr[];
     }
+    export interface LoopBlockDef extends Symbol, ScopeDef {
+        kind: "LoopBlockDef";
+        body: Stmt[];
+        target: Expr;
+    }
     export interface AsyncFunctionDef extends Stmt {
         kind: "AsyncFunctionDef";
         name: identifier;

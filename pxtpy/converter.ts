@@ -6,6 +6,7 @@ namespace pxt.py {
         currModule: py.Module;
         currClass?: py.ClassDef;
         currFun?: py.FunctionDef;
+        currLoop?: py.LoopBlockDef;
         blockDepth: number;
     }
 
@@ -330,7 +331,8 @@ namespace pxt.py {
     }
 
     function currentScope(): py.ScopeDef {
-        return ctx.currFun || ctx.currClass || ctx.currModule
+        // TODO handle loops
+        return ctx.currLoop || ctx.currFun || ctx.currClass || ctx.currModule
     }
 
     function topScope(): py.ScopeDef {
@@ -344,7 +346,7 @@ namespace pxt.py {
     }
 
     function isTopLevel() {
-        return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
+        return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass && !ctx.currLoop
     }
 
     function addImport(a: AST, name: string, scope?: ScopeDef): SymbolInfo {
@@ -699,7 +701,7 @@ namespace pxt.py {
                 return f
             }
         }
-        return null
+        return undefined
     }
 
     function resolvePrimTypes(primType: string | undefined): SymbolInfo[] {
@@ -734,7 +736,7 @@ namespace pxt.py {
 
     function lookupSymbol(n: string) {
         if (!n)
-            return null
+            return undefined
 
         const firstDot = n.indexOf(".")
         if (firstDot > 0) {
@@ -779,6 +781,7 @@ namespace pxt.py {
         ctx = {
             currClass: undefined,
             currFun: undefined,
+            currLoop: undefined,
             currModule: m,
             blockDepth: 0
         }
@@ -1227,7 +1230,11 @@ namespace pxt.py {
             U.assert(n.orelse.length == 0)
             if (isCallTo(n.iter, "range")) {
                 let r = n.iter as py.Call
+                // console.log("for targ:")
+                // console.dir(n.target)
                 let def = expr(n.target)
+                // console.log("for def:")
+                // console.dir(def)
                 let ref = quote(getName(n.target))
                 unifyTypeOf(n.target, tpNumber)
                 let start = r.args.length == 1 ? B.mkText("0") : expr(r.args[0])
@@ -1593,9 +1600,20 @@ namespace pxt.py {
         let id = n.id
         let curr = lookupSymbol(id)
         let local = currentScope().vars[id];
+        console.log("possibleDef")
+        // console.dir(curr)
+        // console.dir(local)
+        // console.dir(n.isdef)
+        // console.dir(currentScope())
 
         if (n.isdef === undefined) {
-            if (!curr || (curr.kind === SK.Variable && curr !== local)) {
+            const isInEnv = !!curr
+            const isInLocalScope = curr === local
+            const isVar = curr && curr.kind === SK.Variable
+            console.log(isInEnv)
+            console.log(isInLocalScope)
+            console.log(isVar)
+            if (!isInEnv || (isVar && !isInLocalScope)) {
                 if (ctx.currClass && !ctx.currFun) {
                     n.isdef = false // field
                     curr = defvar(id, {})
@@ -1609,12 +1627,13 @@ namespace pxt.py {
             n.symbolInfo = curr
             if (!n.tsType)
                 error(n, 9540, lf("definition missing ts type"));
-            if (!curr.pyRetType)
+            if (!curr!.pyRetType)
                 error(n, 9568, lf("missing py return type"));
-            unify(n, n.tsType!, curr.pyRetType!)
+            unify(n, n.tsType!, curr!.pyRetType!)
         }
 
         if (n.isdef && shouldHoist(curr!, currentScope())) {
+            console.log("isdef := false")
             n.isdef = false;
         }
 
