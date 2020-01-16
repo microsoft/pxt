@@ -6,7 +6,8 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
-@highlightLineColor: #fcfc90;
+@highlightLineBackground: #fcfc90;
+@highlightLineColor: #000;
 @tutorialCardHeight: 8rem;
 @seeMoreButtonHeight: 4rem;
 @avatarSize: 4.5rem;
@@ -252,9 +253,10 @@ code.lang-filterblocks {
 span.highlight-line {
     font-weight: bold;
     white-space: pre-wrap;
-    background: @highlightLineColor;
+    background: @highlightLineBackground;
     display: inline-block;
     padding: 0.5rem;
+    color: @highlightLineColor;
 }
 
 #tutorialcard .prevbutton,
