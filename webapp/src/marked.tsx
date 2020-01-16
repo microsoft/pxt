@@ -63,7 +63,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
-        pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript`))
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript,code.lang-python`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.textContent;
                 const wrapperDiv = this.startRenderLangSnippet(langBlock);
