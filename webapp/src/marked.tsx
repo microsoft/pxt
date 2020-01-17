@@ -45,7 +45,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         const parentBlock = preBlock.parentElement as HTMLDivElement; // parent containing all text
 
         const wrapperDiv = document.createElement('div');
-        wrapperDiv.className = 'ui segment raised loading';
+        wrapperDiv.className = 'ui segment raised loading codewidget';
         parentBlock.insertBefore(wrapperDiv, preBlock);
         parentBlock.removeChild(preBlock);
 
@@ -53,10 +53,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string) {
-        const preDiv = document.createElement('pre') as HTMLPreElement;
-        preDiv.textContent = code;
-        pxt.tutorial.highlight(preDiv);
-        wrapperDiv.appendChild(preDiv);
+        const codeDiv = document.createElement('code') as HTMLElement
+        codeDiv.className = "hljs"
+        codeDiv.textContent = code;
+        pxt.tutorial.highlight(codeDiv);
+        wrapperDiv.appendChild(codeDiv);
         pxsim.U.removeClass(wrapperDiv, 'loading');
     }
 

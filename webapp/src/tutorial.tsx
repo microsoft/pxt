@@ -56,7 +56,7 @@ export class TutorialMenu extends data.Component<ISettingsProps, {}> {
         this.hasActivities = tutorialOptions && tutorialOptions.tutorialActivityInfo && tutorialOptions.tutorialActivityInfo.length > 1;
     }
 
-    renderCore () {
+    renderCore() {
         let tutorialOptions = this.props.parent.state.tutorialOptions;
         if (this.hasActivities) {
             return <TutorialStepCircle parent={this.props.parent} />;
@@ -155,12 +155,12 @@ export class TutorialStepCircle extends data.Component<ITutorialMenuProps, {}> {
 
     handleNextClick = () => {
         let options = this.props.parent.state.tutorialOptions;
-        this.openTutorialStep( options.tutorialStep + 1);
+        this.openTutorialStep(options.tutorialStep + 1);
     }
 
     handlePrevClick = () => {
         let options = this.props.parent.state.tutorialOptions;
-        this.openTutorialStep( options.tutorialStep - 1);
+        this.openTutorialStep(options.tutorialStep - 1);
     }
 
     openTutorialStep(step: number) {
@@ -387,7 +387,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
             this.prevStep = step;
 
             // on "new step", sync tutorial card state. used when exiting the modal, since that bypasses the react lifecycle
-            this.setState({showHint: options.tutorialStepInfo[step].unplugged || options.tutorialStepInfo[step].fullscreen})
+            this.setState({ showHint: options.tutorialStepInfo[step].unplugged || options.tutorialStepInfo[step].fullscreen })
         }
     }
 
@@ -424,7 +424,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return tutorialStepInfo[tutorialStep].hasHint || tutorialStepInfo[tutorialStep].unplugged;
+        return tutorialStepInfo[tutorialStep].hasHint
+            || tutorialStepInfo[tutorialStep].unplugged;
     }
 
     private hintOnClick(evt?: any) {
@@ -466,7 +467,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
     }
 
     getExpandedCardStyle(prop: string) {
-        return { [prop] : `calc(${this.getCardHeight()}px + 2rem)` }
+        return { [prop]: `calc(${this.getCardHeight()}px + 2rem)` }
     }
 
     toggleHint(showFullText?: boolean) {
@@ -506,7 +507,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
-        const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
+        const stepInfo = tutorialStepInfo[tutorialStep];
 
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
@@ -516,7 +517,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
         const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
-        const unplugged = tutorialStepInfo[tutorialStep].unplugged;
+        const tutorialCardContent = stepInfo.headerContentMd;
+        const unplugged = stepInfo.unplugged;
 
         let tutorialAriaLabel = '',
             tutorialHintTooltip = '';
@@ -673,8 +675,8 @@ export class WorkspaceHeader extends data.Component<any, {}> {
 
     renderCore() {
         return <div id="headers">
-                    <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
-                    <div id="workspaceHeader">{this.workspaceTitle}</div>
-               </div>;
+            <div id="flyoutHeader" style={this.headerStyle()}>{this.flyoutTitle}</div>
+            <div id="workspaceHeader">{this.workspaceTitle}</div>
+        </div>;
     }
 }
