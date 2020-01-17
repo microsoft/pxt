@@ -214,7 +214,7 @@ namespace pxt.tutorial {
                     pre.appendChild(span);
                 }
             } else {
-                pre.appendChild(document.createTextNode(line + '\n'));
+                pre.appendChild(document.createTextNode(line + ((i < lines.length - 1) ? '\n' : '')));
             }
         }
     }
