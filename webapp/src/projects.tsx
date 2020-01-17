@@ -786,7 +786,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             case "js":
                 return "JavaScript";
             case "blocks":
-                return "Blocks";
+                return lf("Blocks");
             default:
                 return null;
         }
@@ -888,7 +888,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     {this.getActionCard(clickLabel, cardType, this.handleDetailClick, true)}
                     {otherActions && otherActions.map( (el, i) => {
                         let onClick = this.handleActionClick(el);
-                        return this.getActionCard(clickLabel, cardType, onClick, false, el, `action${i}`);
+                        return this.getActionCard(clickLabel, el.cardType || cardType, onClick, false, el, `action${i}`);
                     })}
                     {cardType === "forumUrl" &&
                         // TODO (shakao) migrate forumurl to otherAction json in md
