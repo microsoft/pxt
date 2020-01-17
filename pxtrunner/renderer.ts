@@ -268,7 +268,6 @@ namespace pxt.runner {
                     else {
                         if ($svg) appendJs($svg.parent(), $js, woptions);
                         else appendJs($c, $js, woptions);
-                        $js[0].scrollIntoView();
                     }
                 })
                 $menu.append($jsBtn);
@@ -287,7 +286,6 @@ namespace pxt.runner {
                     else {
                         if ($svg) appendPy($svg.parent(), $py, woptions);
                         else appendPy($c, $py, woptions);
-                        $py[0].scrollIntoView();
                     }
                 })
                 $menu.append($pyBtn);

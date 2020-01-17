@@ -1,0 +1,13 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="namespaceWithAlias_argsWithAlias">
+<field name="f">EnumWithAlias.Foo</field>
+<next>
+<block type="namespaceWithAlias_functionWithAlias">
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
