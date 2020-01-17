@@ -18,7 +18,6 @@ namespace pxt.tutorial {
         body
             .replace(/((?!.)\s)+/g, "\n")
             .replace(regex, function (m0, m1, m2) {
-                let addCode = true;
                 switch (m1) {
                     case "block":
                     case "blocks":
@@ -31,7 +30,7 @@ namespace pxt.tutorial {
                         if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
                             return undefined;
                         if (m1 == "python")
-                            addCode = false;
+                            return undefined; // TODO: support for those?
                         break;
                     case "typescript":
                     case "ts":
@@ -44,8 +43,7 @@ namespace pxt.tutorial {
                         templateCode = m2;
                         break;
                 }
-                if (addCode) // TODO: support python
-                    code += "\n { \n " + m2 + "\n } \n";
+                code += "\n { \n " + m2 + "\n } \n";
                 return "";
             });
 
