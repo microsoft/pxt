@@ -263,11 +263,12 @@ enum EnumWithAlias {
 const FOO = EnumWithAlias.Foo;
 
 namespace namespaceWithAlias {
+    //% block
     export function argsWithAlias(f: EnumWithAlias) {
 
     }
 
-    //% alias=BAR
+    //% alias=BAR block
     export function functionWithAlias() {
 
     }
