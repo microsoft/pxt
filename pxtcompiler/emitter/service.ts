@@ -153,9 +153,11 @@ namespace ts.pxtc {
                 let nm = t.typeName && t.typeName.getText ? t.typeName.getText() : t.typeName;
                 return `${nm}`
             }
+            case ts.SyntaxKind.AnyKeyword:
+                return "any"
             default:
                 pxt.tickEvent("depython.todo", { kind: s.kind })
-                return `(TODO: Unknown TypeNode kind: ${s.kind})`
+                return ``
         }
         // // TODO translate type
         // return s.getText()
