@@ -3081,12 +3081,12 @@ export class ProjectView
 
     private hintManager: HintManager = new HintManager();
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean) {
-        pxt.tickEvent("tutorial.start");
-        this.startTutorialAsync(tutorialId, tutorialTitle, recipe);
+    startTutorial(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editor?: string) {
+        pxt.tickEvent("tutorial.start", { editor });
+        this.startTutorialAsync(tutorialId, tutorialTitle, recipe, editor);
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, recipe?: boolean, editorHint?: string): Promise<void> {
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
@@ -3187,7 +3187,10 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            const { options, editor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+            const { options, editor: parsedEditor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+
+            // pick tutorial editor
+            const editor = editorHint || parsedEditor;
 
             // start a tutorial within the context of an existing program
             if (recipe) {
