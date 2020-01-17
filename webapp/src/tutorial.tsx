@@ -424,7 +424,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return (!options.inlineHints && tutorialStepInfo[tutorialStep].hasHint)
+        return tutorialStepInfo[tutorialStep].hasHint
             || tutorialStepInfo[tutorialStep].unplugged;
     }
 
@@ -517,9 +517,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
         const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
-        let tutorialCardContent = stepInfo.headerContentMd;
-        if (!hasHint && stepInfo.hintContentMd && options.inlineHints)
-            tutorialCardContent += "\n" + stepInfo.hintContentMd
+        const tutorialCardContent = stepInfo.headerContentMd;
         const unplugged = stepInfo.unplugged;
 
         let tutorialAriaLabel = '',

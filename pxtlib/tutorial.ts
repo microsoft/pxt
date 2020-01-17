@@ -240,8 +240,7 @@ namespace pxt.tutorial {
             tutorialRecipe: !!recipe,
             templateCode: tutorialInfo.templateCode,
             autoexpandStep: true,
-            metadata: tutorialInfo.metadata,
-            inlineHints: tutorialInfo.editor != pxt.BLOCKS_PROJECT_NAME
+            metadata: tutorialInfo.metadata
         };
 
         return { options: tutorialOptions, editor: tutorialInfo.editor };
