@@ -254,3 +254,23 @@ enum EnumWithValueBlock {
     //% block=value2
     testValue2 = 5
 }
+
+enum EnumWithAlias {
+    //% alias=FOO
+    Foo    
+}
+
+const FOO = EnumWithAlias.Foo;
+
+namespace namespaceWithAlias {
+    export function argsWithAlias(f: EnumWithAlias) {
+
+    }
+
+    //% alias=BAR
+    export function functionWithAlias() {
+
+    }
+}
+
+const BAR = namespaceWithAlias.functionWithAlias
