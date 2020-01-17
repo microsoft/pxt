@@ -3829,18 +3829,25 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
             return false;
-        case "github": { // follows a github OAuth roundtrip
-            const [hid, ghCmd] = hash.arg.split(':', 2);
-            const hd = workspace.getHeader(hid);
-            if (hd) {
-                switch (ghCmd) {
-                    case "create-repository":
-                        pxt.BrowserUtils.changeHash("");
-                        theEditor.loadHeaderAsync(hd)
-                            .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
-                            .done(r => r && theEditor.reloadHeaderAsync())
-                        return true;
+        case "github": {
+            // #github:owner/user --> import
+            // #github:create-repository:headerid --> create repo
+            const repoid = pxt.github.parseRepoId(hash.arg);
+            const [ghCmd, ghArg] = hash.arg.split(':', 2);
+            if (ghCmd == "create-repository") {
+                // #github:create-repository:HEADERID
+                pxt.BrowserUtils.changeHash("");
+                const hd = workspace.getHeader(ghArg);
+                if (hd) {
+                    theEditor.loadHeaderAsync(hd)
+                        .then(() => cloudsync.githubProvider().createRepositoryAsync(hd.name, hd))
+                        .done(r => r && theEditor.reloadHeaderAsync())
+                    return true;
                 }
+            } else if (repoid) {
+                pxt.BrowserUtils.changeHash("");
+                importGithubProject(hash.arg, true);
+                return true;
             }
             break;
         }
@@ -3875,7 +3882,7 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
     }
 }
 
-async function importGithubProject(repoid: string) {
+async function importGithubProject(repoid: string, requireSignin?: boolean) {
     core.showLoading("loadingheader", lf("importing GitHub project..."));
     try {
         // normalize for precise matching
@@ -3884,12 +3891,23 @@ async function importGithubProject(repoid: string) {
         let hd = workspace.getHeaders().find(h => h.githubId &&
             pxt.github.normalizeRepoId(h.githubId) == repoid
         );
-        if (!hd)
-            hd = await workspace.importGithubAsync(repoid)
+        if (!hd) {
+            if (requireSignin) {
+                const token = await cloudsync.githubProvider().routedLoginAsync(repoid);
+                if (!token.accessToken) { // did not sign in, give up
+                    theEditor.openHome();
+                    return;
+                }
+            }
+            hd = await workspace.importGithubAsync(repoid);
+        }
         if (hd)
             await theEditor.loadHeaderAsync(hd, null)
+        else
+            theEditor.openHome();
     } catch (e) {
         core.handleNetworkError(e)
+        theEditor.openHome();
     } finally {
         core.hideLoading("loadingheader")
     }

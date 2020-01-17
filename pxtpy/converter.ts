@@ -1248,14 +1248,27 @@ namespace pxt.py {
                     B.mkText(")"),
                     stmts(n.body))
             }
-            unifyTypeOf(n.iter, mkArrayType(typeOf(n.target)))
+
+            if (currIteration > 1) {
+                const typeOfTarget = typeOf(n.target);
+                /**
+                 * The type the variable to iterate over must be `string | Iterable<typeof Target>`,
+                 * but we can't model that with the current state of the python type checker.
+                 * If we can identify the type of the value we're iterating over to be a string elsewhere,
+                 * try and allow this by unifying with just the target type;
+                 * otherwise, it is assumed to be an array.
+                 */
+                unifyTypeOf(n.iter, typeOf(n.iter) == tpString ? typeOfTarget : mkArrayType(typeOfTarget));
+            }
+
             return B.mkStmt(
                 B.mkText("for ("),
                 expr(n.target),
                 B.mkText(" of "),
                 expr(n.iter),
                 B.mkText(")"),
-                stmts(n.body))
+                stmts(n.body)
+            );
         },
         While: (n: py.While) => {
             U.assert(n.orelse.length == 0)

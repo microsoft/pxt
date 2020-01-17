@@ -12,7 +12,6 @@ import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
-import * as dialogs from "./dialogs"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -847,7 +846,7 @@ export async function exportToGithubAsync(hd: Header, repoid: string) {
         commit
     })
     await saveAsync(hd, files);
-    await initializeGithubRepoAsync(hd, repoid, false);
+    await initializeGithubRepoAsync(hd, repoid, false, true);
     // race condition, don't pull right away
     // await pullAsync(hd);
 }
@@ -969,7 +968,7 @@ export function prepareConfigForGithub(content: string, createTag?: boolean): st
     }
 }
 
-export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string, forceTemplateFiles: boolean, binaryJs: boolean) {
     await cloudsync.ensureGitHubTokenAsync();
 
     let parsed = pxt.github.parseRepoId(repoid)
@@ -1027,7 +1026,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     await commitAsync(hd, {
         message: lf("Initial files for MakeCode project"),
         filenamesToCommit: Object.keys(currFiles),
-        binaryJs: true
+        binaryJs
     })
 
     // remove files not in the package (only in git)
@@ -1103,7 +1102,7 @@ export async function importGithubAsync(id: string): Promise<Header> {
         files: {}
     })
     if (hd && isEmpty)
-        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles);
+        await initializeGithubRepoAsync(hd, repoid, forceTemplateFiles, false);
     return hd
 }
 
