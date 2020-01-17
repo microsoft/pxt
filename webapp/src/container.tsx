@@ -269,7 +269,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 </div>
                 {lf("Sign out")}
             </div> : undefined}
-            <div className="ui divider"></div>
+            {targetTheme.selectLanguage ? <div className="ui divider"></div> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />

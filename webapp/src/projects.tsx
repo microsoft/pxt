@@ -320,7 +320,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
                 </div>
                 {lf("Sign out")}
             </div> : undefined}
-            <div className="ui divider"></div>
+            {targetTheme.selectLanguage ? <div className="ui divider"></div> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} />
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
