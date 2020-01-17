@@ -125,6 +125,9 @@ namespace pxt.py {
                 return null
             let tsExp = exp.getText()
             let sym = symbols[tsExp]
+            if (sym && sym.attributes.alias) {
+                return sym.attributes.alias
+            }
             if (sym && sym.pyQName) {
                 return sym.pyQName
             }
