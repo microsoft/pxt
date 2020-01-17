@@ -27,9 +27,7 @@ namespace ts.pxtc.transpile {
     const MAX_CODE_EQUIVS = 10
 
     function toComparable(code: string): string {
-        // Ignore whitespace
-        code = code.replace(/\s/g, "")
-
+        // Note that whitespace is semantic for Python
         return code
     }
     export function resetCache() {
