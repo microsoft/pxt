@@ -203,7 +203,7 @@ namespace pxt.tutorial {
         pre.textContent = ""; // clear up and rebuild
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; ++i) {
-            if (i < lines.length)
+            if (i > 0 && i < lines.length)
                 pre.appendChild(document.createTextNode("\n"))
             let line = lines[i];
             if (/@highlight/.test(line)) {
