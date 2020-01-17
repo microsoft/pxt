@@ -54,8 +54,11 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string) {
         const preDiv = document.createElement('pre') as HTMLPreElement;
-        preDiv.textContent = code;
-        pxt.tutorial.highlight(preDiv);
+        const codeDiv = document.createElement('code') as HTMLElement
+        preDiv.className = "hljs"
+        preDiv.appendChild(codeDiv);
+        codeDiv.textContent = code;
+        pxt.tutorial.highlight(codeDiv);
         wrapperDiv.appendChild(preDiv);
         pxsim.U.removeClass(wrapperDiv, 'loading');
     }

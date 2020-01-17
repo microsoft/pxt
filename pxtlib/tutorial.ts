@@ -190,7 +190,7 @@ namespace pxt.tutorial {
         return { metadata: (m as TutorialMetadata), body};
     }
 
-    export function highlight(pre: HTMLPreElement): void {
+    export function highlight(pre: HTMLElement): void {
         let text = pre.textContent;
         if (!/@highlight/.test(text)) // shortcut, nothing to do
             return;
