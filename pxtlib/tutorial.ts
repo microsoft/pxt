@@ -218,4 +218,31 @@ namespace pxt.tutorial {
             }
         }
     }
+
+    export function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
+        const tutorialInfo = pxt.tutorial.parseTutorial(md);
+        if (!tutorialInfo)
+            throw new Error(lf("Invalid tutorial format"));
+
+        const tutorialOptions: pxt.tutorial.TutorialOptions = {
+            tutorial: tutorialId,
+            tutorialName: tutorialInfo.title || filename,
+            tutorialReportId: reportId,
+            tutorialStep: 0,
+            tutorialReady: true,
+            tutorialHintCounter: 0,
+            tutorialStepInfo: tutorialInfo.steps,
+            tutorialActivityInfo: tutorialInfo.activities,
+            tutorialMd: md,
+            tutorialCode: tutorialInfo.code,
+            tutorialRecipe: !!recipe,
+            templateCode: tutorialInfo.templateCode,
+            autoexpandStep: true,
+            metadata: tutorialInfo.metadata,
+            inlineHints: tutorialInfo.editor != pxt.BLOCKS_PROJECT_NAME
+        };
+
+        return { options: tutorialOptions, editor: tutorialInfo.editor };
+    }
+
 }

@@ -880,6 +880,7 @@ declare namespace pxt.tutorial {
         templateCode?: string;
         autoexpandStep?: boolean; // autoexpand tutorial card if instruction text overflows
         metadata?: TutorialMetadata; // metadata about the tutorial parsed from the markdown
+        inlineHints?: boolean; // always show hint as part of the main card
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

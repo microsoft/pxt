@@ -424,7 +424,8 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return false;
-        return tutorialStepInfo[tutorialStep].hasHint || tutorialStepInfo[tutorialStep].unplugged;
+        return (!options.inlineHints && tutorialStepInfo[tutorialStep].hasHint)
+            || tutorialStepInfo[tutorialStep].unplugged;
     }
 
     private hintOnClick(evt?: any) {
@@ -506,7 +507,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded, metadata } = options;
         if (!tutorialReady) return <div />
-        const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
+        const stepInfo = tutorialStepInfo[tutorialStep];
 
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
         const currentStep = tutorialStep;
@@ -516,7 +517,10 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
         const hasFinish = !lockedEditor && currentStep == maxSteps - 1 && !hideIteration;
         const hasHint = this.hasHint();
-        const unplugged = tutorialStepInfo[tutorialStep].unplugged;
+        let tutorialCardContent = stepInfo.headerContentMd;
+        if (!hasHint && stepInfo.hintContentMd && options.inlineHints)
+            tutorialCardContent += "\n" + stepInfo.hintContentMd
+        const unplugged = stepInfo.unplugged;
 
         let tutorialAriaLabel = '',
             tutorialHintTooltip = '';
