@@ -11,7 +11,7 @@ namespace pxt.tutorial {
 
         // collect code and infer editor
         let editor: string = undefined;
-        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template)?\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|ghost|typescript|ts|js|javascript|template|python)?\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         let templateCode: string;
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
