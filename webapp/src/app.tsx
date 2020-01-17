@@ -1588,7 +1588,7 @@ export class ProjectView
 
     importTutorialAsync(md: string) {
         try {
-            const { options, editor } = getTutorialOptions(md, "untitled", "untitled", "", false);
+            const { options, editor } = pxt.tutorial.getTutorialOptions(md, "untitled", "untitled", "", false);
             const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
 
             return this.createProjectAsync({
@@ -3187,7 +3187,7 @@ export class ProjectView
             if (!md)
                 throw new Error(lf("Tutorial not found"));
 
-            const { options, editor } = getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
+            const { options, editor } = pxt.tutorial.getTutorialOptions(md, tutorialId, filename, reportId, !!recipe);
 
             // start a tutorial within the context of an existing program
             if (recipe) {
@@ -4247,29 +4247,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, false);
 })
-
-
-function getTutorialOptions(md: string, tutorialId: string, filename: string, reportId: string, recipe: boolean): { options: pxt.tutorial.TutorialOptions, editor: string } {
-    const tutorialInfo = pxt.tutorial.parseTutorial(md);
-    if (!tutorialInfo)
-        throw new Error(lf("Invalid tutorial format"));
-
-    const tutorialOptions: pxt.tutorial.TutorialOptions = {
-        tutorial: tutorialId,
-        tutorialName: tutorialInfo.title || filename,
-        tutorialReportId: reportId,
-        tutorialStep: 0,
-        tutorialReady: true,
-        tutorialHintCounter: 0,
-        tutorialStepInfo: tutorialInfo.steps,
-        tutorialActivityInfo: tutorialInfo.activities,
-        tutorialMd: md,
-        tutorialCode: tutorialInfo.code,
-        tutorialRecipe: !!recipe,
-        templateCode: tutorialInfo.templateCode,
-        autoexpandStep: true,
-        metadata: tutorialInfo.metadata
-    };
-
-    return { options: tutorialOptions, editor: tutorialInfo.editor };
-}
